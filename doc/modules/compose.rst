@@ -45,6 +45,9 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
+Construction
+............
+
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
@@ -57,7 +60,7 @@ is an estimator object::
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+                    ('clf', SVC(C=1.0,...))], verbose=False)
 
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
@@ -72,19 +75,44 @@ filling in the names automatically::
              steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
-                                                    fit_prior=True))])
+                                                    fit_prior=True))],
+             verbose=False)
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+Accessing steps
+...............
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute,
+but can be accessed by index or name by indexing (with ``[idx]``) the
+Pipeline::
 
     >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
-    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False))
-
-and as a ``dict`` in ``named_steps``::
-
-    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
+                       random_state=None, svd_solver='auto', tol=0.0,
+                       whiten=False))
+    >>> pipe[0]  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+        svd_solver='auto', tol=0.0, whiten=False)
+    >>> pipe['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    PCA(copy=True, ...)
+
+Pipeline's `named_steps` attribute allows accessing steps by name with tab
+completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+    True
+
+A sub-pipeline can also be extracted using the slicing notation commonly used
+for Python Sequences such as lists or strings (although only a step of 1 is
+permitted). This is convenient for performing only some of the transformations
+(or their inverse):
+
+    >>> pipe[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('reduce_dim', PCA(copy=True, ...))],...)
+    >>> pipe[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('clf', SVC(C=1.0, ...))],...)
+
+Nested parameters
+.................
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -92,12 +120,8 @@ Parameters of the estimators in the pipeline can be accessed using the
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
-                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
-
-Attributes of named_steps map to keys, enabling tab completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
-    True
+                    ('clf', SVC(C=10, cache_size=200, class_weight=None,...))],
+             verbose=False)
 
 This is particularly important for doing grid searches::
 
@@ -114,6 +138,16 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+The estimators of the pipeline can be retrieved by index:
+
+    >>> pipe[0]  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
+
+or by name::
+
+    >>> pipe['reduce_dim']  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
 
 .. topic:: Examples:
 
@@ -170,7 +204,7 @@ object::
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(...,
              steps=[('reduce_dim', PCA(copy=True,...)),
-                    ('clf', SVC(C=1.0,...))])
+                    ('clf', SVC(C=1.0,...))], verbose=False)
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
@@ -187,7 +221,8 @@ object::
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
      Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))], 
+              verbose=False)
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[-1.77484909e-19  ... 4.07058917e-18]]
@@ -209,7 +244,8 @@ object::
      >>> cached_pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
       Pipeline(memory=...,
-               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
+               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))],
+               verbose=False)
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
          [[-1.77484909e-19  ... 4.07058917e-18]]
@@ -344,7 +380,7 @@ and ``value`` is an estimator object::
     FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 
 Like pipelines, feature unions have a shorthand constructor called
@@ -359,7 +395,7 @@ and ignored by setting to ``'drop'``::
     FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', 'drop')],
-                 transformer_weights=None)
+                 transformer_weights=None, verbose=False)
 
 .. topic:: Examples:
 

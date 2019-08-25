@@ -57,6 +57,10 @@ N_SPLITS = 5
 rng = np.random.RandomState(0)
 
 X_full, y_full = fetch_california_housing(return_X_y=True)
+# ~2k samples is enough for the purpose of the example.
+# Remove the following two lines for a slower run with different error bars.
+X_full = X_full[::10]
+y_full = y_full[::10]
 n_samples, n_features = X_full.shape
 
 # Estimate the score on the entire dataset, with no missing values
@@ -93,16 +97,16 @@ for strategy in ('mean', 'median'):
 estimators = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features='sqrt', random_state=0),
-    ExtraTreesRegressor(n_estimators=10, n_jobs=-1, random_state=0),
+    ExtraTreesRegressor(n_estimators=10, random_state=0),
     KNeighborsRegressor(n_neighbors=15)
 ]
 score_iterative_imputer = pd.DataFrame()
-for estimator in estimators:
+for impute_estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=estimator),
+        IterativeImputer(random_state=0, estimator=impute_estimator),
         br_estimator
     )
-    score_iterative_imputer[estimator.__class__.__name__] = \
+    score_iterative_imputer[impute_estimator.__class__.__name__] = \
         cross_val_score(
             estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
             cv=N_SPLITS

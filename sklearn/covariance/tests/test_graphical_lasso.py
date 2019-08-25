@@ -129,7 +129,7 @@ def test_graphical_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_graphical_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5

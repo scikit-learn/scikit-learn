@@ -24,7 +24,7 @@ MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
 @deprecated('mldata_filename was deprecated in version 0.20 and will be '
-            'removed in version 0.22')
+            'removed in version 0.22. Please use fetch_openml.')
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename.
 
@@ -46,7 +46,7 @@ def mldata_filename(dataname):
 
 
 @deprecated('fetch_mldata was deprecated in version 0.20 and will be removed '
-            'in version 0.22')
+            'in version 0.22. Please use fetch_openml.')
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):
     """Fetch an mldata.org data set

@@ -61,3 +61,13 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if isinstance(item, DoctestItem):
                 item.add_marker(skip_marker)
+
+
+def pytest_configure(config):
+    import sys
+    sys._is_pytest_session = True
+
+
+def pytest_unconfigure(config):
+    import sys
+    del sys._is_pytest_session

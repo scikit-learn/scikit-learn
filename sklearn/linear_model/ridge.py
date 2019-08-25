@@ -290,7 +290,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'saga' supports sparse input when`fit_intercept` is True.
+        'sag' and 'sparse_cg' supports sparse input when`fit_intercept` is
+        True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -367,12 +368,25 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       return_n_iter=False, return_intercept=False,
                       X_scale=None, X_offset=None):
 
-    if return_intercept and sparse.issparse(X) and solver != 'sag':
-        if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                          "intercept when X is sparse. Solver has been "
-                          "automatically changed into 'sag'.")
-        solver = 'sag'
+    has_sw = sample_weight is not None
+
+    if solver == 'auto':
+        if return_intercept:
+            # only sag supports fitting intercept directly
+            solver = "sag"
+        elif not sparse.issparse(X):
+            solver = "cholesky"
+        else:
+            solver = "sparse_cg"
+
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
+        raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
+                         " 'lsqr', 'sag' or 'saga'. Got %s." % solver)
+
+    if return_intercept and solver != 'sag':
+        raise ValueError("In Ridge, only 'sag' solver can directly fit the "
+                         "intercept. Please change solver to 'sag' or set "
+                         "return_intercept=False.")
 
     _dtype = [np.float64, np.float32]
 
@@ -403,14 +417,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-    has_sw = sample_weight is not None
 
-    if solver == 'auto':
-        # cholesky if it's a dense array and cg in any other case
-        if not sparse.issparse(X) or has_sw:
-            solver = 'cholesky'
-        else:
-            solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -431,8 +438,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
-        raise ValueError('Solver %s not understood' % solver)
 
     n_iter = None
     if solver == 'sparse_cg':
@@ -554,7 +559,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
         else:
-            if sparse.issparse(X):
+            if sparse.issparse(X) and self.solver == 'sparse_cg':
                 # required to fit intercept with sparse_cg solver
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
@@ -651,8 +656,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        All last five solvers support both dense and sparse data. However,
-        only 'sag' and 'saga' supports sparse input when `fit_intercept` is
+        All last five solvers support both dense and sparse data. However, only
+        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
         .. versionadded:: 0.17
@@ -824,8 +829,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_classes, n_features)
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -1407,8 +1414,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         contain the mean squared errors (by default) or the values of the
         ``{loss,score}_func`` function (if provided in the constructor).
 
-    coef_ : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_targets, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if

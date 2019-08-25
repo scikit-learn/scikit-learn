@@ -61,7 +61,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         Indicate that transform should forward the y argument to the
         inner callable.
 
-        .. deprecated::0.19
+        .. deprecated:: 0.19
 
     check_inverse : bool, default=True
        Whether to check that or ``func`` followed by ``inverse_func`` leads to

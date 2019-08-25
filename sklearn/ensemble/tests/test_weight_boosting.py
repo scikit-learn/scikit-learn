@@ -197,7 +197,7 @@ def test_staged_predict():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification

@@ -31,6 +31,7 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
+from ..exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['HashingVectorizer',
@@ -304,10 +305,34 @@ class VectorizerMixin:
             self._stop_words_id = id(self.stop_words)
             return 'error'
 
+    def _validate_custom_analyzer(self):
+        # This is to check if the given custom analyzer expects file or a
+        # filename instead of data.
+        # Behavior changed in v0.21, function could be removed in v0.23
+        import tempfile
+        with tempfile.NamedTemporaryFile() as f:
+            fname = f.name
+        # now we're sure fname doesn't exist
+
+        msg = ("Since v0.21, vectorizers pass the data to the custom analyzer "
+               "and not the file names or the file objects. This warning "
+               "will be removed in v0.23.")
+        try:
+            self.analyzer(fname)
+        except FileNotFoundError:
+            warnings.warn(msg, ChangedBehaviorWarning)
+        except AttributeError as e:
+            if str(e) == "'str' object has no attribute 'read'":
+                warnings.warn(msg, ChangedBehaviorWarning)
+        except Exception:
+            pass
+
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
-            return self.analyzer
+            if self.input in ['file', 'filename']:
+                self._validate_custom_analyzer()
+            return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
 
@@ -490,6 +515,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
+
     n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
@@ -510,13 +540,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         .. versionadded:: 0.19
 
-    non_negative : boolean, optional, default False
-        When True, an absolute value is applied to the features matrix prior to
-        returning it. When used in conjunction with alternate_sign=True, this
-        significantly reduces the inner product preservation property.
-
-        .. deprecated:: 0.19
-            This option will be removed in 0.21.
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
@@ -545,7 +568,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', alternate_sign=True,
-                 non_negative=False, dtype=np.float64):
+                 dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -561,7 +584,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self.binary = binary
         self.norm = norm
         self.alternate_sign = alternate_sign
-        self.non_negative = non_negative
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
@@ -649,8 +671,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
-                             alternate_sign=self.alternate_sign,
-                             non_negative=self.non_negative)
+                             alternate_sign=self.alternate_sign)
 
     def _more_tags(self):
         return {'X_types': ['string']}
@@ -753,6 +774,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
+
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
@@ -1377,6 +1403,11 @@ class TfidfVectorizer(CountVectorizer):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
+
+        .. versionchanged:: 0.21
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
 
     stop_words : string {'english'}, list, or None (default=None)
         If a string, it is passed to _check_stop_list and the appropriate stop

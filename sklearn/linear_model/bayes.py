@@ -59,11 +59,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
         If True, compute the log marginal likelihood at each iteration of the
         optimization. Default is False.
 
-    fit_intercept : boolean, optional
-        Whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+    fit_intercept : boolean, optional, default True
+        Whether to calculate the intercept for this model.
+        The intercept is not treated as a probabilistic parameter
+        and thus has no associated variance. If set
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-        Default is True.
+
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -84,6 +86,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
     ----------
     coef_ : array, shape = (n_features,)
         Coefficients of the regression model (mean of distribution).
+
+    intercept_ : float
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     alpha_ : float
        Estimated precision of the noise.

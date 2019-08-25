@@ -145,7 +145,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         if not hasattr(self.estimator, "fit"):
             raise ValueError("The base estimator should implement"
-                             "  a fit method")
+                             " a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -186,7 +186,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         """
         check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimator, "predict"):
-            raise ValueError("The base estimator should implement a predict method")
+            raise ValueError("The base estimator should implement"
+                             " a predict method")
 
         X = check_array(X, accept_sparse=True)
 
@@ -221,6 +222,11 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+    Attributes
+    ----------
+    estimators_ : list of ``n_output`` estimators
+        Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -251,6 +257,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
+    # XXX Remove this method in 0.23
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
@@ -321,6 +328,9 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
+        This method will raise a ``ValueError`` if any of the
+        estimators do not have ``predict_proba``.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -334,8 +344,9 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimator, "predict_proba"):
-            raise ValueError("The base estimator should implement"
+        if not all([hasattr(estimator, "predict_proba")
+                    for estimator in self.estimators_]):
+            raise ValueError("The base estimator should implement "
                              "predict_proba method")
 
         results = [estimator.predict_proba(X) for estimator in
@@ -343,7 +354,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return results
 
     def score(self, X, y):
-        """"Returns the mean accuracy on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------

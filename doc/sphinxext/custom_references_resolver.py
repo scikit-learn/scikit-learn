@@ -54,7 +54,20 @@ class CustomReferencesResolver(ReferencesResolver):
                 if py_ref:
                     return self.create_node(py_ref[0])
 
-        # next, do the standard domain (makes this a priority)
+        # resolve :term:
+        term_ref = stddomain.resolve_xref(self.env, refdoc, self.app.builder,
+                                          'term', target, node, contnode)
+        if term_ref:
+            # replace literal nodes with inline nodes
+            if not isinstance(term_ref[0], nodes.inline):
+                inline_node = nodes.inline(rawsource=term_ref[0].rawsource,
+                                           classes=term_ref[0].get('classes'))
+                if term_ref[0]:
+                    inline_node.append(term_ref[0][0])
+                term_ref[0] = inline_node
+            return self.create_node(("std:term", term_ref))
+
+        # next, do the standard domain
         std_ref = stddomain.resolve_any_xref(
             self.env, refdoc, self.app.builder, target, node, contnode)
         if std_ref:
@@ -76,6 +89,8 @@ class CustomReferencesResolver(ReferencesResolver):
                     if res and isinstance(res[0], nodes.Element):
                         result = ('%s:%s' % (domain.name, role), res)
                         return self.create_node(result)
+
+        self.warn_missing_reference(refdoc, 'any', target, node, domain)
 
         # no results considered to be <code>
         contnode['classes'] = []

@@ -1,7 +1,5 @@
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause, (C) 2011
-#
-# cython: language_level=3
 
 """
 Routines for performing shortest-path graph searches

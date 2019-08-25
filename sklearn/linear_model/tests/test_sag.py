@@ -24,7 +24,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
-from sklearn.datasets import make_blobs, load_iris
+from sklearn.datasets import make_blobs, load_iris, make_classification
 from sklearn.base import clone
 
 iris = load_iris()
@@ -452,13 +452,12 @@ def test_get_auto_step_size():
                          max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_regressor():
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
     n_samples = 20
     tol = .001
-    max_iter = 20
+    max_iter = 50
     alpha = 0.1
     rng = np.random.RandomState(0)
     X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
@@ -467,7 +466,7 @@ def test_sag_regressor():
     y = 0.5 * X.ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples)
+                 alpha=alpha * n_samples, random_state=rng)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -826,3 +825,24 @@ def test_multinomial_loss_ground_truth():
                         [-0.903942, +5.258745, -4.354803]])
     assert_almost_equal(loss_1, loss_gt)
     assert_array_almost_equal(grad_1, grad_gt)
+
+
+@pytest.mark.parametrize("solver", ["sag", "saga"])
+def test_sag_classifier_raises_error(solver):
+    # Following #13316, the error handling behavior changed in cython sag. This
+    # is simply a non-regression test to make sure numerical errors are
+    # properly raised.
+
+    # Train a classifier on a simple problem
+    rng = np.random.RandomState(42)
+    X, y = make_classification(random_state=rng)
+    clf = LogisticRegression(solver=solver, random_state=rng, warm_start=True)
+    clf.fit(X, y)
+
+    # Trigger a numerical error by:
+    # - corrupting the fitted coefficients of the classifier
+    # - fit it again starting from its current state thanks to warm_start
+    clf.coef_[:] = np.nan
+
+    with pytest.raises(ValueError, match="Floating-point under-/overflow"):
+        clf.fit(X, y)

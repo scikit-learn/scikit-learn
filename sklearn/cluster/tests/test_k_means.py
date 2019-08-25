@@ -9,6 +9,7 @@ import pytest
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -922,3 +923,17 @@ def test_iter_attribute():
     estimator = KMeans(algorithm="elkan", max_iter=1)
     estimator.fit(np.random.rand(10, 10))
     assert estimator.n_iter_ == 1
+
+
+def test_k_means_empty_cluster_relocated():
+    # check that empty clusters are correctly relocated when using sample
+    # weights (#13486)
+    X = np.array([[-1], [1]])
+    sample_weight = [1.9, 0.1]
+    init = np.array([[-1], [10]])
+
+    km = KMeans(n_clusters=2, init=init, n_init=1)
+    km.fit(X, sample_weight=sample_weight)
+
+    assert len(set(km.labels_)) == 2
+    assert_allclose(km.cluster_centers_, [[-1], [1]])

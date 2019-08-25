@@ -397,7 +397,7 @@ def weighted_mode(a, w, axis=0):
     (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
-    1.5 and 2: the sum of these is 3.
+    1.5 and 2: the sum of these is 3.5.
 
     See Also
     --------

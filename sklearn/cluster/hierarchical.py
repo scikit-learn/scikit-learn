@@ -23,10 +23,10 @@ from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
+from ..utils import deprecated
 
 ###############################################################################
 # For non fully-connected graphs
-
 
 def _fix_connectivity(X, connectivity, affinity):
     """
@@ -54,15 +54,15 @@ def _fix_connectivity(X, connectivity, affinity):
             connectivity = connectivity.tolil()
 
     # Compute the number of nodes
-    n_components, labels = connected_components(connectivity)
+    n_connected_components, labels = connected_components(connectivity)
 
-    if n_components > 1:
+    if n_connected_components > 1:
         warnings.warn("the number of connected components of the "
                       "connectivity matrix is %d > 1. Completing it to avoid "
-                      "stopping the tree early." % n_components,
+                      "stopping the tree early." % n_connected_components,
                       stacklevel=2)
         # XXX: Can we do without completing the matrix?
-        for i in range(n_components):
+        for i in range(n_connected_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
             for j in range(i):
@@ -75,11 +75,11 @@ def _fix_connectivity(X, connectivity, affinity):
                 connectivity[idx_i[ii], idx_j[jj]] = True
                 connectivity[idx_j[jj], idx_i[ii]] = True
 
-    return connectivity, n_components
+    return connectivity, n_connected_components
 
 
 def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
-                         n_components, return_distance):
+                         n_connected_components, return_distance):
     """
     Perform single linkage clustering on sparse data via the minimum
     spanning tree from scipy.sparse.csgraph, then using union-find to label.
@@ -125,8 +125,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 
     if return_distance:
         distances = single_linkage_tree[:, 2]
-        return children_, n_components, n_samples, parent, distances
-    return children_, n_components, n_samples, parent
+        return children_, n_connected_components, n_samples, parent, distances
+    return children_, n_connected_components, n_samples, parent
 
 
 ###############################################################################
@@ -177,7 +177,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
-    n_components : int
+    n_connected_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -239,8 +239,9 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         else:
             return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity,
-                                                   affinity='euclidean')
+    connectivity, n_connected_components = _fix_connectivity(
+                                                X, connectivity,
+                                                affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -333,9 +334,9 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
         distances = np.sqrt(2. * distances)
-        return children, n_components, n_leaves, parent, distances
+        return children, n_connected_components, n_leaves, parent, distances
     else:
-        return children, n_components, n_leaves, parent
+        return children, n_connected_components, n_leaves, parent
 
 
 # single average and complete linkage
@@ -396,7 +397,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
-    n_components : int
+    n_connected_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -467,9 +468,9 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity,
-                                                   affinity=affinity)
-
+    connectivity, n_connected_components = _fix_connectivity(
+                                                X, connectivity,
+                                                affinity=affinity)
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
     diag_mask = (connectivity.row != connectivity.col)
@@ -497,7 +498,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     if linkage == 'single':
         return _single_linkage_tree(connectivity, n_samples, n_nodes,
-                                    n_clusters, n_components, return_distance)
+                                    n_clusters, n_connected_components,
+                                    return_distance)
 
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
@@ -567,8 +569,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     children = np.array(children)[:, ::-1]
 
     if return_distance:
-        return children, n_components, n_leaves, parent, distances
-    return children, n_components, n_leaves, parent
+        return children, n_connected_components, n_leaves, parent, distances
+    return children, n_connected_components, n_leaves, parent
 
 
 # Matching names to tree-building strategies
@@ -657,8 +659,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    n_clusters : int, default=2
-        The number of clusters to find.
+    n_clusters : int or None, optional (default=2)
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -686,7 +689,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         not small compared to the number of samples. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional \
             (default="ward")
@@ -709,15 +713,27 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             ``pooling_func`` has been deprecated in 0.20 and will be removed
             in 0.22.
 
+    distance_threshold : float, optional (default=None)
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
+    n_clusters_ : int
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``.
+
     labels_ : array [n_samples]
         cluster labels for each point
 
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    n_components_ : int
+    n_connected_components_ : int
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_samples-1, 2)
@@ -737,8 +753,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> clustering = AgglomerativeClustering().fit(X)
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                connectivity=None, linkage='ward', memory=None, n_clusters=2,
-                pooling_func='deprecated')
+                            connectivity=None, distance_threshold=None,
+                            linkage='ward', memory=None, n_clusters=2,
+                            pooling_func='deprecated')
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -747,14 +764,23 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func='deprecated'):
+                 linkage='ward', pooling_func='deprecated',
+                 distance_threshold=None):
         self.n_clusters = n_clusters
+        self.distance_threshold = distance_threshold
         self.memory = memory
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
+
+    @deprecated("The ``n_components_`` attribute was deprecated "
+                "in favor of ``n_connected_components_`` in 0.21 "
+                "and will be removed in 0.23.")
+    @property
+    def n_components_(self):
+        return self.n_connected_components_
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
@@ -779,9 +805,19 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
-        if self.n_clusters <= 0:
+        if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
                              " %s was provided." % str(self.n_clusters))
+
+        if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
+            raise ValueError("Exactly one of n_clusters and "
+                             "distance_threshold has to be set, and the other "
+                             "needs to be None.")
+
+        if (self.distance_threshold is not None
+                and not self.compute_full_tree):
+            raise ValueError("compute_full_tree must be True if "
+                             "distance_threshold is set.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
@@ -806,10 +842,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.connectivity is None:
             compute_full_tree = True
         if compute_full_tree == 'auto':
-            # Early stopping is likely to give a speed up only for
-            # a large number of clusters. The actual threshold
-            # implemented here is heuristic
-            compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
+            if self.distance_threshold is not None:
+                compute_full_tree = True
+            else:
+                # Early stopping is likely to give a speed up only for
+                # a large number of clusters. The actual threshold
+                # implemented here is heuristic
+                compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
         n_clusters = self.n_clusters
         if compute_full_tree:
             n_clusters = None
@@ -819,13 +858,29 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
-        self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(tree_builder)(X, connectivity,
-                                       n_clusters=n_clusters,
-                                       **kwargs)
+
+        distance_threshold = self.distance_threshold
+
+        return_distance = distance_threshold is not None
+        out = memory.cache(tree_builder)(X, connectivity,
+                                         n_clusters=n_clusters,
+                                         return_distance=return_distance,
+                                         **kwargs)
+        (self.children_,
+         self.n_connected_components_,
+         self.n_leaves_,
+         parents) = out[:4]
+
+        if distance_threshold is not None:
+            distances = out[-1]
+            self.n_clusters_ = np.count_nonzero(
+                distances >= distance_threshold) + 1
+        else:
+            self.n_clusters_ = self.n_clusters
+
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            self.labels_ = _hc_cut(self.n_clusters_, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
@@ -846,8 +901,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Parameters
     ----------
-    n_clusters : int, default 2
-        The number of clusters to find.
+    n_clusters : int or None, optional (default=2)
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -873,7 +929,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         not small compared to the number of features. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
@@ -894,15 +951,27 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
+    distance_threshold : float, optional (default=None)
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
+    n_clusters_ : int
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``.
+
     labels_ : array-like, (n_features,)
         cluster labels for each feature.
 
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    n_components_ : int
+    n_connected_components_ : int
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_nodes-1, 2)
@@ -923,8 +992,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
     >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-               connectivity=None, linkage='ward', memory=None, n_clusters=32,
-               pooling_func=...)
+                 connectivity=None, distance_threshold=None, linkage='ward',
+                 memory=None, n_clusters=32,
+                 pooling_func=...)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
@@ -933,11 +1003,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func=np.mean,
+                 distance_threshold=None):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity)
+            affinity=affinity, distance_threshold=distance_threshold)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
