@@ -1189,15 +1189,13 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
 
 
 def test_fetch_openml_verify_checksum(monkeypatch):
-    # locally, titanic dataset is not trimmed, hence a valid
-    # candidate for a checksum test failure
-    data_id = 40945
+    data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
     # modify a mocked file content to change checksum
     dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
     original_data_path = os.path.join(dataset_dir,
-                                      'data-v1-download-16826755.arff.gz')
+                                      'data-v1-download-1666876.arff.gz')
     backup_data_path = original_data_path + ".back"
     shutil.copy(original_data_path, backup_data_path)
 
@@ -1210,7 +1208,6 @@ def test_fetch_openml_verify_checksum(monkeypatch):
 
         # succeeds if checksum validation is explicitly overriden
         dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
-                                                as_frame=True,
                                                 verify_checksum=False)
         assert dataset
 
