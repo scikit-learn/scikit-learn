@@ -92,16 +92,26 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
         """
         Consume binary stream to validate checksum,
         return a new stream with same content
-        :param input_stream: Stream to read bytes from
-        :param md5_checksum: Expected md5 checksum
-        :return: Stream with the original content for consumption
+
+        Parameters
+        ----------
+        input_stream : io.BufferedIOBase
+            Input stream with a read() method to get content in bytes
+
+        md5_checksum: str
+            Expected md5 checksum
+
+        Returns
+        -------
+        BytesIO stream with the same content as input_stream for consumption
         """
         with closing(input_stream):
             bytes_content = input_stream.read()
             actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
             if md5_checksum != actual_md5_checksum:
-                raise ValueError(f"md5checksum {actual_md5_checksum} "
-                                 "does not match {md5_checksum}")
+                raise ValueError("md5checksum: {} does not match expected: "
+                                 "{}".format(actual_md5_checksum,
+                                             md5_checksum))
             return BytesIO(bytes_content)
 
     if data_home is None:
@@ -123,16 +133,12 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
 
         try:
             with closing(urlopen(req)) as fsrc:
+                if is_gzip(fsrc):   # unzip it for checksum validation
+                    fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
                 if expected_md5_checksum:
-                    if is_gzip(fsrc):
-                        fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
                     fsrc = _md5_validated_stream(fsrc, expected_md5_checksum)
-                if is_gzip(fsrc):
-                    with open(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
-                else:
-                    with gzip.GzipFile(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
+                with gzip.GzipFile(local_path, 'wb') as fdst:
+                    shutil.copyfileobj(fsrc, fdst)
         except Exception:
             if os.path.exists(local_path):
                 os.unlink(local_path)
