@@ -257,6 +257,11 @@ Changelog
 - |Enhancement| Allow computing averaged metrics in the case of no true positives.
   :pr:`14595` by `Andreas Müller`_.
 
+- |Enhancement| Improved performance of multimetric scoring in
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV`. :pr:`14593` by `Thomas Fan`_.
+
 :mod:`sklearn.metrics`
 ......................
 
