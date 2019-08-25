@@ -264,7 +264,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : array-like, shape=(n_samples,)
             array with predicted labels
         """
-        check_is_fitted(self, 'transduction_')
+        check_is_fitted(self)
         X = check_array(X)
         return self.base_estimator_.predict(X)
 
@@ -281,7 +281,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : array-like, shape=(n_samples, n_features)
             array with prediction probabilities
         """
-        check_is_fitted(self, 'transduction_')
+        check_is_fitted(self)
         return self.base_estimator_.predict_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
@@ -298,7 +298,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : array-like, shape=(n_samples, n_features)
             result of the decision function of the base_estimator
         """
-        check_is_fitted(self, 'transduction_')
+        check_is_fitted(self)
         return self.base_estimator_.decision_function(X)
 
     @if_delegate_has_method(delegate='base_estimator')
@@ -315,7 +315,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         y : array-like, shape=(n_samples, n_features)
             array with log prediction probabilities
         """
-        check_is_fitted(self, 'transduction_')
+        check_is_fitted(self)
         return self.base_estimator_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate='base_estimator')
@@ -335,5 +335,5 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         score : float
             result of calling score on the base_estimator
         """
-        check_is_fitted(self, 'transduction_')
+        check_is_fitted(self)
         return self.base_estimator_.score(X, y)
