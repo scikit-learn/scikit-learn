@@ -100,6 +100,13 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         "random"
             A random order for each round.
 
+    skip_non_missing_features : boolean, optional (default=False)
+        If ``True`` then features with missing values during ``transform``
+        which did not have any missing values during ``fit`` will be imputed
+        with the initial imputation method only. Set to ``True`` if you have
+        many features with no missing values at both ``fit`` and ``transform``
+        time to save compute.
+
     min_value : float, optional (default=None)
         Minimum possible imputed value. Default of ``None`` will set minimum
         to negative infinity.
@@ -165,10 +172,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     Features which contain all missing values at ``fit`` are discarded upon
     ``transform``.
 
-    Features with missing values during ``transform`` which did not have any
-    missing values during ``fit`` will be imputed with the initial imputation
-    method only.
-
     References
     ----------
     .. [1] `Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice:
@@ -191,6 +194,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  n_nearest_features=None,
                  initial_strategy="mean",
                  imputation_order='ascending',
+                 skip_non_missing_features=False,
                  min_value=None,
                  max_value=None,
                  verbose=0,
@@ -205,6 +209,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
+        self.skip_non_missing_features = skip_non_missing_features
         self.min_value = min_value
         self.max_value = max_value
         self.verbose = verbose
@@ -258,10 +263,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             ``X_filled[missing_row_mask, feat_idx]``.
         """
 
-        # if nothing is missing, just return the default
-        # (should not happen at fit time because feat_ids would be excluded)
+        # if nothing is missing and skip_non_missing_features is true
+        # then just return the default
         missing_row_mask = mask_missing_values[:, feat_idx]
-        if not np.any(missing_row_mask):
+        if self.skip_non_missing_features and not np.any(missing_row_mask):
             return X_filled, estimator
 
         if estimator is None and fit_mode is False:
@@ -278,48 +283,50 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                     ~missing_row_mask)
             estimator.fit(X_train, y_train)
 
-        # get posterior samples
-        X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
-                               missing_row_mask)
-        if self.sample_posterior:
-            mus, sigmas = estimator.predict(X_test, return_std=True)
-            imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
-            # two types of problems: (1) non-positive sigmas, (2) mus outside
-            # legal range of min_value and max_value (results in inf sample)
-            positive_sigmas = sigmas > 0
-            imputed_values[~positive_sigmas] = mus[~positive_sigmas]
-            mus_too_low = mus < self._min_value
-            imputed_values[mus_too_low] = self._min_value
-            mus_too_high = mus > self._max_value
-            imputed_values[mus_too_high] = self._max_value
-            # the rest can be sampled without statistical issues
-            inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
-            mus = mus[inrange_mask]
-            sigmas = sigmas[inrange_mask]
-            a = (self._min_value - mus) / sigmas
-            b = (self._max_value - mus) / sigmas
+        # get posterior samples if there is at least one missing value
+        if np.sum(missing_row_mask) > 0:
+            X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
+                                   missing_row_mask)
+            if self.sample_posterior:
+                mus, sigmas = estimator.predict(X_test, return_std=True)
+                imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
+                # two types of problems: (1) non-positive sigmas
+                # (2) mus outside legal range of min_value and max_value
+                # (results in inf sample)
+                positive_sigmas = sigmas > 0
+                imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+                mus_too_low = mus < self._min_value
+                imputed_values[mus_too_low] = self._min_value
+                mus_too_high = mus > self._max_value
+                imputed_values[mus_too_high] = self._max_value
+                # the rest can be sampled without statistical issues
+                inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+                mus = mus[inrange_mask]
+                sigmas = sigmas[inrange_mask]
+                a = (self._min_value - mus) / sigmas
+                b = (self._max_value - mus) / sigmas
 
-            if scipy.__version__ < LooseVersion('0.18'):
-                # bug with vector-valued `a` in old scipy
-                imputed_values[inrange_mask] = [
-                    stats.truncnorm(a=a_, b=b_,
-                                    loc=loc_, scale=scale_).rvs(
-                                        random_state=self.random_state_)
-                    for a_, b_, loc_, scale_
-                    in zip(a, b, mus, sigmas)]
+                if scipy.__version__ < LooseVersion('0.18'):
+                    # bug with vector-valued `a` in old scipy
+                    imputed_values[inrange_mask] = [
+                        stats.truncnorm(a=a_, b=b_,
+                                        loc=loc_, scale=scale_).rvs(
+                                            random_state=self.random_state_)
+                        for a_, b_, loc_, scale_
+                        in zip(a, b, mus, sigmas)]
+                else:
+                    truncated_normal = stats.truncnorm(a=a, b=b,
+                                                       loc=mus, scale=sigmas)
+                    imputed_values[inrange_mask] = truncated_normal.rvs(
+                        random_state=self.random_state_)
             else:
-                truncated_normal = stats.truncnorm(a=a, b=b,
-                                                   loc=mus, scale=sigmas)
-                imputed_values[inrange_mask] = truncated_normal.rvs(
-                    random_state=self.random_state_)
-        else:
-            imputed_values = estimator.predict(X_test)
-            imputed_values = np.clip(imputed_values,
-                                     self._min_value,
-                                     self._max_value)
+                imputed_values = estimator.predict(X_test)
+                imputed_values = np.clip(imputed_values,
+                                         self._min_value,
+                                         self._max_value)
 
-        # update the feature
-        X_filled[missing_row_mask, feat_idx] = imputed_values
+            # update the feature
+            X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
 
     def _get_neighbor_feat_idx(self,
@@ -383,7 +390,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             The order in which to impute the features.
         """
         frac_of_missing_values = mask_missing_values.mean(axis=0)
-        missing_values_idx = np.nonzero(frac_of_missing_values)[0]
+        if self.skip_non_missing_features:
+            missing_values_idx = np.nonzero(frac_of_missing_values)[0]
+        else:
+            missing_values_idx = np.arange(np.shape(frac_of_missing_values)[0])
         if self.imputation_order == 'roman':
             ordered_idx = missing_values_idx
         elif self.imputation_order == 'arabic':
@@ -545,8 +555,12 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
-
         if self.max_iter == 0 or np.all(mask_missing_values):
+            self.n_iter_ = 0
+            return Xt
+
+        # edge case: a single feature. can't do anything except initial
+        if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return Xt
 
