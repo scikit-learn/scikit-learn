@@ -197,9 +197,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.n_iter_ += 1
             self.base_estimator_.fit(
                 X[safe_mask(X, has_label)],
-                self.transduction_[safe_mask(self.transduction_, has_label)])
+                self.transduction_[has_label])
 
             if self.n_iter_ == 1:
+                # Only validate in the first iteration so that n_iter=0 is
+                # equivalent to the base_estimator itself.
                 _validate_estimator(self.base_estimator)
 
             # Predict on the unlabeled samples
@@ -208,35 +210,34 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
-            # Select samples
+            # Select new labeled samples
             if self.criterion == 'threshold':
-                new_labels_unlabeled = max_proba > self.threshold
+                selected = max_proba > self.threshold
             else:
                 n_to_select = min(self.k_best, max_proba.shape[0])
                 if n_to_select == max_proba.shape[0]:
-                    new_labels_unlabeled = np.ones_like(max_proba, dtype=bool)
+                    selected = np.ones_like(max_proba, dtype=bool)
                 else:
                     # NB these are indicies, not a mask
-                    new_labels_unlabeled = \
+                    selected = \
                         np.argpartition(-max_proba, n_to_select)[:n_to_select]
 
-            # new_labels_unlabeled indexes into only the unlabeled samples
-            # new_labels_full indexes into the full X
-            new_labels_full = np.nonzero(~has_label)[0][new_labels_unlabeled]
+            # Map selected indices into original array
+            selected_full = np.nonzero(~has_label)[0][selected]
 
             # Add newly labeled confident predictions to the dataset
-            self.transduction_[new_labels_full] = pred[new_labels_unlabeled]
-            has_label[new_labels_full] = True
-            self.labeled_iter_[new_labels_full] = self.n_iter_
+            self.transduction_[selected_full] = pred[selected]
+            has_label[selected_full] = True
+            self.labeled_iter_[selected_full] = self.n_iter_
 
-            if new_labels_full.shape[0] == 0:
+            if selected_full.shape[0] == 0:
                 # no changed labels
                 self.termination_condition_ = "no_change"
                 break
 
             if self.verbose:
                 msg = "End of iteration {}, added {} new labels."
-                print(msg.format(self.n_iter_, new_labels_full.shape[0]))
+                print(msg.format(self.n_iter_, selected_full.shape[0]))
 
         if self.n_iter_ == self.max_iter:
             self.termination_condition_ = "max_iter"
@@ -245,7 +246,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         self.base_estimator_.fit(
             X[safe_mask(X, has_label)],
-            self.transduction_[safe_mask(self.transduction_, has_label)])
+            self.transduction_[has_label])
         self.classes_ = self.base_estimator_.classes_
         return self
 
