@@ -234,7 +234,7 @@ modifying code and submitting a PR:
 7. Synchronize your master branch with the upstream master branch::
 
         $ git checkout master
-        $ git fetch upstream
+        $ git pull upstream master
 
 8. Create a feature branch to hold your development changes::
 
