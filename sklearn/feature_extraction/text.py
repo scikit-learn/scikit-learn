@@ -1678,7 +1678,7 @@ class TfidfVectorizer(CountVectorizer):
         check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
         X = super().transform(raw_documents)
-        return self._tfidf.transform(X, copy=False)
+        return self._tfidf.transform(X, copy=copy)
 
     def _more_tags(self):
         return {'X_types': ['string'], '_skip_test': True}
