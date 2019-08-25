@@ -67,7 +67,7 @@ class _MultimetricScorer:
     created with a dictionary with one key  (i.e. only one actual scorer).
     """
     def __init__(self, **kwargs):
-        self._dict = kwargs
+        self._scorers = kwargs
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
@@ -75,7 +75,7 @@ class _MultimetricScorer:
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        for name, scorer in self._dict.items():
+        for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(cached_call, estimator,
                                       *args, **kwargs)
@@ -97,10 +97,10 @@ class _MultimetricScorer:
              estimator does not have a `decision_function` attribute.
 
         """
-        if len(self._dict) == 1:  # Only one scorer
+        if len(self._scorers) == 1:  # Only one scorer
             return False
 
-        counter = Counter([type(v) for v in self._dict.values()])
+        counter = Counter([type(v) for v in self._scorers.values()])
 
         if any(counter[known_type] > 1 for known_type in
                [_PredictScorer, _ProbaScorer, _ThresholdScorer]):
