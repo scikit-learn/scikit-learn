@@ -99,11 +99,11 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
-   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.OPTICS
    cluster.SpectralClustering
 
 Functions
@@ -346,6 +346,7 @@ Samples generator
    decomposition.dict_learning
    decomposition.dict_learning_online
    decomposition.fastica
+   decomposition.non_negative_factorization
    decomposition.sparse_encode
 
 .. _lda_ref:
@@ -471,6 +472,7 @@ Samples generator
    :toctree: generated/
 
    experimental.enable_hist_gradient_boosting
+   experimental.enable_iterative_imputer
 
 
 .. _feature_extraction_ref:
@@ -616,6 +618,58 @@ Kernels:
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
 
+
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+   impute.IterativeImputer
+   impute.MissingIndicator
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.permutation_importance
+
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.plot_partial_dependence
+
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -642,27 +696,7 @@ Kernels:
    isotonic.check_increasing
    isotonic.isotonic_regression
 
-.. _impute_ref:
 
-:mod:`sklearn.impute`: Impute
-=============================
-
-.. automodule:: sklearn.impute
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`Impute` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   impute.SimpleImputer
-   impute.IterativeImputer
-   impute.MissingIndicator
-   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -797,7 +831,8 @@ Kernels:
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-
+    manifold.t_sne.trustworthiness
+	
 
 .. _metrics_ref:
 
@@ -844,6 +879,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -852,6 +888,7 @@ details.
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -877,6 +914,9 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
+   metrics.mean_poisson_deviance
+   metrics.mean_gamma_deviance
+   metrics.mean_tweedie_deviance
 
 Multilabel ranking metrics
 --------------------------
@@ -976,6 +1016,26 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
    metrics.pairwise_distances_chunked
+
+
+Plotting
+--------
+
+See the :ref:`visualizations` section of the user guide for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.plot_roc_curve
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.RocCurveDisplay
 
 
 .. _mixture_ref:
@@ -1232,26 +1292,6 @@ Model validation
    pipeline.make_pipeline
    pipeline.make_union
 
-
-.. _inspection_ref:
-
-:mod:`sklearn.inspection`: inspection
-=====================================
-
-.. automodule:: sklearn.inspection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.partial_dependence
-   inspection.plot_partial_dependence
-
-
 .. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
@@ -1427,9 +1467,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
-   tree.plot_tree
    tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 
@@ -1540,24 +1589,3 @@ To be removed in 0.23
 
    ensemble.partial_dependence.partial_dependence
    ensemble.partial_dependence.plot_partial_dependence
-
-
-To be removed in 0.22
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   covariance.GraphLasso
-   covariance.GraphLassoCV
-   preprocessing.Imputer
-   utils.testing.mock_mldata_urlopen
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   covariance.graph_lasso
-   datasets.fetch_mldata
-   datasets.mldata_filename

@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections.abc import Sequence
 from contextlib import contextmanager
+from itertools import islice
 import numbers
 import platform
 import struct
@@ -17,6 +18,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .fixes import np_version
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -178,14 +180,75 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def safe_indexing(X, indices):
+def safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns.
+    indices : array-like
+        - When ``axis=0``, indices need to be an array of integer.
+        - When ``axis=1``, indices can be one of:
+            - scalar: output is 1D, unless `X` is sparse.
+              Supported data types for scalars:
+                - integer: supported for arrays, sparse matrices and
+                  dataframes.
+                - string (key-based): only supported for dataframes.
+            - container: lists, slices, boolean masks: output is 2D.
+              Supported data types for containers:
+                - integer or boolean (positional): supported for
+                  arrays, sparse matrices and dataframes
+                - string (key-based): only supported for dataframes. No keys
+                  other than strings are allowed.
+    axis : int, default=0
+        The axis along which `X` will be subsampled. ``axis=0`` will select
+        rows while ``axis=1`` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    if axis == 0:
+        return _safe_indexing_row(X, indices)
+    elif axis == 1:
+        return _safe_indexing_column(X, indices)
+    else:
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
+
+
+def _array_indexing(array, key, axis=0):
+    """Index an array consistently across NumPy version."""
+    if axis not in (0, 1):
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
+    if np_version < (1, 12) or issparse(array):
+        # check if we have an boolean array-likes to make the proper indexing
+        key_array = np.asarray(key)
+        if np.issubdtype(key_array.dtype, np.bool_):
+            key = key_array
+    return array[key] if axis == 0 else array[:, key]
+
+
+def _safe_indexing_row(X, indices):
     """Return items or rows from X using indices.
 
     Allows simple indexing of lists or arrays.
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows or items.
     indices : array-like of int
         Indices according to which X will be subsampled.
@@ -193,7 +256,7 @@ def safe_indexing(X, indices):
     Returns
     -------
     subset
-        Subset of X on first axis
+        Subset of X on first axis.
 
     Notes
     -----
@@ -202,6 +265,7 @@ def safe_indexing(X, indices):
     """
     if hasattr(X, "iloc"):
         # Work-around for indexing with read-only indices in pandas
+        indices = np.asarray(indices)
         indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
@@ -218,9 +282,152 @@ def safe_indexing(X, indices):
             # This is often substantially faster than X[indices]
             return X.take(indices, axis=0)
         else:
-            return X[indices]
+            return _array_indexing(X, indices, axis=0)
     else:
         return [X[idx] for idx in indices]
+
+
+def _check_key_type(key, superclass):
+    """Check that scalar, list or slice is of a certain type.
+
+    This is only used in _safe_indexing_column and _get_column_indices to check
+    if the ``key`` (column specification) is fully integer or fully
+    string-like.
+
+    Parameters
+    ----------
+    key : scalar, list, slice, array-like
+        The column specification to check.
+    superclass : int or str
+        The type for which to check the `key`.
+    """
+    if isinstance(key, superclass):
+        return True
+    if isinstance(key, slice):
+        return (isinstance(key.start, (superclass, type(None))) and
+                isinstance(key.stop, (superclass, type(None))))
+    if isinstance(key, list):
+        return all(isinstance(x, superclass) for x in key)
+    if hasattr(key, 'dtype'):
+        if superclass is int:
+            return key.dtype.kind == 'i'
+        elif superclass is bool:
+            return key.dtype.kind == 'b'
+        else:
+            # superclass = str
+            return key.dtype.kind in ('O', 'U', 'S')
+    return False
+
+
+def _safe_indexing_column(X, key):
+    """Get feature column(s) from input data X.
+
+    Supported input types (X): numpy arrays, sparse arrays and DataFrames.
+
+    Supported key types (key):
+    - scalar: output is 1D;
+    - lists, slices, boolean masks: output is 2D.
+
+    Supported key data types:
+    - integer or boolean mask (positional):
+        - supported for arrays, sparse matrices and dataframes.
+    - string (key-based):
+        - only supported for dataframes;
+        - So no keys other than strings are allowed (while in principle you
+          can use any hashable object as key).
+    """
+    # check that X is a 2D structure
+    if X.ndim != 2:
+        raise ValueError(
+            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "dataframe when indexing the columns (i.e. 'axis=1'). "
+            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+        )
+    # check whether we have string column names or integers
+    if _check_key_type(key, int):
+        column_names = False
+    elif _check_key_type(key, str):
+        column_names = True
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
+        # boolean mask
+        column_names = False
+        if hasattr(X, 'loc'):
+            # pandas boolean masks don't work with iloc, so take loc path
+            column_names = True
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
+
+    if column_names:
+        if hasattr(X, 'loc'):
+            # pandas dataframes
+            return X.loc[:, key]
+        else:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
+    else:
+        if hasattr(X, 'iloc'):
+            # pandas dataframes
+            return X.iloc[:, key]
+        else:
+            # numpy arrays, sparse arrays
+            return _array_indexing(X, key, axis=1)
+
+
+def _get_column_indices(X, key):
+    """Get feature column indices for input data X and key.
+
+    For accepted values of `key`, see the docstring of
+    :func:`_safe_indexing_column`.
+    """
+    n_columns = X.shape[1]
+
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+        # Convert key into positive indexes
+        try:
+            idx = safe_indexing(np.arange(n_columns), key)
+        except IndexError as e:
+            raise ValueError(
+                'all features must be in [0, %d]' % (n_columns - 1)
+            ) from e
+        return np.atleast_1d(idx).tolist()
+    elif _check_key_type(key, str):
+        try:
+            all_columns = list(X.columns)
+        except AttributeError:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
+        if isinstance(key, str):
+            columns = [key]
+        elif isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = all_columns.index(start)
+            if stop is not None:
+                # pandas indexing with strings is endpoint included
+                stop = all_columns.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(range(n_columns)[slice(start, stop)])
+        else:
+            columns = list(key)
+
+        try:
+            column_indices = [all_columns.index(col) for col in columns]
+        except ValueError as e:
+            if 'not in list' in str(e):
+                raise ValueError(
+                    "A given column is not a column of the dataframe"
+                ) from e
+            raise
+
+        return column_indices
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
 
 
 def resample(*arrays, **options):
@@ -281,7 +488,7 @@ def resample(*arrays, **options):
              [2., 1.],
              [1., 0.]])
 
-      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      >>> X_sparse
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 4 stored elements in Compressed Sparse Row format>
 
@@ -426,7 +633,7 @@ def shuffle(*arrays, **options):
              [2., 1.],
              [1., 0.]])
 
-      >>> X_sparse                   # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+      >>> X_sparse
       <3x2 sparse matrix of type '<... 'numpy.float64'>'
           with 3 stored elements in Compressed Sparse Row format>
 
@@ -475,6 +682,17 @@ def safe_sqr(X, copy=True):
         else:
             X **= 2
     return X
+
+
+def _chunk_generator(gen, chunksize):
+    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
+    chunk may have a length less than ``chunksize``."""
+    while True:
+        chunk = list(islice(gen, chunksize))
+        if chunk:
+            yield chunk
+        else:
+            return
 
 
 def gen_batches(n, batch_size, min_batch_size=0):
@@ -542,9 +760,9 @@ def gen_even_slices(n, n_packs, n_samples=None):
     >>> from sklearn.utils import gen_even_slices
     >>> list(gen_even_slices(10, 1))
     [slice(0, 10, None)]
-    >>> list(gen_even_slices(10, 10))                     #doctest: +ELLIPSIS
+    >>> list(gen_even_slices(10, 10))
     [slice(0, 1, None), slice(1, 2, None), ..., slice(9, 10, None)]
-    >>> list(gen_even_slices(10, 5))                      #doctest: +ELLIPSIS
+    >>> list(gen_even_slices(10, 5))
     [slice(0, 2, None), slice(2, 4, None), ..., slice(8, 10, None)]
     >>> list(gen_even_slices(10, 3))
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
@@ -823,4 +1041,25 @@ def check_matplotlib_support(caller_name):
         raise ImportError(
             "{} requires matplotlib. You can install matplotlib with "
             "`pip install matplotlib`".format(caller_name)
+        ) from e
+
+
+def check_pandas_support(caller_name):
+    """Raise ImportError with detailed error message if pandsa is not
+    installed.
+
+    Plot utilities like :func:`fetch_openml` should lazily import
+    pandas and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires pandas.
+    """
+    try:
+        import pandas  # noqa
+        return pandas
+    except ImportError as e:
+        raise ImportError(
+            "{} requires pandas.".format(caller_name)
         ) from e

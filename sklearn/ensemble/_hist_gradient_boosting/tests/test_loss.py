@@ -1,13 +1,14 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_allclose
 from scipy.optimize import newton
 from sklearn.utils import assert_all_finite
 from sklearn.utils.fixes import sp_version
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.types import Y_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 
 def get_derivatives_helper(loss):
@@ -85,13 +86,13 @@ def test_derivatives(loss, x0, y_true):
 ])
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Need 64 bits float precision for numerical checks')
-def test_numerical_gradients(loss, n_classes, prediction_dim):
+def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     # Make sure gradients and hessians computed in the loss are correct, by
     # comparing with their approximations computed with finite central
     # differences.
     # See https://en.wikipedia.org/wiki/Finite_difference.
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
     n_samples = 100
     if loss == 'least_squares':
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
@@ -130,8 +131,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     def relative_error(a, b):
         return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
 
-    assert np.allclose(numerical_gradients, gradients, rtol=1e-5)
-    assert np.allclose(numerical_hessians, hessians, rtol=1e-5)
+    assert_allclose(numerical_gradients, gradients, rtol=1e-4)
+    assert_allclose(numerical_hessians, hessians, rtol=1e-4)
 
 
 def test_baseline_least_squares():

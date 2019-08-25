@@ -10,6 +10,7 @@ import os
 import csv
 import sys
 import shutil
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -568,12 +569,12 @@ def load_digits(n_class=10, return_X_y=False):
 def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
-    ==============      ==================
-    Samples total       442
-    Dimensionality      10
-    Features            real, -.2 < x < .2
-    Targets             integer 25 - 346
-    ==============      ==================
+    ==============   ==================
+    Samples total    442
+    Dimensionality   10
+    Features         real, -.2 < x < .2
+    Targets          integer 25 - 346
+    ==============   ==================
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -621,12 +622,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    ==============    ============================
-    Samples total     20
-    Dimensionality    3 (for both data and target)
-    Features          integer
-    Targets           integer
-    ==============    ============================
+    ==============   ============================
+    Samples total    20
+    Dimensionality   3 (for both data and target)
+    Features         integer
+    Targets          integer
+    ==============   ============================
 
     Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
@@ -685,12 +686,12 @@ def load_linnerud(return_X_y=False):
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
-    ==============     ==============
-    Samples total                 506
-    Dimensionality                 13
-    Features           real, positive
-    Targets             real 5. - 50.
-    ==============     ==============
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
@@ -723,8 +724,8 @@ def load_boston(return_X_y=False):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> boston = load_boston()
-    >>> print(boston.data.shape)
+    >>> X, y = load_boston(return_X_y=True)
+    >>> print(X.shape)
     (506, 13)
     """
     module_path = dirname(__file__)
@@ -810,7 +811,7 @@ def load_sample_image(image_name):
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
-    -----------
+    ----------
     image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
@@ -820,7 +821,7 @@ def load_sample_image(image_name):
         The image as a numpy array: height x width x color
 
     Examples
-    ---------
+    --------
 
     >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
@@ -895,7 +896,7 @@ def _fetch_remote(remote, dirname=None):
     downloaded file.
 
     Parameters
-    -----------
+    ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
         and checksum
@@ -919,3 +920,31 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
+
+
+def _refresh_cache(files, compress):
+    # TODO: REMOVE in v0.23
+    import joblib
+    msg = "sklearn.externals.joblib is deprecated in 0.21"
+    with warnings.catch_warnings(record=True) as warns:
+        data = tuple([joblib.load(f) for f in files])
+
+    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
+
+    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
+    for w in other_warns:
+        warnings.warn(message=w.message, category=w.category)
+
+    if refresh_needed:
+        try:
+            for value, path in zip(data, files):
+                joblib.dump(value, path, compress=compress)
+        except IOError:
+            message = ("This dataset will stop being loadable in scikit-learn "
+                       "version 0.23 because it references a deprecated "
+                       "import path. Consider removing the following files "
+                       "and allowing it to be cached anew:\n%s"
+                       % ("\n".join(files)))
+            warnings.warn(message=message, category=DeprecationWarning)
+
+    return data[0] if len(data) == 1 else data

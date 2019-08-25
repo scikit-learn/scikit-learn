@@ -603,6 +603,18 @@ Single linkage can also perform well on non-globular data.
  * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
+Visualization of cluster hierarchy
+----------------------------------
+
+It's possible to visualize the tree representing the hierarchical merging of clusters
+as a dendrogram. Visual inspection can often be useful for understanding the structure
+of the data, though more so in the case of small sample sizes.
+
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
+    :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
+    :scale: 42
+
+
 
 Adding connectivity constraints
 -------------------------------
@@ -1046,21 +1058,21 @@ chance normalization**::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
 Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
 does not change the score. It can thus be used as a **consensus
 measure**::
 
-  >>> metrics.adjusted_rand_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
 Perfect labeling is scored 1.0::
@@ -1073,7 +1085,7 @@ Bad (e.g. independent labelings) have negative or close to 0.0 scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   -0.12...
 
 
@@ -1360,16 +1372,16 @@ We can turn those concept as scores :func:`homogeneity_score` and
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.homogeneity_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.homogeneity_score(labels_true, labels_pred)
   0.66...
 
-  >>> metrics.completeness_score(labels_true, labels_pred) # doctest: +ELLIPSIS
+  >>> metrics.completeness_score(labels_true, labels_pred)
   0.42...
 
 Their harmonic mean called **V-measure** is computed by
 :func:`v_measure_score`::
 
-  >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
+  >>> metrics.v_measure_score(labels_true, labels_pred)
   0.51...
 
 This function's formula is as follows:::
@@ -1378,12 +1390,12 @@ This function's formula is as follows:::
 
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
-  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)
   0.54...
 
 more weight will be attributed to homogeneity, and using a value greater than 1::
 
-  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)    # doctest: +ELLIPSIS
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)
   0.48...
 
 more weight will be attributed to completeness.
@@ -1395,7 +1407,6 @@ Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  ...                                                      # doctest: +ELLIPSIS
   (0.66..., 0.42..., 0.51...)
 
 The following clustering assignment is slightly better, since it is
@@ -1403,7 +1414,6 @@ homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  ...                                                      # doctest: +ELLIPSIS
   (1.0, 0.68..., 0.81...)
 
 .. note::
@@ -1533,7 +1543,7 @@ between two clusters.
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.47140...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
@@ -1541,20 +1551,20 @@ the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
 
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.47140...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   1.0
 
 Bad (e.g. independent labelings) have zero scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.0
 
 Advantages
@@ -1623,9 +1633,7 @@ Silhouette Coefficient for each sample.
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
@@ -1635,7 +1643,6 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
-  ...                                                      # doctest: +ELLIPSIS
   0.55...
 
 .. topic:: References
@@ -1668,6 +1675,7 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
+
 .. _calinski_harabasz_index:
 
 Calinski-Harabasz Index
@@ -1678,41 +1686,23 @@ If the ground truth labels are not known, the Calinski-Harabasz index
 Ratio Criterion - can be used to evaluate the model, where a higher 
 Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
-ratio of the between-clusters dispersion mean and the within-cluster
-dispersion:
-
-.. math::
-  s(k) = \frac{\mathrm{Tr}(B_k)}{\mathrm{Tr}(W_k)} \times \frac{N - k}{k - 1}
-
-where :math:`B_K` is the between group dispersion matrix and :math:`W_K`
-is the within-cluster dispersion matrix defined by:
-
-.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
-
-.. math:: B_k = \sum_q n_q (c_q - c) (c_q - c)^T
-
-with :math:`N` be the number of points in our data, :math:`C_q` be the set of
-points in cluster :math:`q`, :math:`c_q` be the center of cluster
-:math:`q`, :math:`c` be the center of :math:`E`, :math:`n_q` be the number of
-points in cluster :math:`q`.
-
+The index is the ratio of the sum of between-clusters dispersion and of
+inter-cluster dispersion for all clusters (where dispersion is defined as the
+sum of distances squared):
 
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Calinski-Harabasz index is applied to the results of a
-cluster analysis.
+cluster analysis:
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabasz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)
   561.62...
 
 Advantages
@@ -1721,7 +1711,7 @@ Advantages
 - The score is higher when clusters are dense and well separated, which relates
   to a standard concept of a cluster.
 
-- The score is fast to compute
+- The score is fast to compute.
 
 
 Drawbacks
@@ -1731,11 +1721,35 @@ Drawbacks
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a set of data :math:`E` of size :math:`n_E` which has been clustered into
+:math:`k` clusters, the Calinski-Harabasz score :math:`s` is defined as the
+ratio of the between-clusters dispersion mean and the within-cluster dispersion:
+
+.. math::
+  s = \frac{\mathrm{tr}(B_k)}{\mathrm{tr}(W_k)} \times \frac{n_E - k}{k - 1}
+
+where :math:`\mathrm{tr}(B_k)` is trace of the between group dispersion matrix
+and :math:`\mathrm{tr}(W_k)` is the trace of the within-cluster dispersion
+matrix defined by:
+
+.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+
+.. math:: B_k = \sum_{q=1}^k n_q (c_q - c_E) (c_q - c_E)^T
+
+with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the center
+of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and :math:`n_q` the
+number of points in cluster :math:`q`.
+
 .. topic:: References
 
- *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
-    analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
+ * Caliński, T., & Harabasz, J. (1974).
+   `"A Dendrite Method for Cluster Analysis"
+   <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
+   Communications in Statistics-theory and Methods 3: 1-27.
+   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
 
 
 .. _davies-bouldin_index:
@@ -1747,6 +1761,44 @@ If the ground truth labels are not known, the Davies-Bouldin index
 (:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
 model, where a lower Davies-Bouldin index relates to a model with better
 separation between the clusters.
+
+This index signifies the average 'similarity' between clusters, where the
+similarity is a measure that compares the distance between clusters with the
+size of the clusters themselves.
+
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
+
+  >>> from sklearn import datasets
+  >>> iris = datasets.load_iris()
+  >>> X = iris.data
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics import davies_bouldin_score
+  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans.labels_
+  >>> davies_bouldin_score(X, labels)
+  0.6619...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+- The index is computed only quantities and features inherent to the dataset.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Boulding index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained from
+  DBSCAN.
+- The usage of centroid distance limits the distance metric to Euclidean space.
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The index is defined as the average similarity between each cluster :math:`C_i`
 for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
@@ -1767,38 +1819,6 @@ Then the Davies-Bouldin index is defined as:
 .. math::
    DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
-Zero is the lowest possible score. Values closer to zero indicate a better
-partition.
-
-In normal usage, the Davies-Bouldin index is applied to the results of a
-cluster analysis as follows:
-
-  >>> from sklearn import datasets
-  >>> iris = datasets.load_iris()
-  >>> X = iris.data
-  >>> from sklearn.cluster import KMeans
-  >>> from sklearn.metrics import davies_bouldin_score
-  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
-  >>> labels = kmeans.labels_
-  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
-  0.6619...
-
-
-Advantages
-~~~~~~~~~~
-
-- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is computed only quantities and features inherent to the dataset.
-
-Drawbacks
-~~~~~~~~~
-
-- The Davies-Boulding index is generally higher for convex clusters than other
-  concepts of clusters, such as density based clusters like those obtained from
-  DBSCAN.
-
-- The usage of centroid distance limits the distance metric to Euclidean space.
-- A good value reported by this method does not imply the best information retrieval.
 
 .. topic:: References
 

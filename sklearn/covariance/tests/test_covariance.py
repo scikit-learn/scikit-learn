@@ -5,20 +5,19 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_greater
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, \
     LedoitWolf, ledoit_wolf, ledoit_wolf_shrinkage, OAS, oas
 
-X = datasets.load_diabetes().data
+X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
@@ -39,11 +38,11 @@ def test_covariance():
         cov.error_norm(emp_cov, scaling=False), 0)
     assert_almost_equal(
         cov.error_norm(emp_cov, squared=False), 0)
-    assert_raises(NotImplementedError,
-                  cov.error_norm, emp_cov, norm='foo')
+    with pytest.raises(NotImplementedError):
+        cov.error_norm(emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
-    assert_greater(np.amin(mahal_dist), 0)
+    assert np.amin(mahal_dist) > 0
 
     # test with n_features = 1
     X_1d = X[:, 0].reshape((-1, 1))
