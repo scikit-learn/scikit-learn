@@ -4,7 +4,6 @@ from io import StringIO
 import sys
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
@@ -125,10 +124,8 @@ def test_classification(base_estimator, selection_crit):
     assert np.max(st_string.labeled_iter_) <= st_string.n_iter_ <= max_iter
 
     # check shapes
-    assert_equal(st.labeled_iter_.shape, st.transduction_.shape,
-                 (n_labeled_samples,))
-    assert_equal(st_string.labeled_iter_.shape, st_string.transduction_.shape,
-                 (n_labeled_samples,))
+    assert st.labeled_iter_.shape == st.transduction_.shape
+    assert st_string.labeled_iter_.shape == st_string.transduction_.shape
 
 
 def test_k_best():
