@@ -65,9 +65,14 @@ class _MultimetricScorer:
     `_MultimetricScorer` will return a dictionary of scores corresponding to
     the scorers in the dictionary. Note that `_MultimetricScorer` can be
     created with a dictionary with one key  (i.e. only one actual scorer).
+
+    Parameters
+    ----------
+    scorers : dict
+        Dictionary mapping names to callable scorers.
     """
-    def __init__(self, **kwargs):
-        self._scorers = kwargs
+    def __init__(self, **scorers):
+        self._scorers = scorers
 
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
