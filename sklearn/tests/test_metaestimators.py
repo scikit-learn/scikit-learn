@@ -62,12 +62,12 @@ def test_metaestimator_delegation():
 
     class SubEstimator(BaseEstimator):
         def __init__(self, param=1, hidden_method=None):
-            self.classes_ = []
             self.param = param
             self.hidden_method = hidden_method
 
         def fit(self, X, y=None, *args, **kwargs):
             self.coef_ = np.arange(X.shape[1])
+            self.classes_ = []
             return True
 
         def _check_fit(self):
