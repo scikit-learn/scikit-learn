@@ -58,21 +58,24 @@ def _cached_call(cache, estimator, method, *args, **kwargs):
         return result
 
 
-class _MultimetricScorer(dict):
-    """Callable dictionary for multimetric scoring used to avoid repeated calls
+class _MultimetricScorer:
+    """Callable for multimetric scoring used to avoid repeated calls
     to `predict_proba`, `predict`, and `decision_function`.
 
     `_MultimetricScorer` will return a dictionary of scores corresponding to
     the scorers in the dictionary. Note that `_MultimetricScorer` can be
     created with a dictionary with one key  (i.e. only one actual scorer).
     """
+    def __init__(self, **kwargs):
+        self._dict = kwargs
+
     def __call__(self, estimator, *args, **kwargs):
         """Evaluate predicted target values."""
         scores = {}
         cache = {} if self._use_cache(estimator) else None
         cached_call = partial(_cached_call, cache)
 
-        for name, scorer in self.items():
+        for name, scorer in self._dict.items():
             if isinstance(scorer, _BaseScorer):
                 score = scorer._score(cached_call, estimator,
                                       *args, **kwargs)
@@ -94,10 +97,10 @@ class _MultimetricScorer(dict):
              estimator does not have a `decision_function` attribute.
 
         """
-        if len(self) == 1:  # Only one scorer
+        if len(self._dict) == 1:  # Only one scorer
             return False
 
-        counter = Counter([type(v) for v in self.values()])
+        counter = Counter([type(v) for v in self._dict.values()])
 
         if any(counter[known_type] > 1 for known_type in
                [_PredictScorer, _ProbaScorer, _ThresholdScorer]):

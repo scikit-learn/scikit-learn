@@ -579,10 +579,9 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
 
     scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
-    scores = multi_scorer(mock_est, X, y)
+    results = multi_scorer(mock_est, X, y)
 
-    assert set(scorers) == set(scores)  # compare dict keys
-    assert set(scorers) == set(multi_scorer)  # compare dict keys
+    assert set(scorers) == set(results)  # compare dict keys
 
     assert predict_func.call_count == expected_predict_count
     assert predict_proba_func.call_count == expected_predict_proba_count
