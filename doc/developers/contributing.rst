@@ -190,7 +190,10 @@ How to contribute
 
 The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
-then submit a "pull request" (PR):
+then submit a "pull request" (PR).
+
+In the first few steps, we explain how to locally install scikit-learn, and
+how to set up your git repository:
 
 1. `Create an account <https://github.com/join>`_ on
    GitHub if you do not already have one.
@@ -224,39 +227,47 @@ then submit a "pull request" (PR):
 
     $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-7. Fetch the ``upstream`` and then create a branch to hold your development
-   changes::
+You should now have a working installation of scikit-learn, and your git
+repository properly configured. The next steps now describe the process of
+modifying code and submitting a PR:
 
-       $ git fetch upstream
-       $ git checkout -b my-feature upstream/master
+7. Synchronize your master branch with the upstream master branch::
 
-   and start making changes. Always use a ``feature`` branch. It's good
+        $ git checkout master
+        $ git pull upstream master
+
+8. Create a feature branch to hold your development changes::
+
+        $ git checkout -b my_feature
+
+   and start making changes. Always use a feature branch. It's good
    practice to never work on the ``master`` branch!
 
-8. Develop the feature on your feature branch on your computer, using Git to do the
-   version control. When you're done editing, add changed files using ``git add``
-   and then ``git commit`` files::
+9. Develop the feature on your feature branch on your computer, using Git to
+   do the version control. When you're done editing, add changed files using
+   ``git add`` and then ``git commit``::
 
        $ git add modified_files
        $ git commit
 
-   to record your changes in Git, then push the changes to your GitHub account with::
+   to record your changes in Git, then push the changes to your GitHub
+   account with::
 
        $ git push -u origin my-feature
 
-9. Follow `these
-   <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-   instructions to create a pull request from your fork. This will send an
-   email to the committers. You may want to consider sending an email to the
-   mailing list for more visibility.
+10. Follow `these
+    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+    instructions to create a pull request from your fork. This will send an
+    email to the committers. You may want to consider sending an email to the
+    mailing list for more visibility.
 
 .. note::
 
   If you are modifying a Cython module, you have to re-run step 5 after modifications
   and before testing them.
 
-It is often helpful to keep your local branch synchronized with the latest
-changes of the main scikit-learn repository::
+It is often helpful to keep your local feature branch synchronized with the
+latest changes of the main scikit-learn repository::
 
     $ git fetch upstream
     $ git merge upstream/master
@@ -1750,6 +1761,5 @@ attributes:
        viz = RocCurveDisplay(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
-```
 
 Read more in the :ref:`User Guide <visualizations>`.
