@@ -1,3 +1,4 @@
+import os
 import resource
 import types
 import warnings
@@ -9,7 +10,6 @@ from copy import deepcopy
 from functools import partial
 from inspect import signature
 
-import psutil
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
@@ -574,35 +574,46 @@ def check_estimator_sparse_data(name, estimator_orig):
             raise
 
 
-@contextmanager
-def record_memory_growth():
-    process = psutil.Process()
-    initial_memory = process.memory_info().rss
-    max_memory = [initial_memory]
-
-    def profiler(frame, event, arg):
-        if event != 'return':
-            return
-        max_memory[0] = max(max_memory[0], process.memory_info().rss)
-
-    def get_growth():
-        return max_memory[0] - initial_memory
-
-    sys.setprofile(profiler)
-    try:
-        yield get_growth
-    finally:
-        sys.setprofile(None)
-
-
 def check_estimator_sparse_data_memory_growth(name, estimator_orig):
+    try:
+        # If `psutil` is importable, we'll definitely run the tests.
+        import psutil
+    except ImportError:
+        # If `psutil` is not importable and the distribution is "ubuntu", then
+        # something has gone wrong with the dependency installation.
+        if os.environ.get('DISTRIB') == 'ubuntu':
+            raise
+        # We don't run this test on other distributions.
+        return
+
+    @contextmanager
+    def record_memory_growth():
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss
+        max_memory = initial_memory
+
+        def profiler(frame, event, arg):
+            if event != 'return':
+                return
+            nonlocal max_memory
+            max_memory = max(max_memory, process.memory_info().rss)
+
+        def get_growth():
+            return max_memory - initial_memory
+
+        sys.setprofile(profiler)
+        try:
+            yield get_growth
+        finally:
+            sys.setprofile(None)
+
     rng = np.random.RandomState(0)
     X_base = rng.rand(150, 100)
     X_base[X_base < .95] = 0
     X_base = pairwise_estimator_convert_X(X_base, estimator_orig)
     X_base = sparse.csr_matrix(X_base)
 
-    def _get_memory_usage(X):
+    def _get_memory_usage(nrows, ncols):
         tags = _safe_tags(estimator_orig)
         if tags['binary_only']:
             y = (2 * rng.rand(X.shape[0])).astype(np.int)
@@ -645,26 +656,41 @@ def check_estimator_sparse_data_memory_growth(name, estimator_orig):
                       "sparse data: it should raise a TypeError if sparse "
                       "input is explicitly not supported." % name)
                 raise
-        return get_growth()
+            return get_growth()
 
-    baseline_mem_usage = _get_memory_usage(X_base)
-    more_features_mem_usage = _get_memory_usage(sparse.hstack([X_base] * 10))
-    more_columns_mem_usage = _get_memory_usage(sparse.vstack([X_base] * 10))
+    baseline_mem = _get_memory_usage(X_base)
+    feature_mem_growth = [baseline_mem,
+                          _get_memory_usage(sparse.hstack([X_base] * 11)),
+                          _get_memory_usage(sparse.hstack([X_base] * 21))]
+    row_mem_growth = [baseline_mem,
+                      _get_memory_usage(sparse.vstack([X_base] * 11)),
+                      _get_memory_usage(sparse.vstack([X_base] * 21))]
 
-    if baseline_mem_usage == 0:
-        assert more_features_mem_usage == 0
-        assert more_columns_mem_usage == 0
+    if baseline_mem == 0:
+        assert sum(feature_mem_growth) == 0, (
+            'Memory usage with a small sparse matrix was 0, but grew with a '
+            'larger feature set.'
+        )
+        assert sum(row_mem_growth) == 0, (
+            'Memory usage with a small sparse matrix was 0, but grew with a '
+            'larger row count.'
+        )
         return
 
-    assert more_features_mem_usage / baseline_mem_usage < 10, (
-        'Memory usage with a sparse matrix grew by a factor of {}, when '
-        'feature count grew by a factor of 10.'.format(
-            more_features_mem_usage / baseline_mem_usage)
+    def assert_mem_growth(mem_growth, msg):
+        assert len(mem_growth) == 3
+        deltas = [mem_growth[1] - mem_growth[0], mem_growth[2] - mem_growth[1]]
+        assert deltas[1] <= deltas[0], msg
+
+    assert_mem_growth(
+        feature_mem_growth,
+        ('Memory usage with sparse matrix grew supra-linearly with number of '
+         'features ({})'.format(feature_mem_growth))
     )
-    assert more_columns_mem_usage / baseline_mem_usage < 10, (
-        'Memory usage with a sparse matrix grew by a factor of {}, when '
-        'row count grew by a factor of 10.'.format(
-            more_columns_mem_usage / baseline_mem_usage)
+    assert_mem_growth(
+        row_mem_growth,
+        ('Memory usage with sparse matrix grew supra-linearly with number of '
+         'rows ({})'.format(row_mem_growth))
     )
 
 

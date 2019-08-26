@@ -43,7 +43,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
     TO_INSTALL="python=$PINNED_PYTHON_VERSION pip pytest=$PYTEST_VERSION \
-                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION psutil \
+                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -87,13 +87,16 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython psutil joblib==$JOBLIB_VERSION
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
+    # We run a memory profiling test that uses `psutil`. Because it's slow,
+    # we only run it on Ubuntu.
+    python -m pip install psutil
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
     apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython psutil joblib==$JOBLIB_VERSION
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

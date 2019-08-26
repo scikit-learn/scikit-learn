@@ -66,7 +66,7 @@ make_conda() {
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov psutil \
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION"
 
@@ -102,7 +102,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython psutil joblib==$JOBLIB_VERSION
+    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
@@ -115,7 +115,7 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     pip install https://github.com/joblib/joblib/archive/master.zip
     echo "Installing pillow master"
     pip install https://github.com/python-pillow/Pillow/archive/master.zip
-    pip install pytest==4.6.4 pytest-cov psutil
+    pip install pytest==4.6.4 pytest-cov
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
