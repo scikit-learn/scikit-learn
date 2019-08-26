@@ -108,7 +108,6 @@ def _yield_checks(name, estimator):
         yield check_sparsify_coefficients
 
     yield check_estimator_sparse_data
-    yield check_estimator_sparse_data_process_maxrss
     yield check_estimator_sparse_data_memory_growth
 
     # Test that estimators can be pickled, and once pickled
@@ -692,78 +691,6 @@ def check_estimator_sparse_data_memory_growth(name, estimator_orig):
         ('Memory usage with sparse matrix grew supra-linearly with number of '
          'rows ({})'.format(row_mem_growth))
     )
-
-
-@contextmanager
-def check_maxrss_increase(limit):
-    """Raises `AssertionError` if max RSS increases by `limit` bytes.
-
-    The "max RSS (Resident Set Size)" is the maximum memory the process has
-    had allocated to it. If this increases dramatically, it means that the
-    process has had to allocate a lot of memory.
-    """
-    initial_maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    try:
-        yield
-    finally:
-        new_maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        increase = new_maxrss - initial_maxrss
-        if increase > limit:
-            msg = ('The max RSS of the process increased by {}, which is '
-                   'more that the limit'.format(increase))
-            raise AssertionError(msg)
-
-
-def check_estimator_sparse_data_process_maxrss(name, estimator_orig):
-    rng = np.random.RandomState(0)
-    n_rows, n_cols = 1500, 1000
-    X = rng.rand(int(n_rows / 100), int(n_cols / 100))
-    X[X < .95] = 0
-    X = pairwise_estimator_convert_X(X, estimator_orig)
-    X = sparse.csr_matrix(X)
-    X = sparse.hstack([X] * 100)
-    X = sparse.vstack([X] * 100)
-    tags = _safe_tags(estimator_orig)
-    if tags['binary_only']:
-        y = (2 * rng.rand(n_rows)).astype(np.int)
-    else:
-        y = (4 * rng.rand(n_rows)).astype(np.int)
-    y = enforce_estimator_tags_y(estimator_orig, y)
-    # catch deprecation warnings
-    with ignore_warnings(category=DeprecationWarning):
-        estimator = clone(estimator_orig)
-        if name in ['Scaler', 'StandardScaler']:
-            estimator.set_params(with_mean=False)
-    # fit and predict
-    with check_maxrss_increase(1000000):
-        try:
-            with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-                estimator.fit(X, y)
-            if hasattr(estimator, "predict"):
-                pred = estimator.predict(X)
-                if tags['multioutput_only']:
-                    assert pred.shape == (X.shape[0], 1)
-                else:
-                    assert pred.shape == (X.shape[0],)
-            if hasattr(estimator, 'predict_proba'):
-                probs = estimator.predict_proba(X)
-                if tags['binary_only']:
-                    expected_probs_shape = (X.shape[0], 2)
-                else:
-                    expected_probs_shape = (X.shape[0], 4)
-                assert probs.shape == expected_probs_shape
-        except (TypeError, ValueError) as e:
-            if 'sparse' not in repr(e).lower():
-                print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: error message state explicitly that "
-                      "sparse input is not supported if this is not"
-                      " the case." % name)
-                raise
-        except Exception:
-            print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: it should raise a TypeError if sparse input "
-                  "is explicitly not supported." % name)
-            raise
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
