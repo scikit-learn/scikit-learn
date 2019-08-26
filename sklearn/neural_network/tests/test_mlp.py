@@ -727,16 +727,18 @@ def test_custom_activation(monkeypatch):
         mlp.fit(X, y)
 
     monkeypatch.setattr(
-            multilayer_perceptron,
-            "ACTIVATIONS",
-            # logistic is necessary for the last layer in any case
-            {'identity2': lambda x: x, 'logistic': lambda x: x})
+        multilayer_perceptron,
+        "ACTIVATIONS",
+        # logistic is necessary for the last layer in any case
+        {'identity2': lambda x: x, 'logistic': lambda x: x}
+    )
 
     monkeypatch.setattr(
-            multilayer_perceptron,
-            "DERIVATIVES",
-            # logistic is necessary for the last layer in any case
-            {'identity2': lambda x, _: 1.0, 'logistic': lambda x, _: 1.0})
+        multilayer_perceptron,
+        "DERIVATIVES",
+        # logistic is necessary for the last layer in any case
+        {'identity2': lambda x, _: 1.0, 'logistic': lambda x, _: 1.0}
+    )
 
     mlp = MLPClassifier(activation='identity2')
     mlp.fit(X, y)
