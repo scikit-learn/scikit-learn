@@ -347,12 +347,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> print('Patches shape: {}'.format(patches.shape))
     Patches shape: (272214, 2, 2, 3)
     >>> # Here are just two of these patches:
-    >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(patches[1])
     [[[174 201 231]
       [174 201 231]]
      [[173 200 230]
       [173 200 230]]]
-    >>> print(patches[800])# doctest: +NORMALIZE_WHITESPACE
+    >>> print(patches[800])
     [[[187 214 243]
       [188 215 244]]
      [[187 214 243]

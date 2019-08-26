@@ -162,9 +162,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
-    if weights is not None and (all(weights) and 
-                                len(weights) not in [n_classes, n_classes - 1]):
-            raise ValueError("Weights specified but incompatible with number "
+    w_ok = (weights is not None) and all(weights)
+    if w_ok and (len(weights) not in [n_classes, n_classes - 1]):
+        raise ValueError("Weights specified but incompatible with number "
                          "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
@@ -381,7 +381,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X_indices = array.array('i')
     X_indptr = array.array('i', [0])
     Y = []
-    for i in range(n_samples):
+    for _ in range(n_samples):
         words, y = sample_example()
         X_indices.extend(words)
         X_indptr.append(len(X_indices))
@@ -1238,7 +1238,7 @@ def make_spd_matrix(n_dim, random_state=None):
     generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
-    U, s, V = linalg.svd(np.dot(A.T, A))
+    U, _, V = linalg.svd(np.dot(A.T, A))
     X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
 
     return X
