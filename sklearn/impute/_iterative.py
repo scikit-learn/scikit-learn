@@ -159,6 +159,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
+
     See also
     --------
     SimpleImputer : Univariate imputation of missing values.
