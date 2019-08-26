@@ -100,7 +100,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         "random"
             A random order for each round.
 
-    skip_non_missing_features : boolean, optional (default=False)
+    skip_complete : boolean, optional (default=False)
         If ``True`` then features with missing values during ``transform``
         which did not have any missing values during ``fit`` will be imputed
         with the initial imputation method only. Set to ``True`` if you have
@@ -194,7 +194,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  n_nearest_features=None,
                  initial_strategy="mean",
                  imputation_order='ascending',
-                 skip_non_missing_features=False,
+                 skip_complete=False,
                  min_value=None,
                  max_value=None,
                  verbose=0,
@@ -209,7 +209,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
-        self.skip_non_missing_features = skip_non_missing_features
+        self.skip_complete = skip_complete
         self.min_value = min_value
         self.max_value = max_value
         self.verbose = verbose
@@ -384,7 +384,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             The order in which to impute the features.
         """
         frac_of_missing_values = mask_missing_values.mean(axis=0)
-        if self.skip_non_missing_features:
+        if self.skip_complete:
             missing_values_idx = np.nonzero(frac_of_missing_values)[0]
         else:
             missing_values_idx = np.arange(np.shape(frac_of_missing_values)[0])

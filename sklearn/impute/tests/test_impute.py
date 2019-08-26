@@ -594,7 +594,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
                                max_iter=max_iter,
                                n_nearest_features=5,
                                sample_posterior=False,
-                               skip_non_missing_features=True,
+                               skip_complete=True,
                                min_value=0,
                                max_value=1,
                                verbose=1,
@@ -960,32 +960,26 @@ def test_iterative_imputer_catch_warning():
 
 
 @pytest.mark.parametrize(
-    "skip_non_missing_features",
+    "skip_complete",
     [True, False]
 )
-def test_iterative_imputer_skip_non_missing(skip_non_missing_features):
+def test_iterative_imputer_skip_non_missing(skip_complete):
     # taken from: https://github.com/scikit-learn/scikit-learn/issues/14383
     rng = np.random.RandomState(0)
-
     X_train = np.array([
         [5, 2, 2, 1],
         [10, 1, 2, 7],
         [3, 1, 1, 1],
         [8, 4, 2, 2]
     ])
-
     X_test = np.array([
         [np.nan, 2, 4, 5],
         [np.nan, 4, 1, 2],
         [np.nan, 1, 10, 1]
     ])
-
-    imputer = IterativeImputer(
-        skip_non_missing_features=skip_non_missing_features,
-        random_state=rng
-    )
+    imputer = IterativeImputer(skip_complete=skip_complete, random_state=rng)
     X_test_est = imputer.fit(X_train).transform(X_test)
-    if skip_non_missing_features:
+    if skip_complete:
         assert_allclose(X_test_est[:, 0], 6.5)
     else:
         assert_allclose(X_test_est[:, 0], [11, 7, 12], rtol=1e-4)
