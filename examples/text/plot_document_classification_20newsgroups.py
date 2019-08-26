@@ -96,9 +96,9 @@ print()
 ##############################################################################
 # Load data from the training set
 # ------------------------------------
-# Let's load data from the newsgroups dataset which comprises around 18000 newsgroups
-# posts on 20 topics split in two subsets: one for training (or development)
-# and the other one for testing (or for performance evaluation).
+# Let's load data from the newsgroups dataset which comprises around 18000
+# newsgroups posts on 20 topics split in two subsets: one for training (or
+# development) and the other one for testing (or for performance evaluation).
 if opts.all_categories:
     categories = None
 else:
