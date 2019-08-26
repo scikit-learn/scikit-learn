@@ -457,6 +457,13 @@ def test_imputation_missing_value_in_test_array(Imputer):
     imputer.fit(train).transform(test)
 
 
+def test_iterative_imputer_one_feature():
+    train = [[1], [2]]
+    imputer = IterativeImputer()
+    imputer.fit(train)
+    assert imputer.n_iter_ == 0
+
+
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
