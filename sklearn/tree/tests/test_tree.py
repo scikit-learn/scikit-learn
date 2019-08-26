@@ -1964,8 +1964,3 @@ def test_classes_deprecated():
     
     match = ("'classes_'is to be deprecated from version 0.20 and "
              "will be removed in 0.22.")
-    
-    with pytest.warns(DeprecationWarning, match=match):
-        n = clf.classes_
-    assert n == clf.classes_
-        
