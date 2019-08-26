@@ -820,6 +820,23 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
+    A common mistake is to pass in a list, which leads to the following issue:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit(['sci-fi', 'thriller', 'comedy'])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['-', 'c', 'd', 'e', 'f', 'h', 'i', 'l', 'm', 'o', 'r', 's', 't',
+        'y'], dtype=object)
+
+    To correct this, the list of labels should be passed in as:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit([['sci-fi', 'thriller', 'comedy']])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
+
     See also
     --------
     sklearn.preprocessing.OneHotEncoder : encode categorical features
