@@ -2440,7 +2440,6 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 estimator.set_params(with_mean=False)
                 estimator_sp.set_params(with_mean=False)
             if name in ['RobustScaler']:
-                # XXX naming is not consistent (with_mean vs with_centering) :(
                 estimator.set_params(with_centering=False)
                 estimator_sp.set_params(with_centering=False)
 
