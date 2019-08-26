@@ -534,19 +534,31 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 3-fold cross-validation on a dataset with 10 samples from
-two slightly unbalanced classes::
+Example of stratified 3-fold cross-validation on a dataset with 50 samples from
+three unbalanced classes and comparing with :class:`KFold` split::
 
-  >>> from sklearn.model_selection import StratifiedKFold
+  >>> from sklearn.datasets import make_classification
+  >>> from sklearn.model_selection import StratifiedKFold, KFold
+  >>> import numpy as np
 
-  >>> X = np.ones(10)
-  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> skf = StratifiedKFold(n_splits=3)
-  >>> for train, test in skf.split(X, y):
-  ...     print("%s %s" % (train, test))
-  [2 3 6 7 8 9] [0 1 4 5]
-  [0 1 3 4 5 8 9] [2 6 7]
-  [0 1 2 4 5 6 7] [3 8 9]
+  >>> X, y = make_classification(n_samples=50, n_classes=3,
+  ...       n_informative=3, weights=[0.7, 0.1, 0.2], random_state=1)
+
+  >>> skf = StratifiedKFold(n_splits=3, random_state=1)
+  >>> for train, test in skf.split(X, y):  
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [23  3  6]   |   test -  [12  2  4]
+  train -  [23  3  7]   |   test -  [12  2  3]
+  train -  [24  4  7]   |   test -  [11  1  3]
+
+  >>> kf = KFold(n_splits=3, random_state=9)
+  >>> for train, test in kf.split(X, y):
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [24  5  4]   |   test -  [11  0  6]
+  train -  [21  5  7]   |   test -  [14  0  3]
+  train -  [25  0  9]   |   test -  [10  5  1]
 
 Here is a visualization of the cross-validation behavior.
 
