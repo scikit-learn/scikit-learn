@@ -260,6 +260,7 @@ Here is an example of ``cross_validate`` using a single metric::
     >>> sorted(scores.keys())
     ['estimator', 'fit_time', 'score_time', 'test_score']
 
+
 Obtaining predictions by cross-validation
 -----------------------------------------
 
@@ -299,14 +300,16 @@ section.
     * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
+
+.. _cv_significance_evaluation:
+
 Cross-validation significance evaluation
 ----------------------------------------
 
-Significance of cross validation scores can be evaluated using the 
+Significance of cross validation scores can be evaluated using the
 :func:`permutation_test_score` function. The function returns a p-value, which
 approximates the probability that the average cross-validation score would be
 obtained by chance if the target is independent of the data.
-
 
 It also returns cross validation scores for each permutation of y labels. It
 permutes the labels of the samples and computes the p-value against the null
