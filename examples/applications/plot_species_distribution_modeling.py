@@ -13,7 +13,7 @@ density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.org/basemap>`_
+`basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
@@ -40,8 +40,6 @@ References
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
 # License: BSD 3 clause
-
-from __future__ import print_function
 
 from time import time
 
@@ -154,7 +152,7 @@ def plot_species_distribution(species=("bradypus_variegatus_0",
         else:
             print(" - plot coastlines from coverage")
             plt.contour(X, Y, land_reference,
-                        levels=[-9999], colors="k",
+                        levels=[-9998], colors="k",
                         linestyles="solid")
             plt.xticks([])
             plt.yticks([])

@@ -14,8 +14,8 @@ First, three exemplary classifiers are initialized (`DecisionTreeClassifier`,
 `KNeighborsClassifier`, and `SVC`) and used to initialize a
 soft-voting `VotingClassifier` with weights `[2, 1, 2]`, which means that
 the predicted probabilities of the `DecisionTreeClassifier` and `SVC`
-count 5 times as much as the weights of the `KNeighborsClassifier` classifier
-when the averaged probability is calculated.
+each count 2 times as much as the weights of the `KNeighborsClassifier`
+classifier when the averaged probability is calculated.
 
 """
 print(__doc__)
@@ -39,7 +39,7 @@ y = iris.target
 # Training classifiers
 clf1 = DecisionTreeClassifier(max_depth=4)
 clf2 = KNeighborsClassifier(n_neighbors=7)
-clf3 = SVC(kernel='rbf', probability=True)
+clf3 = SVC(gamma=.1, kernel='rbf', probability=True)
 eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2),
                                     ('svc', clf3)],
                         voting='soft', weights=[2, 1, 2])

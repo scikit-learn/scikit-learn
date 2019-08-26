@@ -13,7 +13,7 @@ from time import time
 from collections import defaultdict
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_lfw_people
-from sklearn.decomposition import IncrementalPCA, RandomizedPCA, PCA
+from sklearn.decomposition import IncrementalPCA, PCA
 
 
 def plot_results(X, y, label):
@@ -37,7 +37,6 @@ def plot_feature_times(all_times, batch_size, all_components, data):
     plot_results(all_components, all_times['pca'], label="PCA")
     plot_results(all_components, all_times['ipca'],
                  label="IncrementalPCA, bsize=%i" % batch_size)
-    plot_results(all_components, all_times['rpca'], label="RandomizedPCA")
     plt.legend(loc="upper left")
     plt.suptitle("Algorithm runtime vs. n_components\n \
                  LFW, size %i x %i" % data.shape)
@@ -50,7 +49,6 @@ def plot_feature_errors(all_errors, batch_size, all_components, data):
     plot_results(all_components, all_errors['pca'], label="PCA")
     plot_results(all_components, all_errors['ipca'],
                  label="IncrementalPCA, bsize=%i" % batch_size)
-    plot_results(all_components, all_errors['rpca'], label="RandomizedPCA")
     plt.legend(loc="lower left")
     plt.suptitle("Algorithm error vs. n_components\n"
                  "LFW, size %i x %i" % data.shape)
@@ -61,7 +59,6 @@ def plot_feature_errors(all_errors, batch_size, all_components, data):
 def plot_batch_times(all_times, n_features, all_batch_sizes, data):
     plt.figure()
     plot_results(all_batch_sizes, all_times['pca'], label="PCA")
-    plot_results(all_batch_sizes, all_times['rpca'], label="RandomizedPCA")
     plot_results(all_batch_sizes, all_times['ipca'], label="IncrementalPCA")
     plt.legend(loc="lower left")
     plt.suptitle("Algorithm runtime vs. batch_size for n_components %i\n \
@@ -92,11 +89,9 @@ def fixed_batch_size_comparison(data):
     all_errors = defaultdict(list)
     for n_components in all_features:
         pca = PCA(n_components=n_components)
-        rpca = RandomizedPCA(n_components=n_components, random_state=1999)
         ipca = IncrementalPCA(n_components=n_components, batch_size=batch_size)
         results_dict = {k: benchmark(est, data) for k, est in [('pca', pca),
-                                                               ('ipca', ipca),
-                                                               ('rpca', rpca)]}
+                                                               ('ipca', ipca)]}
 
         for k in sorted(results_dict.keys()):
             all_times[k].append(results_dict[k]['time'])
@@ -116,7 +111,8 @@ def variable_batch_size_comparison(data):
         all_times = defaultdict(list)
         all_errors = defaultdict(list)
         pca = PCA(n_components=n_components)
-        rpca = RandomizedPCA(n_components=n_components, random_state=1999)
+        rpca = PCA(n_components=n_components, svd_solver='randomized',
+                   random_state=1999)
         results_dict = {k: benchmark(est, data) for k, est in [('pca', pca),
                                                                ('rpca', rpca)]}
 
@@ -138,8 +134,6 @@ def variable_batch_size_comparison(data):
             all_errors['ipca'].append(results_dict['ipca']['error'])
 
         plot_batch_times(all_times, n_components, batch_sizes, data)
-        # RandomizedPCA error is always worse (approx 100x) than other PCA
-        # tests
         plot_batch_errors(all_errors, n_components, batch_sizes, data)
 
 faces = fetch_lfw_people(resize=.2, min_faces_per_person=5)

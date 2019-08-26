@@ -20,20 +20,19 @@ from sklearn.datasets import load_digits
 from sklearn.svm import SVC
 from sklearn.model_selection import validation_curve
 
-digits = load_digits()
-X, y = digits.data, digits.target
+X, y = load_digits(return_X_y=True)
 
 param_range = np.logspace(-6, -1, 5)
 train_scores, test_scores = validation_curve(
     SVC(), X, y, param_name="gamma", param_range=param_range,
-    cv=10, scoring="accuracy", n_jobs=1)
+    scoring="accuracy", n_jobs=1)
 train_scores_mean = np.mean(train_scores, axis=1)
 train_scores_std = np.std(train_scores, axis=1)
 test_scores_mean = np.mean(test_scores, axis=1)
 test_scores_std = np.std(test_scores, axis=1)
 
 plt.title("Validation Curve with SVM")
-plt.xlabel("$\gamma$")
+plt.xlabel(r"$\gamma$")
 plt.ylabel("Score")
 plt.ylim(0.0, 1.1)
 lw = 2

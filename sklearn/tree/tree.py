@@ -14,9 +14,6 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from __future__ import division
-
-
 import numbers
 import warnings
 from abc import ABCMeta
@@ -28,9 +25,11 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
+from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
-from ..externals import six
+from ..base import MultiOutputMixin
+from ..utils import Bunch
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -42,6 +41,8 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
+from ._tree import _build_pruned_tree_ccp
+from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -72,7 +73,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -93,7 +94,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 ccp_alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -107,11 +109,31 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.ccp_alpha = ccp_alpha
+
+    def get_depth(self):
+        """Returns the depth of the decision tree.
+
+        The depth of a tree is the maximum distance between the root
+        and any leaf.
+        """
+        check_is_fitted(self)
+        return self.tree_.max_depth
+
+    def get_n_leaves(self):
+        """Returns the number of leaves of the decision tree.
+        """
+        check_is_fitted(self)
+        return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
 
         random_state = check_random_state(self.random_state)
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
@@ -173,7 +195,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
-        if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_leaf, numbers.Integral):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError("min_samples_leaf must be at least 1 "
                                  "or in (0, 0.5], got %s"
@@ -186,7 +208,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
-        if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_split, numbers.Integral):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be an integer "
                                  "greater than 1 or a float in (0.0, 1.0]; "
@@ -204,7 +226,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         min_samples_split = max(min_samples_split, 2 * min_samples_leaf)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -220,7 +242,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
         else:  # float
             if self.max_features > 0.0:
@@ -240,7 +262,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
+        if not isinstance(max_leaf_nodes, numbers.Integral):
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:
@@ -276,8 +298,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated and"
-                          " will be removed in version 0.21. "
+            warnings.warn("The min_impurity_split parameter is deprecated. "
+                          "Its default value will change from 1e-7 to 0 in "
+                          "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
                           DeprecationWarning)
             min_impurity_split = self.min_impurity_split
@@ -368,6 +391,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        self._prune_tree()
+
         return self
 
     def _validate_X_predict(self, X, check_input):
@@ -411,7 +436,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -422,8 +447,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
+                class_type = self.classes_[0].dtype
+                predictions = np.zeros((n_samples, self.n_outputs_),
+                                       dtype=class_type)
                 for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
                         np.argmax(proba[:, k], axis=1),
@@ -464,7 +490,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -494,6 +520,62 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
+    def _prune_tree(self):
+        """Prune tree using Minimal Cost-Complexity Pruning."""
+        check_is_fitted(self)
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
+        if self.ccp_alpha == 0.0:
+            return
+
+        # build pruned treee
+        n_classes = np.atleast_1d(self.n_classes_)
+        pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
+
+        self.tree_ = pruned_tree
+
+    def cost_complexity_pruning_path(self, X, y, sample_weight=None):
+        """Compute the pruning path during Minimal Cost-Complexity Pruning.
+
+        See `ref`:minimal_cost_complexity_pruning` for details on the pruning
+        process.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        Returns
+        -------
+        ccp_path : Bunch
+            Dictionary-like object, with attributes:
+
+            ccp_alphas : ndarray
+                Effective alphas of subtree during pruning.
+
+            impurities : ndarray
+                Sum of the impurities of the subtree leaves for the
+                corresponding alpha value in ``ccp_alphas``.
+        """
+        est = clone(self).set_params(ccp_alpha=0.0)
+        est.fit(X, y, sample_weight=sample_weight)
+        return Bunch(**ccp_pruning_path(est.tree_))
+
     @property
     def feature_importances_(self):
         """Return the feature importances.
@@ -506,7 +588,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
 
@@ -548,7 +630,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -608,14 +694,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -645,6 +732,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -672,7 +767,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     Notes
     -----
@@ -705,7 +803,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
@@ -733,8 +831,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort=False):
-        super(DecisionTreeClassifier, self).__init__(
+                 presort=False,
+                 ccp_alpha=0.0):
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -747,7 +846,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -785,7 +885,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         self : object
         """
 
-        super(DecisionTreeClassifier, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -819,7 +919,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'tree_')
+        check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
@@ -913,7 +1013,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -973,14 +1077,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -988,6 +1093,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         datasets, setting this to true may slow down the training process.
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
+
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1008,7 +1121,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The number of outputs when ``fit`` is performed.
 
     tree_ : Tree object
-        The underlying Tree object.
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     Notes
     -----
@@ -1041,16 +1157,16 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
            Learning", Springer, 2009.
 
     .. [4] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+           https://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
 
     Examples
     --------
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-    >>> boston = load_boston()
+    >>> X, y = load_boston(return_X_y=True)
     >>> regressor = DecisionTreeRegressor(random_state=0)
-    >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
+    >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
@@ -1068,8 +1184,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort=False):
-        super(DecisionTreeRegressor, self).__init__(
+                 presort=False,
+                 ccp_alpha=0.0):
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1081,7 +1198,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1118,7 +1236,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         self : object
         """
 
-        super(DecisionTreeRegressor, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1146,7 +1264,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1168,7 +1286,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1183,7 +1305,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1228,14 +1350,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1258,9 +1381,44 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
+    Attributes
+    ----------
+    classes_ : array of shape = [n_classes] or a list of such arrays
+        The classes labels (single output problem),
+        or a list of arrays of class labels (multi-output problem).
+
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_classes_ : int or list
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
+
     See also
     --------
-    ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
@@ -1288,8 +1446,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 class_weight=None):
-        super(ExtraTreeClassifier, self).__init__(
+                 class_weight=None,
+                 ccp_alpha=0.0):
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1301,7 +1460,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             class_weight=class_weight,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            ccp_alpha=ccp_alpha)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1329,7 +1489,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : string, optional (default="best")
+    splitter : string, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1351,7 +1511,11 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1366,7 +1530,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1406,24 +1570,50 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
+    Attributes
+    ----------
+    max_features_ : int,
+        The inferred value of max_features.
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    tree_ : Tree object
+        The underlying Tree object. Please refer to
+        ``help(sklearn.tree._tree.Tree)`` for attributes of Tree object and
+        :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
+        for basic usage of these attributes.
 
     See also
     --------
-    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+    ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
+    sklearn.ensemble.ExtraTreesRegressor
 
     Notes
     -----
@@ -1450,8 +1640,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  random_state=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 max_leaf_nodes=None):
-        super(ExtraTreeRegressor, self).__init__(
+                 max_leaf_nodes=None,
+                 ccp_alpha=0.0):
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1462,4 +1653,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            ccp_alpha=ccp_alpha)

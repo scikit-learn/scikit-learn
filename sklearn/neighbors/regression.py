@@ -82,10 +82,25 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
         Doesn't affect :meth:`fit` method.
+
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
 
     Examples
     --------
@@ -93,7 +108,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> neigh = KNeighborsRegressor(n_neighbors=2)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     KNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
@@ -122,9 +137,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(KNeighborsRegressor, self).__init__(
+        super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
@@ -238,13 +253,32 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
     >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import RadiusNeighborsRegressor
     >>> neigh = RadiusNeighborsRegressor(radius=1.0)
-    >>> neigh.fit(X, y) # doctest: +ELLIPSIS
+    >>> neigh.fit(X, y)
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
     [0.5]
@@ -266,12 +300,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
-        super(RadiusNeighborsRegressor, self).__init__(
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
+                 **kwargs):
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
-              p=p, metric=metric, metric_params=metric_params, **kwargs)
+              p=p, metric=metric, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -311,11 +347,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
-        if np.max(np.isnan(y_pred)):
+        if np.any(np.isnan(y_pred)):
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)
-
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
