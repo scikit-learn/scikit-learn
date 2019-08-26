@@ -399,10 +399,9 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     def classes_(self):
         if is_classifier(self):
             return self._classes
-        
         else:
-            warnings.warn("'classes_' is to be deprecated from version 0.20 and "
-                      "will be removed in 0.22.", DeprecationWarning)
+            warnings.warn("'classes_' is to be deprecated from version 0.20 "
+                          "and will be removed in 0.22.", DeprecationWarning)
             return self._classes
 
     def _validate_X_predict(self, X, check_input):
@@ -1123,7 +1122,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     max_features_ : int,
         The inferred value of max_features.
-        
+
     n_features_ : int
         The number of features when ``fit`` is performed.
 
