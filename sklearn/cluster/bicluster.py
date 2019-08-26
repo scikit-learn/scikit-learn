@@ -343,7 +343,7 @@ class SpectralBiclustering(BaseSpectral):
     svd_method : string, optional, default: 'randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
-        `sklearn.utils.extmath.randomized_svd`, which may be faster
+        :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
         `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.

@@ -762,7 +762,7 @@ class SGDClassifier(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -1374,7 +1374,7 @@ class SGDRegressor(BaseSGDRegressor):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 

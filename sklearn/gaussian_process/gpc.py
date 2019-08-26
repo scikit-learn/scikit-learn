@@ -679,7 +679,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         C : array-like, shape = (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         if self.n_classes_ > 2 and self.multi_class == "one_vs_one":

@@ -51,9 +51,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         algorithm due to Halko (2009).
 
     n_iter : int, optional (default 5)
-        Number of iterations for randomized SVD solver. Not used by ARPACK.
-        The default is larger than the default in `randomized_svd` to handle
-        sparse matrices that may have large slowly decaying spectrum.
+        Number of iterations for randomized SVD solver. Not used by ARPACK. The
+        default is larger than the default in
+        `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
+        may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance or None, optional, default = None
         If int, random_state is the seed used by the random number generator;

@@ -121,7 +121,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         See :term:`the Glossary <random_state>`.
 
     add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack onto output
+        If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on

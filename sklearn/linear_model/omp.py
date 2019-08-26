@@ -568,9 +568,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
-        calculations. Improves performance when `n_targets` or `n_samples` is
-        very large. Note that if you already have such matrices, you can pass
-        them directly to the fit method.
+        calculations. Improves performance when :term:`n_targets` or
+        :term:`n_samples` is very large. Note that if you already have such
+        matrices, you can pass them directly to the fit method.
 
     Attributes
     ----------

@@ -280,7 +280,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         -------
         score : array, shape = [n_samples, n_classes] or [n_samples]
             The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification produce an array of shape
             [n_samples].
         """
@@ -302,7 +302,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
@@ -320,7 +320,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
@@ -476,8 +476,8 @@ class RFECV(RFE):
 
         groups : array-like, shape = [n_samples], optional
             Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" `cv`
-            instance (e.g., `GroupKFold`).
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
         X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 

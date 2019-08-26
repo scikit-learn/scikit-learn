@@ -333,8 +333,8 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     def partial_fit(self, X, y=None):
         """Online computation of min and max on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         Parameters
         ----------
@@ -506,8 +506,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
-    standard deviation are then stored to be used on later data using the
-    `transform` method.
+    standard deviation are then stored to be used on later data using
+    :meth:`transform`.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
@@ -647,8 +647,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     def partial_fit(self, X, y=None):
         """Online computation of mean and std on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         The algorithm for incremental mean and std is given in Equation 1.5a,b
         in Chan, Tony F., Gene H. Golub, and Randall J. LeVeque. "Algorithms
@@ -915,8 +915,8 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
     def partial_fit(self, X, y=None):
         """Online computation of max absolute value of X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         Parameters
         ----------
