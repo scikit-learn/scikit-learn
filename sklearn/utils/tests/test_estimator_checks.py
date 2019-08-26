@@ -5,8 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-import pytest
-
 from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -314,8 +312,7 @@ def test_not_an_array_array_function():
         raise SkipTest("array_function protocol not suppored in numpy <1.17")
     not_array = NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
-    with pytest.raises(TypeError, match=msg):
-        np.sum(not_array)
+    assert_raises_regex(TypeError, msg, np.sum, not_array)
     # always returns True
     assert np.may_share_memory(not_array, None)
 
