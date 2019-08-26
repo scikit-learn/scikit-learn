@@ -162,7 +162,7 @@ def test_make_classification_weights_type():
     assert X.shape == (100, 20), "X shape mismatch"
 
     # w as array: should pass in PR_14764, fail in master
-    w = np.array([0.25, 0.75]) 
+    w = np.array([0.25, 0.75])
     X, y = make_classification(weights=w)
     assert X.shape == (100, 20), "X shape mismatch"
 
