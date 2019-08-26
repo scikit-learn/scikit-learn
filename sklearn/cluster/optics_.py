@@ -223,8 +223,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’, or sparse matrix  \
-            if metric in ['cityblock', 'cosine', 'euclidean', 'haversine', 'l2', 'l1', 'manhattan'].
+if metric=’precomputed’, or sparse matrix (n_samples, n_features) if metric
+            in ['cityblock', 'cosine', 'euclidean', 'haversine', 'l2', 'l1',
+            'manhattan'].
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
