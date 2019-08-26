@@ -6,15 +6,14 @@ specifically to work with sparse matrices.
 import warnings
 
 import numpy as np
+import pytest
 from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
 
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_selection.univariate_selection import _chisquare
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import clean_warning_registry
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -66,13 +65,13 @@ def test_chi2_negative():
     # Check for proper error on negative numbers in the input X.
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
-        assert_raises(ValueError, chi2, X, y)
+        with pytest.raises(ValueError):
+            chi2(X, y)
 
 
 def test_chi2_unused_feature():
     # Unused feature should evaluate to NaN
     # and should issue no runtime warning
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as warned:
         warnings.simplefilter('always')
         chi, p = chi2([[1, 0], [0, 0]], [1, 0])
