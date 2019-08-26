@@ -1218,7 +1218,9 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
-        model.precompute = False
+        precompute = getattr(self, "precompute", None)
+        if isinstance(precompute, str) and precompute == "auto":
+            model.precompute = False
         model.fit(X, y)
         if not hasattr(self, 'l1_ratio'):
             del self.l1_ratio_
