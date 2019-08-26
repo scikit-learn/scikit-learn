@@ -19,6 +19,7 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 
 
 class OPTICS(BaseEstimator, ClusterMixin):
@@ -194,7 +195,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='euclidean', p=2,
+    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
@@ -222,7 +223,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’.
+if metric=’precomputed’, or sparse matrix  \
+            if metric in ['cityblock', 'cosine', 'euclidean', 'haversine', 'l2', 'l1', 'manhattan'].
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
@@ -233,7 +235,10 @@ if metric=’precomputed’.
         self : instance of OPTICS
             The instance.
         """
-        X = check_array(X, accept_sparse='csr')
+        if self.metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            X = check_array(X, accept_sparse='csr')
+        else:
+            X = check_array(X)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
