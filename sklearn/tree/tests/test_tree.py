@@ -25,7 +25,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
@@ -1650,7 +1649,8 @@ def test_invalid_presort(cls):
     msg = ("'presort' should be in {}. "
            "Got {!r} instead.".format(allowed_presort, invalid_presort))
     est = cls(presort=invalid_presort)
-    assert_raise_message(ValueError, msg, est.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
 
 def test_decision_path_hardcoded():
