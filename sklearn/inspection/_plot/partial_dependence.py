@@ -23,16 +23,16 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : (ndarray, ndarray) list
+    pd_results : list of (ndarray, ndarray)
         Results of `sklearn.inspection.partial_dependence` for ``features``.
         Each tuple corresponds to a (averaged_predictions, grid).
 
-    features {(int, ), (int, int)} list
+    features : list of {(int, ), (int, int)}
         Indices of features for a given plot. A tuple of one integer will plot
         a partial dependence curve of one feature. A tuple of two integers will
         plot a two-way partial dependence curve as a contour plot.
 
-    feature_names : str list
+    feature_names : list of str
         Feature names corrsponding to the indicies in ``features``.
 
     target_idx : int
@@ -96,15 +96,15 @@ class PartialDependenceDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib axes or Matplotlib axes array-like, default=None
+        ax : Matplotlib axes or array-like of Matplotlib axes, default=None
             Axes to plot the partial dependence curves.
             - If a single axes is given, it is treated as a bounding axes and
-              a grid of partial depedendence plots will be drawn within these
-              bounds.
+                a grid of partial depedendence plots will be drawn within these
+                bounds.
             - If a list of axes or a ndarray of axes are passed in, the partial
-              dependence plots will be drawn directly into these axes.
-            - By default, a bounding axes is created and treated as the single
-              axes case.
+                dependence plots will be drawn directly into these axes.
+            - If None, a figure and a bounding axes is created and treated as
+                the single axes case.
 
         n_cols : int, default=3
             The maximum number of columns in the grid plot.
