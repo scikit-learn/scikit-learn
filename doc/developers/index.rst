@@ -10,7 +10,7 @@ Developer's Guide
 .. toctree::
 
    contributing
-   developing_scikit
+   develop
    tips
    utilities
    performance
