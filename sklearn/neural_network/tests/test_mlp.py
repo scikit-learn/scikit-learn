@@ -20,6 +20,7 @@ from io import StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network._base import mae_loss
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
@@ -558,6 +559,20 @@ def test_shuffle():
     mlp2.fit(X, y)
 
     assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+
+def test_mae_loss():
+    y_true = [3, -0.5, 2, 7]
+    y_pred = [2.5, 0.0, 2, 8]
+    assert mae_loss(y_true,y_pred) == 0.5
+    
+
+def test_mlp_regressor_with_mae_loss():
+    X, y = make_regression(n_samples=50, n_features= 5, random_state=0)
+    mlp = MLPRegressor(hidden_layer_sizes=1,loss='mae_loss',
+    max_iter=1,batch_size=1)
+    mlp.fit(X, y)
+    assert mlp.score(X, y) > 0.80
 
 
 def test_sparse_matrices():

@@ -237,8 +237,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # combinations of output activation and loss function:
         # sigmoid and binary cross entropy, softmax and categorical cross
         # entropy, and identity with squared loss
-        deltas[last] = activations[-1] - y
-
+        if self.loss == 'mae_loss':
+            gradient = np.empty_like(y)
+            gradient[activations[-1] > y] = 1
+            gradient[activations[-1] < y] = -1
+            gradient[activations[-1] == y] = 0
+            deltas[last] = gradient
+        else:
+            deltas[last] = activations[-1] - y
+        
         # Compute gradient for the last layer
         coef_grads, intercept_grads = self._compute_loss_grad(
             last, n_samples, activations, deltas, coef_grads, intercept_grads)
