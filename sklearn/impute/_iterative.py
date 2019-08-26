@@ -262,13 +262,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             The fitted estimator used to impute
             ``X_filled[missing_row_mask, feat_idx]``.
         """
-
-        # if nothing is missing and skip_non_missing_features is true
-        # then just return the default
-        missing_row_mask = mask_missing_values[:, feat_idx]
-        if self.skip_non_missing_features and not np.any(missing_row_mask):
-            return X_filled, estimator
-
         if estimator is None and fit_mode is False:
             raise ValueError("If fit_mode is False, then an already-fitted "
                              "estimator should be passed in.")
@@ -276,6 +269,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         if estimator is None:
             estimator = clone(self._estimator)
 
+        missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
             X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
                                     ~missing_row_mask)
