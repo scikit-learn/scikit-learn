@@ -5,6 +5,8 @@
 import numpy as np
 import pytest
 
+from scipy import sparse
+
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import (OPTICS,
                                      _extend_region,
@@ -101,10 +103,20 @@ def test_extract_xi():
                    xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
+    clust = OPTICS(min_samples=3, min_cluster_size=2,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.4, metric='euclidean').fit(sparse.lil_matrix(X))
+    assert_array_equal(clust.labels_, expected_labels)
+
     # check float min_samples and min_cluster_size
     clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
                    max_eps=20, cluster_method='xi',
                    xi=0.4).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.4, metric='euclidean').fit(sparse.lil_matrix(X))
     assert_array_equal(clust.labels_, expected_labels)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
@@ -118,6 +130,11 @@ def test_extract_xi():
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
 
+    clust = OPTICS(min_samples=3, min_cluster_size=3,
+                   max_eps=20, cluster_method='xi',
+                   xi=0.3, metric='euclidean').fit(sparse.lil_matrix(X))
+    assert_array_equal(clust.labels_, expected_labels)
+
     C1 = [[0, 0], [0, 0.1], [0, -.1], [0.1, 0]]
     C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
     C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
@@ -128,6 +145,11 @@ def test_extract_xi():
     clust = OPTICS(min_samples=2, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    clust = OPTICS(min_samples=2, min_cluster_size=2,
+                   max_eps=np.inf, cluster_method='xi',
+                   xi=0.04, metric='euclidean').fit(sparse.lil_matrix(X))
     assert_array_equal(clust.labels_, expected_labels)
 
 
@@ -144,33 +166,42 @@ def test_cluster_hierarchy_():
     diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
     assert diff / len(X) < 0.05
 
+    clust = OPTICS(min_samples=20, xi=.1,
+                   metric='euclidean').fit(sparse.lil_matrix(X))
+    clusters = clust.cluster_hierarchy_
+    assert clusters.shape == (2, 2)
+    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
+    assert diff / len(X) < 0.05
+
 
 def test_correct_number_of_clusters():
     # in 'auto' mode
 
     n_clusters = 3
     X = generate_clustered_data(n_clusters=n_clusters)
-    # Parameters chosen specifically for this task.
-    # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=.1)
-    clust.fit(X)
-    # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
-    assert n_clusters_1 == n_clusters
 
-    # check attribute types and sizes
-    assert clust.labels_.shape == (len(X),)
-    assert clust.labels_.dtype.kind == 'i'
+    for metric in ['minkowski', 'euclidean']:
+        # Parameters chosen specifically for this task.
+        # Compute OPTICS
+        clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=.1, metric=metric)
+        clust.fit(X if metric == 'minkowski' else sparse.lil_matrix(X))
+        # number of clusters, ignoring noise if present
+        n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
+        assert n_clusters_1 == n_clusters
 
-    assert clust.reachability_.shape == (len(X),)
-    assert clust.reachability_.dtype.kind == 'f'
+        # check attribute types and sizes
+        assert clust.labels_.shape == (len(X),)
+        assert clust.labels_.dtype.kind == 'i'
 
-    assert clust.core_distances_.shape == (len(X),)
-    assert clust.core_distances_.dtype.kind == 'f'
+        assert clust.reachability_.shape == (len(X),)
+        assert clust.reachability_.dtype.kind == 'f'
 
-    assert clust.ordering_.shape == (len(X),)
-    assert clust.ordering_.dtype.kind == 'i'
-    assert set(clust.ordering_) == set(range(len(X)))
+        assert clust.core_distances_.shape == (len(X),)
+        assert clust.core_distances_.dtype.kind == 'f'
+
+        assert clust.ordering_.shape == (len(X),)
+        assert clust.ordering_.dtype.kind == 'i'
+        assert set(clust.ordering_) == set(range(len(X)))
 
 
 def test_minimum_number_of_sample_check():
@@ -180,6 +211,14 @@ def test_minimum_number_of_sample_check():
     # Compute OPTICS
     X = [[1, 1]]
     clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
+
+    # Run the fit
+    assert_raise_message(ValueError, msg, clust.fit, X)
+
+    # Compute OPTICS
+    X = sparse.lil_matrix([[1, 1]])
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1,
+                   metric='euclidean')
 
     # Run the fit
     assert_raise_message(ValueError, msg, clust.fit, X)
@@ -198,6 +237,13 @@ def test_bad_extract():
                    eps=0.3, min_samples=10)
     assert_raise_message(ValueError, msg, clust.fit, X)
 
+    # Compute OPTICS
+    clust = OPTICS(max_eps=5.0 * 0.03,
+                   cluster_method='dbscan',
+                   eps=0.3, min_samples=10,
+                   metric='euclidean')
+    assert_raise_message(ValueError, msg, clust.fit, sparse.lil_matrix(X))
+
 
 def test_bad_reachability():
     msg = "All reachability values are inf. Set a larger max_eps."
@@ -208,6 +254,11 @@ def test_bad_reachability():
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
         clust.fit(X)
+
+    with pytest.warns(UserWarning, match=msg):
+        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015,
+                       metric='euclidean')
+        clust.fit(sparse.lil_matrix(X))
 
 
 def test_close_extract():
@@ -223,32 +274,43 @@ def test_close_extract():
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
     assert max(clust.labels_) == 2
 
+    # Compute OPTICS
+    clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
+                   eps=0.3, min_samples=10,
+                   metric='euclidean').fit(sparse.lil_matrix(X))
+    # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
+    assert max(clust.labels_) == 2
+
 
 @pytest.mark.parametrize('eps', [0.1, .3, .5])
 @pytest.mark.parametrize('min_samples', [3, 10, 20])
 def test_dbscan_optics_parity(eps, min_samples):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
-    centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(n_samples=750, centers=centers,
-                                cluster_std=0.4, random_state=0)
+    for metric in ['minkowski', 'euclidean']:
 
-    # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples, cluster_method='dbscan',
-                eps=eps).fit(X)
+        centers = [[1, 1], [-1, -1], [1, -1]]
+        _X, labels_true = make_blobs(n_samples=750, centers=centers,
+                                     cluster_std=0.4, random_state=0)
+        X = _X if metric == 'minkowski' else sparse.lil_matrix(_X)
 
-    # calculate dbscan labels
-    db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+        # calculate optics with dbscan extract at 0.3 epsilon
+        op = OPTICS(min_samples=min_samples, cluster_method='dbscan',
+                    eps=eps,
+                    metric=metric).fit(X)
 
-    contingency = contingency_matrix(db.labels_, op.labels_)
-    agree = min(np.sum(np.max(contingency, axis=0)),
-                np.sum(np.max(contingency, axis=1)))
-    disagree = X.shape[0] - agree
+        # calculate dbscan labels
+        db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
 
-    percent_mismatch = np.round((disagree - 1) / X.shape[0], 2)
+        contingency = contingency_matrix(db.labels_, op.labels_)
+        agree = min(np.sum(np.max(contingency, axis=0)),
+                    np.sum(np.max(contingency, axis=1)))
+        disagree = X.shape[0] - agree
 
-    # verify label mismatch is <= 5% labels
-    assert percent_mismatch <= 0.05
+        percent_mismatch = np.round((disagree - 1) / X.shape[0], 2)
+
+        # verify label mismatch is <= 5% labels
+        assert percent_mismatch <= 0.05
 
 
 def test_min_samples_edge_case():
@@ -263,10 +325,22 @@ def test_min_samples_edge_case():
                    xi=0.04).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
+    clust = OPTICS(min_samples=3,
+                   max_eps=7, cluster_method='xi',
+                   xi=0.04,
+                   metric='euclidean').fit(sparse.lil_matrix(X))
+    assert_array_equal(clust.labels_, expected_labels)
+
     expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
     clust = OPTICS(min_samples=3,
                    max_eps=3, cluster_method='xi',
                    xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    clust = OPTICS(min_samples=3,
+                   max_eps=3, cluster_method='xi',
+                   xi=0.04,
+                   metric='euclidean').fit(sparse.lil_matrix(X))
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[-1] * 9]
@@ -276,20 +350,33 @@ def test_min_samples_edge_case():
                        xi=0.04).fit(X)
         assert_array_equal(clust.labels_, expected_labels)
 
+    with pytest.warns(UserWarning, match="All reachability values"):
+        clust = OPTICS(min_samples=4,
+                       max_eps=3, cluster_method='xi',
+                       xi=0.04,
+                       metric='euclidean').fit(sparse.lil_matrix(X))
+        assert_array_equal(clust.labels_, expected_labels)
+
 
 # try arbitrary minimum sizes
 @pytest.mark.parametrize('min_cluster_size', range(2, X.shape[0] // 10, 23))
 def test_min_cluster_size(min_cluster_size):
-    redX = X[::2]  # reduce for speed
-    clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
-    cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
-    if cluster_sizes.size:
-        assert min(cluster_sizes) >= min_cluster_size
-    # check behaviour is the same when min_cluster_size is a fraction
-    clust_frac = OPTICS(min_samples=9,
-                        min_cluster_size=min_cluster_size / redX.shape[0])
-    clust_frac.fit(redX)
-    assert_array_equal(clust.labels_, clust_frac.labels_)
+    _redX = X[::2]  # reduce for speed
+
+    for metric in ['minkowski', 'euclidean']:
+        redX = _redX if metric == 'minkowski' else sparse.lil_matrix(_redX)
+
+        clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size,
+                       metric=metric).fit(redX)
+        cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
+        if cluster_sizes.size:
+            assert min(cluster_sizes) >= min_cluster_size
+        # check behaviour is the same when min_cluster_size is a fraction
+        clust_frac = OPTICS(min_samples=9,
+                            min_cluster_size=min_cluster_size / redX.shape[0],
+                            metric=metric)
+        clust_frac.fit(redX)
+        assert_array_equal(clust.labels_, clust_frac.labels_)
 
 
 @pytest.mark.parametrize('min_cluster_size', [0, -1, 1.1, 2.2])
@@ -298,21 +385,33 @@ def test_min_cluster_size_invalid(min_cluster_size):
     with pytest.raises(ValueError, match="must be a positive integer or a "):
         clust.fit(X)
 
+    clust = OPTICS(min_cluster_size=min_cluster_size, metric='euclidean')
+    with pytest.raises(ValueError, match="must be a positive integer or a "):
+        clust.fit(sparse.lil_matrix(X))
+
 
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
         clust.fit(X)
 
+    clust = OPTICS(min_cluster_size=len(X) + 1, metric='euclidean')
+    with pytest.raises(ValueError, match="must be no greater than the "):
+        clust.fit(sparse.lil_matrix(X))
+
 
 def test_processing_order():
-    # Ensure that we consider all unprocessed points,
-    # not only direct neighbors. when picking the next point.
-    Y = [[0], [10], [-10], [25]]
-    clust = OPTICS(min_samples=3, max_eps=15).fit(Y)
-    assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
-    assert_array_equal(clust.core_distances_, [10, 15, np.inf, np.inf])
-    assert_array_equal(clust.ordering_, [0, 1, 2, 3])
+    for metric in ['minkowski', 'euclidean']:
+
+        # Ensure that we consider all unprocessed points,
+        # not only direct neighbors. when picking the next point.
+        _Y = [[0], [10], [-10], [25]]
+        Y = _Y if metric == 'minkowski' else sparse.lil_matrix(_Y)
+
+        clust = OPTICS(min_samples=3, max_eps=15, metric=metric).fit(Y)
+        assert_array_equal(clust.reachability_, [np.inf, 10, 10, 15])
+        assert_array_equal(clust.core_distances_, [10, 15, np.inf, np.inf])
+        assert_array_equal(clust.ordering_, [0, 1, 2, 3])
 
 
 def test_compare_to_ELKI():

@@ -236,7 +236,9 @@ if metric=’precomputed’, or sparse matrix (n_samples, n_features) if metric
         self : instance of OPTICS
             The instance.
         """
-        if self.metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        # TODO: Support the sparse input for metric = 'precopmuted'.
+        if self.metric != 'precomputed' \
+                and self.metric in PAIRWISE_DISTANCE_FUNCTIONS:
             X = check_array(X, accept_sparse='csr')
         else:
             X = check_array(X)
