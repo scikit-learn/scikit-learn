@@ -1484,3 +1484,248 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
+class RazorCV(object):
+    '''
+    RazorCV is a callable refit option for CV whose aim is to balance model complexity and cross-validated score
+    in the spirit of the "one standard error" rule of Breiman et al. (1984), which demonstrated that the tuning
+    parameter associated with the best performance may be prone to overfit. To ensure model parsimony, we can instead
+    pick the simplest model within one standard error (or some percentile/alpha-level tolerance) of the empirically
+    optimal model. This assumes that the models can be easily ordered from simplest to most complex based on some
+    user-defined target parameter. By enabling the user to specify this parameter of interest, whether greater values
+    of this parameter are to be defined as 'more complex', and a target scoring metric (i.e. in the case of
+    multi-metric scoring), the `RazorCV` function can be called directly by `refit` (e.g. in GridSearchCV).
+
+    Parameters
+    ----------
+    cv_results : dict of numpy(masked) ndarrays
+        See attribute cv_results_ of `GridSearchCV`.
+    param : str
+        Parameter with the largest influence on model complexity.
+    greater_is_complex : bool
+        Whether complexity increases as `param` increases. Default is True.
+    scoring : str
+        Refit scoring metric.
+    method : str
+        Method for balancing model complexity with performance.
+        Options are 'onese', 'percentile', and 'ranksum'. Default is 'onese'.
+    tol : float
+        Acceptable percent tolerance in the case that a percentile threshold is used.
+        Required if `method`=='percentile'. Default is 0.25.
+    alpha : float
+        Alpha-level to use for wilcoxon rank sum hypothesis testing. Required if `method`=='ranksum'.
+        Default is 0.01.
+
+    References
+    ----------
+    Breiman, Friedman, Olshen, and Stone. (1984) Classification and Regression Trees. Wadsworth.
+
+    Notes
+    -----
+    Here, simplest is defined by the complexity of the model as influenced by some
+    user-defined target parameter (e.g. number of components, number of estimators,
+    polynomial degree, cost, scale, number hidden units, weight decay, number of
+    nearest neighbors, L1/L2 penalty, etc.).
+
+    See :ref:`sphx_glr_auto_examples_applications_plot_model_complexity_influence.py`
+    See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+    '''
+
+    def __init__(self, cv_results, param, greater_is_complex, scoring, method, tol=0.25, alpha=0.01):
+        import sklearn.metrics
+        self.cv_results = cv_results
+        self.param = param
+        self.greater_is_complex = greater_is_complex
+        self.scoring = scoring
+        self.method = method
+        self.scoring_funcs = [met for met in sklearn.metrics.__all__ if
+                              (met.endswith('_score')) or (met.endswith('_error'))]
+        # Set _score metrics to True and _error metrics to False
+        self.scoring_dict = dict(zip(self.scoring_funcs, [met.endswith('_score') for met in self.scoring_funcs]))
+        self.greater_is_better = self._check_scorer()
+        self.tol = tol
+        self.alpha = alpha
+
+    def _check_scorer(self):
+        """
+        Check whether the target refit scorer is negated. If so, adjusted
+        greater_is_better accordingly.
+        """
+        if self.scoring not in self.scoring_dict.keys():
+            if self.scoring.startswith('neg_'):
+                self.greater_is_better = True
+            else:
+                raise KeyError('Scoring metric not available.')
+        else:
+            self.greater_is_better = [value for key, value in self.scoring_dict.items() if self.scoring in key][0]
+        return self.greater_is_better
+
+    def _best_low_complexity(self):
+        """
+        Balance model complexity with cross-validated score.
+        """
+        # Check parameter whose complexity we seek to restrict
+        if not any(self.param in x for x in self.cv_results['params'][0].keys()):
+            raise KeyError('Parameter not found in cv grid.')
+        else:
+            self.param = [i for i in self.cv_results['params'][0].keys() if i.endswith(self.param)][0]
+
+        if self.method == 'onese':
+            threshold = self.call_standard_error()
+        elif self.method == 'percentile':
+            if self.tol is None:
+                raise ValueError('For percentile method, the tolerance (i.e. `tol`) parameter cannot be null.')
+            threshold = self.call_percentile(tol=self.tol)
+        elif self.method == 'ranksum':
+            if self.alpha is None:
+                raise ValueError('For ranksum method, the alpha-level (i.e. `alpha`) parameter cannot be null.')
+            threshold = self.call_rank_sum_test(alpha=self.alpha)
+        else:
+            raise ValueError('Method ' + self.method + ' is not valid.')
+
+        if self.greater_is_complex is True:
+            candidate_idx = np.flatnonzero(self.cv_results['mean_test_' + self.scoring] >= threshold)
+        else:
+            candidate_idx = np.flatnonzero(self.cv_results['mean_test_' + self.scoring] <= threshold)
+
+        best_idx = candidate_idx[self.cv_results['param_' + self.param]
+        [candidate_idx].argmin()]
+        return best_idx
+
+    def call_standard_error(self):
+        """
+        Calculate the upper/lower bound within 1 standard deviation
+        of the best `mean_test_scores`.
+        """
+        best_mean_score = self.cv_results['mean_test_' + self.scoring]
+        best_std_score = self.cv_results['std_test_' + self.scoring]
+        if self.greater_is_better is True:
+            best_score_idx = np.argmax(best_mean_score)
+            outstandard_error = (best_mean_score[best_score_idx] - best_std_score[best_score_idx])
+        else:
+            best_score_idx = np.argmin(best_mean_score)
+            outstandard_error = (best_mean_score[best_score_idx] + best_std_score[best_score_idx])
+        return outstandard_error
+
+    def call_rank_sum_test(self, alpha):
+        """
+        Returns the performance of the simplest model whose performance is not
+        significantly different across folds.
+        """
+        from scipy.stats import wilcoxon
+        import itertools
+        folds = np.vstack([self.cv_results[fold] for fold in
+                           [i for i in self.cv_results.keys() if ('split' in i) and (self.scoring in i)]])
+        tests = np.array(list(itertools.combinations(range(folds.shape[1]), 2)))
+
+        p_dict = {}
+        i = 0
+        for test in tests:
+            p_dict[i] = wilcoxon(folds[:, test[0]], folds[:, test[1]])[1]
+            i = i + 1
+
+        p_dict_filt = {key: val for key, val in p_dict.items() if val > alpha}
+        unq_cols = np.unique(np.hstack([tests[i] for i in p_dict_filt.keys()]))
+
+        if len(unq_cols) == 0:
+            raise ValueError('Models are all significantly different from one another')
+        best_mean_score = self.cv_results['mean_test_' + self.scoring][unq_cols]
+        if self.greater_is_better is True:
+            best_score_idx = np.argmax(best_mean_score)
+        else:
+            best_score_idx = np.argmin(best_mean_score)
+
+        outstandard_error = best_mean_score[best_score_idx]
+        return outstandard_error
+
+    def call_percentile(self, tol):
+        """
+        Returns the simplest model that is within a percent tolerance of the
+        empirically optimal model with the best `mean_test_scores`.
+        """
+        best_mean_score = self.cv_results['mean_test_' + self.scoring]
+        if self.greater_is_better is True:
+            best_score_idx = np.argmax(best_mean_score)
+        else:
+            best_score_idx = np.argmin(best_mean_score)
+
+        outstandard_error = (np.abs(best_mean_score[best_score_idx]) - tol) / tol
+        return outstandard_error
+
+    def standard_error(param, greater_is_complex, scoring):
+        '''
+        Standard error callable
+
+        Parameters
+        ----------
+        param : str
+            Parameter with the largest influence on model complexity.
+        greater_is_complex : bool
+            Whether complexity increases as `param` increases. Default is True.
+        scoring : str
+            Refit scoring metric.
+        '''
+        from functools import partial
+
+        def razor_pass(cv_results, param, greater_is_complex, scoring, method='onese'):
+            # from sklearn.model_selection._search import RazorCV
+
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method)
+            best_idx = rcv._best_low_complexity()
+            return best_idx
+
+        return partial(razor_pass, param=param, greater_is_complex=greater_is_complex, scoring=scoring)
+
+    def ranksum(param, greater_is_complex, scoring, alpha):
+        '''
+        Rank sum test (Wilcoxon) callable
+
+        Parameters
+        ----------
+        param : str
+            Parameter with the largest influence on model complexity.
+        greater_is_complex : bool
+            Whether complexity increases as `param` increases. Default is True.
+        scoring : str
+            Refit scoring metric.
+        alpha : float
+            Alpha-level to use for wilcoxon rank sum hypothesis testing. Required if `method`=='ranksum'.
+            Default is 0.01.
+        '''
+        from functools import partial
+
+        def razor_pass(cv_results, param, greater_is_complex, scoring, alpha, method='ranksum'):
+            # from sklearn.model_selection._search import RazorCV
+
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method, alpha)
+            best_idx = rcv._best_low_complexity()
+            return best_idx
+
+        return partial(razor_pass, param=param, greater_is_complex=greater_is_complex, scoring=scoring, alpha=alpha)
+
+    def percentile(param, greater_is_complex, scoring, tol):
+        '''
+        Percentile callable
+
+        Parameters
+        ----------
+        param : str
+            Parameter with the largest influence on model complexity.
+        greater_is_complex : bool
+            Whether complexity increases as `param` increases. Default is True.
+        scoring : str
+            Refit scoring metric.
+        tol : float
+            Acceptable percent tolerance in the case that a percentile threshold is used.
+            Required if `method`=='percentile'. Default is 0.25.
+        '''
+        from functools import partial
+
+        def razor_pass(cv_results, param, greater_is_complex, scoring, tol, method='percentile'):
+            # from sklearn.model_selection._search import RazorCV
+
+            rcv = RazorCV(cv_results, param, greater_is_complex, scoring, method, tol)
+            best_idx = rcv._best_low_complexity()
+            return best_idx
+
+        return partial(razor_pass, param=param, greater_is_complex=greater_is_complex, scoring=scoring, tol=tol)
