@@ -12,7 +12,6 @@ from scipy.sparse import lil_matrix
 from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
@@ -224,7 +223,8 @@ def test_label_encoder_str_bad_shape(dtype):
     le = LabelEncoder()
     le.fit(np.array(["apple", "orange"], dtype=dtype))
     msg = "bad input shape"
-    assert_raise_message(ValueError, msg, le.transform, "apple")
+    with pytest.raises(ValueError, match=msg):
+        le.transform("apple")
 
 
 def test_label_encoder_errors():
@@ -239,12 +239,15 @@ def test_label_encoder_errors():
     le = LabelEncoder()
     le.fit([1, 2, 3, -1, 1])
     msg = "contains previously unseen labels"
-    assert_raise_message(ValueError, msg, le.inverse_transform, [-2])
-    assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
+    with pytest.raises(ValueError, match=msg):
+        le.inverse_transform([-2])
+    with pytest.raises(ValueError, match=msg):
+        le.inverse_transform([-2, -3, -4])
 
     # Fail on inverse_transform("")
     msg = "bad input shape ()"
-    assert_raise_message(ValueError, msg, le.inverse_transform, "")
+    with pytest.raises(ValueError, match=msg):
+        le.inverse_transform("")
 
 
 @pytest.mark.parametrize(
@@ -390,7 +393,8 @@ def test_multilabel_binarizer_given_classes():
     err_msg = "The classes argument contains duplicate classes. Remove " \
               "these duplicates before passing them to MultiLabelBinarizer."
     mlb = MultiLabelBinarizer(classes=[1, 3, 2, 3])
-    assert_raise_message(ValueError, err_msg, mlb.fit, inp)
+    with pytest.raises(ValueError, match=err_msg):
+        mlb.fit(inp)
 
 
 def test_multilabel_binarizer_multiple_calls():
