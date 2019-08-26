@@ -1,5 +1,3 @@
-import numbers
-import os
 import pickle
 import tempfile
 import shutil
@@ -22,7 +20,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+                                    _passthrough_scorer, valid_scorers)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -559,3 +557,8 @@ def test_deprecated_scorer():
     deprecated_scorer = get_scorer('brier_score_loss')
     with pytest.deprecated_call():
         deprecated_scorer(clf, X_test, y_test)
+
+
+def test_valid_scorers():
+    scorers = valid_scorers()
+    assert "brier_score_loss" not in scorers
