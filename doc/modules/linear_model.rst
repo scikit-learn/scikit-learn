@@ -871,10 +871,10 @@ with 'log' loss, which might be even faster but requires more tuning.
 
 .. note:: **P-value estimation**
 
-    It is possible to obtain the p-values and confidence intervals for coefficients
-    in cases of regression without penalization. The `statsmodels package
-    <https://pypi.org/project/statsmodels/>` natively supports this. Within
-    sklearn, one could use bootstrapping instead as well.  
+    It is possible to obtain the p-values and confidence intervals for
+    coefficients in cases of regression without penalization. The `statsmodels
+    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    Within sklearn, one could use bootstrapping instead as well.  
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
