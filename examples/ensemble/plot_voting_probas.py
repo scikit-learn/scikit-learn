@@ -13,9 +13,9 @@ First, three examplary classifiers are initialized
 (:class:`~linear_model.LogisticRegression`, :class:`~naive_bayes.GaussianNB`,
 and :class:`~ensemble.RandomForestClassifier`) and used to initialize a
 soft-voting :class:`~ensemble.VotingClassifier` with weights `[1, 1, 5]`, which
-means that the predicted probabilities of the `RandomForestClassifier` count 5
-times as much as the weights of the other classifiers when the averaged
-probability is calculated.
+means that the predicted probabilities of the
+:class:`~ensemble.RandomForestClassifier` count 5 times as much as the weights
+of the other classifiers when the averaged probability is calculated.
 
 To visualize the probability weighting, we fit each classifier on the training
 set and plot the predicted class probabilities for the first sample in this
