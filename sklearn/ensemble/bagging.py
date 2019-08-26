@@ -532,12 +532,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
+        This attribute exists only when ``oob_score`` is True.
 
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        `oob_decision_function_` might contain NaN. This attribute exists 
+        only when ``oob_score`` is True.
 
     References
     ----------
@@ -908,12 +910,14 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
+        This attribute exists only when ``oob_score`` is True.
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_prediction_` might contain NaN.
+        `oob_prediction_` might contain NaN. This attribute exists only 
+        when ``oob_score`` is True.
 
     References
     ----------

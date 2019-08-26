@@ -38,15 +38,15 @@ Let's load the iris data set to fit a linear support vector machine on it::
   >>> from sklearn import datasets
   >>> from sklearn import svm
 
-  >>> iris = datasets.load_iris()
-  >>> iris.data.shape, iris.target.shape
+  >>> X, y = datasets.load_iris(return_X_y=True)
+  >>> X.shape, y.shape
   ((150, 4), (150,))
 
 We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = train_test_split(
-  ...     iris.data, iris.target, test_size=0.4, random_state=0)
+  ...     X, y, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
@@ -117,7 +117,7 @@ time)::
 
   >>> from sklearn.model_selection import cross_val_score
   >>> clf = svm.SVC(kernel='linear', C=1)
-  >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+  >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
@@ -133,7 +133,7 @@ scoring parameter::
 
   >>> from sklearn import metrics
   >>> scores = cross_val_score(
-  ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
+  ...     clf, X, y, cv=5, scoring='f1_macro')
   >>> scores
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
@@ -150,9 +150,9 @@ It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
-  >>> n_samples = iris.data.shape[0]
+  >>> n_samples = X.shape[0]
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
+  >>> cross_val_score(clf, X, y, cv=cv)
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
 Another option is to use an iterable yielding (train, test) splits as arrays of
@@ -166,8 +166,8 @@ indices, for example::
   ...         yield idx, idx
   ...         i += 1
   ...
-  >>> custom_cv = custom_cv_2folds(iris.data)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  >>> custom_cv = custom_cv_2folds(X)
+  >>> cross_val_score(clf, X, y, cv=custom_cv)
   array([1.        , 0.973...])
 
 .. topic:: Data transformation with held out data
@@ -179,7 +179,7 @@ indices, for example::
 
       >>> from sklearn import preprocessing
       >>> X_train, X_test, y_train, y_test = train_test_split(
-      ...     iris.data, iris.target, test_size=0.4, random_state=0)
+      ...     X, y, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
       >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
@@ -192,7 +192,7 @@ indices, for example::
 
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
+      >>> cross_val_score(clf, X, y, cv=cv)
       array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
@@ -233,7 +233,7 @@ predefined scorer names::
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring)
+    >>> scores = cross_validate(clf, X, y, scoring=scoring)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']
@@ -244,7 +244,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> from sklearn.metrics.scorer import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
     ...            'rec_macro': make_scorer(recall_score, average='macro')}
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
+    >>> scores = cross_validate(clf, X, y, scoring=scoring,
     ...                         cv=5, return_train_score=True)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
@@ -254,7 +254,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 
 Here is an example of ``cross_validate`` using a single metric::
 
-    >>> scores = cross_validate(clf, iris.data, iris.target,
+    >>> scores = cross_validate(clf, X, y,
     ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
