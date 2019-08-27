@@ -635,7 +635,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
 
 def test_multimetric_scorer_sanity_check():
-    # scoring dictionary returned is the same as calling each scroer seperately
+    # scoring dictionary returned is the same as calling each scorer seperately
     scorers = {'a1': 'accuracy', 'a2': 'accuracy',
                'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
                'ra1': 'roc_auc', 'ra2': 'roc_auc'}

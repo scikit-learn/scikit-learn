@@ -588,7 +588,7 @@ def _score(estimator, X_test, y_test, scorer):
             if not isinstance(score, numbers.Number):
                 raise ValueError(error_msg % (score, type(score), name))
             scores[name] = score
-    else:  # scaler
+    else:  # scalar
         if hasattr(scores, 'item'):
             with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
