@@ -1966,5 +1966,5 @@ def test_classes_deprecated():
              "will be removed in 0.22.")
 
     with pytest.warns(DeprecationWarning, match=match):
-        n=clf.classes_
-        assert n==clf._classes
+        n = clf.classes_
+        assert n == clf._classes
