@@ -1345,8 +1345,7 @@ def test_forest_degenerate_feature_importances():
      (np.ones(2), TypeError)]
 )
 def test_max_samples_exceptions(name, max_samples_exception):
-    """ Check invalid `max_samples` values
-    """
+    # Check invalid `max_samples` values
     max_samples, exception = max_samples_exception
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
     with pytest.raises(exception):
