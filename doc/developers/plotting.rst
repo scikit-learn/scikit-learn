@@ -24,9 +24,7 @@ the `plot` method defines attributes related to matplotlib, such as the line
 artist. This allows for customizations after calling the `plot` method.
 
 For example, the `RocCurveDisplay` defines the following methods and
-attributes:
-
-.. code-block:: python
+attributes::
 
    class RocCurveDisplay:
        def __init__(self, fpr, tpr, roc_auc, estimator_name):
@@ -76,7 +74,7 @@ axes to be placed. In this case, matplotlib's
 By default, the `ax` keyworld in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-For example, :func:`sklearn.inspection.plot_partial_dependence` plots multiple
+For example, :func:`~sklearn.inspection.plot_partial_dependence` plots multiple
 lines and contours using this API. The axes that is passed in or created that
 defines the space is saved as a `bounding_ax_` attribute. The individual axes
 created are stored in a `axes_` ndarray, corresponding to the axes position on
