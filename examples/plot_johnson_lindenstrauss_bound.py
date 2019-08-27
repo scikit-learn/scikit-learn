@@ -105,7 +105,7 @@ plt.show()
 # Empirical validation
 # ====================
 #
-# We validate the above bounds on the 20 newsgroups text document 
+# We validate the above bounds on the 20 newsgroups text document
 # (TF-IDF word frequencies) dataset or on the digits dataset:
 #
 # - for the 20 newsgroups dataset some 500 documents with 100k
