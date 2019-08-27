@@ -628,8 +628,8 @@ Finally, follow the formatting rules below to make it consistently good:
 In general have the following in mind:
 
     1. Use Python basic types. (``bool`` instead of ``boolean``)
-    2. Use parenthesis for defining shapes: ``array-like, shape=(n_samples,)``
-       or ``array-like, shape=(n_samples, n_features)``
+    2. Use parenthesis for defining shapes: ``array-like of shape (n_samples,)``
+       or ``array-like of shape (n_samples, n_features)``
     3. For strings with multiple options, use brackets:
        ``input: {'log', 'squared', 'multinomial'}``
     4. 1D or 2D data can be a subset of
