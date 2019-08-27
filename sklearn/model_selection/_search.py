@@ -9,38 +9,39 @@ parameters of an estimator.
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
-
-from abc import ABCMeta, abstractmethod
-from collections import defaultdict
-from collections.abc import Mapping, Sequence, Iterable
-from functools import partial, reduce
-from itertools import product
+import bisect
+import itertools
 import numbers
 import operator
 import time
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections import defaultdict
+from collections.abc import Mapping, Sequence, Iterable
+from copy import copy
+from functools import partial, reduce
+from itertools import product
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy.stats import rankdata
 
+from ._split import check_cv
+from ._validation import _aggregate_score_dicts
+from ._validation import _fit_and_score
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
-from ._split import check_cv
-from ._validation import _fit_and_score
-from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from joblib import Parallel, delayed
-from ..utils import check_random_state
-from ..utils.fixes import MaskedArray
-from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted
-from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
-
+from ..utils import check_random_state
+from ..utils.fixes import MaskedArray
+from ..utils.metaestimators import if_delegate_has_method
+from ..utils.random import sample_without_replacement
+from ..utils.validation import indexable, check_is_fitted
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
-           'ParameterSampler', 'RandomizedSearchCV']
+           'ParameterSampler', 'RandomizedSearchCV', 'GeneticSearchCV']
 
 
 class ParameterGrid:
@@ -242,6 +243,7 @@ class ParameterSampler:
     ...                  {'b': 1.038159, 'a': 2}]
     True
     """
+
     def __init__(self, param_distributions, n_iter, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError('Parameter distribution is not a dict or '
@@ -677,7 +679,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 if self.verbose > 0:
                     print("Fitting {0} folds for each of {1} candidates,"
                           " totalling {2} fits".format(
-                              n_splits, n_candidates, n_candidates * n_splits))
+                        n_splits, n_candidates, n_candidates * n_splits))
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
@@ -720,13 +722,13 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 if not isinstance(self.best_index_, numbers.Integral):
                     raise TypeError('best_index_ returned is not an integer')
                 if (self.best_index_ < 0 or
-                   self.best_index_ >= len(results["params"])):
+                        self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
                                            % refit_metric].argmin()
                 self.best_score_ = results["mean_test_%s" % refit_metric][
-                                           self.best_index_]
+                    self.best_index_]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
@@ -797,7 +799,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
         param_results = defaultdict(partial(MaskedArray,
-                                            np.empty(n_candidates,),
+                                            np.empty(n_candidates, ),
                                             mask=True,
                                             dtype=object))
         for cand_i, params in enumerate(candidate_params):
@@ -1484,3 +1486,475 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
+
+class GeneticSearchCV(BaseSearchCV):
+    """ Executes hyperparameters search by genetic algorithm.
+
+    In contrast to other SearchCV, it doesn't select parameters from a list,
+    but generates them and then implement genetic algorithm to improve selected values:
+    generates some "organism" (a bunch of hyperparameters) and then compare their score.
+    Only the best one will be selected for replications. So it is faster then GridSearchCV
+    as it is avoid combinatorial explosion and more accurate then RandomSearchCV as it can choose
+    more variants (not only listed ones).
+    See more info: https://en.wikipedia.org/wiki/Genetic_algorithm
+
+     Parameters
+    ----------
+    estimator : estimator object.
+        A object of that type is instantiated for each grid point.
+        This is assumed to implement the scikit-learn estimator interface.
+        Either estimator needs to provide a ``score`` function,
+        or ``scoring`` must be passed.
+
+    params : dict of dicts or lists
+        A dict where keys are names of estimator's parameter and values are either list or dicts:
+        if list is specified then random element will be selected for every "organism",
+        if params is float you can specify it as a dict with min and max values.
+        E.G. params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'], C=dict(min_=0.0, max_=0.1))
+
+    n_iter : int, default=10
+        Number of generation will be scored.
+
+    population_size : integer, default=16
+        Number of parameters bunches that will be tested every iterations.
+
+    old_genome_ratio : float, default=0.25
+        Number of best score "organism" survive each iteration and will be selected for reproduction and
+        further iterations.
+
+    unisexual_reproduction_ratio : float, default=0.25
+        Ratio of "organism" on every iteration except the initial one constructed from "organisms"
+        with best score with some mutations added.
+
+    totally_new_ratio : float, default=0.25
+        Ratio of "organism" that will be added on every iterations with totally new genome.
+        Specify non zero value to avoid stacking at the local minimum.
+
+    mutation_proba : float, default=0.1
+        Chance of mutation during unisex reproduction.
+
+    mutation_value_min : float, default=0.0
+        Minimum change of float params during mutation in term of relative change.
+
+    mutation_value_max : float, default=1.0
+        Maximum change of float params during mutation in term of relative change.
+
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
+
+        See :ref:`multimetric_grid_search` for an example.
+
+        If None, the estimator's score method is used.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid : boolean, default=False
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds.
+
+        .. deprecated:: 0.22
+            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+
+        - None, to use the default 5-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass, :class:`StratifiedKFold` is used. In all
+        other cases, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
+
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
+
+    refit : boolean, string, or callable, default=True
+        Refit an estimator using the best found parameters on the whole
+        dataset.
+
+        For multiple metric evaluation, this needs to be a string denoting the
+        scorer that would be used to find the best parameters for refitting
+        the estimator at the end.
+
+        Where there are considerations other than maximum score in
+        choosing a best estimator, ``refit`` can be set to a function which
+        returns the selected ``best_index_`` given the ``cv_results``. In that
+        case, the ``best_estimator_`` and ``best_parameters_`` will be set
+        according to the returned ``best_index_`` while the ``best_score_``
+        attribute will not be availble.
+
+        The refitted estimator is made available at the ``best_estimator_``
+        attribute and permits using ``predict`` directly on this
+        ``RandomizedSearchCV`` instance.
+
+        Also for multiple metric evaluation, the attributes ``best_index_``,
+        ``best_score_`` and ``best_params_`` will only be available if
+        ``refit`` is set and all of them will be determined w.r.t this specific
+        scorer.
+
+        See ``scoring`` parameter to know more about multiple metric
+        evaluation.
+
+        .. versionchanged:: 0.20
+            Support for callable added.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    random_state : int, RandomState instance or None, optional, default=None
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    error_score : 'raise' or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error. Default is ``np.nan``.
+
+    return_train_score : boolean, default=False
+        If ``False``, the ``cv_results_`` attribute will not include training
+        scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
+
+    >>>import numpy as np
+    >>>from sklearn.svm import SVC
+    >>>from sklearn import datasets
+    >>>from sklearn.model_selection import cross_validate, GeneticSearchCV
+
+
+    >>>iris = datasets.load_iris()
+    >>>model = SVC()
+    >>>E = np.random.uniform(0, 0.1, size=(len(iris.data), 20))  # add some noise
+    >>>X = np.hstack((iris.data, E))
+    >>>y = iris.target
+    >>>params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'], C=dict(min_=0.0, max_=0.1),
+    >>>              gamma=dict(min_=0.0, max_=0.1))
+    >>>cv = GeneticSearchCV(model, params, return_train_score=True, cv=3)
+    >>>result = cv.fit(X, y)
+    >>>print(result)
+    >>>print(cv.best_score_, cv.best_params_)
+    """
+    _required_parameters = ["estimator", "params"]
+
+    class GenerationAsListWrapper:
+        def __init__(self, genetic_search):
+            self._len = genetic_search.population_size
+            self.parent = genetic_search
+            self._indexes = [0] * 4
+            current = self.parent._n_previous_best
+            self._indexes[0] = current
+            current += self.parent._n_two_sex_reproduced
+            self._indexes[1] = current
+            current += self.parent._n_unisex_reproduced
+            self._indexes[2] = current
+            self._indexes[3] = self._len
+
+        def __len__(self):
+            return self._len
+
+        def __iter__(self):
+            return itertools.chain(self.parent._previous_best, self.parent._two_sex_reproduced,
+                                   self.parent._unisex_reproduced, self.parent._totally_new)
+
+        def __getitem__(self, item):
+            list_index = bisect.bisect_right(self._indexes, item)
+            item = item - self._indexes[list_index - 1] if list_index else item
+            if list_index == 0:
+                return self.parent._previous_best[item]
+            elif list_index == 1:
+                return self.parent._two_sex_reproduced[item]
+            elif list_index == 2:
+                return self.parent._unisex_reproduced[item]
+            elif list_index == 3:
+                return self.parent._totally_new[item]
+            else:
+                raise IndexError
+
+    def __init__(self, estimator, params, population_size=16, old_genome_ratio=0.25, unisexual_reproduction_ratio=0.25,
+                 totally_new_ratio=0.25, mutation_proba=0.1, mutation_value_min=0.0, mutation_value_max=1.0,
+                 n_iter=10,
+                 scoring=None, n_jobs=None, iid='deprecated', refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan, return_train_score=False):
+        super().__init__(
+            estimator=estimator, scoring=scoring,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
+        self.estimator = estimator
+        self.params = params
+        self._rng = check_random_state(random_state)
+        self.population_size = population_size
+        self.n_iter = n_iter
+        self.mutation_proba = mutation_proba
+        self.mutation_value_min = mutation_value_min
+        self.mutation_value_max = mutation_value_max
+
+        self._n_previous_best = int(population_size * old_genome_ratio)
+        self._previous_best = self._form_random_genome(self._n_previous_best)
+
+        two_sex_ratio = 1 - old_genome_ratio - unisexual_reproduction_ratio - totally_new_ratio
+        self._n_two_sex_reproduced = int(population_size * two_sex_ratio)
+        self._two_sex_reproduced = self._form_random_genome(self._n_two_sex_reproduced)
+
+        self._n_unisex_reproduced = int(population_size * unisexual_reproduction_ratio)
+        self._unisex_reproduced = self._form_random_genome(self._n_unisex_reproduced)
+
+        self._n_totally_new = population_size - self._n_previous_best - \
+                              self._n_unisex_reproduced - self._n_two_sex_reproduced
+        self._totally_new = self._form_random_genome(self._n_totally_new)
+        self.current_generation = GeneticSearchCV.GenerationAsListWrapper(self)
+        self._current_iteration = 0
+
+    def _form_random_genome(self, n):
+        result = []
+        for _ in range(n):
+            current = {}
+            for name, values in self.params.items():
+                if type(values) == dict:
+                    current[name] = self._rng.uniform(values["min_"], values["max_"])
+                elif hasattr(values, "__len__"):
+                    current[name] = self._rng.choice(values)
+                else:
+                    raise ValueError("It is expected that every param is a dict or a collection that has length.")
+            result.append(current)
+        return result
+
+    def fit(self, X, y=None, groups=None, **fit_params):
+        """Run fit with all sets of parameters.
+
+        Parameters
+        ----------
+
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        groups : array-like, with shape (n_samples,), optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set. Only used in conjunction with a "Group" `cv`
+            instance (e.g., `GroupKFold`).
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of the estimator
+        """
+        estimator = self.estimator
+        cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
+
+        scorers, self.multimetric_ = _check_multimetric_scoring(
+            self.estimator, scoring=self.scoring)
+
+        if self.multimetric_:
+            if self.refit is not False and (
+                    not isinstance(self.refit, str) or
+                    # This will work for both dict / list (tuple)
+                    self.refit not in scorers) and not callable(self.refit):
+                raise ValueError("For multi-metric scoring, the parameter "
+                                 "refit must be set to a scorer key or a "
+                                 "callable to refit an estimator with the "
+                                 "best parameter setting on the whole "
+                                 "data and make the best_* attributes "
+                                 "available for that metric. If this is "
+                                 "not needed, refit should be set to "
+                                 "False explicitly. %r was passed."
+                                 % self.refit)
+            else:
+                refit_metric = self.refit
+        else:
+            refit_metric = 'score'
+
+        X, y, groups = indexable(X, y, groups)
+        n_splits = cv.get_n_splits(X, y, groups)
+
+        base_estimator = clone(self.estimator)
+
+        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                            pre_dispatch=self.pre_dispatch)
+
+        fit_and_score_kwargs = dict(scorer=scorers,
+                                    fit_params=fit_params,
+                                    return_train_score=self.return_train_score,
+                                    return_n_test_samples=True,
+                                    return_times=True,
+                                    return_parameters=False,
+                                    error_score=self.error_score,
+                                    verbose=self.verbose)
+        results = {}
+        with parallel:
+
+            def evaluate_candidates(candidate_params):
+                n_candidates = len(candidate_params)
+
+                if self.verbose > 0:
+                    print("Fitting {0} folds for each of {1} candidates,"
+                          " totalling {2} fits".format(
+                        n_splits, n_candidates, n_candidates * n_splits))
+
+                out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                       X, y,
+                                                       train=train, test=test,
+                                                       parameters=parameters,
+                                                       **fit_and_score_kwargs)
+                               for parameters, (train, test)
+                               in product(candidate_params,
+                                          cv.split(X, y, groups)))
+
+                if len(out) < 1:
+                    raise ValueError('No fits were performed. '
+                                     'Was the CV iterator empty? '
+                                     'Were there no candidates?')
+                elif len(out) != n_candidates * n_splits:
+                    raise ValueError('cv.split and cv.get_n_splits returned '
+                                     'inconsistent results. Expected {} '
+                                     'splits, got {}'
+                                     .format(n_splits,
+                                             len(out) // n_candidates))
+
+                nonlocal results
+                results = self._format_results(
+                    candidate_params, scorers, n_splits, out)
+                return results
+
+        for _ in range(self.n_iter):
+            results = evaluate_candidates(self.current_generation)
+            self._form_next_generation(results)
+            self._current_iteration += 1
+
+        # For multi-metric evaluation, store the best_index_, best_params_ and
+        # best_score_ iff refit is one of the scorer names
+        # In single metric evaluation, refit_metric is "score"
+        if self.refit or not self.multimetric_:
+            # If callable, refit is expected to return the index of the best
+            # parameter set.
+            if callable(self.refit):
+                self.best_index_ = self.refit(results)
+                if not isinstance(self.best_index_, numbers.Integral):
+                    raise TypeError('best_index_ returned is not an integer')
+                if (self.best_index_ < 0 or
+                        self.best_index_ >= len(results["params"])):
+                    raise IndexError('best_index_ index out of range')
+            else:
+                self.best_index_ = results["rank_test_%s"
+                                           % refit_metric].argmin()
+                self.best_score_ = results["mean_test_%s" % refit_metric][
+                    self.best_index_]
+            self.best_params_ = results["params"][self.best_index_]
+
+        if self.refit:
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **self.best_params_)
+            refit_start_time = time.time()
+            if y is not None:
+                self.best_estimator_.fit(X, y, **fit_params)
+            else:
+                self.best_estimator_.fit(X, **fit_params)
+            refit_end_time = time.time()
+            self.refit_time_ = refit_end_time - refit_start_time
+
+        # Store the only scorer not as a dict for single metric evaluation
+        self.scorer_ = scorers if self.multimetric_ else scorers['score']
+
+        self.cv_results_ = results
+        self.n_splits_ = n_splits
+
+        return self
+
+    def _form_next_generation(self, results):
+        print(max(results["mean_test_score"]), np.mean(results["mean_test_score"]))
+        self._move_previous_best_to_the_beginning(results)
+        self._two_sex_reproduction()
+        self._unisex_reproduction()
+        self._totally_new = self._form_random_genome(self._n_totally_new)
+
+    def _move_previous_best_to_the_beginning(self, results):
+        best_indices = np.argpartition(results["mean_test_score"], self._n_previous_best)[-self._n_previous_best:]
+        if len(self._totally_new) > self._n_totally_new:  # initial run
+            self._previous_best = np.take(self._totally_new, best_indices)
+        else:
+            self._previous_best = np.take(self.current_generation, best_indices)
+
+    def _two_sex_reproduction(self):
+        self._two_sex_reproduced = []
+        for _ in range(self._n_two_sex_reproduced):
+            parent1, parent2 = self._rng.choice(self._previous_best, 2)
+            child = copy(parent1)
+            bit_mask = self._rng.random(len(child))
+            for (name, value), is_parent2_inheritance_proba in zip(parent2.items(), bit_mask):
+                if is_parent2_inheritance_proba > 0.5:
+                    child[name] = value
+            self._two_sex_reproduced.append(child)
+
+    def _unisex_reproduction(self):
+        self._unisex_reproduced = []
+        for _ in range(self._n_unisex_reproduced):
+            parent = self._rng.choice(self._previous_best, 1)[0]
+            child = copy(parent)
+            bit_mask = self._rng.random(len(child))
+            signs = self._rng.choice([-1, 1], len(child), replace=True)
+            for (name, value), mutate_proba, sign in zip(parent.items(), bit_mask, signs):
+                if mutate_proba > self.mutation_proba:
+                    if type(self.params[name]) == dict:
+                        self._mutate_float(child, name, sign, value)
+                    else:
+                        self._mutate_choise(child, name)
+            self._unisex_reproduced.append(child)
+
+    def _mutate_float(self, child, name, sign, value):
+        delta = self._rng.uniform(self.mutation_value_min, self.mutation_value_max)
+        delta *= 1.0 - self._current_iteration / self.n_iter
+        delta *= sign
+        mutated_value = value + delta * value
+        if self.params[name]["min_"] <= mutated_value <= self.params[name]["max_"]:
+            child[name] = mutated_value
+
+    def _mutate_choise(self, child, name):
+        child[name] = self._rng.choice(self.params[name])
