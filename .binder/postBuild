@@ -6,10 +6,7 @@ set -e
 # inside a git checkout of the scikit-learn/scikit-learn repo. This script is
 # generating notebooks from the scikit-learn python examples.
 
-# adapted from https://stackoverflow.com/a/41559867
-INSIDE_DOCKER=$(grep -q docker /proc/1/cgroup && echo "yes" || echo "no")
-
-if [[ "$INSIDE_DOCKER" == "no" ]]; then
+if [[ ! -f /.dockerenv ]]; then
     echo "This script was written for repo2docker and is supposed to run inside a docker container."
     echo "Exiting because this script can delete data if run outside of a docker container."
     exit 1
