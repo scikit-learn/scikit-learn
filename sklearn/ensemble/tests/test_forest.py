@@ -1355,16 +1355,13 @@ def test_forest_degenerate_feature_importances():
 )
 def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
-    print(exc_msg)
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
-    with pytest.raises(exc_type) as exc_info:
+    with pytest.raises(exc_type, match=exc_msg):
         est.fit(X, y)
-    assert str(exc_info.value) == exc_msg
 
 
 def check_classification_toy_max_samples(name):
-    """ Test that the toy example is separable via a bootstrap size of only 2
-    """
+    # Test that the toy example is separable via a bootstrap size of only 2
 
     rng = np.random.RandomState(1)
     max_tries = 100
@@ -1391,7 +1388,8 @@ def check_classification_toy_max_samples(name):
             perfect_score = True
             break
 
-    assert perfect_score
+    msg = "Perfect accuracy is achievable with `max_samples=2` on toy data"
+    assert perfect_score, msg
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
