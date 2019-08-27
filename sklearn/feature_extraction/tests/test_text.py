@@ -33,7 +33,7 @@ from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
-                                   SkipTest, assert_raises, assert_no_warnings,
+                                   SkipTest, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
 from collections import defaultdict
@@ -178,11 +178,13 @@ def test_unicode_decode_error():
     # Then let the Analyzer try to decode it as ascii. It should fail,
     # because we have given it an incorrect encoding.
     wa = CountVectorizer(ngram_range=(1, 2), encoding='ascii').build_analyzer()
-    assert_raises(UnicodeDecodeError, wa, text_bytes)
+    with pytest.raises(UnicodeDecodeError):
+        wa(text_bytes)
 
     ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
                          encoding='ascii').build_analyzer()
-    assert_raises(UnicodeDecodeError, ca, text_bytes)
+    with pytest.raises(UnicodeDecodeError):
+        ca(text_bytes)
 
 
 def test_char_ngram_analyzer():
@@ -299,9 +301,11 @@ def test_countvectorizer_stop_words():
     cv.set_params(stop_words='english')
     assert cv.get_stop_words() == ENGLISH_STOP_WORDS
     cv.set_params(stop_words='_bad_str_stop_')
-    assert_raises(ValueError, cv.get_stop_words)
+    with pytest.raises(ValueError):
+        cv.get_stop_words()
     cv.set_params(stop_words='_bad_unicode_stop_')
-    assert_raises(ValueError, cv.get_stop_words)
+    with pytest.raises(ValueError):
+        cv.get_stop_words()
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
     assert cv.get_stop_words() == set(stoplist)
@@ -451,7 +455,8 @@ def test_vectorizer():
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
-    assert_raises(ValueError, t3.transform, counts_train)
+    with pytest.raises(ValueError):
+        t3.transform(counts_train)
 
     # test idf transform with incompatible n_features
     X = [[1, 1, 5],
@@ -459,7 +464,8 @@ def test_vectorizer():
     t3.fit(X)
     X_incompt = [[1, 3],
                  [1, 3]]
-    assert_raises(ValueError, t3.transform, X_incompt)
+    with pytest.raises(ValueError):
+        t3.transform(X_incompt)
 
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
@@ -480,7 +486,8 @@ def test_vectorizer():
 
     # test transform on unfitted vectorizer with empty vocabulary
     v3 = CountVectorizer(vocabulary=None)
-    assert_raises(ValueError, v3.transform, train_data)
+    with pytest.raises(ValueError):
+        v3.transform(train_data)
 
     # ascii preprocessor?
     v3.set_params(strip_accents='ascii', lowercase=False)
@@ -493,11 +500,13 @@ def test_vectorizer():
 
     # error on bad strip_accents param
     v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
-    assert_raises(ValueError, v3.build_preprocessor)
+    with pytest.raises(ValueError):
+        v3.build_preprocessor()
 
     # error with bad analyzer type
     v3.set_params = '_invalid_analyzer_type_'
-    assert_raises(ValueError, v3.build_analyzer)
+    with pytest.raises(ValueError):
+        v3.build_analyzer()
 
 
 def test_tfidf_vectorizer_setters():
@@ -568,7 +577,8 @@ def test_feature_names():
     cv = CountVectorizer(max_df=0.5)
 
     # test for Value error on unfitted/empty vocabulary
-    assert_raises(ValueError, cv.get_feature_names)
+    with pytest.raises(ValueError):
+        cv.get_feature_names()
     assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
@@ -1014,13 +1024,15 @@ def test_tfidfvectorizer_invalid_idf_attr():
     copy = TfidfVectorizer(vocabulary=vect.vocabulary_, use_idf=True)
     expected_idf_len = len(vect.idf_)
     invalid_idf = [1.0] * (expected_idf_len + 1)
-    assert_raises(ValueError, setattr, copy, 'idf_', invalid_idf)
+    with pytest.raises(ValueError):
+        setattr(copy, 'idf_', invalid_idf)
 
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     vect = CountVectorizer(vocabulary=vocab)
-    assert_raises(ValueError, vect.fit, [])
+    with pytest.raises(ValueError):
+        vect.fit([])
 
 
 @fails_if_pypy

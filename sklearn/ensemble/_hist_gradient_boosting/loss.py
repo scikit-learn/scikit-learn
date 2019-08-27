@@ -15,8 +15,8 @@ try:  # logsumexp was moved from mist to special in 0.19
 except ImportError:
     from scipy.misc import logsumexp
 
-from .types import Y_DTYPE
-from .types import G_H_DTYPE
+from .common import Y_DTYPE
+from .common import G_H_DTYPE
 from ._loss import _update_gradients_least_squares
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy

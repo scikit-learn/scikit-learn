@@ -25,9 +25,11 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
+from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
+from ..utils import Bunch
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -39,6 +41,8 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
+from ._tree import _build_pruned_tree_ccp
+from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -90,7 +94,8 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 ccp_alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -104,6 +109,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.ccp_alpha = ccp_alpha
 
     def get_depth(self):
         """Returns the depth of the decision tree.
@@ -124,6 +130,10 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             X_idx_sorted=None):
 
         random_state = check_random_state(self.random_state)
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csc")
             y = check_array(y, ensure_2d=False, dtype=None)
@@ -381,6 +391,8 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        self._prune_tree()
+
         return self
 
     def _validate_X_predict(self, X, check_input):
@@ -507,6 +519,62 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
+
+    def _prune_tree(self):
+        """Prune tree using Minimal Cost-Complexity Pruning."""
+        check_is_fitted(self)
+
+        if self.ccp_alpha < 0.0:
+            raise ValueError("ccp_alpha must be greater than or equal to 0")
+
+        if self.ccp_alpha == 0.0:
+            return
+
+        # build pruned treee
+        n_classes = np.atleast_1d(self.n_classes_)
+        pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
+
+        self.tree_ = pruned_tree
+
+    def cost_complexity_pruning_path(self, X, y, sample_weight=None):
+        """Compute the pruning path during Minimal Cost-Complexity Pruning.
+
+        See `ref`:minimal_cost_complexity_pruning` for details on the pruning
+        process.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        Returns
+        -------
+        ccp_path : Bunch
+            Dictionary-like object, with attributes:
+
+            ccp_alphas : ndarray
+                Effective alphas of subtree during pruning.
+
+            impurities : ndarray
+                Sum of the impurities of the subtree leaves for the
+                corresponding alpha value in ``ccp_alphas``.
+        """
+        est = clone(self).set_params(ccp_alpha=0.0)
+        est.fit(X, y, sample_weight=sample_weight)
+        return Bunch(**ccp_pruning_path(est.tree_))
 
     @property
     def feature_importances_(self):
@@ -664,6 +732,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -755,7 +831,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -769,7 +846,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1016,6 +1094,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -1078,9 +1164,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-    >>> boston = load_boston()
+    >>> X, y = load_boston(return_X_y=True)
     >>> regressor = DecisionTreeRegressor(random_state=0)
-    >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
+    >>> cross_val_score(regressor, X, y, cv=10)
     ...                    # doctest: +SKIP
     ...
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
@@ -1098,7 +1184,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort=False):
+                 presort=False,
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1111,7 +1198,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1293,6 +1381,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -1306,6 +1402,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The number of classes (for single output problems),
         or a list containing the number of classes for each
         output (for multi-output problems).
+
+    feature_importances_ : array of shape = [n_features]
+        Return the feature importances (the higher, the more important the
+        feature).
 
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -1350,7 +1450,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 class_weight=None):
+                 class_weight=None,
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1363,7 +1464,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             class_weight=class_weight,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            ccp_alpha=ccp_alpha)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1487,6 +1589,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     max_features_ : int,
@@ -1534,7 +1644,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  random_state=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None,
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1546,4 +1657,5 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            random_state=random_state)
+            random_state=random_state,
+            ccp_alpha=ccp_alpha)
