@@ -1091,6 +1091,10 @@ class CategoricalNB(BaseDiscreteNB):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
+            It is further assumed that all categories of each feature are
+            represented by the numbers 0, ..., n - 1, where n refers to the
+            total number of categories for the given feature. This can, for
+            instance, be achieved with the help of OrdinalEncoder.
 
         y : array-like, shape = [n_samples]
             Target values.
@@ -1124,6 +1128,10 @@ class CategoricalNB(BaseDiscreteNB):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features. Here, each feature of X is
             assumed to be from a different categorical distribution.
+            It is further assumed that all categories of each feature are
+            represented by the numbers 0, ..., n - 1, where n refers to the
+            total number of categories for the given feature. This can, for
+            instance, be achieved with the help of OrdinalEncoder.
 
         y : array-like, shape = [n_samples]
             Target values.
@@ -1145,12 +1153,16 @@ class CategoricalNB(BaseDiscreteNB):
                                    sample_weight=sample_weight)
 
     def _check_X(self, X):
-        # force all finite does not work with dtype
+        # force_all_finite has to be checked independently of the dtype
+        # requirement, otherwise X is converted to int before it is checked
+        # for nan and inf and no error is raised
         X = check_array(X, accept_sparse=False, force_all_finite=True)
         return check_array(X, dtype='int')
 
     def _check_X_y(self, X, y):
-        # force all finite does not work with dtype
+        # force_all_finite has to be checked independently of the dtype
+        # requirement, otherwise X is converted to int before it is checked
+        # for nan and inf and no error is raised
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
         return check_X_y(X, y, dtype='int')
 
