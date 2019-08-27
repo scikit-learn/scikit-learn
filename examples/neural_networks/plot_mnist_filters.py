@@ -34,10 +34,8 @@ X = X / 255.
 X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 
-# mlp = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-#                     solver='sgd', verbose=10, tol=1e-4, random_state=1)
 mlp = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10, alpha=1e-4,
-                    solver='sgd', verbose=10, tol=1e-4, random_state=1,
+                    solver='sgd', verbose=10, random_state=1,
                     learning_rate_init=.1)
 
 mlp.fit(X_train, y_train)
