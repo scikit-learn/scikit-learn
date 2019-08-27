@@ -395,15 +395,6 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         return self
 
-    @property
-    def classes_(self):
-        if is_classifier(self):
-            return self._classes
-        else:
-            warnings.warn("'classes_' is to be deprecated from version 0.20 "
-                          "and will be removed in 0.22.", DeprecationWarning)
-            return self._classes
-
     def _validate_X_predict(self, X, check_input):
         """Validate X whenever one tries to predict, apply, predict_proba"""
         if check_input:
@@ -980,6 +971,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
             return proba
 
+    @property
+    def classes_(self):
+        return self._classes
+
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A decision tree regressor.
@@ -1251,6 +1246,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
+
+    @property
+    def classes_(self):
+        warnings.warn("'classes_' is to be deprecated from version 0.20 "
+                      "and will be removed in 0.22.", DeprecationWarning)
+        return self._classes
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
