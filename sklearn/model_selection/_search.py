@@ -499,7 +499,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def predict_log_proba(self, X):
-        """Call predict_log_proba on the estimator with the best found parameters.
+        """Call predict_log_proba on the estimator with the best found
+         parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
         ``predict_log_proba``.
@@ -516,7 +517,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def decision_function(self, X):
-        """Call decision_function on the estimator with the best found parameters.
+        """Call decision_function on the estimator with the best found
+         parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
         ``decision_function``.
@@ -678,8 +680,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 if self.verbose > 0:
                     print("Fitting {0} folds for each of {1} candidates,"
-                          " totalling {2} fits".format(
-                        n_splits, n_candidates, n_candidates * n_splits))
+                          " totalling {2} fits".format(n_splits, n_candidates,
+                                                       n_candidates * n_splits))
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
@@ -1492,11 +1494,12 @@ class GeneticSearchCV(BaseSearchCV):
     """ Executes hyperparameters search by genetic algorithm.
 
     In contrast to other SearchCV, it doesn't select parameters from a list,
-    but generates them and then implement genetic algorithm to improve selected values:
-    generates some "organism" (a bunch of hyperparameters) and then compare their score.
-    Only the best one will be selected for replications. So it is faster then GridSearchCV
-    as it is avoid combinatorial explosion and more accurate then RandomSearchCV as it can choose
-    more variants (not only listed ones).
+    but generates them and then implement genetic algorithm to improve selected
+    values: generates some "organism" (a bunch of hyperparameters) and then
+    compare their score. Only the best one will be selected for replications.
+    So it is faster then GridSearchCV as it is avoid combinatorial explosion
+    and more accurate then RandomSearchCV as it can choose more variants
+    (not only listed ones).
     See more info: https://en.wikipedia.org/wiki/Genetic_algorithm
 
      Parameters
@@ -1508,10 +1511,13 @@ class GeneticSearchCV(BaseSearchCV):
         or ``scoring`` must be passed.
 
     params : dict of dicts or lists
-        A dict where keys are names of estimator's parameter and values are either list or dicts:
-        if list is specified then random element will be selected for every "organism",
+        A dict where keys are names of estimator's parameter and values are
+        either list or dicts:
+        if list is specified then random element will be selected for every
+        "organism",
         if params is float you can specify it as a dict with min and max values.
-        E.G. params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'], C=dict(min_=0.0, max_=0.1))
+        E.G. params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'],
+                           C=dict(min_=0.0, max_=0.1))
 
     n_iter : int, default=10
         Number of generation will be scored.
@@ -1520,25 +1526,30 @@ class GeneticSearchCV(BaseSearchCV):
         Number of parameters bunches that will be tested every iterations.
 
     old_genome_ratio : float, default=0.25
-        Number of best score "organism" survive each iteration and will be selected for reproduction and
+        Number of best score "organism" survive each iteration and will be
+        selected for reproduction and
         further iterations.
 
     unisexual_reproduction_ratio : float, default=0.25
-        Ratio of "organism" on every iteration except the initial one constructed from "organisms"
+        Ratio of "organism" on every iteration except the initial one
+        constructed from "organisms"
         with best score with some mutations added.
 
     totally_new_ratio : float, default=0.25
-        Ratio of "organism" that will be added on every iterations with totally new genome.
+        Ratio of "organism" that will be added on every iterations with totally
+        new genome.
         Specify non zero value to avoid stacking at the local minimum.
 
     mutation_proba : float, default=0.1
         Chance of mutation during unisex reproduction.
 
     mutation_value_min : float, default=0.0
-        Minimum change of float params during mutation in term of relative change.
+        Minimum change of float params during mutation in term of relative
+        change.
 
     mutation_value_max : float, default=1.0
-        Maximum change of float params during mutation in term of relative change.
+        Maximum change of float params during mutation in term of relative
+        change.
 
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -1670,10 +1681,11 @@ class GeneticSearchCV(BaseSearchCV):
 
     >>>iris = datasets.load_iris()
     >>>model = SVC()
-    >>>E = np.random.uniform(0, 0.1, size=(len(iris.data), 20))  # add some noise
+    >>>E = np.random.uniform(0, 0.1, size=(len(iris.data), 20)) # add some noise
     >>>X = np.hstack((iris.data, E))
     >>>y = iris.target
-    >>>params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'], C=dict(min_=0.0, max_=0.1),
+    >>>params = dict(kernel=['linear', 'poly', 'rbf', 'sigmoid'],
+    >>>              C=dict(min_=0.0, max_=0.1),
     >>>              gamma=dict(min_=0.0, max_=0.1))
     >>>cv = GeneticSearchCV(model, params, return_train_score=True, cv=3)
     >>>result = cv.fit(X, y)
@@ -1699,8 +1711,10 @@ class GeneticSearchCV(BaseSearchCV):
             return self._len
 
         def __iter__(self):
-            return itertools.chain(self.parent._previous_best, self.parent._two_sex_reproduced,
-                                   self.parent._unisex_reproduced, self.parent._totally_new)
+            return itertools.chain(self.parent._previous_best,
+                                   self.parent._two_sex_reproduced,
+                                   self.parent._unisex_reproduced,
+                                   self.parent._totally_new)
 
         def __getitem__(self, item):
             list_index = bisect.bisect_right(self._indexes, item)
@@ -1716,11 +1730,14 @@ class GeneticSearchCV(BaseSearchCV):
             else:
                 raise IndexError
 
-    def __init__(self, estimator, params, population_size=16, old_genome_ratio=0.25, unisexual_reproduction_ratio=0.25,
-                 totally_new_ratio=0.25, mutation_proba=0.1, mutation_value_min=0.0, mutation_value_max=1.0,
-                 n_iter=10,
-                 scoring=None, n_jobs=None, iid='deprecated', refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 random_state=None, error_score=np.nan, return_train_score=False):
+    def __init__(self, estimator, params, population_size=16,
+                 old_genome_ratio=0.25, unisexual_reproduction_ratio=0.25,
+                 totally_new_ratio=0.25, mutation_proba=0.1,
+                 mutation_value_min=0.0, mutation_value_max=1.0, n_iter=10,
+                 scoring=None, n_jobs=None, iid='deprecated', refit=True,
+                 cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 random_state=None, error_score=np.nan,
+                 return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -1738,15 +1755,20 @@ class GeneticSearchCV(BaseSearchCV):
         self._n_previous_best = int(population_size * old_genome_ratio)
         self._previous_best = self._form_random_genome(self._n_previous_best)
 
-        two_sex_ratio = 1 - old_genome_ratio - unisexual_reproduction_ratio - totally_new_ratio
+        two_sex_ratio = 1 - old_genome_ratio - unisexual_reproduction_ratio - \
+                        totally_new_ratio
         self._n_two_sex_reproduced = int(population_size * two_sex_ratio)
-        self._two_sex_reproduced = self._form_random_genome(self._n_two_sex_reproduced)
+        self._two_sex_reproduced = \
+            self._form_random_genome(self._n_two_sex_reproduced)
 
-        self._n_unisex_reproduced = int(population_size * unisexual_reproduction_ratio)
-        self._unisex_reproduced = self._form_random_genome(self._n_unisex_reproduced)
+        self._n_unisex_reproduced = \
+            int(population_size * unisexual_reproduction_ratio)
+        self._unisex_reproduced = \
+            self._form_random_genome(self._n_unisex_reproduced)
 
         self._n_totally_new = population_size - self._n_previous_best - \
-                              self._n_unisex_reproduced - self._n_two_sex_reproduced
+                              self._n_unisex_reproduced - \
+                              self._n_two_sex_reproduced
         self._totally_new = self._form_random_genome(self._n_totally_new)
         self.current_generation = GeneticSearchCV.GenerationAsListWrapper(self)
         self._current_iteration = 0
@@ -1757,11 +1779,13 @@ class GeneticSearchCV(BaseSearchCV):
             current = {}
             for name, values in self.params.items():
                 if type(values) == dict:
-                    current[name] = self._rng.uniform(values["min_"], values["max_"])
+                    current[name] = \
+                        self._rng.uniform(values["min_"], values["max_"])
                 elif hasattr(values, "__len__"):
                     current[name] = self._rng.choice(values)
                 else:
-                    raise ValueError("It is expected that every param is a dict or a collection that has length.")
+                    raise ValueError("It is expected that every param is a "
+                                     "dict or a collection that has length.")
             result.append(current)
         return result
 
@@ -1909,14 +1933,17 @@ class GeneticSearchCV(BaseSearchCV):
         return self
 
     def _form_next_generation(self, results):
-        print(max(results["mean_test_score"]), np.mean(results["mean_test_score"]))
+        print(max(results["mean_test_score"]),
+              np.mean(results["mean_test_score"]))
         self._move_previous_best_to_the_beginning(results)
         self._two_sex_reproduction()
         self._unisex_reproduction()
         self._totally_new = self._form_random_genome(self._n_totally_new)
 
     def _move_previous_best_to_the_beginning(self, results):
-        best_indices = np.argpartition(results["mean_test_score"], self._n_previous_best)[-self._n_previous_best:]
+        best_indices = np.argpartition(
+            results["mean_test_score"],
+            self._n_previous_best)[-self._n_previous_best:]
         if len(self._totally_new) > self._n_totally_new:  # initial run
             self._previous_best = np.take(self._totally_new, best_indices)
         else:
@@ -1928,7 +1955,8 @@ class GeneticSearchCV(BaseSearchCV):
             parent1, parent2 = self._rng.choice(self._previous_best, 2)
             child = copy(parent1)
             bit_mask = self._rng.random(len(child))
-            for (name, value), is_parent2_inheritance_proba in zip(parent2.items(), bit_mask):
+            for (name, value), is_parent2_inheritance_proba in \
+                    zip(parent2.items(), bit_mask):
                 if is_parent2_inheritance_proba > 0.5:
                     child[name] = value
             self._two_sex_reproduced.append(child)
@@ -1940,7 +1968,8 @@ class GeneticSearchCV(BaseSearchCV):
             child = copy(parent)
             bit_mask = self._rng.random(len(child))
             signs = self._rng.choice([-1, 1], len(child), replace=True)
-            for (name, value), mutate_proba, sign in zip(parent.items(), bit_mask, signs):
+            for (name, value), mutate_proba, sign in \
+                    zip(parent.items(), bit_mask, signs):
                 if mutate_proba > self.mutation_proba:
                     if type(self.params[name]) == dict:
                         self._mutate_float(child, name, sign, value)
@@ -1949,11 +1978,13 @@ class GeneticSearchCV(BaseSearchCV):
             self._unisex_reproduced.append(child)
 
     def _mutate_float(self, child, name, sign, value):
-        delta = self._rng.uniform(self.mutation_value_min, self.mutation_value_max)
+        delta = self._rng.uniform(self.mutation_value_min,
+                                  self.mutation_value_max)
         delta *= 1.0 - self._current_iteration / self.n_iter
         delta *= sign
         mutated_value = value + delta * value
-        if self.params[name]["min_"] <= mutated_value <= self.params[name]["max_"]:
+        if self.params[name]["min_"] <= mutated_value \
+                <= self.params[name]["max_"]:
             child[name] = mutated_value
 
     def _mutate_choise(self, child, name):
