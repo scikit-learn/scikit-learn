@@ -16,7 +16,6 @@ import pytest
 
 from sklearn.utils import gen_batches
 
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1264,9 +1263,9 @@ def test_quantile_transform_check_error():
                                          "Got 'rnd' instead."):
         transformer.inverse_transform(X_tran)
     # check that an error is raised if input is scalar
-    assert_raise_message(ValueError,
-                         'Expected 2D array, got scalar array instead',
-                         transformer.transform, 10)
+    with pytest.raises(ValueError,
+                       match='Expected 2D array, got scalar array instead'):
+        transformer.transform(10)
     # check that a warning is raised is n_quantiles > n_samples
     transformer = QuantileTransformer(n_quantiles=100)
     warn_msg = "n_quantiles is set to n_samples"
@@ -2263,23 +2262,23 @@ def test_power_transformer_boxcox_strictly_positive_exception():
     X_with_negatives = X_2d
     not_positive_message = 'strictly positive'
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.transform, X_with_negatives)
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.transform(X_with_negatives)
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.fit, X_with_negatives)
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.fit(X_with_negatives)
 
-    assert_raise_message(ValueError, not_positive_message,
-                         power_transform, X_with_negatives, 'box-cox')
+    with pytest.raises(ValueError, match=not_positive_message):
+        power_transform(X_with_negatives, 'box-cox')
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.transform, np.zeros(X_2d.shape))
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.transform(np.zeros(X_2d.shape))
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.fit, np.zeros(X_2d.shape))
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.fit(np.zeros(X_2d.shape))
 
-    assert_raise_message(ValueError, not_positive_message,
-                         power_transform, np.zeros(X_2d.shape), 'box-cox')
+    with pytest.raises(ValueError, match=not_positive_message):
+        power_transform(np.zeros(X_2d.shape), 'box-cox')
 
 
 @pytest.mark.parametrize('X', [X_2d, np.abs(X_2d), -np.abs(X_2d),
@@ -2299,11 +2298,11 @@ def test_power_transformer_shape_exception(method):
     # than during fitting
     wrong_shape_message = 'Input data has a different number of features'
 
-    assert_raise_message(ValueError, wrong_shape_message,
-                         pt.transform, X[:, 0:1])
+    with pytest.raises(ValueError, match=wrong_shape_message):
+        pt.transform(X[:, 0:1])
 
-    assert_raise_message(ValueError, wrong_shape_message,
-                         pt.inverse_transform, X[:, 0:1])
+    with pytest.raises(ValueError, match=wrong_shape_message):
+        pt.inverse_transform(X[:, 0:1])
 
 
 def test_power_transformer_method_exception():
@@ -2312,8 +2311,8 @@ def test_power_transformer_method_exception():
 
     # An exception should be raised if PowerTransformer.method isn't valid
     bad_method_message = "'method' must be one of"
-    assert_raise_message(ValueError, bad_method_message,
-                         pt.fit, X)
+    with pytest.raises(ValueError, match=bad_method_message):
+        pt.fit(X)
 
 
 def test_power_transformer_lambda_zero():
