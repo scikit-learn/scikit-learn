@@ -6,6 +6,7 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
+from itertools import chain
 from inspect import signature
 
 import numpy as np
@@ -33,7 +34,8 @@ from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
+                    BaseEstimator)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -273,14 +275,14 @@ def _yield_all_checks(name, estimator):
         yield check_fit_non_negative
 
 
-def set_check_estimator_ids(obj):
+def _set_check_estimator_ids(obj):
     """Create pytest ids for checks.
 
     When `obj` is an estimator, this returns the pprint version of the
     estimator (with `print_changed_only=True`). When `obj` is a function, the
     name of the function is returned with its keyworld arguments.
 
-    `set_check_estimator_ids` is designed to be used as the `id` in
+    `_set_check_estimator_ids` is designed to be used as the `id` in
     `pytest.mark.parametrize` where `check_estimator(..., generate_only=True)`
     is yielding estimators and checks.
 
@@ -342,6 +344,31 @@ def _generate_class_checks(Estimator):
     yield (Estimator, partial(check_parameters_default_constructible, name))
     estimator = _construct_instance(Estimator)
     yield from _generate_instance_checks(name, estimator)
+
+
+def parametrize_with_checks(estimators):
+    """Pytest specific decorator for parametrizing estimator checks.
+
+    The `id` of each test is set to be a pprint version of the estimator
+    and the name of the check with its keyword arguments.
+
+    Read more in the :ref:`User Guide<rolling_your_own_estimator>`.
+
+    Parameters
+    ----------
+    estimators : list of estimators objects or classes
+        Estimators to generated checks for.
+
+    Returns
+    -------
+    decorator : `pytest.mark.parametrize`
+    """
+    import pytest
+    return pytest.mark.parametrize(
+        "estimator, check",
+        chain.from_iterable(check_estimator(estimator, generate_only=True)
+                            for estimator in estimators),
+        ids=_set_check_estimator_ids)
 
 
 def check_estimator(Estimator, generate_only=False):

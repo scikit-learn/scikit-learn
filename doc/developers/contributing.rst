@@ -1341,24 +1341,20 @@ selection tools such as :class:`model_selection.GridSearchCV` and
 Setting `generate_only=True` returns a generator that yields (estimator, check)
 tuples where the check can be called independently from each other, i.e.
 `check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. In pytest, the checks can be constructed as
-follows::
+the checks that are failing. scikit-learn provides a pytest specific decorator, 
+:func:`~sklearn.utils.parametrize_with_checks` makes it easier to test
+multiple estimators::
 
-  import pytest
-  from sklearn.utils.estimator_checks import check_estimator
-  from sklearn.utils.estimator_checks import set_check_estimator_ids
   from sklearn.linear_model import LogisticRegression
+  from sklearn.tree import DecisionTreeRegressor
 
-  @pytest.mark.parametrize(
-      'estimator, check',
-      check_estimator(LogisticRegression, generate_only=True),
-      ids=set_check_estimator_ids)
+  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
   def test_sklearn_compatible_estimator(estimator, check):
       check(estimator)
 
-Setting `set_check_estimator_ids` in `pytest.mark.parameterize` renames the
-test name to expose the name of the underlying estimator and check. This allows
-`pytest -k` to be used to specific which test to run
+This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
+the name of the underlying estimator and check in the test name. This allows
+`pytest -k` to be used to specific which tests to run.
 
 .. code-block: bash
    

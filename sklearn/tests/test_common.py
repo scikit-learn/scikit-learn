@@ -12,10 +12,10 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator
-from itertools import chain
 from functools import partial
 
 import pytest
+
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
@@ -36,9 +36,10 @@ from sklearn.utils.estimator_checks import (
     _safe_tags,
     _construct_instance,
     set_checking_parameters,
+    _set_check_estimator_ids,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
-    set_check_estimator_ids)
+    parametrize_with_checks)
 
 
 def test_all_estimator_no_base_class():
@@ -73,7 +74,7 @@ def _sample_func(x, y=1):
      "solver='newton-cg',warm_start=True)")
 ])
 def test_set_check_estimator_ids(val, expected):
-    assert set_check_estimator_ids(val) == expected
+    assert _set_check_estimator_ids(val) == expected
 
 
 def _tested_estimators():
@@ -87,14 +88,10 @@ def _tested_estimators():
         except SkipTest:
             continue
 
-        yield name, estimator
+        yield estimator
 
 
-@pytest.mark.parametrize(
-        "estimator, check",
-        chain.from_iterable(check_estimator(estimator, generate_only=True)
-                            for _, estimator in _tested_estimators()),
-        ids=set_check_estimator_ids)
+@parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
