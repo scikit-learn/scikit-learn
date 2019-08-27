@@ -28,11 +28,17 @@ stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
 """
-print(__doc__)
+
+###########################################################################
+# Python package and dataset imports, load dataset
+# ---------------------------------------------------
+
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
+
+print(__doc__)
 
 # Standard scientific Python imports
 import matplotlib.pyplot as plt
@@ -48,6 +54,11 @@ from sklearn.decomposition import PCA
 # The digits dataset
 digits = datasets.load_digits(n_class=9)
 
+
+
+##################################################################
+# Timing and accuracy plots
+# --------------------------------------------------
 # To apply an classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.data)
@@ -155,7 +166,10 @@ plt.tight_layout()
 plt.show()
 
 
+
 ############################################################################
+# Decision Surfaces of RBF Kernel SVM and Linear SVM
+# --------------------------------------------------------
 # The second plot visualized the decision surfaces of the RBF kernel SVM and
 # the linear SVM with approximate kernel maps.
 # The plot shows decision surfaces of the classifiers projected onto
