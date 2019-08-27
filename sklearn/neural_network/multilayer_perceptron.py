@@ -15,7 +15,7 @@ import scipy.optimize
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
-from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
+from ._base import LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
@@ -97,6 +97,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
         """
+        # local import to allow custom activations set via this
+        # private variable in _base
+        from ._base import ACTIVATIONS
+
         hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
@@ -215,6 +219,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         coef_grads : list, length = n_layers - 1
         intercept_grads : list, length = n_layers - 1
         """
+        # local import to allow custom activations set via this
+        # private variable in _base
+        from ._base import DERIVATIVES
+
         n_samples = X.shape[0]
 
         # Forward propagate
@@ -376,6 +384,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _validate_hyperparameters(self):
+        # local import to allow custom activations set via this
+        # private variable in _base
+        from ._base import ACTIVATIONS
+
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False, got %s." %
                              self.shuffle)

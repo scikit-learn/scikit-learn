@@ -713,12 +713,12 @@ def test_early_stopping_stratified():
 
 
 def test_custom_activation(monkeypatch):
-    from sklearn.neural_network import multilayer_perceptron
+    import sklearn.neural_network._base
 
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
 
-    monkeypatch.setattr(multilayer_perceptron, "ACTIVATIONS", {})
+    monkeypatch.setattr(sklearn.neural_network._base, "ACTIVATIONS", {})
 
     mlp = MLPClassifier()
     # check that monkeypatching works as expected.
@@ -727,14 +727,14 @@ def test_custom_activation(monkeypatch):
         mlp.fit(X, y)
 
     monkeypatch.setattr(
-        multilayer_perceptron,
+        sklearn.neural_network._base,
         "ACTIVATIONS",
         # logistic is necessary for the last layer in any case
         {'identity2': lambda x: x, 'logistic': lambda x: x}
     )
 
     monkeypatch.setattr(
-        multilayer_perceptron,
+        sklearn.neural_network._base,
         "DERIVATIVES",
         # logistic is necessary for the last layer in any case
         {'identity2': lambda x, _: 1.0, 'logistic': lambda x, _: 1.0}
