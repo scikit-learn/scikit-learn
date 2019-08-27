@@ -11,6 +11,7 @@ Developer's Guide
 
    contributing
    develop
+   plotting
    tips
    utilities
    performance
