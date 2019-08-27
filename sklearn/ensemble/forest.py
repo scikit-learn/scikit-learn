@@ -80,11 +80,11 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     ----------
     n_samples : int
         Number of samples in the dataset.
-    max_samples : int, float or None, default=None
+    max_samples : int or float
         The maximum number of samples to draw from the total available:
-            - float indicates a fraction of the total.
-            - int indicates the exact number of samples.
-            - None indicates the total number of samples
+            - if float, this indicates a fraction of the total;
+            - if int, this indicates the exact number of samples;
+            - if None, this indicates the total number of samples.
 
     Returns
     -------
@@ -100,7 +100,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
     elif isinstance(max_samples, numbers.Real):
         if not (0 < max_samples < 1.0):
-            msg = "`max_samples` must be in range (0, 1.0) but got value {}"
+            msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
         return int(round(n_samples * max_samples))
     else:
