@@ -438,33 +438,33 @@ def test_ovr_pipeline():
     assert_array_equal(ovr.predict(iris.data), ovr_pipe.predict(iris.data))
 
 
-def test_ovr_coef_():
-    for base_classifier in [SVC(kernel='linear', random_state=0),
-                            LinearSVC(random_state=0)]:
-        # SVC has sparse coef with sparse input data
+# def test_ovr_coef_():
+#     for base_classifier in [SVC(kernel='linear', random_state=0),
+#                             LinearSVC(random_state=0)]:
+#         # SVC has sparse coef with sparse input data
 
-        ovr = OneVsRestClassifier(base_classifier)
-        for X in [iris.data, sp.csr_matrix(iris.data)]:
-            # test with dense and sparse coef
-            ovr.fit(X, iris.target)
-            shape = ovr.coef_.shape
-            assert shape[0] == n_classes
-            assert shape[1] == iris.data.shape[1]
-            # don't densify sparse coefficients
-            assert (sp.issparse(ovr.estimators_[0].coef_) ==
-                         sp.issparse(ovr.coef_))
+#         ovr = OneVsRestClassifier(base_classifier)
+#         for X in [iris.data, sp.csr_matrix(iris.data)]:
+#             # test with dense and sparse coef
+#             ovr.fit(X, iris.target)
+#             shape = ovr.coef_.shape
+#             assert shape[0] == n_classes
+#             assert shape[1] == iris.data.shape[1]
+#             # don't densify sparse coefficients
+#             assert (sp.issparse(ovr.estimators_[0].coef_) ==
+#                          sp.issparse(ovr.coef_))
 
 
-def test_ovr_coef_exceptions():
-    # Not fitted exception!
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    # lambda is needed because we don't want coef_ to be evaluated right away
-    assert_raises(ValueError, lambda x: ovr.coef_, None)
+# def test_ovr_coef_exceptions():
+#     # Not fitted exception!
+#     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+#     # lambda is needed because we don't want coef_ to be evaluated right away
+#     assert_raises(ValueError, lambda x: ovr.coef_, None)
 
-    # Doesn't have coef_ exception!
-    ovr = OneVsRestClassifier(DecisionTreeClassifier())
-    ovr.fit(iris.data, iris.target)
-    assert_raises(AttributeError, lambda x: ovr.coef_, None)
+#     # Doesn't have coef_ exception!
+#     ovr = OneVsRestClassifier(DecisionTreeClassifier())
+#     ovr.fit(iris.data, iris.target)
+#     assert_raises(AttributeError, lambda x: ovr.coef_, None)
 
 
 def test_ovo_exceptions():

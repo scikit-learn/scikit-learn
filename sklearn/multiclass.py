@@ -381,24 +381,24 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
     def n_classes_(self):
         return len(self.classes_)
 
-    @property
-    def coef_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "coef_"):
-            raise AttributeError(
-                "Base estimator doesn't have a coef_ attribute.")
-        coefs = [e.coef_ for e in self.estimators_]
-        if sp.issparse(coefs[0]):
-            return sp.vstack(coefs)
-        return np.vstack(coefs)
+    # @property
+    # def coef_(self):
+    #     check_is_fitted(self)
+    #     if not hasattr(self.estimators_[0], "coef_"):
+    #         raise AttributeError(
+    #             "Base estimator doesn't have a coef_ attribute.")
+    #     coefs = [e.coef_ for e in self.estimators_]
+    #     if sp.issparse(coefs[0]):
+    #         return sp.vstack(coefs)
+    #     return np.vstack(coefs)
 
-    @property
-    def intercept_(self):
-        check_is_fitted(self)
-        if not hasattr(self.estimators_[0], "intercept_"):
-            raise AttributeError(
-                "Base estimator doesn't have an intercept_ attribute.")
-        return np.array([e.intercept_.ravel() for e in self.estimators_])
+    # @property
+    # def intercept_(self):
+    #     check_is_fitted(self)
+    #     if not hasattr(self.estimators_[0], "intercept_"):
+    #         raise AttributeError(
+    #             "Base estimator doesn't have an intercept_ attribute.")
+    #     return np.array([e.intercept_.ravel() for e in self.estimators_])
 
     @property
     def _pairwise(self):
