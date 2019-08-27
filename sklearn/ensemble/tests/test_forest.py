@@ -1356,11 +1356,13 @@ def test_forest_degenerate_feature_importances():
 def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
-    with pytest.raises(exc_type, match=exc_msg):
+    with pytest.raises(exc_type) as exc_info:
         est.fit(X, y)
+    assert str(exc_info.value) == exc_msg, "Exception message does not match"
 
 
-def check_classification_toy_max_samples(name):
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_classification_toy_max_samples(name):
     # Test that the toy example is separable via a bootstrap size of only 2
 
     rng = np.random.RandomState(1)
@@ -1392,6 +1394,32 @@ def check_classification_toy_max_samples(name):
     assert perfect_score, msg
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_classification_toy_max_samples(name):
-    check_classification_toy_max_samples(name)
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
+def test_little_tree_with_small_max_samples(name):
+    rng = np.random.RandomState(1)
+
+    X = rng.randn(10000, 2)
+    y = rng.randn(10000) > 0
+
+    # First fit with no restriction on max samples
+    est1 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        n_estimators=1,
+        random_state=rng,
+        max_samples=None
+    )
+
+    # Second fit with max samples restricted to just 2
+    est2 = FOREST_CLASSIFIERS_REGRESSORS[name](
+        n_estimators=1,
+        random_state=rng,
+        max_samples=2,
+    )
+
+    est1.fit(X, y)
+    est2.fit(X, y)
+
+    tree1 = est1.estimators_[0].tree_
+    tree2 = est2.estimators_[0].tree_
+
+    msg = "Tree without `max_samples` restriction should have more nodes"
+    assert tree1.node_count > tree2.node_count, msg
