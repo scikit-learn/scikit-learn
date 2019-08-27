@@ -1334,22 +1334,32 @@ def test_forest_degenerate_feature_importances():
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize(
-    'max_samples_exception',
-    [(int(1e9), ValueError),
-     (1.0, ValueError),
-     (2.0, ValueError),
-     (0.0, ValueError),
-     (np.nan, ValueError),
-     (np.inf, ValueError),
-     ('str max_samples?!', TypeError),
-     (np.ones(2), TypeError)]
+    'max_samples, exc_type, exc_msg',
+    [(int(1e9), ValueError,
+      "`max_samples` must be in range 1 to 6 but got value 1000000000"),
+     (1.0, ValueError,
+      "`max_samples` must be in range (0, 1) but got value 1.0"),
+     (2.0, ValueError,
+      "`max_samples` must be in range (0, 1) but got value 2.0"),
+     (0.0, ValueError,
+      "`max_samples` must be in range (0, 1) but got value 0.0"),
+     (np.nan, ValueError,
+      "`max_samples` must be in range (0, 1) but got value nan"),
+     (np.inf, ValueError,
+      "`max_samples` must be in range (0, 1) but got value inf"),
+     ('str max_samples?!', TypeError,
+      "`max_samples` should be int or float, but got type '<class \'str\'>'"),
+     (np.ones(2), TypeError,
+      "`max_samples` should be int or float, but got type "
+      "'<class \'numpy.ndarray\'>'")]
 )
-def test_max_samples_exceptions(name, max_samples_exception):
+def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
     # Check invalid `max_samples` values
-    max_samples, exception = max_samples_exception
+    print(exc_msg)
     est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
-    with pytest.raises(exception):
+    with pytest.raises(exc_type) as exc_info:
         est.fit(X, y)
+    assert str(exc_info.value) == exc_msg
 
 
 def check_classification_toy_max_samples(name):
