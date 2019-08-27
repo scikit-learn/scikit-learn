@@ -80,6 +80,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
+    # We run a memory profiling test that uses `psutil`. Because it's slow,
+    # we only run it on Ubuntu.
+    python -m pip install psutil
 elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     apt-get update
     apt-get install -y python3-dev python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv

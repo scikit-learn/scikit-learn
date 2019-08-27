@@ -1,8 +1,11 @@
+import os
+import resource
 import types
 import warnings
 import sys
 import traceback
 import pickle
+from contextlib import contextmanager
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -105,6 +108,7 @@ def _yield_checks(name, estimator):
         yield check_sparsify_coefficients
 
     yield check_estimator_sparse_data
+    yield check_estimator_sparse_data_memory_growth
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -568,6 +572,126 @@ def check_estimator_sparse_data(name, estimator_orig):
                   "sparse data: it should raise a TypeError if sparse input "
                   "is explicitly not supported." % name)
             raise
+
+
+def check_estimator_sparse_data_memory_growth(name, estimator_orig):
+    try:
+        # If `psutil` is importable, we'll definitely run the tests.
+        import psutil
+    except ImportError:
+        # If `psutil` is not importable and the distribution is "ubuntu", then
+        # something has gone wrong with the dependency installation.
+        if os.environ.get('DISTRIB') == 'ubuntu':
+            raise
+        # We don't run this test on other distributions.
+        return
+
+    @contextmanager
+    def record_memory_growth():
+        process = psutil.Process()
+        initial_memory = process.memory_info().rss
+        max_memory = initial_memory
+
+        def profiler(frame, event, arg):
+            if event != 'return':
+                return
+            nonlocal max_memory
+            max_memory = max(max_memory, process.memory_info().rss)
+
+        def get_growth():
+            return max_memory - initial_memory
+
+        sys.setprofile(profiler)
+        try:
+            yield get_growth
+        finally:
+            sys.setprofile(None)
+
+    rng = np.random.RandomState(0)
+    X_base = rng.rand(150, 100)
+    X_base[X_base < .95] = 0
+    X_base = pairwise_estimator_convert_X(X_base, estimator_orig)
+    X_base = sparse.csr_matrix(X_base)
+
+    def _get_memory_usage(nrows, ncols):
+        tags = _safe_tags(estimator_orig)
+        if tags['binary_only']:
+            y = (2 * rng.rand(X.shape[0])).astype(np.int)
+        else:
+            y = (4 * rng.rand(X.shape[0])).astype(np.int)
+        y = enforce_estimator_tags_y(estimator_orig, y)
+        # catch deprecation warnings
+        with ignore_warnings(category=DeprecationWarning):
+            estimator = clone(estimator_orig)
+            if name in ['Scaler', 'StandardScaler']:
+                estimator.set_params(with_mean=False)
+        # fit and predict
+        with record_memory_growth() as get_growth:
+            try:
+                with ignore_warnings(category=(DeprecationWarning,
+                                               FutureWarning)):
+                    estimator.fit(X, y)
+                if hasattr(estimator, "predict"):
+                    pred = estimator.predict(X)
+                    if tags['multioutput_only']:
+                        assert pred.shape == (X.shape[0], 1)
+                    else:
+                        assert pred.shape == (X.shape[0],)
+                if hasattr(estimator, 'predict_proba'):
+                    probs = estimator.predict_proba(X)
+                    if tags['binary_only']:
+                        expected_probs_shape = (X.shape[0], 2)
+                    else:
+                        expected_probs_shape = (X.shape[0], 4)
+                    assert probs.shape == expected_probs_shape
+            except (TypeError, ValueError) as e:
+                if 'sparse' not in repr(e).lower():
+                    print("Estimator %s doesn't seem to fail gracefully on "
+                          "sparse data: error message state explicitly that "
+                          "sparse input is not supported if this is not"
+                          " the case." % name)
+                    raise
+            except Exception:
+                print("Estimator %s doesn't seem to fail gracefully on "
+                      "sparse data: it should raise a TypeError if sparse "
+                      "input is explicitly not supported." % name)
+                raise
+            return get_growth()
+
+    baseline_mem = _get_memory_usage(X_base)
+    feature_mem_growth = [baseline_mem,
+                          _get_memory_usage(sparse.hstack([X_base] * 11)),
+                          _get_memory_usage(sparse.hstack([X_base] * 21))]
+    row_mem_growth = [baseline_mem,
+                      _get_memory_usage(sparse.vstack([X_base] * 11)),
+                      _get_memory_usage(sparse.vstack([X_base] * 21))]
+
+    if baseline_mem == 0:
+        assert sum(feature_mem_growth) == 0, (
+            'Memory usage with a small sparse matrix was 0, but grew with a '
+            'larger feature set.'
+        )
+        assert sum(row_mem_growth) == 0, (
+            'Memory usage with a small sparse matrix was 0, but grew with a '
+            'larger row count.'
+        )
+        return
+
+    def assert_mem_growth(mem_growth, msg):
+        assert len(mem_growth) == 3
+        deltas = [mem_growth[1] - mem_growth[0], mem_growth[2] - mem_growth[1]]
+        assert deltas[1] <= deltas[0], msg
+
+    assert_mem_growth(
+        feature_mem_growth,
+        ('Memory usage with sparse matrix grew supra-linearly with number of '
+         'features ({})'.format(feature_mem_growth))
+    )
+    assert_mem_growth(
+        row_mem_growth,
+        ('Memory usage with sparse matrix grew supra-linearly with number of '
+         'rows ({})'.format(row_mem_growth))
+    )
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
