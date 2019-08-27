@@ -55,7 +55,6 @@ from sklearn.decomposition import PCA
 digits = datasets.load_digits(n_class=9)
 
 
-
 ##################################################################
 # Timing and accuracy plots
 # --------------------------------------------------
@@ -164,7 +163,6 @@ accuracy.legend(loc='best')
 timescale.legend(loc='best')
 plt.tight_layout()
 plt.show()
-
 
 
 ############################################################################
