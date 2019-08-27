@@ -458,9 +458,10 @@ def test_imputation_missing_value_in_test_array(Imputer):
 
 
 def test_iterative_imputer_one_feature():
-    train = [[1], [2]]
     imputer = IterativeImputer()
-    imputer.fit(train)
+    imputer.fit([[1], [2]])
+    assert imputer.n_iter_ == 0
+    imputer.fit([[1], [np.nan]])
     assert imputer.n_iter_ == 0
 
 
