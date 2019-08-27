@@ -80,7 +80,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     ----------
     n_samples : int
         Number of samples in the dataset.
-    max_samples : int, float or None (default=None)
+    max_samples : int, float or None, default=None
         The maximum number of samples to draw from the total available:
             - float indicates a fraction of the total.
             - int indicates the exact number of samples.
@@ -980,7 +980,7 @@ class RandomForestClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-    max_samples : int or float (default=None)
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator.
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
@@ -1263,7 +1263,7 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-    max_samples : int or float (default=None)
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator.
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
@@ -1557,7 +1557,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 0.22
 
-    max_samples : int or float (default=None)
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator.
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
@@ -1817,7 +1817,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.22
 
-    max_samples : int or float (default=None)
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator.
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
@@ -2040,7 +2040,7 @@ class RandomTreesEmbedding(BaseForest):
 
         .. versionadded:: 0.22
 
-    max_samples : int or float (default=None)
+    max_samples : int or float, default=None
         The number of samples to draw from X to train each base estimator.
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
