@@ -1678,8 +1678,11 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
+        should take two rows from X as input and return the corresponding
+        kernel value as a single number. This means that callables from
+        `sklearn.metrics.pairwise` are not allowed, as they operate on
+        matrices, not single samples. Use the string identifying the kernel
+        instead.
 
     filter_params : boolean
         Whether to filter invalid parameters or not.

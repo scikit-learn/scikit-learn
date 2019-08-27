@@ -11,7 +11,6 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -303,22 +302,22 @@ def test_trustworthiness_not_euclidean_metric():
 def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
     tsne = TSNE(early_exaggeration=0.99)
-    assert_raises_regexp(ValueError, "early_exaggeration .*",
-                         tsne.fit_transform, np.array([[0.0], [0.0]]))
+    with pytest.raises(ValueError, match="early_exaggeration .*"):
+        tsne.fit_transform(np.array([[0.0], [0.0]]))
 
 
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
     tsne = TSNE(n_iter=199)
-    assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
-                         np.array([[0.0], [0.0]]))
+    with pytest.raises(ValueError, match="n_iter .*"):
+        tsne.fit_transform(np.array([[0.0], [0.0]]))
 
 
 def test_non_square_precomputed_distances():
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed")
-    assert_raises_regexp(ValueError, ".* square distance matrix",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match=".* square distance matrix"):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_non_positive_precomputed_distances():
@@ -326,8 +325,8 @@ def test_non_positive_precomputed_distances():
     bad_dist = np.array([[0., -1.], [1., 0.]])
     for method in ['barnes_hut', 'exact']:
         tsne = TSNE(metric="precomputed", method=method)
-        assert_raises_regexp(ValueError, "All distances .*precomputed.*",
-                             tsne.fit_transform, bad_dist)
+        with pytest.raises(ValueError, match="All distances .*precomputed.*"):
+            tsne.fit_transform(bad_dist)
 
 
 def test_non_positive_computed_distances():
@@ -337,16 +336,16 @@ def test_non_positive_computed_distances():
 
     tsne = TSNE(metric=metric, method='exact')
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
-    assert_raises_regexp(ValueError, "All distances .*metric given.*",
-                         tsne.fit_transform, X)
+    with pytest.raises(ValueError, match="All distances .*metric given.*"):
+        tsne.fit_transform(X)
 
 
 def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
     tsne = TSNE(init="not available")
     m = "'init' must be 'pca', 'random', or a numpy array"
-    assert_raises_regexp(ValueError, m, tsne.fit_transform,
-                         np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match=m):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_init_ndarray():
@@ -366,42 +365,44 @@ def test_init_ndarray_precomputed():
 def test_distance_not_available():
     # 'metric' must be valid.
     tsne = TSNE(metric="not available", method='exact')
-    assert_raises_regexp(ValueError, "Unknown metric not available.*",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match="Unknown metric not available.*"):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
     tsne = TSNE(metric="not available", method='barnes_hut')
-    assert_raises_regexp(ValueError, "Metric 'not available' not valid.*",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match="Metric 'not available' not valid.*"):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_method_not_available():
     # 'nethod' must be 'barnes_hut' or 'exact'
     tsne = TSNE(method='not available')
-    assert_raises_regexp(ValueError, "'method' must be 'barnes_hut' or ",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_angle_out_of_range_checks():
     # check the angle parameter range
     for angle in [-1, -1e-6, 1 + 1e-6, 2]:
         tsne = TSNE(angle=angle)
-        assert_raises_regexp(ValueError, "'angle' must be between 0.0 - 1.0",
-                             tsne.fit_transform, np.array([[0.0], [1.0]]))
+        with pytest.raises(ValueError, match="'angle' must be between "
+                                             "0.0 - 1.0"):
+            tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca")
-    assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
-                         "used with metric=\"precomputed\".",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match="The parameter init=\"pca\" cannot"
+                                         " be used with"
+                                         " metric=\"precomputed\"."):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_n_components_range():
     # barnes_hut method should only be used with n_components <= 3
     tsne = TSNE(n_components=4, method="barnes_hut")
-    assert_raises_regexp(ValueError, "'n_components' should be .*",
-                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+    with pytest.raises(ValueError, match="'n_components' should be .*"):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_early_exaggeration_used():
@@ -569,8 +570,8 @@ def test_no_sparse_on_barnes_hut():
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_iter=199, method='barnes_hut')
-    assert_raises_regexp(TypeError, "A sparse matrix was.*",
-                         tsne.fit_transform, X_csr)
+    with pytest.raises(TypeError, match="A sparse matrix was.*"):
+        tsne.fit_transform(X_csr)
 
 
 @pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
