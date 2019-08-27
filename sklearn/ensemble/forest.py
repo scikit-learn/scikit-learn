@@ -323,7 +323,9 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
 
         # Get bootstrap sample size
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples=X.shape[0], max_samples=self.max_samples)
+            n_samples=X.shape[0],
+            max_samples=self.max_samples
+        )
 
         # Check parameters
         self._validate_estimator()
@@ -487,7 +489,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
                        for k in range(self.n_outputs_)]
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples)
+            n_samples, self.max_samples
+        )
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
@@ -770,7 +773,8 @@ class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples)
+            n_samples, self.max_samples
+        )
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
@@ -987,6 +991,8 @@ class RandomForestClassifier(ForestClassifier):
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1270,6 +1276,8 @@ class RandomForestRegressor(ForestRegressor):
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1565,6 +1573,8 @@ class ExtraTreesClassifier(ForestClassifier):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
 
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     base_estimator_ : ExtraTreeClassifier
@@ -1825,6 +1835,8 @@ class ExtraTreesRegressor(ForestRegressor):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
 
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     base_estimator_ : ExtraTreeRegressor
@@ -2047,6 +2059,8 @@ class RandomTreesEmbedding(BaseForest):
             - If None (default), then draw `X.shape[0]` samples.
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
