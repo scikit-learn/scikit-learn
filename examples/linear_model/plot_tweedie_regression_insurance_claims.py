@@ -80,7 +80,7 @@ def load_mtpl2(n_samples=100000):
 
 
 def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
-                  title=None, ax=None):
+                  title=None, ax=None, fill_legend=False):
     """Plot observed and predicted - aggregated per feature level.
 
     Parameters
@@ -95,6 +95,8 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
         a column name of df with the observed target
     predicted : frame
         a dataframe, with the same index as df, with the predicted target
+    fill_legend : bool, default=False
+        wgether to show fill_between legend
     """
     # aggregate observed and predicted variables by feature level
     df_ = df.loc[:, [feature, weight]].copy()
@@ -109,13 +111,15 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 
     ax = df_.loc[:, ["observed", "predicted"]].plot(style=".", ax=ax)
     y_max = df_.loc[:, ["observed", "predicted"]].values.max() * 0.8
-    ax.fill_between(
+    p2 = ax.fill_between(
         df_.index,
         0,
         y_max * df_[weight] / df_[weight].values.max(),
         color="g",
         alpha=0.1,
     )
+    if fill_legend:
+        ax.legend([p2], ["{} distribution".format(feature)])
     ax.set(
         ylabel=y_label if y_label is not None else None,
         title=title if title is not None else "Train: Observed vs Predicted",
@@ -132,7 +136,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
 
-df = load_mtpl2(n_samples=100000)
+df = load_mtpl2(n_samples=60000)
 
 # Note: filter out claims with zero amount, as the severity model
 # requires a strictly positive target values.
@@ -180,9 +184,10 @@ print(df[df.ClaimAmount > 0].head())
 # as a Poisson distribution. It is then assumed to be the number of discrete
 # events occuring with a constant rate in a given time interval (``Exposure``).
 # Here we model the frequency ``y = ClaimNb / Exposure``,
-# which is still a (scaled) Poisson distribution.
+# which is still a (scaled) Poisson distribution, and use ``Exposure`` as
+# `sample_weight`.
 
-df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
+df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
 # Some of the features are colinear, we use a weak penalization to avoid
 # numerical issues.
@@ -200,6 +205,7 @@ def mean_deviance(estimator, y, y_pred, weights):
 def score_estimator(
     estimator, X_train, X_test, df_train, df_test, target, weights
 ):
+    """Evaluate an estimator on train and test sets with different metrics"""
     res = []
 
     for subset_label, X, df in [
@@ -282,6 +288,7 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[0, 1],
+    fill_legend=True
 )
 
 plot_obs_pred(
@@ -293,6 +300,7 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 0],
+    fill_legend=True
 )
 
 plot_obs_pred(
@@ -304,10 +312,16 @@ plot_obs_pred(
     y_label="Claim Frequency",
     title="test data",
     ax=ax[1, 1],
+    fill_legend=True
 )
 
 
 ##############################################################################
+#
+# According to the observed data, the frequency of accidents is higher for
+# drivers younger than 30 years old, and it positively correlated with the
+# `BonusMalus` variable. Out model is able to mostly correctly model
+# this behaviour.
 #
 # 3. Severity model -  Gamma Distribution
 # ---------------------------------------
@@ -392,10 +406,14 @@ plot_obs_pred(
     y_label="Average Claim Severity",
     title="test data",
     ax=ax[1],
+    fill_legend=True
 )
 
 
 ##############################################################################
+#
+# Overall the drivers age (``DrivAge``) has a weak impact on the claim
+# severity, both in observed and predicted data.
 #
 # 4. Total Claims Amount -- Compound Poisson distribution
 # -------------------------------------------------------
@@ -517,3 +535,5 @@ for subset_label, X, df in [
     )
 
 print(pd.DataFrame(res).set_index("subset").T)
+
+plt.show()

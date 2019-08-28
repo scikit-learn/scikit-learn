@@ -116,8 +116,8 @@ X = column_trans.fit_transform(df)
 # as a Poisson distribution. It is then assumed to be the number of discrete
 # events occurring with a constant rate in a given time interval
 # (``Exposure``). Here we model the frequency ``y = ClaimNb / Exposure``,
-# which is still a (scaled) Poisson distribution.
-#
+# which is still a (scaled) Poisson distribution, and use ``Exposure`` as
+# `sample_weight`.
 
 df["Frequency"] = df.ClaimNb / df.Exposure
 
