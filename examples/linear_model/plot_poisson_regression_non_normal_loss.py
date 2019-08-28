@@ -5,7 +5,9 @@ Poisson regression and non-normal loss
 
 This example illustrates the use of linear Poisson regression
 on the French Motor Third-Party Liability Claims dataset [1] and compares
-it with models learned with least squared error.
+it with models learned with least squared error. The goal is to predict the
+number of insurance claims (or frequency) following car accidents for a user
+given historical data over a population of users.
 
 We start by defining a few helper functions for loading the data and
 visualizing results.
