@@ -53,17 +53,15 @@ def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.)
     est = KBinsDiscretizer(n_bins=n_bins)
-    err_msg = "n_bins must be a scalar or array of shape (n_features,)."
-    with pytest.raises(ValueError,
-                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
+    err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
     est = KBinsDiscretizer(n_bins=n_bins)
-    err_msg = "n_bins must be a scalar or array of shape (n_features,)."
-    with pytest.raises(ValueError,
-                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
+    err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
     # Bad bin values
@@ -152,11 +150,10 @@ def test_numeric_stability(i):
 
 def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
-    err_msg = ("Valid options for 'encode' are "
-               "('onehot', 'onehot-dense', 'ordinal'). "
+    err_msg = (r"Valid options for 'encode' are "
+               "\('onehot', 'onehot-dense', 'ordinal'\). "
                "Got encode='invalid-encode' instead.")
-    with pytest.raises(ValueError,
-                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 
 
@@ -185,11 +182,10 @@ def test_encode_options():
 
 def test_invalid_strategy_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
-    err_msg = ("Valid options for 'strategy' are "
-               "('uniform', 'quantile', 'kmeans'). "
+    err_msg = (r"Valid options for 'strategy' are "
+               "\('uniform', 'quantile', 'kmeans'\). "
                "Got strategy='invalid-strategy' instead.")
-    with pytest.raises(ValueError,
-                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 
 
