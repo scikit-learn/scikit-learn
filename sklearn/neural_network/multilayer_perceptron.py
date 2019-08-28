@@ -97,6 +97,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         activations : list, length = n_layers - 1
             The ith element of the list holds the values of the ith layer.
         """
+        # local import to allow custom activations set via this
+        # private variable in _base
         from ._base import ACTIVATIONS
 
         hidden_activation = ACTIVATIONS[self.activation]
@@ -217,6 +219,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         coef_grads : list, length = n_layers - 1
         intercept_grads : list, length = n_layers - 1
         """
+        # local import to allow custom activations set via this
+        # private variable in _base
         from ._base import DERIVATIVES
 
         n_samples = X.shape[0]
@@ -380,6 +384,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _validate_hyperparameters(self):
+        # local import to allow custom activations set via this
+        # private variable in _base
         from ._base import ACTIVATIONS
 
         if not isinstance(self.shuffle, bool):
