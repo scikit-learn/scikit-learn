@@ -35,16 +35,16 @@ def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
                     ' got 2 and 3')
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1], [1, 1, 1])
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1], [1, 1, 1])
 
         expected = "labels_true must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [[0, 1], [1, 0]], [1, 1, 1])
+        with pytest.raises(ValueError, match=expected):
+            score_func([[0, 1], [1, 0]], [1, 1, 1])
 
         expected = "labels_pred must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1, 0], [[1, 1], [0, 0]])
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
 def test_generalized_average():
