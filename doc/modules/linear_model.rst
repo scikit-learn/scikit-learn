@@ -67,7 +67,7 @@ Ordinary Least Squares Complexity
 
 The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of 
+this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
@@ -430,7 +430,7 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features 
+  - It is numerically efficient in contexts where the number of features
     is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
@@ -732,9 +732,9 @@ classifier. In this model, the probabilities describing the possible outcomes
 of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`. 
-This implementation can fit binary, One-vs-Rest, or multinomial logistic 
-regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
+Logistic regression is implemented in :class:`LogisticRegression`.
+This implementation can fit binary, One-vs-Rest, or multinomial logistic
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
 .. note::
@@ -868,6 +868,14 @@ with 'log' loss, which might be even faster but requires more tuning.
    A logistic regression with :math:`\ell_1` penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
+.. note:: **P-value estimation**
+
+    It is possible to obtain the p-values and confidence intervals for
+    coefficients in cases of regression without penalization. The `statsmodels
+    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    Within sklearn, one could use bootstrapping instead as well.  
+
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
 cross-validation support, to find the optimal `C` and `l1_ratio` parameters

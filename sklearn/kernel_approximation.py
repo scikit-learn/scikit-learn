@@ -263,6 +263,12 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
+    Attributes
+    ----------
+    sample_interval_ : float
+        Stored sampling interval. Specified as a parameter if sample_steps not
+        in {1,2,3}.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

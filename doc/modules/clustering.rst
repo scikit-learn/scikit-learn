@@ -777,7 +777,7 @@ When chosen too small, most data will not be clustered at all (and labeled
 as ``-1`` for "noise"). When chosen too large, it causes close clusters to
 be merged into one cluster, and eventually the entire data set to be returned
 as a single cluster. Some heuristics for choosing this parameter have been
-discussed in literature, for example based on a knee in the nearest neighbor
+discussed in the literature, for example based on a knee in the nearest neighbor
 distances plot (as discussed in the references below).
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -1038,7 +1038,7 @@ classification algorithm. In particular any evaluation metric should not
 take the absolute values of the cluster labels into account but rather
 if this clustering define separations of the data similar to some ground
 truth set of classes or satisfying some assumption such that members
-belong to the same class are more similar that members of different
+belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
@@ -1384,7 +1384,7 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)
   0.51...
 
-This function's formula is as follows:::
+This function's formula is as follows:
 
 .. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
 
@@ -1633,9 +1633,7 @@ Silhouette Coefficient for each sample.
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
@@ -1695,9 +1693,7 @@ sum of distances squared):
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis:

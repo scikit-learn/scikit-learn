@@ -17,9 +17,9 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises_regexp, assert_warns
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
-from sklearn.utils.testing import ignore_warnings, assert_raises
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
@@ -97,7 +97,8 @@ def test_precomputed():
     # Gram matrix for test data (rectangular matrix)
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
-    assert_raises(ValueError, clf.predict, KT.T)
+    with pytest.raises(ValueError):
+        clf.predict(KT.T)
 
     assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
@@ -231,7 +232,8 @@ def test_svr_errors():
     # Bad kernel
     clf = svm.SVR(kernel=lambda x, y: np.array([[1.0]]))
     clf.fit(X, y)
-    assert_raises(ValueError, clf.predict, X)
+    with pytest.raises(ValueError):
+        clf.predict(X)
 
 
 def test_oneclass():
@@ -246,7 +248,8 @@ def test_oneclass():
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.750, 0.750, 0.750, 0.750]],
                               decimal=3)
-    assert_raises(AttributeError, lambda: clf.coef_)
+    with pytest.raises(AttributeError):
+        (lambda: clf.coef_)()
 
 
 def test_oneclass_decision_function():
@@ -471,14 +474,17 @@ def test_auto_weight():
 def test_bad_input():
     # Test that it gives proper exception on deficient input
     # impossible value of C
-    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
+    with pytest.raises(ValueError):
+        svm.SVC(C=-1).fit(X, Y)
 
     # impossible value of nu
     clf = svm.NuSVC(nu=0.0)
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
     Y2 = Y[:-1]  # wrong dimensions for labels
-    assert_raises(ValueError, clf.fit, X, Y2)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y2)
 
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
@@ -493,23 +499,28 @@ def test_bad_input():
 
     # error for precomputed kernelsx
     clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
     # sample_weight bad dimensions
     clf = svm.SVC()
-    assert_raises(ValueError, clf.fit, X, Y, sample_weight=range(len(X) - 1))
+    with pytest.raises(ValueError):
+        clf.fit(X, Y, sample_weight=range(len(X) - 1))
 
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
-    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
+    with pytest.raises(ValueError):
+        clf.predict(sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
+    with pytest.raises(ValueError):
+        clf.predict(X)
 
     clf = svm.SVC()
     clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
+    with pytest.raises(ValueError):
+        clf.predict(Xt)
 
 
 @pytest.mark.parametrize(
@@ -564,17 +575,16 @@ def test_linearsvc_parameters():
                 (penalty, dual) == ('l1', True) or
                 loss == 'foo' or penalty == 'bar'):
 
-            assert_raises_regexp(ValueError,
-                                 "Unsupported set of arguments.*penalty='%s.*"
-                                 "loss='%s.*dual=%s"
-                                 % (penalty, loss, dual),
-                                 clf.fit, X, y)
+            with pytest.raises(ValueError, match="Unsupported set of "
+                               "arguments.*penalty='%s.*loss='%s.*dual=%s"
+                               % (penalty, loss, dual)):
+                clf.fit(X, y)
         else:
             clf.fit(X, y)
 
     # Incorrect loss value - test if explicit error message is raised
-    assert_raises_regexp(ValueError, ".*loss='l3' is not supported.*",
-                         svm.LinearSVC(loss="l3").fit, X, y)
+    with pytest.raises(ValueError, match=".*loss='l3' is not supported.*"):
+        svm.LinearSVC(loss="l3").fit(X, y)
 
 
 # FIXME remove in 0.23
@@ -796,9 +806,10 @@ def test_immutable_coef_property():
         svm.OneClassSVM(kernel='linear').fit(iris.data),
     ]
     for clf in svms:
-        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
-        assert_raises((RuntimeError, ValueError),
-                      clf.coef_.__setitem__, (0, 0), 0)
+        with pytest.raises(AttributeError):
+            clf.__setattr__('coef_', np.arange(3))
+        with pytest.raises((RuntimeError, ValueError)):
+            clf.coef_.__setitem__((0, 0), 0)
 
 
 def test_linearsvc_verbose():
@@ -845,7 +856,8 @@ def test_svc_clone_with_callable_kernel():
 
 def test_svc_bad_kernel():
     svc = svm.SVC(kernel=lambda x, y: x)
-    assert_raises(ValueError, svc.fit, X, Y)
+    with pytest.raises(ValueError):
+        svc.fit(X, Y)
 
 
 def test_timeout():
@@ -858,12 +870,12 @@ def test_unfitted():
     X = "foo!"  # input validation not required when SVM not fitted
 
     clf = svm.SVC()
-    assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
-                         clf.predict, X)
+    with pytest.raises(Exception, match=r".*\bSVC\b.*\bnot\b.*\bfitted\b"):
+        clf.predict(X)
 
     clf = svm.NuSVR()
-    assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
-                         clf.predict, X)
+    with pytest.raises(Exception, match=r".*\bNuSVR\b.*\bnot\b.*\bfitted\b"):
+        clf.predict(X)
 
 
 # ignore convergence warnings from max_iter=1
