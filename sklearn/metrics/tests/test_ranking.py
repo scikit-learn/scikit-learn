@@ -1,3 +1,4 @@
+import re
 import pytest
 import numpy as np
 import warnings
@@ -12,7 +13,6 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -447,7 +447,8 @@ def test_auc_errors():
     y = [5, 6, 7, 8]
     error_message = ("x is neither increasing nor decreasing : "
                      "{}".format(np.array(x)))
-    assert_raise_message(ValueError, error_message, auc, x, y)
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        auc(x, y)
 
 
 @pytest.mark.parametrize(
@@ -636,28 +637,29 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    assert_raise_message(ValueError, "ROC AUC score is not defined",
-                         roc_auc_score, y_true, y_pred)
+    err_msg = "ROC AUC score is not defined"
+    with pytest.raises(ValueError, match=err_msg):
+        roc_auc_score(y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    assert_raise_message(ValueError, "ROC AUC score is not defined",
-                         roc_auc_score, y_true, y_pred)
+    with pytest.raises(ValueError, match=err_msg):
+        roc_auc_score(y_true, y_pred)
     y_true = np.full(10, -1, dtype="int")
-    assert_raise_message(ValueError, "ROC AUC score is not defined",
-                         roc_auc_score, y_true, y_pred)
+    with pytest.raises(ValueError, match=err_msg):
+        roc_auc_score(y_true, y_pred)
 
     with warnings.catch_warnings(record=True):
         rng = check_random_state(404)
         y_pred = rng.rand(10)
         # y_true contains only one class value
         y_true = np.zeros(10, dtype="int")
-        assert_raise_message(ValueError, "ROC AUC score is not defined",
-                             roc_auc_score, y_true, y_pred)
+        with pytest.raises(ValueError, match=err_msg):
+            roc_auc_score(y_true, y_pred)
         y_true = np.ones(10, dtype="int")
-        assert_raise_message(ValueError, "ROC AUC score is not defined",
-                             roc_auc_score, y_true, y_pred)
+        with pytest.raises(ValueError, match=err_msg):
+            roc_auc_score(y_true, y_pred)
         y_true = np.full(10, -1, dtype="int")
-        assert_raise_message(ValueError, "ROC AUC score is not defined",
-                             roc_auc_score, y_true, y_pred)
+        with pytest.raises(ValueError, match=err_msg):
+            roc_auc_score(y_true, y_pred)
 
 
 def test_binary_clf_curve():
@@ -665,8 +667,8 @@ def test_binary_clf_curve():
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
     msg = "multiclass format is not supported"
-    assert_raise_message(ValueError, msg, precision_recall_curve,
-                         y_true, y_pred)
+    with pytest.raises(ValueError, match=msg):
+        precision_recall_curve(y_true, y_pred)
 
 
 def test_precision_recall_curve():
@@ -845,8 +847,8 @@ def test_average_precision_score_pos_label_errors():
     y_true = np.array([0, 1])
     y_pred = np.array([0, 1])
     error_message = ("pos_label=2 is invalid. Set it to a label in y_true.")
-    assert_raise_message(ValueError, error_message, average_precision_score,
-                         y_true, y_pred, pos_label=2)
+    with pytest.raises(ValueError, match=error_message):
+        average_precision_score(y_true, y_pred, pos_label=2)
     # Raise an error for multilabel-indicator y_true with
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
@@ -854,8 +856,8 @@ def test_average_precision_score_pos_label_errors():
     error_message = ("Parameter pos_label is fixed to 1 for multilabel"
                      "-indicator y_true. Do not set pos_label or set "
                      "pos_label to 1.")
-    assert_raise_message(ValueError, error_message, average_precision_score,
-                         y_true, y_pred, pos_label=0)
+    with pytest.raises(ValueError, match=error_message):
+        average_precision_score(y_true, y_pred, pos_label=0)
 
 
 def test_score_scale_invariance():
