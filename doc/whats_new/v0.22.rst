@@ -200,6 +200,13 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+-|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
+ `KeyError` when using `kernel="precomputed"`.
+ :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`. 
+
 :mod:`sklearn.linear_model`
 ...........................
 
