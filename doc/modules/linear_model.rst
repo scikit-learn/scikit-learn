@@ -986,6 +986,18 @@ of the unit variance function,
      :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
      together with :math:`s=\mathrm{exposure}` as sample weights. This is done
      in both examples linked below.
+   * The fit itself does not need Y to be from an EDM, but only assumes
+     the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
+     :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`.
+   * If the target y is a ratio, appropriate sample weights s should be
+     provided.
+     As an example, consider Poisson distributed counts z (integers) and
+     weights s=exposure (time, money, persons years, ...). Then you fit
+     y = z/s, i.e. ``PoissonRegressor.fit(X, y, sample_weight=s)``.
+     The weights are necessary for the right (finite sample) mean.
+     Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+     in this case one might say that y has a 'scaled' Poisson distributions.
+     The same holds for other distributions.
 
 The estimator can be used as follows::
 

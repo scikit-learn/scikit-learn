@@ -114,43 +114,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     n_iter_ : int
         Actual number of iterations used in solver.
-
-    Notes
-    -----
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
-    :ref:`User Guide <Generalized_linear_regression>`.
-
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
-    minimizing the deviance plus penalty term, which is equivalent to
-    (penalized) maximum likelihood estimation.
-
-    For alpha > 0, the feature matrix X should be standardized in order to
-    penalize features equally strong. Call
-    :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
-
-    If the target y is a ratio, appropriate sample weights s should be
-    provided.
-    As an example, consider Poisson distributed counts z (integers) and
-    weights s=exposure (time, money, persons years, ...). Then you fit
-    y = z/s, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
-    sample_weight=s)``. The weights are necessary for the right (finite
-    sample) mean.
-    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
-    in this case one might say that y has a 'scaled' Poisson distributions.
-    The same holds for other distributions.
-
-    References
-    ----------
-    .. McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
-
-    .. Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
@@ -487,40 +450,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in solver.
-
-    Notes
-    -----
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
-    :ref:`User Guide <Generalized_linear_regression>`.
-
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
-    minimizing the deviance plus penalty term, which is equivalent to
-    (penalized) maximum likelihood estimation.
-
-    For alpha > 0, the feature matrix X should be standardized in order to
-    penalize features equally strong.
-
-    If the target y is a ratio, appropriate sample weights s should be
-    provided.
-    As an example, consider Poisson distributed counts z (integers) and
-    weights s=exposure (time, money, persons years, ...). Then you fit
-    y = z/s, i.e. ``PoissonRegressor().fit(X, y, sample_weight=s)``.
-    The weights are necessary for the right (finite sample) mean.
-    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
-    in this case one might say that y has a 'scaled' Poisson distributions.
-
-    References
-    ----------
-    .. McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
-
-    .. Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, alpha=1.0, fit_intercept=True, link='log',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
@@ -605,29 +534,6 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in solver.
-
-    Notes
-    -----
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
-    :ref:`User Guide <Generalized_linear_regression>`.
-
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
-    minimizing the deviance plus penalty term, which is equivalent to
-    (penalized) maximum likelihood estimation.
-
-
-    References
-    ----------
-    .. McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
-
-    .. Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, alpha=1.0, fit_intercept=True, link='log',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
@@ -732,29 +638,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in solver.
-
-    Notes
-    -----
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`. The unit variance function
-    :math:`v(\\mu_i)` is a property of and given by the specific EDM, see
-    :ref:`User Guide <Generalized_linear_regression>`.
-
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
-    minimizing the deviance plus penalty term, which is equivalent to
-    (penalized) maximum likelihood estimation.
-
-
-    References
-    ----------
-    .. McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
-
-    .. Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
     """
     def __init__(self, power=0.0, alpha=1.0, fit_intercept=True, link='log',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
