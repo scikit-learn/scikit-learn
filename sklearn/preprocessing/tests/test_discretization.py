@@ -151,8 +151,8 @@ def test_numeric_stability(i):
 def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
     err_msg = (r"Valid options for 'encode' are "
-               "\('onehot', 'onehot-dense', 'ordinal'\). "
-               "Got encode='invalid-encode' instead.")
+               r"\('onehot', 'onehot-dense', 'ordinal'\). "
+               r"Got encode='invalid-encode' instead.")
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 
@@ -183,8 +183,8 @@ def test_encode_options():
 def test_invalid_strategy_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
     err_msg = (r"Valid options for 'strategy' are "
-               "\('uniform', 'quantile', 'kmeans'\). "
-               "Got strategy='invalid-strategy' instead.")
+               r"\('uniform', 'quantile', 'kmeans'\). "
+               r"Got strategy='invalid-strategy' instead.")
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 
