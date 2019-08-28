@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
@@ -799,19 +798,17 @@ invalids = [([0, 1], [np.inf, np.inf]),
 def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
-        assert_raise_message(ValueError,
-                             "contains NaN, infinity",
-                             metric, y_true, y_score)
+        with pytest.raises(ValueError, match="contains NaN, infinity"):
+            metric(y_true, y_score)
 
 
 @pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
 def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
-        assert_raise_message(ValueError,
-                             "Input contains NaN, infinity or a "
-                             "value too large",
-                             metric, y_true, y_score)
+        err_msg = "Input contains NaN, infinity or a value too large"
+        with pytest.raises(ValueError, match=err_msg):
+            metric(y_true, y_score)
 
 
 @ignore_warnings
@@ -1204,13 +1201,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     # Check that if number of samples in y_true and sample_weight are not
     # equal, meaningful error is raised.
-    error_message = ("Found input variables with inconsistent numbers of "
-                     "samples: [{}, {}, {}]".format(
+    error_message = (r"Found input variables with inconsistent numbers of "
+                     r"samples: \[{}, {}, {}\]".format(
                          _num_samples(y1), _num_samples(y2),
                          _num_samples(sample_weight) * 2))
-    assert_raise_message(ValueError, error_message, metric, y1, y2,
-                         sample_weight=np.hstack([sample_weight,
-                                                  sample_weight]))
+    with pytest.raises(ValueError, match=error_message):
+        metric(y1, y2, sample_weight=np.hstack([sample_weight,
+                                                sample_weight]))
 
 
 @pytest.mark.parametrize(
