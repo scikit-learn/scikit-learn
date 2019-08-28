@@ -24,7 +24,6 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
 
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
@@ -659,7 +658,8 @@ def test_warm_start():
         message = ('warm_start can only be used where `y` has the same '
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
-        assert_raise_message(ValueError, message, clf.fit, X, y_i)
+        with pytest.raises(ValueError, match=message):
+            clf.fit(X, y_i)
 
 
 def test_n_iter_no_change():
