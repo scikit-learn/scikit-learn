@@ -9,7 +9,7 @@ Version 0.22.0
 
 **In Development**
 
-Changed models 
+Changed models
 --------------
 
 The following estimators and functions, when fit with the same data and
@@ -197,10 +197,10 @@ Changelog
   `Nicolas Hug`_.
 
 :mod:`sklearn.kernel_approximation`
-...........................
+...................................
 
 -|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
- KeyError when using `kernel="precomputed"`.
+ `KeyError` when using `kernel="precomputed"`.
  :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`. 
 
 :mod:`sklearn.linear_model`
