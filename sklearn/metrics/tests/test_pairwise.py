@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
 
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
@@ -800,9 +799,9 @@ def test_haversine_distances():
     assert_array_almost_equal(D1, D2)
     # Test haversine distance does not accept X where n_feature != 2
     X = rng.random_sample((10, 3))
-    assert_raise_message(ValueError,
-                         "Haversine distance only valid in 2 dimensions",
-                         haversine_distances, X)
+    err_msg = "Haversine distance only valid in 2 dimensions"
+    with pytest.raises(ValueError, match=err_msg):
+        haversine_distances(X)
 
 
 # Paired distances
