@@ -89,14 +89,17 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
-    with pytest.raises(ValueError, match="Mean Squared Logarithmic Error "
-                       "cannot be used when targets contain negative values."):
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
         mean_squared_log_error([-1.], [-1.])
-    with pytest.raises(ValueError, match="Mean Squared Logarithmic Error "
-                       "cannot be used when targets contain negative values."):
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
         mean_squared_log_error([1., 2., 3.], [1., -2., 3.])
-    with pytest.raises(ValueError, match="Mean Squared Logarithmic Error "
-                       "cannot be used when targets contain negative values."):
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
         mean_squared_log_error([1., -2., 3.], [1., 2., 3.])
 
     # Tweedie deviance error
