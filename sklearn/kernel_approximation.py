@@ -601,7 +601,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not (callable(self.kernel) or self.kernel == 'precomputed'):
+        if not callable(self.kernel) and self.kernel != 'precomputed':
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
