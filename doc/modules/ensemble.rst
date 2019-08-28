@@ -390,9 +390,9 @@ learners::
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import AdaBoostClassifier
 
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...
 
@@ -864,7 +864,7 @@ Usage
 Most of the parameters are unchanged from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`.
 One exception is the ``max_iter`` parameter that replaces ``n_estimators``, and
-controls the number of iterations of the boosting process:
+controls the number of iterations of the boosting process::
 
   >>> from sklearn.experimental import enable_hist_gradient_boosting
   >>> from sklearn.ensemble import HistGradientBoostingClassifier
@@ -873,10 +873,10 @@ controls the number of iterations of the boosting process:
   >>> X, y = make_hastie_10_2(random_state=0)
   >>> X_train, X_test = X[:2000], X[2000:]
   >>> y_train, y_test = y[:2000], y[2000:]
-  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
 
+  >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
-  0.8998
+  0.8965
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -894,6 +894,45 @@ behaviour is controlled via the ``scoring``, ``validation_fraction``,
 using an arbitrary :term:`scorer`, or just the training or validation loss. By
 default, early-stopping is performed using the default :term:`scorer` of
 the estimator on a validation set.
+
+Missing values support
+----------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` have built-in support for missing
+values (NaNs).
+
+During training, the tree grower learns at each split point whether samples
+with missing values should go to the left or right child, based on the
+potential gain. When predicting, samples with missing values are assigned to
+the left or right child consequently::
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> from sklearn.ensemble import HistGradientBoostingClassifier
+  >>> import numpy as np
+
+  >>> X = np.array([0, 1, 2, np.nan]).reshape(-1, 1)
+  >>> y = [0, 0, 1, 1]
+
+  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
+  >>> gbdt.predict(X)
+  array([0, 0, 1, 1])
+
+When the missingness pattern is predictive, the splits can be done on
+whether the feature value is missing or not::
+
+  >>> X = np.array([0, np.nan, 1, 2, np.nan]).reshape(-1, 1)
+  >>> y = [0, 1, 0, 0, 1]
+  >>> gbdt = HistGradientBoostingClassifier(min_samples_leaf=1,
+  ...                                       max_depth=2,
+  ...                                       learning_rate=1,
+  ...                                       max_iter=1).fit(X, y)
+  >>> gbdt.predict(X)
+  array([0, 1, 0, 0, 1])
+
+If no missing values were encountered for a given feature during training,
+then samples with missing values are mapped to whichever child has the most
+samples.
 
 Low-level parallelism
 ---------------------
@@ -1132,17 +1171,15 @@ Usage
 
 The following example shows how to fit the VotingRegressor::
 
-   >>> from sklearn import datasets
+   >>> from sklearn.datasets import load_boston
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> boston = datasets.load_boston()
-   >>> X = boston.data
-   >>> y = boston.target
-
+   >>> X, y = load_boston(return_X_y=True)
+   
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)

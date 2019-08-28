@@ -869,6 +869,14 @@ with 'log' loss, which might be even faster but requires more tuning.
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
+.. note:: **P-value estimation**
+
+    It is possible to obtain the p-values and confidence intervals for
+    coefficients in cases of regression without penalization. The `statsmodels
+    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    Within sklearn, one could use bootstrapping instead as well.  
+
+
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
 cross-validation support, to find the optimal `C` and `l1_ratio` parameters
 according to the ``scoring`` attribute. The "newton-cg", "sag", "saga" and

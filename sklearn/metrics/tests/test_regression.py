@@ -73,7 +73,7 @@ def test_multioutput_regression():
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
     error = mean_absolute_error(y_true, y_pred)
-    assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+    assert_almost_equal(error, (1. + 2. / 3) / 4.)
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
