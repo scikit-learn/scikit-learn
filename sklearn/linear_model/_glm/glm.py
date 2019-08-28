@@ -462,6 +462,10 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        # We use a property with a setter, since the GLM solver relies
+        # on self.family attribute, but we can't set it in __init__ according
+        # to scikit-learn API constraints. This attribute is made read-only
+        # to disallow changing distribution to other than Poisson.
         return "poisson"
 
     @family.setter
@@ -546,6 +550,10 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        # We use a property with a setter, since the GLM solver relies
+        # on self.family attribute, but we can't set it in __init__ according
+        # to scikit-learn API constraints. This attribute is made read-only
+        # to disallow changing distribution to other than Gamma.
         return "gamma"
 
     @family.setter
@@ -571,7 +579,10 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Parameters
     ----------
     power : float (default=0)
-            The variance power: :math:`v(\\mu) = \\mu^{power}`.
+            The power determines the underlying target distribution. By
+            definition it links distribution variance (:math:`v`) and
+            mean (:math:`\\mu`): :math:`v(\\mu) = \\mu^{power}`.
+
             For ``0<power<1``, no distribution exists.
 
             Special cases are:
@@ -629,9 +640,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
-        Estimated coefficients for the linear predictor (X*coef_+intercept_) in
-        the GLM.
+    coef_ : array, shape (n_features,) Estimated coefficients for the linear
+        predictor (X*coef_+intercept_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
@@ -650,6 +660,10 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     @property
     def family(self):
+        # We use a property with a setter, since the GLM solver relies
+        # on self.family attribute, but we can't set it in __init__ according
+        # to scikit-learn API constraints. This also ensures that self.power
+        # and self.family.power are identical by construction.
         dist = TweedieDistribution(power=self.power)
         # TODO: make the returned object immutable
         return dist

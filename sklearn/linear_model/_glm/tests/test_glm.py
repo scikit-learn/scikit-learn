@@ -230,6 +230,9 @@ def test_warm_start(fit_intercept):
     assert glm1.score(X, y) > glm2.score(X, y)
     glm2.set_params(max_iter=1000)
     glm2.fit(X, y)
+    # The two model are not exactly identical since the lbfgs solver
+    # computes the approximate hessian from previous iterations, which
+    # will not be strictly identical in the case of a warm start.
     assert_allclose(glm1.coef_, glm2.coef_, rtol=1e-5)
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-4)
 
