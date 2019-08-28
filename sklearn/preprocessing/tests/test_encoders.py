@@ -645,9 +645,8 @@ def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
     enc = OneHotEncoder(drop=drop)
-    with pytest.raises(ValueError,
-                       match="`drop` should have length "
-                       "equal to the number"):
+    err_msg = "`drop` should have length equal to the number"
+    with pytest.raises(ValueError, match=err_msg):
         enc.fit([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
 
