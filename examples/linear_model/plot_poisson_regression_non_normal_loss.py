@@ -28,6 +28,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
+from sklearn.dummy import DummyRegressor
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import PoissonRegressor, LinearRegression
 from sklearn.model_selection import train_test_split
@@ -78,7 +79,7 @@ def load_mtpl2(n_samples=100000):
 # containing the number of claims (``ClaimNb``) with the freMTPL2sev table
 # containing the claim amount (``ClaimAmount``) for the same user ids.
 
-df = load_mtpl2(n_samples=100000)
+df = load_mtpl2(n_samples=50000)
 
 # Note: filter out claims with zero amount, as the severity model
 # requires a strictly positive target values.
@@ -117,8 +118,6 @@ X = column_trans.fit_transform(df)
 # (``Exposure``). Here we model the frequency ``y = ClaimNb / Exposure``,
 # which is still a (scaled) Poisson distribution.
 #
-# A very important property of the Poisson distribution is its mean-variance
-# relation: The variance is proportional to the mean.
 
 df["Frequency"] = df.ClaimNb / df.Exposure
 
@@ -135,48 +134,49 @@ print(
 # To evaluate the pertinence of the used metrics, we will consider as a
 # baseline an estimator that returns 0 for any input.
 
-df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=2)
+df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
+
+dummy = DummyRegressor(strategy='constant', constant=0)
+dummy.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
+
+##############################################################################
+#
+# The Poisson deviance cannot be computed on negative values predicted by the
+# model, so we set the minimum predicted value to eps,
 
 
-eps = 1e-5
-print("MSE: %.3f" % mean_squared_error(
-        df_test.Frequency.values, np.zeros(len(df_test)),
-        df_test.Exposure.values))
-print("MAE: %.3f" % mean_absolute_error(
-        df_test.Frequency.values, np.zeros(len(df_test)),
-        df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-        df_test.Frequency.values, eps + np.zeros(len(df_test)),
-        df_test.Exposure.values))
+def score_estimator(estimator, df_test, eps=1e-5):
+    """Score an estimatr on the test set"""
 
+    print("MSE: %.3f" % mean_squared_error(
+              df_test.Frequency.values, estimator.predict(X_test),
+              df_test.Exposure.values))
+    print("MAE: %.3f" % mean_absolute_error(
+              df_test.Frequency.values, estimator.predict(X_test),
+              df_test.Exposure.values))
+
+    print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
+            df_test.Frequency.values, np.fmax(estimator.predict(X_test), eps),
+            df_test.Exposure.values))
+
+
+print("DummyRegressor")
+score_estimator(dummy, df_test)
 
 ##############################################################################
 #
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-
 linregr = LinearRegression()
 linregr.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
-print("LinearRegression")
-print("MSE: %.3f" % mean_squared_error(
-          df_test.Frequency.values, linregr.predict(X_test),
-          df_test.Exposure.values))
-print("MSE: %.3f" % mean_absolute_error(
-          df_test.Frequency.values, linregr.predict(X_test),
-          df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-        df_test.Frequency.values, np.fmax(linregr.predict(X_test), eps),
-        df_test.Exposure.values))
-
-##############################################################################
-#
-# The Poisson deviance cannot be computed because negative values are
-# predicted by the model,
 
 print('Number Negatives: %s / total: %s' % (
       (linregr.predict(X_test) < 0).sum(), X_test.shape[0]))
+
+print("LinearRegression")
+score_estimator(linregr, df_test)
 
 ##############################################################################
 #
@@ -186,15 +186,7 @@ glm_freq = PoissonRegressor(alpha=0, max_iter=1000)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 print("PoissonRegressor")
-print("MSE: %.3f" % mean_squared_error(
-        df_test.Frequency.values, glm_freq.predict(X_test),
-        df_test.Exposure.values))
-print("MAE: %.3f" % mean_absolute_error(
-        df_test.Frequency.values, glm_freq.predict(X_test),
-        df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-        df_test.Frequency.values, glm_freq.predict(X_test),
-        df_test.Exposure.values))
+score_estimator(glm_freq, df_test)
 
 ##############################################################################
 #
@@ -202,19 +194,13 @@ print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
 # still minimizes the least square error.
 
 
-gbr = GradientBoostingRegressor(max_depth=3)
+gbr = GradientBoostingRegressor()
 gbr.fit(X_train, df_train.Frequency.values,
         sample_weight=df_train.Exposure.values)
 
 
 print("GradientBoostingRegressor")
-print("MSE: %.3f" % mean_squared_error(
-      df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
-print("MAE: %.3f" % mean_absolute_error(
-      df_test.Frequency.values, gbr.predict(X_test), df_test.Exposure.values))
-print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-      df_test.Frequency.values, np.fmax(gbr.predict(X_test), eps),
-      df_test.Exposure.values))
+score_estimator(gbr, df_test)
 
 ##############################################################################
 #
@@ -231,6 +217,7 @@ print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
 
 
 fig, axes = plt.subplots(1, 4, figsize=(16, 3))
+fig.subplots_adjust(bottom=0.2)
 
 df_train.Frequency.hist(bins=np.linspace(-1, 10, 50), ax=axes[0])
 
@@ -247,3 +234,17 @@ for axi in axes:
         yscale='log',
         xlabel="y (Frequency)"
     )
+
+##############################################################################
+#
+# The experimental data presents a long tail distribution for ``y``. In all
+# models we predict the mean expected value, so we will have necessairily fewer
+# extreme values. Additionally normal distribution used in ``Ridge`` and
+# ``GradientBoostingRegressor`` has a constant variance, while for the Poisson
+# distribution used in ``PoissonRegressor``, the variance is proportional to
+# the mean predicted value.
+#
+# Thus, among the considered estimators,
+# ``PoissonRegressor`` and ``GradientBoostingRegressor`` are better suited for
+# modeling the long tail distribution of the data as compared to the ``Ridge``
+# estimator.
