@@ -45,7 +45,7 @@ def test_invalid_n_bins():
     est = KBinsDiscretizer(n_bins=1.1)
     err_msg = ("KBinsDiscretizer received an invalid "
                "n_bins type. Received float, expected int.")
-    with pytest.raises(ValueError, match=err_msg): 
+    with pytest.raises(ValueError, match=err_msg):
         est.fit_transform(X)
 
 
@@ -55,7 +55,7 @@ def test_invalid_n_bins_array():
     est = KBinsDiscretizer(n_bins=n_bins)
     err_msg = "n_bins must be a scalar or array of shape (n_features,)."
     with pytest.raises(ValueError,
-                       match=err_msg.replace('(', '\(').replace(')', '\)')):
+                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
         est.fit_transform(X)
 
     # Incorrect number of features
@@ -63,7 +63,7 @@ def test_invalid_n_bins_array():
     est = KBinsDiscretizer(n_bins=n_bins)
     err_msg = "n_bins must be a scalar or array of shape (n_features,)."
     with pytest.raises(ValueError,
-                       match=err_msg.replace('(', '\(').replace(')', '\)')):
+                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
         est.fit_transform(X)
 
     # Bad bin values
@@ -156,7 +156,7 @@ def test_invalid_encode_option():
                "('onehot', 'onehot-dense', 'ordinal'). "
                "Got encode='invalid-encode' instead.")
     with pytest.raises(ValueError,
-                       match=err_msg.replace('(', '\(').replace(')', '\)')):
+                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
         est.fit(X)
 
 
@@ -189,7 +189,7 @@ def test_invalid_strategy_option():
                "('uniform', 'quantile', 'kmeans'). "
                "Got strategy='invalid-strategy' instead.")
     with pytest.raises(ValueError,
-                       match=err_msg.replace('(', '\(').replace(')', '\)')):
+                       match=err_msg.replace('(', r'\(').replace(')', r'\)')):
         est.fit(X)
 
 
