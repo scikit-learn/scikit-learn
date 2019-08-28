@@ -528,7 +528,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     alpha : float, optional
         Constant that multiplies the penalty terms. Defaults to 1.0.
         See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to an ordinary least square,
+        parameter. ``alpha = 0`` is equivalent to an ordinary least square,
         solved by the :class:`LinearRegression` object. For numerical
         reasons, using ``alpha = 0`` with the ``Lasso`` object is not advised.
         Given this, you should use the :class:`LinearRegression` object.
