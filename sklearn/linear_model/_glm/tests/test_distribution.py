@@ -38,11 +38,6 @@ def test_invalid_distribution_bound():
                        match="must be of type DistributionBoundary"):
         dist.in_y_range([-1, 0, 1])
 
-    dist = TweedieDistribution()
-    dist._upper_bound = None
-    with pytest.raises(NotImplementedError):
-        dist.in_y_range([-1, 0, 1])
-
 
 def test_tweedie_distribution_power():
     msg = "distribution is only defined for power<=0 and power>=1"

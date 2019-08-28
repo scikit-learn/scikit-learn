@@ -63,11 +63,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         y : array, shape (n_samples,)
             Target values.
         """
-        if hasattr(self, '_upper_bound'):
-            # All currently supported distributions have an upper bound at
-            # +inf, however this may need to be implemented for other
-            # distributions
-            raise NotImplementedError
+        # Note that currently supported distributions have +inf upper bound
 
         if not isinstance(self._lower_bound, DistributionBoundary):
             raise TypeError('_lower_bound attribute must be of type '
@@ -236,7 +232,6 @@ class TweedieDistribution(ExponentialDispersionModel):
             For ``0<power<1``, no distribution exists.
     """
     def __init__(self, power=0):
-        # validate power and set _upper_bound, _include_upper_bound attrs
         self.power = power
 
     @property
