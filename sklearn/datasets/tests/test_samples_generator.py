@@ -11,6 +11,8 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 
+from sklearn.utils.validation import assert_all_finite
+
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import make_hastie_10_2
@@ -29,8 +31,6 @@ from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
 from sklearn.datasets import make_biclusters
 from sklearn.datasets import make_checkerboard
-
-from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
@@ -146,25 +146,25 @@ def test_make_classification_informative_features():
              n_clusters_per_class=2)
 
 
-def test_make_classification_weights_type():
-    """Test change of type for weights from
-       list or None to sequence or None, so that a
-       numpy array can be also be passed not just a list.
-
-    """
-    # w as None (default)
-    X, y = make_classification()
-    assert X.shape == (100, 20), "X shape mismatch"
-
-    # w as list
-    w = [0.25, 0.75]
-    X, y = make_classification(weights=w)
-    assert X.shape == (100, 20), "X shape mismatch"
-
-    # w as array: should pass in PR_14764, fail in master
-    w = np.array([0.25, 0.75])
-    X, y = make_classification(weights=w)
-    assert X.shape == (100, 20), "X shape mismatch"
+@pytest.mark.parametrize(
+    'weights, err_msg',
+    [
+        (0, "object of type 'int' has no len()"),
+        (-1, "object of type 'int' has no len()"),
+        ([], "Weights specified but incompatible with number of classes."),
+        ([.25, .75, .1],
+         "Weights specified but incompatible with number of classes."),
+        (np.array([]),
+         "Weights specified but incompatible with number of classes."),
+        (np.array([.25, .75, .1]),
+         "Weights specified but incompatible with number of classes."),
+        (np.random.random(3),
+         "Weights specified but incompatible with number of classes.")
+    ]
+)
+def test_make_classification_weights_type(weights, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        make_classification(weights=weights)
 
 
 def test_make_multilabel_classification_return_sequences():
