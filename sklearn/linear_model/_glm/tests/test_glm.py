@@ -340,3 +340,16 @@ def test_tweedie_regression_family(regression_data):
 
     # TODO: the following should not be allowed
     # est.family.power = 2
+
+
+@pytest.mark.parametrize(
+        'estimator, value',
+        [
+            (PoissonRegressor(), True),
+            (GammaRegressor(), True),
+            (TweedieRegressor(power=1.5), True),
+            (TweedieRegressor(power=0), False)
+        ],
+)
+def test_tags(estimator, value):
+    assert estimator._get_tags()['requires_positive_y'] is value

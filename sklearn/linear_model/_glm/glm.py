@@ -383,7 +383,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return 1 - dev / dev_null
 
     def _more_tags(self):
-        return {"requires_positive_y": True}
+        # create the _family_instance if fit wasn't called yet.
+        if hasattr(self, '_family_instance'):
+            _family_instance = self._family_instance
+        elif isinstance(self.family, ExponentialDispersionModel):
+            _family_instance = self.family
+        elif self.family in EDM_DISTRIBUTIONS:
+            _family_instance = EDM_DISTRIBUTIONS[self.family]()
+        else:
+            raise ValueError
+        return {"requires_positive_y": not _family_instance.in_y_range(-1.0)}
 
 
 class PoissonRegressor(GeneralizedLinearRegressor):
