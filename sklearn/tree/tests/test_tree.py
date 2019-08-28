@@ -1649,7 +1649,8 @@ def test_invalid_presort(cls):
     msg = ("'presort' should be in {}. "
            "Got {!r} instead.".format(allowed_presort, invalid_presort))
     est = cls(presort=invalid_presort)
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(ValueError,
+                       match=msg.replace('(', r'\(').replace(')', r'\)')):
         est.fit(X, y)
 
 
