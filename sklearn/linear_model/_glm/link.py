@@ -64,17 +64,6 @@ class Link(metaclass=ABCMeta):
         """
         pass  # pragma: no cover
 
-    @abstractmethod
-    def inverse_derivative2(self, lin_pred):
-        """Compute 2nd derivative of the inverse link function h''(lin_pred).
-
-        Parameters
-        ----------
-        lin_pred : array, shape (n_samples,)
-            Usually the (fitted) linear predictor.
-        """
-        pass  # pragma: no cover
-
 
 class IdentityLink(Link):
     """The identity link function g(x)=x."""
@@ -91,9 +80,6 @@ class IdentityLink(Link):
     def inverse_derivative(self, lin_pred):
         return np.ones_like(lin_pred)
 
-    def inverse_derivative2(self, lin_pred):
-        return np.zeros_like(lin_pred)
-
 
 class LogLink(Link):
     """The log link function g(x)=log(x)."""
@@ -108,9 +94,6 @@ class LogLink(Link):
         return np.exp(lin_pred)
 
     def inverse_derivative(self, lin_pred):
-        return np.exp(lin_pred)
-
-    def inverse_derivative2(self, lin_pred):
         return np.exp(lin_pred)
 
 
@@ -129,7 +112,3 @@ class LogitLink(Link):
     def inverse_derivative(self, lin_pred):
         ep = expit(lin_pred)
         return ep * (1 - ep)
-
-    def inverse_derivative2(self, lin_pred):
-        ep = expit(lin_pred)
-        return ep * (1 - ep) * (1 - 2 * ep)

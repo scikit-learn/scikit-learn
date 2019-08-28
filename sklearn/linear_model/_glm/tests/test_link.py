@@ -30,10 +30,3 @@ def test_link_properties(link):
     # g = link, h = link.inverse
     assert_allclose(link.derivative(link.inverse(x)),
                     1 / link.inverse_derivative(x))
-
-    assert (
-      link.inverse_derivative2(x).shape == link.inverse_derivative(x).shape)
-
-    # for LogitLink, in the following x should be between 0 and 1
-    # assert_almost_equal(link.inverse_derivative(link(x)),
-    #                     1 / link.derivative(x), decimal=decimal)

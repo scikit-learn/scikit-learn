@@ -919,8 +919,8 @@ The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
 likelihood as
 
 .. math::     d(y, \mu) = -2\phi\cdot
-              \left(loglike(y,\mu,\phi)
-              - loglike(y,y,\phi)\right)
+              \left( log P(y|\mu,\phi)
+              - log P(y|y,\phi)\right)
 
 The following table lists some specific EDM distributions—all are Tweedie
 distributions—and some of their properties.
