@@ -1209,58 +1209,58 @@ def test_quantile_transform_check_error():
                           [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     X_neg = sparse.csc_matrix(X_neg)
 
-    with pytest.raises(ValueError, match="Invalid value for "
-                                         "'n_quantiles': 0."):
+    err_msg = "Invalid value for 'n_quantiles': 0."
+    with pytest.raises(ValueError, match=err_msg):
         QuantileTransformer(n_quantiles=0).fit(X)
-    with pytest.raises(ValueError, match="Invalid value for "
-                                         "'subsample': 0."):
+    err_msg = "Invalid value for 'subsample': 0."
+    with pytest.raises(ValueError, match=err_msg):
         QuantileTransformer(subsample=0).fit(X)
-    with pytest.raises(ValueError, match="The number of quantiles "
-                                         "cannot be greater than "
-                                         "the number of samples "
-                                         "used. Got 1000 quantiles "
-                                         "and 10 samples."):
+    err_msg = ("The number of quantiles cannot be greater than "
+               "the number of samples used. Got 1000 quantiles "
+               "and 10 samples.")
+    with pytest.raises(ValueError, match=err_msg):
         QuantileTransformer(subsample=10).fit(X)
 
     transformer = QuantileTransformer(n_quantiles=10)
-    with pytest.raises(ValueError, match="QuantileTransformer only accepts "
-                                         "non-negative sparse matrices."):
+    err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
+    with pytest.raises(ValueError, match=err_msg):
         transformer.fit(X_neg)
     transformer.fit(X)
-    with pytest.raises(ValueError, match="QuantileTransformer only accepts "
-                                         "non-negative sparse matrices."):
+    err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
+    with pytest.raises(ValueError, match=err_msg):
         transformer.transform(X_neg)
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                                [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
-    with pytest.raises(ValueError, match="X does not have the same number of "
-                                         "features as the previously fitted "
-                                         "data. Got 2 instead of 3."):
+    err_msg = ("X does not have the same number of features as the previously"
+               " fitted " "data. Got 2 instead of 3.")
+    with pytest.raises(ValueError, match=err_msg):
         transformer.transform(X_bad_feat)
-    with pytest.raises(ValueError, match="X does not have the same number of "
-                                         "features as the previously fitted "
-                                         "data. Got 2 instead of 3."):
+    err_msg = ("X does not have the same number of features "
+               "as the previously fitted data. Got 2 instead of 3.")
+    with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
     transformer = QuantileTransformer(n_quantiles=10,
                                       output_distribution='rnd')
     # check that an error is raised at fit time
-    with pytest.raises(ValueError, match="'output_distribution' has to "
-                       "be either 'normal' or 'uniform'. Got 'rnd' instead."):
+    err_msg = ("'output_distribution' has to be either 'normal' or "
+               "'uniform'. Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
         transformer.fit(X)
     # check that an error is raised at transform time
     transformer.output_distribution = 'uniform'
     transformer.fit(X)
     X_tran = transformer.transform(X)
     transformer.output_distribution = 'rnd'
-    with pytest.raises(ValueError, match="'output_distribution' has to "
-                                         "be either 'normal' or 'uniform'. "
-                                         "Got 'rnd' instead."):
+    err_msg = ("'output_distribution' has to be either 'normal' or 'uniform'."
+               " Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
         transformer.transform(X)
     # check that an error is raised at inverse_transform time
-    with pytest.raises(ValueError, match="'output_distribution' has to "
-                                         "be either 'normal' or 'uniform'. "
-                                         "Got 'rnd' instead."):
+    err_msg = ("'output_distribution' has to be either 'normal' or 'uniform'."
+               " Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_tran)
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError,
