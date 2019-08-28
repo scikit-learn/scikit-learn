@@ -5,7 +5,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
@@ -190,17 +189,15 @@ def test_silhouette_nonzero_diag(dtype):
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.zeros(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.zeros(10))
 
 
 def assert_raises_on_all_points_same_cluster(func):
     """Assert message when all point are in different clusters"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.arange(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.arange(10))
 
 
 def test_calinski_harabasz_score():
