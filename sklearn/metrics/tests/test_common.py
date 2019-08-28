@@ -555,9 +555,9 @@ def test_not_symmetric_metric(name):
     metric = ALL_METRICS[name]
 
     # use context manager to supply custom error message
-    with pytest.raises(AssertionError) as cm:
+    with pytest.raises(AssertionError):
         assert_array_equal(metric(y_true, y_pred), metric(y_pred, y_true))
-        cm.msg = ("%s seems to be symmetric" % name)
+        raise ValueError("%s seems to be symmetric" % name)
 
 
 @pytest.mark.parametrize(
@@ -1152,9 +1152,9 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
 
     # use context manager to supply custom error message
-    with pytest.raises(AssertionError) as cm:
+    with pytest.raises(AssertionError):
         assert_allclose(unweighted_score, weighted_score)
-        cm.msg = ("Unweighted and weighted scores are unexpectedly almost "
+        raise ValueError("Unweighted and weighted scores are unexpectedly almost "
                   "equal (%s) and (%s) for %s" % (unweighted_score,
                                                   weighted_score, name))
 
