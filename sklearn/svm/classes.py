@@ -590,11 +590,11 @@ class SVC(BaseSVC):
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
 
-    class_weight_: array, shape = [n_class]
+    class_weight_ : array, shape = [n_class]
         Multipliers of parameter C of class i (class_weight_[i]*C).
         Computed based on the ``class_weight`` parameter.
 
-    shape_fit_: tuple, shape = [n_dimensions_of_X]
+    shape_fit_ : tuple, shape = [n_dimensions_of_X]
         Array dimensions of training vector ``X``.
 
     Examples
@@ -795,11 +795,11 @@ class NuSVC(BaseSVC):
         Sorted unique classes as provided in the target vector ``y`` in the
         ``fit`` method.
 
-    class_weight_: array, shape = [n_class]
+    class_weight_ : array, shape = [n_class]
         Multipliers of parameter C of class i (class_weight_[i]*C).
         Computed based on the ``class_weight`` parameter.
 
-    shape_fit_: tuple, shape = [n_dimensions_of_X]
+    shape_fit_ : tuple, shape = [n_dimensions_of_X]
         Array dimensions of training vector ``X``.
 
     Examples
