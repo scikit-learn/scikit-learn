@@ -1421,7 +1421,7 @@ class _RidgeGCV(LinearModel):
         """
         # if clf, label_binarizer applied first in RidgeClassifierCV
         # output of lb is int always
-        is_clf = y.dtype.kind == 'i'
+        is_clf = ((y == -1) | (y == 1)).all()
 
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
                          dtype=[np.float64],
