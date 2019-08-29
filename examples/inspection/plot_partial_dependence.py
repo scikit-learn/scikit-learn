@@ -5,7 +5,7 @@ Partial Dependence Plots
 
 Partial dependence plots show the dependence between the target function [2]_
 and a set of 'target' features, marginalizing over the values of all other
-features (the complement features). Due to the limits of human perception the
+features (the complement features). Due to the limits of human perception, the
 size of the target feature set must be small (usually, one or two) thus the
 target features are usually chosen among the most important features.
 
@@ -80,9 +80,9 @@ print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
 ##############################################################################
-# Here we configured a pipeline to scale the numerical input features and tuned
-# the neural network size and learning rate to get a reasonable compromise
-# between training time and predictive performance on a test set.
+# We configured a pipeline to scale the numerical input features and tuned the
+# neural network size and learning rate to get a reasonable compromise between
+# training time and predictive performance on a test set.
 #
 # Importantly, this tabular dataset has very different dynamic ranges for its
 # features. Neural networks tend to be very sensitive to features with varying
@@ -92,9 +92,10 @@ print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 # It would be possible to get even higher predictive performance with a larger
 # neural network but the training would also be significantly more expensive.
 #
-# Note that it is important to check that the model is accurate enough on a a
-# test set before plotting the partial dependence are there would be little use
-# in exploring the shape of the decision function of a poor model.
+# Note that it is important to check that the model is accurate enough on a
+# test set before plotting the partial dependence since there would be little
+# use in explaining the impact of a given feature on the prediction function of
+# a poor model.
 #
 # Let's now compute the partial dependence plots for this neural network using
 # the model-agnostic (brute-force) method:
@@ -127,7 +128,7 @@ print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
 ##############################################################################
-# Here we use the default hyperparameters for the gradient boosting model
+# Here, we used the default hyperparameters for the gradient boosting model
 # without any preprocessing as tree-based models are naturally robust to
 # monotonic transformations of numerical features.
 #
