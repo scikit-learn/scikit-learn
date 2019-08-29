@@ -17,7 +17,6 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -203,14 +202,16 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     se = SpectralEmbedding(n_components=1, affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(n_components=1, affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_connectivity(seed=36):

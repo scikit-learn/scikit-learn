@@ -17,7 +17,7 @@ from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_sparse_coded_signal
 
-n_samples, n_features, n_nonzero_coefs, n_targets = 20, 30, 5, 3
+n_samples, n_features, n_nonzero_coefs, n_targets = 25, 35, 5, 3
 y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
                                        n_nonzero_coefs, random_state=0)
 # Make X not of norm 1 for testing

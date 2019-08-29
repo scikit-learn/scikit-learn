@@ -122,6 +122,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
+    random_state_ : numpy.RandomState
+        Pseudo random number generator object used during initialization.
+
     Examples
     --------
     >>> from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
@@ -255,7 +258,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             If :meth:`fit` has not been called before.
         """
 
-        check_is_fitted(self, ['components_'])
+        check_is_fitted(self)
         X = check_array(X)
 
         return np.dot(X, self.components_.T)

@@ -88,6 +88,7 @@ Scoring                           Function                                      
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
 'r2'                              :func:`metrics.r2_score`
@@ -100,8 +101,7 @@ Usage examples:
 
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import cross_val_score
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data, iris.target
+    >>> X, y = datasets.load_iris(return_X_y=True)
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
@@ -1663,6 +1663,67 @@ Here is a small example of usage of this function::
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
+.. _ndcg:
+
+Normalized Discounted Cumulative Gain
+-------------------------------------
+
+Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
+(NDCG) are ranking metrics; they compare a predicted order to ground-truth
+scores, such as the relevance of answers to a query.
+
+from the Wikipedia page for Discounted Cumulative Gain:
+
+"Discounted cumulative gain (DCG) is a measure of ranking quality. In
+information retrieval, it is often used to measure effectiveness of web search
+engine algorithms or related applications. Using a graded relevance scale of
+documents in a search-engine result set, DCG measures the usefulness, or gain,
+of a document based on its position in the result list. The gain is accumulated
+from the top of the result list to the bottom, with the gain of each result
+discounted at lower ranks"
+
+DCG orders the true targets (e.g. relevance of query answers) in the predicted
+order, then multiplies them by a logarithmic decay and sums the result. The sum
+can be truncated after the first :math:`K` results, in which case we call it
+DCG@K.
+NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
+that it is always between 0 and 1. Usually, NDCG is preferred to DCG.
+
+Compared with the ranking loss, NDCG can take into account relevance scores,
+rather than a ground-truth ranking. So if the ground-truth consists only of an
+ordering, the ranking loss should be preferred; if the ground-truth consists of
+actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
+relevant), NDCG can be used.
+
+For one sample, given the vector of continuous ground-truth values for each
+target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
+the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+DCG score is
+
+.. math::
+   \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
+
+and the NDCG score is the DCG score divided by the DCG score obtained for
+:math:`y`.
+
+.. topic:: References:
+
+  * Wikipedia entry for Discounted Cumulative Gain:
+    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+
+  * Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+  * Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+  * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
 .. _regression_metrics:
 
 Regression metrics
@@ -2072,8 +2133,7 @@ dataset::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 

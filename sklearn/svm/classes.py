@@ -112,6 +112,9 @@ else [n_classes, n_features]
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
@@ -488,7 +491,9 @@ class SVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -574,6 +579,9 @@ class SVC(BaseSVC):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
@@ -695,7 +703,9 @@ class NuSVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -791,16 +801,16 @@ class NuSVC(BaseSVC):
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
-    classes_ : array, shape = [n_class]
-        Sorted unique classes as provided in the target vector ``y`` in the
-        ``fit`` method.
-
     class_weight_ : array, shape = [n_class]
         Multipliers of parameter C of class i (class_weight_[i]*C).
         Computed based on the ``class_weight`` parameter.
 
     shape_fit_ : tuple, shape = [n_dimensions_of_X]
         Array dimensions of training vector ``X``.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
 
     Examples
     --------
@@ -1188,6 +1198,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         We have the relation: decision_function = score_samples - `offset_`.
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     Examples
     --------
