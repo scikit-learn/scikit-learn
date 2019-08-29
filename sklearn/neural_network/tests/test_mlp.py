@@ -8,6 +8,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 import pytest
 import sys
 import warnings
+import re
 
 import numpy as np
 
@@ -658,7 +659,7 @@ def test_warm_start():
         message = ('warm_start can only be used where `y` has the same '
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
-        with pytest.raises(ValueError, match=message):
+        with pytest.raises(ValueError, match=re.escape(message)):
             clf.fit(X, y_i)
 
 
