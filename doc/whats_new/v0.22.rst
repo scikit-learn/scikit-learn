@@ -231,6 +231,14 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
+
+:mod:`sklearn.manifold`
+.......................
+- |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
+  :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
+  computed wrong eigenvalues with ``solver='amg'`` when
+  ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
+  
 :mod:`sklearn.metrics`
 ......................
 
@@ -265,9 +273,6 @@ Changelog
 
 - |Enhancement| Allow computing averaged metrics in the case of no true positives.
   :pr:`14595` by `Andreas Müller`_.
-
-:mod:`sklearn.metrics`
-......................
 
 - |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
   precomputed distance matrix contains non-zero diagonal entries.
