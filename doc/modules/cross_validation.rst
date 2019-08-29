@@ -537,14 +537,12 @@ target class as the complete set.
 Example of stratified 3-fold cross-validation on a dataset with 50 samples from
 three unbalanced classes and comparing with :class:`KFold` split::
 
-  >>> from sklearn.datasets import make_classification
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
 
-  >>> X, y = make_classification(n_samples=50, n_classes=3,
-  ...       n_informative=3, weights=[0.7, 0.1, 0.2], random_state=1)
+  >>> X, y = np.ones((50,1)), np.hstack(([0]*35, [1]*5, [2]*10))
 
-  >>> skf = StratifiedKFold(n_splits=3, random_state=1)
+  >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):  
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
@@ -552,14 +550,14 @@ three unbalanced classes and comparing with :class:`KFold` split::
   train -  [23  3  7]   |   test -  [12  2  3]
   train -  [24  4  7]   |   test -  [11  1  3]
 
-  >>> kf = KFold(n_splits=3, random_state=9)
+  >>> kf = KFold(n_splits=3)
   >>> for train, test in kf.split(X, y):
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
-  train -  [24  5  4]   |   test -  [11  0  6]
-  train -  [21  5  7]   |   test -  [14  0  3]
-  train -  [25  0  9]   |   test -  [10  5  1]
-
+  train -  [18  5 10]   |   test -  [17]
+  train -  [18  5 10]   |   test -  [17]
+  train -  [34]   |   test -  [ 1  5 10]
+  
 Here is a visualization of the cross-validation behavior.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
