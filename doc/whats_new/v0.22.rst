@@ -231,13 +231,19 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
-
 :mod:`sklearn.manifold`
 .......................
+
 - |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
   :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
-  computed wrong eigenvalues with ``solver='amg'`` when
+  computed wrong eigenvalues with ``eigen_solver='amg'`` when
   ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
+
+- |Fix| Fixed a bug in :func:`manifold.spectral_embedding`  used in
+  :class:`manifold.SpectralEmbedding` and :class:`cluster.spectral.SpectralClustering`
+  where ``eigen_solver="amg"`` would sometimes result in a LinAlgError.
+  :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`13707` by :user:`Scott White <whitews>`
 
 :mod:`sklearn.metrics`
 ......................
