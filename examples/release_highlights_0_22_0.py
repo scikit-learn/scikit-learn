@@ -85,7 +85,7 @@ svc_disp.figure_.suptitle("ROC Curve")  # adjust title after
 plt.show()
 
 #############################################################################
-# Tree prining
+# Tree pruning
 # ------------
 #
 # It is now possible to prune most tree-based estimators as a post-fit
