@@ -36,16 +36,17 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
     X : array-like, shape (n_samples, n_features)
         Input data.
 
-    covariance_estimator : estimator, or None, default=None
+    covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
-        method and a .covariance_ attribute like the estimators in
-        sklearn.covariance
+        method and a ``covariance_`` attribute like the estimators in
+        `sklearn.covariance`
 
         if None the shrinkage parameter drives the estimate.
 
     standardize : bool
-        if True standardize the data before applying the covariance estimator
-        Note: only used when covariance_estimator is not None
+         if ``True`` standardize the data before
+         applying the covariance estimator
+        Note: only used when `covariance_estimator` is not `None`
 
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
@@ -83,15 +84,17 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
             X = sc.fit_transform(X)
             covariance_estimator.fit(X)
             if not hasattr(covariance_estimator, 'covariance_'):
-                raise RuntimeError("%s does not have a covariance "
-                                   "attribute" % covariance_estimator)
+                raise RuntimeError("%s does not have a covariance_ "
+                                   "attribute" %
+                                   covariance_estimator.__class__.__name__)
             s = covariance_estimator.covariance_
             s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
         else:
             covariance_estimator.fit(X)
             if not hasattr(covariance_estimator, 'covariance_'):
-                raise RuntimeError("%s does not have a covariance "
-                                   "attribute" % covariance_estimator)
+                raise RuntimeError("%s does not have a covariance_ "
+                                   "attribute" %
+                                   covariance_estimator.__class__.__name__)
             s = covariance_estimator.covariance_
     return s
 
@@ -123,7 +126,7 @@ def _class_means(X, y):
 def _class_cov(
         X,
         y,
-        priors=None,
+        priors,
         shrinkage=None,
         covariance_estimator=None,
         standardize=False
@@ -141,16 +144,17 @@ def _class_cov(
     priors : array-like, shape (n_classes,)
         Class priors.
 
-    covariance_estimator : estimator, or None, default=None
+    covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
-        method and a .covariance_ attribute like the estimators in
-        sklearn.covariance
+        method and a ``covariance_`` attribute like the estimators in
+        `sklearn.covariance`
 
         if None the shrinkage parameter drives the estimate.
 
     standardize : bool
-        if True standardize the data before applying the covariance estimator
-        Note: only used when covariance_estimator is not None
+         if ``True`` standardize the data before
+         applying the covariance estimator
+        Note: only used when `covariance_estimator` is not `None`
 
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
@@ -191,16 +195,17 @@ def _classes_cov(
     y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values.
 
-    covariance_estimator : estimator, or None, default=None
+    covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
-        method and a .covariance_ attribute like the estimators in
-        sklearn.covariance
+        method and a ``covariance_`` attribute like the estimators in
+        `sklearn.covariance`
 
         if None the shrinkage parameter drives the estimate.
 
     standardize : bool
-        if True standardize the data before applying the covariance estimator
-        Note: only used when covariance_estimator is not None
+         if ``True`` standardize the data before
+         applying the covariance estimator
+        Note: only used when `covariance_estimator` is not `None`
 
     shrinkage : string or float, optional
         Shrinkage parameter, possible values:
@@ -266,17 +271,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
-    covariance_estimator : estimator, or None, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a .covariance_ attribute like the estimators in
-        sklearn.covariance
-
-        if None the shrinkage parameter drives the estimate.
-
-    standardize : bool
-        if True standardize the data before applying the covariance estimator
-        Note: only used when covariance_estimator is not None
-
     priors : array, optional, shape (n_classes,)
         Class priors.
 
@@ -295,6 +289,18 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Threshold used for rank estimation in SVD solver.
 
         .. versionadded:: 0.17
+
+    covariance_estimator : estimator, default=None
+        The covariance estimator is a BaseEstimator with a fit
+        method and a ``covariance_`` attribute like the estimators in
+        `sklearn.covariance`
+
+        if None the shrinkage parameter drives the estimate.
+
+    standardize : bool
+         if ``True`` standardize the data before
+         applying the covariance estimator
+        Note: only used when `covariance_estimator` is not `None`
 
     Attributes
     ----------
@@ -362,17 +368,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     [1]
     """
 
-    def __init__(
-            self,
-            solver='svd',
-            shrinkage=None,
-            covariance_estimator=None,
-            standardize=False,
-            priors=None,
-            n_components=None,
-            store_covariance=False,
-            tol=1e-4
-    ):
+    def __init__(self, solver='svd', shrinkage=None, priors=None,
+                 n_components=None, store_covariance=False, tol=1e-4,
+                 covariance_estimator=None, standardize=False):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
@@ -405,19 +403,19 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
-        covariance_estimator : estimator, or None, default=None
+        covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
-            method and a .covariance_ attribute like the estimators in
-            sklearn.covariance
+            method and a ``covariance_`` attribute like the estimators in
+            `sklearn.covariance`
 
             if None the shrinkage parameter drives the estimate.
 
         standardize : bool
-            if True standardize the data before applying the
-            covariance estimator
-            Note: only used when covariance_estimator is not None
+             if ``True`` standardize the data before
+             applying the covariance estimator
+            Note: only used when `covariance_estimator` is not `None`
 
-       Notes
+        Notes
         -----
         This solver is based on [1]_, section 2.6.2, pp. 39-41.
 
@@ -463,17 +461,17 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
-        covariance_estimator : estimator, or None, default=None
+        covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
-            method and a .covariance_ attribute like the estimators in
-            sklearn.covariance
+            method and a ``covariance_`` attribute like the estimators in
+            `sklearn.covariance`
 
             if None the shrinkage parameter drives the estimate.
 
         standardize : bool
-            if True standardize the data before applying
-            the covariance estimator
-            Note: only used when covariance_estimator is not None
+             if ``True`` standardize the data before
+             applying the covariance estimator
+            Note: only used when `covariance_estimator` is not `None`
 
         Notes
         -----
@@ -648,7 +646,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                 raise NotImplementedError(
                         'covariance estimator'
                         'is not supported'
-                        'with svd solver. Try an other solver')
+                        'with svd solver. Try another solver')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
             self._solve_lsqr(
@@ -754,25 +752,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    solver : string, optional
-        Solver to use, possible values:
-          - 'svd': Singular value decomposition (default).
-            Does not compute the covariance matrix, therefore this solver is
-            recommended for data with a large number of features.
-          - 'lsqr': Least squares solution, can be combined with
-          custom covariance estimator.
-
-    covariance_estimator : estimator, or None, default=None
-        The covariance estimator is a BaseEstimator with a fit
-        method and a .covariance_ attribute like the estimators in
-        sklearn.covariance
-
-        if None the shrinkage parameter drives the estimate.
-
-    standardize : bool
-        if True standardize the data before applying the covariance estimator
-        Note: only used when covariance_estimator is not None
-
     priors : array, optional, shape = [n_classes]
         Priors on classes
 
@@ -790,6 +769,26 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Threshold used for rank estimation.
 
         .. versionadded:: 0.17
+
+    solver : string, optional
+        Solver to use, possible values:
+          - 'svd': Singular value decomposition (default).
+            Does not compute the covariance matrix, therefore this solver is
+            recommended for data with a large number of features.
+          - 'lsqr': Least squares solution, can be combined with
+          custom covariance estimator.
+
+    covariance_estimator : estimator, default=None
+        The covariance estimator is a BaseEstimator with a fit
+        method and a ``covariance_`` attribute like the estimators in
+        `sklearn.covariance`
+
+        if None the shrinkage parameter drives the estimate.
+
+    standardize : bool
+         if ``True`` standardize the data before
+         applying the covariance estimator
+        Note: only used when `covariance_estimator` is not `None`
 
     Attributes
     ----------
@@ -833,15 +832,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-    def __init__(
-            self,
-            solver='svd',
-            covariance_estimator=None,
-            standardize=False,
-            priors=None,
-            reg_param=0.,
-            store_covariance=False,
-            tol=1.0e-4):
+    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+                 tol=1.0e-4, solver='svd', covariance_estimator=None,
+                 standardize=False):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariance = store_covariance
@@ -923,19 +916,19 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Regularizes the covariance estimate as
             ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-        covariance_estimator : estimator, or None, default=None
+        covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
-            method and a .covariance_ attribute like the estimators in
-            sklearn.covariance
+            method and a ``covariance_`` attribute like the estimators in
+            `sklearn.covariance`
 
             if None the shrinkage parameter drives the estimate.
 
         standardize : bool
-            if True standardize the data before applying
-            the covariance estimator
-            Note: only used when covariance_estimator is not None
+             if ``True`` standardize the data before
+             applying the covariance estimator
+            Note: only used when `covariance_estimator` is not `None`
 
-       Notes
+        Notes
         -----
         This solver is based on [1]_, section 2.6.2, pp. 39-41.
 
@@ -1005,7 +998,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             if self.covariance_estimator is not None:
                 raise NotImplementedError(
                     'covariance estimator is not'
-                    'supported with svd solver. Try an other solver')
+                    'supported with svd solver. Try another solver')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
             self._solve_lsqr(
