@@ -73,7 +73,6 @@ print(gbdt.predict(X))
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.metrics import plot_roc_curve
-from sklearn.datasets import load_wine
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
