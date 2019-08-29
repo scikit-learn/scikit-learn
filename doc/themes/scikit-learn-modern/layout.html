@@ -20,9 +20,12 @@
   <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
   {% endblock %}
 
-  {%- if pageurl %}
-  <link rel="canonical" href="{{ pageurl }}" />
-  {%- endif %}
+  <script>
+     VERSION_SUBDIR = (function(groups) {
+         return groups ? groups[1] : null;
+     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+  </script>
+  <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
   {% if favicon %}
   <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}"/>
@@ -43,7 +46,7 @@
 <body>
 {% include "nav.html" %}
 {%- block content %}
-<div class="d-flex" id="sk-doc-wrapper">
+<div class="d-flex " id="sk-doc-wrapper">
     <div class="border-right" id="sk-sidebar-wrapper">
       <div class="h-100 sk-sidebar-toc-wrapper">
         <div class="alert alert-danger p-1 mb-2" role="alert">
@@ -61,7 +64,7 @@
       </div>
     </div>
     <div id="sk-page-content-wrapper">
-      <div class="sk-page-content container-fluid">
+      <div class="sk-page-content container-fluid body" role="main">
         {% block body %}{% endblock %}
       </div>
     <div class="container">

@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% set title = 'scikit-learn: machine learning in Python' %}
 
 {% block content %}
 <div class="container-fluid sk-landing-bg py-3">
@@ -18,7 +19,7 @@
   </div>
 </div>
 
-<div class="container sk-landing-container py-3">
+<div class="container sk-landing-container py-3 body" role="main">
   <div class="row">
     <div class="col-md-4 mb-2">
       <div class="card h-100">
@@ -33,7 +34,9 @@
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_classifier_comparison_001.png" class="sk-index-img">
+          <a href="auto_examples/classification/plot_classifier_comparison.html">
+          <img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -51,7 +54,9 @@
           and <a href="supervised_learning.html#supervised-learning">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1 text-center">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_adaboost_regression_001.png" class="sk-index-img">
+          <a href="auto_examples/ensemble/plot_adaboost_regression.html">
+          <img src="_images/sphx_glr_plot_adaboost_regression_thumb.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -69,7 +74,9 @@
           and <a href="modules/clustering.html#clustering">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1 text-center">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_kmeans_digits_001.png" class="sk-index-img">
+          <a href="auto_examples/cluster/plot_kmeans_digits.html">
+          <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -87,7 +94,9 @@
           and <a href="modules/decomposition.html#decompositions">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1 text-center">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_pca_iris_001.png" class="sk-index-img">
+          <a href="auto_examples/decomposition/plot_pca_iris.html">
+          <img src="_images/sphx_glr_plot_pca_iris_thumb.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -105,7 +114,9 @@
           and <a href="modules/decomposition.html#decompositions">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1 text-center">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_multi_metric_evaluation_001.png" class="sk-index-img">
+          <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html">
+            <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#model-selection" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -122,7 +133,9 @@
           and <a href="modules/preprocessing.html#preprocessing">more...</a></p>
         </div>
         <div class="overflow-hidden mx-1 text-center">
-          <img src="https://scikit-learn.org/stable/_images/sphx_glr_plot_discretization_strategies_001.png" class="sk-index-img">
+          <a href="auto_examples/preprocessing/plot_discretization_strategies.html">
+          <img src="_images/sphx_glr_plot_discretization_strategies_thumb.png" class="sk-index-img">
+          </a>
         </div>
           <a href="auto_examples/index.html#preprocessing" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
       </div>
@@ -169,9 +182,8 @@
             <input type="hidden" value="_s-xclick" name="cmd">
             <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
         </form>
-        <a class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); ">Help us, <strong>donate!</strong></a>
-        <a class="btn btn-warning btn-big cite-us" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
-
+        <a class="btn btn-warning btn-big sk-donate-btn" onclick="document.getElementById('paypal-form').submit(); ">Help us, <strong>donate!</strong></a>
+        <a class="btn btn-warning btn-big" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
         <p>
             <small><a href="about.html#funding">Read more about donations</a></small>
         </p>

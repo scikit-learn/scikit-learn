@@ -284,11 +284,7 @@ sphinx_gallery_conf = {
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
-carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
-                   'sphx_glr_plot_gpr_co2_001.png': 350,
-                   'sphx_glr_plot_adaboost_twoclass_001.png': 372,
-                   'sphx_glr_plot_compare_methods_001.png': 349}
+carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 
 
 # enable experimental module so that experimental estimators can be

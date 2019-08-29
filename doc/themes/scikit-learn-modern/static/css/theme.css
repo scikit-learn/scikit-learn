@@ -17,18 +17,34 @@ a.headerlink {
   visibility: hidden;
 }
 
+a.headerlink:hover {
+    background-color: #c60f0f;
+    color: white;
+}
+
 input:focus {
   outline: none;
 }
 
-.literal {
+code {
+  color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   padding: 0.2rem;
 }
 
-code {
-  color: #222;
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
+  background-color: transparent;
+}
+
+h1:hover a.headerlink,
+h2:hover a.headerlink,
+h3:hover a.headerlink,
+h4:hover a.headerlink,
+h5:hover a.headerlink,
+h6:hover a.headerlink,
+dt:hover a.headerlink {
+  visibility: visible;
 }
 
 strong {
@@ -39,26 +55,41 @@ p {
   margin-bottom: 0.8rem;
 }
 
-a code.xref {
-  background-color: initial;
+a code {
+  color: inherit;
+}
+
+a code {
+  background-color: transparent;
   font-weight: bold;
   color: #2878A2;
   border-radius: 0;
   padding: 0;
 }
 
-.highlight {
+div.highlight {
   padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
 }
 
-.highlight pre {
+div.highlight pre {
   margin-bottom: 0;
+  line-height: 1rem;
 }
 
-.dropdown-item:active {
-  background-color: #3499cd;
+div.highlight a {
+  text-decoration: underline;
+}
+
+.sk-donate-btn {
+  cursor: pointer;
+}
+
+/* clearfix */
+
+div.clearer {
+  clear: both;
 }
 
 /* Button */
@@ -88,27 +119,27 @@ a code.xref {
 
 /* Search */
 
-.form-inline .sk-form-search-input {
+form.form-inline .sk-form-search-input {
   width: 200px;
 }
 
 /* General layout */
 
-.section {
+div.section {
   margin-bottom: 1rem;
 }
 
 /* LANDING PAGE STYLE */
 
-.sk-landing-container {
+div.sk-landing-container {
   max-width: 1240px;
 }
 
-.sk-landing-bg {
+div.sk-landing-bg {
   background-image: linear-gradient(90deg, #3499cd 50%, #ff9c34);
 }
 
-.sk-landing-bg-more-info {
+div.sk-landing-bg-more-info {
   background-color: #f8f8f8;
 }
 
@@ -130,19 +161,19 @@ a code.xref {
   font-weight: 700;
 }
 
-.sk-index-img {
+img.sk-index-img {
   height: 240px;
   width: auto;
   margin: auto;
   margin-bottom: 1em;
 }
 
-.sk-who-uses-carousel-img {
+img.sk-who-uses-carousel-img {
   height: 100px;
   max-width: 50%;
 }
 
-.sk-footer-funding-logo {
+img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
   margin: 0 8px;
@@ -169,6 +200,7 @@ a code.xref {
   opacity: 0;
   top: 4rem;
   padding: 0.5rem;
+  z-index: 2;
 }
 
 #sk-doc-wrapper.toggled #sk-sidebar-wrapper {
@@ -207,13 +239,13 @@ a code.xref {
   background-color: white;
 }
 
-.sk-content-footer {
+footer.sk-content-footer {
   padding: 1rem 0;
   color: #999;
   text-align: right;
 }
 
-.sk-docs-navbar {
+nav.sk-docs-navbar {
   position: fixed;
   width: 100%;
   z-index: 2;
@@ -243,14 +275,14 @@ a code.xref {
 
 /* docs index */
 
-.sk-documentation-index-card {
+div.sk-documentation-index-card {
   border-left: 0.15rem solid #ff9c34;
 }
-.sk-documentation-index-card:hover {
+div.sk-documentation-index-card:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.sk-documentation-index-anchor:hover {
+a.sk-documentation-index-anchor:hover {
   text-decoration: none;
   color: #2878A2;
 }
@@ -266,27 +298,27 @@ a code.xref {
 
 /* toc  */
 
-.sk-sidebar-toc-wrapper > ul > li > a{
+div.sk-sidebar-toc-wrapper > ul > li > a{
   font-weight: bold;
 }
 
-.sk-sidebar-toc-wrapper {
+div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
 }
 
-.sk-sidebar-toc-wrapper > ul,
-.sk-sidebar-toc-wrapper ul ul {
+div.sk-sidebar-toc-wrapper > ul,
+div.sk-sidebar-toc-wrapper ul ul {
   list-style: none;
   margin-left: 0;
   padding-left: 0;
 }
 
-.sk-sidebar-toc-wrapper ul ul ul {
+div.sk-sidebar-toc-wrapper ul ul ul {
   list-style: square;
   margin-left: 1rem;
 }
 
-.sk-sidebar-toc-wrapper::after {
+div.sk-sidebar-toc-wrapper::after {
   display: block;
   content: "";
   height: 120px;
@@ -295,7 +327,11 @@ a code.xref {
 
 /* content styling element style */
 
-.sk-page-content h1 {
+div.sk-page-content {
+  margin-top: 0.5rem;
+}
+
+div.sk-page-content h1 {
   background-color: #cde8ef;
   padding: 0.5rem;
   border-radius: 0 1rem;
@@ -304,31 +340,31 @@ a code.xref {
   margin-bottom: 1.5rem;
 }
 
-.sk-page-content h2 {
-  padding: 0.4rem;
+div.sk-page-content h2 {
+  padding: 0.5rem;
   background-color: #BED4EB;
   border-radius: 0.3rem;
   font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2rem;
 }
 
-.sk-page-content h3 {
-  padding: 0.2rem;
+div.sk-page-content h3 {
+  padding: 0.3rem;
   background-color: #eee;
   border-radius: 0.3rem;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
 }
 
-.sk-page-content h4 {
+div.sk-page-content h4 {
   padding: 0.2rem;
   background-color: #F4F4F4;
   border-radius: 0.3rem;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
 
 /* longtables */
 
-.longtable p {
+table.longtable p {
     -moz-hyphens: none;
     -ms-hyphens: none;
     -webkit-hyphens: none;
@@ -337,14 +373,14 @@ a code.xref {
     margin-bottom: 0;
 }
 
-.longtable td, .longtable th {
+table.longtable td, table.longtable th {
   border-top: 1px solid #ddd;
   border-bottom: 1px solid #ddd;
   padding-right: 0.5rem;
   white-space:nowrap;
 }
 
-.longtable tr.row-odd {
+table.longtable tr.row-odd {
   background-color: #F0F7FA;
 }
 
@@ -361,13 +397,16 @@ a code.xref {
 }
 
 .class > dt::after, .function > dt::after, .method > dt::after {
-  content: "";
-  clear: both;
-  display: table;
+  overflow: auto;
 }
 
-.descname {
+code.descname {
   font-weight: bold;
+  background-color: transparent;
+}
+
+code.descclassname {
+  background-color: transparent;
 }
 
 .viewcode-link {
@@ -485,7 +524,7 @@ div.seealso {
   color: #AF8A4B;
 }
 
-dl.citation dt.label {
+dl.citation, dt.label {
   float: left;
   padding-right: 0.5rem;
 }
@@ -509,6 +548,15 @@ img.align-center, .figure.align-center, object.align-center {
   margin-left: auto;
   margin-right: auto;
   margin-bottom: 1rem;
+  text-align: center;
+}
+
+a.brackets::after, span.brackets > a::after {
+  content: "]";
+}
+
+a.brackets::before, span.brackets > a::before {
+    content: "[";
 }
 
 /* copybutton */
@@ -525,7 +573,6 @@ img.align-center, .figure.align-center, object.align-center {
   padding-right: 0.2rem;
 }
 
-
 div.highlight:hover span.copybutton::after {
   background: #3F556B;
   border-radius: 0.25rem;
@@ -538,6 +585,41 @@ div.highlight:hover span.copybutton::after {
   font-size: 0.8rem;
   top: 0;
   right: 0;
+}
+
+/* table */
+table.align-default {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+table.docutils tr:nth-child(odd) {
+  background-color: #F0F7FA;
+}
+
+table.docutils tr {
+  border-style: solid none solid none;
+  border-width: 1px 0;
+  border-color: #ddd;
+}
+
+table.docutils td, table.docutils th {
+  padding: 0.125rem 0.5rem 0.125rem 0.25rem;
+}
+
+table.docutils {
+  margin-bottom: 1rem;
+}
+
+table.docutils p {
+  margin-bottom: 0;
+}
+
+/* gallery */
+
+div.sphx-glr-thumbcontainer {
+  min-height: 250px;
+  font-size: 0.9rem;
 }
 
 /* pygments - highlightning */
