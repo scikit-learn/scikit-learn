@@ -535,7 +535,7 @@ folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
 Example of stratified 3-fold cross-validation on a dataset with 50 samples from
-three unbalanced classes and comparing with :class:`KFold` split::
+two unbalanced classes and comparing with :class:`KFold` split::
 
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
