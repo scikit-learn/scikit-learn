@@ -734,6 +734,7 @@ class Ridge(_BaseRidge, RegressorMixin):
     Ridge()
 
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
@@ -1418,6 +1419,10 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+        # if clf, label_binarizer applied first in RidgeClassifierCV
+        # output of lb is int always
+        is_clf = y.dtype.kind == 'i'
+
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
                          dtype=[np.float64],
                          multi_output=True, y_numeric=True)
@@ -1483,6 +1488,10 @@ class _RidgeGCV(LinearModel):
                 pass
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
+
+            if is_clf:
+                y = (y > 0).astype(np.int)
+                cv_values = (cv_values > 0).astype(np.int)
 
             out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
