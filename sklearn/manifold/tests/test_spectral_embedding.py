@@ -17,7 +17,6 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -173,7 +172,22 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
+
+    # same with special case in which amg is not actually used
+    # regression test for #10715
+    # affinity between nodes
+    row = [0, 0, 1, 2, 3, 3, 4]
+    col = [1, 2, 2, 3, 4, 5, 5]
+    val = [100, 100, 100, 1, 100, 100, 100]
+
+    affinity = sparse.coo_matrix((val + val, (row + col, col + row)),
+                                 shape=(6, 6)).toarray()
+    se_amg.affinity = "precomputed"
+    se_arpack.affinity = "precomputed"
+    embed_amg = se_amg.fit_transform(affinity)
+    embed_arpack = se_arpack.fit_transform(affinity)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
 def test_spectral_embedding_amg_solver_failure(seed=36):
@@ -225,14 +239,16 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     se = SpectralEmbedding(n_components=1, affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(n_components=1, affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_connectivity(seed=36):
