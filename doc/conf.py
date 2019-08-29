@@ -31,12 +31,13 @@ import sphinx_gallery
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
-    'sphinx_gallery.gen_gallery',
+    # 'sphinx_gallery.gen_gallery',
     'sphinx_issues',
     'custom_references_resolver'
 ]
@@ -75,7 +76,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
@@ -135,7 +136,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'scikit-learn'
+html_theme = 'scikit-learn-modern'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -178,7 +179,7 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+html_additional_pages = {'index': 'index.html'}
 
 # If false, no module index is generated.
 html_domain_indices = False

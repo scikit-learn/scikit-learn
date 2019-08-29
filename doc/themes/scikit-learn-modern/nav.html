@@ -1,0 +1,88 @@
+{%- if pagename != 'index' and pagename != 'documentation' %}
+  {%- set nav_bar_class = "sk-docs-navbar" %}
+  {%- set top_container_cls = "sk-docs-container" %}
+{%- else %}
+  {%- set nav_bar_class = "sk-landing-navbar" %}
+  {%- set top_container_cls = "sk-landing-container" %}
+{%- endif %}
+
+<nav class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
+  <div class="container-fluid {{ top_container_cls }}">
+    <a class="navbar-brand" href="#">
+      <img
+        src="{{ pathto('_static/images/scikit-learn-logo-notext.png', 1) }}"
+        width="100"
+        alt="logo"
+      />
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ pathto('index') }}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Install</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle"
+            href="#"
+            id="navbarDropdown"
+            role="button"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            Documentation
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <h2 class="dropdown-header">
+              Scikit-learn
+              <script>
+                document.write(
+                  DOCUMENTATION_OPTIONS.VERSION +
+                    (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : "")
+                );
+              </script>
+            </h2>
+            <a class="dropdown-item" href="#">Tutorials</a>
+            <a class="dropdown-item" href="#">User guide</a>
+            <a class="dropdown-item" href="#">API</a>
+            <a class="dropdown-item" href="#">Glossary</a>
+            <a class="dropdown-item" href="#">FAQ</a>
+            <a class="dropdown-item" href="#">Development</a>
+            <a class="dropdown-item" href="#">Roadmap</a>
+            <a class="dropdown-item" href="#">About us</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#">All available versions</a>
+            <a class="dropdown-item" href="#">PDF documentation</a>
+          </div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Examples</a>
+        </li>
+      </ul>
+      <form class="form-inline my-2 my-lg-0">
+        <input
+          class="form-control mr-sm-2 sk-form-search-input"
+          type="search"
+          placeholder="Search"
+          aria-label="Search"
+        />
+        <button class="btn sk-btn-primary-outline my-2 my-sm-0" type="submit">Go</button>
+      </form>
+    </div>
+  </div>
+</nav>
