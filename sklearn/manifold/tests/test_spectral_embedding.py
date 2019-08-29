@@ -207,10 +207,11 @@ def test_spectral_embedding_amg_solver_failure(seed=36):
                                 random_state=np.random.RandomState(seed))
     embed_amg0 = se_amg0.fit_transform(S)
 
-    se_amg0.set_params(random_state=np.random.RandomState(seed+1))
-    embed_amg1 = se_amg0.fit_transform(S)
+    for i in range(10):
+        se_amg0.set_params(random_state=np.random.RandomState(seed + 1))
+        embed_amg1 = se_amg0.fit_transform(S)
 
-    assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
+        assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
 
 
 @pytest.mark.filterwarnings("ignore:the behavior of nmi will "
