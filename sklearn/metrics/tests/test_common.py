@@ -1151,9 +1151,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # use context manager to supply custom error message
     with pytest.raises(AssertionError):
         assert_allclose(unweighted_score, weighted_score)
-        raise ValueError("Unweighted and weighted scores are unexpectedly almost "
-                  "equal (%s) and (%s) for %s" % (unweighted_score,
-                                                  weighted_score, name))
+        raise ValueError("Unweighted and weighted scores are unexpectedly "
+                         "almost equal (%s) and (%s) "
+                         "for %s" % (unweighted_score,
+                                     weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,
