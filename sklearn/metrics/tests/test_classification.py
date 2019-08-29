@@ -2,6 +2,7 @@
 from functools import partial
 from itertools import product
 import warnings
+import re
 
 import numpy as np
 from scipy import linalg
@@ -13,7 +14,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -298,8 +298,9 @@ def test_average_precision_score_score_non_binary_class():
 
     # y_true contains three different class values
     y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "multiclass format is not supported",
-                         average_precision_score, y_true, y_pred)
+    err_msg = "multiclass format is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_score(y_true, y_pred)
 
 
 def test_average_precision_score_duplicate_values():
@@ -481,34 +482,31 @@ def test_multilabel_confusion_matrix_errors():
     y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
 
     # Bad sample_weight
-    assert_raise_message(ValueError, "inconsistent numbers of samples",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, sample_weight=[1, 2])
-    assert_raise_message(ValueError, "bad input shape",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred,
-                         sample_weight=[[1, 2, 3],
-                                        [2, 3, 4],
-                                        [3, 4, 5]])
+    with pytest.raises(ValueError, match="inconsistent numbers of samples"):
+        multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
+    with pytest.raises(ValueError, match="bad input shape"):
+        multilabel_confusion_matrix(y_true, y_pred,
+                                    sample_weight=[[1, 2, 3],
+                                                   [2, 3, 4],
+                                                   [3, 4, 5]])
 
     # Bad labels
-    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, labels=[-1])
-    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
-                         multilabel_confusion_matrix,
-                         y_true, y_pred, labels=[3])
+    err_msg = "All labels must be in [0, n labels)"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        multilabel_confusion_matrix(y_true, y_pred, labels=[-1])
+    err_msg = "All labels must be in [0, n labels)"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        multilabel_confusion_matrix(y_true, y_pred, labels=[3])
 
     # Using samplewise outside multilabel
-    assert_raise_message(ValueError, "Samplewise metrics",
-                         multilabel_confusion_matrix,
-                         [0, 1, 2], [1, 2, 0], samplewise=True)
+    with pytest.raises(ValueError, match="Samplewise metrics"):
+        multilabel_confusion_matrix([0, 1, 2], [1, 2, 0], samplewise=True)
 
     # Bad y_type
-    assert_raise_message(ValueError, "multiclass-multioutput is not supported",
-                         multilabel_confusion_matrix,
-                         [[0, 1, 2], [2, 1, 0]],
-                         [[1, 2, 0], [1, 0, 2]])
+    err_msg = "multiclass-multioutput is not supported"
+    with pytest.raises(ValueError, match=err_msg):
+        multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
+                                    [[1, 2, 0], [1, 0, 2]])
 
 
 def test_cohen_kappa():
@@ -1071,12 +1069,11 @@ def test_classification_report_no_labels_target_names_unequal_length():
     y_pred = [0, 2, 2, 0, 0]
     target_names = ['class 0', 'class 1', 'class 2']
 
-    assert_raise_message(ValueError,
-                         "Number of classes, 2, does not "
-                         "match size of target_names, 3. "
-                         "Try specifying the labels parameter",
-                         classification_report,
-                         y_true, y_pred, target_names=target_names)
+    err_msg = ("Number of classes, 2, does not "
+               "match size of target_names, 3. "
+               "Try specifying the labels parameter")
+    with pytest.raises(ValueError, match=err_msg):
+        classification_report(y_true, y_pred, target_names=target_names)
 
 
 @ignore_warnings
@@ -1154,29 +1151,29 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    assert_raise_message(ValueError, "pos_label=2 is not a valid label: "
-                         "array([0, 1])", jaccard_score, y_true,
-                         y_pred, average='binary', pos_label=2)
+    err_msg = "pos_label=2 is not a valid label: array([0, 1])"
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
+        jaccard_score(y_true, y_pred, average='binary', pos_label=2)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     msg1 = ("Target is multilabel-indicator but average='binary'. "
             "Please choose another average setting, one of [None, "
             "'micro', 'macro', 'weighted', 'samples'].")
-    assert_raise_message(ValueError, msg1, jaccard_score, y_true,
-                         y_pred, average='binary', pos_label=-1)
+    with pytest.raises(ValueError, match=re.escape(msg1)):
+        jaccard_score(y_true, y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
     msg2 = ("Target is multiclass but average='binary'. Please choose "
             "another average setting, one of [None, 'micro', 'macro', "
             "'weighted'].")
-    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
-                         y_pred, average='binary')
+    with pytest.raises(ValueError, match=re.escape(msg2)):
+        jaccard_score(y_true, y_pred, average='binary')
     msg3 = ("Samplewise metrics are not available outside of multilabel "
             "classification.")
-    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
-                         y_pred, average='samples')
+    with pytest.raises(ValueError, match=msg3):
+        jaccard_score(y_true, y_pred, average='samples')
 
     assert_warns_message(UserWarning,
                          "Note that pos_label (set to 3) is ignored when "
@@ -1232,11 +1229,11 @@ def test_multilabel_jaccard_score(recwarn):
                                       average='weighted'), 7. / 8)
 
     msg2 = 'Got 4 > 2'
-    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
-                         y_pred, labels=[4], average='macro')
+    with pytest.raises(ValueError, match=msg2):
+        jaccard_score(y_true, y_pred, labels=[4], average='macro')
     msg3 = 'Got -1 < 0'
-    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
-                         y_pred, labels=[-1], average='macro')
+    with pytest.raises(ValueError, match=msg3):
+        jaccard_score(y_true, y_pred, labels=[-1], average='macro')
 
     msg = ('Jaccard is ill-defined and being set to 0.0 in labels '
            'with no true or predicted samples.')
@@ -1703,8 +1700,8 @@ def test_prf_average_binary_data_non_binary():
     ]:
         for metric in [precision_score, recall_score, f1_score,
                        partial(fbeta_score, beta=2)]:
-            assert_raise_message(ValueError, msg,
-                                 metric, y_true, y_pred)
+            with pytest.raises(ValueError, match=re.escape(msg)):
+                metric(y_true, y_pred)
 
 
 def test__check_targets():
@@ -1769,17 +1766,16 @@ def test__check_targets():
                 _check_targets(y1, y2)
 
             if type1 != type2:
-                assert_raise_message(
-                    ValueError,
-                    "Classification metrics can't handle a mix of {0} and {1} "
-                    "targets".format(type1, type2),
-                    _check_targets, y1, y2)
+                err_msg = ("Classification metrics can't handle a mix "
+                           "of {0} and {1} targets".format(type1, type2))
+                with pytest.raises(ValueError, match=err_msg):
+                    _check_targets(y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
-                    assert_raise_message(ValueError,
-                                         "{0} is not supported".format(type1),
-                                         _check_targets, y1, y2)
+                    err_msg = "{0} is not supported".format(type1)
+                    with pytest.raises(ValueError, match=err_msg):
+                        _check_targets(y1, y2)
 
         else:
             merged_type, y1out, y2out = _check_targets(y1, y2)
@@ -1800,7 +1796,8 @@ def test__check_targets():
            'Sequence of sequences are no longer supported; use a binary array'
            ' or sparse matrix instead - the MultiLabelBinarizer'
            ' transformer can convert to this format.')
-    assert_raise_message(ValueError, msg, _check_targets, y1, y2)
+    with pytest.raises(ValueError, match=msg):
+        _check_targets(y1, y2)
 
 
 def test__check_targets_multiclass_with_both_y_true_and_y_pred_binary():
@@ -1854,9 +1851,8 @@ def test_hinge_loss_multiclass_missing_labels_with_labels_none():
     ])
     error_message = ("Please include all labels in y_true "
                      "or pass labels as third argument")
-    assert_raise_message(ValueError,
-                         error_message,
-                         hinge_loss, y_true, pred_decision)
+    with pytest.raises(ValueError, match=error_message):
+        hinge_loss(y_true, pred_decision)
 
 
 def test_hinge_loss_multiclass_with_missing_labels():
@@ -1954,12 +1950,13 @@ def test_log_loss():
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
     error_str = ('y_true contains only one label (2). Please provide '
                  'the true labels explicitly through the labels argument.')
-    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+    with pytest.raises(ValueError, match=re.escape(error_str)):
+        log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
     error_str = ('Found input variables with inconsistent numbers of samples: '
                  '[3, 2]')
-    assert_raise_message(ValueError, error_str, log_loss, y_true, y_pred)
+    (ValueError, error_str, log_loss, y_true, y_pred)
 
     # works when the labels argument is used
 
@@ -2015,8 +2012,8 @@ def test_brier_score_loss():
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     error_message = ("Only binary classification is supported. Labels "
                      "in y_true: {}".format(np.array([0, 1, 2])))
-    assert_raise_message(ValueError, error_message, brier_score_loss,
-                         y_true, y_pred)
+    with pytest.raises(ValueError, match=re.escape(error_message)):
+        brier_score_loss(y_true, y_pred)
 
     # calculate correctly when there's only one class in y_true
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
