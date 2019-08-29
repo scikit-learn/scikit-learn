@@ -97,7 +97,7 @@ if [[ -z "$COMMIT_RANGE" ]]; then
     echo -e "\nCommon ancestor between $LOCAL_BRANCH_REF ($LOCAL_BRANCH_SHORT_HASH)"\
          "and $REMOTE_MASTER_REF ($REMOTE_MASTER_SHORT_HASH) is $COMMIT_SHORT_HASH:"
     echo '--------------------------------------------------------------------------------'
-    git --no-pager show $COMMIT_SHORT_HASH
+    git --no-pager show --no-patch $COMMIT_SHORT_HASH
 
     COMMIT_RANGE="$COMMIT_SHORT_HASH..$LOCAL_BRANCH_SHORT_HASH"
 
