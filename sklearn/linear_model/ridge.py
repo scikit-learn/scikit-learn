@@ -1419,13 +1419,14 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        # if clf, LabelBinarizer applied first in RidgeClassifierCV
-        # y (output of lb) would be -1 or 1 only
-        is_clf = ((y == -1) | (y == 1)).all()
 
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
                          dtype=[np.float64],
                          multi_output=True, y_numeric=True)
+
+        # if clf, LabelBinarizer applied first in RidgeClassifierCV
+        # y (output of lb) would be -1 or 1 only
+        is_clf = ((y == -1) | (y == 1)).all()
 
         if np.any(self.alphas <= 0):
             raise ValueError(
