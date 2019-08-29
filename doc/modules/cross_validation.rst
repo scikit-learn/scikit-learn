@@ -540,24 +540,23 @@ three unbalanced classes and comparing with :class:`KFold` split::
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
 
-  >>> X, y = np.ones((50,1)), np.hstack(([0]*35, [1]*5, [2]*10))
+  >>> X, y = np.ones((50,1)), np.hstack(([0]*45, [1]*5))
 
   >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):  
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
-  train -  [23  3  6]   |   test -  [12  2  4]
-  train -  [23  3  7]   |   test -  [12  2  3]
-  train -  [24  4  7]   |   test -  [11  1  3]
-
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  4]   |   test -  [15  1]
   >>> kf = KFold(n_splits=3)
   >>> for train, test in kf.split(X, y):
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
-  train -  [18  5 10]   |   test -  [17]
-  train -  [18  5 10]   |   test -  [17]
-  train -  [34]   |   test -  [ 1  5 10]
-  
+  train -  [28  5]   |   test -  [17]
+  train -  [28  5]   |   test -  [17]
+  train -  [34]   |   test -  [11  5]
+
 Here is a visualization of the cross-validation behavior.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
