@@ -238,7 +238,7 @@ Changelog
   :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
   computed wrong eigenvalues with ``solver='amg'`` when
   ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
-  
+
 :mod:`sklearn.metrics`
 ......................
 
