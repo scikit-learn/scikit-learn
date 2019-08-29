@@ -710,35 +710,3 @@ def test_early_stopping_stratified():
             ValueError,
             match='The least populated class in y has only 1 member'):
         mlp.fit(X, y)
-
-
-def test_custom_activation(monkeypatch):
-    from sklearn.neural_network import multilayer_perceptron
-
-    X = X_digits_binary[:100]
-    y = y_digits_binary[:100]
-
-    monkeypatch.setattr(multilayer_perceptron, "ACTIVATIONS", {})
-
-    mlp = MLPClassifier()
-    # check that monkeypatching works as expected.
-    msg = r"activation 'relu' is not supported. Supported activations are \[\]"
-    with pytest.raises(ValueError, match=msg):
-        mlp.fit(X, y)
-
-    monkeypatch.setattr(
-        multilayer_perceptron,
-        "ACTIVATIONS",
-        # logistic is necessary for the last layer in any case
-        {'identity2': lambda x: x, 'logistic': lambda x: x}
-    )
-
-    monkeypatch.setattr(
-        multilayer_perceptron,
-        "DERIVATIVES",
-        # logistic is necessary for the last layer in any case
-        {'identity2': lambda x, _: 1.0, 'logistic': lambda x, _: 1.0}
-    )
-
-    mlp = MLPClassifier(activation='identity2')
-    mlp.fit(X, y)
