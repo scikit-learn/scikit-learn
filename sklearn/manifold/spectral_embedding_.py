@@ -299,9 +299,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # Shift the Laplacian so its diagononal is not all ones. The shift
         # does change the eigenpairs however, so we'll feed the shifted
         # matrix to the solver and afterward set it back to the original.
-        laplacian += 1e-5 * sparse.eye(laplacian.shape[0])
+        diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
+        laplacian += diag_shift
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
-        laplacian = laplacian - 1e-5 * sparse.eye(laplacian.shape[0])
+        laplacian -= diag_shift
 
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
@@ -388,8 +389,7 @@ class SpectralEmbedding(BaseEstimator):
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
-        to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        to be installed. It can be faster on very large, sparse problems.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
