@@ -839,8 +839,8 @@ class SGDClassifier(BaseSGDClassifier):
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
         the default schedule 'optimal'.
 
-    power_t : double
-        The exponent for inverse scaling learning rate [default 0.5].
+    power_t : double, default=0.25
+        The exponent for inverse scaling learning rate.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
