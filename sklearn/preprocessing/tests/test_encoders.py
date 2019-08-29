@@ -8,7 +8,6 @@ import pytest
 
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
@@ -261,7 +260,8 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1], [1, 0, 1]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
 
 
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
@@ -520,7 +520,8 @@ def test_ordinal_encoder_inverse():
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
@@ -550,6 +551,7 @@ def test_ordinal_encoder_raise_categories_shape():
 
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
 
 def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
@@ -643,10 +645,9 @@ def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
     enc = OneHotEncoder(drop=drop)
-    assert_raises_regex(
-        ValueError,
-        "`drop` should have length equal to the number",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+    err_msg = "`drop` should have length equal to the number"
+    with pytest.raises(ValueError, match=err_msg):
+        enc.fit([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
 
 @pytest.mark.parametrize("density", [True, False],
