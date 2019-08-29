@@ -518,6 +518,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
     def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
@@ -600,7 +601,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not callable(self.kernel):
+        if not callable(self.kernel) and self.kernel != 'precomputed':
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
@@ -609,6 +610,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
                     self.coef0 is not None or
                     self.degree is not None):
                 raise ValueError("Don't pass gamma, coef0 or degree to "
-                                 "Nystroem if using a callable kernel.")
+                                 "Nystroem if using a callable "
+                                 "or precomputed kernel")
 
         return params
