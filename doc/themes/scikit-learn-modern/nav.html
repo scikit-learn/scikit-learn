@@ -8,7 +8,7 @@
 
 <nav class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
   <div class="container-fluid {{ top_container_cls }}">
-    <a class="navbar-brand" href="#">
+    <a class="navbar-brand" href="{{ pathto('index') }}">
       <img
         src="{{ pathto('_static/images/scikit-learn-logo-notext.png', 1) }}"
         width="100"
@@ -33,7 +33,7 @@
           <a class="nav-link" href="{{ pathto('index') }}">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Install</a>
+          <a class="nav-link" href="{{ pathto('install') }}">Install</a>
         </li>
         <li class="nav-item dropdown">
           <a
@@ -48,30 +48,22 @@
             Documentation
           </a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <h2 class="dropdown-header">
-              Scikit-learn
-              <script>
-                document.write(
-                  DOCUMENTATION_OPTIONS.VERSION +
-                    (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : "")
-                );
-              </script>
-            </h2>
-            <a class="dropdown-item" href="#">Tutorials</a>
-            <a class="dropdown-item" href="#">User guide</a>
-            <a class="dropdown-item" href="#">API</a>
-            <a class="dropdown-item" href="#">Glossary</a>
-            <a class="dropdown-item" href="#">FAQ</a>
-            <a class="dropdown-item" href="#">Development</a>
-            <a class="dropdown-item" href="#">Roadmap</a>
-            <a class="dropdown-item" href="#">About us</a>
+            <a class="dropdown-item font-weight-bold" href="{{ pathto('documentation') }}">Scikit-learn {{ version }}</a>
+            <a class="dropdown-item" href="{{ pathto('tutorial/index') }}">Tutorials</a>
+            <a class="dropdown-item" href="{{ pathto('user_guide') }}">User guide</a>
+            <a class="dropdown-item" href="{{ pathto('modules/classes') }}">API</a>
+            <a class="dropdown-item" href="{{ pathto('glossary') }}">Glossary</a>
+            <a class="dropdown-item" href="{{ pathto('faq') }}">FAQ</a>
+            <a class="dropdown-item" href="{{ pathto('developers') }}">Development</a>
+            <a class="dropdown-item" href="{{ pathto('roadmap') }}">Roadmap</a>
+            <a class="dropdown-item" href="{{ pathto('about') }}">About us</a>
             <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="#">All available versions</a>
-            <a class="dropdown-item" href="#">PDF documentation</a>
+            <a class="dropdown-item" href="https://scikit-learn.org/dev/versions.html">All available versions</a>
+            <a class="dropdown-item" href="_downloads/scikit-learn-docs.pdf">PDF documentation</a>
           </div>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">Examples</a>
+          <a class="nav-link" href="{{ pathto('auto_examples') }}">Examples</a>
         </li>
       </ul>
       <form class="form-inline my-2 my-lg-0">

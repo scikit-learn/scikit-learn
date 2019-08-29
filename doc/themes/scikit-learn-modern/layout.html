@@ -7,7 +7,6 @@
   {%- set titlesuffix = "" %}
 {%- endif %}
 {%- set lang_attr = 'en' %}
-{% import 'theme_variables.jinja' as theme_variables %}
 
 <!DOCTYPE html>
 <!--[if IE 8]><html class="no-js lt-ie9" lang="{{ lang_attr }}" > <![endif]-->
@@ -42,20 +41,17 @@
 {%- block extrahead %} {% endblock %}
 </head>
 <body>
-
 {% include "nav.html" %}
-
 {%- block content %}
-
 <div class="d-flex" id="sk-doc-wrapper">
     <div class="border-right" id="sk-sidebar-wrapper">
-        <div class="alert alert-danger p-2" role="alert">
+        <div class="alert alert-danger p-1 mb-1" role="alert">
           <b>scikit-learn v0.21.3</b>
         </div>
-        <div class="alert alert-warning p-2" role="alert">
+        <div class="alert alert-warning p-1 mb-1" role="alert">
           <b>Please cite us if you use the software.</b>
         </div>
-      <div class="h-100 container sk-sidebar-toc-wrapper">
+      <div class="h-100 sk-sidebar-toc-wrapper">
         {{ toc }}
       </div>
     </div>
@@ -64,31 +60,28 @@
         {% block body %}{% endblock %}
       </div>
     <div class="container">
-      <footer class="sk-footer">
-        <p>This is a footer</p>
+      <footer class="sk-content-footer">
+        {%- if pagename != 'index' %}
+        {%- if show_copyright %}
+          {%- if hasdoc('copyright') %}
+            {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+          {%- else %}
+            {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+          {%- endif %}
+        {%- endif %}
+        {%- if last_updated %}
+          {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+        {%- endif %}
+        {%- if show_source and has_source and sourcename %}
+          <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow">{{ _('Show this page source') }}</a>
+        {%- endif %}
+        {%- endif %}
       </footer>
     </div>
   </div>
   <button class="sk-btn-toggle-toc btn sk-btn-primary" id="menu-toggle">Toggle Menu</button>
 </div>
 {%- endblock %}
-
-  <script src="{{ pathto('_static/js/vendor/jquery.js', 1) }}"></script>
-  <script src="{{ pathto('_static/js/vendor/bootstrap.js', 1) }}"></script>
-  {% if theme_google_analytics|tobool %}
-  <script>
-      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-      ga('create', 'UA-22606712-2', 'auto');
-      ga('set', 'anonymizeIp', true);
-      ga('send', 'pageview');
-  </script>
-  <script async src='https://www.google-analytics.com/analytics.js'></script>
-  {% endif %}
-  <script>
-      $("#menu-toggle").click(function(e) {
-        e.preventDefault();
-        $("#sk-doc-wrapper").toggleClass("toggled");
-      });
-  </script>
+{% include "javascript.html" %}
 </body>
 </html>

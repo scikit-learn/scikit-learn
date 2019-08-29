@@ -141,9 +141,8 @@ html_theme = 'scikit-learn-modern'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
-                      'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner': True, 'body_max_width': None}
+html_theme_options = {'google_analytics': True,
+                      'katex_version': '0.11.0'}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -179,7 +178,8 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html'}
+html_additional_pages = {'index': 'index.html',
+                         'documentation': 'documentation.html'}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -320,8 +320,8 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 def setup(app):
     # to hide/show the prompt in code examples:
-    app.add_javascript('js/copybutton.js')
-    app.add_javascript('js/extra.js')
+    # app.add_javascript('js/copybutton.js')
+    # app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 

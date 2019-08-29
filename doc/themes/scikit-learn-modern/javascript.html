@@ -1,0 +1,20 @@
+<script src="{{ pathto('_static/js/vendor/jquery.js', 1) }}"></script>
+<script src="{{ pathto('_static/js/vendor/bootstrap.js', 1) }}"></script>
+{% if theme_google_analytics|tobool %}
+<script>
+    window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+    ga('create', 'UA-22606712-2', 'auto');
+    ga('set', 'anonymizeIp', true);
+    ga('send', 'pageview');
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+{% endif %}
+<script>
+    $("#menu-toggle").click(function(e) {
+    e.preventDefault();
+    $("#sk-doc-wrapper").toggleClass("toggled");
+    });
+</script>
+{%- for js in script_files %}
+{{ js_tag(js) }}
+{%- endfor %}

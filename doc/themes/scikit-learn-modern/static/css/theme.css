@@ -13,11 +13,7 @@ input:focus {
   outline: none;
 }
 
-h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
-  display: none;
-}
-
-a.headerlink {
+.headerlink {
   display: none;
 }
 
@@ -46,10 +42,40 @@ a code.xref {
 .highlight {
   padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
+  margin-bottom: 1rem;
 }
 
 .highlight pre {
   margin-bottom: 0;
+}
+
+.dropdown-item:active {
+  background-color: #3499cd;
+}
+
+/* Button */
+
+.sk-btn-primary {
+  background-color: #3499cd;
+  border-color: #3499cd;
+  color: white;
+}
+
+.sk-btn-primary:hover,
+.sk-btn-primary:active {
+  background-color: #388bb5;
+  border-color: #388bb5;
+}
+
+.sk-btn-primary-outline {
+  border-color: #3499cd;
+  color: #3499cd;
+}
+
+.sk-btn-primary-outline:hover,
+.sk-btn-primary-outline:active {
+  background-color: #388bb5;
+  color: white;
 }
 
 /* Search */
@@ -96,30 +122,6 @@ a code.xref {
   font-weight: 700;
 }
 
-.sk-btn-primary {
-  background-color: #3499cd;
-  border-color: #3499cd;
-  color: white;
-}
-
-.sk-btn-primary:hover,
-.sk-btn-primary:active {
-  background-color: #388bb5;
-  border-color: #388bb5;
-}
-
-.sk-btn-primary-outline {
-  border-color: #3499cd;
-  color: #3499cd;
-}
-
-.sk-btn-primary-outline:hover,
-.sk-btn-primary-outline:active {
-  background-color: #388bb5;
-  color: white;
-}
-
-
 .sk-index-img {
   height: 240px;
   width: auto;
@@ -158,8 +160,8 @@ a code.xref {
   background-color: white;
   opacity: 0;
   top: 4rem;
+  padding: 0.5rem;
 }
-
 
 #sk-doc-wrapper.toggled #sk-sidebar-wrapper {
   margin-left: 0;
@@ -195,7 +197,7 @@ a code.xref {
   background-color: white;
 }
 
-.sk-footer {
+.sk-content-footer {
   padding: 1rem 0;
   color: #999;
   text-align: right;
@@ -226,6 +228,29 @@ a code.xref {
     margin-left: auto;
     margin-right: auto;
   }
+}
+
+/* docs index */
+
+.sk-documentation-index-card {
+  border-left: 0.15rem solid orange;
+}
+.sk-documentation-index-card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.sk-documentation-index-anchor:hover {
+  text-decoration: none;
+  color: #2878A2;
+}
+
+.sk-documentation-index-header {
+  background-color: #cde8ef;
+  padding: 0.5rem;
+  border-radius: 0 1rem;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 500;
 }
 
 /* toc  */
@@ -320,7 +345,7 @@ a code.xref {
   padding: 0.5rem;
   background-color: #f8f8f8;
   font-weight: normal;
-  border: 1px solid #ddd;
+  border-left: 2px solid #ff9c34;
   overflow: auto;
   margin-bottom: 1rem;
 }
@@ -399,6 +424,54 @@ ul.simple li p {
   margin-bottom: 0;
 }
 
+/* katex overflow */
+
+.katex-display > .katex {
+    max-width: 100%;
+}
+.katex-display > .katex > .katex-html {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+/* Increase margin around equations */
+.katex-display {
+    margin: 1.2em 0;
+}
+/* Equation number floats to the right and shows permalink for mouse hover
+   on the right side of equation number. */
+div.math {
+    position: relative;
+    padding-right: 2.5em;
+}
+.eqno {
+    height: 100%;
+    position: absolute;
+    right: 0;
+    padding-left: 5px;
+    padding-bottom: 5px;
+    padding-right: 1px;
+}
+.eqno:before {
+    /* Force vertical alignment of number */
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    content: "";
+}
+.eqno .headerlink {
+    display: none;
+    visibility: hidden;
+    font-size: 14px;
+    padding-left: .3em;
+}
+.eqno:hover .headerlink {
+    display: inline-block;
+    visibility: visible;
+    margin-right: -1.05em;
+}
 
 /* pygments - highlightning */
 
