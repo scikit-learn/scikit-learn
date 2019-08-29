@@ -9,12 +9,16 @@ a:focus {
   outline: none;
 }
 
-input:focus {
-  outline: none;
+a.headerlink {
+  color: #c60f0f;
+  font-size: 0.8em;
+  padding: 0 4px 0 4px;
+  text-decoration: none;
+  visibility: hidden;
 }
 
-.headerlink {
-  display: none;
+input:focus {
+  outline: none;
 }
 
 .literal {
@@ -29,6 +33,10 @@ code {
 
 strong {
   font-weight: bold;
+}
+
+p {
+  margin-bottom: 0.8rem;
 }
 
 a code.xref {
@@ -87,7 +95,7 @@ a code.xref {
 /* General layout */
 
 .section {
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 /* LANDING PAGE STYLE */
@@ -188,8 +196,10 @@ a code.xref {
 
 .sk-btn-toggle-toc {
   position: fixed;
-  bottom: 1rem;
-  margin-left: 1rem;
+  bottom: 0.5rem;
+  margin-left: 0.5rem;
+  padding: 0.25rem;
+  border-radius: 1rem;
 }
 
 .sk-btn-toggle-toc:hover {
@@ -206,6 +216,7 @@ a code.xref {
 .sk-docs-navbar {
   position: fixed;
   width: 100%;
+  z-index: 2;
 }
 
 @media (min-width: 768px) {
@@ -233,7 +244,7 @@ a code.xref {
 /* docs index */
 
 .sk-documentation-index-card {
-  border-left: 0.15rem solid orange;
+  border-left: 0.15rem solid #ff9c34;
 }
 .sk-documentation-index-card:hover {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -290,41 +301,39 @@ a code.xref {
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .sk-page-content h2 {
   padding: 0.4rem;
   background-color: #BED4EB;
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   font-size: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
 .sk-page-content h3 {
   padding: 0.2rem;
   background-color: #eee;
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   font-size: 1.3rem;
 }
 
 .sk-page-content h4 {
   padding: 0.2rem;
   background-color: #F4F4F4;
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   font-size: 1.1rem;
 }
 
 /* longtables */
-
-.longtable {
-  margin-bottom: 1rem;
-}
 
 .longtable p {
     -moz-hyphens: none;
     -ms-hyphens: none;
     -webkit-hyphens: none;
     hyphens: none;
-    line-height: 1em;
+    line-height: 1.1em;
     margin-bottom: 0;
 }
 
@@ -345,6 +354,7 @@ a code.xref {
   padding: 0.5rem;
   background-color: #f8f8f8;
   font-weight: normal;
+  border: 1px solid rgba(0, 0, 0, 0.125);
   border-left: 2px solid #ff9c34;
   overflow: auto;
   margin-bottom: 1rem;
@@ -424,53 +434,110 @@ ul.simple li p {
   margin-bottom: 0;
 }
 
-/* katex overflow */
+ul.simple {
+  padding-left: 1.5rem;
+}
 
-.katex-display > .katex {
-    max-width: 100%;
+/* info boxes */
+
+div.topic {
+  padding: 0.5rem;
+  background-color: #eee;
+  margin-bottom: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #CCC;
 }
-.katex-display > .katex > .katex-html {
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-left: 2px;
-    padding-right: 2px;
+
+p.topic-title {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
 }
-/* Increase margin around equations */
-.katex-display {
-    margin: 1.2em 0;
+
+div.topic > ul.simple {
+  margin-bottom: 0.25rem;
 }
-/* Equation number floats to the right and shows permalink for mouse hover
-   on the right side of equation number. */
-div.math {
-    position: relative;
-    padding-right: 2.5em;
+
+p.admonition-title {
+  margin-right: 0.5rem;
+  font-weight: bold;
+  display: inline;
 }
-.eqno {
-    height: 100%;
-    position: absolute;
-    right: 0;
-    padding-left: 5px;
-    padding-bottom: 5px;
-    padding-right: 1px;
+
+p.admonition-title:after {
+  content: ":";
 }
-.eqno:before {
-    /* Force vertical alignment of number */
-    display: inline-block;
-    height: 100%;
-    vertical-align: middle;
-    content: "";
+
+div.admonition p.admonition-title + p, div.deprecated p {
+  display: inline;
 }
-.eqno .headerlink {
-    display: none;
-    visibility: hidden;
-    font-size: 14px;
-    padding-left: .3em;
+
+div.admonition {
+  padding: 0.5rem;
+  background-color: #eee;
+  border-radius: 0.5rem;
+  border: 1px solid #ddd;
+  margin-bottom: 1rem;
 }
-.eqno:hover .headerlink {
-    display: inline-block;
-    visibility: visible;
-    margin-right: -1.05em;
+
+div.seealso {
+  background-color: #FFFBE8;
+  border: 1px solid #fbeed5;
+  color: #AF8A4B;
+}
+
+dl.citation dt.label {
+  float: left;
+  padding-right: 0.5rem;
+}
+
+/* copy buttonn */
+div.highlight:hover span.copybutton {
+  background-color: #3F556B;
+  color: white;
+}
+
+div.highlight:hover span.copybutton:hover {
+    background-color: #20252B;
+}
+
+div.body img.align-center {
+  max-width: 800px;
+}
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+}
+
+/* copybutton */
+
+.copybutton {
+  cursor: pointer;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  border: 1px solid rgb(221, 221, 221);
+  color: rgb(221, 221, 221);
+  font-family: monospace;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+}
+
+
+div.highlight:hover span.copybutton::after {
+  background: #3F556B;
+  border-radius: 0.25rem;
+  color: white;
+  content: attr(title);
+  padding: 0.5rem;
+  position: absolute;
+  z-index: 98;
+  width: 140px;
+  font-size: 0.8rem;
+  top: 0;
+  right: 0;
 }
 
 /* pygments - highlightning */

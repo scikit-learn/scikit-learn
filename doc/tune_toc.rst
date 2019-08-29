@@ -1,6 +1,8 @@
 .. raw:: html
 
-   <SCRIPT>
+   <script>
+   window.addEventListener('DOMContentLoaded', function() {
+        (function($) {
    //Function to make the index toctree collapsible
    $(function () {
        $('.toctree-l2')
@@ -41,8 +43,9 @@
            }
        );
    });
-
-   </SCRIPT>
+        })(jQuery);
+    });
+   </script>
 
   <style type="text/css">
     div.bodywrapper blockquote {

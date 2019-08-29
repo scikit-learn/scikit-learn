@@ -37,7 +37,7 @@ extensions = [
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
-    # 'sphinx_gallery.gen_gallery',
+    'sphinx_gallery.gen_gallery',
     'sphinx_issues',
     'custom_references_resolver'
 ]
@@ -141,8 +141,7 @@ html_theme = 'scikit-learn-modern'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'google_analytics': True,
-                      'katex_version': '0.11.0'}
+html_theme_options = {'google_analytics': True }
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
