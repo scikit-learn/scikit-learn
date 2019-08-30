@@ -43,9 +43,7 @@ solver = 'saga'
 n_samples = 10000
 
 # Memorized fetch_rcv1 for faster access
-dataset = fetch_20newsgroups_vectorized('all')
-X = dataset.data
-y = dataset.target
+X, y = fetch_20newsgroups_vectorized('all', return_X_y=True)
 X = X[:n_samples]
 y = y[:n_samples]
 
@@ -76,9 +74,7 @@ for model in models:
               (model_params['name'], solver, this_max_iter))
         lr = LogisticRegression(solver=solver,
                                 multi_class=model,
-                                C=1,
                                 penalty='l1',
-                                fit_intercept=True,
                                 max_iter=this_max_iter,
                                 random_state=42,
                                 )

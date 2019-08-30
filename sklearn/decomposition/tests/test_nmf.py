@@ -9,13 +9,11 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_raise_message, assert_no_warnings
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
@@ -52,6 +50,14 @@ def test_parameter_checking():
                          2, 'nndsvd')
     clf = NMF(2, tol=0.1).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
+
+    for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
+        msg = ("init = '{}' can only be used when "
+               "n_components <= min(n_samples, n_features)"
+               .format(init))
+        assert_raise_message(ValueError, msg, NMF(3, init).fit, A)
+        assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
+                             3, init)
 
 
 def test_initialize_close():
@@ -103,7 +109,7 @@ def test_nmf_fit_close(solver):
     pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
                max_iter=600)
     X = np.abs(rng.randn(6, 5))
-    assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
+    assert pnmf.fit(X).reconstruction_err_ < 0.1
 
 
 @pytest.mark.parametrize('solver', ('cd', 'mu'))
@@ -197,17 +203,21 @@ def test_non_negative_factorization_consistency():
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('cd', 'mu'):
-        W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+    for init in ['random', 'nndsvd']:
+        for solver in ('cd', 'mu'):
+            W_nmf, H, _ = non_negative_factorization(
+                A, init=init, solver=solver, random_state=1, tol=1e-2)
+            W_nmf_2, _, _ = non_negative_factorization(
+                A, H=H, update_H=False, init=init, solver=solver,
+                random_state=1, tol=1e-2)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
-        W_cls = model_class.fit_transform(A)
-        W_cls_2 = model_class.transform(A)
-        assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-        assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+            model_class = NMF(init=init, solver=solver, random_state=1,
+                              tol=1e-2)
+            W_cls = model_class.fit_transform(A)
+            W_cls_2 = model_class.transform(A)
+
+            assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+            assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
 def test_non_negative_factorization_checking():
@@ -426,8 +436,8 @@ def test_nmf_regularization():
         H_regul_n_zeros = H_regul[H_regul == 0].size
         H_model_n_zeros = H_model[H_model == 0].size
 
-        assert_greater(W_regul_n_zeros, W_model_n_zeros)
-        assert_greater(H_regul_n_zeros, H_model_n_zeros)
+        assert W_regul_n_zeros > W_model_n_zeros
+        assert H_regul_n_zeros > H_model_n_zeros
 
     # L2 regularization should decrease the mean of the coefficients
     l1_ratio = 0.
@@ -443,8 +453,8 @@ def test_nmf_regularization():
         H_regul = regul.components_
         H_model = model.components_
 
-        assert_greater(W_model.mean(), W_regul.mean())
-        assert_greater(H_model.mean(), H_regul.mean())
+        assert W_model.mean() > W_regul.mean()
+        assert H_model.mean() > H_regul.mean()
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -481,7 +491,7 @@ def test_nmf_decreasing():
 
                 loss = nmf._beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:
-                    assert_greater(previous_loss, loss)
+                    assert previous_loss > loss
                 previous_loss = loss
 
 

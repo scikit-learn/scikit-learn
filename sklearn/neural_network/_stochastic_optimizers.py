@@ -1,13 +1,13 @@
 """Stochastic optimization methods for MLP
 """
 
-# Authors:  Jiyuan Qian <jq401@nyu.edu>
+# Authors: Jiyuan Qian <jq401@nyu.edu>
 # License: BSD 3 clause
 
 import numpy as np
 
 
-class BaseOptimizer(object):
+class BaseOptimizer:
     """Base (Stochastic) gradient descent optimizer
 
     Parameters

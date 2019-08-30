@@ -31,8 +31,7 @@ from sklearn.datasets import load_digits
 from sklearn.linear_model import SGDClassifier
 
 # get some data
-digits = load_digits()
-X, y = digits.data, digits.target
+X, y = load_digits(return_X_y=True)
 
 # build a classifier
 clf = SGDClassifier(loss='hinge', penalty='elasticnet',
@@ -60,7 +59,7 @@ param_dist = {'average': [True, False],
 # run randomized search
 n_iter_search = 20
 random_search = RandomizedSearchCV(clf, param_distributions=param_dist,
-                                   n_iter=n_iter_search, cv=5, iid=False)
+                                   n_iter=n_iter_search)
 
 start = time()
 random_search.fit(X, y)
@@ -74,7 +73,7 @@ param_grid = {'average': [True, False],
               'alpha': [10**-i for i in [-4, -3, -2, -1, 0]]}
 
 # run grid search
-grid_search = GridSearchCV(clf, param_grid=param_grid, cv=5, iid=False)
+grid_search = GridSearchCV(clf, param_grid=param_grid)
 start = time()
 grid_search.fit(X, y)
 

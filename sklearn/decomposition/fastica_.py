@@ -406,7 +406,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         point. Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -436,10 +436,17 @@ class FastICA(BaseEstimator, TransformerMixin):
     mixing_ : array, shape (n_features, n_components)
         The mixing matrix.
 
+    mean_ : array, shape(n_features)
+        The mean over features. Only set if `self.whiten` is True.
+
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
+
+    whitening_ : array, shape (n_components, n_features)
+        Only set if whiten is 'True'. This is the pre-whitening matrix
+        that projects data onto the first `n_components` principal components.
 
     Examples
     --------
@@ -567,7 +574,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
@@ -590,7 +597,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)

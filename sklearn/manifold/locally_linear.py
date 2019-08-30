@@ -9,7 +9,7 @@ from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -518,7 +518,8 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
+class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
+                             _UnstableArchMixin):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -716,7 +717,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        check_is_fitted(self, "nbrs_")
+        check_is_fitted(self)
 
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,

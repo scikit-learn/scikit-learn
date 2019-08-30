@@ -17,14 +17,11 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
-
-INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
 def norm(x):
@@ -261,7 +258,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -304,8 +302,14 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
+    if (init is not None and init != 'random'
+            and n_components > min(n_samples, n_features)):
+        raise ValueError("init = '{}' can only be used when "
+                         "n_components <= min(n_samples, n_features)"
+                         .format(init))
+
     if init is None:
-        if n_components < n_features:
+        if n_components <= min(n_samples, n_features):
             init = 'nndsvd'
         else:
             init = 'random'
@@ -995,7 +999,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
-    if safe_min(X) == 0 and beta_loss <= 0:
+    if X.min() == 0 and beta_loss <= 0:
         raise ValueError("When beta_loss <= 0 and X contains zeros, "
                          "the solver may diverge. Please add small values to "
                          "X, or use a positive beta_loss.")
@@ -1004,10 +1008,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
+    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
         raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
+    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
         raise ValueError("Maximum number of iterations must be a positive "
                          "integer; got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:
@@ -1104,7 +1108,8 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise random.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1186,6 +1191,11 @@ class NMF(BaseEstimator, TransformerMixin):
     components_ : array, [n_components, n_features]
         Factorization matrix, sometimes called 'dictionary'.
 
+    n_components_ : integer
+        The number of components. It is same as the `n_components` parameter
+        if it was given. Otherwise, it will be same as the number of
+        features.
+
     reconstruction_err_ : number
         Frobenius norm of the matrix difference, or beta-divergence, between
         the training data ``X`` and the reconstructed data ``WH`` from
@@ -1229,6 +1239,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
@@ -1302,7 +1315,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1329,5 +1342,5 @@ class NMF(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)

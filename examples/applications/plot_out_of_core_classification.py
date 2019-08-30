@@ -207,10 +207,10 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(max_iter=5, tol=1e-3),
-    'Perceptron': Perceptron(tol=1e-3),
+    'SGD': SGDClassifier(max_iter=5),
+    'Perceptron': Perceptron(),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
+    'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
 
@@ -220,7 +220,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):

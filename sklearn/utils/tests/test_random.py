@@ -6,14 +6,10 @@ import scipy.stats
 from numpy.testing import assert_array_almost_equal
 import pytest
 
-from sklearn.utils.random import sample_without_replacement
-from sklearn.utils.random import random_choice_csc
 from sklearn.utils.fixes import comb
-from sklearn.utils.random import loguniform
-
-from sklearn.utils.testing import (
-    assert_raises,
-    assert_equal)
+from sklearn.utils.random import random_choice_csc, sample_without_replacement, loguniform
+from sklearn.utils._random import _our_rand_r_py
+from sklearn.utils.testing import assert_raises
 
 
 ###############################################################################
@@ -45,13 +41,13 @@ def check_edge_case_of_sample_int(sample_without_replacement):
     assert_raises(ValueError, sample_without_replacement, 1, 2)
 
     # n_population == n_samples
-    assert_equal(sample_without_replacement(0, 0).shape, (0, ))
+    assert sample_without_replacement(0, 0).shape == (0, )
 
-    assert_equal(sample_without_replacement(1, 1).shape, (1, ))
+    assert sample_without_replacement(1, 1).shape == (1, )
 
     # n_population >= n_samples
-    assert_equal(sample_without_replacement(5, 0).shape, (0, ))
-    assert_equal(sample_without_replacement(5, 1).shape, (1, ))
+    assert sample_without_replacement(5, 0).shape == (0, )
+    assert sample_without_replacement(5, 1).shape == (1, )
 
     # n_population < 0 or n_samples < 0
     assert_raises(ValueError, sample_without_replacement, -1, 5)
@@ -67,13 +63,13 @@ def check_sample_int(sample_without_replacement):
 
     for n_samples in range(n_population + 1):
         s = sample_without_replacement(n_population, n_samples)
-        assert_equal(len(s), n_samples)
+        assert len(s) == n_samples
         unique = np.unique(s)
-        assert_equal(np.size(unique), n_samples)
+        assert np.size(unique) == n_samples
         assert np.all(unique < n_population)
 
     # test edge case n_population == n_samples == 0
-    assert_equal(np.size(sample_without_replacement(0, 0)), 0)
+    assert np.size(sample_without_replacement(0, 0)) == 0
 
 
 def check_sample_int_distribution(sample_without_replacement):
@@ -240,3 +236,7 @@ class TestLogUniformAPI:
         with pytest.raises(TypeError):
             loguniform.rvs(size=4)
         raise TypeError
+
+def test_our_rand_r():
+    assert 131541053 == _our_rand_r_py(1273642419)
+    assert 270369 == _our_rand_r_py(0)
