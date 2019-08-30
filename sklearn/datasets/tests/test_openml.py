@@ -48,13 +48,13 @@ def _test_features_list(data_id):
     data_bunch = fetch_openml(data_id=data_id, cache=False, target_column=None)
 
     # also obtain decoded arff
-    data_description = _get_data_description_by_id(data_id, None)
+    data_description = _get_data_description_by_id(data_id)
     sparse = data_description['format'].lower() == 'sparse_arff'
     if sparse is True:
         raise ValueError('This test is not intended for sparse data, to keep '
                          'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
-                                    sparse, None, False)
+                                    sparse, False)
     data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
