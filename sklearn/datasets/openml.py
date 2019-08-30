@@ -416,12 +416,10 @@ def _get_data_qualities(data_id, data_home):
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True,
                                                   data_home)
-    try:
-        return json_data['data_qualities']['quality']
-    except KeyError:
-        # the qualities might not be available, but we still try to process
-        # the data
-        return None
+
+    # the qualities might not be available, but we still try to process
+    # the data
+    return json_data.get('data_qualities', {}).get('quality', None)
 
 
 def _get_num_samples(data_qualities):
