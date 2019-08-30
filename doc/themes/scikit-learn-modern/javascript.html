@@ -88,8 +88,9 @@
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(gcse, s);
     })();
 </script>
-{%- block mathjax %}
+
+{%- if pagename != 'index' and pagename != 'documentation' %}
     {% if theme_mathjax_path %}
 <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"></script>
     {% endif %}
-{%- endblock %}
+{%- endif %}
