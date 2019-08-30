@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import re
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -40,12 +39,12 @@ def test_error_messages_on_wrong_input():
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2"
-        with pytest.raises(ValueError, match=re.escape(expected)):
+        expected = r"labels_true must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
             score_func([[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2"
-        with pytest.raises(ValueError, match=re.escape(expected)):
+        expected = r"labels_pred must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
             score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
