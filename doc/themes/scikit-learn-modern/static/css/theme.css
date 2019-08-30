@@ -689,7 +689,7 @@ table.docutils td, table.docutils th {
 table.docutils {
   margin-bottom: 1rem;
   line-height: 1rem;
-  width: 100%;
+  max-width: 100%;
 }
 
 table.docutils p {
