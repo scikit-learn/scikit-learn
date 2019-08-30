@@ -128,14 +128,18 @@ class loguniform(scipy.stats.rv_continuous):
 
     """
 
-    def __init__(self, low=-1, high=0, base=10):
+    def __init__(self, low=-1, high=0, base=10, **kwargs):
         """
         Create a log-uniform random variable.
         """
         self._low = low
         self._high = high
         self._base = base
-        super(loguniform, self).__init__(a=base ** low, b=base ** high)
+        super(loguniform, self).__init__(
+            a=base ** low,
+            b=base ** high,
+            **kwargs
+        )
 
     def _rvs(self):
         """
@@ -158,3 +162,8 @@ class loguniform(scipy.stats.rv_continuous):
                                           size=self._size)
         rvs = np.power(self._base, unif)
         return rvs
+
+    def _cdf(self, x):
+        hi, lo = self._high, self._low
+        logx = np.log(x) / np.log(self._base)
+        return (logx - lo) / (hi - lo)
