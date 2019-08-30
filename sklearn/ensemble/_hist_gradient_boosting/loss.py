@@ -186,13 +186,13 @@ class BinaryCrossEntropy(BaseLoss):
     hessians_are_constant = False
     inverse_link_function = staticmethod(expit)
 
-    def __call__(self, y_true, raw_predictions, average=True):
+    def __call__(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         # logaddexp(0, x) = log(1 + exp(x))
         loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
-        return loss.mean() if average else loss
+        return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         if prediction_dim > 2:
@@ -240,7 +240,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
     hessians_are_constant = False
 
-    def __call__(self, y_true, raw_predictions, average=True):
+    def __call__(self, y_true, raw_predictions):
         one_hot_true = np.zeros_like(raw_predictions)
         prediction_dim = raw_predictions.shape[0]
         for k in range(prediction_dim):
@@ -248,7 +248,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
         loss = (logsumexp(raw_predictions, axis=0) -
                 (one_hot_true * raw_predictions).sum(axis=0))
-        return loss.mean() if average else loss
+        return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)

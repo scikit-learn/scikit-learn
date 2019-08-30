@@ -20,7 +20,7 @@ def get_derivatives_helper(loss):
         gradients = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         hessians = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
-                                           raw_predictions)
+                                           raw_predictions, None)
         return gradients
 
     def get_hessians(y_true, raw_predictions):
@@ -28,7 +28,7 @@ def get_derivatives_helper(loss):
         gradients = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         hessians = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
-                                           raw_predictions)
+                                           raw_predictions, None)
 
         if loss.__class__.__name__ == 'LeastSquares':
             # hessians aren't updated because they're constant:
@@ -116,16 +116,16 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     eps = 1e-9
     offset = np.zeros_like(raw_predictions)
     offset[0, :] = eps
-    f_plus_eps = loss(y_true, raw_predictions + offset / 2, average=False)
-    f_minus_eps = loss(y_true, raw_predictions - offset / 2, average=False)
+    f_plus_eps = loss(y_true, raw_predictions + offset / 2)
+    f_minus_eps = loss(y_true, raw_predictions - offset / 2)
     numerical_gradients = (f_plus_eps - f_minus_eps) / eps
 
     # Approximate hessians
     eps = 1e-4  # need big enough eps as we divide by its square
     offset[0, :] = eps
-    f_plus_eps = loss(y_true, raw_predictions + offset, average=False)
-    f_minus_eps = loss(y_true, raw_predictions - offset, average=False)
-    f = loss(y_true, raw_predictions, average=False)
+    f_plus_eps = loss(y_true, raw_predictions + offset)
+    f_minus_eps = loss(y_true, raw_predictions - offset)
+    f = loss(y_true, raw_predictions)
     numerical_hessians = (f_plus_eps + f_minus_eps - 2 * f) / eps**2
 
     def relative_error(a, b):
@@ -140,7 +140,7 @@ def test_baseline_least_squares():
 
     loss = _LOSSES['least_squares']()
     y_train = rng.normal(size=100)
-    baseline_prediction = loss.get_baseline_prediction(y_train, 1)
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the mean of all targets
@@ -153,7 +153,7 @@ def test_baseline_binary_crossentropy():
     loss = _LOSSES['binary_crossentropy']()
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
-        baseline_prediction = loss.get_baseline_prediction(y_train, 1)
+        baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
         assert_all_finite(baseline_prediction)
         assert np.allclose(loss.inverse_link_function(baseline_prediction),
                            y_train[0])
@@ -164,7 +164,7 @@ def test_baseline_binary_crossentropy():
     # p = inverse_link_function(raw_prediction) = sigmoid(raw_prediction)
     # So we want raw_prediction = link_function(p) = log(p / (1 - p))
     y_train = rng.randint(0, 2, size=100).astype(np.float64)
-    baseline_prediction = loss.get_baseline_prediction(y_train, 1)
+    baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
     p = y_train.mean()
@@ -178,7 +178,7 @@ def test_baseline_categorical_crossentropy():
     loss = _LOSSES['categorical_crossentropy']()
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
-        baseline_prediction = loss.get_baseline_prediction(y_train,
+        baseline_prediction = loss.get_baseline_prediction(y_train, None,
                                                            prediction_dim)
         assert baseline_prediction.dtype == y_train.dtype
         assert_all_finite(baseline_prediction)
@@ -186,7 +186,8 @@ def test_baseline_categorical_crossentropy():
     # Same logic as for above test. Here inverse_link_function = softmax and
     # link_function = log
     y_train = rng.randint(0, prediction_dim + 1, size=100).astype(np.float32)
-    baseline_prediction = loss.get_baseline_prediction(y_train, prediction_dim)
+    baseline_prediction = loss.get_baseline_prediction(y_train, None,
+                                                       prediction_dim)
     assert baseline_prediction.shape == (prediction_dim, 1)
     for k in range(prediction_dim):
         p = (y_train == k).mean()
