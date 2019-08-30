@@ -233,17 +233,19 @@ def test_log_api_w_scipy(low=1, high=2):
 
 
 class TestLogUniformAPI:
-    @pytest.mark.xfail(reason="loguniform not developed enough")
+    def test_uniform_api(self):
+        scipy.stats.uniform.rvs(size=4)
+        scipy.stats.uniform.rvs(scale=2)
+        scipy.stats.uniform.rvs(loc=1)
+
+    @pytest.mark.xfail(reason="loguniform not developed enough",
+                       raises=TypeError)
     def test_no_args(self):
         # loguniform not initialized
-        assert any(loguniform.rvs(size=4))
-
-    @pytest.mark.xfail(reason="loguniform not developed enough")
-    def test_scale_keyword(self):
-        # `scale` keyword arg raises
-        assert loguniform().rvs(scale=2)
-
-    @pytest.mark.xfail(reason="loguniform not developed enough")
-    def test_loc_keyword(self):
-        # `loc` keyword arg raises
-        assert loguniform().rvs(loc=0)
+        with pytest.raises(TypeError):
+            loguniform.rvs(size=4)
+        with pytest.raises(TypeError):
+            loguniform.rvs(scale=2)
+        with pytest.raises(TypeError):
+            loguniform.rvs(loc=0)
+        raise TypeError()
