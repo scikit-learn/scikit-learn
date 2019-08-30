@@ -5,7 +5,7 @@ import shutil
 from os.path import join
 from warnings import warn
 from contextlib import closing
-from functools import wraps
+from collections import namedtuple
 import itertools
 from collections.abc import Generator
 from collections import OrderedDict
@@ -14,6 +14,7 @@ from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
+from joblib import Memory
 
 from ..externals import _arff
 from .base import get_data_home
@@ -35,30 +36,6 @@ _DATA_FILE = "data/v1/download/{}"
 
 def _get_local_path(openml_path, data_home):
     return os.path.join(data_home, 'openml.org', openml_path + ".gz")
-
-
-def _retry_with_clean_cache(openml_path, data_home):
-    """If the first call to the decorated function fails, the local cached
-    file is removed, and the function is called again. If ``data_home`` is
-    ``None``, then the function is called once.
-    """
-    def decorator(f):
-        @wraps(f)
-        def wrapper():
-            if data_home is None:
-                return f()
-            try:
-                return f()
-            except HTTPError:
-                raise
-            except Exception:
-                warn("Invalid cache, redownloading file", RuntimeWarning)
-                local_path = _get_local_path(openml_path, data_home)
-                if os.path.exists(local_path):
-                    os.unlink(local_path)
-                return f()
-        return wrapper
-    return decorator
 
 
 def _open_openml_url(openml_path, data_home):
@@ -150,7 +127,6 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
         ``acceptable``
     """
 
-    @_retry_with_clean_cache(url, data_home)
     def _load_json():
         with closing(_open_openml_url(url, data_home)) as response:
             return json.loads(response.read().decode("utf-8"))
@@ -451,10 +427,10 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # https://www.openml.org/api_data_docs#!/data/get_download_id
     # encode_nominal argument is to ensure unit testing, do not alter in
     # production!
+
     url = _DATA_FILE.format(file_id)
 
-    @_retry_with_clean_cache(url, data_home)
-    def _arff_load():
+    def _arff_load(url, sparse, data_home, encode_nominal):
         with closing(_open_openml_url(url, data_home)) as response:
             if sparse is True:
                 return_type = _arff.COO
@@ -466,7 +442,15 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
                                     return_type=return_type)
         return arff_file
 
-    return _arff_load()
+    args = (url, sparse, data_home, encode_nominal)
+
+    return _arff_load(*args)
+
+    if data_home is not None:
+        memory = Memory(location=os.path.join(data_home, 'openml', 'cache'))
+        return memory.cache(_arff_load)(*args)
+    else:
+        return _arff_load(*args)
 
 
 def _verify_target_data_type(features_dict, target_columns):
@@ -614,6 +598,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
+
     if cache is False:
         # no caching will be applied
         data_home = None
@@ -642,6 +627,27 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError(
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
+
+    kwargs = dict(data_id=data_id, data_home=data_home,
+                  target_column=target_column, as_frame=as_frame)
+
+    data = _fetch_openml_inner(**kwargs)
+
+    if return_X_y:
+        return data.X, data.y
+
+    bunch = Bunch(
+        data=data.X, target=data.y, frame=data.frame,
+        feature_names=data.columns,
+        DESCR=data.description, details=data.details,
+        categories=data.nominal_attributes,
+        url="https://www.openml.org/d/{}".format(data.id))
+
+    return bunch
+
+
+def _fetch_openml_inner(data_id=None, data_home=None,
+                        target_column='default-target', as_frame=False):
 
     data_description = _get_data_description_by_id(data_id, data_home)
     if data_description['status'] != "active":
@@ -777,13 +783,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         elif y.shape[1] == 0:
             y = None
 
-    if return_X_y:
-        return X, y
-
-    bunch = Bunch(
-        data=X, target=y, frame=frame, feature_names=data_columns,
-        DESCR=description, details=data_description,
-        categories=nominal_attributes,
-        url="https://www.openml.org/d/{}".format(data_id))
-
-    return bunch
+    Data = namedtuple('OpenmlData',
+                      ['id', 'X', 'y', 'description', 'details',
+                       'frame', 'columns', 'nominal_attributes'])
+    data = Data(id=data_id, X=X, y=y, description=description,
+                details=data_description, frame=frame,
+                columns=data_columns,
+                nominal_attributes=nominal_attributes)
+    return data
