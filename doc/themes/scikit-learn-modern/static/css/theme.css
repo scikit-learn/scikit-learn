@@ -158,9 +158,6 @@ div.gsc-results {
 }
 
 @media (min-width: 768px) {
-  div.gsc-control-cse {
-    padding: 1em;
-  }
   .search_form {
     width: 16rem;
   }
@@ -253,7 +250,7 @@ img.sk-footer-funding-logo {
   background-color: white;
   opacity: 0;
   top: 0;
-  padding: 0.5rem;
+  padding: 0 0.5rem 0.5rem 0.5rem;
   z-index: 2;
 }
 
@@ -301,13 +298,8 @@ nav.sk-docs-navbar {
 }
 
 @media (min-width: 768px) {
-  nav.sk-docs-navbar {
-    position: fixed;
-  }
-
   #sk-page-content-wrapper {
     width: 100%;
-    margin-top: 4.5rem;
   }
 
   #sk-page-content-wrapper {
@@ -367,7 +359,6 @@ div.sk-sidebar-toc-wrapper > ul > li > a{
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-  margin-top: 4rem;
 }
 
 div.sk-sidebar-toc-wrapper > ul,
@@ -385,7 +376,7 @@ div.sk-sidebar-toc-wrapper ul ul ul {
 div.sk-sidebar-toc-wrapper::after {
   display: block;
   content: "";
-  height: 120px;
+  height: 3rem;
   visibility: hidden;
 }
 
