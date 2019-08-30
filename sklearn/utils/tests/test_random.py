@@ -231,13 +231,12 @@ def test_log_api_w_scipy(low=1, high=2):
     assert 0 <= urvs.min() <= urvs.max() <= 1
 
 
-class TestLogUniformAPI:
-    @pytest.mark.xfail(raises=TypeError, reason="not developed")
-    def test_uniform_api(self):
-        scipy.stats.uniform.rvs(size=4)
-        with pytest.raises(TypeError):
-            loguniform.rvs(size=4)
-        raise TypeError
+@pytest.mark.xfail(raises=TypeError, reason="not developed")
+def test_uniform_api(self):
+    scipy.stats.uniform.rvs(size=4)
+    with pytest.raises(TypeError):
+        loguniform.rvs(size=4)
+    raise TypeError
 
 
 def test_our_rand_r():
