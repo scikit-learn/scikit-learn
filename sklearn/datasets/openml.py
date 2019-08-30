@@ -748,8 +748,7 @@ def _fetch_openml_inner(data_id=None, target_column='default-target',
             y = None
 
     bunch = Bunch(
-        data=X, target=y, frame=frame,
-        feature_names=data_columns,
+        data=X, target=y, frame=frame, feature_names=data_columns,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id)
