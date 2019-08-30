@@ -118,25 +118,18 @@ class LeastSquares(BaseLoss):
 
     hessians_are_constant = True
 
-    def __call__(self, y_true, raw_predictions, sample_weight,
-                 average=True):
+    def __call__(self, y_true, raw_predictions, average=True):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         loss = 0.5 * np.power(y_true - raw_predictions, 2)
-        if sample_weight is not None:
-            loss = sample_weight * loss
-
-        if average:
-            if sample_weight is None:
-                return loss.mean()
-            else:
-                return loss.sum() / sample_weight.sum
-        else:
-            return loss
+        return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
-        return np.average(y_train, sample_weight)
+        if sample_weight is None:
+            return np.mean(y_train)
+        else:
+            return np.average(y_train, sample_weight)
 
     @staticmethod
     def inverse_link_function(raw_predictions):

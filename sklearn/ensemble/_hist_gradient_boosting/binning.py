@@ -47,6 +47,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
+        # TODO: depends on the weights and stratify maybe
         subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
         data = data.take(subset, axis=0)
 

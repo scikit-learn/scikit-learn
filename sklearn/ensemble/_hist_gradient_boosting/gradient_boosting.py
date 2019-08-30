@@ -155,6 +155,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     X, y, test_size=self.validation_fraction,
                     stratify=stratify,
                     random_state=self._train_val_split_seed)
+                sample_weight_train = sample_weight_val = None
             else:
                 (X_train, X_val, y_train, y_val, sample_weight_train,
                  sample_weight_val) = train_test_split(
@@ -425,7 +426,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if hasattr(self, var):
                 delattr(self, var)
 
-    def _get_small_trainset(self, X_binned_train, y_train, seed):
+    def _get_small_trainset(self, X_binned_train, y_train, sample_weight_train,
+                            seed):
         """Compute the indices of the subsample set and return this set.
 
         For efficiency, we need to subsample the training set to compute scores
