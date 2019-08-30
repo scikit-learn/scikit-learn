@@ -374,14 +374,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions, y_train,
-                        raw_predictions_val, y_val
+                        raw_predictions, y_train, sample_weight_train,
+                        raw_predictions_val, y_val, sample_weight_val
                     )
 
                 else:
                     should_early_stop = self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
-                        X_binned_val, y_val,
+                        sample_weight_small_train,
+                        X_binned_val, y_val, sample_weight_val
                     )
 
             if self.verbose:
@@ -443,10 +444,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                stratify=stratify)
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
+            sample_weight_small_train = sample_weight_train[indices]
             X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
-            return X_binned_small_train, y_small_train
+            return (X_binned_small_train, y_small_train,
+                    sample_weight_small_train)
         else:
-            return X_binned_train, y_train
+            return X_binned_train, y_train, sample_weight_train
 
     def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
                                      sample_weight_small_train,
@@ -460,6 +463,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # TODO: handle when _scorer doesn't accept sample_weight, but
         # sample_weight is provided
+        import sys
         if sample_weight_small_train is None:
             self.train_score_.append(
                 self.scorer_(self, X_binned_small_train, y_small_train)
@@ -498,12 +502,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         self.train_score_.append(
-            -self.loss_(y_train, raw_predictions, sample_weight_train)
+            -self.loss_.get_average_loss(y_train, raw_predictions,
+                                         sample_weight_train)
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self.loss_(y_val, raw_predictions_val, sample_weight_val)
+                -self.loss_.get_average_loss(y_val, raw_predictions_val,
+                                             sample_weight_val)
             )
             return self._should_stop(self.validation_score_)
         else:

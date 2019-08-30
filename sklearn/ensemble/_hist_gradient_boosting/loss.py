@@ -63,13 +63,17 @@ class BaseLoss(ABC):
         return gradients, hessians
 
     @abstractmethod
-    def get_baseline_prediction(self, y_train, prediction_dim):
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         """Return initial predictions (before the first iteration).
 
         Parameters
         ----------
         y_train : ndarray, shape (n_samples,)
             The target training values.
+
+        sample_weight : array-like of shape(n_samples,) default=None
+            Weights of training data.
+
         prediction_dim : int
             The dimension of one prediction: 1 for binary classification and
             regression, n_classes for multiclass classification.
@@ -118,12 +122,19 @@ class LeastSquares(BaseLoss):
 
     hessians_are_constant = True
 
-    def __call__(self, y_true, raw_predictions, average=True):
+    def __call__(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         loss = 0.5 * np.power(y_true - raw_predictions, 2)
-        return loss.mean() if average else loss
+        return loss
+
+    def get_average_loss(self, y_true, raw_predictions, sample_weight):
+        if sample_weight is None:
+            return self(y_true, raw_predictions).mean()
+        else:
+            return np.average(self(y_true, raw_predictions),
+                              weights=sample_weight)
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         if sample_weight is None:
@@ -167,7 +178,7 @@ class BinaryCrossEntropy(BaseLoss):
         loss = np.logaddexp(0, raw_predictions) - y_true * raw_predictions
         return loss.mean() if average else loss
 
-    def get_baseline_prediction(self, y_train, prediction_dim):
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         if prediction_dim > 2:
             raise ValueError(
                 "loss='binary_crossentropy' is not defined for multiclass"
