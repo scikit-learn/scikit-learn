@@ -266,7 +266,6 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
-  margin-top: 4.2rem;
 }
 
 div.sk-page-content {
@@ -296,12 +295,16 @@ footer.sk-content-footer {
 nav.sk-docs-navbar {
   width: 100%;
   z-index: 3;
-  position: fixed;
 }
 
 @media (min-width: 768px) {
+  nav.sk-docs-navbar {
+    position: fixed;
+  }
+
   #sk-page-content-wrapper {
     padding-left: 240px;
+    margin-top: 4.2rem;
   }
 
   #sk-sidebar-wrapper {
