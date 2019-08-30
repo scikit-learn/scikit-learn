@@ -213,8 +213,7 @@ div.sk-landing-bg-more-info {
 }
 
 img.sk-index-img {
-  height: 240px;
-  width: auto;
+  max-height: 240px;
   margin: auto;
   margin-bottom: 1em;
   max-width: none;
