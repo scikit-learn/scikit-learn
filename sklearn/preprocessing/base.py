@@ -8,40 +8,7 @@ from ..utils.fixes import _astype_copy_false
 from ..utils.validation import FLOAT_DTYPES
 
 
-def _transform_selected(X, transform, dtype, selected="all", copy=True,
-                        retain_order=False):
-    """Apply a transform function to portion of selected features.
 
-    Returns an array Xt, where the non-selected features appear on the right
-    side (largest column indices) of Xt.
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape [n_samples, n_features]
-        Dense array or sparse matrix.
-
-    transform : callable
-        A callable transform(X) -> X_transformed
-
-    dtype : number type
-        Desired dtype of output.
-
-    copy : boolean, default=True
-        Copy X even if it could be avoided.
-
-    selected : "all" or array of indices or mask
-        Specify which features to apply the transform to.
-
-    retain_order : boolean, default=False
-        If True, the non-selected features will not be displaced to the right
-        side of the transformed array. The number of features in Xt must
-        match the number of features in X. Furthermore, X and Xt cannot be
-        sparse.
-
-    Returns
-    -------
-    Xt : array or sparse matrix, shape=(n_samples, n_features_new)
-    """
     X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
 
     if sparse.issparse(X) and retain_order:
