@@ -266,6 +266,7 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
+  margin-top: 4.2rem;
 }
 
 div.sk-page-content {
@@ -300,11 +301,8 @@ nav.sk-docs-navbar {
 
 @media (min-width: 768px) {
   #sk-page-content-wrapper {
-    width: 100%;
     padding-left: 240px;
-    margin-top: 4.2rem;
   }
-
 
   #sk-sidebar-wrapper {
     margin-left: 0;
@@ -384,7 +382,7 @@ div.sk-sidebar-toc-wrapper::after {
 /* content styling element style */
 
 div.sk-page-content img {
-  max-width: 100%;
+  max-width: 80%;
 }
 
 div.sk-page-content h1 {
