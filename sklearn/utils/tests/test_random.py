@@ -188,6 +188,7 @@ def test_random_choice_csc_errors():
 @pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
 def test_loguniform(low, high, base):
     rv = loguniform(low, high, base=base)
+    assert isinstance(rv, scipy.stats.rv_continuous)
     rvs = rv.rvs(size=2000, random_state=0)
 
     # Test the basics; right bounds, right size
@@ -233,19 +234,9 @@ def test_log_api_w_scipy(low=1, high=2):
 
 
 class TestLogUniformAPI:
+    @pytest.mark.xfail(raises=TypeError, reason="not developed")
     def test_uniform_api(self):
         scipy.stats.uniform.rvs(size=4)
-        scipy.stats.uniform.rvs(scale=2)
-        scipy.stats.uniform.rvs(loc=1)
-
-    @pytest.mark.xfail(reason="loguniform not developed enough",
-                       raises=TypeError)
-    def test_no_args(self):
-        # loguniform not initialized
         with pytest.raises(TypeError):
             loguniform.rvs(size=4)
-        with pytest.raises(TypeError):
-            loguniform.rvs(scale=2)
-        with pytest.raises(TypeError):
-            loguniform.rvs(loc=0)
-        raise TypeError()
+        raise TypeError

@@ -1,8 +1,11 @@
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #
 # License: BSD 3 clause
+import math
+
 import numpy as np
 import scipy.sparse as sp
+import scipy.stats
 
 import array
 
@@ -98,7 +101,7 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                          dtype=int)
 
 
-class loguniform:
+class loguniform(scipy.stats.rv_continuous):
     """A class supporting log-uniform random variables.
 
     Parameters
@@ -134,8 +137,9 @@ class loguniform:
         self._low = low
         self._high = high
         self._base = base
+        super(loguniform, self).__init__(a=base ** low, b=base ** high)
 
-    def rvs(self, size=None, random_state=None):
+    def _rvs(self):
         """
         Generates random variables with ``base**low <= rv <= base**high``
         where ``rv`` is the return value of this function.
@@ -152,7 +156,6 @@ class loguniform:
         rv : float or np.ndarray
             Either a single log-uniform random variable or an array of them
         """
-        _rng = check_random_state(random_state)
-        unif = _rng.uniform(self._low, self._high, size=size)
+        unif = self._random_state.uniform(self._low, self._high, size=self._size)
         rvs = np.power(self._base, unif)
         return rvs
