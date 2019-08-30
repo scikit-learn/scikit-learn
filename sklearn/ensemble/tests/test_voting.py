@@ -32,8 +32,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-boston = datasets.load_boston()
-X_r, y_r = boston.data, boston.target
+X_r, y_r = datasets.load_boston(return_X_y=True)
 
 
 def test_estimator_init():

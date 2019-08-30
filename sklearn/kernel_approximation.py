@@ -115,7 +115,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -222,7 +222,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'random_weights_')
+        check_is_fitted(self)
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -262,6 +262,12 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         Gives the number of (complex) sampling points.
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
+
+    Attributes
+    ----------
+    sample_interval_ : float
+        Stored sampling interval. Specified as a parameter if sample_steps not
+        in {1,2,3}.
 
     Examples
     --------
@@ -350,7 +356,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, "sample_interval_", msg=msg)
+        check_is_fitted(self, msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -512,6 +518,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
     def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
@@ -580,7 +587,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
@@ -594,7 +601,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not callable(self.kernel):
+        if not callable(self.kernel) and self.kernel != 'precomputed':
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
@@ -603,6 +610,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
                     self.coef0 is not None or
                     self.degree is not None):
                 raise ValueError("Don't pass gamma, coef0 or degree to "
-                                 "Nystroem if using a callable kernel.")
+                                 "Nystroem if using a callable "
+                                 "or precomputed kernel")
 
         return params

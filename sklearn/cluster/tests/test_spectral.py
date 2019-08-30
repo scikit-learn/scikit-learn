@@ -9,7 +9,6 @@ import pickle
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
@@ -72,8 +71,9 @@ def test_spectral_unknown_mode():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, eigen_solver="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            eigen_solver="<unknown>")
 
 
 def test_spectral_unknown_assign_labels():
@@ -88,8 +88,9 @@ def test_spectral_unknown_assign_labels():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, assign_labels="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            assign_labels="<unknown>")
 
 
 def test_spectral_clustering_sparse():
@@ -149,7 +150,8 @@ def test_affinities():
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
-    assert_raises(ValueError, sp.fit, X)
+    with pytest.raises(ValueError):
+        sp.fit(X)
 
 
 @pytest.mark.parametrize('n_samples', [50, 100, 150, 500])
@@ -203,9 +205,9 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
         assert adjusted_rand_score(labels_arpack, labels_amg) == 1
     else:
-        assert_raises(
-            ValueError, spectral_clustering,
-            graph, n_clusters=2, eigen_solver='amg', random_state=0)
+        with pytest.raises(ValueError):
+            spectral_clustering(graph, n_clusters=2, eigen_solver='amg',
+                                random_state=0)
 
 
 def test_n_components():
