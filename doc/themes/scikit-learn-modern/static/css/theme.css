@@ -33,10 +33,6 @@ code {
   padding: 0.2rem;
 }
 
-img {
-  max-width: 100%;
-}
-
 code span.pre {
   font-weight: bold;
 }
@@ -131,9 +127,12 @@ div.clearer {
 
 /* Search */
 
+.search_form {
+  width: 16rem;
+}
+
 .gsc-input {
   padding-right: 0;
-  width: 12rem;
 }
 
 div.gsc-control-cse {
@@ -146,14 +145,9 @@ button.gsc-search-button {
   padding: 0.7rem 0.8rem;
 }
 
-
 button.gsc-search-button:hover,
 button.gsc-search-button:active {
   background-color: #388bb5;
-}
-
-table.gsc-search-box {
-  width: 12rem;
 }
 
 div.gsc-results-wrapper-visible {
@@ -380,6 +374,9 @@ div.sk-sidebar-toc-wrapper::after {
 
 /* content styling element style */
 
+div.sk-page-content img {
+  max-width: 100%;
+}
 
 div.sk-page-content h1 {
   background-color: #cde8ef;

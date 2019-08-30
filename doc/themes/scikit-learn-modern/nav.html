@@ -8,13 +8,14 @@
 
 <nav class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
   <div class="container-fluid {{ top_container_cls }}">
-    <a class="navbar-brand" href="{{ pathto('index') }}">
-      <img
-        src="{{ pathto('_static/images/scikit-learn-logo-notext.png', 1) }}"
-        width="100"
-        alt="logo"
-      />
-    </a>
+    {%- if logo %}
+      <a class="navbar-brand" href="{{ pathto('index') }}">
+        <img
+          src="{{ pathto('_static/' + logo, 1) }}"
+          width="100"
+          alt="logo"/>
+      </a>
+    {%- endif %}
     <button
       class="navbar-toggler"
       type="button"
