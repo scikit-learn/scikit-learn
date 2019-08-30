@@ -31,6 +31,37 @@ _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
+class _CacheWithRetry:
+    """Apply a function with a joblib.Memory cache
+
+    If first call fails, likely due to pickling issue, clean the
+    cache and try again.
+    """
+    def __init__(self, memory, data_home):
+        self.memory = memory
+        self.data_home = data_home
+
+    def __call__(self, func, **kwargs):
+        # TODO: the retry could be handled in joblib (maybe it already is?)
+        memory = self.memory
+        if memory is not None and self.data_home is not None:
+            try:
+                data = memory.cache(func)(**kwargs)
+            except HTTPError:
+                raise
+            except Exception:
+                warn("Invalid cache, redownloading file", RuntimeWarning)
+                data = None
+
+            if data is None:
+                # attemting to download data with cleared cache
+                memory.clear()
+                data = memory.cache(func)(**kwargs)
+        else:
+            data = func(**kwargs)
+        return data
+
+
 def _open_openml_url(openml_path):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
@@ -538,9 +569,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
 
-    if cache is False:
-        # no caching will be applied
-        data_home = None
+    if cache and data_home is not None:
+        # Use dataset specific cache location, so it can be separately cleaned
+        memory = Memory(location=join(data_home, 'cache', str(data_id)),
+                        verbose=0)
+    else:
+        memory = None
+    _apply_cached_with_retry = _CacheWithRetry(memory, data_home)
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
@@ -553,7 +588,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 "Dataset data_id={} and name={} passed, but you can only "
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name))
-        data_info = _get_data_info_by_name(name, version)
+        data_info = _apply_cached_with_retry(
+            _get_data_info_by_name, name=name, version=version)
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -567,27 +603,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
 
-    kwargs = dict(data_id=data_id, target_column=target_column,
-                  as_frame=as_frame)
-
-    print(f'data_home={data_home}')
-    if data_home is not None:
-        # Use dataset specific cache location, so it can be separately cleaned
-        memory = Memory(location=join(data_home, 'cache', str(data_id)))
-        try:
-            bunch = memory.cache(_fetch_openml_inner)(**kwargs)
-        except HTTPError:
-            raise
-        except Exception:
-            warn("Invalid cache, redownloading file", RuntimeWarning)
-            bunch = None
-
-        if bunch is None:
-            # attemting to download data with cleared cache
-            memory.clear()
-            bunch = memory.cache(_fetch_openml_inner)(**kwargs)
-    else:
-        bunch = _fetch_openml_inner(**kwargs)
+    bunch = _apply_cached_with_retry(
+        _fetch_openml_inner, data_id=data_id, target_column=target_column,
+        as_frame=as_frame)
 
     if return_X_y:
         return bunch.data, bunch.target
