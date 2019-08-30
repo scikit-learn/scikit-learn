@@ -12,13 +12,11 @@
 {% endif %}
 
 <script>
-
-    $(document).ready(function() {
-
-        $("#menu-toggle").click(function(e) {
-            e.preventDefault();
-            $("#sk-doc-wrapper").toggleClass("toggled");
-        });
+$(document).ready(function() {
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#sk-doc-wrapper").toggleClass("toggled");
+    });
 
     /* Add a [>>>] button on the top-right corner of code samples to hide
      * the >>> and ... prompts and the output and thus make the code
@@ -71,7 +69,6 @@
         }
     });
 
-
 	/*** Add permalink buttons next to glossary terms ***/
 	$('dl.glossary > dt[id]').append(function() {
 		return ('<a class="headerlink" href="#' +
@@ -79,7 +76,7 @@
 			    '" title="Permalink to this term">¶</a>');
 	})
 
-    // Scroll to anchor link with fixed header
+    /*** Scroll to anchor link with fixed header ***/
 	// Run on first scroll (in case the user loaded a page with a hash in the url)
 	function onScroll()
 	{
@@ -91,9 +88,7 @@
 	{
         if (window.innerWidth < 768) { return ; }
 
-		var hash,
-			target,
-			offset;
+		var hash, target, offset;
 
 		hash = window.location.hash;
 		if ( hash.length < 2 ) { return; }
@@ -106,13 +101,11 @@
 			window.scrollBy(0, -78);
 		}
 	}
-
 	window.addEventListener('scroll', onScroll);
 	// Run on hash change (user clicked on anchor link)
 	if ( 'onhashchange' in window ) {
 		window.addEventListener('hashchange', scrollUpToCompensateForFixedHeader);
 	}
-
 });
 
 </script>
