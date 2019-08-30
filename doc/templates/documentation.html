@@ -1,5 +1,12 @@
 {% extends "layout.html" %}
 {% set title = 'Documentation scikit-learn: machine learning in Python' %}
+{%- block extrahead %}
+<script>
+    VERSION_SUBDIR = (function(groups) {
+        return groups ? groups[1] : null;
+    })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+</script>
+{% endblock %}
 {% block content %}
 <div class="container sk-landing-container body" role="main">
   <h1 class="sk-documentation-index-header mb-3">Documentation of scikit-learn {{ version }}</h1>
@@ -26,6 +33,8 @@
         <div class="card-body p-3">
           <p class="card-text">
             <ul>
+                <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
+                <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
                 <li><a href="https://scikit-learn.org/dev/versions.html">All available versions</a>
                 </li>
                 <li><a href="_downloads/scikit-learn-docs.pdf">PDF documentation</a>
