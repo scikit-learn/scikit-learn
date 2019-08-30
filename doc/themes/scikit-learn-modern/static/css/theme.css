@@ -256,9 +256,10 @@ img.sk-footer-funding-logo {
   transition: margin 0.25s ease-out, opacity 0.25s ease-out;
   background-color: white;
   opacity: 0;
-  top: 4rem;
+  top: 0;
   padding: 0.5rem;
   z-index: 2;
+  background-color: #f8f9fa;
 }
 
 #sk-doc-wrapper.toggled #sk-sidebar-wrapper {
@@ -273,7 +274,6 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
-  margin-top: 4.5rem;
 }
 
 :target::before {
@@ -304,12 +304,20 @@ footer.sk-content-footer {
 }
 
 nav.sk-docs-navbar {
-  position: fixed;
   width: 100%;
   z-index: 3;
 }
 
 @media (min-width: 768px) {
+  nav.sk-docs-navbar {
+    position: fixed;
+  }
+
+  #sk-page-content-wrapper {
+    width: 100%;
+    margin-top: 4.5rem;
+  }
+
   #sk-page-content-wrapper {
     padding-left: 240px;
   }
@@ -366,6 +374,7 @@ div.sk-sidebar-toc-wrapper > ul > li > a{
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
+  margin-top: 4rem;
 }
 
 div.sk-sidebar-toc-wrapper > ul,
