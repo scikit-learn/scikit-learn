@@ -1,9 +1,4 @@
 /* Elements */
-
-body {
-  background-color: #f8f9fa;
-}
-
 a {
   color: #2878A2;
   word-wrap: break-word;
@@ -279,7 +274,6 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
-  height: 100vh;
 }
 
 div.sk-page-content {
