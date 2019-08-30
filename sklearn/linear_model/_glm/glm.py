@@ -460,12 +460,12 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, link='log',
+    def __init__(self, alpha=1.0, fit_intercept=True,
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="poisson", link=link,
+                         family="poisson", link='log',
                          solver=solver, max_iter=max_iter, tol=tol,
                          warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
@@ -548,12 +548,12 @@ class GammaRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, link='log',
-                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+    def __init__(self, alpha=1.0, fit_intercept=True, solver='lbfgs',
+                 max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="gamma", link=link,
+                         family="gamma", link='log',
                          solver=solver, max_iter=max_iter, tol=tol,
                          warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
@@ -619,6 +619,15 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         case, the design matrix X must have full column rank
         (no collinearities).
 
+    link : {'auto', 'identity', 'log'}, default='auto'
+        The link function of the GLM, i.e. mapping from linear predictor
+        (X*coef) to expectation (y_pred). Option 'auto' sets the link
+        depending on the chosen family as follows:
+
+        - 'identity' for Normal distribution
+
+        - 'log' for Poisson,  Gamma or Inverse Gaussian distributions
+
     fit_intercept : boolean, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
@@ -659,9 +668,9 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in solver.
     """
-    def __init__(self, power=0.0, alpha=1.0, fit_intercept=True, link='log',
-                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
-                 copy_X=True, check_input=True, verbose=0):
+    def __init__(self, power=0.0, alpha=1.0, fit_intercept=True,
+                 link='auto', solver='lbfgs', max_iter=100, tol=1e-4,
+                 warm_start=False, copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family=TweedieDistribution(power=power), link=link,
