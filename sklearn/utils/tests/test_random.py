@@ -7,7 +7,8 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 from sklearn.utils.fixes import comb
-from sklearn.utils.random import random_choice_csc, sample_without_replacement, loguniform
+from sklearn.utils.random import random_choice_csc, sample_without_replacement
+from sklearn.utils.random import loguniform
 from sklearn.utils._random import _our_rand_r_py
 from sklearn.utils.testing import assert_raises
 
@@ -181,7 +182,8 @@ def test_random_choice_csc_errors():
                   class_probabilities, 1)
 
 
-@pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
+@pytest.mark.parametrize("low,high,base",
+                         [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
 def test_loguniform(low, high, base):
     rv = loguniform(low, high, base=base)
     assert isinstance(rv, scipy.stats.rv_continuous)
@@ -236,6 +238,7 @@ class TestLogUniformAPI:
         with pytest.raises(TypeError):
             loguniform.rvs(size=4)
         raise TypeError
+
 
 def test_our_rand_r():
     assert 131541053 == _our_rand_r_py(1273642419)

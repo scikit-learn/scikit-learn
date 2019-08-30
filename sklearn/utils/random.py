@@ -1,8 +1,6 @@
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #
 # License: BSD 3 clause
-import math
-
 import numpy as np
 import scipy.sparse as sp
 import scipy.stats
@@ -156,6 +154,7 @@ class loguniform(scipy.stats.rv_continuous):
         rv : float or np.ndarray
             Either a single log-uniform random variable or an array of them
         """
-        unif = self._random_state.uniform(self._low, self._high, size=self._size)
+        unif = self._random_state.uniform(self._low, self._high,
+                                          size=self._size)
         rvs = np.power(self._base, unif)
         return rvs
