@@ -131,8 +131,9 @@ div.clearer {
 
 /* Search */
 
-div.gsc-input {
+.gsc-input {
   padding-right: 0;
+  width: 12rem;
 }
 
 div.gsc-control-cse {
@@ -161,7 +162,7 @@ div.gsc-results-wrapper-visible {
   right: 0;
 }
 
-div.gsc-wrapper {
+div.gsc-results {
   overflow-y: scroll;
 }
 
