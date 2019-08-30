@@ -78,7 +78,43 @@
 			    this.getAttribute('id') +
 			    '" title="Permalink to this term">¶</a>');
 	})
+
+    // Scroll to anchor link with fixed header
+	// Run on first scroll (in case the user loaded a page with a hash in the url)
+	function onScroll()
+	{
+		window.removeEventListener('scroll', onScroll);
+		scrollUpToCompensateForFixedHeader();
+	}
+
+	function scrollUpToCompensateForFixedHeader()
+	{
+        if (window.innerWidth < 768) { return ; }
+
+		var hash,
+			target,
+			offset;
+
+		hash = window.location.hash;
+		if ( hash.length < 2 ) { return; }
+
+		target = document.getElementById( hash.slice(1) );
+		if ( target === null ) { return; }
+
+        // At the top
+		if ( target.getBoundingClientRect().top < 2 ) {
+			window.scrollBy(0, -78);
+		}
+	}
+
+	window.addEventListener('scroll', onScroll);
+	// Run on hash change (user clicked on anchor link)
+	if ( 'onhashchange' in window ) {
+		window.addEventListener('hashchange', scrollUpToCompensateForFixedHeader);
+	}
+
 });
+
 </script>
 <script>
     (function() {

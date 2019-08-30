@@ -32,10 +32,6 @@ code {
   padding: 0.2rem;
 }
 
-code span.pre {
-  font-weight: bold;
-}
-
 nav {
   z-index: 3;
 }
@@ -338,6 +334,7 @@ nav.sk-docs-navbar {
 .centered {
   text-align: center;
 }
+
 
 /* docs index */
 
