@@ -624,7 +624,7 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
+def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -640,20 +640,21 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    p : float, optional
-        Tweedie power parameter. Either p <= 0 or p >= 1.
+    power : float, default=0
+        Tweedie power parameter. Either power <= 0 or power >= 1.
 
         The higher `p` the less weight is given to extreme
         deviations between true and predicted targets.
 
-        - p < 0: Extreme stable distribution. Requires: y_pred > 0.
-        - p = 0 : Normal distribution, output corresponds to
+        - power < 0: Extreme stable distribution. Requires: y_pred > 0.
+        - power = 0 : Normal distribution, output corresponds to
           mean_squared_error. y_true and y_pred can be any real numbers.
-        - p = 1 : Poisson distribution. Requires: y_true >= 0 and y_pred > 0.
+        - power = 1 : Poisson distribution. Requires: y_true >= 0 and
+          y_pred > 0.
         - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
           and y_pred > 0.
-        - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
-        - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
+        - power = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
+        - power = 3 : Inverse Gaussian distribution. Requires: y_true > 0
           and y_pred > 0.
         - otherwise : Positive stable distribution. Requires: y_true > 0
           and y_pred > 0.
@@ -668,7 +669,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     >>> from sklearn.metrics import mean_tweedie_deviance
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
-    >>> mean_tweedie_deviance(y_true, y_pred, p=1)
+    >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
     from ..linear_model._glm.distribution import TweedieDistribution
@@ -682,7 +683,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    dist = TweedieDistribution(power=p)
+    dist = TweedieDistribution(power=power)
     dev = dist.unit_deviance(y_true, y_pred, check_input=True)
 
     return np.average(dev, weights=sample_weight)
@@ -721,7 +722,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     1.4260...
     """
     return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, p=1
+        y_true, y_pred, sample_weight=sample_weight, power=1
     )
 
 
@@ -759,5 +760,5 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
     1.0568...
     """
     return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, p=2
+        y_true, y_pred, sample_weight=sample_weight, power=2
     )
