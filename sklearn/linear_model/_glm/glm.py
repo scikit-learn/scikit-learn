@@ -31,8 +31,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a Generalized Linear Model (GLM) with penalties.
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as mu=h(X*w). Therefore,
-    the fit minimizes the following objective function with L2
+    fitting and predicting the mean of the target y as y_pred=h(X*w).
+    Therefore, the fit minimizes the following objective function with L2
     priors as regularizer::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s)
@@ -66,8 +66,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     link : {'auto', 'identity', 'log'} or an instance of class Link, \
             optional (default='auto')
         The link function of the GLM, i.e. mapping from linear predictor
-        (X*coef) to expectation (mu). Option 'auto' sets the link depending on
-        the chosen family as follows:
+        (X*coef) to expectation (y_pred). Option 'auto' sets the link
+        depending on the chosen family as follows:
 
         - 'identity' for family 'normal'
 
@@ -146,9 +146,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 optional (default=None)
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
-            Var[Y_i]=phi/w_i * v(mu).
-            If Y_i ~ EDM(mu, phi/w_i), then
-            sum(w*Y)/sum(w) ~ EDM(mu, phi/sum(w)), i.e. the mean of y is a
+            Var[Y_i]=phi/w_i * v(y_pred).
+            If Y_i ~ EDM(y_pred, phi/w_i), then
+            sum(w*Y)/sum(w) ~ EDM(y_pred, phi/sum(w)), i.e. the mean of y is a
             weighted average with weights=sample_weight.
 
         Returns
@@ -267,10 +267,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if solver == 'lbfgs':
             def func(coef, X, y, weights, alpha, family, link):
-                mu, devp = family._mu_deviance_derivative(
+                y_pred, devp = family._y_pred_deviance_derivative(
                     coef, X, y, weights, link
                 )
-                dev = family.deviance(y, mu, weights)
+                dev = family.deviance(y, y_pred, weights)
                 intercept = (coef.size == X.shape[1] + 1)
                 idx = 1 if intercept else 0  # offset if coef[0] is intercept
                 coef_scaled = alpha * coef[idx:]
@@ -337,8 +337,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         """
         # check_array is done in _linear_predictor
         eta = self._linear_predictor(X)
-        mu = self._link_instance.inverse(eta)
-        return mu
+        y_pred = self._link_instance.inverse(eta)
+        return y_pred
 
     def score(self, X, y, sample_weight=None):
         """Compute D^2, the percentage of deviance explained.
@@ -376,8 +376,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # TODO: make D^2 a score function in module metrics (and thereby get
         #       input validation and so on)
         weights = _check_sample_weight(sample_weight, X)
-        mu = self.predict(X)
-        dev = self._family_instance.deviance(y, mu, weights=weights)
+        y_pred = self.predict(X)
+        dev = self._family_instance.deviance(y, y_pred, weights=weights)
         y_mean = np.average(y, weights=weights)
         dev_null = self._family_instance.deviance(y, y_mean, weights=weights)
         return 1 - dev / dev_null
@@ -399,7 +399,7 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     """Regression with the response variable y following a Poisson distribution
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as mu=h(X*w).
+    fitting and predicting the mean of the target y as y_pred=h(X*w).
     The fit minimizes the following objective function with L2 regularization::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
@@ -487,7 +487,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
     """Regression with the response variable y following a Gamma distribution
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as mu=h(X*w).
+    fitting and predicting the mean of the target y as y_pred=h(X*w).
     The fit minimizes the following objective function with L2 regularization::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
@@ -572,10 +572,10 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
 
 class TweedieRegressor(GeneralizedLinearRegressor):
-    """Regression with the response variable y following a Tweedie distribution
+    r"""Regression with the response variable y following a Tweedie distribution
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as mu=h(X*w).
+    fitting and predicting the mean of the target y as y_pred=h(X*w).
     The fit minimizes the following objective function with L2 regularization::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
@@ -590,7 +590,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     power : float (default=0)
             The power determines the underlying target distribution. By
             definition it links distribution variance (:math:`v`) and
-            mean (:math:`\\mu`): :math:`v(\\mu) = \\mu^{power}`.
+            mean (:math:`\y_\textrm{pred}`):
+            :math:`v(\y_\textrm{pred}) = \y_\textrm{pred}^{power}`.
 
             For ``0<power<1``, no distribution exists.
 

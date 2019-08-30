@@ -15,26 +15,26 @@ class Link(metaclass=ABCMeta):
     """Abstract base class for Link functions."""
 
     @abstractmethod
-    def __call__(self, mu):
-        """Compute the link function g(mu).
+    def __call__(self, y_pred):
+        """Compute the link function g(y_pred).
 
-        The link function links the mean mu=E[Y] to the so called linear
-        predictor (X*w), i.e. g(mu) = linear predictor.
+        The link function links the mean y_pred=E[Y] to the so called linear
+        predictor (X*w), i.e. g(y_pred) = linear predictor.
 
         Parameters
         ----------
-        mu : array, shape (n_samples,)
+        y_pred : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
         pass  # pragma: no cover
 
     @abstractmethod
-    def derivative(self, mu):
-        """Compute the derivative of the link g'(mu).
+    def derivative(self, y_pred):
+        """Compute the derivative of the link g'(y_pred).
 
         Parameters
         ----------
-        mu : array, shape (n_samples,)
+        y_pred : array, shape (n_samples,)
             Usually the (predicted) mean.
         """
         pass  # pragma: no cover
@@ -44,7 +44,7 @@ class Link(metaclass=ABCMeta):
         """Compute the inverse link function h(lin_pred).
 
         Gives the inverse relationship between linear predictor and the mean
-        mu=E[Y], i.e. h(linear predictor) = mu.
+        y_pred=E[Y], i.e. h(linear predictor) = y_pred.
 
         Parameters
         ----------
@@ -68,11 +68,11 @@ class Link(metaclass=ABCMeta):
 class IdentityLink(Link):
     """The identity link function g(x)=x."""
 
-    def __call__(self, mu):
-        return mu
+    def __call__(self, y_pred):
+        return y_pred
 
-    def derivative(self, mu):
-        return np.ones_like(mu)
+    def derivative(self, y_pred):
+        return np.ones_like(y_pred)
 
     def inverse(self, lin_pred):
         return lin_pred
@@ -84,11 +84,11 @@ class IdentityLink(Link):
 class LogLink(Link):
     """The log link function g(x)=log(x)."""
 
-    def __call__(self, mu):
-        return np.log(mu)
+    def __call__(self, y_pred):
+        return np.log(y_pred)
 
-    def derivative(self, mu):
-        return 1 / mu
+    def derivative(self, y_pred):
+        return 1 / y_pred
 
     def inverse(self, lin_pred):
         return np.exp(lin_pred)
@@ -100,11 +100,11 @@ class LogLink(Link):
 class LogitLink(Link):
     """The logit link function g(x)=logit(x)."""
 
-    def __call__(self, mu):
-        return logit(mu)
+    def __call__(self, y_pred):
+        return logit(y_pred)
 
-    def derivative(self, mu):
-        return 1 / (mu * (1 - mu))
+    def derivative(self, y_pred):
+        return 1 / (y_pred * (1 - y_pred))
 
     def inverse(self, lin_pred):
         return expit(lin_pred)
