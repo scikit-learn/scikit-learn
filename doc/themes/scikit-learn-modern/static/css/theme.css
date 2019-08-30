@@ -295,16 +295,16 @@ footer.sk-content-footer {
 nav.sk-docs-navbar {
   width: 100%;
   z-index: 3;
+  position: fixed;
 }
 
 @media (min-width: 768px) {
   #sk-page-content-wrapper {
     width: 100%;
+    padding-left: 240px;
+    margin-top: 4.2rem;
   }
 
-  #sk-page-content-wrapper {
-    padding-left: 240px;
-  }
 
   #sk-sidebar-wrapper {
     margin-left: 0;
@@ -359,6 +359,7 @@ div.sk-sidebar-toc-wrapper > ul > li > a{
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
+  margin-top: 4.2rem;
 }
 
 div.sk-sidebar-toc-wrapper > ul,
