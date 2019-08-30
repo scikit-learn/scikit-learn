@@ -34,6 +34,7 @@ from sklearn.linear_model import PoissonRegressor, LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -134,10 +135,14 @@ print(
 # To evaluate the pertinence of the used metrics, we will consider as a
 # baseline an estimator that returns 0 for any input.
 
-df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
+df_train, df_test = train_test_split(df, random_state=0)
 
-dummy = DummyRegressor(strategy='constant', constant=0)
-dummy.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
+dummy = make_pipeline(
+    column_trans,
+    DummyRegressor(strategy='constant', constant=0)
+)
+dummy.fit(df_train, df_train.Frequency,
+          dummyregressor__sample_weight=df_train.Exposure)
 
 ##############################################################################
 #
@@ -149,14 +154,14 @@ def score_estimator(estimator, df_test, eps=1e-5):
     """Score an estimatr on the test set"""
 
     print("MSE: %.3f" % mean_squared_error(
-              df_test.Frequency.values, estimator.predict(X_test),
+              df_test.Frequency.values, estimator.predict(df_test),
               df_test.Exposure.values))
     print("MAE: %.3f" % mean_absolute_error(
-              df_test.Frequency.values, estimator.predict(X_test),
+              df_test.Frequency.values, estimator.predict(df_test),
               df_test.Exposure.values))
 
     print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-            df_test.Frequency.values, np.fmax(estimator.predict(X_test), eps),
+            df_test.Frequency.values, np.fmax(estimator.predict(df_test), eps),
             df_test.Exposure.values))
 
 
@@ -168,12 +173,14 @@ score_estimator(dummy, df_test)
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-linregr = LinearRegression()
-linregr.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
+linregr = make_pipeline(column_trans, LinearRegression())
+linregr.fit(df_train, df_train.Frequency,
+            linearregression__sample_weight=df_train.Exposure)
 
 
 print('Number Negatives: %s / total: %s' % (
-      (linregr.predict(X_test) < 0).sum(), X_test.shape[0]))
+      (linregr.predict(df_train) < 0).sum(),
+      df_train.shape[0]))
 
 print("LinearRegression")
 score_estimator(linregr, df_test)
@@ -182,8 +189,12 @@ score_estimator(linregr, df_test)
 #
 # Next we fit the Poisson regressor on the target variable,
 
-glm_freq = PoissonRegressor(alpha=0, max_iter=1000)
-glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
+glm_freq = make_pipeline(
+    column_trans,
+    PoissonRegressor(alpha=0, max_iter=1000)
+)
+glm_freq.fit(df_train, df_train.Frequency,
+             poissonregressor__sample_weight=df_train.Exposure)
 
 print("PoissonRegressor")
 score_estimator(glm_freq, df_test)
@@ -191,12 +202,31 @@ score_estimator(glm_freq, df_test)
 ##############################################################################
 #
 # Finally we will consider a non linear model  with Gradient boosting that
-# still minimizes the least square error.
+# still minimizes the least square error. Gradient Boostring Decision Trees do
+# not require for categorical data to be one hot encoded, therefore here we use
+# a simpler pre-processing pipeline without ``KBinsDiscretizer`` and with
+# ``OrdinalEncoder`` instead of ``OneHotEncoder``.
 
 
-gbr = GradientBoostingRegressor()
-gbr.fit(X_train, df_train.Frequency.values,
-        sample_weight=df_train.Exposure.values)
+gbr = make_pipeline(
+    ColumnTransformer(
+        [
+            (
+                "Veh_Brand_Gas_Region",
+                OrdinalEncoder(),
+                ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
+            ),
+            ("Continious", "passthrough", ["VehAge", "DrivAge", "BonusMalus"]),
+            ("Density_log", make_pipeline(
+                FunctionTransformer(np.log, validate=False), StandardScaler()),
+                ["Density"]),
+        ],
+        remainder="drop",
+    ),
+    GradientBoostingRegressor()
+)
+gbr.fit(df_train, df_train.Frequency.values,
+        gradientboostingregressor__sample_weight=df_train.Exposure.values)
 
 
 print("GradientBoostingRegressor")
@@ -224,7 +254,7 @@ df_train.Frequency.hist(bins=np.linspace(-1, 10, 50), ax=axes[0])
 axes[0].set_title('Experimental data')
 
 for idx, model in enumerate([linregr, glm_freq, gbr]):
-    y_pred = model.predict(X_train)
+    y_pred = model.predict(df_train)
 
     pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=axes[idx+1])
     axes[idx + 1].set_title(model.__class__.__name__)
