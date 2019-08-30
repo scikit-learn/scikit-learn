@@ -1,5 +1,9 @@
 /* Elements */
 
+body {
+  background-color: #f8f9fa;
+}
+
 a {
   color: #2878A2;
   word-wrap: break-word;
@@ -275,20 +279,18 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
+  height: 100vh;
 }
 
-:target::before {
-  display: block;
-  content: " ";
-  height: 4.5rem;
-  visibility: hidden;
+div.sk-page-content {
+  background-color: white;
 }
 
 .sk-btn-toggle-toc {
   position: fixed;
   bottom: 0.5rem;
   margin-left: 0.5rem;
-  padding: 0.25rem;
+  padding: 0.5rem;
   border-radius: 1rem;
   z-index: 3;
 }
