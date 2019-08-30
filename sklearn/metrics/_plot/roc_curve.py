@@ -7,7 +7,7 @@ from ...utils import check_matplotlib_support
 class RocCurveDisplay:
     """ROC Curve visualization.
 
-    It is recommend to use `sklearn.metrics.plot_roc_curve` to create a
+    It is recommend to use :func:`~sklearn.metrics.plot_roc_curve` to create a
     visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -16,10 +16,13 @@ class RocCurveDisplay:
     ----------
     fpr : ndarray
         False positive rate.
+
     tpr : ndarray
         True positive rate.
+
     roc_auc : float
         Area under ROC curve.
+
     estimator_name : str
         Name of estimator.
 
@@ -27,10 +30,12 @@ class RocCurveDisplay:
     ----------
     line_ : matplotlib Artist
         ROC Curve.
+
     ax_ : matplotlib Axes
-        Axes with ROC Curve
+        Axes with ROC Curve.
+
     figure_ : matplotlib Figure
-        Figure containing the curve
+        Figure containing the curve.
     """
 
     def __init__(self, fpr, tpr, roc_auc, estimator_name):
@@ -46,14 +51,20 @@ class RocCurveDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib Axes or None, default=None
-            Axes object to plot on.
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
-        name : str or None, default=None
+        name : str, default=None
             Name of ROC Curve for labeling. If `None`, use the name of the
             estimator.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.plot.RocCurveDisplay`
+            Object that stores computed values.
         """
-        check_matplotlib_support('plot_roc_curve')
+        check_matplotlib_support('RocCurveDisplay.plot')
         import matplotlib.pyplot as plt
 
         if ax is None:
@@ -61,10 +72,12 @@ class RocCurveDisplay:
 
         name = self.estimator_name if name is None else name
 
-        if 'label' not in kwargs:
-            label = "{} (AUC = {:0.2f})".format(name, self.roc_auc)
-            kwargs['label'] = label
-        self.line_ = ax.plot(self.fpr, self.tpr, **kwargs)[0]
+        line_kwargs = {
+            'label': "{} (AUC = {:0.2f})".format(name, self.roc_auc)
+        }
+        line_kwargs.update(**kwargs)
+
+        self.line_ = ax.plot(self.fpr, self.tpr, **line_kwargs)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
         ax.legend(loc='lower right')
@@ -88,10 +101,10 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     estimator : estimator instance
         Trained classifier.
 
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like, shape (n_samples, )
+    y : array-like of shape (n_samples,)
         Target values.
 
     pos_label : int or str, default=None
@@ -99,7 +112,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
         `pos_label` is set to 1, otherwise an error will be raised.
 
-    sample_weight : array-like, shape (n_samples, ) or None, default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     drop_intermediate : boolean, default=True
@@ -113,18 +126,20 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         target response. If set to 'auto', `predict_proba` is tried first
         and if it does not exist `decision_function` is tried next.
 
-    name : str or None, default=None
+    name : str, default=None
         Name of ROC Curve for labeling. If `None`, use the name of the
         estimator.
 
     ax : matplotlib axes, default=None
-        axes object to plot on
+        Axes object to plot on. If `None`, a new figure and axes is created.
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.plot.RocCurveDisplay`
-        object that stores computed values
+    display : :class:`~sklearn.metrics.RocCurveDisplay`
+        Object that stores computed values.
     """
+    check_matplotlib_support('plot_roc_curve')
+
     if response_method not in ("predict_proba", "decision_function", "auto"):
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")

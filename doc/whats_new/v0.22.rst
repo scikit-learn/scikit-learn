@@ -17,17 +17,19 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
 - :class:`decomposition.SparseCoder`,
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
 - :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
-- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
-- :class:`cluster.KMeans` when `n_jobs=1`. |Fix|
 - :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` |Fix|, |Feature|,
   |Enhancement|.
+- :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+- :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
+  classifier. |Fix|
 
 Details are listed in the changelog below.
 
@@ -132,6 +134,8 @@ Changelog
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Fix| Estimators now bin the training and validation data separately to
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
+  - |Fix| Fixed a bug where early stopping would break with string targets.
+    :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
 
   Note that pickles from 0.21 will not work in 0.22.
 
@@ -196,6 +200,13 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+-|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
+ `KeyError` when using `kernel="precomputed"`.
+ :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`. 
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -216,6 +227,23 @@ Changelog
 - |Fix| :class:`linear_model.Ridge` with `solver='sag'` now accepts F-ordered
   and non-contiguous arrays and makes a conversion instead of failing.
   :pr:`14458` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
+  when fitting the final model. :pr:`14591` by `Andreas Müller`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
+  :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
+  computed wrong eigenvalues with ``eigen_solver='amg'`` when
+  ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
+
+- |Fix| Fixed a bug in :func:`manifold.spectral_embedding`  used in
+  :class:`manifold.SpectralEmbedding` and :class:`cluster.spectral.SpectralClustering`
+  where ``eigen_solver="amg"`` would sometimes result in a LinAlgError.
+  :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`13707` by :user:`Scott White <whitews>`
 
 :mod:`sklearn.metrics`
 ......................
@@ -252,9 +280,6 @@ Changelog
 - |Enhancement| Allow computing averaged metrics in the case of no true positives.
   :pr:`14595` by `Andreas Müller`_.
 
-:mod:`sklearn.metrics`
-......................
-
 - |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
@@ -269,6 +294,10 @@ Changelog
 
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+- |Fix| Reimplemented :class:`model_selection.StratifiedKFold` to fix an issue
+  where one test set could be `n_classes` larger than another. Test sets should
+  now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -352,6 +381,17 @@ Changelog
   NumPy array, SciPy sparse matrix, and Pandas DataFrame.
   :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| :func:`~utils.estimator_checks.check_estimator` can now generate
+  checks by setting `generate_only=True`. Previously, running
+  :func:`~utils.estimator_checks.check_estimator` will stop when the first
+  check fails. With `generate_only=True`, all checks can run independently and
+  report the ones that are failing. Read more in
+  :ref:`rolling_your_own_estimator`. :pr:`14381` by `Thomas Fan`_.
+
+- |Feature| Added a pytest specific decorator,
+  :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
+  estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
+
 - |API| `requires_positive_X` estimator tag (for models that require
   X to be non-negative) is now used by `check_estimator` to make sure
   a proper error message is raised if X contains some negative entries.
@@ -384,6 +424,13 @@ Changelog
   maximum number of function evaluation to not meet ``tol`` improvement.
   :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
 
+:mod:`sklearn.cross_decomposition`
+..................................
+
+- |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
+  :class:`cross_decomposition.PLSRegression` were raising an error when fitted
+  with a target matrix `Y` in which the first column was constant.
+  :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
 Miscellaneous
 .............
@@ -394,7 +441,7 @@ Miscellaneous
 
 - |Fix| Port `lobpcg` from SciPy which implement some bug fixes but only
   available in 1.3+.
-  :pr:`14195` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`13609` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes to estimator checks
 ---------------------------

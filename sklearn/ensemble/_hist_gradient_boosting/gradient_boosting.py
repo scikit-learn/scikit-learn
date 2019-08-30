@@ -455,6 +455,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Scores are computed on validation data or on training data.
         """
+        if is_classifier(self):
+            y_small_train = self.classes_[y_small_train.astype(int)]
+
         # TODO: handle when _scorer doesn't accept sample_weight, but
         # sample_weight is provided
         if sample_weight_small_train is None:
@@ -468,6 +471,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             )
 
         if self._use_validation_data:
+            if is_classifier(self):
+                y_val = self.classes_[y_val.astype(int)]
             if sample_weight_val is None:
                 self.validation_score_.append(
                     self.scorer_(self, X_binned_val, y_val)
