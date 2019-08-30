@@ -11,10 +11,8 @@ import pytest
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import (_open_openml_url,
-                                     _get_data_description_by_id,
+from sklearn.datasets.openml import (_get_data_description_by_id,
                                      _download_data_arff,
-                                     _get_local_path,
                                      _feature_to_dtype)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
@@ -902,47 +900,6 @@ def test_decode_emotions(monkeypatch):
     data_id = 40589
     _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
-
-
-@pytest.mark.parametrize('gzip_response', [True, False])
-def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
-    data_id = 61
-
-    _monkey_patch_webbased_functions(
-        monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
-    # first fill the cache
-    response1 = _open_openml_url(openml_path, cache_directory)
-    # assert file exists
-    location = _get_local_path(openml_path, cache_directory)
-    assert os.path.isfile(location)
-    # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, cache_directory)
-    assert response1.read() == response2.read()
-
-
-@pytest.mark.parametrize('gzip_response', [True, False])
-@pytest.mark.parametrize('write_to_disk', [True, False])
-def test_open_openml_url_unlinks_local_path(
-        monkeypatch, gzip_response, tmpdir, write_to_disk):
-    data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
-    cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
-    location = _get_local_path(openml_path, cache_directory)
-
-    def _mock_urlopen(request):
-        if write_to_disk:
-            with open(location, "w") as f:
-                f.write("")
-        raise ValueError("Invalid request")
-
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
-
-    with pytest.raises(ValueError, match="Invalid request"):
-        _open_openml_url(openml_path, cache_directory)
-
-    assert not os.path.exists(location)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])

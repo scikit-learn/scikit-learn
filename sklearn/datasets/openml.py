@@ -1,7 +1,6 @@
 import gzip
 import json
 import os
-import shutil
 from os.path import join
 from warnings import warn
 from contextlib import closing
@@ -34,10 +33,6 @@ _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
-def _get_local_path(openml_path, data_home):
-    return os.path.join(data_home, 'openml.org', openml_path + ".gz")
-
-
 def _open_openml_url(openml_path, data_home):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
@@ -63,36 +58,10 @@ def _open_openml_url(openml_path, data_home):
     req = Request(_OPENML_PREFIX + openml_path)
     req.add_header('Accept-encoding', 'gzip')
 
-    if data_home is None:
-        fsrc = urlopen(req)
-        if is_gzip(fsrc):
-            return gzip.GzipFile(fileobj=fsrc, mode='rb')
-        return fsrc
-
-    local_path = _get_local_path(openml_path, data_home)
-    if not os.path.exists(local_path):
-        try:
-            os.makedirs(os.path.dirname(local_path))
-        except OSError:
-            # potentially, the directory has been created already
-            pass
-
-        try:
-            with closing(urlopen(req)) as fsrc:
-                if is_gzip(fsrc):
-                    with open(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
-                else:
-                    with gzip.GzipFile(local_path, 'wb') as fdst:
-                        shutil.copyfileobj(fsrc, fdst)
-        except Exception:
-            if os.path.exists(local_path):
-                os.unlink(local_path)
-            raise
-
-    # XXX: First time, decompression will not be necessary (by using fsrc), but
-    # it will happen nonetheless
-    return gzip.GzipFile(local_path, 'rb')
+    fsrc = urlopen(req)
+    if is_gzip(fsrc):
+        return gzip.GzipFile(fileobj=fsrc, mode='rb')
+    return fsrc
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,
