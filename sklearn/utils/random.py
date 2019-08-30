@@ -126,7 +126,8 @@ class loguniform:
     are random variales that are equally likely to be returned.
 
     """
-    def __init__(self, low, high, base=10):
+
+    def __init__(self, low=-1, high=0, base=10):
         """
         Create a log-uniform random variable.
         """
@@ -153,5 +154,5 @@ class loguniform:
         """
         _rng = check_random_state(random_state)
         unif = _rng.uniform(self._low, self._high, size=size)
-        rv = np.power(self._base, unif)
-        return rv
+        rvs = np.power(self._base, unif)
+        return rvs

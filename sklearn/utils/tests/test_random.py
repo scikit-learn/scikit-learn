@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import scipy.sparse as sp
+import scipy.stats
 from numpy.testing import assert_array_almost_equal
 import pytest
 
@@ -184,17 +185,13 @@ def test_random_choice_csc_errors():
                   class_probabilities, 1)
 
 
-@pytest.mark.parametrize("low,high,base", [
-    (-1, 0, 10),
-    (0, 2, np.exp(1)),
-    (-1, 1, 2),
-])
+@pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
 def test_loguniform(low, high, base):
     rv = loguniform(low, high, base=base)
     rvs = rv.rvs(size=2000, random_state=0)
 
     # Test the basics; right bounds, right size
-    assert (base**low <= rvs).all() and (rvs <= base**high).all()
+    assert (base ** low <= rvs).all() and (rvs <= base ** high).all()
     assert len(rvs) == 2000
 
     # Test that it's actually (fairly) uniform
@@ -204,12 +201,49 @@ def test_loguniform(low, high, base):
     assert np.abs(counts - counts.mean()).max() <= 40
 
     # Test that random_state works
-    assert (loguniform(low, high, base=base).rvs(random_state=0) ==
-            loguniform(low, high, base=base).rvs(random_state=0))
+    assert loguniform(low, high, base=base).rvs(random_state=0) == loguniform(
+        low, high, base=base
+    ).rvs(random_state=0)
 
 
 def test_log_uniform_default_base(low=-1, high=0):
     rv = loguniform(low, high)
     rvs = rv.rvs(size=100)
     assert isinstance(rvs, np.ndarray)
-    assert (10**low <= rvs).all() and (rvs <= 10**high).all()
+    assert (10 ** low <= rvs).all() and (rvs <= 10 ** high).all()
+
+
+def test_log_api_w_scipy(low=1, high=2):
+    def _check_rvs(rvs, low, high):
+        return low <= rvs.min() <= rvs.max() <= high
+
+    # API difference: loguniform has [low, high] not uniform's [low, pdf_width]
+    log = loguniform(low, high)
+    uni = scipy.stats.uniform(low, high - low)
+    assert isinstance(log.rvs(), float)
+    assert isinstance(uni.rvs(), float)
+
+    assert len(log.rvs(size=3)) == 3
+    assert len(uni.rvs(size=3)) == 3
+    assert _check_rvs(log.rvs(size=10), 10 ** low, 10 ** high)
+    assert _check_rvs(uni.rvs(size=10), low, high)
+
+    urvs = scipy.stats.uniform.rvs(size=4)
+    assert 0 <= urvs.min() <= urvs.max() <= 1
+
+
+class TestLogUniformAPI:
+    @pytest.mark.xfail(reason="loguniform not developed enough")
+    def test_no_args(self):
+        # loguniform not initialized
+        assert any(loguniform.rvs(size=4))
+
+    @pytest.mark.xfail(reason="loguniform not developed enough")
+    def test_scale_keyword(self):
+        # `scale` keyword arg raises
+        assert loguniform().rvs(scale=2)
+
+    @pytest.mark.xfail(reason="loguniform not developed enough")
+    def test_loc_keyword(self):
+        # `loc` keyword arg raises
+        assert loguniform().rvs(loc=0)
