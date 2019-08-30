@@ -16,6 +16,7 @@ import numpy as np
 from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
+from scipy.special import expit
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
@@ -1424,7 +1425,7 @@ class _RidgeGCV(LinearModel):
                          dtype=[np.float64],
                          multi_output=True, y_numeric=True)
 
-        # if clf, LabelBinarizer applied first in RidgeClassifierCV
+        # if classification, LabelBinarizer applied first in RidgeClassifierCV
         # y (output of lb) would be -1 or 1 only
         is_clf = ((y == -1) | (y == 1)).all()
 
@@ -1482,20 +1483,37 @@ class _RidgeGCV(LinearModel):
         if error:
             best = cv_values.mean(axis=0).argmin()
         else:
-            # The scorer want an object that will make the predictions but
-            # they are already computed efficiently by _RidgeGCV. This
-            # identity_estimator will just return them
-            def identity_estimator():
-                pass
-            identity_estimator.decision_function = lambda y_predict: y_predict
-            identity_estimator.predict = lambda y_predict: y_predict
 
-            if is_clf:
-                y = (y > 0).astype(np.int)
-                cv_values = (cv_values > 0).astype(np.int)
+            if not is_clf:
 
-            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
-                   for i in range(len(self.alphas))]
+                # The scorer want an object that will make the predictions but
+                # they are already computed efficiently by _RidgeGCV. This
+                # identity_estimator will just return them
+                def identity_estimator():
+                    pass
+                identity_estimator.decision_function = lambda y_predict: y_predict
+                identity_estimator.predict = lambda y_predict: y_predict
+
+                out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
+                       for i in range(len(self.alphas))]
+
+            else:
+
+                scorer.needs_threshold = True
+                y = y.argmax(axis=1)
+
+                class identity_classifier(LinearClassifierMixin):
+                    def decision_function(self, X):
+                        return X
+
+                    @property
+                    def classes_(self):
+                        return np.arange(n_y)
+
+                out = [scorer(identity_classifier(),
+                              cv_values[:, i].reshape(n_samples, n_y), y)
+                       for i in range(len(self.alphas))]
+
             best = np.argmax(out)
 
         self.alpha_ = self.alphas[best]
