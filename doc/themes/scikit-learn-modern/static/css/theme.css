@@ -273,14 +273,13 @@ img.sk-footer-funding-logo {
 
 #sk-page-content-wrapper {
   width: 100%;
-  margin-top: 4rem;
+  margin-top: 4.5rem;
 }
 
 :target::before {
   display: block;
   content: " ";
-  height: 4rem;
-  margin-top: -4rem;
+  height: 4.5rem;
   visibility: hidden;
 }
 
@@ -400,7 +399,6 @@ div.sk-page-content h1 {
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
-  margin: 0.5rem -1rem 1.5rem -1rem;
 }
 
 div.sk-page-content h2 {
