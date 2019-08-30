@@ -18,8 +18,8 @@ a.headerlink {
 }
 
 a.headerlink:hover {
-    background-color: #c60f0f;
-    color: white;
+  background-color: #c60f0f;
+  color: white;
 }
 
 input:focus {
@@ -31,6 +31,18 @@ code {
   background-color: #ecf0f3;
   border-radius: 0.2rem;
   padding: 0.2rem;
+}
+
+img {
+  max-width: 100%;
+}
+
+code span.pre {
+  font-weight: bold;
+}
+
+nav {
+  z-index: 3;
 }
 
 h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
@@ -51,8 +63,8 @@ strong {
   font-weight: bold;
 }
 
-p {
-  margin-bottom: 0.8rem;
+div.line-block {
+  height: 0;
 }
 
 a code {
@@ -119,8 +131,38 @@ div.clearer {
 
 /* Search */
 
-form.form-inline .sk-form-search-input {
-  width: 200px;
+div.gsc-input {
+  padding-right: 0;
+}
+
+div.gsc-control-cse {
+  background-color: #f8f9fa;
+  border-color: #f8f9fa;
+}
+
+button.gsc-search-button {
+  border-radius: 0.25rem;
+  padding: 0.7rem 0.8rem;
+}
+
+
+button.gsc-search-button:hover,
+button.gsc-search-button:active {
+  background-color: #388bb5;
+}
+
+table.gsc-search-box {
+  width: 12rem;
+}
+
+div.gsc-results-wrapper-visible {
+  background-color: #f8f9fa;
+  position: absolute;
+  right: 0;
+}
+
+div.gsc-wrapper {
+  overflow-y: scroll;
 }
 
 /* General layout */
@@ -133,6 +175,10 @@ div.section {
 
 div.sk-landing-container {
   max-width: 1240px;
+}
+
+div.sk-landing-bg-more-info dd {
+  padding-left: 0;
 }
 
 div.sk-landing-bg {
@@ -166,6 +212,7 @@ img.sk-index-img {
   width: auto;
   margin: auto;
   margin-bottom: 1em;
+  max-width: none;
 }
 
 img.sk-who-uses-carousel-img {
@@ -232,6 +279,7 @@ img.sk-footer-funding-logo {
   margin-left: 0.5rem;
   padding: 0.25rem;
   border-radius: 1rem;
+  z-index: 3;
 }
 
 .sk-btn-toggle-toc:hover {
@@ -271,6 +319,10 @@ nav.sk-docs-navbar {
     margin-left: auto;
     margin-right: auto;
   }
+}
+
+.centered {
+  text-align: center;
 }
 
 /* docs index */
@@ -327,9 +379,6 @@ div.sk-sidebar-toc-wrapper::after {
 
 /* content styling element style */
 
-div.sk-page-content {
-  margin-top: 0.5rem;
-}
 
 div.sk-page-content h1 {
   background-color: #cde8ef;
@@ -337,7 +386,7 @@ div.sk-page-content h1 {
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
-  margin-bottom: 1.5rem;
+  margin: 0.5rem -1rem 1.5rem -1rem;
 }
 
 div.sk-page-content h2 {
@@ -403,6 +452,7 @@ table.longtable tr.row-odd {
 code.descname {
   font-weight: bold;
   background-color: transparent;
+  padding: 0;
 }
 
 code.descclassname {
@@ -461,7 +511,7 @@ dt.field-odd, dt.field-even {
 }
 
 dd {
-  padding-left: 1rem;
+  padding-left: 1.5rem;
 }
 
 .rubric {
@@ -485,6 +535,14 @@ div.topic {
   margin-bottom: 1rem;
   border-radius: 0.25rem;
   border: 1px solid #CCC;
+}
+
+div.topic p {
+  margin-bottom: 0.25rem;
+}
+
+div.topic dd {
+  margin-bottom: 0.25rem;
 }
 
 p.topic-title {
@@ -524,7 +582,7 @@ div.seealso {
   color: #AF8A4B;
 }
 
-dl.citation, dt.label {
+dt.label {
   float: left;
   padding-right: 0.5rem;
 }
@@ -578,11 +636,11 @@ div.highlight:hover span.copybutton::after {
   border-radius: 0.25rem;
   color: white;
   content: attr(title);
-  padding: 0.5rem;
+  padding: 0.25rem;
   position: absolute;
   z-index: 98;
-  width: 140px;
-  font-size: 0.8rem;
+  width: 100px;
+  font-size: 0.7rem;
   top: 0;
   right: 0;
 }
@@ -609,10 +667,18 @@ table.docutils td, table.docutils th {
 
 table.docutils {
   margin-bottom: 1rem;
+  line-height: 1rem;
+  width: 100%;
 }
 
 table.docutils p {
   margin-bottom: 0;
+}
+
+table.docutils td:last-child p {
+  margin-bottom: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* gallery */
@@ -620,6 +686,56 @@ table.docutils p {
 div.sphx-glr-thumbcontainer {
   min-height: 250px;
   font-size: 0.9rem;
+}
+
+/* rellinks */
+
+.sk-btn-rellink {
+  background-color: #ff9c34;
+  border-color: #ff9c34;
+  color: white;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.sk-btn-rellink:hover {
+  color: #ff8d14;
+  background-color: white;
+}
+
+[sk-rellink-tooltip] {
+  position: relative;
+  cursor: pointer;
+}
+
+[sk-rellink-tooltip]:before {
+  visibility: hidden;
+  position: absolute;
+  padding: 0.5rem;
+  overflow: hidden;
+  background-color: white;
+  border: 1px solid #ff8d14;
+  white-space: pre;
+  content: attr(sk-rellink-tooltip);
+  text-align: left;
+  width: 222px;
+  top: 100%;
+  left: -78px;
+}
+
+[sk-rellink-tooltip]:first-child::before {
+  left: 0;
+}
+
+[sk-rellink-tooltip]:last-child::before {
+  left: -144px;
+}
+
+[sk-rellink-tooltip]:hover::before {
+  visibility: visible;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 /* pygments - highlightning */

@@ -19,19 +19,13 @@
   {% block htmltitle %}
   <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
   {% endblock %}
-
-  <script>
-     VERSION_SUBDIR = (function(groups) {
-         return groups ? groups[1] : null;
-     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
-  </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
   {% if favicon %}
   <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}"/>
   {% endif %}
 
-  <link rel="stylesheet" href="{{ pathto('_static/css/vendor/bootstrap.css', 1) }}" type="text/css" />
+  <link rel="stylesheet" href="{{ pathto('_static/css/vendor/bootstrap.min.css', 1) }}" type="text/css" />
   <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
   {%- for css in css_files %}
     {%- if css|attr("rel") %}
@@ -49,12 +43,36 @@
 <div class="d-flex " id="sk-doc-wrapper">
     <div class="border-right" id="sk-sidebar-wrapper">
       <div class="h-100 sk-sidebar-toc-wrapper">
+        {%- if rellinks -%}
+          <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
+            {%- set rellinks_previous = rellinks[-1] %}
+            {%- if rellinks_previous[2] == 'P' %}
+              <a href="{{ pathto(rellinks_previous[0]) }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ rellinks_previous[1]|striptags }}">Prev</a>
+            {%- else %}
+              <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Prev</a>
+            {%- endif %}
+            {%- if parents -%}
+              <a href="{{ parents[-1].link }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title }}">Up</a>
+            {%- else %}
+              <a href="#" role="button" class="btn sk-btn-rellink disabled py-1">Up</a>
+            {%- endif %}
+
+            {%- set rellinks_next = rellinks[0] %}
+            {%- if rellinks_next[2] == 'N' %}
+              <a href="{{ pathto(rellinks_next[0]) }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ rellinks_next[1]|striptags }}">Next</a>
+            {%- else %}
+              <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Next</a>
+            {%- endif %}
+          </div>
+        {%- endif %}
+        {%- if pagename != "install" %}
         <div class="alert alert-danger p-1 mb-2" role="alert">
           <p class="text-center mb-0">
           <strong>scikit-learn {{ version }}</strong><br/>
           <a href="http://scikit-learn.org/dev/versions.html">Other versions</a>
           </p>
         </div>
+        {%- endif %}
         <div class="alert alert-warning p-1 mb-2" role="alert">
           <p class="text-center mb-0">
             Please <a class="font-weight-bold" href="about.html#citing-scikit-learn"><string>cite us</string></a> if you use the software.
