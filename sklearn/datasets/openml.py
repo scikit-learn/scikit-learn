@@ -568,8 +568,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     if cache and data_home is not None:
         # Use dataset specific cache location, so it can be separately cleaned
-        memory = Memory(location=join(data_home, 'cache', str(data_id)),
-                        verbose=0)
+        memory = Memory(join(data_home, 'cache', str(data_id)), verbose=0)
     else:
         memory = None
     _apply_cached_with_retry = _CacheWithRetry(memory, data_home)
