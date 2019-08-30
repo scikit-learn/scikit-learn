@@ -404,6 +404,7 @@ div.sk-page-content h1 {
   border-radius: 0 1rem;
   text-align: center;
   font-size: 2rem;
+  word-wrap: break-word;
 }
 
 div.sk-page-content h2 {
@@ -412,6 +413,7 @@ div.sk-page-content h2 {
   border-radius: 0.3rem;
   font-size: 1.5rem;
   margin-bottom: 1.2rem;
+  word-wrap: break-word;
 }
 
 div.sk-page-content h3 {
@@ -419,6 +421,7 @@ div.sk-page-content h3 {
   background-color: #eee;
   border-radius: 0.3rem;
   font-size: 1.2rem;
+  word-wrap: break-word;
 }
 
 div.sk-page-content h4 {
@@ -426,6 +429,7 @@ div.sk-page-content h4 {
   background-color: #F4F4F4;
   border-radius: 0.3rem;
   font-size: 1.2rem;
+  word-wrap: break-word;
 }
 
 /* longtables */
