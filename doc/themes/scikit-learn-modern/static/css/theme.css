@@ -153,6 +153,7 @@ button.gsc-search-button:active {
 
 div.gsc-results-wrapper-visible {
   background-color: #f8f9fa;
+  padding: 1rem;
   position: absolute;
   right: 0;
 }
