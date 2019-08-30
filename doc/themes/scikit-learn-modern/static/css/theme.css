@@ -128,7 +128,7 @@ div.clearer {
 /* Search */
 
 .search_form {
-  width: 16rem;
+  width: 80%;
 }
 
 .gsc-input {
@@ -138,6 +138,7 @@ div.clearer {
 div.gsc-control-cse {
   background-color: #f8f9fa;
   border-color: #f8f9fa;
+  padding: 0;
 }
 
 button.gsc-search-button {
@@ -158,6 +159,15 @@ div.gsc-results-wrapper-visible {
 
 div.gsc-results {
   overflow-y: scroll;
+}
+
+@media (min-width: 768px) {
+  div.gsc-control-cse {
+    padding: 1em;
+  }
+  .search_form {
+    width: 16rem;
+  }
 }
 
 /* General layout */
