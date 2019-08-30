@@ -5,8 +5,9 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -14,6 +15,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -29,8 +32,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-boston = datasets.load_boston()
-X_r, y_r = boston.data, boston.target
+X_r, y_r = datasets.load_boston(return_X_y=True)
 
 
 def test_estimator_init():
@@ -69,7 +71,12 @@ def test_predictproba_hardvoting():
                                         ('lr2', LogisticRegression())],
                             voting='hard')
     msg = "predict_proba is not available when voting='hard'"
-    assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
+    with pytest.raises(AttributeError, match=msg):
+        eclf.predict_proba
+
+    assert not hasattr(eclf, "predict_proba")
+    eclf.fit(X, y)
+    assert not hasattr(eclf, "predict_proba")
 
 
 def test_notfitted():
@@ -99,7 +106,7 @@ def test_majority_label_iris():
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                 voting='hard')
-    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
@@ -109,9 +116,9 @@ def test_tie_situation():
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
                             voting='hard')
-    assert_equal(clf1.fit(X, y).predict(X)[73], 2)
-    assert_equal(clf2.fit(X, y).predict(X)[73], 1)
-    assert_equal(eclf.fit(X, y).predict(X)[73], 1)
+    assert clf1.fit(X, y).predict(X)[73] == 2
+    assert clf2.fit(X, y).predict(X)[73] == 1
+    assert eclf.fit(X, y).predict(X)[73] == 1
 
 
 def test_weights_iris():
@@ -123,7 +130,7 @@ def test_weights_iris():
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 2, 10])
-    scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
+    scores = cross_val_score(eclf, X, y, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
 
 
@@ -174,21 +181,21 @@ def test_predict_on_toy_problem():
 
     y = np.array([1, 1, 1, 2, 2, 2])
 
-    assert_equal(all(clf1.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
-    assert_equal(all(clf2.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
-    assert_equal(all(clf3.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(clf1.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert all(clf2.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert all(clf3.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='hard',
                             weights=[1, 1, 1])
-    assert_equal(all(eclf.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 1, 1])
-    assert_equal(all(eclf.fit(X, y).predict(X)), all([1, 1, 1, 2, 2, 2]))
+    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
 
 
 def test_predict_proba_on_toy_problem():
@@ -267,7 +274,7 @@ def test_gridsearch():
               'voting': ['soft', 'hard'],
               'weights': [[0.5, 0.5, 0.5], [1.0, 0.5, 0.5]]}
 
-    grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
+    grid = GridSearchCV(estimator=eclf, param_grid=params)
     grid.fit(iris.data, iris.target)
 
 
@@ -370,15 +377,15 @@ def test_set_params():
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    assert_equal(eclf2.estimators[0][1].get_params(), clf1.get_params())
-    assert_equal(eclf2.estimators[1][1].get_params(), clf2.get_params())
+    assert eclf2.estimators[0][1].get_params() == clf1.get_params()
+    assert eclf2.estimators[1][1].get_params() == clf2.get_params()
 
     eclf1.set_params(lr__C=10.0)
     eclf2.set_params(nb__max_depth=5)
 
     assert eclf1.estimators[0][1].get_params()['C'] == 10.0
     assert eclf2.estimators[1][1].get_params()['max_depth'] == 5
-    assert_equal(eclf1.get_params()["lr__C"],
+    assert (eclf1.get_params()["lr__C"] ==
                  eclf1.get_params()["lr"].get_params()['C'])
 
 
@@ -504,3 +511,20 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('tree', DecisionTreeRegressor(random_state=0))]),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=0)),
+                     ('tree', DecisionTreeClassifier(random_state=0))])],
+    ids=['VotingRegressor', 'VotingClassifier']
+)
+def test_check_estimators_voting_estimator(estimator):
+    # FIXME: to be removed when meta-estimators can be specified themselves
+    # their testing parameters (for required parameters).
+    check_estimator(estimator)
+    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)

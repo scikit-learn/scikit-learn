@@ -17,6 +17,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -25,9 +26,6 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
@@ -552,12 +550,15 @@ def haversine_distances(X, Y=None):
     (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
 
     >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> from math import radians
     >>> bsas = [-34.83333, -58.5166646]
     >>> paris = [49.0083899664, 2.53844117956]
-    >>> result = haversine_distances([bsas, paris])
+    >>> bsas_in_radians = [radians(_) for _ in bsas]
+    >>> paris_in_radians = [radians(_) for _ in paris]
+    >>> result = haversine_distances([bsas_in_radians, paris_in_radians])
     >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
-    array([[    0.        , 11279.45379464],
-           [11279.45379464,     0.        ]])
+    array([[    0.        , 11099.54035582],
+           [11099.54035582,     0.        ]])
     """
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
@@ -596,20 +597,20 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
-    >>> manhattan_distances([[3]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[3]])
     array([[0.]])
-    >>> manhattan_distances([[3]], [[2]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[3]], [[2]])
     array([[1.]])
-    >>> manhattan_distances([[2]], [[3]])#doctest:+ELLIPSIS
+    >>> manhattan_distances([[2]], [[3]])
     array([[1.]])
     >>> manhattan_distances([[1, 2], [3, 4]],\
-         [[1, 2], [0, 3]])#doctest:+ELLIPSIS
+         [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)#doctest:+ELLIPSIS
+    >>> manhattan_distances(X, y, sum_over_features=False)
     array([[1., 1.],
            [1., 1.]])
     """
@@ -1358,7 +1359,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
-    >>> D_chunk  # doctest: +ELLIPSIS
+    >>> D_chunk
     array([[0.  ..., 0.29..., 0.41..., 0.19..., 0.57...],
            [0.29..., 0.  ..., 0.57..., 0.41..., 0.76...],
            [0.41..., 0.57..., 0.  ..., 0.44..., 0.90...],
@@ -1376,7 +1377,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     >>> neigh, avg_dist = next(gen)
     >>> neigh
     [array([0, 3]), array([1]), array([2]), array([0, 3]), array([4])]
-    >>> avg_dist  # doctest: +ELLIPSIS
+    >>> avg_dist
     array([0.039..., 0.        , 0.        , 0.039..., 0.        ])
 
     Where r is defined per sample, we need to make use of ``start``:
@@ -1677,8 +1678,11 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
+        should take two rows from X as input and return the corresponding
+        kernel value as a single number. This means that callables from
+        `sklearn.metrics.pairwise` are not allowed, as they operate on
+        matrices, not single samples. Use the string identifying the kernel
+        instead.
 
     filter_params : boolean
         Whether to filter invalid parameters or not.

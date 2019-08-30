@@ -390,11 +390,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
-    ... compute_labels=True)
-    >>> brc.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
-       threshold=0.5)
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
@@ -536,8 +534,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
-                        all_or_any=any)
+        check_is_fitted(self)
 
         if (hasattr(self, 'subcluster_centers_') and
                 X.shape[1] != self.subcluster_centers_.shape[1]):
@@ -585,7 +582,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        check_is_fitted(self, 'subcluster_centers_')
+        check_is_fitted(self)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

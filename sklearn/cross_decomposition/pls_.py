@@ -31,7 +31,11 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y.
     """
-    y_score = Y[:, [0]]
+    for col in Y.T:
+        if np.any(np.abs(col) > np.finfo(np.double).eps):
+            y_score = col.reshape(len(col), 1)
+            break
+
     x_weights_old = 0
     ite = 1
     X_pinv = Y_pinv = None
@@ -398,7 +402,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -433,7 +437,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -578,9 +582,7 @@ class PLSRegression(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
     >>> pls2.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSRegression(copy=True, max_iter=500, n_components=2, scale=True,
-            tol=1e-06)
+    PLSRegression()
     >>> Y_pred = pls2.predict(X)
 
     References
@@ -720,9 +722,7 @@ class PLSCanonical(_PLS):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
     >>> plsca.fit(X, Y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    PLSCanonical(algorithm='nipals', copy=True, max_iter=500, n_components=2,
-                 scale=True, tol=1e-06)
+    PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
 
     References
@@ -797,7 +797,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     ...     [11.9, 12.3]])
     >>> plsca = PLSSVD(n_components=2)
     >>> plsca.fit(X, Y)
-    PLSSVD(copy=True, n_components=2, scale=True)
+    PLSSVD()
     >>> X_c, Y_c = plsca.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
@@ -876,7 +876,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)

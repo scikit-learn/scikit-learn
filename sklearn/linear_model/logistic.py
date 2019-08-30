@@ -16,6 +16,7 @@ import warnings
 import numpy as np
 from scipy import optimize, sparse
 from scipy.special import expit
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
@@ -27,13 +28,12 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg
+from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
-from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
+from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..metrics import get_scorer
@@ -826,11 +826,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # If sample weights exist, convert them to array (support for lists)
     # and check length
     # Otherwise set them to 1 for all examples
-    if sample_weight is not None:
-        sample_weight = np.array(sample_weight, dtype=X.dtype, order='C')
-        check_consistent_length(y, sample_weight)
-    else:
-        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -899,7 +896,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0[:, :coef.shape[1]] = coef
 
     if multi_class == 'multinomial':
-        # fmin_l_bfgs_b and newton-cg accepts only ravelled parameters.
+        # scipy.optimize.minimize and newton-cg accepts only
+        # ravelled parameters.
         if solver in ['lbfgs', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
@@ -926,16 +924,13 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
-            w0, loss, info = optimize.fmin_l_bfgs_b(
-                func, w0, fprime=None,
+            opt_res = optimize.minimize(
+                func, w0, method="L-BFGS-B", jac=True,
                 args=(X, target, 1. / C, sample_weight),
-                iprint=iprint, pgtol=tol, maxiter=max_iter)
-            if info["warnflag"] == 1:
-                warnings.warn("lbfgs failed to converge. Increase the number "
-                              "of iterations.", ConvergenceWarning)
-            # In scipy <= 1.0.0, nit may exceed maxiter.
-            # See https://github.com/scipy/scipy/issues/7854.
-            n_iter_i = min(info['nit'], max_iter)
+                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
+            )
+            n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
+            w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
@@ -1135,9 +1130,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
-        sample_weight = check_array(sample_weight, ensure_2d=False)
-        check_consistent_length(y, sample_weight)
-
+        sample_weight = _check_sample_weight(sample_weight, X)
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = _logistic_regression_path(
@@ -1167,8 +1160,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores = list()
 
-    if isinstance(scoring, str):
-        scoring = get_scorer(scoring)
+    scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1288,7 +1280,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         - 'newton-cg', 'lbfgs', 'sag' and 'saga' handle L2 or no penalty
         - 'liblinear' and 'saga' also handle L1 penalty
         - 'saga' also supports 'elasticnet' penalty
-        - 'liblinear' does not handle no penalty
+        - 'liblinear' does not support setting ``penalty='none'``
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
@@ -1384,7 +1376,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf = LogisticRegression(random_state=0).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
-    >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
+    >>> clf.predict_proba(X[:2, :])
     array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
            [9.7...e-01, 2.8...e-02, ...e-08]])
     >>> clf.score(X, y)
@@ -1409,6 +1401,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     References
     ----------
+
+    L-BFGS-B -- Software for Large-scale Bound-constrained Optimization
+        Ciyou Zhu, Richard Byrd, Jorge Nocedal and Jose Luis Morales.
+        http://users.iems.northwestern.edu/~nocedal/lbfgsb.html
 
     LIBLINEAR -- A Library for Large Linear Classification
         https://www.csie.ntu.edu.tw/~cjlin/liblinear/
@@ -1510,7 +1506,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['lbfgs', 'liblinear']:
+        if solver == 'lbfgs':
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
@@ -1631,7 +1627,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         ovr = (self.multi_class in ["ovr", "warn"] or
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
@@ -1706,9 +1702,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         See the module :mod:`sklearn.model_selection` module for the
         list of possible cross-validation objects.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     dual : bool, optional (default=False)
         Dual or primal formulation. Dual formulation is only implemented for
@@ -1818,7 +1813,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Note that this only applies to the solver and not the cross-validation
+        generator.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -1903,7 +1900,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
     (2, 3)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.score(X, y)
     0.98...
 
     See also
@@ -1911,7 +1908,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     LogisticRegression
 
     """
-    def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
+    def __init__(self, Cs=10, fit_intercept=True, cv=None, dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='auto',
@@ -2171,7 +2168,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Take the best scores across every fold and the average of
                 # all coefficients corresponding to the best scores.
                 best_indices = np.argmax(scores, axis=1)
-                if self.multi_class == 'ovr':
+                if multi_class == 'ovr':
                     w = np.mean([coefs_paths[i, best_indices[i], :]
                                  for i in range(len(folds))], axis=0)
                 else:
@@ -2181,8 +2178,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 best_indices_C = best_indices % len(self.Cs_)
                 self.C_.append(np.mean(self.Cs_[best_indices_C]))
 
-                best_indices_l1 = best_indices // len(self.Cs_)
-                self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
+                if self.penalty == 'elasticnet':
+                    best_indices_l1 = best_indices // len(self.Cs_)
+                    self.l1_ratio_.append(np.mean(l1_ratios_[best_indices_l1]))
+                else:
+                    self.l1_ratio_.append(None)
 
             if multi_class == 'multinomial':
                 self.C_ = np.tile(self.C_, n_classes)
@@ -2241,7 +2241,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           "This warning will disappear in version 0.22.",
                           ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-        if isinstance(scoring, str):
-            scoring = get_scorer(scoring)
+
+        scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)

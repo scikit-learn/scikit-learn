@@ -44,9 +44,7 @@ and will store the coefficients :math:`w` of the linear model in its
     >>> from sklearn import linear_model
     >>> reg = linear_model.LinearRegression()
     >>> reg.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    ...                                       # doctest: +NORMALIZE_WHITESPACE
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
-                     normalize=False)
+    LinearRegression()
     >>> reg.coef_
     array([0.5, 0.5])
 
@@ -69,7 +67,7 @@ Ordinary Least Squares Complexity
 
 The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of 
+this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
@@ -105,12 +103,11 @@ its ``coef_`` member::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Ridge(alpha=.5)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1]) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=0.5, copy_X=True, fit_intercept=True, max_iter=None,
-          normalize=False, random_state=None, solver='auto', tol=0.001)
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    Ridge(alpha=0.5)
     >>> reg.coef_
     array([0.34545455, 0.34545455])
-    >>> reg.intercept_ #doctest: +ELLIPSIS
+    >>> reg.intercept_
     0.13636...
 
 
@@ -143,11 +140,9 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
-          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
-            cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
-            scoring=None, store_cv_values=False)
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]))
     >>> reg.alpha_
     0.01
 
@@ -193,10 +188,8 @@ for another implementation::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
-    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
-    Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-       normalize=False, positive=False, precompute=False, random_state=None,
-       selection='cyclic', tol=0.0001, warm_start=False)
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+    Lasso(alpha=0.1)
     >>> reg.predict([[1, 1]])
     array([0.8])
 
@@ -437,7 +430,7 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features 
+  - It is numerically efficient in contexts where the number of features
     is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
@@ -483,11 +476,9 @@ function of the norm of its coefficients.
 
    >>> from sklearn import linear_model
    >>> reg = linear_model.LassoLars(alpha=.1)
-   >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-   LassoLars(alpha=0.1, copy_X=True, eps=..., fit_intercept=True,
-        fit_path=True, max_iter=500, normalize=True, positive=False,
-        precompute='auto', verbose=False)
-   >>> reg.coef_    # doctest: +ELLIPSIS
+   >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+   LassoLars(alpha=0.1)
+   >>> reg.coef_
    array([0.717157..., 0.        ])
 
 .. topic:: Examples:
@@ -652,11 +643,8 @@ Bayesian Ridge Regression is used for regression::
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
-    >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None,
-                  compute_score=False, copy_X=True, fit_intercept=True,
-                  lambda_1=1e-06, lambda_2=1e-06, lambda_init=None, n_iter=300,
-                  normalize=False, tol=0.001, verbose=False)
+    >>> reg.fit(X, Y)
+    BayesianRidge()
 
 After being fitted, the model can then be used to predict new values::
 
@@ -744,10 +732,17 @@ classifier. In this model, the probabilities describing the possible outcomes
 of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`. 
-This implementation can fit binary, One-vs-Rest, or multinomial logistic 
-regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
-regularization. Note that regularization is applied by default.
+Logistic regression is implemented in :class:`LogisticRegression`.
+This implementation can fit binary, One-vs-Rest, or multinomial logistic
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
+regularization.
+
+.. note::
+
+    Regularization is applied by default, which is common in machine
+    learning but not in statistics. Another advantage of regularization is
+    that it improves numerical stability. No regularization amounts to
+    setting C to a very high value.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
 regression minimizes the following cost function:
@@ -873,6 +868,14 @@ with 'log' loss, which might be even faster but requires more tuning.
    A logistic regression with :math:`\ell_1` penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
+.. note:: **P-value estimation**
+
+    It is possible to obtain the p-values and confidence intervals for
+    coefficients in cases of regression without penalization. The `statsmodels
+    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    Within sklearn, one could use bootstrapping instead as well.  
+
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
 cross-validation support, to find the optimal `C` and `l1_ratio` parameters

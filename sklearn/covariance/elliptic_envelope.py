@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
@@ -82,7 +81,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     >>> cov.predict([[0, 0],
     ...              [3, 3]])
     array([ 1, -1])
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7411..., 0.2535...],
            [0.2535..., 0.3053...]])
     >>> cov.location_
@@ -148,7 +147,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             compatibility with other outlier detection algorithms.
 
         """
-        check_is_fitted(self, 'offset_')
+        check_is_fitted(self)
         negative_mahal_dist = self.score_samples(X)
         return negative_mahal_dist - self.offset_
 
@@ -164,7 +163,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         negative_mahal_distances : array-like, shape (n_samples, )
             Opposite of the Mahalanobis distances.
         """
-        check_is_fitted(self, 'offset_')
+        check_is_fitted(self)
         return -self.mahalanobis(X)
 
     def predict(self, X):

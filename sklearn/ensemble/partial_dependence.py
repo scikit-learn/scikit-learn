@@ -12,9 +12,9 @@ import numbers
 
 import numpy as np
 from scipy.stats.mstats import mquantiles
+from joblib import Parallel, delayed
 
 from ..utils.extmath import cartesian
-from ..utils._joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
@@ -100,11 +100,11 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
     target_variables : array-like, dtype=int
-        The target features for which the partial dependecy should be
+        The target features for which the partial dependency should be
         computed (size should be smaller than 3 for visual renderings).
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
-        partial dependecy should be evaluated (either ``grid`` or ``X``
+        partial dependency should be evaluated (either ``grid`` or ``X``
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
@@ -138,7 +138,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    check_is_fitted(gbrt, 'estimators_')
+    check_is_fitted(gbrt)
     if (grid is None and X is None) or (grid is not None and X is not None):
         raise ValueError('Either grid or X must be specified')
 
@@ -270,7 +270,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    check_is_fitted(gbrt, 'estimators_')
+    check_is_fitted(gbrt)
 
     # set label_idx for multi-class GBRT
     if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:
