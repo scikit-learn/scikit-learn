@@ -217,7 +217,13 @@ img.sk-index-img {
   max-height: 240px;
   margin: auto;
   margin-bottom: 1em;
-  max-width: none;
+  width: auto;
+}
+
+@media screen and (min-width: 768px) {
+  img.sk-index-img {
+    width: 100%
+  }
 }
 
 img.sk-who-uses-carousel-img {
