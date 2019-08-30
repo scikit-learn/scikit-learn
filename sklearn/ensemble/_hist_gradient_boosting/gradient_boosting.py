@@ -324,7 +324,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Update gradients and hessians, inplace
             self.loss_.update_gradients_and_hessians(gradients, hessians,
-                                                     y_train, raw_predictions)
+                                                     y_train, raw_predictions,
+                                                     sample_weight_train)
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -444,7 +445,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                stratify=stratify)
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
-            sample_weight_small_train = sample_weight_train[indices]
+            if sample_weight_train is not None:
+                sample_weight_small_train = sample_weight_train[indices]
+            else:
+                sample_weight_small_train = None
             X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
             return (X_binned_small_train, y_small_train,
                     sample_weight_small_train)

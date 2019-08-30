@@ -25,6 +25,20 @@ from ._loss import _update_gradients_hessians_categorical_crossentropy
 class BaseLoss(ABC):
     """Base class for a loss."""
 
+    @abstractmethod
+    def __call__(self, y_true, raw_predictions):
+        """Return the loss for each value
+        """
+
+    def get_average_loss(self, y_true, raw_predictions, sample_weight):
+        """Return the average loss, weighted if sample_weight is not None
+        """
+        if sample_weight is None:
+            return self(y_true, raw_predictions).mean()
+        else:
+            return np.average(self(y_true, raw_predictions),
+                              weights=sample_weight)
+
     def init_gradients_and_hessians(self, n_samples, prediction_dim):
         """Return initial gradients and hessians.
 
@@ -86,7 +100,7 @@ class BaseLoss(ABC):
 
     @abstractmethod
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
+                                      raw_predictions, sample_weight):
         """Update gradients and hessians arrays, inplace.
 
         The gradients (resp. hessians) are the first (resp. second) order
@@ -97,14 +111,20 @@ class BaseLoss(ABC):
         ----------
         gradients : ndarray, shape (prediction_dim, n_samples)
             The gradients (treated as OUT array).
+
         hessians : ndarray, shape (prediction_dim, n_samples) or \
             (1,)
             The hessians (treated as OUT array).
+
         y_true : ndarray, shape (n_samples,)
             The true target values or each training sample.
+
         raw_predictions : ndarray, shape (prediction_dim, n_samples)
             The raw_predictions (i.e. values from the trees) of the tree
             ensemble at iteration ``i - 1``.
+
+        sample_weight : array-like of shape(n_samples,) default=None
+            Weights of training data.
         """
 
 
@@ -129,13 +149,6 @@ class LeastSquares(BaseLoss):
         loss = 0.5 * np.power(y_true - raw_predictions, 2)
         return loss
 
-    def get_average_loss(self, y_true, raw_predictions, sample_weight):
-        if sample_weight is None:
-            return self(y_true, raw_predictions).mean()
-        else:
-            return np.average(self(y_true, raw_predictions),
-                              weights=sample_weight)
-
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         if sample_weight is None:
             return np.mean(y_train)
@@ -147,12 +160,15 @@ class LeastSquares(BaseLoss):
         return raw_predictions
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
+                                      raw_predictions, sample_weight):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         _update_gradients_least_squares(gradients, y_true, raw_predictions)
+        if sample_weight is not None:
+            np.multiply(gradients, sample_weight, out=gradients)
+            np.multiply(hessians, sample_weight, out=hessians)
 
 
 class BinaryCrossEntropy(BaseLoss):
@@ -192,7 +208,7 @@ class BinaryCrossEntropy(BaseLoss):
         return np.log(proba_positive_class / (1 - proba_positive_class))
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
+                                      raw_predictions, sample_weight):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
@@ -200,6 +216,9 @@ class BinaryCrossEntropy(BaseLoss):
         hessians = hessians.reshape(-1)
         _update_gradients_hessians_binary_crossentropy(
             gradients, hessians, y_true, raw_predictions)
+        if sample_weight is not None:
+            np.multiply(gradients, sample_weight, out=gradients)
+            np.multiply(hessians, sample_weight, out=hessians)
 
     def predict_proba(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -231,7 +250,7 @@ class CategoricalCrossEntropy(BaseLoss):
                 (one_hot_true * raw_predictions).sum(axis=0))
         return loss.mean() if average else loss
 
-    def get_baseline_prediction(self, y_train, prediction_dim):
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
@@ -242,9 +261,12 @@ class CategoricalCrossEntropy(BaseLoss):
         return init_value
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
+                                      raw_predictions, sample_weight):
         _update_gradients_hessians_categorical_crossentropy(
             gradients, hessians, y_true, raw_predictions)
+        if sample_weight is not None:
+            np.multiply(gradients, sample_weight, out=gradients)
+            np.multiply(hessians, sample_weight, out=hessians)
 
     def predict_proba(self, raw_predictions):
         # TODO: This could be done in parallel

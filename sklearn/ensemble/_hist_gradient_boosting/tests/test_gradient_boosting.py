@@ -266,7 +266,8 @@ def test_small_trainset():
     gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
-    X_small, y_small = gb._get_small_trainset(X, y, seed=42)
+    X_small, y_small, _ = gb._get_small_trainset(X, y, seed=42,
+                                                 sample_weight_train=None)
 
     # Compute the class distribution in the small training set
     unique, counts = np.unique(y_small, return_counts=True)
