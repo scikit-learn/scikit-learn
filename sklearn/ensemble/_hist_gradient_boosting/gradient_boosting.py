@@ -467,7 +467,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # TODO: handle when _scorer doesn't accept sample_weight, but
         # sample_weight is provided
-        import sys
         if sample_weight_small_train is None:
             self.train_score_.append(
                 self.scorer_(self, X_binned_small_train, y_small_train)
