@@ -46,20 +46,17 @@ class _CacheWithRetry:
         memory = self.memory
         if memory is not None and self.data_home is not None:
             try:
-                data = memory.cache(func)(**kwargs)
+                return memory.cache(func)(**kwargs)
             except HTTPError:
                 raise
             except Exception:
                 warn("Invalid cache, redownloading file", RuntimeWarning)
-                data = None
 
-            if data is None:
-                # attemting to download data with cleared cache
-                memory.clear()
-                data = memory.cache(func)(**kwargs)
+            # attemting to download data with cleared cache
+            memory.clear()
+            return memory.cache(func)(**kwargs)
         else:
-            data = func(**kwargs)
-        return data
+            return func(**kwargs)
 
 
 def _open_openml_url(openml_path):
