@@ -390,6 +390,10 @@ class PCA(_BasePCA):
         -------
         X_new : array-like, shape (n_samples, n_components)
 
+        Notes
+        -----
+        This method returns a Fortran-ordered array. To convert it to a
+        C-ordered array, use 'np.ascontiguousarray'.
         """
         U, S, _ = self._fit(X)
         U = U[:, :self.n_components_]
@@ -610,7 +614,7 @@ class PCA(_BasePCA):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        check_is_fitted(self, 'mean_')
+        check_is_fitted(self)
 
         X = check_array(X)
         Xr = X - self.mean_

@@ -117,19 +117,27 @@ export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 ccache -M 512M
 export CCACHE_COMPRESS=1
 
-# Configure the conda environment and put it in the path using the
-# provided versions
+# Old packages coming from the 'free' conda channel have been removed but we
+# are using them for our min-dependencies doc generation. See
+# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
+# more details.
+if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
+    conda config --set restore_free_channel true
+fi
+
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
+  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
+  cython="${CYTHON_VERSION:-*}" pytest coverage \
+  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib
+  joblib memory_profiler
 
 source activate testenv
-pip install "sphinx-gallery>=0.2,<0.3"
+pip install sphinx-gallery==0.3.1
 pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
+python setup.py build_ext --inplace -j 3
 python setup.py develop
 
 export OMP_NUM_THREADS=1
@@ -142,6 +150,10 @@ fi
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+
+# Insert the version warning for deployment
+find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
+\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
 
 cd -
 set +o pipefail

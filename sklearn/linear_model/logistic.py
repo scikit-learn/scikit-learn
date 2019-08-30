@@ -30,7 +30,7 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
 from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
@@ -826,11 +826,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # If sample weights exist, convert them to array (support for lists)
     # and check length
     # Otherwise set them to 1 for all examples
-    if sample_weight is not None:
-        sample_weight = np.array(sample_weight, dtype=X.dtype, order='C')
-        check_consistent_length(y, sample_weight)
-    else:
-        sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=X.dtype)
 
     # If class_weights is a dict (provided by the user), the weights
     # are assigned to the original labels. If it is "balanced", then
@@ -1133,9 +1130,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     y_test = y[test]
 
     if sample_weight is not None:
-        sample_weight = check_array(sample_weight, ensure_2d=False)
-        check_consistent_length(y, sample_weight)
-
+        sample_weight = _check_sample_weight(sample_weight, X)
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = _logistic_regression_path(
@@ -1165,8 +1160,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores = list()
 
-    if isinstance(scoring, str):
-        scoring = get_scorer(scoring)
+    scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1512,7 +1506,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['lbfgs', 'liblinear']:
+        if solver == 'lbfgs':
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
@@ -1633,7 +1627,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         ovr = (self.multi_class in ["ovr", "warn"] or
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
@@ -1819,7 +1813,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Note that this only applies to the solver and not the cross-validation
+        generator.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -2245,7 +2241,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           "This warning will disappear in version 0.22.",
                           ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-        if isinstance(scoring, str):
-            scoring = get_scorer(scoring)
+
+        scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
