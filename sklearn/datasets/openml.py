@@ -4,7 +4,6 @@ import os
 from os.path import join
 from warnings import warn
 from contextlib import closing
-from collections import namedtuple
 import itertools
 from collections.abc import Generator
 from collections import OrderedDict
@@ -600,19 +599,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     kwargs = dict(data_id=data_id, data_home=data_home,
                   target_column=target_column, as_frame=as_frame)
 
-    data = _fetch_openml_inner(**kwargs)
+    bunch = _fetch_openml_inner(**kwargs)
 
     if return_X_y:
-        return data.X, data.y
-
-    bunch = Bunch(
-        data=data.X, target=data.y, frame=data.frame,
-        feature_names=data.columns,
-        DESCR=data.description, details=data.details,
-        categories=data.nominal_attributes,
-        url="https://www.openml.org/d/{}".format(data.id))
-
-    return bunch
+        return bunch.data, bunch.target
+    else:
+        return bunch
 
 
 def _fetch_openml_inner(data_id=None, data_home=None,
@@ -752,11 +744,11 @@ def _fetch_openml_inner(data_id=None, data_home=None,
         elif y.shape[1] == 0:
             y = None
 
-    Data = namedtuple('OpenmlData',
-                      ['id', 'X', 'y', 'description', 'details',
-                       'frame', 'columns', 'nominal_attributes'])
-    data = Data(id=data_id, X=X, y=y, description=description,
-                details=data_description, frame=frame,
-                columns=data_columns,
-                nominal_attributes=nominal_attributes)
-    return data
+    bunch = Bunch(
+        data=X, target=y, frame=frame,
+        feature_names=data_columns,
+        DESCR=description, details=data_description,
+        categories=nominal_attributes,
+        url="https://www.openml.org/d/{}".format(data_id)
+    )
+    return bunch
