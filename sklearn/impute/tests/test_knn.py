@@ -419,8 +419,8 @@ def test_knn_imputer_weight_distance():
     dist = nan_euclidean_distances(X)
     r1c1_nbor_dists = dist[1, [0, 2, 3, 4, 5]]
     r1c3_nbor_dists = dist[1, [0, 3, 4, 5, 6]]
-    r1c1_nbor_wt = (1 / r1c1_nbor_dists)
-    r1c3_nbor_wt = (1 / r1c3_nbor_dists)
+    r1c1_nbor_wt = 1 / r1c1_nbor_dists
+    r1c3_nbor_wt = 1 / r1c3_nbor_dists
 
     r2c3_nbor_dists = dist[2, [0, 3, 4, 5, 6]]
     r2c3_nbor_wt = 1 / r2c3_nbor_dists
