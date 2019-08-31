@@ -8,6 +8,8 @@ a:focus {
   outline: none;
 }
 
+/* Anchor links */
+
 a.headerlink {
   color: #c60f0f;
   font-size: 0.8em;
