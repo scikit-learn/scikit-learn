@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 from sklearn.datasets import make_classification, make_regression
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -441,3 +441,31 @@ def test_string_target_early_stopping(scoring):
     y = np.array(['x'] * 50 + ['y'] * 50, dtype=object)
     gbrt = HistGradientBoostingClassifier(n_iter_no_change=10, scoring=scoring)
     gbrt.fit(X, y)
+
+
+def test_non_uniform_weights_toy_edge_case_reg():
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1]]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    gb = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert gb.predict([[1, 0]])[0] > 0.5
+
+
+@pytest.mark.parametrize("loss", ['binary_crossentropy',
+                                  'categorical_crossentropy'])
+def test_non_uniform_weights_toy_edge_case_clf(loss):
+    X = [[1, 0],
+         [1, 0],
+         [1, 0],
+         [0, 1]]
+    y = [0, 0, 1, 0]
+    # ignore the first 2 training samples by setting their weight to 0
+    sample_weight = [0, 0, 1, 1]
+    gb = HistGradientBoostingClassifier(loss=loss, min_samples_leaf=1)
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(gb.predict([[1, 0]]), [1])

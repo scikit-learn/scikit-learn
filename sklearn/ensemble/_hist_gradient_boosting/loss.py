@@ -209,7 +209,10 @@ class BinaryCrossEntropy(BaseLoss):
                 "loss='binary_crossentropy' is not defined for multiclass"
                 " classification with n_classes=%d, use"
                 " loss='categorical_crossentropy' instead" % prediction_dim)
-        proba_positive_class = np.mean(y_train)
+        if sample_weight is None:
+            proba_positive_class = np.mean(y_train)
+        else:
+            proba_positive_class = np.average(y_train, weights=sample_weight)
         eps = np.finfo(y_train.dtype).eps
         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
         # log(x / 1 - x) is the anti function of sigmoid, or the link function
@@ -263,7 +266,11 @@ class CategoricalCrossEntropy(BaseLoss):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
-            proba_kth_class = np.mean(y_train == k)
+            if sample_weight is None:
+                proba_kth_class = np.mean(y_train == k)
+            else:
+                proba_kth_class = np.average(y_train == k,
+                                             weights=sample_weight)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
             init_value[k, :] += np.log(proba_kth_class)
 
