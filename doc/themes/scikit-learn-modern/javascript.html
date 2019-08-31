@@ -75,28 +75,28 @@ $(document).ready(function() {
 			    this.getAttribute('id') +
 			    '" title="Permalink to this term">¶</a>');
 	});
+
+    scrollUpToCompensateForFixedHeader();
+    // Run on hash change (user clicked on anchor link)
+    if ( 'onhashchange' in window ) {
+        window.addEventListener('hashchange', scrollUpToCompensateForFixedHeader);
+    }
 });
 
-    /*** Scroll to anchor link with fixed header ***/
-	function scrollUpToCompensateForFixedHeader() {
-        if (window.innerWidth < 768) { return ; }
+/*** Scroll to anchor link with fixed header ***/
+function scrollUpToCompensateForFixedHeader() {
+if (window.innerWidth < 768) { return; }
 
-		var hash, target;
+    var hash = window.location.hash;
+    if ( hash.length < 2 ) { return; }
 
-		hash = window.location.hash;
-		if ( hash.length < 2 ) { return; }
+    var target = document.getElementById( hash.slice(1) );
+    if ( target === null ) { return; }
 
-		target = document.getElementById( hash.slice(1) );
-		if ( target === null ) { return; }
-        // At the top
-		if ( target.clientTop < 3 ) {
-			window.scrollBy(0, -78);
-		}
-	}
-	// Run on hash change (user clicked on anchor link)
-	if ( 'onhashchange' in window ) {
-		window.addEventListener('hashchange', scrollUpToCompensateForFixedHeader);
-	}
+    if ( target.getBoundingClientRect().top < 3 ) {
+        window.scrollBy(0, -48);
+    }
+}
 </script>
 <script>
     (function() {
