@@ -212,7 +212,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # shape = (n_trees_per_iteration, n_samples).
             gradients, hessians = self.loss_.init_gradients_and_hessians(
                 n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_
+                prediction_dim=self.n_trees_per_iteration_,
+                sample_weight=sample_weight
             )
 
             # predictors is a matrix (list of lists) of TreePredictor objects

@@ -39,7 +39,8 @@ class BaseLoss(ABC):
             return np.average(self(y_true, raw_predictions),
                               weights=sample_weight)
 
-    def init_gradients_and_hessians(self, n_samples, prediction_dim):
+    def init_gradients_and_hessians(self, n_samples, prediction_dim,
+                                    sample_weight):
         """Return initial gradients and hessians.
 
         Unless hessians are constant, arrays are initialized with undefined
@@ -49,11 +50,15 @@ class BaseLoss(ABC):
         ----------
         n_samples : int
             The number of samples passed to `fit()`.
+
         prediction_dim : int
             The dimension of a raw prediction, i.e. the number of trees
             built at each iteration. Equals 1 for regression and binary
             classification, or K where K is the number of classes for
             multiclass classification.
+
+        sample_weight : array-like of shape(n_samples,) default=None
+            Weights of training data.
 
         Returns
         -------
@@ -66,10 +71,14 @@ class BaseLoss(ABC):
         """
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
+        if sample_weight is not None:
+            self.hessians_are_constant = False
         if self.hessians_are_constant:
             # if the hessians are constant, we consider they are equal to 1.
             # this is correct as long as we adjust the gradients. See e.g. LS
-            # loss
+            # loss. If sample weights are provided, the hessians and gradients
+            # are multiplied by sample_weight, which means the hessains are
+            # equal to sample weights.
             hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
@@ -153,7 +162,7 @@ class LeastSquares(BaseLoss):
         if sample_weight is None:
             return np.mean(y_train)
         else:
-            return np.average(y_train, sample_weight)
+            return np.average(y_train, weights=sample_weight)
 
     @staticmethod
     def inverse_link_function(raw_predictions):
@@ -168,7 +177,7 @@ class LeastSquares(BaseLoss):
         _update_gradients_least_squares(gradients, y_true, raw_predictions)
         if sample_weight is not None:
             np.multiply(gradients, sample_weight, out=gradients)
-            np.multiply(hessians, sample_weight, out=hessians)
+            hessians[:] = sample_weight
 
 
 class BinaryCrossEntropy(BaseLoss):
