@@ -28,6 +28,7 @@ from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _handle_zeros_in_scale
+from sklearn.preprocessing.data import select_k_best
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
@@ -2484,3 +2485,57 @@ def test_power_transform_default_method():
 
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
+
+
+def test_select_k_best():
+    class_probas = np.array([
+        [0, 0.9, 0.9, 0.9],
+        [0, 0.95, 0.9, 0.95],
+        [0.1, 0.2, 0.2, 0.1]
+    ])
+
+    expected_best_1 = np.array([
+        [0, 0, 0, 1],
+        [0, 0, 0, 1],
+        [0, 0, 1, 0]
+    ])
+
+    expected_best_1_scores = np.array([
+        [0, 0, 0, 0.9],
+        [0, 0, 0, 0.95],
+        [0, 0, 0.2, 0]
+    ])
+
+    expected_best_2 = np.array([
+        [0, 0, 1, 1],
+        [0, 1, 0, 1],
+        [0, 1, 1, 0]
+    ])
+
+    expected_best_2_scores = np.array([
+        [0, 0, 0.9, 0.9],
+        [0, 0.95, 0, 0.95],
+        [0, 0.2, 0.2, 0]
+    ])
+
+    # K=1
+    # test boolean output
+    best_1 = select_k_best(sparse.csr_matrix(class_probas), k_best=1, cast_as_indicator=True)
+    assert sparse.issparse(best_1)
+    assert best_1.todense().tolist() == expected_best_1.tolist()
+
+    # test score output
+    best_1_scores = select_k_best(sparse.csr_matrix(class_probas), k_best=1, cast_as_indicator=False)
+    assert sparse.issparse(best_1_scores)
+    assert best_1_scores.todense().tolist() == expected_best_1_scores.tolist()
+
+    # K=2
+    # test boolean output
+    best_2 = select_k_best(sparse.csr_matrix(class_probas), k_best=2, cast_as_indicator=True)
+    assert sparse.issparse(best_2)
+    assert best_2.todense().tolist() == expected_best_2.tolist()
+
+    # test score output
+    best_2_scores = select_k_best(sparse.csr_matrix(class_probas), k_best=2, cast_as_indicator=False)
+    assert sparse.issparse(best_2_scores)
+    assert best_2_scores.todense().tolist() == expected_best_2_scores.tolist()

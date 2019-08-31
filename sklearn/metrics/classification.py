@@ -30,6 +30,7 @@ from scipy.sparse import csr_matrix
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
+from ..preprocessing import select_k_best
 from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
@@ -1563,6 +1564,66 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
+def precision_at_k_score(y_true, y_pred, at_k, labels=None, average=None, sample_weight=None):
+    """In a multilabel context, count how many time the ``k_best`` predicted labels (with highest score) are in the set
+    of true labels. Intuitively, precision at k is the ability of the classifier not to incorrectly predict that labels
+    are present whereas they aren't.
+
+    The best value is 1 and the worst value is 0.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    Parameters
+    ----------
+    y_true : 2d array-like / sparse matrix: shape = [n_samples, n_labels]
+        Ground truth (correct) target values.
+
+    y_pred : 2d array-like / sparse matrix: shape = [n_samples, n_labels]
+        Estimated targets as returned by a classifier.
+
+    labels : list, optional
+        The set of labels to include, and their order if ``average is None``.
+        Labels present in the data can be excluded. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
+
+    average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    precision_at_k : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+    """
+    if average not in (None, 'micro', 'macro', 'weighted', 'samples'):
+        raise ValueError("{0} average is not supported".format(average))
+    y_pred = select_k_best(scores=y_pred, k_best=at_k, cast_as_indicator=True)
+    return precision_score(y_true, y_pred, labels=labels, average=average, sample_weight=sample_weight)
+
+
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
                  sample_weight=None):
     """Compute the recall
@@ -1667,6 +1728,66 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
                                                  warn_for=('recall',),
                                                  sample_weight=sample_weight)
     return r
+
+
+def recall_at_k_score(y_true, y_pred, at_k, labels=None, average=None, sample_weight=None):
+    """In a multiclass or multilabel context, count how many time the true labels are in the set or ``k_best`` predicted
+    labels (with highest score). The recall is intuitively the ability of the classifier to find all the positive
+    samples.
+
+    The best value is 1 and the worst value is 0.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+
+    Parameters
+    ----------
+    y_true : 2d array-like / sparse matrix: shape = [n_samples, n_labels]
+        Ground truth (correct) target values.
+
+    y_pred : 2d array-like / sparse matrix: shape = [n_samples, n_labels]
+        Estimated targets as returned by a classifier.
+
+    labels : list, optional
+        The set of labels to include, and their order if ``average is None``.
+        Labels present in the data can be excluded. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+        .. versionchanged:: 0.17
+           parameter *labels* improved for multiclass problem.
+
+    average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    recall_at_k : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+    """
+    if average not in (None, 'micro', 'macro', 'weighted', 'samples'):
+        raise ValueError("{0} average is not supported".format(average))
+    y_pred = select_k_best(scores=y_pred, k_best=at_k, cast_as_indicator=True)
+    return recall_score(y_true, y_pred, labels=labels, average=average, sample_weight=sample_weight)
 
 
 def balanced_accuracy_score(y_true, y_pred, sample_weight=None,

@@ -24,6 +24,7 @@ from .data import quantile_transform
 from .data import power_transform
 from .data import PowerTransformer
 from .data import PolynomialFeatures
+from .data import select_k_best
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
@@ -64,4 +65,5 @@ __all__ = [
     'label_binarize',
     'quantile_transform',
     'power_transform',
+    'select_k_best',
 ]

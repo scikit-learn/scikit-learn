@@ -52,6 +52,14 @@ if sp_version >= (1, 3):
 else:
     from scipy.linalg import pinvh # noqa
 
+if np_version < (1, 8):
+    def partition(a, kth, axis=-1):
+        # The k argument is ingored.
+        # the implementation is a lot slower than partition unfortunately
+        return np.sort(a, axis=axis)
+else:
+    from numpy import partition # noqa
+
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
         return arr_or_spmatrix.argmax(axis=axis)
