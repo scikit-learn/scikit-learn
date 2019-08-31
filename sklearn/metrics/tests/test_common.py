@@ -450,7 +450,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
     # log loss is near symmetric with binary predictions
     "log_loss",
-    "matthews_corrcoef_score", "mean_absolute_error", "m2q  D   Wean_squared_error",
+    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
 
     "cohen_kappa_score", "mean_normal_deviance"
