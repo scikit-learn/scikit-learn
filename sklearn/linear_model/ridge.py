@@ -16,7 +16,6 @@ import numpy as np
 from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
-from scipy.special import expit
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
@@ -1491,7 +1490,8 @@ class _RidgeGCV(LinearModel):
                 # identity_estimator will just return them
                 def identity_estimator():
                     pass
-                identity_estimator.decision_function = lambda y_predict: y_predict
+                identity_estimator.decision_function = lambda \
+                    y_predict: y_predict
                 identity_estimator.predict = lambda y_predict: y_predict
 
                 out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
