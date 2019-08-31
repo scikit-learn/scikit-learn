@@ -141,7 +141,7 @@ html_theme = 'scikit-learn-modern'
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {'google_analytics': True,
-                      'mathjax_path': mathjax_path[0]}
+                      'mathjax_path': mathjax_path}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']

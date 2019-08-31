@@ -517,7 +517,7 @@ dt.field-odd, dt.field-even {
   font-style: italic;
 }
 
-.classifier:before {
+.classifier::before {
   font-style: normal;
   margin: 0.5em;
   content: ":";
@@ -721,7 +721,7 @@ div.sphx-glr-thumbcontainer {
   cursor: pointer;
 }
 
-[sk-rellink-tooltip]:before {
+[sk-rellink-tooltip]::before {
   visibility: hidden;
   position: absolute;
   padding: 0.5rem;

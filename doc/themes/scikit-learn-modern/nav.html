@@ -6,7 +6,7 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
-<nav class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
+<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
   <div class="container-fluid {{ top_container_cls }}">
     {%- if logo %}
       <a class="navbar-brand" href="{{ pathto('index') }}">

@@ -74,9 +74,29 @@ $(document).ready(function() {
 		return ('<a class="headerlink" href="#' +
 			    this.getAttribute('id') +
 			    '" title="Permalink to this term">¶</a>');
-	})
+	});
 });
 
+    /*** Scroll to anchor link with fixed header ***/
+	function scrollUpToCompensateForFixedHeader() {
+        if (window.innerWidth < 768) { return ; }
+
+		var hash, target;
+
+		hash = window.location.hash;
+		if ( hash.length < 2 ) { return; }
+
+		target = document.getElementById( hash.slice(1) );
+		if ( target === null ) { return; }
+        // At the top
+		if ( target.clientTop < 3 ) {
+			window.scrollBy(0, -78);
+		}
+	}
+	// Run on hash change (user clicked on anchor link)
+	if ( 'onhashchange' in window ) {
+		window.addEventListener('hashchange', scrollUpToCompensateForFixedHeader);
+	}
 </script>
 <script>
     (function() {
@@ -86,9 +106,8 @@ $(document).ready(function() {
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(gcse, s);
     })();
 </script>
-
 {%- if pagename != 'index' and pagename != 'documentation' %}
     {% if theme_mathjax_path %}
-<script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG"></script>
+<script async type="text/javascript" src="{{ theme_mathjax_path }}"></script>
     {% endif %}
 {%- endif %}
