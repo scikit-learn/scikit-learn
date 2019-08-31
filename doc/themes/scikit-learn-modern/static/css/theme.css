@@ -306,7 +306,7 @@ nav.sk-docs-navbar {
 
   #sk-page-content-wrapper {
     padding-left: 240px;
-    margin-top: 4.2rem;
+    margin-top: 48px;
   }
 
   #sk-sidebar-wrapper {
@@ -362,7 +362,7 @@ div.sk-sidebar-toc-wrapper > ul > li > a{
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-  margin-top: 4.2rem;
+  margin-top: 48px;
 }
 
 div.sk-sidebar-toc-wrapper > ul,
