@@ -1,7 +1,6 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
-# cython: language_level=3
 #
 # Author: Christopher Moody <chrisemoody@gmail.com>
 # Author: Nick Travers <nickt@squareup.com>
@@ -16,7 +15,7 @@ from libc.math cimport sqrt, log
 import numpy as np
 cimport numpy as np
 
-from sklearn.neighbors.quad_tree cimport _QuadTree
+from ..neighbors.quad_tree cimport _QuadTree
 
 cdef char* EMPTY_STRING = ""
 

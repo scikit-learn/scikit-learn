@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from ..utils._joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin
@@ -18,7 +18,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -41,6 +41,8 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
+
+MAX_INT = np.iinfo(np.int32).max
 
 
 class _ValidationScoreCallback:
@@ -94,18 +96,18 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self.tol = tol
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
 
     def set_params(self, *args, **kwargs):
         super().set_params(*args, **kwargs)
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
         return self
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
+    def _validate_params(self, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -138,9 +140,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
-        if not set_max_iter:
-            return
-
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
@@ -166,19 +165,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             return PENALTY_TYPES[penalty]
         except KeyError:
             raise ValueError("Penalty %s is not supported. " % penalty)
-
-    def _validate_sample_weight(self, sample_weight, n_samples):
-        """Set the sample weight array."""
-        if sample_weight is None:
-            # uniform sample weights
-            sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
-        else:
-            # user-provided array
-            sample_weight = np.asarray(sample_weight, dtype=np.float64,
-                                       order="C")
-        if sample_weight.shape[0] != n_samples:
-            raise ValueError("Shapes of X and sample_weight do not match.")
-        return sample_weight
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -322,7 +308,8 @@ def _prepare_fit_binary(est, y, i):
 
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
-               pos_weight, neg_weight, sample_weight, validation_mask=None):
+               pos_weight, neg_weight, sample_weight, validation_mask=None,
+               random_state=None):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -366,13 +353,22 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     validation_mask : numpy array of shape [n_samples, ] or None
         Precomputed validation mask in case _fit_binary is called in the
         context of a one-vs-rest reduction.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
     """
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = \
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
-    dataset, intercept_decay = make_dataset(X, y_i, sample_weight)
+
+    random_state = check_random_state(random_state)
+    dataset, intercept_decay = make_dataset(
+        X, y_i, sample_weight, random_state=random_state)
 
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
@@ -383,11 +379,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes)
 
-    # XXX should have random_state_!
-    random_state = check_random_state(est.random_state)
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
-    seed = random_state.randint(0, np.iinfo(np.int32).max)
+    seed = random_state.randint(MAX_INT)
 
     tol = est.tol if est.tol is not None else -np.inf
 
@@ -478,7 +472,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # Allocate datastructures from input arguments
         self._expanded_class_weight = compute_class_weight(self.class_weight,
                                                            self.classes_, y)
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
@@ -558,7 +552,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                                               learning_rate, max_iter,
                                               self._expanded_class_weight[1],
                                               self._expanded_class_weight[0],
-                                              sample_weight)
+                                              sample_weight,
+                                              random_state=self.random_state)
 
         self.t_ += n_iter_ * X.shape[0]
         self.n_iter_ = n_iter_
@@ -589,13 +584,19 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         validation_mask = self._make_validation_split(y)
 
         # Use joblib to fit OvA in parallel.
+        # Pick the random seed for each job outside of fit_binary to avoid
+        # sharing the estimator random state between threads which could lead
+        # to non-deterministic behavior
+        random_state = check_random_state(self.random_state)
+        seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                           **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 max_iter, self._expanded_class_weight[i],
                                 1., sample_weight,
-                                validation_mask=validation_mask)
-            for i in range(len(self.classes_)))
+                                validation_mask=validation_mask,
+                                random_state=seed)
+            for i, seed in enumerate(seeds))
 
         # take the maximum of n_iter_ over every binary fit
         n_iter_ = 0.
@@ -776,10 +777,10 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -856,7 +857,7 @@ class SGDClassifier(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -869,7 +870,7 @@ class SGDClassifier(BaseSGDClassifier):
         this counter, while ``partial_fit`` will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -891,6 +892,12 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
+    classes_ : array of shape = [n_classes]
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -899,13 +906,7 @@ class SGDClassifier(BaseSGDClassifier):
     >>> Y = np.array([1, 1, 2, 2])
     >>> clf = linear_model.SGDClassifier(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, Y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
-           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
-           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
+    SGDClassifier()
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -978,7 +979,7 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
-        check_is_fitted(self, "t_")
+        check_is_fitted(self)
 
         if self.loss == "log":
             return self._predict_proba_lr(X)
@@ -1084,9 +1085,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        # Allocate datastructures from input arguments
-        sample_weight = self._validate_sample_weight(sample_weight, n_samples)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
+        # Allocate datastructures from input arguments
         if getattr(self, "coef_", None) is None:
             self._allocate_parameter_mem(1, n_features, coef_init,
                                          intercept_init)
@@ -1212,7 +1213,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 
@@ -1388,10 +1389,10 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level.
 
-    epsilon : float
+    epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
@@ -1424,11 +1425,10 @@ class SGDRegressor(BaseSGDRegressor):
 
     eta0 : double
         The initial learning rate for the 'constant', 'invscaling' or
-        'adaptive' schedules. The default value is 0.0 as eta0 is not used by
-        the default schedule 'optimal'.
+        'adaptive' schedules. The default value is 0.01.
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.5].
+        The exponent for inverse scaling learning rate [default 0.25].
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
@@ -1451,7 +1451,7 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.20
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         See :term:`the Glossary <warm_start>`.
@@ -1464,7 +1464,7 @@ class SGDRegressor(BaseSGDRegressor):
         this counter, while ``partial_fit``  will result in increasing the
         existing counter.
 
-    average : bool or int, optional
+    average : bool or int, default=False
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
@@ -1488,6 +1488,10 @@ class SGDRegressor(BaseSGDRegressor):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> import numpy as np
@@ -1498,13 +1502,7 @@ class SGDRegressor(BaseSGDRegressor):
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
-    ... #doctest: +NORMALIZE_WHITESPACE
-    SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
-           epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='invscaling', loss='squared_loss', max_iter=1000,
-           n_iter_no_change=5, penalty='l2', power_t=0.25, random_state=None,
-           shuffle=True, tol=0.001, validation_fraction=0.1, verbose=0,
-           warm_start=False)
+    SGDRegressor()
 
     See also
     --------

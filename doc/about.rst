@@ -1,3 +1,5 @@
+.. _about:
+
 About us
 ========
 
@@ -13,6 +15,11 @@ Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
 following a ~3 month cycle, and a thriving international community has
 been leading the development.
+
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the :ref:`governance document <governance>`.
 
 Authors
 -------
@@ -33,28 +40,11 @@ in the FAQ.
 
 Emeritus Core Developers
 ------------------------
-The following people have been active contributors in the past, but are no longer active in the project
+The following people have been active contributors in the past, but are no
+longer active in the project:
 
-- Alexander Fabisch
-- Alexandre Passos
-- Chris Gorgolewski
-- David Cournapeau
-- David Warde-Farley
-- Jake Vanderplas
-- Kyle Kastner
-- Matthieu Brucher
-- Raghav Rajagopalan
-- Robert Layton
-- Ron Weiss
-- Thouis (Ray) Jones
-- Vincent Dubourg
-- Vincent Michel
-- Virgile Fritsch
+.. include:: authors_emeritus.rst
 
-Governance
-----------
-The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
 
 .. _citing-scikit-learn:
 

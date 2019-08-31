@@ -3,11 +3,12 @@ Testing for Elliptic Envelope algorithm (sklearn.covariance.elliptic_envelope).
 """
 
 import numpy as np
+import pytest
+
 from sklearn.covariance import EllipticEnvelope
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal, assert_warns_message
+from sklearn.utils.testing import assert_array_equal
 from sklearn.exceptions import NotFittedError
 
 
@@ -15,8 +16,10 @@ def test_elliptic_envelope():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    assert_raises(NotFittedError, clf.predict, X)
-    assert_raises(NotFittedError, clf.decision_function, X)
+    with pytest.raises(NotFittedError):
+        clf.predict(X)
+    with pytest.raises(NotFittedError):
+        clf.decision_function(X)
     clf.fit(X)
     y_pred = clf.predict(X)
     scores = clf.score_samples(X)
@@ -40,21 +43,3 @@ def test_score_samples():
                        clf2.decision_function([[2., 2.]]) + clf2.offset_)
     assert_array_equal(clf1.score_samples([[2., 2.]]),
                        clf2.score_samples([[2., 2.]]))
-
-
-def test_raw_values_deprecation():
-    X = [[0.0], [1.0]]
-    clf = EllipticEnvelope().fit(X)
-    assert_warns_message(DeprecationWarning,
-                         "raw_values parameter is deprecated in 0.20 and will"
-                         " be removed in 0.22.",
-                         clf.decision_function, X, raw_values=True)
-
-
-def test_threshold_deprecation():
-    X = [[0.0], [1.0]]
-    clf = EllipticEnvelope().fit(X)
-    assert_warns_message(DeprecationWarning,
-                         "threshold_ attribute is deprecated in 0.20 and will"
-                         " be removed in 0.22.",
-                         getattr, clf, "threshold_")
