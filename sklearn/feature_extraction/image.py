@@ -32,7 +32,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     """Returns a list of edges for a 3D image.
 
     Parameters
-    ===========
+    ----------
     n_x : integer
         The size of the grid in the x direction.
     n_y : integer
@@ -322,11 +322,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.  If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -348,12 +347,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> print('Patches shape: {}'.format(patches.shape))
     Patches shape: (272214, 2, 2, 3)
     >>> # Here are just two of these patches:
-    >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
+    >>> print(patches[1])
     [[[174 201 231]
       [174 201 231]]
      [[173 200 230]
       [173 200 230]]]
-    >>> print(patches[800])# doctest: +NORMALIZE_WHITESPACE
+    >>> print(patches[800])
     [[[187 214 243]
       [188 215 244]]
      [[187 214 243]
@@ -455,10 +454,11 @@ class PatchExtractor(BaseEstimator):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
+
 
     Examples
     --------

@@ -56,10 +56,10 @@ def empirical_covariance(X, assume_centered=False):
         Data from which to compute the covariance estimate
 
     assume_centered : boolean
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False, data are centered before computation.
+        If False, data will be centered before computation.
 
     Returns
     -------
@@ -122,10 +122,10 @@ class EmpiricalCovariance(BaseEstimator):
     ...                      [.3, .4]])
     >>> rng = np.random.RandomState(0)
     >>> X = rng.multivariate_normal(mean=[0, 0],
-    ...                                   cov=real_cov,
-    ...                                   size=500)
+    ...                             cov=real_cov,
+    ...                             size=500)
     >>> cov = EmpiricalCovariance().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7569..., 0.2818...],
            [0.2818..., 0.3928...]])
     >>> cov.location_

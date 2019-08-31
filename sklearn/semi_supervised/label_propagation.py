@@ -40,7 +40,6 @@ Examples
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
-... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
 LabelPropagation(...)
 
 Notes
@@ -185,7 +184,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
             Normalized probability distributions across
             class labels
         """
-        check_is_fitted(self, 'X_')
+        check_is_fitted(self)
 
         X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
                                              'bsr', 'lil', 'dia'])
@@ -360,7 +359,6 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelPropagation(...)
 
     References
@@ -474,7 +472,6 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelSpreading(...)
 
     References
