@@ -152,7 +152,8 @@ div.gsc-results-wrapper-visible {
   background-color: #f8f9fa;
   padding: 1rem;
   position: absolute;
-  right: 0;
+  right: 1rem;
+  box-shadow: -4px 9px 20px -4px rgba(0,0,0,0.56);
 }
 
 div.gsc-results {
