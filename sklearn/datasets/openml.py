@@ -37,8 +37,14 @@ class _CacheWithRetry:
     If first call fails, likely due to pickling issue, clean the
     cache and try again.
     """
-    def __init__(self, memory, data_home):
-        self.memory = memory
+    def __init__(self, data_home, data_id):
+        if data_home is not None:
+            # Use dataset specific cache location, so it can be separately
+            # cleaned
+            self.memory = Memory(join(data_home, 'cache', str(data_id)),
+                                 verbose=0)
+        else:
+            self.memory = None
         self.data_home = data_home
 
     def __call__(self, func, **kwargs):
@@ -566,12 +572,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
 
-    if cache and data_home is not None:
-        # Use dataset specific cache location, so it can be separately cleaned
-        memory = Memory(join(data_home, 'cache', str(data_id)), verbose=0)
-    else:
-        memory = None
-    _apply_cached_with_retry = _CacheWithRetry(memory, data_home)
+    if not cache:
+        # disable caching
+        data_home = None
+
+    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
 
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
@@ -626,7 +631,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     bunch = _apply_cached_with_retry(
         _fetch_openml_inner, data_id=data_id, target_column=target_column,
         as_frame=as_frame, return_sparse=return_sparse,
-        file_id=data_description['file_id'])
+        file_id=data_description['file_id'], data_home=data_home)
 
     if return_X_y:
         return bunch.data, bunch.target
@@ -638,7 +643,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
 
 def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
-                        file_id):
+                        file_id, data_home):
+
+    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id)
@@ -700,8 +707,9 @@ def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
         shape = None
 
     # obtain the data
-    arff = _download_data_arff(file_id, return_sparse,
-                               encode_nominal=not as_frame)
+    arff = _apply_cached_with_retry(
+            _download_data_arff, file_id=file_id,
+            sparse=return_sparse, encode_nominal=not as_frame)
 
     nominal_attributes = None
     frame = None
