@@ -159,6 +159,7 @@ div.gsc-results-wrapper-visible {
 
 div.gsc-results {
   overflow-y: scroll;
+  height: 680px;
 }
 
 @media (min-width: 768px) {
