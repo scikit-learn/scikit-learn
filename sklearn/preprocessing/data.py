@@ -23,7 +23,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import partition
+from ..utils.fixes import argpartition
 from ..utils.multiclass import type_of_target
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
@@ -3085,37 +3085,33 @@ def power_transform(X, method='warn', standardize=True, copy=True):
 def select_k_best(scores, k_best, cast_as_indicator=False):
     """Select the k-best scores per sample.
     :param scores: array, shape = [n_samples, n_labels] array / sparse matrix
-        Target scores, can either be probability estimates of the positive class, confidence values, or binary
-        decisions.
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
     :param k_best: The number of best scores kept.
-    :param cast_as_indicator: return multilabel-indicator matrix instead of matrix of scores
+    :param cast_as_indicator: return multilabel-indicator matrix instead of
+        matrix of scores
     :return: array/matrix of the same format that input scores
     """
     scores = check_array(scores, accept_sparse='csr')
 
-    scores_type = type_of_target(scores)
-    if scores_type not in ('continuous-multioutput', 'multilabel-indicator'):
-        raise ValueError("{0} format is not supported".format(scores_type))
+    # scores_type = type_of_target(scores)
+    # if scores_type not in ('continuous-multioutput', 'multilabel-indicator'):
+    #     raise ValueError("{0} format is not supported".format(scores_type))
 
-    if sparse.issparse(scores):
-        truncated_scores = sparse.csr_matrix(scores, copy=True)
-        for i in range(truncated_scores.shape[0]):
-            # get the row slice per reference
-            row_array = truncated_scores.data[truncated_scores.indptr[i]: truncated_scores.indptr[i + 1]]
-            # only take the k last elements in the sorted indices, and set them to 0
-            row_array[np.argsort(row_array)[:-k_best]] = 0
-        truncated_scores.eliminate_zeros()
-        if cast_as_indicator:
-            return truncated_scores.astype(bool).astype(int)
-        return truncated_scores
-
-    # TODO compare perf with csr transition
-    n_labels = scores.shape[1]
-    if k_best > 1:
-        row_top_k = partition(scores, kth=n_labels - k_best, axis=1)[:, -k_best]
-    else:
-        row_top_k = np.max(scores, axis=1)
-    truncated_scores = scores.multiply(scores >= row_top_k.reshape((-1, 1)))
+    best_scores = sparse.csr_matrix(scores, copy=True)
+    for i in range(best_scores.shape[0]):
+        # get the row slice per reference
+        row_array = best_scores.data[
+                    best_scores.indptr[i]: best_scores.indptr[i + 1]]
+        # only take the k last elements in the sorted indices,
+        # and set them to 0
+        row_array[argpartition(row_array, kth=k_best)[:-k_best]] = 0
+    best_scores.eliminate_zeros()
     if cast_as_indicator:
-        return truncated_scores.astype(bool).astype(int)
-    return truncated_scores
+        best_scores = best_scores.astype(bool).astype(int)
+        if sparse.issparse(scores):
+            return best_scores
+        return best_scores.todense()
+    if sparse.issparse(scores):
+        return best_scores
+    return best_scores.todense()
