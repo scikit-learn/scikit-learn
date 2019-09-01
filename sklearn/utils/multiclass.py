@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from .validation import check_array, _assert_all_finite
+from .validation import check_array, _assert_all_finite, assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -265,12 +265,19 @@ def type_of_target(y):
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
         warnings.simplefilter('error', np.VisibleDeprecationWarning)
-        try:
-            y = np.asarray(y)
-        except np.VisibleDeprecationWarning:
-            # dtype=object should be provided explicitly for ragged arrays,
-            # see NEP 34
-            y = np.asarray(y, dtype=object)
+        if not issparse(y):
+            # calling np.asarray on sparse matrix has unexpected behavior
+            # https://github.com/numpy/numpy/issues/14221
+
+            try:
+                y = np.asarray(y)
+            except np.VisibleDeprecationWarning:
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = np.asarray(y, dtype=object)
+            except ValueError:
+                # Known to fail in numpy 1.3 for array of arrays
+                return 'unknown'
 
     # The old sequence of sequences format
     try:
@@ -285,9 +292,14 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
+    if y.ndim > 2:
+        return 'unknown'
+    if not issparse(y) and y.dtype == object and len(y) \
+            and not isinstance(y.flat[0], str):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if issparse(y) and y.dtype == object and y.shape[0] \
+            and not isinstance(y.data[0], str):
+        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"] (sparse)
 
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'  # [[]]
@@ -298,13 +310,22 @@ def type_of_target(y):
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
     # check float and contains non-integer float values
-    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
-        # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y)
-        return 'continuous' + suffix
+    if y.dtype.kind == 'f':
+        if not issparse(y) and np.any(y != y.astype(int)):
+            # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+            _assert_all_finite(y)
+            return 'continuous' + suffix
+        if issparse(y) and np.any(y.data != y.data.astype(int)):
+            # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+            assert_all_finite(y)
+            return 'continuous' + suffix
 
-    if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    if len(np.unique(y)) > 2:
+        return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]]
+    if not issparse(y) and y.ndim >= 2 and len(y[0]) > 1:
+        return 'multiclass' + suffix  # [[1, 2]] or [[0],[1]]
+    if issparse(y) and y.ndim >= 2:
+        return 'multiclass' + suffix  # [[1, 2]]
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]
 
