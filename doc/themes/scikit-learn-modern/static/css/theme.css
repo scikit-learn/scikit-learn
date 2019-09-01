@@ -133,6 +133,11 @@ div.clearer {
   padding-right: 0;
 }
 
+div.gsc-input-box {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 div.gsc-control-cse {
   background-color: #f8f9fa;
   border-color: #f8f9fa;
