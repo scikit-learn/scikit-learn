@@ -125,7 +125,7 @@ div.clearer {
 
 /* Search */
 
-.search_form {
+.sk-search-form {
   width: 80%;
 }
 
@@ -163,7 +163,7 @@ div.gsc-results {
 }
 
 @media (min-width: 768px) {
-  .search_form {
+  .sk-search-form {
     width: 16rem;
   }
 }
