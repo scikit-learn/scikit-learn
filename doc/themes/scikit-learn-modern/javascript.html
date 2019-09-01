@@ -79,59 +79,60 @@ $(document).ready(function() {
 {%- if pagename != 'index' and pagename != 'documentation' %}
   /*** Had navbar when scrolling down ***/
   // Returns true when headerlink target matches hash in url
-  hashTargetOnTop = function() {
-    var hash = window.location.hash;
-    if ( hash.length < 2 ) { return false; }
+  (function() {
+    hashTargetOnTop = function() {
+        var hash = window.location.hash;
+        if ( hash.length < 2 ) { return false; }
 
-    var target = document.getElementById( hash.slice(1) );
-    if ( target === null ) { return false; }
+        var target = document.getElementById( hash.slice(1) );
+        if ( target === null ) { return false; }
 
-    return target.getBoundingClientRect().top < 2;
-  };
+        return target.getBoundingClientRect().top < 2;
+    };
 
-  // Hide navbar on load if hash target is on top
-  var navBar = document.getElementById("navbar");
-  var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
-  if (hashTargetOnTop()) {
-    navBar.
-      navBar.style.top = navBarHeightHidden;
-  }
-
-  var prevScrollpos = window.pageYOffset;
-  hideOnScroll = function(lastScrollTop) {
-    var currentScrollPos = window.pageYOffset;
-    if (lastScrollTop > 2 && (prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
-      navBar.style.top = navBarHeightHidden;
-    } else {
-      navBar.style.top = "0";
+    // Hide navbar on load if hash target is on top
+    var navBar = document.getElementById("navbar");
+    var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
+    if (hashTargetOnTop()) {
+        navBar.style.top = navBarHeightHidden;
     }
-    prevScrollpos = currentScrollPos;
-  };
 
-  /*** high preformance scroll event listener***/
-  var raf = window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
-      window.oRequestAnimationFrame;
-  var $window = $(window);
-  var lastScrollTop = $window.scrollTop();
+    var prevScrollpos = window.pageYOffset;
+    hideOnScroll = function(lastScrollTop) {
+        var currentScrollPos = window.pageYOffset;
+        if (lastScrollTop > 2 && (prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
+            navBar.style.top = navBarHeightHidden;
+        } else {
+            navBar.style.top = "0";
+        }
+            prevScrollpos = currentScrollPos;
+    };
 
-  if (raf) {
-      loop();
-  }
+    /*** high preformance scroll event listener***/
+    var raf = window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        window.oRequestAnimationFrame;
+    var $window = $(window);
+    var lastScrollTop = $window.scrollTop();
 
-function loop() {
-    var scrollTop = $window.scrollTop();
-    if (lastScrollTop === scrollTop) {
-        raf(loop);
-        return;
-    } else {
-        lastScrollTop = scrollTop;
-        hideOnScroll(lastScrollTop);
-        raf(loop);
+    if (raf) {
+        loop();
     }
-  }
+
+    function loop() {
+        var scrollTop = $window.scrollTop();
+        if (lastScrollTop === scrollTop) {
+            raf(loop);
+            return;
+        } else {
+            lastScrollTop = scrollTop;
+            hideOnScroll(lastScrollTop);
+            raf(loop);
+        }
+    }
+  })();
 {%- endif %}
 });
 
