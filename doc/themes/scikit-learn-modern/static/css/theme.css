@@ -184,7 +184,7 @@ div.sk-landing-bg-more-info dd {
 }
 
 div.sk-landing-bg {
-  background-image: linear-gradient(90deg, #3499cd 50%, #ff9c34);
+  background-image: linear-gradient(90deg, #3499cd 40%, #ff9c34);
 }
 
 div.sk-landing-bg-more-info {
@@ -196,11 +196,11 @@ div.sk-landing-bg-more-info {
 }
 
 .sk-landing-header {
-  font-size: 3rem;
+  font-size: 3.2rem;
 }
 
 .sk-landing-header-body {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: 500;
 }
 
