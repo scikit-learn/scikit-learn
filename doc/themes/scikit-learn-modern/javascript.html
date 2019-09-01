@@ -89,14 +89,19 @@ $(document).ready(function() {
     return target.getBoundingClientRect().top < 2;
   };
 
+  // Hide navbar on load if hash target is on top
+  var navBar = document.getElementById("navbar")
+  if (hashTargetOnTop()) {
+      navBar.style.top = "-48px";
+  }
+
   var prevScrollpos = window.pageYOffset;
-  var narBar = document.getElementById("navbar")
   hideOnScroll = function() {
     var currentScrollPos = window.pageYOffset;
     if ((prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
-      narBar.style.top = "-48px";
+      navBar.style.top = "-48px";
     } else {
-      narBar.style.top = "0";
+      navBar.style.top = "0";
     }
     prevScrollpos = currentScrollPos;
   };
