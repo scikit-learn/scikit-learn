@@ -874,7 +874,7 @@ with 'log' loss, which might be even faster but requires more tuning.
     It is possible to obtain the p-values and confidence intervals for
     coefficients in cases of regression without penalization. The `statsmodels
     package <https://pypi.org/project/statsmodels/>` natively supports this.
-    Within sklearn, one could use bootstrapping instead as well.  
+    Within sklearn, one could use bootstrapping instead as well.
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
@@ -919,8 +919,8 @@ The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
 likelihood as
 
 .. math::     d(y, \mu) = -2\phi\cdot
-              \left( log P(y|\mu,\phi)
-              - log P(y|y,\phi)\right)
+              \left( \log p(y|\mu,\phi)
+              - \log p(y|y,\phi)\right).
 
 The following table lists some specific EDM distributions—all are Tweedie
 distributions—and some of their properties.
@@ -939,7 +939,7 @@ Usage
 -----
 
 In the following use cases, a loss different from the squared loss might be
-appropriate,
+appropriate:
 
   * If the target values :math:`y` are counts (non-negative integer valued) or
     frequencies (non-negative), you might use a Poisson deviance with log-link.
@@ -960,7 +960,7 @@ log-link `link='log'` with :math:`h(x^\top w)=\exp(x^\top w)`.
 :class:`TweedieRegressor` implements a generalized linear model
 for the Tweedie distribution, that allows to model any of the above mentioned
 distributions using the appropriate ``power`` parameter, i.e. the exponent
-of the unit variance function,
+of the unit variance function:
 
  - ``power = 0``: Normal distribution. Specialized solvers such as
    :class:`Ridge`, :class:`ElasticNet` are generally
@@ -987,15 +987,15 @@ of the unit variance function,
      together with :math:`s=\mathrm{exposure}` as sample weights. This is done
      in both examples linked below.
    * The fit itself does not need Y to be from an EDM, but only assumes
-     the first two moments to be :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
-     :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`.
-   * If the target y is a ratio, appropriate sample weights s should be
+     the first two moments to be :math:`E[Y_i]=\mu_i=h((Xw)_i)` and
+     :math:`Var[Y_i]=\frac{\phi}{s_i} v(\mu_i)`.
+   * If the target `y` is a ratio, appropriate sample weights ``s`` should be
      provided.
      As an example, consider Poisson distributed counts z (integers) and
      weights s=exposure (time, money, persons years, ...). Then you fit
      y = z/s, i.e. ``PoissonRegressor.fit(X, y, sample_weight=s)``.
      The weights are necessary for the right (finite sample) mean.
-     Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+     Consider :math:`\bar{y} = \frac{\\sum_i s_i y_i}{\sum_i s_i}`,
      in this case one might say that y has a 'scaled' Poisson distributions.
      The same holds for other distributions.
 
