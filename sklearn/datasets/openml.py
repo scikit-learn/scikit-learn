@@ -599,20 +599,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
 
-    bunch = _apply_cached_with_retry(
-        _fetch_openml_inner, data_id=data_id, target_column=target_column,
-        as_frame=as_frame)
+    data_description = _apply_cached_with_retry(_get_data_description_by_id,
+                                                data_id=data_id)
 
-    if return_X_y:
-        return bunch.data, bunch.target
-    else:
-        return bunch
-
-
-def _fetch_openml_inner(data_id=None, target_column='default-target',
-                        as_frame=False):
-
-    data_description = _get_data_description_by_id(data_id)
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have "
              "been found in the dataset. Try using a newer version from "
@@ -633,6 +622,23 @@ def _fetch_openml_inner(data_id=None, target_column='default-target',
 
     if as_frame and return_sparse:
         raise ValueError('Cannot return dataframe with sparse data')
+
+    bunch = _apply_cached_with_retry(
+        _fetch_openml_inner, data_id=data_id, target_column=target_column,
+        as_frame=as_frame, return_sparse=return_sparse,
+        file_id=data_description['file_id'])
+
+    if return_X_y:
+        return bunch.data, bunch.target
+    else:
+        bunch['DESCR'] = ("{}\n\nDownloaded from openml.org."
+                          .format(data_description.pop('description')))
+        bunch['details'] = data_description
+        return bunch
+
+
+def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
+                        file_id):
 
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id)
@@ -694,11 +700,8 @@ def _fetch_openml_inner(data_id=None, target_column='default-target',
         shape = None
 
     # obtain the data
-    arff = _download_data_arff(data_description['file_id'], return_sparse,
+    arff = _download_data_arff(file_id, return_sparse,
                                encode_nominal=not as_frame)
-
-    description = "{}\n\nDownloaded from openml.org.".format(
-        data_description.pop('description'))
 
     nominal_attributes = None
     frame = None
@@ -748,7 +751,6 @@ def _fetch_openml_inner(data_id=None, target_column='default-target',
 
     bunch = Bunch(
         data=X, target=y, frame=frame, feature_names=data_columns,
-        DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id)
     )
