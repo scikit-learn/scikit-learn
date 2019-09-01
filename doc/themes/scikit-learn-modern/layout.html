@@ -43,6 +43,14 @@
 <div class="d-flex " id="sk-doc-wrapper">
     <div id="sk-sidebar-wrapper" class="border-right">
       <div class="sk-sidebar-toc-wrapper">
+        <div class="sk-sidebar-toc-logo">
+          <a href="{{ pathto('index') }}">
+            <img
+              src="{{ pathto('_static/scikit-learn-logo-small.png', 1) }}"
+              height="38"
+              alt="logo"/>
+          </a>
+        </div>
         {%- if rellinks -%}
           <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
             {%- set rellinks_previous = rellinks[-1] %}

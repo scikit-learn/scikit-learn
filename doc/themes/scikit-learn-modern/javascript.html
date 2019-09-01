@@ -96,9 +96,9 @@ $(document).ready(function() {
   }
 
   var prevScrollpos = window.pageYOffset;
-  hideOnScroll = function() {
+  hideOnScroll = function(lastScrollTop) {
     var currentScrollPos = window.pageYOffset;
-    if ((prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
+    if (lastScrollTop > 2 && (prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
       navBar.style.top = "-48px";
     } else {
       navBar.style.top = "0";
@@ -126,7 +126,7 @@ function loop() {
         return;
     } else {
         lastScrollTop = scrollTop;
-        hideOnScroll();
+        hideOnScroll(lastScrollTop);
         raf(loop);
     }
   }

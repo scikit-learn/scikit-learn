@@ -274,7 +274,7 @@ img.sk-footer-funding-logo {
 
 div.sk-page-content {
   background-color: white;
-  margin-top: 48px;
+  margin-top: 52px;
 }
 
 .sk-btn-toggle-toc {
@@ -361,13 +361,16 @@ a.sk-documentation-index-anchor:hover {
 
 /* toc  */
 
+div.sk-sidebar-toc-logo {
+  height: 52px;
+}
+
 div.sk-sidebar-toc-wrapper > ul > li > a{
   font-weight: bold;
 }
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-  margin-top: 48px;
 }
 
 div.sk-sidebar-toc-wrapper > ul,
@@ -625,6 +628,12 @@ img.align-center, .figure.align-center, object.align-center {
   margin-right: auto;
   margin-bottom: 1rem;
   text-align: center;
+}
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right;
+  float: right;
+  margin-left: 1em;
 }
 
 a.brackets::after, span.brackets > a::after {
