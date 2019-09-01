@@ -83,20 +83,55 @@ $(document).ready(function() {
     }
 });
 
-/*** Scroll to anchor link with fixed header ***/
-function scrollUpToCompensateForFixedHeader() {
-if (window.innerWidth < 768) { return; }
-
+  /*** Had navbar when scrolling down ***/
+  // Returns true when headerlink target matches hash in url
+  hashTargetOnTop = function() {
     var hash = window.location.hash;
-    if ( hash.length < 2 ) { return; }
+    if ( hash.length < 2 ) { return false; }
 
     var target = document.getElementById( hash.slice(1) );
-    if ( target === null ) { return; }
+    if ( target === null ) { return false; }
 
-    if ( target.getBoundingClientRect().top < 3 ) {
-        window.scrollBy(0, -48);
+    return target.getBoundingClientRect().top < 2;
+  };
+
+  var prevScrollpos = window.pageYOffset;
+  var narBar = document.getElementById("navbar")
+  hideOnScroll = function() {
+    var currentScrollPos = window.pageYOffset;
+    if ((prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
+      narBar.style.top = "-48px";
+    } else {
+      narBar.style.top = "0";
     }
-}
+    prevScrollpos = currentScrollPos;
+  };
+
+  /*** high preformance scroll event listener***/
+  var raf = window.requestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.mozRequestAnimationFrame ||
+      window.msRequestAnimationFrame ||
+      window.oRequestAnimationFrame;
+  var $window = $(window);
+  var lastScrollTop = $window.scrollTop();
+
+  if (raf) {
+      loop();
+  }
+
+function loop() {
+    var scrollTop = $window.scrollTop();
+    if (lastScrollTop === scrollTop) {
+        raf(loop);
+        return;
+    } else {
+        lastScrollTop = scrollTop;
+        hideOnScroll();
+        raf(loop);
+    }
+  }
+
 </script>
 <script>
     (function() {

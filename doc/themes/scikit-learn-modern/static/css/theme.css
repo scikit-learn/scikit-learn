@@ -272,6 +272,7 @@ img.sk-footer-funding-logo {
 
 div.sk-page-content {
   background-color: white;
+  margin-top: 48px;
 }
 
 .sk-btn-toggle-toc {
@@ -297,16 +298,18 @@ footer.sk-content-footer {
 nav.sk-docs-navbar {
   width: 100%;
   z-index: 3;
+  position: fixed;
+  -webkit-transition: top .2s ease-in-out;
+  -moz-transition: top .2s ease-in-out .05s;
+  -o-transition: top .2s ease-in-out .05s;
+  transition: top .2s ease-in-out .05s;
+  position: fixed;
 }
 
 @media (min-width: 768px) {
-  nav.sk-docs-navbar {
-    position: fixed;
-  }
 
   #sk-page-content-wrapper {
     padding-left: 240px;
-    margin-top: 48px;
   }
 
   #sk-sidebar-wrapper {
