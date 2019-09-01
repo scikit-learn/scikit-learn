@@ -3,11 +3,11 @@
 Poisson regression and non-normal loss
 ======================================
 
-This example illustrates the use of linear Poisson regression
+This example illustrates the use of log-linear Poisson regression
 on the French Motor Third-Party Liability Claims dataset [1] and compares
 it with models learned with least squared error. The goal is to predict the
-number of insurance claims (or frequency) following car accidents for a user
-given historical data over a population of users.
+number of insurance claims (or frequency) following car accidents for a
+policyholder given historical data over a population of policyholders.
 
 We start by defining a few helper functions for loading the data and
 visualizing results.
@@ -48,7 +48,8 @@ def load_mtpl2(n_samples=100000):
     Parameters
     ----------
     n_samples: int, default=100000
-      number of samples to select (for faster run time).
+      number of samples to select (for faster run time). Full dataset has
+      678013 samples.
     """
 
     # freMTPL2freq dataset from https://www.openml.org/d/41214
@@ -76,14 +77,15 @@ def load_mtpl2(n_samples=100000):
 # 1. Loading datasets and pre-processing
 # --------------------------------------
 #
-# We construct the freMTPL2 dataset by joining the  freMTPL2freq table,
+# We construct the freMTPL2 dataset by joining the freMTPL2freq table,
 # containing the number of claims (``ClaimNb``) with the freMTPL2sev table
-# containing the claim amount (``ClaimAmount``) for the same user ids.
+# containing the claim amount (``ClaimAmount``) for the same policy ids
+# (``IDpol``).
 
 df = load_mtpl2(n_samples=50000)
 
 # Note: filter out claims with zero amount, as the severity model
-# requires a strictly positive target values.
+# requires strictly positive target values.
 df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
 
 # correct for unreasonable observations (that might be data error)
@@ -116,9 +118,9 @@ X = column_trans.fit_transform(df)
 # The number of claims (``ClaimNb``) is a positive integer that can be modeled
 # as a Poisson distribution. It is then assumed to be the number of discrete
 # events occurring with a constant rate in a given time interval
-# (``Exposure``). Here we model the frequency ``y = ClaimNb / Exposure``,
-# which is still a (scaled) Poisson distribution, and use ``Exposure`` as
-# `sample_weight`.
+# (``Exposure``, in units of years). Here we model the frequency
+# ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
+# and use ``Exposure`` as `sample_weight`.
 
 df["Frequency"] = df.ClaimNb / df.Exposure
 
@@ -126,20 +128,23 @@ print(
    pd.cut(df.Frequency, [-1e-6, 1e-6, 1, 2, 3, 4, 5]).value_counts()
 )
 
+print("Average Frequency = {}"
+      .format(np.average(df.Frequency, weights=df.Exposure)))
+
 ##############################################################################
 #
-# It worth noting that 96 % of users have 0 claims, and if we were to convert
-# this problem into a binary classification task, it would be significantly
-# imbalanced.
+# It worth noting that 96 % of policyholders have zero claims, and if we were
+# to convert this problem into a binary classification task, it would be
+# significantly imbalanced.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
-# baseline an estimator that returns 0 for any input.
+# baseline an estimator that returns the mean of the training sample.
 
 df_train, df_test = train_test_split(df, random_state=0)
 
 dummy = make_pipeline(
     column_trans,
-    DummyRegressor(strategy='constant', constant=0)
+    DummyRegressor(strategy='mean')
 )
 dummy.fit(df_train, df_train.Frequency,
           dummyregressor__sample_weight=df_train.Exposure)
@@ -257,7 +262,7 @@ for idx, model in enumerate([linregr, glm_freq, gbr]):
     y_pred = model.predict(df_train)
 
     pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=axes[idx+1])
-    axes[idx + 1].set_title(model.__class__.__name__)
+    axes[idx + 1].set_title(model[-1].__class__.__name__)
 
 for axi in axes:
     axi.set(
