@@ -308,6 +308,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Initialize the gradients and hessians
             gradients, hessians = self.loss_.init_gradients_and_hessians(
                 n_samples=n_samples,
+                sample_weight=sample_weight_train,
                 prediction_dim=self.n_trees_per_iteration_
             )
 
