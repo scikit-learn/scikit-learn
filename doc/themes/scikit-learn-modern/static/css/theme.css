@@ -141,7 +141,7 @@ div.gsc-control-cse {
 
 button.gsc-search-button {
   border-radius: 0.25rem;
-  padding: 0.7rem 0.8rem;
+  padding: 10px 10px;
 }
 
 button.gsc-search-button:hover,
@@ -162,7 +162,7 @@ div.gsc-results {
   height: 680px;
 }
 
-@media (min-width: 768px) {
+@media screen and (min-width: 768px) {
   .sk-search-form {
     width: 16rem;
   }
@@ -309,7 +309,7 @@ nav.sk-docs-navbar {
   position: fixed;
 }
 
-@media (min-width: 768px) {
+@media screen and (min-width: 768px) {
 
   #sk-page-content-wrapper {
     padding-left: 240px;
