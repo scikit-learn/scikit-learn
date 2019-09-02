@@ -15,7 +15,8 @@ from .label import _encode, _encode_check_unknown
 
 __all__ = [
     'OneHotEncoder',
-    'OrdinalEncoder'
+    'OrdinalEncoder',
+    'EnumEncoder'
 ]
 
 
@@ -660,3 +661,45 @@ class OrdinalEncoder(_BaseEncoder):
             X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr
+
+
+class EnumEncoder(OrdinalEncoder):
+
+    def __init__(self, target_variable, dtype=np.float64):
+        # self.categories = categories
+        self.target_variable = np.array(target_variable)
+        self.dtype = dtype
+        self._categories = []
+
+        assert self.target_variable.ndim == 1, "Target variable is expected to be 1-Dimensional, i.e of size (n,)"
+
+    def extract_encoding_xy(self, x):
+        ids = np.unique(x)
+        pos_mean = [[i, np.mean(self.target_variable[x == i])] for i in ids]
+        pos_mean.sort(key=lambda x: x[1])
+
+        return [x[0] for x in pos_mean]
+
+    def __extract_categories(self, X):
+        X_list, _, _ = self._check_X(X)
+
+        for x in X_list:
+            self._categories.append(self.extract_encoding_xy(x))
+
+    def fit(self, X, y=None):
+        """Fit the OrdinalEncoder to X.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data to determine the categories of each feature.
+
+        Returns
+        -------
+        self
+
+        """
+        self.__extract_categories(X)
+        self._fit(X)
+
+        return self
