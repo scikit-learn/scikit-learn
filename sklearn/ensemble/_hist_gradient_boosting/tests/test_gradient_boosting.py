@@ -419,7 +419,7 @@ def test_infinite_values_missing_values():
 
 def test_crossentropy_binary_problem():
     # categorical_crossentropy should only be used if there are more than two
-    # classes present.
+    # classes present. PR #14869
     X = [[1], [0]]
     y = [0, 1]
     gbrt = HistGradientBoostingClassifier(loss='categorical_crossentropy')
