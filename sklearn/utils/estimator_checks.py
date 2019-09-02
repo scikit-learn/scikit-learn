@@ -132,11 +132,11 @@ def _yield_classifier_checks(name, classifier):
         yield check_classifiers_multilabel_representation_invariance
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
-    yield check_classifiers_multilabel_representation_invariance
 
-    if (name not in ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
-        # TODO some complication with -1 label
-       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+    if (name not in
+            ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
+            # TODO some complication with -1 label
+            name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
         # We don't raise a warning in these classifiers, as
         # the column y interface is used by the forests.
 
