@@ -202,8 +202,6 @@ def type_of_target(y):
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
 
-            .. versionadded:: 0.19
-
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
           of two dimensions with at least two columns, and at most 2 unique
           values.

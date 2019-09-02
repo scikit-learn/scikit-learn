@@ -33,8 +33,7 @@ from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
-                    BaseEstimator)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -53,7 +52,8 @@ from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import load_iris, load_boston, make_blobs, make_multilabel_classification
+from ..datasets import load_iris, load_boston, make_blobs, \
+    make_multilabel_classification
 
 
 BOSTON = None
@@ -1840,6 +1840,11 @@ def check_classifiers_multilabel_representation_invariance(name,
     assert_array_equal(y_pred, y_pred_list_of_arrays)
     assert_array_equal(y_pred, y_pred_list_of_lists)
 
+    assert y_pred.dtype == y_pred_list_of_arrays.dtype
+    assert y_pred.dtype == y_pred_list_of_lists.dtype
+    assert type(y_pred) == type(y_pred_list_of_arrays)
+    assert type(y_pred) == type(y_pred_list_of_lists)
+
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_fit_returns_self(name, estimator_orig,
@@ -2177,7 +2182,7 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
     classifier.fit(X_train, y_train)
     y_pred_balanced = classifier.predict(X_test)
     assert (f1_score(y_test, y_pred_balanced, average='weighted') >
-                   f1_score(y_test, y_pred, average='weighted'))
+            f1_score(y_test, y_pred, average='weighted'))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2404,8 +2409,8 @@ def check_parameters_default_constructible(name, Estimator):
                 assert init_param.default in [np.float64, np.int64]
             else:
                 assert (type(init_param.default) in
-                          [str, int, float, bool, tuple, type(None),
-                           np.float64, types.FunctionType, joblib.Memory])
+                        [str, int, float, bool, tuple, type(None),
+                         np.float64, types.FunctionType, joblib.Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
@@ -2548,7 +2553,7 @@ def check_set_params(name, estimator_orig):
                 curr_params = estimator.get_params(deep=False)
                 try:
                     assert (set(params_before_exception.keys()) ==
-                                 set(curr_params.keys()))
+                            set(curr_params.keys()))
                     for k, v in curr_params.items():
                         assert params_before_exception[k] is v
                 except AssertionError:
