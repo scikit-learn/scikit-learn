@@ -88,6 +88,19 @@ div.highlight a {
   text-decoration: underline;
 }
 
+a.sk-btn-landing-whats-new {
+  background-color: #ff9c34;
+  color: black;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+a.sk-btn-landing-whats-new:hover {
+  color: #ff8d14;
+  background-color: white;
+}
+
 .sk-donate-btn {
   cursor: pointer;
 }
