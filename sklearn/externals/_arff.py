@@ -304,7 +304,7 @@ _SUPPORTED_DATA_STRUCTURES = [DENSE, COO, LOD, DENSE_GEN, LOD_GEN]
 # =============================================================================
 
 # COMPATIBILITY WITH PYTHON 3 =================================================
-PY3 = sys.version_info[0] == 3
+PY3 = sys.version_info[0] >= 3
 if PY3:
     unicode = str
     basestring = str
