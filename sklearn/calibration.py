@@ -216,7 +216,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples, n_classes)
             The predicted probas.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
@@ -244,7 +244,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
@@ -452,9 +452,8 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def grad(AB):
         # gradient of the objective function
-        E = np.exp(AB[0] * F + AB[1])
-        P = 1. / (1. + E)
-        TEP_minus_T1P = P * (T * E - T1)
+        P = expit(-(AB[0] * F + AB[1]))
+        TEP_minus_T1P = T - P
         if sample_weight is not None:
             TEP_minus_T1P *= sample_weight
         dA = np.dot(TEP_minus_T1P, F)

@@ -9,7 +9,6 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 
 from sklearn.datasets import make_classification
@@ -130,18 +129,21 @@ def test_make_classification_informative_features():
                                                       "centered on hypercube "
                                                       "vertices")
                 else:
-                    assert_raises(AssertionError,
-                                  assert_array_almost_equal,
-                                  np.abs(centroid) / class_sep,
-                                  np.ones(n_informative),
-                                  decimal=5,
-                                  err_msg="Clusters should not be centered "
-                                          "on hypercube vertices")
+                    with pytest.raises(AssertionError):
+                        assert_array_almost_equal(np.abs(centroid) / class_sep,
+                                                  np.ones(n_informative),
+                                                  decimal=5,
+                                                  err_msg="Clusters should "
+                                                          "not be centered "
+                                                          "on hypercube "
+                                                          "vertices")
 
-    assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=5,
-                  n_clusters_per_class=1)
-    assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=3,
-                  n_clusters_per_class=2)
+    with pytest.raises(ValueError):
+        make(n_features=2, n_informative=2, n_classes=5,
+             n_clusters_per_class=1)
+    with pytest.raises(ValueError):
+        make(n_features=2, n_informative=2, n_classes=3,
+             n_clusters_per_class=2)
 
 
 def test_make_multilabel_classification_return_sequences():
@@ -466,5 +468,7 @@ def test_make_circles():
         assert X[y == 1].shape == (n_inner, 2), (
             "Samples not correctly distributed across circles.")
 
-    assert_raises(ValueError, make_circles, factor=-0.01)
-    assert_raises(ValueError, make_circles, factor=1.)
+    with pytest.raises(ValueError):
+        make_circles(factor=-0.01)
+    with pytest.raises(ValueError):
+        make_circles(factor=1.)
