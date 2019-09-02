@@ -417,6 +417,17 @@ def test_infinite_values_missing_values():
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
 
 
+def test_crossentropy_binary_problem():
+    # categorical_crossentropy should only be used if there are more than two
+    # classes present.
+    X = [[1], [0]]
+    y = [0, 1]
+    gbrt = HistGradientBoostingClassifier(loss='categorical_crossentropy')
+    with pytest.warns(UserWarning,
+                      match="Switching to 'binary_crossentropy' loss since"):
+        gbrt.fit(X, y)
+
+
 @pytest.mark.parametrize("scoring", [None, 'loss'])
 def test_string_target_early_stopping(scoring):
     # Regression tests for #14709 where the targets need to be encoded before
