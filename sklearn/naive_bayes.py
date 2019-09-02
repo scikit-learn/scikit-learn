@@ -723,8 +723,8 @@ class MultinomialNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.randint(5, size=(6, 100))
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
@@ -833,8 +833,8 @@ class ComplementNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.randint(5, size=(6, 100))
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
@@ -944,8 +944,8 @@ class BernoulliNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.randint(2, size=(6, 100))
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 4, 5])
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
@@ -1066,8 +1066,8 @@ class CategoricalNB(BaseDiscreteNB):
     Examples
     --------
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.randint(5, size=(6, 100))
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import CategoricalNB
     >>> clf = CategoricalNB()
