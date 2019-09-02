@@ -139,6 +139,29 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
+class MockHTTPResponse:
+    def __init__(self, data, is_gzip):
+        self.data = data
+        self.is_gzip = is_gzip
+
+    def read(self, amt=-1):
+        return self.data.read(amt)
+
+    def tell(self):
+        return self.data.tell()
+
+    def seek(self, pos, whence=0):
+        return self.data.seek(pos, whence)
+
+    def close(self):
+        self.data.close()
+
+    def info(self):
+        if self.is_gzip:
+            return {'Content-Encoding': 'gzip'}
+        return {}
+
+
 def _monkey_patch_webbased_functions(context,
                                      data_id,
                                      gzip_response):
@@ -152,28 +175,6 @@ def _monkey_patch_webbased_functions(context,
 
     path_suffix = '.gz'
     read_fn = gzip.open
-
-    class MockHTTPResponse:
-        def __init__(self, data, is_gzip):
-            self.data = data
-            self.is_gzip = is_gzip
-
-        def read(self, amt=-1):
-            return self.data.read(amt)
-
-        def tell(self):
-            return self.data.tell()
-
-        def seek(self, pos, whence=0):
-            return self.data.seek(pos, whence)
-
-        def close(self):
-            self.data.close()
-
-        def info(self):
-            if self.is_gzip:
-                return {'Content-Encoding': 'gzip'}
-            return {}
 
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])

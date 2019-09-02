@@ -6,11 +6,13 @@ from contextlib import closing
 import itertools
 from collections.abc import Generator
 from collections import OrderedDict
+from distutils.version import LooseVersion
 
 from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
+import joblib
 from joblib import Memory
 
 from ..externals import _arff
@@ -576,8 +578,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # disable caching
         data_home = None
 
-    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
-
     # check valid function arguments. data_id XOR (name, version) should be
     # provided
     if name is not None:
@@ -589,7 +589,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 "Dataset data_id={} and name={} passed, but you can only "
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name))
-        data_info = _apply_cached_with_retry(
+        data_info = _CacheWithRetry(data_home, data_id=None)(
             _get_data_info_by_name, name=name, version=version)
         data_id = data_info['did']
     elif data_id is not None:
@@ -603,6 +603,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError(
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
+
+    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
 
     data_description = _apply_cached_with_retry(_get_data_description_by_id,
                                                 data_id=data_id)
@@ -644,12 +646,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
 def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
                         file_id, data_home):
-
     _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
 
     # download data features, meta-info about column types
-    features_list = _get_data_features(data_id)
-
+    features_list = _apply_cached_with_retry(_get_data_features,
+                                             data_id=data_id)
     if not as_frame:
         for feature in features_list:
             if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
@@ -701,16 +702,22 @@ def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
     if not return_sparse:
         # The shape must include the ignored features to keep the right indexes
         # during the arff data conversion.
-        data_qualities = _get_data_qualities(data_id)
+        data_qualities = _apply_cached_with_retry(_get_data_qualities,
+                                                  data_id=data_id)
         shape = _get_num_samples(data_qualities), len(features_list)
     else:
         shape = None
 
     # obtain the data
-    arff = _apply_cached_with_retry(
-            _download_data_arff, file_id=file_id,
-            sparse=return_sparse, encode_nominal=not as_frame)
-
+    kwargs = dict(file_id=file_id, sparse=return_sparse,
+                  encode_nominal=not as_frame)
+    if LooseVersion(joblib.__version__) >= LooseVersion('0.12.0'):
+        arff = _CacheWithRetry(data_home, data_id)(_download_data_arff,
+                                                   **kwargs)
+    else:
+        # in some cases liac-arff returns a generator with data which
+        # cannot be pickled with joblib < 0.12
+        arff = _download_data_arff(**kwargs)
     nominal_attributes = None
     frame = None
     if as_frame:
