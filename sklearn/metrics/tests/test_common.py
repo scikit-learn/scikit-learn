@@ -921,12 +921,6 @@ def test_multilabel_representation_invariance():
                         measure,
                         err_msg="%s failed representation invariance between "
                                 "dense and sparse indicator formats." % name)
-        assert_almost_equal(metric(y1_sparse_indicator,
-                                   y2_sparse_indicator),
-                            measure,
-                            err_msg="%s failed representation invariance  "
-                                    "between dense and sparse indicator "
-                                    "formats." % name)
         assert_almost_equal(metric(y1_list_list_indicator,
                                    y2_list_list_indicator),
                             measure,

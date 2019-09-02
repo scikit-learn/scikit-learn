@@ -601,8 +601,6 @@ def test_label_binarize_multilabel():
 
 
 def test_invalid_input_label_binarize():
-    with pytest.raises(ValueError):
-        label_binarize([0, 2], classes=[0, 2], pos_label=0, neg_label=1)
     assert_raises(ValueError, label_binarize, [0, 2], classes=[0, 2],
                   pos_label=0, neg_label=1)
     assert_raise_message(ValueError, "continuous target data is not "

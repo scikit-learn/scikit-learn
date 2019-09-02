@@ -417,7 +417,6 @@ def test_check_estimator():
     check_estimator(LogisticRegression(C=0.01))
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
-    check_estimator(RandomForestClassifier())
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier)
