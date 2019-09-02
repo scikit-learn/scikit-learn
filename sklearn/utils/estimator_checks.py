@@ -58,18 +58,6 @@ from ..datasets import load_iris, load_boston, make_blobs, \
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
-                'GaussianProcessRegressor',
-                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
-                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
-                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
-                'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
-                'RANSACRegressor', 'RadiusNeighborsRegressor',
-                'RandomForestRegressor', 'Ridge', 'RidgeCV']
-MULTI_OUTPUT_CLASSIFIER = ['DecisionTreeClassifier', 'ExtraTreeClassifier',
-                           'ExtraTreesClassifier', 'KNeighborsClassifier',
-                           'OneVsRestClassifier', 'RandomForestClassifier']
 
 
 def _safe_tags(estimator, key=None):
@@ -140,6 +128,8 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield check_classifiers_regression_target
+    if tags["multilabel"] or tags["multioutput"]:
+        yield check_classifiers_multilabel_representation_invariance
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
     yield check_classifiers_multilabel_representation_invariance
@@ -1812,9 +1802,6 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
 
 def check_classifiers_multilabel_representation_invariance(name,
                                                            classifier_orig):
-    if name not in MULTI_OUTPUT_CLASSIFIER:
-        raise SkipTest
-
     X, y = make_multilabel_classification(n_samples=100, n_features=20,
                                           n_classes=5, n_labels=3,
                                           length=50, allow_unlabeled=True,
