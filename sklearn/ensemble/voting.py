@@ -29,6 +29,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..exceptions import NotFittedError
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -143,6 +144,20 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
             of the estimators as well
         """
         return self._get_params('estimators', deep=deep)
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.estimators_[0].n_features_in_
 
 
 class VotingClassifier(_BaseVoting, ClassifierMixin):
