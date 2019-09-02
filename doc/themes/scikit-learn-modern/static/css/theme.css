@@ -264,7 +264,11 @@ img.sk-footer-funding-logo {
   z-index: 2;
 }
 
-#sk-doc-wrapper.toggled #sk-sidebar-wrapper {
+#sk-toggle-checkbox {
+  display: none;
+}
+
+#sk-toggle-checkbox:checked ~ #sk-sidebar-wrapper {
   margin-left: 0;
   opacity: 1;
 }
@@ -290,11 +294,12 @@ div.sk-page-content {
   padding: 0.5rem;
   border-radius: 1rem;
   z-index: 3;
+  cursor: pointer;
 }
 
 .sk-btn-toggle-toc:hover {
-  color: #3499cd;
-  background-color: white;
+  color: white;
+  background-color: #297ca7;
 }
 
 footer.sk-content-footer {
@@ -325,12 +330,12 @@ nav.sk-docs-navbar {
     opacity: 1;
   }
 
-  #sk-doc-wrapper.toggled #sk-sidebar-wrapper {
+  #sk-toggle-checkbox:checked ~ #sk-sidebar-wrapper {
     margin-left: -240px;
     opacity: 0;
   }
 
-  #sk-doc-wrapper.toggled #sk-page-content-wrapper {
+  #sk-toggle-checkbox:checked ~ #sk-page-content-wrapper {
     padding-left: 0;
     margin-left: auto;
     margin-right: auto;
