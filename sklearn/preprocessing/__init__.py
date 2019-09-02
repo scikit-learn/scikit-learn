@@ -27,6 +27,7 @@ from .data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
+from ._encoders import EnumEncoder
 
 from .label import label_binarize
 from .label import LabelBinarizer
@@ -50,6 +51,7 @@ __all__ = [
     'Normalizer',
     'OneHotEncoder',
     'OrdinalEncoder',
+    'EnumEncoder',
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
