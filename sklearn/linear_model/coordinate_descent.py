@@ -696,9 +696,11 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
         # when bypassing checks
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            X, y = check_X_y(X, y, accept_sparse='csc',
-                             order='F', dtype=[np.float64, np.float32],
-                             copy=X_copied, multi_output=True, y_numeric=True)
+            X, y = self._validate_X_y(X, y, accept_sparse='csc',
+                                      order='F',
+                                      dtype=[np.float64, np.float32],
+                                      copy=X_copied, multi_output=True,
+                                      y_numeric=True)
             y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                             ensure_2d=False)
 
@@ -1120,7 +1122,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = check_array(X, 'csc', copy=False)
+            X = self._validate_X(X, accept_sparse='csc', copy=False)
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
                    not np.may_share_memory(reference_to_old_X.data, X.data)):
@@ -1131,8 +1133,9 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 copy_X = False
             del reference_to_old_X
         else:
-            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
-                            order='F', copy=copy_X)
+            X = self._validate_X(X, accept_sparse='csc',
+                                 dtype=[np.float64, np.float32], order='F',
+                                 copy=copy_X)
             copy_X = False
 
         if X.shape[0] != y.shape[0]:
@@ -1752,8 +1755,8 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        X = check_array(X, dtype=[np.float64, np.float32], order='F',
-                        copy=self.copy_X and self.fit_intercept)
+        X = self._validate_X(X, dtype=[np.float64, np.float32], order='F',
+                             copy=self.copy_X and self.fit_intercept)
         y = check_array(y, dtype=X.dtype.type, ensure_2d=False)
 
         if hasattr(self, 'l1_ratio'):

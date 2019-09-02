@@ -612,7 +612,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, multi_output=False)
+        X, y = self._validate_X_y(X, y, multi_output=False)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,

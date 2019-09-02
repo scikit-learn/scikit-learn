@@ -352,7 +352,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
                        **self.get_params())
         self.core_sample_indices_, self.labels_ = clust

@@ -61,7 +61,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         -------
         self
         """
-        X = check_array(X, ('csr', 'csc'), dtype=np.float64)
+        X = self._validate_X(X, accept_sparse=('csr', 'csc'), dtype=np.float64)
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)

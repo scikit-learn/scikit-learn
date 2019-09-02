@@ -414,7 +414,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         y : Ignored
 
         """
-        X = check_array(X)
+        X = self._validate_X(X)
         self.cluster_centers_, self.labels_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,

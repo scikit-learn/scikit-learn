@@ -150,7 +150,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2)
+        X, y = self._validate_X_y(X, y, accept_sparse="csc",
+                                  ensure_min_features=2)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -479,7 +480,8 @@ class RFECV(RFE):
             train/test set. Only used in conjunction with a "Group" `cv`
             instance (e.g., `GroupKFold`).
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2)
+        X, y = self._validate_X_y(X, y, accept_sparse="csr",
+                                  ensure_min_features=2)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))

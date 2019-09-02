@@ -572,7 +572,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         except NotFittedError as nfe:
             raise AttributeError(
                 "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__ )
+                .format(self.__class__.__name__)
             ) from nfe
 
         return self.best_estimator_.n_features_in_

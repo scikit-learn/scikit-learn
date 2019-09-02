@@ -1217,7 +1217,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the object itself
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_X(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1423,7 +1423,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_X(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
             X, self.n_components, self.alpha,

@@ -148,8 +148,8 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
-                         y_numeric=True)
+        X, y = self._validate_X_y(X, y, accept_sparse=("csr", "csc"),
+                                  multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False)
 

@@ -104,9 +104,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == 'manhattan':
-            X, y = check_X_y(X, y, ['csc'])
+            X, y = self._validate_X_y(X, y, accept_sparse=['csc'])
         else:
-            X, y = check_X_y(X, y, ['csr', 'csc'])
+            X, y = self._validate_X_y(X, y, accept_sparse=['csr', 'csc'])
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"

@@ -350,7 +350,8 @@ class BaseEstimator:
                     'as input.'.format(X.shape[1], self.__class__.__name__,
                                        self.n_features_in_)
                 )
-        self.n_features_in_ = X.shape[1]
+        else:
+            self.n_features_in_ = X.shape[1]
 
     def _validate_X(self, X, check_n_features=False, **check_array_params):
         X = check_array(X, **check_array_params)

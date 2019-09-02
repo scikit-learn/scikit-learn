@@ -220,7 +220,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_X_y(X, y)
         self.X_ = X
         check_classification_targets(y)
 

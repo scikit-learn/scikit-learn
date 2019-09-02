@@ -91,7 +91,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -197,7 +197,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X)
+        X = self._validate_X(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
@@ -324,7 +324,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        check_array(X, accept_sparse='csr')
+        self._validate_X(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -540,7 +540,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X(X, accept_sparse='csr')
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
 

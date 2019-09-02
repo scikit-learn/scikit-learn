@@ -206,7 +206,7 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:

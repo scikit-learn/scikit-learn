@@ -1159,8 +1159,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         """
         # at fit, convert sparse matrices to csc for optimized computation of
         # the quantiles
-        X = check_array(X, accept_sparse='csc', estimator=self,
-                        dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+        X = self._validate_X(X, accept_sparse='csc', estimator=self,
+                             dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
         q_min, q_max = self.quantile_range
         if not 0 <= q_min <= q_max <= 100:
@@ -1468,7 +1468,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         -------
         self : instance
         """
-        n_samples, n_features = check_array(X, accept_sparse=True).shape
+        n_samples, n_features = self._validate_X(X, accept_sparse=True).shape
         combinations = self._combinations(n_features, self.degree,
                                           self.interaction_only,
                                           self.include_bias)
@@ -1774,7 +1774,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        check_array(X, accept_sparse='csr')
+        self._validate_X(X, accept_sparse='csr')
         return self
 
     def transform(self, X, copy=None):
@@ -1908,7 +1908,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like
         """
-        check_array(X, accept_sparse='csr')
+        self._validate_X(X, accept_sparse='csr')
         return self
 
     def transform(self, X, copy=None):

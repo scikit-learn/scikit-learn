@@ -114,7 +114,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_X(X, accept_sparse='csr')
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)

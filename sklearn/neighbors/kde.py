@@ -125,7 +125,7 @@ class KernelDensity(BaseEstimator):
             List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = check_array(X, order='C', dtype=DTYPE)
+        X = self._validate_X(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,

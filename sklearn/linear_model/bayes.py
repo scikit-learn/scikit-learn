@@ -189,7 +189,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             raise ValueError('n_iter should be greater than or equal to 1.'
                              ' Got {!r}.'.format(self.n_iter))
 
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
@@ -516,8 +516,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
-                         ensure_min_samples=2)
+        X, y = self._validate_X_y(X, y, dtype=np.float64, y_numeric=True,
+                                  ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)

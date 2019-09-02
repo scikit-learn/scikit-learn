@@ -682,11 +682,11 @@ class TSNE(BaseEstimator):
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
         if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
+            X = self._validate_X(X, ensure_min_samples=2,
+                                 dtype=[np.float32, np.float64])
         else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+            X = self.validate_X(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "

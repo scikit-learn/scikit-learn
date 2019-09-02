@@ -182,7 +182,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         self._rng = check_random_state(self.random_state)
 
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        X, y = self._validate_X_y(X, y, multi_output=True, y_numeric=True)
 
         # Normalize target value
         if self.normalize_y:

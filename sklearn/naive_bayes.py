@@ -192,7 +192,7 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y)
+        X, y = self._validate_X_y(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
@@ -591,7 +591,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, 'csr')
+        X, y = self._validate_X_y(X, y, accept_sparse='csr')
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()

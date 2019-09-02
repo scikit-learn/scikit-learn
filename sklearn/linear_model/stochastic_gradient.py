@@ -509,8 +509,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_X_y(X, y, accept_sparse='csr',
+                                  dtype=np.float64, order="C",
+                                  accept_large_sparse=False)
 
         # labels can be encoded as float, int, or string literals
         # np.unique sorts in asc order; largest class id is positive class
@@ -1079,8 +1080,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64,
-                         accept_large_sparse=False)
+        X, y = self._validate_X_y(X, y, accept_sparse="csr", copy=False,
+                                  order='C', dtype=np.float64,
+                                  accept_large_sparse=False)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape

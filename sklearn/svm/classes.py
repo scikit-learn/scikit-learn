@@ -229,9 +229,9 @@ else [n_classes, n_features]
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_X_y(X, y, accept_sparse='csr',
+                                  dtype=np.float64, order="C",
+                                  accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
@@ -418,9 +418,9 @@ class LinearSVR(LinearModel, RegressorMixin):
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
 
-        X, y = check_X_y(X, y, accept_sparse='csr',
-                         dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = self._validate_X_y(X, y, accept_sparse='csr',
+                                  dtype=np.float64, order="C",
+                                  accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,

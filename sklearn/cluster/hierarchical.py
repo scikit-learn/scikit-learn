@@ -790,7 +790,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        X = check_array(X, ensure_min_samples=2, estimator=self)
+        X = self._validate_X(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
         if self.n_clusters is not None and self.n_clusters <= 0:

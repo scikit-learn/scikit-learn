@@ -191,7 +191,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
 
         """
-        X = check_array(X)
+        X = self._validate_X(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:

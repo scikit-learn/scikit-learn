@@ -271,7 +271,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        X = self._validate_X(X, accept_sparse='csr', copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
