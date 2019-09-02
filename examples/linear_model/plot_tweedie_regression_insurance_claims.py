@@ -426,7 +426,7 @@ class ClaimProdEstimator:
     """Total claim amount estimator.
 
     Computed as the product of the frequency model by the serverity model,
-    denormalized by exposure. Use Tweedie deviance with `p=1.5`.
+    denormalized by exposure. Use Tweedie deviance with `power=1.5`.
     """
 
     def __init__(self, est_freq, est_sev):
@@ -527,7 +527,7 @@ for subset_label, X, df in [
             "predicted, frequency*severity model": np.sum(
                 est_prod.predict(X, exposure=df.Exposure.values)
             ),
-            "predicted, tweedie, p=%.2f"
+            "predicted, tweedie, power=%.2f"
             % glm_total.best_estimator_.family.power: np.sum(
                 glm_total.best_estimator_.predict(X)
             ),

@@ -693,7 +693,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
     Poisson deviance is equivalent to the Tweedie deviance with
-    the power parameter `p=1`.
+    the power parameter `power=1`.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
 
@@ -730,7 +730,7 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
     Gamma deviance is equivalent to the Tweedie deviance with
-    the power parameter `p=2`. It is invariant to scaling of
+    the power parameter `power=2`. It is invariant to scaling of
     the target variable, and mesures relative errors.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
