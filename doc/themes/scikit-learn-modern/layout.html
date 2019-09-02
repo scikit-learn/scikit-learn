@@ -41,9 +41,9 @@
 {% include "nav.html" %}
 {%- block content %}
 <div class="d-flex " id="sk-doc-wrapper">
+    <input type="checkbox" name="sk-toggle-checkbox" id="sk-toggle-checkbox">
+    <label id="sk-sidemenu-toggle" class="sk-btn-toggle-toc btn sk-btn-primary" for="sk-toggle-checkbox">Toggle Menu</label>
     <div id="sk-sidebar-wrapper" class="border-right">
-      <input type="checkbox" name="sk-toggle-checkbox" id="sk-toggle-checkbox">
-      <label id="sk-sidemenu-toggle" class="sk-btn-toggle-toc btn sk-btn-primary" for="sk-toggle-checkbox">Toggle Menu</label>
       <div class="sk-sidebar-toc-wrapper">
         <div class="sk-sidebar-toc-logo">
           <a href="{{ pathto('index') }}">
