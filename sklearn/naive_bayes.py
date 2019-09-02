@@ -30,7 +30,7 @@ from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, check_non_negative
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
 
@@ -726,10 +726,12 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
+        check_non_negative(X, "MultinomialNB (input X)")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -830,10 +832,12 @@ class ComplementNB(BaseDiscreteNB):
         self.class_prior = class_prior
         self.norm = norm
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _count(self, X, Y):
         """Count feature occurrences."""
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
+        check_non_negative(X, "ComplementNB (input X)")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
         self.feature_all_ = self.feature_count_.sum(axis=0)

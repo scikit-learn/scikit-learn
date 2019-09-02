@@ -1162,6 +1162,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     Examples
     --------
     >>> from sklearn.svm import OneClassSVM
