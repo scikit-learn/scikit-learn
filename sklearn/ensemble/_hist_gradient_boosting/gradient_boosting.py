@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
-import warnings
 
 import numpy as np
 from timeit import default_timer as time
@@ -1048,9 +1047,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         if (self.loss == 'categorical_crossentropy' and
                 self.n_trees_per_iteration_ == 1):
-            warnings.warn("Switching to 'binary_crossentropy' loss since "
-                          "'categorical_crossentropy' is not suitable for a "
-                          "binary classification problem.", UserWarning)
-            return _LOSSES['binary_crossentropy']()
+            raise ValueError("'categorical_crossentropy' is not suitable for "
+                             "a binary classification problem. Please use "
+                             "'auto' or 'binary_crossentropy' instead.")
 
         return _LOSSES[self.loss]()

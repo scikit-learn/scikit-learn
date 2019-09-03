@@ -423,8 +423,8 @@ def test_crossentropy_binary_problem():
     X = [[1], [0]]
     y = [0, 1]
     gbrt = HistGradientBoostingClassifier(loss='categorical_crossentropy')
-    with pytest.warns(UserWarning,
-                      match="Switching to 'binary_crossentropy' loss since"):
+    with pytest.raises(ValueError,
+                       match="'categorical_crossentropy' is not suitable for"):
         gbrt.fit(X, y)
 
 
