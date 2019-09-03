@@ -1620,7 +1620,8 @@ def test_binnedstratifiedkfold_stable_moments_between_splits():
 
         kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
 
-        bins = np.percentile(y, np.linspace(0, 100, skf.n_bins))
+        bins = np.percentile(y, np.linspace(0, 100, skf.n_bins + 1))
+        bins[-1] += 1e-8
 
         for train_index, test_index in skf.split(X=X, y=y):
             y_test = y[test_index]
