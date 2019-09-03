@@ -193,8 +193,12 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                              "dataset and the one to be transformed")
 
         mask = _get_mask(X, self.missing_values)
+        mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+
+        # Removes columns where the training data is all nan
         if not np.any(mask):
-            return X
+            valid_mask = ~np.all(mask_fit_X, axis=0)
+            return X[:, valid_mask]
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -208,7 +212,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
-        mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         non_missing_fix_X = np.logical_not(mask_fit_X)
 
         # Find and impute missing

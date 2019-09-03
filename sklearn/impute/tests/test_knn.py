@@ -111,6 +111,11 @@ def test_knn_imputer_removes_all_na_features(na):
 
     X_transform = knn.transform(X)
     assert not np.isnan(X_transform).any()
+    assert X_transform.shape == (4, 5)
+
+    X_test = np.arange(0, 12).reshape(2, 6)
+    X_transform = knn.transform(X_test)
+    assert_allclose(X_test[:, [0, 1, 3, 4, 5]], X_transform)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])
