@@ -6,12 +6,6 @@
 .. include:: includes/big_toc_css.rst
 .. include:: tune_toc.rst
 
-.. top level heading needed for LaTeX TOC in sphinx<=1.3.1
-
-************
-scikit-learn
-************
-
 =======================
 Welcome to scikit-learn
 =======================
