@@ -589,14 +589,13 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     if strategy == 'quantile':  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
         bins = np.percentile(y_prob, quantiles * 100)
-        bins[-1] = bins[-1] + 1e-8
     elif strategy == 'uniform':
-        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+        bins = np.linspace(0., 1., n_bins + 1)
     else:
         raise ValueError("Invalid entry to 'strategy' input. Strategy "
                          "must be either 'quantile' or 'uniform'.")
 
-    binids = np.digitize(y_prob, bins) - 1
+    binids = np.digitize(y_prob, bins[1:-1])
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
     bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))
