@@ -500,8 +500,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 warnings.simplefilter('error', ComplexWarning)
                 if dtype is not None and np.dtype(dtype).kind in 'iu':
                     # Conversion float -> int should not contain NaN or
-                    # inf. We cannot use casting='safe' because then
-                    # conversion float -> int would be disallowed.
+                    # inf (numpy#14412). We cannot use casting='safe' because
+                    # then conversion float -> int would be disallowed.
                     array = np.asarray(array, order=order)
                     if array.dtype.kind == 'f':
                         _assert_all_finite(array, allow_nan=False,
