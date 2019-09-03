@@ -1890,8 +1890,9 @@ class BinnedStratifiedKFold(StratifiedKFold):
         How many quantile bins to use.
 
     random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
+        When ``shuffle=True``, pseudo-random number generator state used for
         shuffling. If None, use default numpy RNG for shuffling.
+        See :term:`glossary <random_state>` for details.
 
     Examples
     --------
@@ -1922,6 +1923,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
 
     See also
     --------
+    KFold: k-fold generator without any stratification
     StratifiedKFold: stratified k-fold generator for classification data
     """
 
