@@ -171,8 +171,7 @@ def test_make_classification_weights_array_or_list_ok():
                                  random_state=0)
     X2, y2 = make_classification(weights=np.array([.1, .9]),
                                  random_state=0)
-    assert((X1.all() == X2.all()) and (y1.all() == y2.all()),
-           "Different outputs, weights as list vs. array.")
+    assert (X1.all() == X2.all()) and (y1.all() == y2.all())
 
 
 def test_make_multilabel_classification_return_sequences():
