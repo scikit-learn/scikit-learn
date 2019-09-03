@@ -452,7 +452,6 @@ def test_knn_imputer_weight_distance(na):
     imputer = KNNImputer(weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
-
     X = np.array([
         [0, 0, 0, na],
         [1, 1, 1, na],
