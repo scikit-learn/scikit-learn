@@ -11,8 +11,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 
-from sklearn.utils.validation import assert_all_finite
-
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import make_hastie_10_2
@@ -31,6 +29,8 @@ from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
 from sklearn.datasets import make_biclusters
 from sklearn.datasets import make_checkerboard
+
+from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
@@ -149,10 +149,6 @@ def test_make_classification_informative_features():
 @pytest.mark.parametrize(
     'weights, err_type, err_msg',
     [
-        (0, TypeError,
-         "Weights must be either None or array-like, not int."),
-        (-1, TypeError,
-         "Weights must be either None or array-like, not int."),
         ([], ValueError,
          "Weights specified but incompatible with number of classes."),
         ([.25, .75, .1], ValueError,
@@ -168,6 +164,15 @@ def test_make_classification_informative_features():
 def test_make_classification_weights_type(weights, err_type, err_msg):
     with pytest.raises(err_type, match=err_msg):
         make_classification(weights=weights)
+
+
+def test_make_classification_weights_array_or_list_ok():
+    X1, y1 = make_classification(weights=[.1, .9],
+                                 random_state=0)
+    X2, y2 = make_classification(weights=np.array([.1, .9]),
+                                 random_state=0)
+    assert((X1.all() == X2.all()) and (y1.all() == y2.all()),
+           "Different outputs, weights as list vs. array.")
 
 
 def test_make_multilabel_classification_return_sequences():

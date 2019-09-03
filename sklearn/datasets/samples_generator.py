@@ -167,14 +167,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                                     n_informative, 2**n_informative))
 
     if weights is not None:
-        if isinstance(weights, int):
-            raise TypeError("Weights must be either None or array-like,"
-                            " not int.")
-
         if len(weights) not in [n_classes, n_classes - 1]:
             raise ValueError("Weights specified but incompatible with number "
                              "of classes.")
-        if len(weights) == (n_classes - 1):
+        if len(weights) == n_classes - 1:
             if isinstance(weights, list):
                 weights = weights + [1.0 - sum(weights)]
             else:
@@ -390,7 +386,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X_indices = array.array('i')
     X_indptr = array.array('i', [0])
     Y = []
-    for _ in range(n_samples):
+    for i in range(n_samples):
         words, y = sample_example()
         X_indices.extend(words)
         X_indptr.append(len(X_indices))
@@ -1247,7 +1243,7 @@ def make_spd_matrix(n_dim, random_state=None):
     generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
-    U, _, V = linalg.svd(np.dot(A.T, A))
+    U, s, V = linalg.svd(np.dot(A.T, A))
     X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
 
     return X
