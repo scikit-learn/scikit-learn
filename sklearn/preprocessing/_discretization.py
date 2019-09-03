@@ -263,15 +263,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible to numeric
-            # instability. Add eps to X so these values are binned correctly
-            # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.e-5
-            atol = 1.e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+            Xt[:, jj] = np.digitize(Xt[:, jj], bin_edges[jj][1:-1])
 
         if self.encode == 'ordinal':
             return Xt
