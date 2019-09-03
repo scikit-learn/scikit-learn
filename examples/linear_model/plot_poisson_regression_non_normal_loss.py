@@ -206,8 +206,8 @@ score_estimator(glm_freq, df_test)
 
 ##############################################################################
 #
-# Finally we will consider a non linear model  with Gradient boosting that
-# still minimizes the least square error. Gradient Boostring Decision Trees do
+# Finally, we will consider a non linear model with Gradient boosting that
+# still minimizes the least square error. Gradient Boosting Decision Trees do
 # not require for categorical data to be one hot encoded, therefore here we use
 # a simpler pre-processing pipeline without ``KBinsDiscretizer`` and with
 # ``OrdinalEncoder`` instead of ``OneHotEncoder``.

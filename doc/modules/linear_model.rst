@@ -1004,7 +1004,7 @@ The estimator can be used as follows::
     >>> from sklearn.linear_model import TweedieRegressor
     >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
-    TweedieRegressor(alpha=0.5, power=1)
+    TweedieRegressor(alpha=0.5, link='log', power=1)
     >>> reg.coef_
     array([0.2463..., 0.4337...])
     >>> reg.intercept_
