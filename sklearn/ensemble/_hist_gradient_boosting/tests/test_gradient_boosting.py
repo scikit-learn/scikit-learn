@@ -19,6 +19,14 @@ X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
 
 
+def _make_dumb_dataset(n_samples):
+    """Make a dumb dataset to test early stopping."""
+    rng = np.random.RandomState(42)
+    X_dumb = rng.randn(n_samples, 1)
+    y_dumb = (X_dumb[:, 0] > 0).astype('int64')
+    return X_dumb, y_dumb
+
+
 @pytest.mark.parametrize('GradientBoosting, X, y', [
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
@@ -49,8 +57,7 @@ def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 
 
 def test_invalid_classification_loss():
-    binary_clf = HistGradientBoostingClassifier(
-        loss="binary_crossentropy")
+    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
     err_msg = ("loss='binary_crossentropy' is not defined for multiclass "
                "classification with n_classes=3, use "
                "loss='categorical_crossentropy' instead")
@@ -76,7 +83,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
     X, y = make_regression(n_samples=50, random_state=0)
 
     gb = HistGradientBoostingRegressor(
-        verbose=0,  # just for coverage
+        verbose=1,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
@@ -88,7 +95,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
     )
     gb.fit(X, y)
 
-    if early_stopping is True:
+    if early_stopping:
         assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
         assert gb.n_iter_ == max_iter
@@ -117,7 +124,7 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
     X, y = data
 
     gb = HistGradientBoostingClassifier(
-        verbose=0,  # just for coverage
+        verbose=1,  # just for coverage
         min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
@@ -136,15 +143,15 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
-    (HistGradientBoostingClassifier, X_classification, y_classification),
-    (HistGradientBoostingClassifier, *make_classification(n_samples=10001)),
-    (HistGradientBoostingRegressor, X_regression, y_regression),
-    (HistGradientBoostingRegressor, *make_regression(n_samples=10001))
+    (HistGradientBoostingClassifier, *_make_dumb_dataset(10000)),
+    (HistGradientBoostingClassifier, *_make_dumb_dataset(10001)),
+    (HistGradientBoostingRegressor, *_make_dumb_dataset(10000)),
+    (HistGradientBoostingRegressor, *_make_dumb_dataset(10001))
 ])
 def test_early_stopping_default(GradientBoosting, X, y):
     # Test that early stopping is enabled by default if and only if there
     # are more than 10000 samples
-    gb = GradientBoosting(min_samples_leaf=50, max_iter=1000)
+    gb = GradientBoosting(max_iter=10, n_iter_no_change=2, tol=1e-1)
     gb.fit(X, y)
     if X.shape[0] > 10000:
         assert gb.n_iter_ < gb.max_iter
@@ -415,8 +422,7 @@ def test_infinite_values():
     X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
     y = np.array([0, 0, 1, 1])
 
-    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1,
-                                         early_stopping=False)
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
     gbdt.fit(X, y)
     np.testing.assert_allclose(gbdt.predict(X), y, atol=1e-4)
 

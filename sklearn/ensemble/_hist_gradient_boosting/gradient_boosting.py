@@ -28,7 +28,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
-                 early_stopping, warm_start, scoring, validation_fraction,
+                 warm_start, early_stopping, scoring, validation_fraction,
                  n_iter_no_change, tol, verbose, random_state):
         self.loss = loss
         self.learning_rate = learning_rate
@@ -38,8 +38,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.min_samples_leaf = min_samples_leaf
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
-        self.early_stopping = early_stopping
         self.warm_start = warm_start
+        self.early_stopping = early_stopping
         self.scoring = scoring
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
@@ -702,16 +702,16 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    early_stopping : 'auto' or bool (default='auto')
-        If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    scoring : str or callable or None, optional (default=None)
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        10000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
+    scoring : str or callable or None, optional (default='loss')
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
@@ -777,7 +777,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
-                 early_stopping='auto', warm_start=False, scoring=None,
+                 warm_start=False, early_stopping='auto', scoring='loss',
                  validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
                  verbose=0, random_state=None):
         super(HistGradientBoostingRegressor, self).__init__(
@@ -785,7 +785,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            early_stopping=early_stopping, warm_start=warm_start,
+            warm_start=warm_start, early_stopping=early_stopping,
             scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)
@@ -886,16 +886,16 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    early_stopping : 'auto' or bool (default='auto')
-        If 'auto', early stopping is enabled if the sample size is larger than
-        10000. If True, early stopping is enabled, otherwise early stopping is
-        disabled.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    scoring : str or callable or None, optional (default=None)
+    early_stopping : 'auto' or bool (default='auto')
+        If 'auto', early stopping is enabled if the sample size is larger than
+        10000. If True, early stopping is enabled, otherwise early stopping is
+        disabled.
+    scoring : str or callable or None, optional (default='loss')
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
@@ -962,15 +962,16 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=255, early_stopping='auto',
-                 warm_start=False, scoring=None, validation_fraction=0.1,
-                 n_iter_no_change=10, tol=1e-7, verbose=0, random_state=None):
+                 l2_regularization=0., max_bins=255, warm_start=False,
+                 early_stopping='auto', scoring='loss',
+                 validation_fraction=0.1, n_iter_no_change=10, tol=1e-7,
+                 verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
-            early_stopping=early_stopping, warm_start=warm_start,
+            warm_start=warm_start, early_stopping=early_stopping,
             scoring=scoring, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, verbose=verbose,
             random_state=random_state)

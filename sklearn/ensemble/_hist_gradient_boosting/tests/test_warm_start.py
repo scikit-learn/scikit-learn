@@ -11,6 +11,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import check_scoring
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -116,7 +117,7 @@ def test_warm_start_early_stopping(GradientBoosting, X, y):
 ])
 def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
     # Test if warm start with equal n_estimators does nothing
-    gb_1 = GradientBoosting(max_depth=2, n_iter_no_change=5)
+    gb_1 = GradientBoosting(max_depth=2, early_stopping=False)
     gb_1.fit(X, y)
 
     gb_2 = clone(gb_1)
@@ -168,16 +169,17 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
             return np.random.RandomState(0)
 
     random_state = _get_rng(rng_type)
-    gb_1 = GradientBoosting(n_iter_no_change=5, early_stopping=True,
-                            max_iter=2, random_state=random_state)
+    gb_1 = GradientBoosting(early_stopping=True, max_iter=2,
+                            random_state=random_state)
+    gb_1.set_params(scoring=check_scoring(gb_1))
     gb_1.fit(X, y)
     train_val_seed_1 = gb_1._train_val_split_seed
     small_trainset_seed_1 = gb_1._small_trainset_seed
 
     random_state = _get_rng(rng_type)
-    gb_2 = GradientBoosting(n_iter_no_change=5, early_stopping=True,
-                            max_iter=2, random_state=random_state,
-                            warm_start=True)
+    gb_2 = GradientBoosting(early_stopping=True, max_iter=2,
+                            random_state=random_state, warm_start=True)
+    gb_2.set_params(scoring=check_scoring(gb_2))
     gb_2.fit(X, y)  # inits state
     train_val_seed_2 = gb_2._train_val_split_seed
     small_trainset_seed_2 = gb_2._small_trainset_seed
