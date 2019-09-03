@@ -1929,10 +1929,15 @@ class BinnedStratifiedKFold(StratifiedKFold):
 
     Notes
     -----
-    All the folds have size floor(n_samples / n_splits) or
-    floor(n_samples / n_splits) +1,
-    the length is assigned randomly (even if no shuffling is requested)
-    to balance the variance between folds.
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      binned targets, or as close as possible.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from bin k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
+    * Generate test sets where the smallest and largest differ by at most one
+      sample.
 
     See also
     --------
