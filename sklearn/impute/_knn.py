@@ -162,6 +162,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         _check_weights(self.weights)
         self._fit_X = X
+        self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
 
         return self
 
@@ -193,7 +194,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                              "dataset and the one to be transformed")
 
         mask = _get_mask(X, self.missing_values)
-        mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+        mask_fit_X = self._mask_fit_X
 
         # Removes columns where the training data is all nan
         if not np.any(mask):
