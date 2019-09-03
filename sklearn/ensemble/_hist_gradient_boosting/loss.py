@@ -18,6 +18,7 @@ except ImportError:
 from .common import Y_DTYPE
 from .common import G_H_DTYPE
 from ._loss import _update_gradients_least_squares
+from ._loss import _update_gradients_hessians_least_squares
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy
 
@@ -33,11 +34,8 @@ class BaseLoss(ABC):
     def get_average_loss(self, y_true, raw_predictions, sample_weight):
         """Return the average loss, weighted if sample_weight is not None
         """
-        if sample_weight is None:
-            return self(y_true, raw_predictions).mean()
-        else:
-            return np.average(self(y_true, raw_predictions),
-                              weights=sample_weight)
+        return np.average(self(y_true, raw_predictions),
+                          weights=sample_weight)
 
     def init_gradients_and_hessians(self, n_samples, prediction_dim,
                                     sample_weight):
@@ -72,13 +70,14 @@ class BaseLoss(ABC):
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
         if sample_weight is not None:
+            # If sample weights are provided, the hessians and gradients
+            # are multiplied by sample_weight, which means the hessians are
+            # equal to sample weights.
             self.hessians_are_constant = False
         if self.hessians_are_constant:
             # if the hessians are constant, we consider they are equal to 1.
             # this is correct as long as we adjust the gradients. See e.g. LS
-            # loss. If sample weights are provided, the hessians and gradients
-            # are multiplied by sample_weight, which means the hessains are
-            # equal to sample weights.
+            # loss.
             hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
@@ -159,10 +158,7 @@ class LeastSquares(BaseLoss):
         return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
-        if sample_weight is None:
-            return np.mean(y_train)
-        else:
-            return np.average(y_train, weights=sample_weight)
+        return np.average(y_train, weights=sample_weight)
 
     @staticmethod
     def inverse_link_function(raw_predictions):
@@ -174,10 +170,13 @@ class LeastSquares(BaseLoss):
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
-        _update_gradients_least_squares(gradients, y_true, raw_predictions)
-        if sample_weight is not None:
-            np.multiply(gradients, sample_weight, out=gradients)
-            hessians[:] = sample_weight
+        hessians = hessians.reshape(-1)
+        if sample_weight is None:
+            _update_gradients_least_squares(gradients, y_true, raw_predictions)
+        else:
+            _update_gradients_hessians_least_squares(gradients, hessians,
+                                                     y_true, raw_predictions,
+                                                     sample_weight)
 
 
 class BinaryCrossEntropy(BaseLoss):
@@ -209,10 +208,7 @@ class BinaryCrossEntropy(BaseLoss):
                 "loss='binary_crossentropy' is not defined for multiclass"
                 " classification with n_classes=%d, use"
                 " loss='categorical_crossentropy' instead" % prediction_dim)
-        if sample_weight is None:
-            proba_positive_class = np.mean(y_train)
-        else:
-            proba_positive_class = np.average(y_train, weights=sample_weight)
+        proba_positive_class = np.average(y_train, weights=sample_weight)
         eps = np.finfo(y_train.dtype).eps
         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)
         # log(x / 1 - x) is the anti function of sigmoid, or the link function
@@ -227,10 +223,7 @@ class BinaryCrossEntropy(BaseLoss):
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
         _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
-        if sample_weight is not None:
-            np.multiply(gradients, sample_weight, out=gradients)
-            np.multiply(hessians, sample_weight, out=hessians)
+            gradients, hessians, y_true, raw_predictions, sample_weight)
 
     def predict_proba(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -266,11 +259,8 @@ class CategoricalCrossEntropy(BaseLoss):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
-            if sample_weight is None:
-                proba_kth_class = np.mean(y_train == k)
-            else:
-                proba_kth_class = np.average(y_train == k,
-                                             weights=sample_weight)
+            proba_kth_class = np.average(y_train == k,
+                                         weights=sample_weight)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
             init_value[k, :] += np.log(proba_kth_class)
 
@@ -279,10 +269,7 @@ class CategoricalCrossEntropy(BaseLoss):
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
                                       raw_predictions, sample_weight):
         _update_gradients_hessians_categorical_crossentropy(
-            gradients, hessians, y_true, raw_predictions)
-        if sample_weight is not None:
-            np.multiply(gradients, sample_weight, out=gradients)
-            np.multiply(hessians, sample_weight, out=hessians)
+            gradients, hessians, y_true, raw_predictions, sample_weight)
 
     def predict_proba(self, raw_predictions):
         # TODO: This could be done in parallel

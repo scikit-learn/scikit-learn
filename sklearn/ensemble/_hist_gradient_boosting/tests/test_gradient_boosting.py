@@ -407,7 +407,7 @@ def test_consistent_lengths():
     sample_weight = np.array([.1, .3, .1])
     gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
     with pytest.raises(ValueError,
-                       match="Found input variables with inconsistent number"):
+                       match=r"sample_weight.shape == \(3,\), expected"):
         gbdt.fit(X, y, sample_weight)
 
     with pytest.raises(ValueError,

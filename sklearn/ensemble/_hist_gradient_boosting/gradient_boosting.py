@@ -9,8 +9,8 @@ from timeit import default_timer as time
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_X_y, check_random_state, check_array, resample
-from ...utils.validation import (check_is_fitted, column_or_1d,
-                                 check_consistent_length)
+from ...utils.validation import (check_is_fitted,
+                                 check_consistent_length, _check_sample_weight)
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -107,11 +107,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_prediction_time = 0.
         X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
+        check_consistent_length(X, y)
         if sample_weight is not None:
-            sample_weight = column_or_1d(sample_weight)
-            check_consistent_length(X, y, sample_weight)
-        else:
-            check_consistent_length(X, y)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # The rng state must be preserved if warm_start is True
         if (self.warm_start and hasattr(self, '_rng')):
@@ -157,6 +155,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     random_state=self._train_val_split_seed)
                 sample_weight_train = sample_weight_val = None
             else:
+                # TODO: incorporate sample_weight in sampling here, as well as
+                # stratify
                 (X_train, X_val, y_train, y_val, sample_weight_train,
                  sample_weight_val) = train_test_split(
                     X, y, sample_weight, test_size=self.validation_fraction,
