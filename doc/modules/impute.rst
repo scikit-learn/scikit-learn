@@ -180,6 +180,47 @@ References
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
 
+.. _knnimpute:
+
+Nearest neighbors imputation
+============================
+
+The :class:`KNNImputer` class provides imputation for filling in missing values
+using the k-Nearest Neighbors approach. By default, a euclidean distance metric
+that supports missing values, :func:`~sklearn.metrics.nan_euclidean_distances`,
+is used to find the nearest neighbors. Each missing feature is imputed using
+values from ``n_neighbors`` nearest neighbors that have a value for the
+feature. The feature of the neighbors are averaged uniformly or weighted by
+distance to each neighbor. If a sample has more than one feature missing, then
+the neighbors for that sample can be different depending on the particular
+feature being imputed. When the number of available neighbors is less than
+`n_neighbors` and there are no defined distances to the training set, the
+training set average for that feature is used during imputation. If there is at
+least one neighbor with a defined distance, the weighted or unweighted average
+of the remaining neighbors will be used during imputation. If a feature is
+always missing in training, it is removed during `transform`. For more
+information on the methodology, see ref. [OL2001]_.
+
+The following snippet demonstrates how to replace missing values,
+encoded as ``np.nan``, using the mean feature value of the two nearest
+neighbors of samples with missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import KNNImputer
+    >>> nan = np.nan
+    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer.fit_transform(X)
+    array([[1. , 2. , 4. ],
+           [3. , 4. , 3. ],
+           [5.5, 6. , 5. ],
+           [8. , 8. , 7. ]])
+
+.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, 
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, 
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS 
+    Vol. 17 no. 6, 2001 Pages 520-525.
+
 .. _missing_indicator:
 
 Marking imputed values

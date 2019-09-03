@@ -187,6 +187,13 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -247,6 +254,11 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
+  calculates euclidean distances in the presence of missing values.
+  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
 
 - |Feature| New ranking metrics :func:`metrics.ndcg_score` and
   :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
