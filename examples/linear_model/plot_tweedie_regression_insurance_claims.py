@@ -13,8 +13,8 @@ of the total claim amount. There are several possibilities to do that, two of
 which are:
 
 1. Model the number of claims with a Poisson distribution, the average
-   claim amount as a Gamma distribution and multiply the predictions of both in
-   order to get the total claim amount.
+   claim amount per claim, also known as severity, as a Gamma distribution and
+   multiply the predictions of both in order to get the total claim amount.
 2. Model total claim amount directly, typically with a Tweedie distribution of
    Tweedie power :math:`p \\in (1, 2)`.
 
@@ -42,6 +42,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import PoissonRegressor, GammaRegressor
 from sklearn.linear_model import TweedieRegressor
+from sklearn.metrics import mean_tweedie_deviance
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
@@ -56,7 +57,8 @@ def load_mtpl2(n_samples=100000):
     Parameters
     ----------
     n_samples: int, default=100000
-      number of samples to select (for faster run time).
+      number of samples to select (for faster run time). Full dataset has
+      678013 samples.
     """
 
     # freMTPL2freq dataset from https://www.openml.org/d/41214
@@ -139,7 +141,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 df = load_mtpl2(n_samples=60000)
 
 # Note: filter out claims with zero amount, as the severity model
-# requires a strictly positive target values.
+# requires strictly positive target values.
 df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
 
 # Correct for unreasonable observations (that might be data error)
@@ -182,10 +184,10 @@ print(df[df.ClaimAmount > 0].head())
 #
 # The number of claims (``ClaimNb``) is a positive integer that can be modeled
 # as a Poisson distribution. It is then assumed to be the number of discrete
-# events occuring with a constant rate in a given time interval (``Exposure``).
-# Here we model the frequency ``y = ClaimNb / Exposure``,
-# which is still a (scaled) Poisson distribution, and use ``Exposure`` as
-# `sample_weight`.
+# events occuring with a constant rate in a given time interval
+# (``Exposure``, in units of years). Here we model the frequency
+# ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
+# and use ``Exposure`` as `sample_weight`.
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
@@ -197,7 +199,10 @@ glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 def mean_deviance(estimator, y, y_pred, weights):
     if hasattr(estimator, "_family_instance"):
-        return estimator._family_instance.deviance(y, y_pred, weights) / len(y)
+        if weights is None:
+            weights = np.ones_like(y)
+        return (estimator._family_instance.deviance(y, y_pred, weights)
+                / np.sum(weights))
     else:
         return np.nan
 
@@ -320,10 +325,10 @@ plot_obs_pred(
 #
 # According to the observed data, the frequency of accidents is higher for
 # drivers younger than 30 years old, and it positively correlated with the
-# `BonusMalus` variable. Out model is able to mostly correctly model
+# `BonusMalus` variable. Our model is able to mostly correctly model
 # this behaviour.
 #
-# 3. Severity model -  Gamma Distribution
+# 3. Severity model -  Gamma distribution
 # ---------------------------------------
 # The mean claim amount or severity (`AvgClaimAmount`) can be empirically
 # shown to follow approximately a Gamma distribution. We fit a GLM model for
@@ -333,7 +338,7 @@ plot_obs_pred(
 #
 # - We filter out ``ClaimAmount == 0`` as the Gamma distribution has support
 #   on :math:`(0, \infty)`, not :math:`[0, \infty)`.
-# - We use ``ClaimNb`` as sample weights.
+# - We use ``ClaimNb`` as `sample_weight`.
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
@@ -360,6 +365,8 @@ print(scores)
 
 ##############################################################################
 #
+# Here, the scores for the test data call for caution as they are significantly
+# worse than for the training data indicating an overfit.
 # Note that the resulting model is the average claim amount per claim. As such,
 # it is conditional on having at least one claim, and cannot be used to predict
 # the average claim amount per policy in general.
@@ -412,10 +419,10 @@ plot_obs_pred(
 
 ##############################################################################
 #
-# Overall the drivers age (``DrivAge``) has a weak impact on the claim
+# Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
-# 4. Total Claims Amount -- Compound Poisson distribution
+# 4. Total claim amount -- Compound Poisson distribution
 # -------------------------------------------------------
 #
 # As mentionned in the introduction, the total claim amount can be modeled
@@ -426,12 +433,16 @@ class ClaimProdEstimator:
     """Total claim amount estimator.
 
     Computed as the product of the frequency model by the serverity model,
-    denormalized by exposure. Use Tweedie deviance with `power=1.5`.
+    denormalized by exposure. For scores, use Tweedie deviance with
+    `power=1.5`.
     """
 
     def __init__(self, est_freq, est_sev):
+        from sklearn.linear_model._glm.distribution import TweedieDistribution
+
         self.est_freq = est_freq
         self.est_sev = est_sev
+        self._family_instance = TweedieDistribution(power=1.5)
 
     def predict(self, X, exposure):
         """Predict the total claim amount.
@@ -442,14 +453,13 @@ class ClaimProdEstimator:
 
     def score(self, X, y, sample_weight=None):
         """Compute D², the percentage of deviance explained."""
-        # TODO: remove this private import once d2_score is available
-        from sklearn.linear_model._glm.distribution import TweedieDistribution
-
+        # TODO: use d2_score directly once it is available
         mu = self.predict(X, exposure=sample_weight)
-        family = TweedieDistribution(power=1.5)
-        dev = family.deviance(y, mu, weights=sample_weight)
-        y_mean = np.average(y, weights=sample_weight)
-        dev_null = family.deviance(y, y_mean, weights=sample_weight)
+        dev = mean_tweedie_deviance(
+            y, mu, sample_weight=sample_weight, power=1.5)
+        y_mean = np.average(y, weights=sample_weight) * np.ones_like(y)
+        dev_null = mean_tweedie_deviance(
+            y, y_mean, sample_weight=sample_weight, power=1.5)
         return 1. - dev / dev_null
 
 
@@ -475,7 +485,7 @@ print(scores)
 
 from sklearn.model_selection import GridSearchCV
 
-# exclude upper bound as power=2 does not support null y values.
+# exclude upper bound as power>=2 does not support y=0.
 params = {"power": np.linspace(1 + 1e-4, 2 - 1e-4, 8)}
 
 
