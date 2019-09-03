@@ -332,8 +332,8 @@ def test_knn_imputer_weight_uniform(na):
     assert_allclose(imputer.fit_transform(X), X_imputed_uniform)
 
 
-def test_knn_imputer_weight_distance():
-    na = np.nan
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_weight_distance(na):
     X = np.array([
         [0, 0],
         [na, 2],
@@ -377,7 +377,7 @@ def test_knn_imputer_weight_distance():
         [11, 10]
     ])
 
-    imputer = KNNImputer(weights="distance")
+    imputer = KNNImputer(weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed_distance1)
     assert_allclose(imputer.fit_transform(X), X_imputed_distance2)
 
@@ -401,7 +401,7 @@ def test_knn_imputer_weight_distance():
         [4, 5, 5],
     ])
 
-    imputer = KNNImputer(n_neighbors=2, weights="distance")
+    imputer = KNNImputer(n_neighbors=2, weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
 
     # Test with varying missingness patterns
@@ -416,7 +416,7 @@ def test_knn_imputer_weight_distance():
     ])
 
     # Get weights of donor neighbors
-    dist = nan_euclidean_distances(X)
+    dist = nan_euclidean_distances(X, missing_values=na)
     r1c1_nbor_dists = dist[1, [0, 2, 3, 4, 5]]
     r1c3_nbor_dists = dist[1, [0, 3, 4, 5, 6]]
     r1c1_nbor_wt = 1 / r1c1_nbor_dists
@@ -444,8 +444,49 @@ def test_knn_imputer_weight_distance():
         [10, 10, 10, 10],
     ])
 
-    imputer = KNNImputer(weights="distance")
+    imputer = KNNImputer(weights="distance", missing_values=na)
     assert_allclose(imputer.fit_transform(X), X_imputed)
+
+
+    X = np.array([
+        [0, 0, 0, na],
+        [1, 1, 1, na],
+        [2, 2, na, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [na, 7, 7, 7]
+    ])
+
+    dist = pairwise_distances(X, metric="nan_euclidean", squared=False,
+                              missing_values=na)
+
+    # Calculate weights
+    r0c3_w = 1.0 / dist[0, 2:-1]
+    r1c3_w = 1.0 / dist[1, 2:-1]
+    r2c2_w = 1.0 / dist[2, (0, 1, 3, 4, 5)]
+    r7c0_w = 1.0 / dist[7, 2:7]
+
+    # Calculate weighted averages
+    r0c3 = np.average(X[2:-1, -1], weights=r0c3_w)
+    r1c3 = np.average(X[2:-1, -1], weights=r1c3_w)
+    r2c2 = np.average(X[(0, 1, 3, 4, 5), 2], weights=r2c2_w)
+    r7c0 = np.average(X[2:7, 0], weights=r7c0_w)
+
+    X_imputed = np.array([
+        [0, 0, 0, r0c3],
+        [1, 1, 1, r1c3],
+        [2, 2, r2c2, 2],
+        [3, 3, 3, 3],
+        [4, 4, 4, 4],
+        [5, 5, 5, 5],
+        [6, 6, 6, 6],
+        [r7c0, 7, 7, 7]
+    ])
+
+    imputer_comp_wt = KNNImputer(missing_values=na, weights="distance")
+    assert_allclose(imputer_comp_wt.fit_transform(X), X_imputed)
 
 
 def test_knn_imputer_callable_metric():
@@ -510,50 +551,6 @@ def test_knn_imputer_with_simple_example(na):
 
     imputer_comp = KNNImputer(missing_values=na)
     assert_allclose(imputer_comp.fit_transform(X), X_imputed)
-
-
-@pytest.mark.parametrize("na", [-1, np.nan])
-def test_knn_imputer_with_weighted_features(na):
-
-    X = np.array([
-        [0, 0, 0, na],
-        [1, 1, 1, na],
-        [2, 2, na, 2],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [5, 5, 5, 5],
-        [6, 6, 6, 6],
-        [na, 7, 7, 7]
-    ])
-
-    dist = pairwise_distances(X, metric="nan_euclidean", squared=False,
-                              missing_values=na)
-
-    # Calculate weights
-    r0c3_w = 1.0 / dist[0, 2:-1]
-    r1c3_w = 1.0 / dist[1, 2:-1]
-    r2c2_w = 1.0 / dist[2, (0, 1, 3, 4, 5)]
-    r7c0_w = 1.0 / dist[7, 2:7]
-
-    # Calculate weighted averages
-    r0c3 = np.average(X[2:-1, -1], weights=r0c3_w)
-    r1c3 = np.average(X[2:-1, -1], weights=r1c3_w)
-    r2c2 = np.average(X[(0, 1, 3, 4, 5), 2], weights=r2c2_w)
-    r7c0 = np.average(X[2:7, 0], weights=r7c0_w)
-
-    X_imputed = np.array([
-        [0, 0, 0, r0c3],
-        [1, 1, 1, r1c3],
-        [2, 2, r2c2, 2],
-        [3, 3, 3, 3],
-        [4, 4, 4, 4],
-        [5, 5, 5, 5],
-        [6, 6, 6, 6],
-        [r7c0, 7, 7, 7]
-    ])
-
-    imputer_comp_wt = KNNImputer(missing_values=na, weights="distance")
-    assert_allclose(imputer_comp_wt.fit_transform(X), X_imputed)
 
 
 @pytest.mark.parametrize("na", [-1, np.nan])
