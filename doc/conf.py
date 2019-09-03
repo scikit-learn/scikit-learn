@@ -271,7 +271,7 @@ sphinx_gallery_conf = {
     'gallery_dirs': ['auto_examples'],
     'binder': {
         'org': 'scikit-learn',
-        'repo': 'binder-examples',
+        'repo': 'scikit-learn',
         'binderhub_url': 'https://mybinder.org',
         'branch': binder_branch,
         'dependencies': './binder/requirements.txt',
