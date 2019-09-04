@@ -595,7 +595,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
         raise ValueError("Invalid entry to 'strategy' input. Strategy "
                          "must be either 'quantile' or 'uniform'.")
 
-    binids = np.digitize(y_prob, bins[1:-1])
+    binids = np.searchsorted(bins[1:-1], y_prob, side='right')
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
     bin_true = np.bincount(binids, weights=y_true, minlength=len(bins))

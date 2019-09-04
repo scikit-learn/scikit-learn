@@ -263,7 +263,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
-            Xt[:, jj] = np.digitize(Xt[:, jj], bin_edges[jj][1:-1])
+            Xt[:, jj] = np.searchsorted(bin_edges[jj][1:-1], Xt[:, jj],
+                                        side='right')
 
         if self.encode == 'ordinal':
             return Xt
