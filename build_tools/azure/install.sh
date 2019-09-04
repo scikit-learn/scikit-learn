@@ -22,6 +22,7 @@ conda_version=$(conda -V | awk '{print $2}')
 
 make_conda() {
     TO_INSTALL="$@"
+    conda init
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     if version_ge "$conda_version" "4.6.0"; then
         conda activate $VIRTUALENV
