@@ -94,17 +94,29 @@ def _update_gradients_hessians_categorical_crossentropy(
         Y_DTYPE_C [:, ::1] p = np.empty(shape=(n_samples, prediction_dim))
         Y_DTYPE_C p_i_k
 
-    for i in prange(n_samples, schedule='static', nogil=True):
-        # first compute softmaxes of sample i for each class
-        for k in range(prediction_dim):
-            p[i, k] = raw_predictions[k, i]  # prepare softmax
-        _compute_softmax(p, i)
-        # then update gradients and hessians
-        for k in range(prediction_dim):
-            p_i_k = p[i, k]
-            sw = 1 if sample_weight is None else sample_weight[i]
-            gradients[k, i] = p_i_k - (y_true[i] == k) * sw
-            hessians[k, i] = p_i_k * (1. - p_i_k) * sw
+    if sample_weight is None:
+        for i in prange(n_samples, schedule='static', nogil=True):
+            # first compute softmaxes of sample i for each class
+            for k in range(prediction_dim):
+                p[i, k] = raw_predictions[k, i]  # prepare softmax
+            _compute_softmax(p, i)
+            # then update gradients and hessians
+            for k in range(prediction_dim):
+                p_i_k = p[i, k]
+                gradients[k, i] = p_i_k - (y_true[i] == k)
+                hessians[k, i] = p_i_k * (1. - p_i_k)
+    else:
+        for i in prange(n_samples, schedule='static', nogil=True):
+            # first compute softmaxes of sample i for each class
+            for k in range(prediction_dim):
+                p[i, k] = raw_predictions[k, i]  # prepare softmax
+            _compute_softmax(p, i)
+            # then update gradients and hessians
+            for k in range(prediction_dim):
+                p_i_k = p[i, k]
+                sw = sample_weight[i]
+                gradients[k, i] = p_i_k - (y_true[i] == k) * sw
+                hessians[k, i] = p_i_k * (1. - p_i_k) * sw
 
 
 cdef inline void _compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:
