@@ -16,7 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.fixes import _object_dtype_isnan
+from ..utils.mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
 
@@ -28,23 +28,6 @@ def _check_inputs_dtype(X, missing_values):
                          " both numerical. Got X.dtype={} and "
                          " type(missing_values)={}."
                          .format(X.dtype, type(missing_values)))
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if is_scalar_nan(value_to_mask):
-        if X.dtype.kind == "f":
-            return np.isnan(X)
-        elif X.dtype.kind in ("i", "u"):
-            # can't have NaNs in integer array.
-            return np.zeros(X.shape, dtype=bool)
-        else:
-            # np.isnan does not work on object dtypes.
-            return _object_dtype_isnan(X)
-    else:
-        # X == value_to_mask with object dytpes does not always perform
-        # element-wise for old versions of numpy
-        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
