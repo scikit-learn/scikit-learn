@@ -168,7 +168,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
 
 
-class LabelEncoder(BaseEstimator, TransformerMixin):
+class LabelEncoder(TransformerMixin, BaseEstimator):
     """Encode target labels with value between 0 and n_classes-1.
 
     This transformer should be used to encode target values, *i.e.* `y`, and
@@ -300,7 +300,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return {'X_types': ['1dlabels']}
 
 
-class LabelBinarizer(BaseEstimator, TransformerMixin):
+class LabelBinarizer(TransformerMixin, BaseEstimator):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -781,7 +781,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
+class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     """Transform between iterable of iterables and a multilabel format
 
     Although a list of sets or tuples is a very intuitive format for multilabel

@@ -65,7 +65,7 @@ class _ValidationScoreCallback:
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
+class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
@@ -420,7 +420,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
+class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -1050,7 +1050,7 @@ class SGDClassifier(BaseSGDClassifier):
         return np.log(self.predict_proba(X))
 
 
-class BaseSGDRegressor(BaseSGD, RegressorMixin):
+class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     loss_functions = {
         "squared_loss": (SquaredLoss, ),

@@ -293,7 +293,7 @@ def test_score_sample_weight():
 
 def test_clone_pandas_dataframe():
 
-    class DummyEstimator(BaseEstimator, TransformerMixin):
+    class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
@@ -408,7 +408,7 @@ class DontPickleAttributeMixin:
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+class MultiInheritanceEstimator(DontPickleAttributeMixin, BaseEstimator):
     def __init__(self, attribute_pickled=5):
         self.attribute_pickled = attribute_pickled
         self._attribute_not_pickled = None
@@ -475,13 +475,11 @@ def test_tag_inheritance():
     assert nan_tag_est._get_tags()['allow_nan']
     assert not no_nan_tag_est._get_tags()['allow_nan']
 
-    invalid_tags_est = OverrideTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        invalid_tags_est._get_tags()
+    redefine_tags_est = OverrideTag()
+    assert not redefine_tags_est._get_tags()['allow_nan']
 
     diamond_tag_est = DiamondOverwriteTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        diamond_tag_est._get_tags()
+    assert diamond_tag_est._get_tags()
 
 
 # XXX: Remove in 0.23

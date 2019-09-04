@@ -122,7 +122,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
+class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -392,7 +392,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
+class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -633,7 +633,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
             return proba
 
 
-class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
+class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes

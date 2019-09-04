@@ -12,7 +12,7 @@ from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
 
-class Isomap(BaseEstimator, TransformerMixin):
+class Isomap(TransformerMixin, BaseEstimator):
     """Isomap Embedding
 
     Non-linear dimensionality reduction through Isometric Mapping

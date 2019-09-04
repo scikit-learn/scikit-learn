@@ -129,8 +129,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
-                          MultiOutputMixin):
+class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
+                          MetaEstimatorMixin, BaseEstimator):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -435,7 +435,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     return estimator
 
 
-class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """One-vs-one multiclass strategy
 
     This strategy consists in fitting one classifier per class pair.
@@ -562,7 +562,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in zip(self.estimators_,
-                                              (combinations)))
+                                             (combinations)))
 
         self.pairwise_indices_ = None
 
@@ -634,7 +634,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return getattr(self.estimator, "_pairwise", False)
 
 
-class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a

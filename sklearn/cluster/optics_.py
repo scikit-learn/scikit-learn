@@ -21,7 +21,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 
 
-class OPTICS(BaseEstimator, ClusterMixin):
+class OPTICS(ClusterMixin, BaseEstimator):
     """Estimate clustering structure from vector array
 
     OPTICS (Ordering Points To Identify the Clustering Structure), closely
