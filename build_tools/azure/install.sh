@@ -21,7 +21,7 @@ fi
 make_conda() {
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
-    source activate $VIRTUALENV
+    conda activate $VIRTUALENV
 }
 
 version_ge() {
