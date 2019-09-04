@@ -309,19 +309,16 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
+    def _more_tags(self):
+        return _DEFAULT_TAGS
+
     def _get_tags(self):
         collected_tags = {}
-        for base_class in inspect.getmro(self.__class__):
-            if (hasattr(base_class, '_more_tags')
-                    and base_class != self.__class__):
+        for base_class in inspect.getmro(self.__class__)[::-1]:
+            if hasattr(base_class, '_more_tags'):
                 more_tags = base_class._more_tags(self)
                 collected_tags.update(more_tags)
-        if hasattr(self, '_more_tags'):
-            more_tags = self._more_tags()
-            collected_tags.update(more_tags)
-        tags = _DEFAULT_TAGS.copy()
-        tags.update(collected_tags)
-        return tags
+        return collected_tags
 
 
 class ClassifierMixin:
