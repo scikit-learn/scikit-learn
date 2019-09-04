@@ -3,8 +3,6 @@ This is testing the equivalence between some estimators with internal nearest
 neighbors computations, and the corresponding pipeline versions with
 KNeighborsTransformer or RadiusNeighborsTransformer to precompute the
 neighbors.
-
-We might not need to merge this.
 """
 
 import numpy as np
@@ -100,7 +98,7 @@ def test_isomap():
     est_chain = make_pipeline(
         KNeighborsTransformer(n_neighbors=n_neighbors, algorithm=algorithm,
                               mode='distance'),
-        Isomap(n_neighbors=n_neighbors, neighbors_algorithm='precomputed'))
+        Isomap(n_neighbors=n_neighbors, metric='precomputed'))
     est_compact = Isomap(n_neighbors=n_neighbors,
                          neighbors_algorithm=algorithm)
 

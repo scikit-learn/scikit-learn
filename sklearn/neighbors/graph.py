@@ -151,8 +151,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibility.
+        itself. If 'auto', then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -195,6 +195,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
+
+    Read more in the :ref:`User Guide <neighbors_transformer>`.
 
     .. versionadded:: 0.22
 
@@ -335,6 +337,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
     The transformed data is a sparse graph as returned by
     radius_neighbors_graph.
+
+    Read more in the :ref:`User Guide <neighbors_transformer>`.
 
     .. versionadded:: 0.22
 

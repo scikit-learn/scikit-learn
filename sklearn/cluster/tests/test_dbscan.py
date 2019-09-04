@@ -98,15 +98,18 @@ def test_dbscan_sparse_precomputed(include_self):
 def test_dbscan_sparse_precomputed_different_eps():
     # test that precomputed neighbors graph is filtered if computed with
     # a radius larger than DBSCAN's eps.
-    eps = 0.2
-    results = []
-    for radius in [eps, eps + 0.7]:
-        nn = NearestNeighbors(radius=radius).fit(X)
-        D_sparse = nn.radius_neighbors_graph(X, mode='distance')
-        results.append(dbscan(D_sparse, eps=eps, metric='precomputed'))
+    lower_eps = 0.2
+    nn = NearestNeighbors(radius=lower_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_lower = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
 
-    for res0, res1 in zip(*results):
-        assert_array_equal(res0, res1)
+    higher_eps = lower_eps + 0.7
+    nn = NearestNeighbors(radius=higher_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_higher = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
+
+    assert_array_equal(dbscan_lower[0], dbscan_higher[0])
+    assert_array_equal(dbscan_lower[1], dbscan_higher[1])
 
 
 @pytest.mark.parametrize('use_sparse', [True, False])

@@ -90,9 +90,8 @@ def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     # the desired perplexity
     distances.sort_indices()
     n_samples = distances.shape[0]
-    distances_data = distances.data.reshape(distances.shape[0], -1)
+    distances_data = distances.data.reshape(n_samples, -1)
     distances_data = distances_data.astype(np.float32, copy=False)
-    distances_data = distances_data.reshape(n_samples, -1)
     conditional_P = _utils._binary_search_perplexity(
         distances_data, desired_perplexity, verbose)
     assert np.all(np.isfinite(conditional_P)), \

@@ -55,18 +55,38 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         'D' : Dijkstra's algorithm.
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree'| \
-            'precomputed']
+    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
         Algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance.
-        If "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    metric : string, or callable, default="minkowski"
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string or callable, it must be one of
+        the options allowed by :func:`sklearn.metrics.pairwise_distances` for
+        its metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a :term:`Glossary <sparse graph>`.
+
+        .. versionadded:: 0.22
+
+    p : int, default=2
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+        .. versionadded:: 0.22
+
+    metric_params : dict, default=None
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -104,7 +124,8 @@ class Isomap(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_jobs=None):
+                 neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
+                 p=2, metric_params=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -113,18 +134,16 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.path_method = path_method
         self.neighbors_algorithm = neighbors_algorithm
         self.n_jobs = n_jobs
+        self.metric = metric
+        self.p = p
+        self.metric_params = metric_params
 
     def _fit_transform(self, X):
 
-        if self.neighbors_algorithm == 'precomputed':
-            algorithm = 'brute'
-            metric = 'precomputed'
-        else:
-            algorithm = self.neighbors_algorithm
-            metric = 'minkowski'
-
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                      algorithm=algorithm, metric=metric,
+                                      algorithm=self.neighbors_algorithm,
+                                      metric=self.metric, p=self.p,
+                                      metric_params=self.metric_params,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
 
@@ -134,7 +153,9 @@ class Isomap(BaseEstimator, TransformerMixin):
                                      tol=self.tol, max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors, metric=metric,
+        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
+                               metric=self.metric, p=self.p,
+                               metric_params=self.metric_params,
                                mode='distance', n_jobs=self.n_jobs)
 
         self.dist_matrix_ = graph_shortest_path(kng,

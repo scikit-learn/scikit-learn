@@ -509,6 +509,7 @@ the model from 0.81 to 0.82.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
+.. _neighbors_transformer:
 
 Nearest Neighbors Transformer
 =============================
@@ -557,7 +558,8 @@ implementation with special data types. The precomputed neighbors
 * a CSR matrix (although COO, CSC or LIL will be accepted).
 * only explicitly store nearest neighborhoods of each sample with respect to the
   training data. This should include those at 0 distance from a query point,
-  including the matrix diagonal in the training data.
+  including the matrix diagonal when computing the nearest neighborhoods
+  between the training data and itself.
 * each row's `data` should store the distance in increasing order (optional.
   Unsorted data will be stable-sorted, adding a computational overhead).
 * all values in data should be non-negative.

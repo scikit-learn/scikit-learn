@@ -1,6 +1,7 @@
 from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
+import pytest
 
 from sklearn import datasets
 from sklearn import manifold
@@ -127,8 +128,7 @@ def test_pipeline_with_nearest_neighbors_transformer():
     est_chain = pipeline.make_pipeline(
         neighbors.KNeighborsTransformer(
             n_neighbors=n_neighbors + 1, algorithm=algorithm, mode='distance'),
-        manifold.Isomap(n_neighbors=n_neighbors,
-                        neighbors_algorithm='precomputed'))
+        manifold.Isomap(n_neighbors=n_neighbors, metric='precomputed'))
     est_compact = manifold.Isomap(n_neighbors=n_neighbors,
                                   neighbors_algorithm=algorithm)
 
@@ -139,6 +139,31 @@ def test_pipeline_with_nearest_neighbors_transformer():
     Xt_chain = est_chain.transform(X2)
     Xt_compact = est_compact.transform(X2)
     assert_array_almost_equal(Xt_chain, Xt_compact)
+
+
+def test_different_metric():
+    # Test that the metric parameters work correctly, and default to euclidean
+    def custom_metric(x1, x2):
+        return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
+
+    # metric, p, is_euclidean
+    metrics = [('euclidean', 2, True),
+               ('manhattan', 1, False),
+               ('minkowski', 1, False),
+               ('minkowski', 2, True),
+               (custom_metric, 2, False)]
+
+    X, _ = datasets.make_blobs(random_state=0)
+    reference = manifold.Isomap().fit_transform(X)
+
+    for metric, p, is_euclidean in metrics:
+        embedding = manifold.Isomap(metric=metric, p=p).fit_transform(X)
+
+        if is_euclidean:
+            assert_array_almost_equal(embedding, reference)
+        else:
+            with pytest.raises(AssertionError, match='not almost equal'):
+                assert_array_almost_equal(embedding, reference)
 
 
 def test_isomap_clone_bug():

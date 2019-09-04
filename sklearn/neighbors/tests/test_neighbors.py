@@ -251,6 +251,14 @@ def test_is_sorted_by_data():
     X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
     assert _is_sorted_by_data(X)
 
+    # Test with duplicates entries in X.indptr
+    data, indices, indptr = [0, 1, 2, 2], [0, 1, 1, 1], [0, 2, 4, 4]
+    X = csr_matrix((data, indices, indptr), shape=(3, 3))
+    assert _is_sorted_by_data(X)
+    # make sure X had duplicates
+    X.sum_duplicates()
+    assert len(data) > len(X.data)
+
 
 @ignore_warnings(category=EfficiencyWarning)
 def test_check_precomputed():
