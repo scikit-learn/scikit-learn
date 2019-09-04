@@ -187,6 +187,13 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -251,6 +258,11 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
+  calculates euclidean distances in the presence of missing values.
+  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
 
 - |Feature| New ranking metrics :func:`metrics.ndcg_score` and
   :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
@@ -382,8 +394,9 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
+  refactoring was done.
+  :pr:`14035` and :pr:`14475` by `Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :func:`~utils.estimator_checks.check_estimator` can now generate
   checks by setting `generate_only=True`. Previously, running
