@@ -1273,7 +1273,7 @@ cdef class FriedmanMSE(MSE):
     Uses the formula (35) in Friedman's original Gradient Boosting paper:
 
         diff = mean_left - mean_right
-        improvement = n_left * n_right * diff^2 / (n_left + n_right)
+        improvement = diff^2 / (n_left * n_right * (n_left + n_right))
     """
 
     cdef double proxy_impurity_improvement(self) nogil:
