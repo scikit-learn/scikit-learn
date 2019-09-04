@@ -1484,7 +1484,7 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
-            # signature of scorer is (estimator, X, y)    
+            # signature of scorer is (estimator, X, y)
             out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
                    for i in range(len(self.alphas))]
             best = np.argmax(out)
