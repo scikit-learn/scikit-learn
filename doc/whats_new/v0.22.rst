@@ -390,8 +390,9 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
+  refactoring was done.
+  :pr:`14035` and :pr:`14475` by `Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :func:`~utils.estimator_checks.check_estimator` can now generate
   checks by setting `generate_only=True`. Previously, running
