@@ -576,7 +576,7 @@ in particular if the data was sorted in some way::
   >>> kf = KFold(n_splits=3)
   >>> for train, test in bskf.split(X, y):
   ...     print("stratified test-set mean y: {:.3f}".format(y[test].mean()))
-  stratified test-set mean y: 0.459
+  stratified test-set mean y: 0.429
   stratified test-set mean y: 0.500
   stratified test-set mean y: 0.571
 
