@@ -17,7 +17,6 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -163,10 +162,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
 
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
-    try:
-        from pyamg import smoothed_aggregation_solver  # noqa
-    except ImportError:
-        raise SkipTest("pyamg not available.")
+    pytest.importorskip('pyamg')
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,
@@ -176,9 +172,50 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
+
+    # same with special case in which amg is not actually used
+    # regression test for #10715
+    # affinity between nodes
+    row = [0, 0, 1, 2, 3, 3, 4]
+    col = [1, 2, 2, 3, 4, 5, 5]
+    val = [100, 100, 100, 1, 100, 100, 100]
+
+    affinity = sparse.coo_matrix((val + val, (row + col, col + row)),
+                                 shape=(6, 6)).toarray()
+    se_amg.affinity = "precomputed"
+    se_arpack.affinity = "precomputed"
+    embed_amg = se_amg.fit_transform(affinity)
+    embed_arpack = se_arpack.fit_transform(affinity)
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 1e-5)
 
 
+def test_spectral_embedding_amg_solver_failure(seed=36):
+    # Test spectral embedding with amg solver failure, see issue #13393
+    pytest.importorskip('pyamg')
+
+    # The generated graph below is NOT fully connected if n_neighbors=3
+    n_samples = 200
+    n_clusters = 3
+    n_features = 3
+    centers = np.eye(n_clusters, n_features)
+    S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
+                                cluster_std=1., random_state=42)
+
+    se_amg0 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
+                                eigen_solver="amg", n_neighbors=3,
+                                random_state=np.random.RandomState(seed))
+    embed_amg0 = se_amg0.fit_transform(S)
+
+    for i in range(10):
+        se_amg0.set_params(random_state=np.random.RandomState(seed + 1))
+        embed_amg1 = se_amg0.fit_transform(S)
+
+        assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
+
+
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)
@@ -203,14 +240,16 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
     se = SpectralEmbedding(n_components=1, affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
     se = SpectralEmbedding(n_components=1, affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
-    assert_raises(ValueError, se.fit, S)
+    with pytest.raises(ValueError):
+        se.fit(S)
 
 
 def test_connectivity(seed=36):

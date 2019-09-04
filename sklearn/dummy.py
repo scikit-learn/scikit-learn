@@ -171,7 +171,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         y : array, shape = [n_samples] or [n_samples, n_outputs]
             Predicted target values for X.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         # numpy random_state expects Python int and not long as size argument
         # under Windows
@@ -249,7 +249,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             the model, where classes are ordered arithmetically, for each
             output.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         # numpy random_state expects Python int and not long as size argument
         # under Windows
@@ -500,7 +500,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y_std : array, shape = [n_samples] or [n_samples, n_outputs]
             Standard deviation of predictive distribution of query points.
         """
-        check_is_fitted(self, "constant_")
+        check_is_fitted(self)
         n_samples = _num_samples(X)
 
         y = np.full((n_samples, self.n_outputs_), self.constant_,

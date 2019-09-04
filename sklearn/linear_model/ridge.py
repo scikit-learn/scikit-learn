@@ -1761,7 +1761,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Cross-validation values for each alpha (if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
-        ``{loss,score}_func`` function (if provided in the constructor).
+        ``{loss,score}_func`` function (if provided in the constructor). This
+        attribute exists only when ``store_cv_values`` is True.
 
     coef_ : array, shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.

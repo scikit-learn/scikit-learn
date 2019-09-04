@@ -911,7 +911,7 @@ class SparseCodingMixin(TransformerMixin):
             Transformed data
 
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         X = check_array(X)
 
@@ -1359,6 +1359,14 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations run.
+
+    iter_offset_ : int
+        The number of iteration on data batches that has been
+        performed before.
+
+    random_state_ : RandomState
+        RandomState instance that is generated either from a seed, the random
+        number generattor or by `np.random`.
 
     Notes
     -----

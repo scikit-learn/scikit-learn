@@ -1240,6 +1240,9 @@ class NMF(TransformerMixin, BaseEstimator):
         self.verbose = verbose
         self.shuffle = shuffle
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1312,7 +1315,7 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1339,5 +1342,5 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)

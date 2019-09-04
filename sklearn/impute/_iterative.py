@@ -14,8 +14,9 @@ from ..preprocessing import normalize
 from ..utils import check_array, check_random_state, safe_indexing
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils import is_scalar_nan
+from ..utils.mask import _get_mask
 
-from ._base import (_get_mask, MissingIndicator, SimpleImputer,
+from ._base import (MissingIndicator, SimpleImputer,
                     _check_inputs_dtype)
 
 
@@ -627,7 +628,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """
-        check_is_fitted(self, 'initial_imputer_')
+        check_is_fitted(self)
 
         if self.add_indicator:
             X_trans_indicator = self.indicator_.transform(X)

@@ -414,11 +414,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              % self.n_iter_no_change)
 
         # raise ValueError if not registered
-        supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        if self.activation not in supported_activations:
+        if self.activation not in ACTIVATIONS:
             raise ValueError("The activation '%s' is not supported. Supported "
-                             "activations are %s." % (self.activation,
-                                                      supported_activations))
+                             "activations are %s."
+                             % (self.activation, list(sorted(ACTIVATIONS))))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
@@ -968,7 +967,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1069,7 +1068,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1330,7 +1329,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()

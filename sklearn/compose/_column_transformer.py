@@ -20,7 +20,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _check_key_type
+from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -309,7 +309,8 @@ boolean mask array or callable
 
         # Make it possible to check for reordered named columns on transform
         if (hasattr(X, 'columns') and
-                any(_check_key_type(cols, str) for cols in self._columns)):
+                any(_determine_key_type(cols) == 'str'
+                    for cols in self._columns)):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
@@ -342,7 +343,7 @@ boolean mask array or callable
         feature_names : list of strings
             Names of the features produced by transform.
         """
-        check_is_fitted(self, 'transformers_')
+        check_is_fitted(self)
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
             if trans == 'drop':
@@ -550,7 +551,7 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        check_is_fitted(self, 'transformers_')
+        check_is_fitted(self)
         X = _check_X(X)
         if hasattr(X, "columns"):
             X_feature_names = np.asarray(X.columns)
@@ -755,6 +756,6 @@ def _is_negative_indexing(key):
     def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
     if isinstance(key, slice):
         return is_neg(key.start) or is_neg(key.stop)
-    elif _check_key_type(key, int):
+    elif _determine_key_type(key) == 'int':
         return np.any(np.asarray(key) < 0)
     return False

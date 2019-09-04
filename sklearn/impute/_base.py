@@ -16,7 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.fixes import _object_dtype_isnan
+from ..utils.mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
 
@@ -28,23 +28,6 @@ def _check_inputs_dtype(X, missing_values):
                          " both numerical. Got X.dtype={} and "
                          " type(missing_values)={}."
                          .format(X.dtype, type(missing_values)))
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if is_scalar_nan(value_to_mask):
-        if X.dtype.kind == "f":
-            return np.isnan(X)
-        elif X.dtype.kind in ("i", "u"):
-            # can't have NaNs in integer array.
-            return np.zeros(X.shape, dtype=bool)
-        else:
-            # np.isnan does not work on object dtypes.
-            return _object_dtype_isnan(X)
-    else:
-        # X == value_to_mask with object dytpes does not always perform
-        # element-wise for old versions of numpy
-        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -338,10 +321,9 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
         # Most frequent
         elif strategy == "most_frequent":
-            # scipy.stats.mstats.mode cannot be used because it will no work
-            # properly if the first element is masked and if its frequency
-            # is equal to the frequency of the most frequent valid element
-            # See https://github.com/scipy/scipy/issues/2636
+            # Avoid use of scipy.stats.mstats.mode due to the required
+            # additional overhead and slow benchmarking performance.
+            # See Issue 14325 and PR 14399 for full discussion.
 
             # To be able access the elements by columns
             X = X.transpose()
@@ -373,7 +355,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        check_is_fitted(self, 'statistics_')
+        check_is_fitted(self)
 
         X = self._validate_input(X)
 
@@ -655,7 +637,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        check_is_fitted(self, "features_")
+        check_is_fitted(self)
         X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
