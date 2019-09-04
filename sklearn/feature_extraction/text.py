@@ -468,7 +468,7 @@ class VectorizerMixin:
                 "lower boundary larger than the upper boundary."
                 % str(self.ngram_range))
 
-    def _missing_param_warning(self):
+    def _warn_for_unused_params(self):
 
         if self.tokenizer is not None and self.token_pattern is not None:
             warnings.warn("The parameter 'token_pattern' will not be used"
@@ -709,8 +709,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
-        self._missing_param_warning()
-
+        self._warn_for_unused_params()
         self._validate_params()
 
         self._get_hasher().fit(X, y=y)
@@ -1125,8 +1124,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
-        self._missing_param_warning()
-
+        self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
 
@@ -1740,7 +1738,7 @@ class TfidfVectorizer(CountVectorizer):
         self : TfidfVectorizer
         """
         self._check_params()
-        self._missing_param_warning()
+        self._warn_for_unused_params()
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
