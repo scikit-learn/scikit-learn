@@ -336,7 +336,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
          - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
            of precomputed nearest neighbors, and constructs the affinity matrix
            by selecting the ``n_neighbors`` nearest neighbors.
-         - one of the kernels supported by `sklearn.metrics.pairwise_kernels`.
+         - one of the kernels supported by :func:`~sklearn.metrics.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked

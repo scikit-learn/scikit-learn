@@ -200,12 +200,12 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     Parameters
     ----------
-    mode : {'distance', 'connectivity'}, optional (default = 'distance')
+    mode : {'distance', 'connectivity'}, default='distance'
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    n_neighbors : int, optional (default = 5)
+    n_neighbors : int, default=5
         Number of neighbors for each sample in the transformed sparse graph.
         For compatibility reasons, as each sample is considered as its own
         neighbor, one extra neighbor will be computed when mode == 'distance'.
@@ -223,13 +223,13 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or callable, default 'minkowski'
+    metric : string or callable, default='minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -255,16 +255,16 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : integer, optional (default = 2)
+    p : int, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int, default=1
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -291,12 +291,12 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples_transform, n_features)
+        X : array-like of shape (n_samples_transform, n_features)
             Sample data
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples_transform, n_samples_fit)
+        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
@@ -314,14 +314,14 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : numpy array of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training set.
 
         y : ignored
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples, n_samples)
+        Xt : CSR sparse graph of shape (n_samples, n_samples)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
@@ -340,15 +340,15 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
     Parameters
     ----------
-    mode : {'distance', 'connectivity'}, optional (default = 'distance')
+    mode : {'distance', 'connectivity'}, default='distance'
         Type of returned matrix: 'connectivity' will return the connectivity
         matrix with ones and zeros, and 'distance' will return the distances
         between neighbors according to the given metric.
 
-    radius : float, optional (default = 1.)
+    radius : float, default=1.
         Radius of neighborhood in the transformed sparse graph.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
@@ -360,13 +360,13 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    leaf_size : int, optional (default = 30)
+    leaf_size : int, default=30
         Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or callable, default 'minkowski'
+    metric : string or callable, default='minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -392,16 +392,16 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : integer, optional (default = 2)
+    p : int, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_params : dict, optional (default = None)
+    metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int, default=1
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
@@ -428,12 +428,12 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples_transform, n_features)
+        X : array-like of shape (n_samples_transform, n_features)
             Sample data
 
         Returns
         -------
-        Xt : CSR sparse graph, shape (n_samples_transform, n_samples_fit)
+        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
             Xt[i, j] is assigned the weight of edge that connects i to j.
             Only the neighbors have an explicit value.
             The diagonal is always explicit.
@@ -450,7 +450,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : numpy array of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training set.
 
         y : ignored

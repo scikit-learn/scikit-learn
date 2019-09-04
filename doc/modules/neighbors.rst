@@ -525,9 +525,9 @@ them also accept precomputed nearest neighbors :term:`sparse graph`,
 as given by :func:`~sklearn.neighbors.kneighbors_graph` and
 :func:`~sklearn.neighbors.radius_neighbors_graph`. With mode
 `mode='connectivity'`, these functions return a binary adjacency sparse graph
-as required for instance in :class:`~sklearn.cluster.SpectralClustering`,
-whereas with `mode='distance'`, they return a distance sparse graph as required
-for instance in :class:`~sklearn.cluster.DBSCAN`. To include these functions in
+as required, for instance, in :class:`~sklearn.cluster.SpectralClustering`.
+Whereas with `mode='distance'`, they return a distance sparse graph as required,
+for instance, in :class:`~sklearn.cluster.DBSCAN`. To include these functions in
 a scikit-learn pipeline, one can also use the corresponding classes
 :class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
 The benefits of this sparse graph API are multiple.
