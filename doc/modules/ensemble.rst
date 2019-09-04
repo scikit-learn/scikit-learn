@@ -390,9 +390,9 @@ learners::
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import AdaBoostClassifier
 
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...
 

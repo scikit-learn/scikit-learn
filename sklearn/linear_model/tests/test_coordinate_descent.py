@@ -864,3 +864,27 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+@pytest.mark.parametrize("precompute, inner_precompute", [
+    (True, True),
+    ('auto', False),
+    (False, False),
+])
+def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
+                                         inner_precompute):
+    X, y, _, _ = build_dataset()
+    calls = 0
+
+    class LassoMock(Lasso):
+        def fit(self, X, y):
+            super().fit(X, y)
+            nonlocal calls
+            calls += 1
+            assert self.precompute == inner_precompute
+
+    monkeypatch.setattr("sklearn.linear_model.coordinate_descent.Lasso",
+                        LassoMock)
+    clf = LassoCV(precompute=precompute)
+    clf.fit(X, y)
+    assert calls > 0
