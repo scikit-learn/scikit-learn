@@ -173,6 +173,18 @@ def test_make_classification_weights_array_or_list_ok():
                                  random_state=0)
     assert (X1.all() == X2.all()) and (y1.all() == y2.all())
 
+    # Case where weights length < # classes. n_informative is
+    # also increased to 3 to avoid the informative check error.
+    X1, y1 = make_classification(weights=[.1, .9],
+                                 n_classes=3,
+                                 n_informative=3,
+                                 random_state=0)
+    X2, y2 = make_classification(weights=np.array([.1, .9]),
+                                 n_classes=3,
+                                 n_informative=3,
+                                 random_state=0)
+    assert (X1.all() == X2.all()) and (y1.all() == y2.all())
+
 
 def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
