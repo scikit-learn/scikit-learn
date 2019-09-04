@@ -316,7 +316,7 @@ class BaseEstimator:
         collected_tags = {}
         for base_class in reversed(inspect.getmro(self.__class__)):
             if hasattr(base_class, '_more_tags'):
-                # need the if because mixins might not have it
+                # need the if because mixins might not have _more_tags
                 # but might do redundant work in estimators
                 # (i.e. calling more tags on BaseEstimator multiple times)
                 more_tags = base_class._more_tags(self)
