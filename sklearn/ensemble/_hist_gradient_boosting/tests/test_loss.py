@@ -65,7 +65,7 @@ def test_derivatives(loss, x0, y_true):
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     def func(x):
-        return loss(y_true, x)
+        return loss.pointwise_loss(y_true, x)
 
     def fprime(x):
         return get_gradients(y_true, x)
@@ -75,7 +75,7 @@ def test_derivatives(loss, x0, y_true):
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2)
     assert np.allclose(loss.inverse_link_function(optimum), y_true)
-    assert np.allclose(loss(y_true, optimum), 0)
+    assert np.allclose(loss.pointwise_loss(y_true, optimum), 0)
     assert np.allclose(get_gradients(y_true, optimum), 0)
 
 
@@ -116,16 +116,16 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     eps = 1e-9
     offset = np.zeros_like(raw_predictions)
     offset[0, :] = eps
-    f_plus_eps = loss(y_true, raw_predictions + offset / 2)
-    f_minus_eps = loss(y_true, raw_predictions - offset / 2)
+    f_plus_eps = loss.pointwise_loss(y_true, raw_predictions + offset / 2)
+    f_minus_eps = loss.pointwise_loss(y_true, raw_predictions - offset / 2)
     numerical_gradients = (f_plus_eps - f_minus_eps) / eps
 
     # Approximate hessians
     eps = 1e-4  # need big enough eps as we divide by its square
     offset[0, :] = eps
-    f_plus_eps = loss(y_true, raw_predictions + offset)
-    f_minus_eps = loss(y_true, raw_predictions - offset)
-    f = loss(y_true, raw_predictions)
+    f_plus_eps = loss.pointwise_loss(y_true, raw_predictions + offset)
+    f_minus_eps = loss.pointwise_loss(y_true, raw_predictions - offset)
+    f = loss.pointwise_loss(y_true, raw_predictions)
     numerical_hessians = (f_plus_eps + f_minus_eps - 2 * f) / eps**2
 
     def relative_error(a, b):

@@ -507,14 +507,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         self.train_score_.append(
-            -self.loss_.get_average_loss(y_train, raw_predictions,
-                                         sample_weight_train)
+            -self.loss_(y_train, raw_predictions, sample_weight_train)
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self.loss_.get_average_loss(y_val, raw_predictions_val,
-                                             sample_weight_val)
+                -self.loss_(y_val, raw_predictions_val, sample_weight_val)
             )
             return self._should_stop(self.validation_score_)
         else:

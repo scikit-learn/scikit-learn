@@ -26,16 +26,16 @@ from ._loss import _update_gradients_hessians_categorical_crossentropy
 class BaseLoss(ABC):
     """Base class for a loss."""
 
-    @abstractmethod
-    def __call__(self, y_true, raw_predictions):
-        """Return the loss for each value
+    def __call__(self, y_true, raw_predictions, sample_weight):
+        """Return the weighted average loss
         """
-
-    def get_average_loss(self, y_true, raw_predictions, sample_weight):
-        """Return the average loss, weighted if sample_weight is not None
-        """
-        return np.average(self(y_true, raw_predictions),
+        return np.average(self.pointwise_loss(y_true, raw_predictions),
                           weights=sample_weight)
+
+    @abstractmethod
+    def pointwise_loss(self, y_true, raw_predictions):
+        """Return loss value for each input
+        """
 
     def init_gradients_and_hessians(self, n_samples, prediction_dim,
                                     sample_weight):
@@ -150,7 +150,7 @@ class LeastSquares(BaseLoss):
 
     hessians_are_constant = True
 
-    def __call__(self, y_true, raw_predictions):
+    def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
@@ -194,7 +194,7 @@ class BinaryCrossEntropy(BaseLoss):
     hessians_are_constant = False
     inverse_link_function = staticmethod(expit)
 
-    def __call__(self, y_true, raw_predictions):
+    def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
@@ -245,7 +245,7 @@ class CategoricalCrossEntropy(BaseLoss):
 
     hessians_are_constant = False
 
-    def __call__(self, y_true, raw_predictions):
+    def pointwise_loss(self, y_true, raw_predictions):
         one_hot_true = np.zeros_like(raw_predictions)
         prediction_dim = raw_predictions.shape[0]
         for k in range(prediction_dim):
