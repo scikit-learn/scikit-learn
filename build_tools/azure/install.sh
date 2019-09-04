@@ -86,7 +86,7 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
-elif [[ "$DISTRIB" == "latest"]]; then
+elif [[ "$DISTRIB" == "latest" ]]; then
     # since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     make_conda("python=$PYTHON_VERSION")
