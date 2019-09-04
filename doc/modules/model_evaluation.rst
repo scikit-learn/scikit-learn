@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
