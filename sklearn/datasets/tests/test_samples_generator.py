@@ -166,24 +166,14 @@ def test_make_classification_weights_type(weights, err_type, err_msg):
         make_classification(weights=weights)
 
 
-def test_make_classification_weights_array_or_list_ok():
+@pytest.mark.parametrize("kwargs", [{}, {"n_classes": 3, "n_informative": 3}])
+def test_make_classification_weights_array_or_list_ok(kwargs):
     X1, y1 = make_classification(weights=[.1, .9],
-                                 random_state=0)
+                                 random_state=0, **kwargs)
     X2, y2 = make_classification(weights=np.array([.1, .9]),
-                                 random_state=0)
-    assert (X1.all() == X2.all()) and (y1.all() == y2.all())
-
-    # Case where weights length < # classes. n_informative is
-    # also increased to 3 to avoid the informative check error.
-    X1, y1 = make_classification(weights=[.1, .9],
-                                 n_classes=3,
-                                 n_informative=3,
-                                 random_state=0)
-    X2, y2 = make_classification(weights=np.array([.1, .9]),
-                                 n_classes=3,
-                                 n_informative=3,
-                                 random_state=0)
-    assert (X1.all() == X2.all()) and (y1.all() == y2.all())
+                                 random_state=0, **kwargs)
+    assert_almost_equal(X1, X2)
+    assert_almost_equal(y1, y2)
 
 
 def test_make_multilabel_classification_return_sequences():
