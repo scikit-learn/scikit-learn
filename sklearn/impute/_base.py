@@ -177,7 +177,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.add_indicator = add_indicator
 
-    def _validate_input(self, X):
+    def _validate_input(self, X, in_fit):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
         if self.strategy not in allowed_strategies:
             raise ValueError("Can only use these strategies: {0} "
@@ -195,8 +195,11 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             force_all_finite = "allow-nan"
 
         try:
-            X = check_array(X, accept_sparse='csc', dtype=dtype,
-                            force_all_finite=force_all_finite, copy=self.copy)
+            check_n_features = not in_fit
+            X = self._validate_X(X, check_n_features=check_n_features,
+                                 accept_sparse='csc', dtype=dtype,
+                                 force_all_finite=force_all_finite,
+                                 copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
                 raise ValueError("Cannot use {0} strategy with non-numeric "
@@ -229,7 +232,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         -------
         self : SimpleImputer
         """
-        X = self._validate_input(X)
+        X = self._validate_input(X, in_fit=True)
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -374,7 +377,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = self._validate_input(X)
+        X = self._validate_input(X, in_fit=False)
 
         statistics = self.statistics_
 
@@ -560,13 +563,15 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask, features_indices
 
-    def _validate_input(self, X):
+    def _validate_input(self, X, in_fit):
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=None,
-                        force_all_finite=force_all_finite)
+        check_n_features = not in_fit
+        X = self._validate_X(X, check_n_features=check_n_features,
+                             accept_sparse=('csc', 'csr'), dtype=None,
+                             force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
             raise ValueError("MissingIndicator does not support data with "
@@ -601,7 +606,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             The imputer mask of the original data.
 
         """
-        X = self._validate_input(X)
+        X = self._validate_input(X, in_fit=True)
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -653,7 +658,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self)
-        X = self._validate_input(X)
+        X = self._validate_input(X, in_fit=False)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "

@@ -70,25 +70,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.learning_rate = learning_rate
         self.random_state = random_state
 
-    def _validate_data(self, X, y=None):
-
-        # Accept or convert to these sparse matrix formats so we can
-        # use safe_indexing
-        accept_sparse = ['csr', 'csc']
-        if y is None:
-            ret = check_array(X,
-                              accept_sparse=accept_sparse,
-                              ensure_2d=False,
-                              allow_nd=True,
-                              dtype=None)
-        else:
-            ret = check_X_y(X, y,
-                            accept_sparse=accept_sparse,
-                            ensure_2d=False,
-                            allow_nd=True,
-                            dtype=None,
-                            y_numeric=is_regressor(self))
-        return ret
+    def _validate_data(self, X):
+        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=False,
+                           allow_nd=True, dtype=None)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -115,7 +99,12 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_X_y(X, y,
+                                  accept_sparse=['csr', 'csc'],
+                                  ensure_2d=False,
+                                  allow_nd=True,
+                                  dtype=None,
+                                  y_numeric=is_regressor(self))
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples

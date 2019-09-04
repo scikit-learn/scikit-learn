@@ -83,7 +83,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     def _check_input(self, X):
         if self.validate:
-            return check_array(X, accept_sparse=self.accept_sparse)
+            return self._validate_X(X, accept_sparse=self.accept_sparse)
         return X
 
     def _check_inverse_transform(self, X):
@@ -156,5 +156,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         return func(X, **(kw_args if kw_args else {}))
 
     def _more_tags(self):
-        return {'no_validation': True,
+        return {'no_validation': not self.validate,
                 'stateless': True}

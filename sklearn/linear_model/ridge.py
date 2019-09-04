@@ -1574,6 +1574,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
+        self.n_features_in_ = estimator.n_features_in_
 
         return self
 

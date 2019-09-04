@@ -1034,9 +1034,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        ensure_min_features=2, estimator=self)
-        return AgglomerativeClustering.fit(self, X.T, **params)
+        X = self._validate_X(X, accept_sparse=['csr', 'csc', 'coo'],
+                             ensure_min_features=2, estimator=self)
+        n_features_in_ = self.n_features_in_
+        AgglomerativeClustering.fit(self, X.T, **params)
+        # Need to restore n_features_in_ attribute that was overridden in
+        # AgglomerativeClustering since we passed it X.T.
+        self.n_features_in_ = n_features_in_
+        return self
 
     @property
     def fit_predict(self):

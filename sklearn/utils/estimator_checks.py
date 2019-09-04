@@ -271,7 +271,8 @@ def _yield_all_checks(name, estimator):
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
     yield check_fit_idempotent
-    yield check_n_features_in
+    if not tags["no_validation"]:
+        yield check_n_features_in
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -2655,32 +2656,9 @@ def check_n_features_in(name, estimator_orig):
     # Make sure that n_features_in_ attribute doesn't exist until fit is
     # called.
 
-    if 'Dummy' in name:
-        # Dummy estimators don't validate X at all
-        return
     if any(x in name for x in ('FastICA', 'KMeans')):
         # fit calls public function helper and validates there. No way to
         # access `self` from the helper.
-        return
-    if 'FunctionTransformer' in name:
-        # Validation is optional and False by default
-        return
-    if 'KernelCenterer' in name:
-        # Takes kernel K with shape (n_samples, n_samples) as input, not X
-        return
-    if any(x in name for x in ('LatentDirichlet', 'MissingIndicator',
-                               'PowerTransformer', 'QuantileTransformer',
-                               'SimpleImputer', 'AdaBoost')):
-        # fit calls private validation method, which is also called for
-        # predict, transform, etc
-        return
-    if any(x in name for x in ('MaxAbsScaler', 'MinMaxScaler')):
-        # Fit directly calls partial_fit. Don't know what to do with
-        # partial_fit.
-        return
-    if name in 'RidgeCV':
-        # Uses aggregation from an estimator that is not an attribute. There is
-        # no way to delegate to this estimator.
         return
 
     rng = np.random.RandomState(0)
@@ -2701,4 +2679,4 @@ def check_n_features_in(name, estimator_orig):
 
     assert not hasattr(estimator, 'n_features_in_')
     estimator.fit(X, y)
-    assert hasattr(estimator, 'n_features_in_')
+    assert estimator.n_features_in_ == X.shape[1]
