@@ -44,9 +44,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Strictly positive parameter that is inversely proportional to the
-        regularization strength and is multiplied with the loss term of the
-        in the cost function.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -275,9 +274,8 @@ class LinearSVR(LinearModel, RegressorMixin):
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Strictly positive parameter that is inversely proportional to the
-        regularization strength and is multiplied with the loss term of the
-        in the cost function.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     loss : string, optional (default='epsilon_insensitive')
         Specifies the loss function. The epsilon-insensitive loss
@@ -457,8 +455,9 @@ class SVC(BaseSVC):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Strictly positive parameter that is inversely proportional to the
-        regularization strength. The penalty is a squared l2 penalty.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive. The penalty
+        is a squared l2 penalty.
 
     kernel : string, optional (default='rbf')
         Specifies the kernel type to be used in the algorithm.
@@ -870,8 +869,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     C : float, optional (default=1.0)
-        Strictly positive parameter that is inversely proportional to the
-        regularization strength. The penalty is a squared l2 penalty.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
+        The penalty is a squared l2 penalty.
 
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
