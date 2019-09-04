@@ -640,10 +640,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _get_tags(self):
         tags = super()._get_tags()
-        # This is not strictly True, but it's needed since
-        # force_all_finite=False means accept both nans and infinite values.
-        # Without the tag, common checks would fail.
-        # This comment must be removed once we merge PR 13911
         tags.update({'allow_nan': True})
         return tags
 

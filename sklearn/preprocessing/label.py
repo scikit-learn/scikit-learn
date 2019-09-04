@@ -168,7 +168,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
 
 
-class LabelEncoder(BaseEstimator, TransformerMixin):
+class LabelEncoder(TransformerMixin, BaseEstimator):
     """Encode target labels with value between 0 and n_classes-1.
 
     This transformer should be used to encode target values, *i.e.* `y`, and
