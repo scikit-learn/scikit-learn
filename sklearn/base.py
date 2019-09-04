@@ -310,9 +310,17 @@ class BaseEstimator:
             self.__dict__.update(state)
 
     def _get_tags(self):
+        collected_tags = {}
+        for base_class in inspect.getmro(self.__class__):
+            if (hasattr(base_class, '_more_tags')
+                    and base_class != self.__class__):
+                more_tags = base_class._more_tags(self)
+                collected_tags.update(more_tags)
+        if hasattr(self, '_more_tags'):
+            more_tags = self._more_tags()
+            collected_tags.update(more_tags)
         tags = _DEFAULT_TAGS.copy()
-        if hasattr(super(), '_get_tags'):
-            tags.update(super()._get_tags())
+        tags.update(collected_tags)
         return tags
 
 
@@ -596,13 +604,13 @@ class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn."""
 
 
-class MultiOutputMixin:
+class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
     def _more_tags(self):
         return {'multioutput': True}
 
 
-class _UnstableArchMixin:
+class _UnstableArchMixin(object):
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
         return {'non_deterministic': (
