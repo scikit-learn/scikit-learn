@@ -11,9 +11,9 @@ Developer's Guide
 
    contributing
    develop
-   plotting
    tips
    utilities
    performance
    advanced_installation
    maintainer
+   plotting

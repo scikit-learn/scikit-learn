@@ -48,6 +48,9 @@ attributes::
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 
+Read more in :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+and the :ref:`User Guide <visualizations>`.
+
 Plotting with Multiple Axes
 ---------------------------
 
@@ -58,8 +61,8 @@ number of axes is consistent with the number of axes it needs and then draw on
 those axes. 
 
 When a single axes is passed in, that axes defines a space for the multiple
-axes to be placed. In this case, matplotlib's
-`gridspec.GridSpecFromSubplotSpec` can be used to split up the space::
+axes to be placed. In this case, we suggest using matplotlib's
+`gridspec.GridSpecFromSubplotSpec` to split up the space::
 
    import matplotlib.pyplot as plt
    from matplotlib.gridspec import GridSpecFromSubplotSpec
@@ -74,15 +77,12 @@ axes to be placed. In this case, matplotlib's
 By default, the `ax` keyworld in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
-For example, :func:`~sklearn.inspection.plot_partial_dependence` plots multiple
-lines and contours using this API. The axes that is passed in or created that
-defines the space is saved as a `bounding_ax_` attribute. The individual axes
-created are stored in a `axes_` ndarray, corresponding to the axes position on
-the grid. Positions that are not used are set to `None`. Furthermore, the
-matplotlib Artists are stored in `lines_` and `contours_` where the key is the
-position on the grid. When a list of axes is passsed in, the `axes_`, `lines_`,
-and `contours_` keys is single int corresponding to the position on the passed
-in list of axes. 
-
-Read more in :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
-and the :ref:`User Guide <visualizations>`.
+See for example, :func:`~sklearn.inspection.plot_partial_dependence` which
+plots multiple lines and contours using this API. The axes defining the bounding box is saved in  
+:class:`~sklearn.inspection.PartialDependenceDisplay`'s `bounding_ax_` attribute. The
+individual axes created are stored in an `axes_` ndarray, corresponding to the
+axes position on the grid. Positions that are not used are set to `None`.
+Furthermore, the matplotlib Artists are stored in `lines_` and `contours_`
+where the key is the position on the grid. When a list of axes is passsed in,
+the `axes_`, `lines_`, and `contours_` keys is single int corresponding to the
+position on the passed in list of axes. 
