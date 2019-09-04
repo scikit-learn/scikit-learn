@@ -401,17 +401,6 @@ class VectorizerMixin:
 
         preprocess = self.build_preprocessor()
 
-        if self.analyzer != 'word' or callable(self.analyzer):
-            if self.stop_words is not None:
-                warnings.warn("The parameter 'stop_words' will not be used"
-                              " since 'analyzer' != 'word'")
-            if self.token_pattern is not None:
-                warnings.warn("The parameter 'token_pattern' will not be used"
-                              " since 'analyzer' != 'word'")
-            if self.tokenizer is not None:
-                warnings.warn("The parameter 'tokenizer' will not be used"
-                              " since 'analyzer' != 'word'")
-
         if self.analyzer == 'char':
             return partial(_analyze, ngrams=self._char_ngrams,
                            preprocessor=preprocess, decoder=self.decode)
@@ -493,6 +482,17 @@ class VectorizerMixin:
                 and callable(self.analyzer)):
             warnings.warn("The parameter 'ngram_range' will not be used"
                           " since 'analyzer' is callable'")
+        if self.analyzer != 'word' or callable(self.analyzer):
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.token_pattern is not None and \
+               self.token_pattern != r"(?u)\b\w\w+\b":
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since 'analyzer' != 'word'")
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
@@ -709,10 +709,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
-        self._validate_params()
-        # Calling build analyzer to trigger any parameter warnings
-        self.build_analyzer()
         self._missing_param_warning()
+
+        self._validate_params()
 
         self._get_hasher().fit(X, y=y)
         return self
