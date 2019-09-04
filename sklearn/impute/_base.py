@@ -200,7 +200,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         except ValueError as ve:
             if "could not convert" in str(ve):
                 new_ve = ValueError("Cannot use {} strategy with non-numeric "
-                                    "data:\n{}".format(self.strategy, str(ve)))
+                                    "data:\n{}".format(self.strategy, ve))
                 raise new_ve from None
             else:
                 raise ve
