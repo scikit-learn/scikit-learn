@@ -1904,28 +1904,27 @@ class BinnedStratifiedKFold(StratifiedKFold):
 
     random_state : None, int or RandomState
         When ``shuffle=True``, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+        shuffling.
         See :term:`glossary <random_state>` for details.
 
     Examples
     --------
     >>> from sklearn.model_selection import BinnedStratifiedKFold
     >>> y = np.arange(11.0)
-    >>> np.random.seed(0)
-    >>> np.random.shuffle(y)
-    >>> X = y + 0.1* np.random.randn(len(y))
+    >>> rng = np.random.RandomState(0)
+    >>> X = y + 0.1 * rng.randn(len(y))
     >>> cv = BinnedStratifiedKFold(n_splits=3)
     >>> skf = cv.split(X, y)
     >>> print(cv)
     BinnedStratifiedKFold(n_bins=5, n_splits=3, random_state=None...)
-    >>> indarr = np.zeros(len(y), dtype=bool)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [ 5  6  7  8  9 10] TEST: [0 1 2 3 4]
-    TRAIN: [ 0  1  2  3  4  9 10] TEST: [5 6 7 8]
-    TRAIN: [0 1 2 3 4 5 6 7 8] TEST: [ 9 10]
+    TRAIN: [ 1  3  4  5  7  9 10] TEST: [0 2 6 8]
+    TRAIN: [ 0  2  3  5  6  8 10] TEST: [1 4 7 9]
+    TRAIN: [0 1 2 4 6 7 8 9] TEST: [ 3  5 10]
+
 
     Notes
     -----

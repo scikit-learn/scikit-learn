@@ -1593,7 +1593,6 @@ def test_binnedstratifiedkfold_balance():
             train_sizes.append(len(train_index))
             test_sizes.append(len(test_index))
 
-        # fixme we can make this test be <= 1 once we fix StratifiedKFold
         assert (np.max(test_sizes) - np.min(test_sizes)) <= 1
         assert (np.max(train_sizes) - np.min(train_sizes)) <= 1
         assert np.sum(test_sizes) == X.shape[0]
