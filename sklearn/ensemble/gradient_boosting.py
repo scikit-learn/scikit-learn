@@ -1088,7 +1088,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return (score.ravel() >= 0.0).astype(np.int)
 
 
-class VerboseReporter(object):
+class VerboseReporter:
     """Reports verbose output to stdout.
 
     Parameters
