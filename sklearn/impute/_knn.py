@@ -264,5 +264,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         return X[:, valid_idx]
 
-    def _more_tags(self):
-        return {'allow_nan': is_scalar_nan(self.missing_values)}
+    def _get_tags(self):
+        tags = super()._get_tags()
+        tags.update({'allow_nan': is_scalar_nan(self.missing_values)})
+        return tags
