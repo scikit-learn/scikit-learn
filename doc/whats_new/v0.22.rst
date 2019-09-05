@@ -146,9 +146,8 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Enhancement| :func:`feature_extraction.text._warn_for_unused_params` will
-  give warning messages to inform the user about the  parameters that will
-  be ignored on calling the fit() method for
+- |Enhancement| A warning  will  now be raised  if a parameter choice means
+  that another parameter will be unused on calling the fit() method for
   :class:`feature_extraction.text.HashingVectorizer`,
   :class:`feature_extraction.text.CountVectorizer` and
   :class:`feature_extraction.text.TfidfVectorizer`.
