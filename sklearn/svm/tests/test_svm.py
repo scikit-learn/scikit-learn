@@ -690,7 +690,7 @@ def test_sparse_precomputed():
         assert "Sparse precomputed" in str(e)
 
 
-def test_sparse_fit_no_support_vectors():
+def test_sparse_fit_support_vectors_empty():
     x_train = sparse.csr_matrix([[0, 1, 0, 0],
                                  [0, 0, 0, 1],
                                  [0, 0, 1, 0],
