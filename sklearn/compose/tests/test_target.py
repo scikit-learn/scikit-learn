@@ -298,17 +298,18 @@ def test_transform_target_regressor_count_fit(check_inverse):
 
 class DummyRegressorWithExtraFitParams(DummyRegressor):
     def fit(self, X, y, sample_weight=None, check_input=True):
-        # on the test below we force this to false, we make sure this actually passed
-        # to the regressor
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the regressor
         assert not check_input
         return super().fit(X, y, sample_weight)
 
 
 def test_transform_target_regressor_pass_fit_parameters():
     X, y = friedman
-    # provide a transformer and functions at the same time
-    regr = TransformedTargetRegressor(regressor=DummyRegressorWithExtraFitParams(),
-                                      transformer=DummyTransformer())
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
 
     regr.fit(X, y, check_input=False)
     assert regr.transformer_.fit_counter == 1

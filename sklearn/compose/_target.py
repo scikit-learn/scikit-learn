@@ -161,7 +161,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Target values.
 
         **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of the underlying regressor.
+            Parameters passed to the ``fit`` method of the underlying
+            regressor.
 
 
         Returns
