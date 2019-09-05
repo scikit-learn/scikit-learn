@@ -58,6 +58,11 @@ class PrecisionRecallDisplay:
         name : str, default=None
             Name of precision recall curve for labeling. If `None`, use the
             name of the estimator.
+
+        Returns
+        -------
+        display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("PrecisionRecallDisplay.plot")
         import matplotlib.pyplot as plt
@@ -100,7 +105,7 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples, )
+    y : array-like of shape (n_samples,)
         Target values.
 
     pos_label : int or str, default=None
@@ -108,14 +113,15 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
         When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
         `pos_label` is set to 1, otherwise an error will be raised.
 
-    sample_weight : array-like of shape (n_samples, ), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     response_method : {'predict_proba', 'decision_function', 'auto'} \
     default='auto'
-        Specifies whether to use `predict_proba` or `decision_function` as the
-        target response. If set to 'auto', `predict_proba` is tried first
-        and if it does not exist `decision_function` is tried next.
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next.
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the
@@ -126,7 +132,7 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
 
     Returns
     -------
-    viz : :class:`sklearn.metrics.PrecisionRecallDisplay`
+    display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object that stores computed values.
     """
     check_matplotlib_support("plot_precision_recall_curve")
