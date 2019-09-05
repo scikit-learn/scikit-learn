@@ -34,7 +34,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
+class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the

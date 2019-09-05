@@ -24,7 +24,7 @@ from .bagging import BaseBagging
 __all__ = ["IsolationForest"]
 
 
-class IsolationForest(BaseBagging, OutlierMixin):
+class IsolationForest(OutlierMixin, BaseBagging):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm

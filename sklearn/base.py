@@ -129,17 +129,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-def _update_if_consistent(dict1, dict2):
-    common_keys = set(dict1.keys()).intersection(dict2.keys())
-    for key in common_keys:
-        if dict1[key] != dict2[key]:
-            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
-                key, dict1[key], dict2[key]
-            ))
-    dict1.update(dict2)
-    return dict1
-
-
 class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
@@ -320,20 +309,19 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
+    def _more_tags(self):
+        return _DEFAULT_TAGS
+
     def _get_tags(self):
         collected_tags = {}
-        for base_class in inspect.getmro(self.__class__):
-            if (hasattr(base_class, '_more_tags')
-                    and base_class != self.__class__):
+        for base_class in reversed(inspect.getmro(self.__class__)):
+            if hasattr(base_class, '_more_tags'):
+                # need the if because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
                 more_tags = base_class._more_tags(self)
-                collected_tags = _update_if_consistent(collected_tags,
-                                                       more_tags)
-        if hasattr(self, '_more_tags'):
-            more_tags = self._more_tags()
-            collected_tags = _update_if_consistent(collected_tags, more_tags)
-        tags = _DEFAULT_TAGS.copy()
-        tags.update(collected_tags)
-        return tags
+                collected_tags.update(more_tags)
+        return collected_tags
 
 
 class ClassifierMixin:

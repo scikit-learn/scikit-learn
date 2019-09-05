@@ -18,7 +18,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(BaseEstimator, TransformerMixin):
+class TruncatedSVD(TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of

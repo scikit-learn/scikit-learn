@@ -251,7 +251,7 @@ else [n_classes, n_features]
         return self
 
 
-class LinearSVR(LinearModel, RegressorMixin):
+class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
 
     Similar to SVR with parameter kernel='linear', but implemented in terms of
@@ -824,7 +824,7 @@ class NuSVC(BaseSVC):
             random_state=random_state)
 
 
-class SVR(BaseLibSVM, RegressorMixin):
+class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -956,7 +956,7 @@ class SVR(BaseLibSVM, RegressorMixin):
             class_weight=None, max_iter=max_iter, random_state=None)
 
 
-class NuSVR(BaseLibSVM, RegressorMixin):
+class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -1081,7 +1081,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM, OutlierMixin):
+class OneClassSVM(OutlierMixin, BaseLibSVM):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.

@@ -84,7 +84,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
+class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod

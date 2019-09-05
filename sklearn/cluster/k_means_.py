@@ -761,7 +761,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
+class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     """K-Means clustering
 
     Read more in the :ref:`User Guide <k_means>`.

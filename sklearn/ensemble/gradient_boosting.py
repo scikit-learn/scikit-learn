@@ -1810,7 +1810,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return leaves
 
 
-class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
+class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
@@ -2286,7 +2286,7 @@ shape (n_estimators, ``loss_.K``)
                                  self.loss)
 
 
-class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
+class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
 
     GB builds an additive model in a forward stage-wise fashion;

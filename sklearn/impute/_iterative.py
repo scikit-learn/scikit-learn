@@ -25,7 +25,7 @@ _ImputerTriplet = namedtuple('_ImputerTriplet', ['feat_idx',
                                                  'estimator'])
 
 
-class IterativeImputer(BaseEstimator, TransformerMixin):
+class IterativeImputer(TransformerMixin, BaseEstimator):
     """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
