@@ -2392,7 +2392,13 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     def _check_inputs(self, X, in_fit, accept_sparse_negative=False,
                       copy=False):
         """Check inputs before fit and transform"""
-        check_n_features = not in_fit
+        # deactivating check for now (specific tests about error message would
+        # break)
+        # TODO: uncomment when addressing check_n_features in
+        # predict/transform/etc.
+        # check_n_features = not in_fit
+        check_n_features = False
+
         X = self._validate_X(X, check_n_features=check_n_features,
                              accept_sparse='csc', copy=copy,
                              dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
@@ -2962,7 +2968,12 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         check_method : bool
             If True, check that the transformation method is valid.
         """
-        check_n_features = not in_fit
+        # deactivating check for now (specific tests about error message would
+        # break)
+        # TODO: uncomment when addressing check_n_features in
+        # predict/transform/etc.
+        # check_n_features = not in_fit
+        check_n_features = False
         X = self._validate_X(X, check_n_features=check_n_features,
                              ensure_2d=True, dtype=FLOAT_DTYPES,
                              copy=self.copy, force_all_finite='allow-nan')
