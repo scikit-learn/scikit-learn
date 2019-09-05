@@ -54,15 +54,16 @@ and the :ref:`User Guide <visualizations>`.
 Plotting with Multiple Axes
 ---------------------------
 
-The visualization API handles plotting multiple axes in two ways. The Display
-object's `plot` method and the `plot_*` helper function can take a list of axes
-or a single axes. If a list of axes is provided, `plot` will check if the the
-number of axes is consistent with the number of axes it needs and then draw on
-those axes. 
+Some of the plotting tools like
+:func:`~sklearn.inspection.plot_partial_dependence` and
+:class:`~sklearn.inspection.PartialDependenceDisplay` support plottong on
+multiple axes. Two different scenarios are supported:
 
-When a single axes is passed in, that axes defines a space for the multiple
-axes to be placed. In this case, we suggest using matplotlib's
-`gridspec.GridSpecFromSubplotSpec` to split up the space::
+1. If a list of axes is passed in, `plot` will check if the number of axes is
+consistent with the number of axes it expects and then draws on those axes. 2.
+If a single axes is passed in, that axes defines a space for multiple axes to
+be placed. In this case, we suggest using matplotlib's
+`~matplotlib.gridspec.GridSpecFromSubplotSpec` to split up the space::
 
    import matplotlib.pyplot as plt
    from matplotlib.gridspec import GridSpecFromSubplotSpec
@@ -74,15 +75,14 @@ axes to be placed. In this case, we suggest using matplotlib's
    ax_top_right = fig.add_subplot(gs[0, 1])
    ax_bottom = fig.add_subplot(gs[1, :])
 
-By default, the `ax` keyworld in `plot` is `None`. In this case, the single
+By default, the `ax` keyword in `plot` is `None`. In this case, the single
 axes is created and the gridspec api is used to create the regions to plot in.
 
 See for example, :func:`~sklearn.inspection.plot_partial_dependence` which
-plots multiple lines and contours using this API. The axes defining the bounding box is saved in  
-:class:`~sklearn.inspection.PartialDependenceDisplay`'s `bounding_ax_` attribute. The
-individual axes created are stored in an `axes_` ndarray, corresponding to the
-axes position on the grid. Positions that are not used are set to `None`.
-Furthermore, the matplotlib Artists are stored in `lines_` and `contours_`
-where the key is the position on the grid. When a list of axes is passsed in,
-the `axes_`, `lines_`, and `contours_` keys is single int corresponding to the
-position on the passed in list of axes. 
+plots multiple lines and contours using this API. The axes defining the
+bounding box is saved in a `bounding_ax_` attribute. The individual axes
+created are stored in an `axes_` ndarray, corresponding to the axes position on
+the grid. Positions that are not used are set to `None`. Furthermore, the
+matplotlib Artists are stored in `lines_` and `contours_` where the key is the
+position on the grid. When a list of axes is passed in, the `axes_`, `lines_`,
+and `contours_` is a 1d ndarray corresponding to the list of axes passed in.
