@@ -53,7 +53,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'neg_brier_score',
+               'neg_log_loss', 'log_loss', 'neg_brier_score_loss',
                'brier_score_loss', 'jaccard', 'jaccard_weighted',
                'jaccard_macro', 'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
 
@@ -554,7 +554,7 @@ def test_deprecated_scorer():
     clf.fit(X_train, y_train)
 
     deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.deprecated_call():
+    with pytest.warns(DeprecationWarning):
         deprecated_scorer(clf, X_test, y_test)
 
 

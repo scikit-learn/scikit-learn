@@ -50,7 +50,7 @@ class _BaseScorer(metaclass=ABCMeta):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-        # XXX After removing the deprecated scorers (v0.22) remove the
+        # XXX After removing the deprecated scorers (v0.24) remove the
         # XXX deprecation_msg property again and remove __call__'s body again
         self._deprecation_msg = None
 
@@ -603,7 +603,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
                brier_score_loss=brier_score_loss_scorer,
-               neg_brier_score=neg_brier_score_scorer,
+               neg_brier_score_loss=neg_brier_score_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,
