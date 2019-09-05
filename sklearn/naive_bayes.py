@@ -78,7 +78,7 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         C : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
@@ -98,7 +98,7 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         C : array-like, shape = [n_samples, n_classes]
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         return np.exp(self.predict_log_proba(X))
 
@@ -107,7 +107,7 @@ class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
-    Can perform online updates to model parameters via `partial_fit` method.
+    Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
     see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
 

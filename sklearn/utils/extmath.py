@@ -490,13 +490,13 @@ def svd_flip(u, v, u_based_decision=True):
     ----------
     u : ndarray
         u and v are the output of `linalg.svd` or
-        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
-        so one can compute `np.dot(u * s, v)`.
+        :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
+        dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
         u and v are the output of `linalg.svd` or
-        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
-        so one can compute `np.dot(u * s, v)`.
+        :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
+        dimensions so one can compute `np.dot(u * s, v)`.
 
     u_based_decision : boolean, (default=True)
         If True, use the columns of u as the basis for sign flipping.

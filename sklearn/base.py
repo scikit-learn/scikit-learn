@@ -309,6 +309,9 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
+    def _more_tags(self):
+        return _DEFAULT_TAGS
+
     def _get_tags(self):
         tags = _DEFAULT_TAGS.copy()
         if hasattr(super(), '_get_tags'):
@@ -386,12 +389,13 @@ class RegressorMixin:
         -----
         The R2 score used when calling ``score`` on a regressor will use
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
-        with `metrics.r2_score`. This will influence the ``score`` method of
-        all the multioutput regressors (except for
-        `multioutput.MultiOutputRegressor`). To specify the default value
-        manually and avoid the warning, please either call `metrics.r2_score`
-        directly or make a custom scorer with `metrics.make_scorer` (the
-        built-in scorer ``'r2'`` uses ``multioutput='uniform_average'``).
+        with :func:`~sklearn.metrics.r2_score`. This will influence the
+        ``score`` method of all the multioutput regressors (except for
+        :class:`~sklearn.multioutput.MultiOutputRegressor`). To specify the
+        default value manually and avoid the warning, please either call
+        :func:`~sklearn.metrics.r2_score` directly or make a custom scorer with
+        :func:`~sklearn.metrics.make_scorer` (the built-in scorer ``'r2'`` uses
+        ``multioutput='uniform_average'``).
         """
 
         from .metrics import r2_score

@@ -69,6 +69,11 @@ class OverrideTag(NaNTag):
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    def _more_tags(self):
+        return dict()
+
+
+class InheritDiamondOverwriteTag(DiamondOverwriteTag):
     pass
 
 
@@ -485,7 +490,10 @@ def test_tag_inheritance():
     assert not redefine_tags_est._get_tags()['allow_nan']
 
     diamond_tag_est = DiamondOverwriteTag()
-    assert diamond_tag_est._get_tags()
+    assert diamond_tag_est._get_tags()['allow_nan']
+
+    inherit_diamond_tag_est = InheritDiamondOverwriteTag()
+    assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
 # XXX: Remove in 0.23
