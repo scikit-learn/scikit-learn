@@ -212,10 +212,10 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and `predict`.
+        An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for `fit`.
+        The number of jobs to run in parallel for :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -307,7 +307,8 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit`, `score` and `predict_proba`.
+        An estimator object implementing :term:`fit`, :term:`score` and
+        :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -364,7 +365,7 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")

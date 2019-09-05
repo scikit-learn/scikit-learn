@@ -917,7 +917,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
@@ -958,7 +958,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         proba = self.predict_proba(X)
 

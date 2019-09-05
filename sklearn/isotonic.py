@@ -321,7 +321,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         Notes
         -----
-        X is stored for future use, as `transform` needs X to interpolate
+        X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
         check_params = dict(accept_sparse=False, ensure_2d=False,

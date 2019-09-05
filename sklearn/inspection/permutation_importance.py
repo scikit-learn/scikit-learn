@@ -46,13 +46,13 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None):
     """Permutation importance for feature evaluation [BRE]_.
 
-    The `estimator` is required to be a fitted estimator. `X` can be the
+    The :term:`estimator` is required to be a fitted estimator. `X` can be the
     data set used to train the estimator or a hold-out set. The permutation
     importance of a feature is calculated as follows. First, a baseline metric,
-    defined by `scoring`, is evaluated on a (potentially different) dataset
-    defined by the `X`. Next, a feature column from the validation set is
-    permuted and the metric is evaluated again. The permutation importance is
-    defined to be the difference between the baseline metric and metric from
+    defined by :term:`scoring`, is evaluated on a (potentially different)
+    dataset defined by the `X`. Next, a feature column from the validation set
+    is permuted and the metric is evaluated again. The permutation importance
+    is defined to be the difference between the baseline metric and metric from
     permutating the feature column.
 
     Read more in the :ref:`User Guide <permutation_importance>`.
@@ -60,8 +60,8 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     Parameters
     ----------
     estimator : object
-        An estimator that has already been `fitted` and is compatible with
-        `scorer`.
+        An estimator that has already been :term:`fitted` and is compatible
+        with :term:`scorer`.
 
     X : ndarray or DataFrame, shape (n_samples, n_features)
         Data on which permutation importance will be computed.

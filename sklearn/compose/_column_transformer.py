@@ -57,10 +57,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -668,10 +668,10 @@ def make_column_transformer(*transformers, **kwargs):
         transformer objects to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as

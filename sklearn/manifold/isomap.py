@@ -70,7 +70,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         Stores the embedding vectors.
 
     kernel_pca_ : object
-        `KernelPCA` object used to implement the embedding.
+        :class:`~sklearn.decomposition.KernelPCA` object used to implement the
+        embedding.
 
     training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.

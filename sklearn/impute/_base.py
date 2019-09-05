@@ -109,7 +109,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         - If add_indicator=True.
 
     add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack onto output
+        If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on
@@ -121,7 +121,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
         Computing statistics can result in `np.nan` values.
-        During `transform`, features corresponding to `np.nan`
+        During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
@@ -147,8 +147,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    Columns which only contained missing values at `fit` are discarded upon
-    `transform` if strategy is not "constant".
+    Columns which only contained missing values at :meth:`fit` are discarded
+    upon :meth:`transform` if strategy is not "constant".
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",

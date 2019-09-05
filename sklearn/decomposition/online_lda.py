@@ -155,7 +155,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         In [1]_, this is called `eta`.
 
     learning_method : 'batch' | 'online', default='batch'
-        Method used to update `_component`. Only used in `fit` method.
+        Method used to update `_component`. Only used in :meth:`fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
@@ -200,7 +200,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         up to two-fold.
 
     total_samples : int, optional (default=1e6)
-        Total number of documents. Only used in the `partial_fit` method.
+        Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when

@@ -848,7 +848,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self.sparse_output = sparse_output
 
     def fit(self, y):
-        """Fit the label sets binarizer, storing `classes_`
+        """Fit the label sets binarizer, storing :term:`classes_`
 
         Parameters
         ----------
