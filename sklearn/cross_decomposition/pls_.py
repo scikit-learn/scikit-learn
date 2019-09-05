@@ -121,7 +121,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
+class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
@@ -750,7 +750,7 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSSVD(BaseEstimator, TransformerMixin):
+class PLSSVD(TransformerMixin, BaseEstimator):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y

@@ -16,7 +16,7 @@ from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin):
+class KernelPCA(TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see

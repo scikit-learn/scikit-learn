@@ -45,7 +45,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
-                                   {'haversine'}))
+                                   {'haversine', 'nan_euclidean'}))
 
 
 def _check_weights(weights):
@@ -103,7 +103,7 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
+class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod

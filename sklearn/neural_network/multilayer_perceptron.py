@@ -688,7 +688,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return y_pred
 
 
-class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
+class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
 
     This model optimizes the log-loss function using LBFGS or stochastic
@@ -1080,7 +1080,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             return y_pred
 
 
-class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
+class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
     This model optimizes the squared-loss using LBFGS or stochastic gradient

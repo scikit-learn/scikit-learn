@@ -130,8 +130,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
-                          MultiOutputMixin):
+class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
+                          MetaEstimatorMixin, BaseEstimator):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -155,8 +155,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -449,7 +449,7 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
     return estimator
 
 
-class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """One-vs-one multiclass strategy
 
     This strategy consists in fitting one classifier per class pair.
@@ -467,8 +467,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -485,7 +485,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Array containing labels.
 
     n_classes_ : int
-        Number of classes 
+        Number of classes
 
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
@@ -576,7 +576,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in zip(self.estimators_,
-                                              (combinations)))
+                                             (combinations)))
 
         self.pairwise_indices_ = None
 
@@ -648,7 +648,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return getattr(self.estimator, "_pairwise", False)
 
 
-class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy
 
     Output-code based strategies consist in representing each class with a
@@ -665,8 +665,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and one of `decision_function`
-        or `predict_proba`.
+        An estimator object implementing :term:`fit` and one of
+        :term:`decision_function` or :term:`predict_proba`.
 
     code_size : float
         Percentage of the number of classes to be used to create the code book.

@@ -122,7 +122,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
+class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -392,7 +392,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
+class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -573,7 +573,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         # Check data
@@ -619,7 +619,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         proba = self.predict_proba(X)
 
@@ -633,7 +633,7 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
             return proba
 
 
-class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
+class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
@@ -868,12 +868,11 @@ class RandomForestClassifier(ForestClassifier):
         the generalization accuracy.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel.
-        `fit`, `predict`, `decision_path` and `apply` are all
-        parallelized over the trees.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
+        :meth:`decision_path` and :meth:`apply` are all parallelized over the
+        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -957,7 +956,7 @@ class RandomForestClassifier(ForestClassifier):
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN. This attribute exists 
+        `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
     Examples
@@ -1171,12 +1170,11 @@ class RandomForestRegressor(ForestRegressor):
         the R^2 on unseen data.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel.
-        `fit`, `predict`, `decision_path` and `apply` are all
-        parallelized over the trees.
-        `None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
+        :meth:`decision_path` and :meth:`apply` are all parallelized over the
+        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1434,12 +1432,11 @@ class ExtraTreesClassifier(ForestClassifier):
         the generalization accuracy.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel.
-        `fit`, `predict`, `decision_path` and `apply` are all
-        parallelized over the trees.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
+        :meth:`decision_path` and :meth:`apply` are all parallelized over the
+        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1522,7 +1519,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN. This attribute exists 
+        `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
     Notes
@@ -1713,12 +1710,11 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel.
-        `fit`, `predict`, `decision_path` and `apply` are all
-        parallelized over the trees.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
+        :meth:`decision_path` and :meth:`apply` are all parallelized over the
+        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1930,12 +1926,11 @@ class RandomTreesEmbedding(BaseForest):
         or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel.
-        `fit`, `transform`, `decision_path` and `apply` are all
-        parallelized over the trees.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel. :meth:`fit`, :meth:`transform`,
+        :meth:`decision_path` and :meth:`apply` are all parallelized over the
+        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context. ``-1`` means using all processors. See :term:`Glossary
+        <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

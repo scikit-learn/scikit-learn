@@ -469,7 +469,7 @@ class VectorizerMixin(NonRectangularInputMixin):
                 % str(self.ngram_range))
 
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
+class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -753,7 +753,7 @@ def _document_frequency(X):
         return np.diff(X.indptr)
 
 
-class CountVectorizer(BaseEstimator, VectorizerMixin):
+class CountVectorizer(VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -1229,7 +1229,7 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(BaseEstimator, TransformerMixin):
+class TfidfTransformer(TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
     Tf means term-frequency while tf-idf means term-frequency times inverse

@@ -640,7 +640,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return len(self._predictors)
 
 
-class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
+class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Regression Tree.
 
     This estimator is much faster than

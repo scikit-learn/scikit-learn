@@ -289,7 +289,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
+class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for random projections.
 
     Warning: This class should not be used directly.

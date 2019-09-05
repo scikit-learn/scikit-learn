@@ -9,7 +9,7 @@ from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
 
 
-class VarianceThreshold(BaseEstimator, SelectorMixin):
+class VarianceThreshold(SelectorMixin, BaseEstimator):
     """Feature selector that removes all low-variance features.
 
     This feature selection algorithm looks only at the features (X), not the

@@ -485,7 +485,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
+class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
@@ -605,7 +605,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -644,7 +644,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----

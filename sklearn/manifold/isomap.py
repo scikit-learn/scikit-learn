@@ -12,7 +12,7 @@ from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 
 
-class Isomap(BaseEstimator, TransformerMixin):
+class Isomap(TransformerMixin, BaseEstimator):
     """Isomap Embedding
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -70,7 +70,8 @@ class Isomap(BaseEstimator, TransformerMixin):
         Stores the embedding vectors.
 
     kernel_pca_ : object
-        `KernelPCA` object used to implement the embedding.
+        :class:`~sklearn.decomposition.KernelPCA` object used to implement the
+        embedding.
 
     training_data_ : array-like, shape (n_samples, n_features)
         Stores the training data.

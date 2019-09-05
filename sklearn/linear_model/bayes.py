@@ -19,7 +19,7 @@ from ..utils.fixes import pinvh
 ###############################################################################
 # BayesianRidge regression
 
-class BayesianRidge(LinearModel, RegressorMixin):
+class BayesianRidge(RegressorMixin, LinearModel):
     """Bayesian ridge regression.
 
     Fit a Bayesian ridge model. See the Notes section for details on this
@@ -375,7 +375,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 # ARD (Automatic Relevance Determination) regression
 
 
-class ARDRegression(LinearModel, RegressorMixin):
+class ARDRegression(RegressorMixin, LinearModel):
     """Bayesian ARD regression.
 
     Fit the weights of a regression model, using an ARD prior. The weights of

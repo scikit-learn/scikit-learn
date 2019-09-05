@@ -15,7 +15,7 @@ from ..exceptions import NotFittedError
 __all__ = ['TransformedTargetRegressor']
 
 
-class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression

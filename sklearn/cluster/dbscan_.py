@@ -190,7 +190,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     return np.where(core_samples)[0], labels
 
 
-class DBSCAN(BaseEstimator, ClusterMixin):
+class DBSCAN(ClusterMixin, BaseEstimator):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     DBSCAN - Density-Based Spatial Clustering of Applications with Noise.

@@ -1686,7 +1686,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         raw_predictions : generator of array, shape (n_samples, k)
             The raw predictions of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
@@ -1811,7 +1811,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return leaves
 
 
-class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
+class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
@@ -1924,8 +1924,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     init : estimator or 'zero', optional (default=None)
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide `fit` and `predict_proba`. If 'zero', the
-        initial raw predictions are set to zero. By default, a
+        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -2129,7 +2129,7 @@ shape (n_estimators, ``loss_.K``)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
             order of the classes corresponds to that in the attribute
-            `classes_`. Regression and binary classification produce an
+            :term:`classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
         X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
@@ -2156,7 +2156,7 @@ shape (n_estimators, ``loss_.K``)
         score : generator of array, shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
@@ -2224,7 +2224,7 @@ shape (n_estimators, ``loss_.K``)
         -------
         p : array, shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         raw_predictions = self.decision_function(X)
         try:
@@ -2254,7 +2254,7 @@ shape (n_estimators, ``loss_.K``)
         -------
         p : array, shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         proba = self.predict_proba(X)
         return np.log(proba)
@@ -2287,7 +2287,7 @@ shape (n_estimators, ``loss_.K``)
                                  self.loss)
 
 
-class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
+class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
 
     GB builds an additive model in a forward stage-wise fashion;
@@ -2399,10 +2399,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     init : estimator or 'zero', optional (default=None)
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide `fit` and `predict`. If 'zero', the initial
-        raw predictions are set to zero. By default a ``DummyEstimator`` is
-        used, predicting either the average target value (for loss='ls'), or
-        a quantile for the other losses.
+        ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
+        initial raw predictions are set to zero. By default a
+        ``DummyEstimator`` is used, predicting either the average target value
+        (for loss='ls'), or a quantile for the other losses.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

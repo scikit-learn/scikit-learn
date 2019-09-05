@@ -21,8 +21,8 @@ def _tosequence(X):
         return tosequence(X)
 
 
-class DictVectorizer(BaseEstimator, TransformerMixin,
-                     NonRectangularInputMixin):
+class DictVectorizer(NonRectangularInputMixin, TransformerMixin,
+                     BaseEstimator):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
