@@ -152,7 +152,7 @@ Changelog
   :class:`feature_extraction.text.HashingVectorizer`,
   :class:`feature_extraction.text.CountVectorizer` and
   :class:`feature_extraction.text.TfidfVectorizer`.
-  :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`
+  :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`.
 
 - |Fix| Functions created by build_preprocessor and build_analyzer of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
@@ -162,10 +162,6 @@ Changelog
   :meth: `feature_extraction.text.TfidfVectorizer.transform` it will be
   removed in v0.24. :pr:`14520` by
   :user:`Guillem G. Subies <guillemgsubies>`.
-
-- |Enhancement| :func:`_warn_for_unused_params` will give warning
-  messages to inform the user about pr:`14602`
-  by :user:`Gaurav Chawla <getgaurav2>`.
 
 :mod:`sklearn.gaussian_process`
 ...............................
