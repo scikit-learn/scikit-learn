@@ -427,7 +427,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         :term:`decision_function`.
 
     n_cols : int, optional (default=3)
-        The maximum number of columns in the grid plot.
+        The maximum number of columns in the grid plot. Only active when `ax`
+        is a single axes or `None`.
 
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the axes of the plots, for each
@@ -485,20 +486,20 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         For two-way partial dependence plots.
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
-        Axes to plot the partial dependence curves.
-        - If a single axes is given, it is treated as a bounding axes and
-            a grid of partial depedendence plots will be drawn within these
-            bounds.
-        - If a list of axes or a ndarray of axes are passed in, the partial
-            dependence plots will be drawn directly into these axes.
-        - If None, a figure and a bounding axes is created and treated as
-            the single axes case.
+        - If a single axes is passed in, it is treated as a bounding axes
+            and a grid of partial depedendence plots will be drawn within
+            these bounds. The `n_cols` parameter controls the number of
+            columns in the grid.
+        - If a array-like of axes are passed in, the partial dependence
+            plots will be drawn directly into these axes.
+        - If `None`, a figure and a bounding axes is created and treated
+            as the single axes case.
 
         .. versionadded:: 0.22
 
     Returns
     -------
-    sklearn.inspection.PartialDependenceDisplay
+    display: :class:`~sklearn.inspection.PartialDependenceDisplay`
 
     Examples
     --------
@@ -645,24 +646,24 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 class PartialDependenceDisplay:
     """Partial Dependence Plot (PDP) visualization.
 
-    If is recommended to use
+    It is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
     :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
     stored as attributes.
 
     Read more in
-    :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py` and the
-    :ref:`User Guide <visualizations>`.
+    :ref:`sphx_glr_auto_examples_plot_partial_dependence_visualization_api.py`
+    and the :ref:`User Guide <visualizations>`.
 
         .. versionadded:: 0.22
 
     Parameters
     ----------
     pd_results : list of (ndarray, ndarray)
-        Results of `sklearn.inspection.partial_dependence` for ``features``.
-        Each tuple corresponds to a (averaged_predictions, grid).
+        Results of :func:`~sklearn.inspection.partial_dependence` for
+        ``features``. Each tuple corresponds to a (averaged_predictions, grid).
 
-    features : list of {(int, ), (int, int)}
+    features : list of (int,) or list of (int, int)
         Indices of features for a given plot. A tuple of one integer will plot
         a partial dependence curve of one feature. A tuple of two integers will
         plot a two-way partial dependence curve as a contour plot.
@@ -679,18 +680,19 @@ class PartialDependenceDisplay:
         Ignored in binary classification or classical regression settings.
 
     pdp_lim : dict
-        Global min and max average predictions. `pdp_lim[1]` is the global min
-        and max for single partial dependence curves. `pdp_lim[2]` is the
-        global min and max for two-way partial dependence curves.
+        Global min and max average predictions, such that all plots will have
+        the same scale and y limits. `pdp_lim[1]` is the global min and max for
+        single partial dependence curves. `pdp_lim[2]` is the global min and
+        max for two-way partial dependence curves.
 
     deciles : dict
-        Deciles for feature indicies in ``features``.
+        Deciles for feature indices in ``features``.
 
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
         If `ax` is an axes or None, the `bounding_ax_` is the axes where the
-        grid of partial dependence plots are drawn. If `ax` is a list of axe
+        grid of partial dependence plots are drawn. If `ax` is a list of axes
         or a numpy array of axes, `bounding_ax_` is None.
 
     axes_ : ndarray of matplotlib Axes
@@ -732,17 +734,18 @@ class PartialDependenceDisplay:
         Parameters
         ----------
         ax : Matplotlib axes or array-like of Matplotlib axes, default=None
-            Axes to plot the partial dependence curves.
-            - If a single axes is given, it is treated as a bounding axes and
-                a grid of partial depedendence plots will be drawn within these
-                bounds.
-            - If a list of axes or a ndarray of axes are passed in, the partial
-                dependence plots will be drawn directly into these axes.
-            - If None, a figure and a bounding axes is created and treated as
-                the single axes case.
+            - If a single axes is passed in, it is treated as a bounding axes
+              and a grid of partial depedendence plots will be drawn within
+              these bounds. The `n_cols` parameter controls the number of
+              columns in the grid.
+            - If a array-like of axes are passed in, the partial dependence
+              plots will be drawn directly into these axes.
+            - If `None`, a figure and a bounding axes is created and treated
+              as the single axes case.
 
         n_cols : int, default=3
-            The maximum number of columns in the grid plot.
+            The maximum number of columns in the grid plot. Only active when
+            `ax` is a single axes or `None`.
 
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
@@ -751,12 +754,6 @@ class PartialDependenceDisplay:
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
-
-        fig : Matplotlib figure object, default=None
-            A figure object onto which the plots will be drawn, after the
-            figure has been cleared. By default, a new one is created.
-
-            .. deprecated:: 0.22
 
         Returns
         -------

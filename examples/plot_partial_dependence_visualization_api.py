@@ -50,7 +50,7 @@ mlp.fit(X_train, y_train)
 # ===========================================================
 #
 # Next, we plot a partial dependence curves for features "LSTAT" and "RM" for
-# for the decision tree.
+# the decision tree.
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
 tree_disp = plot_partial_dependence(tree, X_test, ["LSTAT", "RM"],
@@ -58,9 +58,9 @@ tree_disp = plot_partial_dependence(tree, X_test, ["LSTAT", "RM"],
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
-# In this case `line_kw` was passed to
-# `~sklearn.inspection.plot_partial_dependence` to change the color of the
-# curve and `n_cols` was set to 1 to set the number of columns to 1.
+# In this case, `line_kw` is passed to
+# :func:`~sklearn.inspection.plot_partial_dependence` to change the color of
+# the curve and `n_cols` is set to 1.
 fig, ax = plt.subplots(figsize=(8, 8))
 ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
