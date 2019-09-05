@@ -85,6 +85,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Enhancement| :func:`datasets.samples_generator.make_classification` now accepts
+  array-like :param:`weights`, i.e. list or numpy.array, instead of list only.
+  :pr:`14764` by :user:`Cat Chenal <CatChenal>, with thanks to <WiMLDS>`.
+
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.

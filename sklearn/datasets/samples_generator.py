@@ -91,7 +91,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_clusters_per_class : int, optional (default=2)
         The number of clusters per class.
 
-    weights : array-like of shape (n_classes,) or (n_classes - 1,),
+    weights : array-like of shape (n_classes,) or (n_classes - 1,),\
               (default=None)
         The proportions of samples assigned to each class. If None, then
         classes are balanced. Note that if ``len(weights) == n_classes - 1``,
