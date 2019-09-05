@@ -956,9 +956,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # This validates twice but there is not clean way to avoid validation
         # in k_means.
         order = "C" if self.copy_x else None
-        X = self._validate_X(X, accept_sparse='csr',
-                             dtype=[np.float64, np.float32], order=order,
-                             copy=self.copy_x)
+        self._validate_X(X, accept_sparse='csr',
+                         dtype=[np.float64, np.float32], order=order,
+                         copy=self.copy_x)
 
         self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
             k_means(
@@ -1489,8 +1489,8 @@ class MiniBatchKMeans(KMeans):
 
         """
         random_state = check_random_state(self.random_state)
-        self._validate_X(X, accept_sparse="csr", order='C',
-                         dtype=[np.float64, np.float32])
+        X = self._validate_X(X, accept_sparse="csr", order='C',
+                             dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d"
