@@ -537,14 +537,19 @@ X_types
     of the ``'sparse'`` tag.
 
 
-To override the tags of a child class, one must define the `_more_tags()`
-method and return a dict with the desired tags, e.g::
+To override the tags in a child class, one must define `_more_tags`
+as an attribute or a property returning a dict with the desired tags, e.g::
 
     class MyMultiOutputEstimator(BaseEstimator):
 
-        def _more_tags(self):
-            return {'multioutput_only': True,
-                    'non_deterministic': True}
+        _more_tags = {'multioutput_only': True, 'non_deterministic': True}
+
+
+Estimator tags are assembled from parent classes in the standard Python
+`Method Resolution Order (MRO)
+<https://www.python.org/download/releases/2.3/mro/>`_ order. Duplicate tags
+are overwritten by child classes.
+
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,

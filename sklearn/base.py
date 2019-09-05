@@ -321,9 +321,10 @@ class BaseEstimator:
                 if hasattr(base_class._more_tags, "__call__"):
                     more_tags = base_class._more_tags(self)
                     warnings.warn(
-                        "class {}: callable _more_tags are deprecated!"
-                        "_more_tags should either be a dict, or a property "
-                        "returning a dict".format(base_class.__name__),
+                        "class {}: callable _more_tags are deprecated in 0.22 "
+                        "and will be removed in 0.23! _more_tags should either"
+                        " be a dict, or a property returning a dict"
+                        .format(base_class.__name__),
                         category=DeprecationWarning)
                 elif isinstance(base_class._more_tags, property):
                     more_tags = base_class._more_tags.fget(self)
