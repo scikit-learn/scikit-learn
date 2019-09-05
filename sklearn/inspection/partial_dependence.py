@@ -381,7 +381,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
-    columns. Two-way partial dependence plots are plotted as contour plots.
+    columns. Two-way partial dependence plots are plotted as contour plots. The
+    deciles of the feature values will be shown with tick marks on the x-axes
+    for one-way plots, and on both axes for two-way plots.
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
