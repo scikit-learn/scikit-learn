@@ -85,9 +85,8 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
-- |Enhancement| `make_classification` in :func:`datasets.samples_generator` now 
-  accepts array-like `weights` parameter, i.e. list or numpy.array, instead of 
-  list only.
+- |Enhancement| :func:`datasets.make_classification` now accepts array-like
+   `weights` parameter, i.e. list or numpy.array, instead of list only.
   :pr:`14764` by :user:`Cat Chenal <CatChenal>`, with thanks to `WiMLDS <WiMLDS>`.
 
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
