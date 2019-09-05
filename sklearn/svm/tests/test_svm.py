@@ -697,7 +697,7 @@ def test_sparse_fit_support_vectors_empty():
                                  [0, 0, 0, 1]])
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
     model = svm.SVR(C=316.227766017, cache_size=200, coef0=0.0, degree=3,
-		    epsilon=0.1, gamma=1.0, kernel='linear', max_iter=15000,
+                    epsilon=0.1, gamma=1.0, kernel='linear', max_iter=15000,
                     shrinking=True, tol=0.001, verbose=False)
     model.fit(x_train, y_train)
     assert model.support_vectors_.data.size == 0
