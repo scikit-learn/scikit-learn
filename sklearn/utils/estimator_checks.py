@@ -2654,12 +2654,7 @@ def check_fit_idempotent(name, estimator_orig):
 
 def check_n_features_in(name, estimator_orig):
     # Make sure that n_features_in_ attribute doesn't exist until fit is
-    # called.
-
-    if any(x in name for x in ('FastICA', 'KMeans')):
-        # fit calls public function helper and validates there. No way to
-        # access `self` from the helper.
-        return
+    # called, and that its value is correct.
 
     rng = np.random.RandomState(0)
 

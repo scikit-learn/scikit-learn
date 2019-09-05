@@ -501,6 +501,9 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : array-like, shape (n_samples, n_components)
         """
+
+        X = self._validate_X(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                             ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
             X=X, n_components=self.n_components, algorithm=self.algorithm,
