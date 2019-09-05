@@ -415,5 +415,4 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
 
-    def _more_tags(self):
-        return {'X_types': ['1darray']}
+    _more_tags = {'X_types': ['1darray']}

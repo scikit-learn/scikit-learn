@@ -309,8 +309,7 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
-    def _more_tags(self):
-        return _DEFAULT_TAGS
+    _more_tags = _DEFAULT_TAGS
 
     def _get_tags(self):
         collected_tags = {}
@@ -319,7 +318,17 @@ class BaseEstimator:
                 # need the if because mixins might not have _more_tags
                 # but might do redundant work in estimators
                 # (i.e. calling more tags on BaseEstimator multiple times)
-                more_tags = base_class._more_tags(self)
+                if hasattr(base_class._more_tags, "__call__"):
+                    more_tags = base_class._more_tags(self)
+                    warnings.warn(
+                        "class {}: callable _more_tags are deprecated!"
+                        "_more_tags should either be a dict, or a property "
+                        "returning a dict".format(base_class.__name__),
+                        category=DeprecationWarning)
+                elif isinstance(base_class._more_tags, property):
+                    more_tags = base_class._more_tags.fget(self)
+                else:
+                    more_tags = base_class._more_tags
                 collected_tags.update(more_tags)
         return collected_tags
 
@@ -607,12 +616,12 @@ class MetaEstimatorMixin:
 
 class MultiOutputMixin(object):
     """Mixin to mark estimators that support multioutput."""
-    def _more_tags(self):
-        return {'multioutput': True}
+    _more_tags = {'multioutput': True}
 
 
 class _UnstableArchMixin(object):
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    @property
     def _more_tags(self):
         return {'non_deterministic': (
             _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}

@@ -485,5 +485,4 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         return theta_opt, func_min
 
-    def _more_tags(self):
-        return {'requires_fit': False}
+    _more_tags = {'requires_fit': False}

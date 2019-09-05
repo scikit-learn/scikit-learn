@@ -635,8 +635,7 @@ class BaseDiscreteNB(BaseNB):
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
 
-    def _more_tags(self):
-        return {'poor_score': True}
+    _more_tags = {'poor_score': True}
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -726,8 +725,7 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _more_tags(self):
-        return {'requires_positive_X': True}
+    _more_tags = {'requires_positive_X': True}
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -832,8 +830,7 @@ class ComplementNB(BaseDiscreteNB):
         self.class_prior = class_prior
         self.norm = norm
 
-    def _more_tags(self):
-        return {'requires_positive_X': True}
+    _more_tags = {'requires_positive_X': True}
 
     def _count(self, X, Y):
         """Count feature occurrences."""

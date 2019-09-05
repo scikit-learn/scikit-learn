@@ -296,8 +296,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y = np.asarray(y)
         return self.classes_[y]
 
-    def _more_tags(self):
-        return {'X_types': ['1dlabels']}
+    _more_tags = {'X_types': ['1dlabels']}
 
 
 class LabelBinarizer(TransformerMixin, BaseEstimator):
@@ -532,8 +531,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         return y_inv
 
-    def _more_tags(self):
-        return {'X_types': ['1dlabels']}
+    _more_tags = {'X_types': ['1dlabels']}
 
 
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
@@ -1019,5 +1017,4 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
 
-    def _more_tags(self):
-        return {'X_types': ['2dlabels']}
+    _more_tags = {'X_types': ['2dlabels']}

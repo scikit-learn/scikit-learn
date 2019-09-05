@@ -466,8 +466,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self.n_batch_iter_ += 1
         return
 
-    def _more_tags(self):
-        return {'requires_positive_X': True}
+    _more_tags = {'requires_positive_X': True}
 
     def _check_non_neg_array(self, X, whom):
         """check X format

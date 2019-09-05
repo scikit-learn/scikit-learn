@@ -234,5 +234,4 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         return pred_trans
 
-    def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+    _more_tags = {'poor_score': True, 'no_validation': True}

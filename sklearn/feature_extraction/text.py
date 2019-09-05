@@ -741,8 +741,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
                              input_type='string', dtype=self.dtype,
                              alternate_sign=self.alternate_sign)
 
-    def _more_tags(self):
-        return {'X_types': ['string']}
+    _more_tags = {'X_types': ['string']}
 
 
 def _document_frequency(X):
@@ -1220,8 +1219,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
-    def _more_tags(self):
-        return {'X_types': ['string']}
+    _more_tags = {'X_types': ['string']}
 
 
 def _make_int_array():
@@ -1404,8 +1402,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
 
-    def _more_tags(self):
-        return {'X_types': 'sparse'}
+    _more_tags = {'X_types': 'sparse'}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1761,5 +1758,4 @@ class TfidfVectorizer(CountVectorizer):
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 
-    def _more_tags(self):
-        return {'X_types': ['string'], '_skip_test': True}
+    _more_tags = {'X_types': ['string'], '_skip_test': True}

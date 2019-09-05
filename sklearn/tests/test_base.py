@@ -48,27 +48,28 @@ class T(BaseEstimator):
 
 
 class NaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {'allow_nan': True}
+    _more_tags = {'allow_nan': True}
 
 
 class NoNaNTag(BaseEstimator):
-    def _more_tags(self):
-        return {'allow_nan': False}
+    _more_tags = {'allow_nan': False}
 
 
 class OverrideTag(NaNTag):
-    def _more_tags(self):
-        return {'allow_nan': False}
+    _more_tags = {'allow_nan': False}
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
-    def _more_tags(self):
-        return dict()
+    _more_tags = {}
 
 
 class InheritDiamondOverwriteTag(DiamondOverwriteTag):
     pass
+
+
+class DeprecatedTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 class ModifyInitParams(BaseEstimator):
@@ -488,6 +489,13 @@ def test_tag_inheritance():
 
     inherit_diamond_tag_est = InheritDiamondOverwriteTag()
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
+
+
+def test_tag_deprecated():
+    estimator = DeprecatedTag()
+    msg = "class DeprecatedTag: callable _more_tags are deprecated"
+    with pytest.warns(DeprecationWarning, match=msg):
+        assert estimator._get_tags()['allow_nan']
 
 
 # XXX: Remove in 0.23

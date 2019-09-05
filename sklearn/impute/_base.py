@@ -412,8 +412,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
         return X
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    _more_tags = {'allow_nan': True}
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
@@ -679,6 +678,4 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return imputer_mask
 
-    def _more_tags(self):
-        return {'allow_nan': True,
-                'X_types': ['2darray', 'string']}
+    _more_tags = {'allow_nan': True, 'X_types': ['2darray', 'string']}

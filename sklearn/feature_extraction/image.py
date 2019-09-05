@@ -535,5 +535,4 @@ class PatchExtractor(BaseEstimator):
                 image, patch_size, self.max_patches, self.random_state)
         return patches
 
-    def _more_tags(self):
-        return {'X_types': ['3darray']}
+    _more_tags = {'X_types': ['3darray']}

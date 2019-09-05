@@ -622,8 +622,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return averaged_predictions
 
-    def _more_tags(self):
-        return {'allow_nan': True}
+    _more_tags = {'allow_nan': True}
 
     @abstractmethod
     def _get_loss(self):
