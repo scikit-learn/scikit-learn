@@ -71,7 +71,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
 
     def _validate_data(self, X):
-        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=False,
+        return check_array(X, accept_sparse=['csr', 'csc'], ensure_2d=True,
                            allow_nd=True, dtype=None)
 
     def fit(self, X, y, sample_weight=None):
@@ -101,7 +101,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_X_y(X, y,
                                   accept_sparse=['csr', 'csc'],
-                                  ensure_2d=False,
+                                  ensure_2d=True,
                                   allow_nd=True,
                                   dtype=None,
                                   y_numeric=is_regressor(self))

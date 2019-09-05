@@ -157,8 +157,9 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             raise ValueError(
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+        X = self._validate_X(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                             force_all_finite=force_all_finite,
+                             copy=self.copy)
 
         _check_weights(self.weights)
         self._fit_X = X
