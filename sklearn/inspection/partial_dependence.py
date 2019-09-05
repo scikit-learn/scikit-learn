@@ -180,9 +180,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
     Parameters
     ----------
     estimator : BaseEstimator
-        A fitted estimator object implementing `predict`, `predict_proba`,
-        or `decision_function`. Multioutput-multiclass classifiers are not
-        supported.
+        A fitted estimator object implementing :term:`predict`,
+        :term:`predict_proba`, or :term:`decision_function`.
+        Multioutput-multiclass classifiers are not supported.
     X : array-like, shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
@@ -390,9 +390,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     Parameters
     ----------
     estimator : BaseEstimator
-        A fitted estimator object implementing `predict`, `predict_proba`,
-        or `decision_function`. Multioutput-multiclass classifiers are not
-        supported.
+        A fitted estimator object implementing :term:`predict`,
+        :term:predict_proba`, or :term:`decision_function`.
+        Multioutput-multiclass classifiers are not supported.
 
     X : array-like, shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence

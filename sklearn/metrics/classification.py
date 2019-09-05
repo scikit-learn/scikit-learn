@@ -1798,7 +1798,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         micro average (averaging the total true positives, false negatives and
         false positives) it is only shown for multi-label or multi-class
         with a subset of classes because it is accuracy otherwise.
-        See also:func:`precision_recall_fscore_support` for more details
+        See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
         Note that in binary classification, recall of the positive class

@@ -24,7 +24,7 @@ from sklearn.metrics import (consensus_score, v_measure_score)
 from sklearn.datasets import make_biclusters, make_checkerboard
 
 
-class MockBiclustering(BaseEstimator, BiclusterMixin):
+class MockBiclustering(BiclusterMixin, BaseEstimator):
     # Mock object for testing get_submatrix.
     def __init__(self):
         pass
