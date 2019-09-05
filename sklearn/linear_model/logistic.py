@@ -1675,11 +1675,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of `Cs` values and `l1_ratios` values, the best
-    hyperparameter is selected by the cross-validator `StratifiedKFold`, but
-    it can be changed using the `cv` parameter. The 'newton-cg', 'sag',
-    'saga' and 'lbfgs' solvers can warm-start the coefficients (see
-    :term:`Glossary<warm_start>`).
+    For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
+    is selected by the cross-validator
+    :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
+    using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    solvers can warm-start the coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
