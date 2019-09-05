@@ -445,6 +445,13 @@ Changelog
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
+:mod:`sklearn.metrics`
+..................................
+
+- |API| Introduced new scorer `neg_brier_loss_score` to better reflect real
+  behavior of now deprecated `brier_loss_score`
+  :issue:`14123` by :user:`Stefan Matcovici <stefan-matcovici>`.
+
 Miscellaneous
 .............
 
