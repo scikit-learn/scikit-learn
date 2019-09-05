@@ -18,7 +18,6 @@ print(__doc__)
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_boston
 from sklearn.neural_network import MLPRegressor
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.tree import DecisionTreeRegressor
@@ -29,43 +28,45 @@ from sklearn.inspection import plot_partial_dependence
 # Train models on the boston housing price dataset
 # ================================================
 #
-# First, we load the boston housing price dataset and split the the dataset
-# into a training and test set. Then, we train a decision tree and a
-# multi-layer perceptron on the training set.
+# First, we train a decision tree and a multi-layer perceptron on the boston
+# housing price dataset.
 
 boston = load_boston()
 X, y = boston.data, boston.target
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
-                                                    random_state=0)
+feature_names = boston.feature_names
 
 tree = DecisionTreeRegressor()
 mlp = make_pipeline(StandardScaler(),
                     MLPRegressor(hidden_layer_sizes=(100, 100),
                                  tol=1e-2, max_iter=500, random_state=0))
-tree.fit(X_train, y_train)
-mlp.fit(X_train, y_train)
+tree.fit(X, y)
+mlp.fit(X, y)
+
 
 ##############################################################################
-# Plotting partial dependence of the two models independently
-# ===========================================================
+# Plotting partial dependence for two features
+# ============================================
 #
-# Next, we plot a partial dependence curves for features "LSTAT" and "RM" for
-# the decision tree.
+# We plot partial dependence curves for features "LSTAT" and "RM" for
+# the decision tree. With two features,
+# :func:`~sklearn.inspection.plot_partial_dependence` expects to plot two
+# curves. Here the plot function place a grid of two plots using the space
+# defined by `ax` .
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
-tree_disp = plot_partial_dependence(tree, X_test, ["LSTAT", "RM"],
-                                    feature_names=boston.feature_names, ax=ax)
+tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"],
+                                    feature_names=feature_names, ax=ax)
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
 # In this case, `line_kw` is passed to
 # :func:`~sklearn.inspection.plot_partial_dependence` to change the color of
-# the curve and `n_cols` is set to 1.
-fig, ax = plt.subplots(figsize=(8, 8))
+# the curve.
+fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
-mlp_disp = plot_partial_dependence(mlp, X_test, ["LSTAT", "RM"],
-                                   feature_names=boston.feature_names, ax=ax,
-                                   n_cols=1, line_kw={"c": "red"})
+mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT", "RM"],
+                                   feature_names=feature_names, ax=ax,
+                                   line_kw={"c": "red"})
 
 ##############################################################################
 # Plotting partial dependence of the two models together
@@ -121,3 +122,17 @@ tree_disp.figure_.set_size_inches(10, 6)
 tree_disp.axes_[0, 0].legend()
 tree_disp.axes_[0, 1].legend()
 plt.show()
+
+
+##############################################################################
+# Plotting partial dependence for one feature
+# ===========================================
+#
+# Here we plot the partial dependence curves for a single feature, "LSTAT", on
+# the same axes. In this case, `tree_disp.axes_` is passed into the second
+# plot function.
+tree_disp = plot_partial_dependence(tree, X, ["LSTAT"],
+                                    feature_names=feature_names)
+mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT"],
+                                   feature_names=feature_names,
+                                   ax=tree_disp.axes_, line_kw={"c": "red"})
