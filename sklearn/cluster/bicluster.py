@@ -84,7 +84,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
+class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod
@@ -343,7 +343,7 @@ class SpectralBiclustering(BaseSpectral):
     svd_method : string, optional, default: 'randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
-        `sklearn.utils.extmath.randomized_svd`, which may be faster
+        :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
         `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.

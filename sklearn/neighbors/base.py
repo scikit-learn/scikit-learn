@@ -290,7 +290,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
         return neigh_ind
 
 
-class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
+class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod
