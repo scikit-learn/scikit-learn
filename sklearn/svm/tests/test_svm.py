@@ -700,8 +700,8 @@ def test_sparse_fit_support_vectors_empty():
                     gamma=1.0, kernel='linear', max_iter=15000,
                     shrinking=True, tol=0.001, verbose=False)
     model.fit(x_train, y_train)
-    assert not model.support_vectors_.data
-    assert not model.dual_coef_.data
+    assert model.support_vectors_.data.size == 0
+    assert model.dual_coef_.data.size == 0
 
 
 def test_linearsvc_parameters():
