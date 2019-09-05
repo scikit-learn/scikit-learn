@@ -1489,8 +1489,8 @@ class MiniBatchKMeans(KMeans):
 
         """
         random_state = check_random_state(self.random_state)
-        X = self._validate_X(X, accept_sparse="csr", order='C',
-                             dtype=[np.float64, np.float32])
+        self._validate_X(X, accept_sparse="csr", order='C',
+                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d"
