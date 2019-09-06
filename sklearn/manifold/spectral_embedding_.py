@@ -133,7 +133,7 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
-                       random_state=None, eigen_tol=0.0,
+                       random_state=None, eigen_tol=1e-15,
                        norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
@@ -308,7 +308,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
 
-        # Until sklearn depens on scipy>=1.4.0 we require high tolerance
+        # Until sklearn depends only on scipy>=1.4.0 we require high tolerance
         # as explained in https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509  # noqa
         eigen_tol = max(1e-5, eigen_tol)
 
@@ -321,7 +321,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise ValueError
 
     if eigen_solver == "lobpcg":
-        eigen_tol = 1e-15 if eigen_tol == 0 else eigen_tol
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
