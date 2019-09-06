@@ -1,11 +1,9 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
-from sklearn.utils.testing import assert_not_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
-from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -65,19 +63,19 @@ def test_additive_chi2_sampler():
 
         # test that the sample_interval is initialized correctly
         transform = AdditiveChi2Sampler(sample_steps=sample_steps)
-        assert_equal(transform.sample_interval, None)
+        assert transform.sample_interval is None
 
         # test that the sample_interval is changed in the fit method
         transform.fit(X)
-        assert_not_equal(transform.sample_interval_, None)
+        assert transform.sample_interval_ is not None
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3
     transform = AdditiveChi2Sampler(sample_steps=4,
                                     sample_interval=sample_interval)
-    assert_equal(transform.sample_interval, sample_interval)
+    assert transform.sample_interval == sample_interval
     transform.fit(X)
-    assert_equal(transform.sample_interval_, sample_interval)
+    assert transform.sample_interval_ == sample_interval
 
 
 def test_skewed_chi2_sampler():
@@ -109,10 +107,10 @@ def test_skewed_chi2_sampler():
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
-    assert_true(np.isfinite(kernel).all(),
-                'NaNs found in the Gram matrix')
-    assert_true(np.isfinite(kernel_approx).all(),
-                'NaNs found in the approximate Gram matrix')
+    assert np.isfinite(kernel).all(), \
+        'NaNs found in the Gram matrix'
+    assert np.isfinite(kernel_approx).all(), \
+        'NaNs found in the approximate Gram matrix'
 
     # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
@@ -133,10 +131,10 @@ def test_rbf_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
 
 def test_input_validation():
@@ -163,21 +161,21 @@ def test_nystroem_approximation():
 
     trans = Nystroem(n_components=2, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test callable kernel
     def linear_kernel(X, Y):
         return np.dot(X, Y.T)
     trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    assert X_transformed.shape == (X.shape[0], 2)
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
-        assert_equal(X_transformed.shape, (X.shape[0], 2))
+        assert X_transformed.shape == (X.shape[0], 2)
 
 
 def test_nystroem_default_parameters():
@@ -213,7 +211,7 @@ def test_nystroem_singular_kernel():
     K = rbf_kernel(X, gamma=gamma)
 
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
-    assert_true(np.all(np.isfinite(Y)))
+    assert np.all(np.isfinite(Y))
 
 
 def test_nystroem_poly_kernel_params():
@@ -244,14 +242,36 @@ def test_nystroem_callable():
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
-    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+    assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
     def linear_kernel(X, Y):
         return np.dot(X, Y.T)
 
     # if degree, gamma or coef0 is passed, we raise a warning
-    msg = "Passing gamma, coef0 or degree to Nystroem"
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
         ny = Nystroem(kernel=linear_kernel, **param)
-        assert_warns_message(DeprecationWarning, msg, ny.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(X)
+
+
+def test_nystroem_precomputed_kernel():
+    # Non-regression: test Nystroem on precomputed kernel.
+    # PR - 14706
+    rnd = np.random.RandomState(12)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=2, coef0=.1)
+    nystroem = Nystroem(kernel='precomputed', n_components=X.shape[0])
+    X_transformed = nystroem.fit_transform(K)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+    # if degree, gamma or coef0 is passed, we raise a ValueError
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel='precomputed', n_components=X.shape[0],
+                      **param)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(K)

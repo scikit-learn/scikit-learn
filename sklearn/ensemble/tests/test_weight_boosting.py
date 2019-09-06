@@ -1,11 +1,10 @@
 """Testing for the boost module (sklearn.ensemble.boost)."""
 
-import pytest
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal, assert_true, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
@@ -59,7 +58,7 @@ def test_samme_proba():
 
     # _samme_proba calls estimator.predict_proba.
     # Make a mock object so I can control what gets returned.
-    class MockEstimator(object):
+    class MockEstimator:
         def predict_proba(self, X):
             assert_array_equal(X.shape, probs.shape)
             return probs
@@ -68,7 +67,7 @@ def test_samme_proba():
     samme_proba = weight_boosting._samme_proba(mock, 3, np.ones_like(probs))
 
     assert_array_equal(samme_proba.shape, probs.shape)
-    assert_true(np.isfinite(samme_proba).all())
+    assert np.isfinite(samme_proba).all()
 
     # Make sure that the correct elements come out as smallest --
     # `_samme_proba` should preserve the ordering in each example.
@@ -85,15 +84,15 @@ def test_oneclass_adaboost_proba():
     assert_array_almost_equal(clf.predict_proba(X), np.ones((len(X), 1)))
 
 
-def test_classification_toy():
+@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
+def test_classification_toy(algorithm):
     # Check classification on a toy dataset.
-    for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg, random_state=0)
-        clf.fit(X, y_class)
-        assert_array_equal(clf.predict(T), y_t_class)
-        assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
-        assert_equal(clf.predict_proba(T).shape, (len(T), 2))
-        assert_equal(clf.decision_function(T).shape, (len(T),))
+    clf = AdaBoostClassifier(algorithm=algorithm, random_state=0)
+    clf.fit(X, y_class)
+    assert_array_equal(clf.predict(T), y_t_class)
+    assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
+    assert clf.predict_proba(T).shape == (len(T), 2)
+    assert clf.decision_function(T).shape == (len(T),)
 
 
 def test_regression_toy():
@@ -117,17 +116,17 @@ def test_iris():
         if alg == "SAMME":
             clf_samme = clf
             prob_samme = proba
-        assert_equal(proba.shape[1], len(classes))
-        assert_equal(clf.decision_function(iris.data).shape[1], len(classes))
+        assert proba.shape[1] == len(classes)
+        assert clf.decision_function(iris.data).shape[1] == len(classes)
 
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with algorithm %s and score = %f" % \
             (alg, score)
 
         # Check we used multiple estimators
-        assert_greater(len(clf.estimators_), 1)
+        assert len(clf.estimators_) > 1
         # Check for distinct random states (see issue #7408)
-        assert_equal(len(set(est.random_state for est in clf.estimators_)),
+        assert (len(set(est.random_state for est in clf.estimators_)) ==
                      len(clf.estimators_))
 
     # Somewhat hacky regression test: prior to
@@ -146,38 +145,37 @@ def test_boston():
     assert score > 0.85
 
     # Check we used multiple estimators
-    assert_true(len(reg.estimators_) > 1)
+    assert len(reg.estimators_) > 1
     # Check for distinct random states (see issue #7408)
-    assert_equal(len(set(est.random_state for est in reg.estimators_)),
+    assert (len(set(est.random_state for est in reg.estimators_)) ==
                  len(reg.estimators_))
 
 
-def test_staged_predict():
+@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
+def test_staged_predict(algorithm):
     # Check staged predictions.
     rng = np.random.RandomState(0)
     iris_weights = rng.randint(10, size=iris.target.shape)
     boston_weights = rng.randint(10, size=boston.target.shape)
 
-    # AdaBoost classification
-    for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg, n_estimators=10)
-        clf.fit(iris.data, iris.target, sample_weight=iris_weights)
+    clf = AdaBoostClassifier(algorithm=algorithm, n_estimators=10)
+    clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
-        predictions = clf.predict(iris.data)
-        staged_predictions = [p for p in clf.staged_predict(iris.data)]
-        proba = clf.predict_proba(iris.data)
-        staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
-        score = clf.score(iris.data, iris.target, sample_weight=iris_weights)
-        staged_scores = [
-            s for s in clf.staged_score(
-                iris.data, iris.target, sample_weight=iris_weights)]
+    predictions = clf.predict(iris.data)
+    staged_predictions = [p for p in clf.staged_predict(iris.data)]
+    proba = clf.predict_proba(iris.data)
+    staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
+    score = clf.score(iris.data, iris.target, sample_weight=iris_weights)
+    staged_scores = [
+        s for s in clf.staged_score(
+            iris.data, iris.target, sample_weight=iris_weights)]
 
-        assert_equal(len(staged_predictions), 10)
-        assert_array_almost_equal(predictions, staged_predictions[-1])
-        assert_equal(len(staged_probas), 10)
-        assert_array_almost_equal(proba, staged_probas[-1])
-        assert_equal(len(staged_scores), 10)
-        assert_array_almost_equal(score, staged_scores[-1])
+    assert len(staged_predictions) == 10
+    assert_array_almost_equal(predictions, staged_predictions[-1])
+    assert len(staged_probas) == 10
+    assert_array_almost_equal(proba, staged_probas[-1])
+    assert len(staged_scores) == 10
+    assert_array_almost_equal(score, staged_scores[-1])
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10, random_state=0)
@@ -190,14 +188,12 @@ def test_staged_predict():
         s for s in clf.staged_score(
             boston.data, boston.target, sample_weight=boston_weights)]
 
-    assert_equal(len(staged_predictions), 10)
+    assert len(staged_predictions) == 10
     assert_array_almost_equal(predictions, staged_predictions[-1])
-    assert_equal(len(staged_scores), 10)
+    assert len(staged_scores) == 10
     assert_array_almost_equal(score, staged_scores[-1])
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification
@@ -229,9 +225,9 @@ def test_pickle():
         s = pickle.dumps(obj)
 
         obj2 = pickle.loads(s)
-        assert_equal(type(obj2), obj.__class__)
+        assert type(obj2) == obj.__class__
         score2 = obj2.score(iris.data, iris.target)
-        assert_equal(score, score2)
+        assert score == score2
 
     # Adaboost regressor
     obj = AdaBoostRegressor(random_state=0)
@@ -240,9 +236,9 @@ def test_pickle():
     s = pickle.dumps(obj)
 
     obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
+    assert type(obj2) == obj.__class__
     score2 = obj2.score(boston.data, boston.target)
-    assert_equal(score, score2)
+    assert score == score2
 
 
 def test_importances():
@@ -261,9 +257,8 @@ def test_importances():
         clf.fit(X, y)
         importances = clf.feature_importances_
 
-        assert_equal(importances.shape[0], 10)
-        assert_equal((importances[:3, np.newaxis] >= importances[3:]).all(),
-                     True)
+        assert importances.shape[0] == 10
+        assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
 def test_error():
@@ -281,7 +276,6 @@ def test_error():
                   X, y_class, sample_weight=np.asarray([-1]))
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_base_estimator():
     # Test different base estimators.
     from sklearn.ensemble import RandomForestClassifier
@@ -291,7 +285,7 @@ def test_base_estimator():
     clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y_regr)
 
-    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
     clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
@@ -299,13 +293,13 @@ def test_base_estimator():
     clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
     clf.fit(X, y_regr)
 
-    clf = AdaBoostRegressor(SVR(gamma='scale'), random_state=0)
+    clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y_regr)
 
     # Check that an empty discrete ensemble fails in fit, not predict.
     X_fail = [[1, 1], [1, 1], [1, 1], [1, 1]]
     y_fail = ["foo", "bar", 1, 2]
-    clf = AdaBoostClassifier(SVC(gamma="scale"), algorithm="SAMME")
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
     assert_raises_regexp(ValueError, "worse than random",
                          clf.fit, X_fail, y_fail)
 
@@ -328,7 +322,7 @@ def test_sparse_classification():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVC, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
@@ -347,14 +341,14 @@ def test_sparse_classification():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(gamma='scale', probability=True),
+            base_estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME"
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(gamma='scale', probability=True),
+            base_estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME"
         ).fit(X_train, y_train)
@@ -425,7 +419,7 @@ def test_sparse_regression():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVR, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
@@ -441,13 +435,13 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(gamma='scale'),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(gamma='scale'),
+            base_estimator=CustomSVR(),
             random_state=1
         ).fit(X_train, y_train)
 
@@ -471,7 +465,6 @@ def test_sparse_regression():
 def test_sample_weight_adaboost_regressor():
     """
     AdaBoostRegressor should work without sample_weights in the base estimator
-
     The random weighted sampling is done internally in the _boost method in
     AdaBoostRegressor.
     """
@@ -485,4 +478,45 @@ def test_sample_weight_adaboost_regressor():
 
     boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
     boost.fit(X, y_regr)
-    assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))
+    assert len(boost.estimator_weights_) == len(boost.estimator_errors_)
+
+
+def test_multidimensional_X():
+    """
+    Check that the AdaBoost estimators can work with n-dimensional
+    data matrix
+    """
+
+    from sklearn.dummy import DummyClassifier, DummyRegressor
+
+    rng = np.random.RandomState(0)
+
+    X = rng.randn(50, 3, 3)
+    yc = rng.choice([0, 1], 50)
+    yr = rng.randn(50)
+
+    boost = AdaBoostClassifier(DummyClassifier(strategy='most_frequent'))
+    boost.fit(X, yc)
+    boost.predict(X)
+    boost.predict_proba(X)
+
+    boost = AdaBoostRegressor(DummyRegressor())
+    boost.fit(X, yr)
+    boost.predict(X)
+
+
+@pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
+def test_adaboost_consistent_predict(algorithm):
+    # check that predict_proba and predict give consistent results
+    # regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/14084
+    X_train, X_test, y_train, y_test = train_test_split(
+        *datasets.load_digits(return_X_y=True), random_state=42
+    )
+    model = AdaBoostClassifier(algorithm=algorithm, random_state=42)
+    model.fit(X_train, y_train)
+
+    assert_array_equal(
+        np.argmax(model.predict_proba(X_test), axis=1),
+        model.predict(X_test)
+    )

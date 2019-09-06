@@ -12,8 +12,7 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import (assert_true, assert_greater,
-                                   assert_almost_equal, assert_array_equal)
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 
 
 def f(x):
@@ -49,7 +48,7 @@ def test_predict_consistent(kernel):
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-    assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+    assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
                    gpc.log_marginal_likelihood(kernel.theta))
 
 
@@ -61,6 +60,16 @@ def test_lml_precomputed(kernel):
                         gpc.log_marginal_likelihood(), 7)
 
 
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that clone_kernel=False has side-effects of kernel.theta.
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpc.kernel_.theta.shape, dtype=np.float64)
+
+    gpc.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpc.kernel_.theta, input_theta, 7)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.
@@ -69,9 +78,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-    assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
-                       (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1])))
+    assert np.all((np.abs(lml_gradient) < 1e-4) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
+                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -106,19 +115,19 @@ def test_random_starts():
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
-        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_custom_optimizer(kernel):
     # Test that GPC can use externally defined optimizers.
-    # Define a dummy optimizer that simply tests 50 random hyperparameters
+    # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
         rng = np.random.RandomState(0)
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
-        for _ in range(50):
+        for _ in range(10):
             theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
                                               np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
@@ -129,7 +138,7 @@ def test_custom_optimizer(kernel):
     gpc = GaussianProcessClassifier(kernel=kernel, optimizer=optimizer)
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
-    assert_greater(gpc.log_marginal_likelihood(gpc.kernel_.theta),
+    assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
                    gpc.log_marginal_likelihood(kernel.theta))
 
 

@@ -13,7 +13,7 @@ endif
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
+ALLSPHINXOPTS   = -T -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)\
     $(EXAMPLES_PATTERN_OPTS) .
 
 
@@ -98,7 +98,7 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 download-data:
-	python -c "from sklearn.datasets.lfw import check_fetch_lfw; check_fetch_lfw()"
+	python -c "from sklearn.datasets.lfw import _check_fetch_lfw; _check_fetch_lfw()"
 
 # Optimize PNG files. Needs OptiPNG. Change the -P argument to the number of
 # cores you have available, so -P 64 if you have a real computer ;)

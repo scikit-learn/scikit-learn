@@ -1,3 +1,6 @@
+# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
+# License: BSD 3 clause, (C) 2011
+
 """
 Routines for performing shortest-path graph searches
 
@@ -5,9 +8,6 @@ The main interface is in the function `graph_shortest_path`.  This
 calls cython routines that compute the shortest path using either
 the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 """
-
-# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause, (C) 2011
 
 import numpy as np
 cimport numpy as np
@@ -116,7 +116,7 @@ cdef np.ndarray floyd_warshall(np.ndarray[DTYPE_t, ndim=2, mode='c'] graph,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef int N = graph.shape[0]
+    cdef unsigned int N = graph.shape[0]
     assert graph.shape[1] == N
 
     cdef unsigned int i, j, k, m
@@ -498,14 +498,15 @@ cdef void dijkstra_directed_one_row(
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]
-    cdef unsigned int i
+    cdef unsigned int i_N
+    cdef ITYPE_t i
     cdef FibonacciNode *v
     cdef FibonacciNode *current_neighbor
     cdef DTYPE_t dist
 
     # initialize nodes
-    for i from 0 <= i < N:
-        initialize_node(&nodes[i], i)
+    for i_N in range(0, N):
+        initialize_node(&nodes[i_N], i_N)
 
     heap.min_node = NULL
     insert_node(heap, &nodes[i_node])
@@ -563,7 +564,8 @@ cdef void dijkstra_one_row(unsigned int i_node,
     nodes : the array of nodes to use
     """
     cdef unsigned int N = graph.shape[0]
-    cdef unsigned int i
+    cdef unsigned int i_N
+    cdef ITYPE_t i
     cdef FibonacciNode *v
     cdef FibonacciNode *current_neighbor
     cdef DTYPE_t dist
@@ -572,9 +574,9 @@ cdef void dijkstra_one_row(unsigned int i_node,
     # children, parent, left_sibling, right_sibling should already be NULL
     # rank should already be 0, index will already be set
     # we just need to re-set state and val
-    for i from 0 <= i < N:
-        nodes[i].state = 0  # 0 -> NOT_IN_HEAP
-        nodes[i].val = 0
+    for i_N in range(0, N):
+        nodes[i_N].state = 0  # 0 -> NOT_IN_HEAP
+        nodes[i_N].val = 0
 
     insert_node(heap, &nodes[i_node])
 

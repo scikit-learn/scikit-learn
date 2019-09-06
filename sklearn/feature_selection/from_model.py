@@ -6,7 +6,6 @@ import numbers
 
 from .base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..externals import six
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
@@ -16,12 +15,13 @@ def _get_feature_importances(estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
     importances = getattr(estimator, "feature_importances_", None)
 
-    if importances is None and hasattr(estimator, "coef_"):
+    coef_ = getattr(estimator, "coef_", None)
+    if importances is None and coef_ is not None:
         if estimator.coef_.ndim == 1:
-            importances = np.abs(estimator.coef_)
+            importances = np.abs(coef_)
 
         else:
-            importances = np.linalg.norm(estimator.coef_, axis=0,
+            importances = np.linalg.norm(coef_, axis=0,
                                          ord=norm_order)
 
     elif importances is None:
@@ -47,7 +47,7 @@ def _calculate_threshold(estimator, importances, threshold):
         else:
             threshold = "mean"
 
-    if isinstance(threshold, six.string_types):
+    if isinstance(threshold, str):
         if "*" in threshold:
             scale, reference = threshold.split("*")
             scale = float(scale.strip())
@@ -78,7 +78,7 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
+class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17

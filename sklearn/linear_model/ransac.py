@@ -8,9 +8,10 @@ import numpy as np
 import warnings
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
+from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -52,7 +53,8 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
+class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
+                      MultiOutputMixin, BaseEstimator):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -74,6 +76,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
            which is used for the stop criterion defined by `stop_score`.
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
+         * `predict(X)`: Returns predicted values using the linear model,
+           which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
         ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
@@ -183,6 +187,18 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         ``is_model_valid``.
 
         .. versionadded:: 0.19
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import RANSACRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = RANSACRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y)
+    0.9885...
+    >>> reg.predict(X[:1,])
+    array([-31.9417...])
 
     References
     ----------
@@ -308,8 +324,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             raise ValueError("%s does not support sample_weight. Samples"
                              " weights are only used for the calibration"
                              " itself." % estimator_name)
-        if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         n_inliers_best = 1
         score_best = -np.inf
@@ -451,7 +466,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.predict(X)
 
@@ -473,6 +488,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         z : float
             Score of the prediction.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.score(X, y)

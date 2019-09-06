@@ -1,12 +1,11 @@
+import pytest
 import numpy as np
 from scipy import sparse
 
-from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
@@ -44,13 +43,13 @@ def test_ransac_inliers_outliers():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_is_data_valid():
     def is_data_valid(X, y):
-        assert_equal(X.shape[0], 2)
-        assert_equal(y.shape[0], 2)
+        assert X.shape[0] == 2
+        assert y.shape[0] == 2
         return False
 
     rng = np.random.RandomState(0)
@@ -68,8 +67,8 @@ def test_ransac_is_data_valid():
 
 def test_ransac_is_model_valid():
     def is_model_valid(estimator, X, y):
-        assert_equal(X.shape[0], 2)
-        assert_equal(y.shape[0], 2)
+        assert X.shape[0] == 2
+        assert y.shape[0] == 2
         return False
 
     base_estimator = LinearRegression()
@@ -98,7 +97,7 @@ def test_ransac_max_trials():
     for i in range(50):
         ransac_estimator.set_params(min_samples=2, random_state=i)
         ransac_estimator.fit(X, y)
-        assert_less(ransac_estimator.n_trials_, max_trials + 1)
+        assert ransac_estimator.n_trials_ < max_trials + 1
 
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
@@ -107,7 +106,7 @@ def test_ransac_stop_n_inliers():
                                        random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.n_trials_, 1)
+    assert ransac_estimator.n_trials_ == 1
 
 
 def test_ransac_stop_score():
@@ -117,7 +116,7 @@ def test_ransac_stop_score():
                                        random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.n_trials_, 1)
+    assert ransac_estimator.n_trials_ == 1
 
 
 def test_ransac_score():
@@ -131,8 +130,8 @@ def test_ransac_score():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.score(X[2:], y[2:]), 1)
-    assert_less(ransac_estimator.score(X[:2], y[:2]), 1)
+    assert ransac_estimator.score(X[2:], y[2:]) == 1
+    assert ransac_estimator.score(X[:2], y[:2]) < 1
 
 
 def test_ransac_predict():
@@ -146,7 +145,7 @@ def test_ransac_predict():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), np.zeros(100))
+    assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
 def test_ransac_resid_thresh_no_inliers():
@@ -159,9 +158,9 @@ def test_ransac_resid_thresh_no_inliers():
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_, 5)
-    assert_equal(ransac_estimator.n_skips_invalid_data_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
+    assert ransac_estimator.n_skips_no_inliers_ == 5
+    assert ransac_estimator.n_skips_invalid_data_ == 0
+    assert ransac_estimator.n_skips_invalid_model_ == 0
 
 
 def test_ransac_no_valid_data():
@@ -175,9 +174,9 @@ def test_ransac_no_valid_data():
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_data_, 5)
-    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
+    assert ransac_estimator.n_skips_no_inliers_ == 0
+    assert ransac_estimator.n_skips_invalid_data_ == 5
+    assert ransac_estimator.n_skips_invalid_model_ == 0
 
 
 def test_ransac_no_valid_model():
@@ -191,9 +190,9 @@ def test_ransac_no_valid_model():
 
     msg = ("RANSAC could not find a valid consensus set")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_data_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_model_, 5)
+    assert ransac_estimator.n_skips_no_inliers_ == 0
+    assert ransac_estimator.n_skips_invalid_data_ == 0
+    assert ransac_estimator.n_skips_invalid_model_ == 5
 
 
 def test_ransac_exceed_max_skips():
@@ -208,9 +207,9 @@ def test_ransac_exceed_max_skips():
 
     msg = ("RANSAC skipped more iterations than `max_skips`")
     assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_data_, 4)
-    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
+    assert ransac_estimator.n_skips_no_inliers_ == 0
+    assert ransac_estimator.n_skips_invalid_data_ == 4
+    assert ransac_estimator.n_skips_invalid_model_ == 0
 
 
 def test_ransac_warn_exceed_max_skips():
@@ -232,9 +231,9 @@ def test_ransac_warn_exceed_max_skips():
                                        max_trials=5)
 
     assert_warns(ConvergenceWarning, ransac_estimator.fit, X, y)
-    assert_equal(ransac_estimator.n_skips_no_inliers_, 0)
-    assert_equal(ransac_estimator.n_skips_invalid_data_, 4)
-    assert_equal(ransac_estimator.n_skips_invalid_model_, 0)
+    assert ransac_estimator.n_skips_no_inliers_ == 0
+    assert ransac_estimator.n_skips_invalid_data_ == 4
+    assert ransac_estimator.n_skips_invalid_model_ == 0
 
 
 def test_ransac_sparse_coo():
@@ -249,7 +248,7 @@ def test_ransac_sparse_coo():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_sparse_csr():
@@ -264,7 +263,7 @@ def test_ransac_sparse_csr():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_sparse_csc():
@@ -279,7 +278,7 @@ def test_ransac_sparse_csc():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_none_estimator():
@@ -333,6 +332,7 @@ def test_ransac_min_n_samples():
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_multi_dimensional_targets():
 
     base_estimator = LinearRegression()
@@ -350,9 +350,10 @@ def test_ransac_multi_dimensional_targets():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_residual_loss():
     loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
     loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
@@ -406,7 +407,7 @@ def test_ransac_default_residual_threshold():
                                    ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+    assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_dynamic_max_trials():
@@ -416,29 +417,29 @@ def test_ransac_dynamic_max_trials():
     #   Cambridge University Press, ISBN: 0521540518
 
     # e = 0%, min_samples = X
-    assert_equal(_dynamic_max_trials(100, 100, 2, 0.99), 1)
+    assert _dynamic_max_trials(100, 100, 2, 0.99) == 1
 
     # e = 5%, min_samples = 2
-    assert_equal(_dynamic_max_trials(95, 100, 2, 0.99), 2)
+    assert _dynamic_max_trials(95, 100, 2, 0.99) == 2
     # e = 10%, min_samples = 2
-    assert_equal(_dynamic_max_trials(90, 100, 2, 0.99), 3)
+    assert _dynamic_max_trials(90, 100, 2, 0.99) == 3
     # e = 30%, min_samples = 2
-    assert_equal(_dynamic_max_trials(70, 100, 2, 0.99), 7)
+    assert _dynamic_max_trials(70, 100, 2, 0.99) == 7
     # e = 50%, min_samples = 2
-    assert_equal(_dynamic_max_trials(50, 100, 2, 0.99), 17)
+    assert _dynamic_max_trials(50, 100, 2, 0.99) == 17
 
     # e = 5%, min_samples = 8
-    assert_equal(_dynamic_max_trials(95, 100, 8, 0.99), 5)
+    assert _dynamic_max_trials(95, 100, 8, 0.99) == 5
     # e = 10%, min_samples = 8
-    assert_equal(_dynamic_max_trials(90, 100, 8, 0.99), 9)
+    assert _dynamic_max_trials(90, 100, 8, 0.99) == 9
     # e = 30%, min_samples = 8
-    assert_equal(_dynamic_max_trials(70, 100, 8, 0.99), 78)
+    assert _dynamic_max_trials(70, 100, 8, 0.99) == 78
     # e = 50%, min_samples = 8
-    assert_equal(_dynamic_max_trials(50, 100, 8, 0.99), 1177)
+    assert _dynamic_max_trials(50, 100, 8, 0.99) == 1177
 
     # e = 0%, min_samples = 10
-    assert_equal(_dynamic_max_trials(1, 100, 10, 0), 0)
-    assert_equal(_dynamic_max_trials(1, 100, 10, 1), float('inf'))
+    assert _dynamic_max_trials(1, 100, 10, 0) == 0
+    assert _dynamic_max_trials(1, 100, 10, 1) == float('inf')
 
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
@@ -455,7 +456,7 @@ def test_ransac_fit_sample_weight():
     weights = np.ones(n_samples)
     ransac_estimator.fit(X, y, weights)
     # sanity check
-    assert_equal(ransac_estimator.inlier_mask_.shape[0], n_samples)
+    assert ransac_estimator.inlier_mask_.shape[0] == n_samples
 
     ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
                                    ).astype(np.bool_)
