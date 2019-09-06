@@ -325,7 +325,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         new input data.
         """
         check_params = dict(accept_sparse=False, ensure_2d=False,
-                            dtype=[np.float64, np.float32])
+                            dtype=[np.float64])
         X = check_array(X, **check_params)
         y = check_array(y, **check_params)
         check_consistent_length(X, y, sample_weight)
