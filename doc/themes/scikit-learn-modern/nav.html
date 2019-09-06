@@ -6,18 +6,18 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
-<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
+<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md bg-light py-0">
   <div class="container-fluid {{ top_container_cls }}">
     {%- if logo %}
-      <a class="navbar-brand" href="{{ pathto('index') }}">
+      <a class="navbar-brand py-0" href="{{ pathto('index') }}">
         <img
+          class="sk-brand-img"
           src="{{ pathto('_static/' + logo, 1) }}"
-          height="38"
           alt="logo"/>
       </a>
     {%- endif %}
     <button
-      class="navbar-toggler"
+      class="sk-toggler-icon navbar-toggler"
       type="button"
       data-toggle="collapse"
       data-target="#navbarSupportedContent"
@@ -31,16 +31,26 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav mr-auto">
         <li class="nav-item">
-          <a class="nav-link" href="{{ pathto('index') }}">Home</a>
+          <a class="sk-nav-link nav-link" href="{{ pathto('install') }}">Install</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ pathto('install') }}">Install</a>
+          <a class="sk-nav-link nav-link" href="{{ pathto('user_guide') }}">User Guide</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ pathto('documentation') }}">Documentation</a>
+          <a class="sk-nav-link nav-link" href="{{ pathto('modules/classes') }}">API</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{{ pathto('auto_examples/index') }}">Examples</a>
+          <a class="sk-nav-link nav-link" href="{{ pathto('auto_examples/index') }}">Examples</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Documentation
+          </a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/basic/tutorial') }}"></a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="#">Another action</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="#">Something else here</a>
+          </div>
         </li>
       </ul>
       <div class="sk-search-form">

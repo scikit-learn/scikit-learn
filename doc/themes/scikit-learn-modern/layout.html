@@ -40,18 +40,20 @@
 <body>
 {% include "nav.html" %}
 {%- block content %}
-<div class="d-flex " id="sk-doc-wrapper">
+<div class="d-flex" id="sk-doc-wrapper">
     <input type="checkbox" name="sk-toggle-checkbox" id="sk-toggle-checkbox">
     <label id="sk-sidemenu-toggle" class="sk-btn-toggle-toc btn sk-btn-primary" for="sk-toggle-checkbox">Toggle Menu</label>
     <div id="sk-sidebar-wrapper" class="border-right">
       <div class="sk-sidebar-toc-wrapper">
         <div class="sk-sidebar-toc-logo">
+          {%- if logo %}
           <a href="{{ pathto('index') }}">
             <img
-              src="{{ pathto('_static/scikit-learn-logo-small.png', 1) }}"
-              height="38"
+              class="sk-brand-img"
+              src="{{ pathto('_static/' + logo, 1) }}"
               alt="logo"/>
           </a>
+          {%- endif %}
         </div>
         {%- if rellinks -%}
           <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
@@ -91,7 +93,7 @@
         {{ toc }}
       </div>
     </div>
-    <div id="sk-page-content-wrapper">
+    <div id="sk-page-content-wrapper" >
       <div class="sk-page-content container-fluid body" role="main">
         {% block body %}{% endblock %}
       </div>

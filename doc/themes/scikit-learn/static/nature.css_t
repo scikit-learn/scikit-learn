@@ -227,6 +227,7 @@ div.navbar div.nav-icon {
 
 form.gsc-search-box {
     padding: 0 !important;
+    margin: 0 !important;
 }
 
 input.gsc-search-button {

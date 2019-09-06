@@ -88,7 +88,7 @@ div.highlight a {
   text-decoration: underline;
 }
 
-a.sk-btn-landing-whats-new {
+a.sk-landing-btn {
   background-color: #ff9c34;
   color: black;
   cursor: pointer;
@@ -96,9 +96,8 @@ a.sk-btn-landing-whats-new {
   font-weight: 500;
 }
 
-a.sk-btn-landing-whats-new:hover {
-  color: #ff8d14;
-  background-color: white;
+a.sk-landing-btn:hover {
+  background-color: #ea8f30;
 }
 
 .sk-donate-btn {
@@ -198,6 +197,31 @@ div.section {
   overflow-x: scroll;
 }
 
+/* navbar */
+
+img.sk-brand-img {
+  height: 48px;
+}
+
+button.sk-nav-togger-button {
+  color: rgba(0,0,0,.5);
+  border-color: rgba(0,0,0,.1);
+}
+
+a.sk-nav-link, a.sk-dropdown-item {
+  color: rgba(23, 23, 23, 1);
+  font-weight: 500;
+}
+
+a.sk-nav-link:hover, a.sk-dropdown-item:hover {
+  color: rgba(246, 126, 0, 1);
+}
+
+a.sk-nav-dropdown-item:active {
+  color: white;
+  background-color: rgba(246, 126, 0, 1);
+}
+
 /* LANDING PAGE STYLE */
 
 div.sk-landing-container {
@@ -209,7 +233,7 @@ div.sk-landing-bg-more-info dd {
 }
 
 div.sk-landing-bg {
-  background-image: linear-gradient(90deg, #3499cd 40%, #ff9c34);
+  background-color: #3499cd;
 }
 
 div.sk-landing-bg-more-info {
@@ -755,8 +779,7 @@ div.sphx-glr-thumbcontainer {
 }
 
 .sk-btn-rellink:hover {
-  color: #ff8d14;
-  background-color: white;
+  color: black;
 }
 
 [sk-rellink-tooltip] {
@@ -769,8 +792,8 @@ div.sphx-glr-thumbcontainer {
   position: absolute;
   padding: 0.5rem;
   overflow: hidden;
-  background-color: white;
-  border: 1px solid #ff8d14;
+  background-color: #ff9c34;
+  border: 1px solid #ff9c34;
   white-space: pre;
   content: attr(sk-rellink-tooltip);
   text-align: left;
