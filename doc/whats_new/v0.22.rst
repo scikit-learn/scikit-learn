@@ -164,6 +164,13 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
+- |Enhancement| A warning  will  now be raised  if a parameter choice means
+  that another parameter will be unused on calling the fit() method for
+  :class:`feature_extraction.text.HashingVectorizer`,
+  :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer`.
+  :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`.
+
 - |Fix| Functions created by build_preprocessor and build_analyzer of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
   :pr:`14430` by :user:`Dillon Niederhut <deniederhut>`.
