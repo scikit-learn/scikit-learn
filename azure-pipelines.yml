@@ -31,7 +31,7 @@ jobs:
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
       pylatest_pip_openblas_pandas:
-        DISTRIB: 'latest'
+        DISTRIB: 'conda-latest'
         PYTHON_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
