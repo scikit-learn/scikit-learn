@@ -2,6 +2,10 @@ import textwrap
 from sklearn.utils.testing import assert_run_python_script
 
 
+# This file makes sure importing from sklearn.neural_net.rbm or
+# sklearn.neural_net.multilayer_perceptron raises a deprecation warning.
+
+
 def test_rbm():
     script = """
     import pytest
