@@ -1199,23 +1199,17 @@ def check_pairwise_estimator_tag(name, estimator_orig):
     has_pairwise_tag = hasattr(estimator_orig, '_pairwise')
 
     # Using iris as sample data
-    iris = load_iris()
-    X, y_ = iris.data, iris.target
+    X, y_ = load_iris(return_X_y=True)
     distance_matrix = pairwise_distances(X)
 
     for attribute in attributes_to_check:
         # Check to see if attribute value is supported by estimator
-        if attribute not in estimator_orig.get_params(deep=False):
-            continue
-        try:
+        if attribute in estimator_orig.get_params(deep=False):
             # Construct new object of estimator with desired attribute value
             estimator2 = clone(estimator_orig).set_params(
                                                 **{attribute: 'precomputed'})
             # Estimators may validate parameters in fit if not in set_params
             estimator2.fit(distance_matrix, y_)
-        except Exception:
-            # Estimator does not support given attribute value
-            continue
 
         # Also check to see if non-square distance matrix raises an error
         try:
