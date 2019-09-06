@@ -448,8 +448,8 @@ Changelog
 :mod:`sklearn.metrics`
 ..................................
 
-- |API| Introduced new scorer `neg_brier_loss_score` to better reflect real
-  behavior of now deprecated `brier_loss_score`
+- |API| Introduced new scorer neg_brier_score to better reflect real
+  behavior of now deprecated brier_score_loss
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 Miscellaneous
