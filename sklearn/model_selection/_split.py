@@ -1480,7 +1480,7 @@ class GroupShuffleSplit(ShuffleSplit):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-    
+
     Examples
     --------
     >>> import numpy as np
