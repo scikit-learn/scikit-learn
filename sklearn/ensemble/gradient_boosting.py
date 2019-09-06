@@ -2523,7 +2523,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated', validation_fraction=0.1,
+                 warm_start=False, presort='deprecated',
+                 validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(

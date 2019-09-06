@@ -1620,7 +1620,7 @@ def test_public_apply_sparse_trees(name):
 @pytest.mark.parametrize('presort', ['auto', True, False])
 def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
-    y = np.r_[[0] * 5, [1] * 5]    
+    y = np.r_[[0] * 5, [1] * 5]
     tree = Cls(presort=presort)
     with pytest.warns(UserWarning,
                       match="The parameter 'presort' is deprecated "):
