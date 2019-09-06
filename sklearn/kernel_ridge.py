@@ -6,14 +6,14 @@
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin
+from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -27,7 +27,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     squared error loss while support vector regression uses epsilon-insensitive
     loss, both combined with l2 regularization. In contrast to SVR, fitting a
     KRR model can be done in closed-form and is typically faster for
-    medium-sized datasets. On the other  hand, the learned model is non-sparse
+    medium-sized datasets. On the other hand, the learned model is non-sparse
     and thus slower than SVR, which learns a sparse model for epsilon > 0, at
     prediction-time.
 
@@ -101,9 +101,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidge(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
-                kernel_params=None)
+    >>> clf.fit(X, y)
+    KernelRidge(alpha=1.0)
     """
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
@@ -189,6 +188,6 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         C : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        check_is_fitted(self)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

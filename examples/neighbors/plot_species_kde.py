@@ -7,7 +7,7 @@ density estimate) on geospatial data, using a Ball Tree built upon the
 Haversine distance metric -- i.e. distances over points in latitude/longitude.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.org/basemap>`_
+`basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
 This example does not perform any learning over the data

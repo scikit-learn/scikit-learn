@@ -15,8 +15,8 @@ from sklearn.gaussian_process.kernels \
 from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
-    import (assert_true, assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal, assert_raise_message,
+    import (assert_array_less,
+            assert_almost_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)
 
 
@@ -57,7 +57,7 @@ def test_gpr_interpolation(kernel):
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
                    gpr.log_marginal_likelihood(kernel.theta))
 
 
@@ -65,8 +65,18 @@ def test_lml_improving(kernel):
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_equal(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
                  gpr.log_marginal_likelihood())
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that lml of optimized kernel is stored correctly.
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpr.kernel_.theta.shape, dtype=np.float64)
+
+    gpr.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpr.kernel_.theta, input_theta, 7)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -77,9 +87,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-    assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
-                       (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
-                       (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
+    assert np.all((np.abs(lml_gradient) < 1e-4) |
+                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
+                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -145,7 +155,7 @@ def test_no_optimizer():
     # Test that kernel parameters are unmodified when optimizer is None.
     kernel = RBF(1.0)
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None).fit(X, y)
-    assert_equal(np.exp(gpr.kernel_.theta), 1.0)
+    assert np.exp(gpr.kernel_.theta) == 1.0
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -168,7 +178,7 @@ def test_anisotropic_kernel():
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_greater(np.exp(gpr.kernel_.theta[1]),
+    assert (np.exp(gpr.kernel_.theta[1]) >
                    np.exp(gpr.kernel_.theta[0]) * 5)
 
 
@@ -191,7 +201,7 @@ def test_random_starts():
             kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
             random_state=0,).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
-        assert_greater(lml, last_lml - np.finfo(np.float32).eps)
+        assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
 
 
@@ -286,7 +296,7 @@ def test_custom_optimizer(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel, optimizer=optimizer)
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
-    assert_greater(gpr.log_marginal_likelihood(gpr.kernel_.theta),
+    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
                    gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 
@@ -349,12 +359,12 @@ def test_K_inv_reset(kernel):
 
     # Test that self._K_inv is reset after a new fit
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_true(hasattr(gpr, '_K_inv'))
-    assert_true(gpr._K_inv is None)
+    assert hasattr(gpr, '_K_inv')
+    assert gpr._K_inv is None
     gpr.predict(X, return_std=True)
-    assert_true(gpr._K_inv is not None)
+    assert gpr._K_inv is not None
     gpr.fit(X2, y2)
-    assert_true(gpr._K_inv is None)
+    assert gpr._K_inv is None
     gpr.predict(X2, return_std=True)
     gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
     gpr2.predict(X2, return_std=True)

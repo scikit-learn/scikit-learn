@@ -53,7 +53,10 @@ BINS = 30
 rng = np.random.RandomState(304)
 bc = PowerTransformer(method='box-cox')
 yj = PowerTransformer(method='yeo-johnson')
-qt = QuantileTransformer(output_distribution='normal', random_state=rng)
+# n_quantiles is set to the training set size rather than the default value
+# to avoid a warning being raised by this example
+qt = QuantileTransformer(n_quantiles=500, output_distribution='normal',
+                         random_state=rng)
 size = (N_SAMPLES, 1)
 
 
@@ -91,8 +94,8 @@ distributions = [
     ('Bimodal', X_bimodal)
 ]
 
-colors = ['firebrick', 'darkorange', 'goldenrod',
-          'seagreen', 'royalblue', 'darkorchid']
+colors = ['#D81B60', '#0188FF', '#FFC107',
+          '#B7A2FF', '#000000', '#2EC5AC']
 
 fig, axes = plt.subplots(nrows=8, ncols=3, figsize=plt.figaspect(2))
 axes = axes.flatten()
@@ -127,7 +130,7 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
         ax.hist(X_trans, color=color, bins=BINS)
         title = 'After {}'.format(meth_name)
         if lmbda is not None:
-            title += '\n$\lambda$ = {}'.format(lmbda)
+            title += r'\n$\lambda$ = {}'.format(lmbda)
         ax.set_title(title, fontsize=FONT_SIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
         ax.set_xlim([-3.5, 3.5])

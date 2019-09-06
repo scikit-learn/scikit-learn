@@ -13,7 +13,23 @@ from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
 
 
-class SparsePCA(BaseEstimator, TransformerMixin):
+# FIXME: remove in 0.24
+def _check_normalize_components(normalize_components, estimator_name):
+    if normalize_components != 'deprecated':
+        if normalize_components:
+            warnings.warn(
+                "'normalize_components' has been deprecated in 0.22 and "
+                "will be removed in 0.24. Remove the parameter from the "
+                " constructor.", DeprecationWarning
+            )
+        else:
+            raise NotImplementedError(
+                "normalize_components=False is not supported starting from "
+                "0.22. Remove this parameter from the constructor."
+            )
+
+
+class SparsePCA(TransformerMixin, BaseEstimator):
     """Sparse Principal Components Analysis (SparsePCA)
 
     Finds the set of sparse components that can optimally reconstruct
@@ -69,20 +85,15 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : boolean, optional (default=False)
-        - if False, use a version of Sparse PCA without components
-          normalization and without data centering. This is likely a bug and
-          even though it's the default for backward compatibility,
-          this should not be used.
-        - if True, use a version of Sparse PCA with components normalization
-          and data centering.
+    normalize_components : 'deprecated'
+        This parameter does not have any effect. The components are always
+        normalized.
 
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` was added and set to ``False`` for
-           backward compatibility. It would be set to ``True`` from 0.22
-           onwards.
+           ``normalize_components`` is deprecated in 0.22 and will be removed
+           in 0.24.
 
     Attributes
     ----------
@@ -105,16 +116,14 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.decomposition import SparsePCA
     >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
-    >>> transformer = SparsePCA(n_components=5,
-    ...         normalize_components=True,
-    ...         random_state=0)
-    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    >>> transformer = SparsePCA(n_components=5, random_state=0)
+    >>> transformer.fit(X)
     SparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
     (200, 5)
     >>> # most values in the components_ are zero (sparsity)
-    >>> np.mean(transformer.components_ == 0) # doctest: +ELLIPSIS
+    >>> np.mean(transformer.components_ == 0)
     0.9666...
 
     See also
@@ -126,7 +135,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
                  U_init=None, V_init=None, verbose=False, random_state=None,
-                 normalize_components=False):
+                 normalize_components='deprecated'):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -159,15 +168,12 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         random_state = check_random_state(self.random_state)
         X = check_array(X)
 
-        if self.normalize_components:
-            self.mean_ = X.mean(axis=0)
-            X = X - self.mean_
-        else:
-            warnings.warn("normalize_components=False is a "
-                          "backward-compatible setting that implements a "
-                          "non-standard definition of sparse PCA. This "
-                          "compatibility mode will be removed in 0.22.",
-                          DeprecationWarning)
+        _check_normalize_components(
+            self.normalize_components, self.__class__.__name__
+        )
+
+        self.mean_ = X.mean(axis=0)
+        X = X - self.mean_
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -184,20 +190,17 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                random_state=random_state,
                                                code_init=code_init,
                                                dict_init=dict_init,
-                                               return_n_iter=True
-                                               )
+                                               return_n_iter=True)
         self.components_ = Vt.T
-
-        if self.normalize_components:
-            components_norm = \
-                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = np.linalg.norm(
+            self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha='deprecated'):
+    def transform(self, X):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -213,42 +216,18 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha : float, default: 0.01
-            Amount of ridge shrinkage to apply in order to improve
-            conditioning.
-
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
-               Specify ``ridge_alpha`` in the ``SparsePCA`` constructor.
-
         Returns
         -------
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         X = check_array(X)
-        if ridge_alpha != 'deprecated':
-            warnings.warn("The ridge_alpha parameter on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21. "
-                          "Specify ridge_alpha in the SparsePCA constructor.",
-                          DeprecationWarning)
-            if ridge_alpha is None:
-                ridge_alpha = self.ridge_alpha
-        else:
-            ridge_alpha = self.ridge_alpha
+        X = X - self.mean_
 
-        if self.normalize_components:
-            X = X - self.mean_
-
-        U = ridge_regression(self.components_.T, X.T, ridge_alpha,
+        U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
                              solver='cholesky')
-
-        if not self.normalize_components:
-            s = np.sqrt((U ** 2).sum(axis=0))
-            s[s == 0] = 1
-            U /= s
 
         return U
 
@@ -309,20 +288,15 @@ class MiniBatchSparsePCA(SparsePCA):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : boolean, optional (default=False)
-        - if False, use a version of Sparse PCA without components
-          normalization and without data centering. This is likely a bug and
-          even though it's the default for backward compatibility,
-          this should not be used.
-        - if True, use a version of Sparse PCA with components normalization
-          and data centering.
+    normalize_components : 'deprecated'
+        This parameter does not have any effect. The components are always
+        normalized.
 
         .. versionadded:: 0.20
 
         .. deprecated:: 0.22
-           ``normalize_components`` was added and set to ``False`` for
-           backward compatibility. It would be set to ``True`` from 0.22
-           onwards.
+           ``normalize_components`` is deprecated in 0.22 and will be removed
+           in 0.24.
 
     Attributes
     ----------
@@ -342,11 +316,9 @@ class MiniBatchSparsePCA(SparsePCA):
     >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.decomposition import MiniBatchSparsePCA
     >>> X, _ = make_friedman1(n_samples=200, n_features=30, random_state=0)
-    >>> transformer = MiniBatchSparsePCA(n_components=5,
-    ...         batch_size=50,
-    ...         normalize_components=True,
-    ...         random_state=0)
-    >>> transformer.fit(X) # doctest: +ELLIPSIS
+    >>> transformer = MiniBatchSparsePCA(n_components=5, batch_size=50,
+    ...                                  random_state=0)
+    >>> transformer.fit(X)
     MiniBatchSparsePCA(...)
     >>> X_transformed = transformer.transform(X)
     >>> X_transformed.shape
@@ -364,8 +336,8 @@ class MiniBatchSparsePCA(SparsePCA):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
-                 normalize_components=False):
-        super(MiniBatchSparsePCA, self).__init__(
+                 normalize_components='deprecated'):
+        super().__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
             random_state=random_state,
@@ -394,15 +366,12 @@ class MiniBatchSparsePCA(SparsePCA):
         random_state = check_random_state(self.random_state)
         X = check_array(X)
 
-        if self.normalize_components:
-            self.mean_ = X.mean(axis=0)
-            X = X - self.mean_
-        else:
-            warnings.warn("normalize_components=False is a "
-                          "backward-compatible setting that implements a "
-                          "non-standard definition of sparse PCA. This "
-                          "compatibility mode will be removed in 0.22.",
-                          DeprecationWarning)
+        _check_normalize_components(
+            self.normalize_components, self.__class__.__name__
+        )
+
+        self.mean_ = X.mean(axis=0)
+        X = X - self.mean_
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -420,10 +389,9 @@ class MiniBatchSparsePCA(SparsePCA):
             return_n_iter=True)
         self.components_ = Vt.T
 
-        if self.normalize_components:
-            components_norm = \
-                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = np.linalg.norm(
+            self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         return self

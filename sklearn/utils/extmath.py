@@ -11,30 +11,16 @@ Extended math utilities.
 #          Giorgio Patrini
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 
 import numpy as np
 from scipy import linalg, sparse
 
-from . import check_random_state, deprecated
-from .fixes import np_version
-from .fixes import logsumexp as scipy_logsumexp
+from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-
-
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.norm instead.")
-def norm(x):
-    """Compute the Euclidean or Frobenius norm of x.
-
-    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
-    """
-    return linalg.norm(x)
+from .deprecation import deprecated
 
 
 def squared_norm(x):
@@ -107,22 +93,6 @@ def fast_logdet(A):
     if not sign > 0:
         return -np.inf
     return ld
-
-
-def _impose_f_order(X):
-    """Helper Function"""
-    # important to access flags instead of calling np.isfortran,
-    # this catches corner cases.
-    if X.flags.c_contiguous:
-        return check_array(X.T, copy=False, order='F'), True
-    else:
-        return check_array(X, copy=False, order='F'), False
-
-
-@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use the equivalent np.dot instead.")
-def fast_dot(a, b, out=None):
-    return np.dot(a, b, out)
 
 
 def density(w, **kwargs):
@@ -218,7 +188,7 @@ def randomized_range_finder(A, size, n_iter,
     Follows Algorithm 4.3 of
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -331,7 +301,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
-      Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -388,25 +358,6 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
-def logsumexp(arr, axis=0):
-    """Computes the sum of arr assuming arr is in the log domain.
-    Returns log(sum(exp(arr))) while minimizing the possibility of
-    over/underflow.
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.utils.extmath import logsumexp
-    >>> a = np.arange(10)
-    >>> np.log(np.sum(np.exp(a)))
-    9.458...
-    >>> logsumexp(a)  # doctest: +SKIP
-    9.458...
-    """
-    return scipy_logsumexp(arr, axis)
-
-
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
@@ -442,12 +393,12 @@ def weighted_mode(a, w, axis=0):
     The value 4 appears three times: with uniform weights, the result is
     simply the mode of the distribution.
 
-    >>> weights = [1, 3, 0.5, 1.5, 1, 2] # deweight the 4's
+    >>> weights = [1, 3, 0.5, 1.5, 1, 2]  # deweight the 4's
     >>> weighted_mode(x, weights)
     (array([2.]), array([3.5]))
 
     The value 2 has the highest score: it appears twice with weights of
-    1.5 and 2: the sum of these is 3.
+    1.5 and 2: the sum of these is 3.5.
 
     See Also
     --------
@@ -478,12 +429,6 @@ def weighted_mode(a, w, axis=0):
         oldcounts = np.maximum(counts, oldcounts)
         oldmostfreq = mostfrequent
     return mostfrequent, oldcounts
-
-
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
-            "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
-def pinvh(a, cond=None, rcond=None, lower=True):
-    return linalg.pinvh(a, cond, rcond, lower)
 
 
 def cartesian(arrays, out=None):
@@ -545,13 +490,13 @@ def svd_flip(u, v, u_based_decision=True):
     ----------
     u : ndarray
         u and v are the output of `linalg.svd` or
-        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
-        so one can compute `np.dot(u * s, v)`.
+        :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
+        dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
         u and v are the output of `linalg.svd` or
-        `sklearn.utils.extmath.randomized_svd`, with matching inner dimensions
-        so one can compute `np.dot(u * s, v)`.
+        :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
+        dimensions so one can compute `np.dot(u * s, v)`.
 
     u_based_decision : boolean, (default=True)
         If True, use the columns of u as the basis for sign flipping.
@@ -567,13 +512,13 @@ def svd_flip(u, v, u_based_decision=True):
     if u_based_decision:
         # columns of u, rows of v
         max_abs_cols = np.argmax(np.abs(u), axis=0)
-        signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+        signs = np.sign(u[max_abs_cols, range(u.shape[1])])
         u *= signs
         v *= signs[:, np.newaxis]
     else:
         # rows of v, columns of u
         max_abs_rows = np.argmax(np.abs(v), axis=1)
-        signs = np.sign(v[xrange(v.shape[0]), max_abs_rows])
+        signs = np.sign(v[range(v.shape[0]), max_abs_rows])
         u *= signs
         v *= signs[:, np.newaxis]
     return u, v
@@ -658,10 +603,14 @@ def softmax(X, copy=True):
     return X
 
 
+@deprecated("safe_min is deprecated in version 0.22 and will be removed "
+            "in version 0.24.")
 def safe_min(X):
     """Returns the minimum value of a dense or a CSR/CSC matrix.
 
-    Adapated from http://stackoverflow.com/q/13426580
+    Adapated from https://stackoverflow.com/q/13426580
+
+    .. deprecated:: 0.22.0
 
     Parameters
     ----------
@@ -702,7 +651,7 @@ def make_nonnegative(X, min_value=0):
     ValueError
         When X is sparse
     """
-    min_ = safe_min(X)
+    min_ = X.min()
     if min_ < min_value:
         if sparse.issparse(X):
             raise ValueError("Cannot make the data matrix"
@@ -711,6 +660,38 @@ def make_nonnegative(X, min_value=0):
                              " make it no longer sparse.")
         X = X + (min_value - min_)
     return X
+
+
+# Use at least float64 for the accumulating functions to avoid precision issue
+# see https://github.com/numpy/numpy/issues/9393. The float64 is also retained
+# as it is in case the float overflows
+def _safe_accumulator_op(op, x, *args, **kwargs):
+    """
+    This function provides numpy accumulator functions with a float64 dtype
+    when used on a floating point input. This prevents accumulator overflow on
+    smaller floating point dtypes.
+
+    Parameters
+    ----------
+    op : function
+        A numpy accumulator function such as np.mean or np.sum
+    x : numpy array
+        A numpy array to apply the accumulator function
+    *args : positional arguments
+        Positional arguments passed to the accumulator function after the
+        input x
+    **kwargs : keyword arguments
+        Keyword arguments passed to the accumulator function
+
+    Returns
+    -------
+    result : The output of the accumulator function passed to this function
+    """
+    if np.issubdtype(x.dtype, np.floating) and x.dtype.itemsize < 8:
+        result = op(x, *args, **kwargs, dtype=np.float64)
+    else:
+        result = op(x, *args, **kwargs)
+    return result
 
 
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
@@ -763,7 +744,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    new_sum = np.nansum(X, axis=0)
+    new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
@@ -773,7 +754,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        new_unnormalized_variance = (
+            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -827,10 +809,6 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     atol : float
         Absolute tolerance, see ``np.allclose``
     """
-    # sum is as unstable as cumsum for numpy < 1.9
-    if np_version < (1, 9):
-        return np.cumsum(arr, axis=axis, dtype=np.float64)
-
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)
     if not np.all(np.isclose(out.take(-1, axis=axis), expected, rtol=rtol,

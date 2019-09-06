@@ -1,9 +1,10 @@
+import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
-from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
-                                   assert_array_equal, assert_true,
-                                   assert_raise_message, assert_warns)
+from sklearn.utils.testing import (assert_array_almost_equal,
+                                   assert_array_equal, assert_raise_message,
+                                   assert_warns)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
@@ -260,6 +261,47 @@ def test_pls():
     check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
     check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
 
+    # 4) Another "Non regression test" of PLS Regression (PLS2):
+    #    Checking behavior when the first column of Y is constant
+    # ===============================================
+    # The results were compared against a modified version of plsreg2
+    # from the R-package plsdepot
+    X = d.data
+    Y = d.target
+    Y[:, 0] = 1
+    pls_2 = pls_.PLSRegression(n_components=X.shape[1])
+    pls_2.fit(X, Y)
+
+    x_weights = np.array(
+        [[-0.6273573, 0.007081799, 0.7786994],
+         [-0.7493417, -0.277612681, -0.6011807],
+         [-0.2119194, 0.960666981, -0.1794690]])
+    x_weights_sign_flip = pls_2.x_weights_ / x_weights
+
+    x_loadings = np.array(
+        [[-0.6273512, -0.22464538, 0.7786994],
+         [-0.6643156, -0.09871193, -0.6011807],
+         [-0.5125877, 1.01407380, -0.1794690]])
+    x_loadings_sign_flip = pls_2.x_loadings_ / x_loadings
+
+    y_loadings = np.array(
+        [[0.0000000, 0.0000000, 0.0000000],
+         [0.4357300, 0.5828479, 0.2174802],
+         [-0.1353739, -0.2486423, -0.1810386]])
+
+    # R/python sign flip should be the same in x_weight and x_rotation
+    assert_array_almost_equal(x_loadings_sign_flip, x_weights_sign_flip, 4)
+
+    # This test that R / python give the same result up to column
+    # sign indeterminacy
+    assert_array_almost_equal(np.abs(x_loadings_sign_flip), 1, 4)
+    assert_array_almost_equal(np.abs(x_weights_sign_flip), 1, 4)
+
+    # For the PLSRegression with default parameters, it holds that
+    # y_loadings==y_weights. In this case we only test that R/python
+    # give the same result for the y_loadings irrespective of the sign
+    assert_array_almost_equal(np.abs(pls_2.y_loadings_), np.abs(y_loadings), 4)
+
 
 def test_convergence_fail():
     d = load_linnerud()
@@ -280,7 +322,7 @@ def test_PLSSVD():
     for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
         pls = clf(n_components=n_components)
         pls.fit(X, Y)
-        assert_equal(n_components, pls.y_scores_.shape[1])
+        assert n_components == pls.y_scores_.shape[1]
 
 
 def test_univariate_pls_regression():
@@ -317,7 +359,7 @@ def test_predict_transform_copy():
     assert_array_equal(X_copy, X)
     assert_array_equal(Y_copy, Y)
     # also check that mean wasn't zero before (to make sure we didn't touch it)
-    assert_true(np.all(X.mean(axis=0) != 0))
+    assert np.all(X.mean(axis=0) != 0)
 
 
 def test_scale_and_stability():
@@ -377,6 +419,7 @@ def test_pls_errors():
                              clf.fit, X, Y)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls_scaling():
     # sanity check for scale=True
     n_samples = 1000

@@ -14,7 +14,7 @@ to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
 
-[1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+[1] https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
 Notes
 -----
@@ -33,7 +33,6 @@ Authors
 import warnings
 import  numpy as np
 cimport numpy as np
-cimport libsvm
 from libc.stdlib cimport free
 
 cdef extern from *:
@@ -445,7 +444,7 @@ def decision_function(
         n_class = 1
     else:
         n_class = get_nr(model)
-        n_class = n_class * (n_class - 1) / 2
+        n_class = n_class * (n_class - 1) // 2
 
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)

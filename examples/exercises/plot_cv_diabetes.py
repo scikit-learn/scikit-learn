@@ -9,7 +9,6 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 
-from __future__ import print_function
 print(__doc__)
 
 import numpy as np
@@ -21,11 +20,11 @@ from sklearn.linear_model import Lasso
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 
-diabetes = datasets.load_diabetes()
-X = diabetes.data[:150]
-y = diabetes.target[:150]
+X, y = datasets.load_diabetes(return_X_y=True)
+X = X[:150]
+y = y[:150]
 
-lasso = Lasso(random_state=0)
+lasso = Lasso(random_state=0, max_iter=10000)
 alphas = np.logspace(-4, -0.5, 30)
 
 tuned_parameters = [{'alpha': alphas}]
@@ -60,7 +59,7 @@ plt.xlim([alphas[0], alphas[-1]])
 # performs cross-validation on the training data it receives).
 # We use external cross-validation to see how much the automatically obtained
 # alphas differ across different cross-validation folds.
-lasso_cv = LassoCV(alphas=alphas, cv=5, random_state=0)
+lasso_cv = LassoCV(alphas=alphas, random_state=0, max_iter=10000)
 k_fold = KFold(3)
 
 print("Answer to the bonus question:",

@@ -10,19 +10,19 @@ The dataset page is available at
 
 import logging
 
-from os import remove
+from os import remove, makedirs
 from os.path import dirname, exists, join
 from gzip import GzipFile
 
 import numpy as np
 import scipy.sparse as sp
+import joblib
 
 from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils.fixes import makedirs
-from ..externals import joblib
+from .base import _refresh_cache
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
@@ -180,7 +180,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
         sample_id = np.hstack((Xy[9], Xy[1], Xy[3], Xy[5], Xy[7]))
-        sample_id = sample_id.astype(np.uint32)
+        sample_id = sample_id.astype(np.uint32, copy=False)
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
@@ -190,8 +190,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
             f.close()
             remove(f.name)
     else:
-        X = joblib.load(samples_path)
-        sample_id = joblib.load(sample_id_path)
+        X, sample_id = _refresh_cache([samples_path, sample_id_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -209,7 +211,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         category_names = {}
         with GzipFile(filename=topics_archive_path, mode='rb') as f:
             for line in f:
-                line_components = line.decode("ascii").split(u" ")
+                line_components = line.decode("ascii").split(" ")
                 if len(line_components) == 3:
                     cat, doc, _ = line_components
                     if cat not in category_names:
@@ -244,8 +246,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         joblib.dump(y, sample_topics_path, compress=9)
         joblib.dump(categories, topics_path, compress=9)
     else:
-        y = joblib.load(sample_topics_path)
-        categories = joblib.load(topics_path)
+        y, categories = _refresh_cache([sample_topics_path, topics_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # y = joblib.load(sample_topics_path)
+        # categories = joblib.load(topics_path)
 
     if subset == 'all':
         pass

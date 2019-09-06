@@ -2,32 +2,25 @@
 ===================================
 Demo of OPTICS clustering algorithm
 ===================================
-
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
-
-The clustering is first used in its automatic settings, which is the
-:class:`sklearn.cluster.OPTICS` algorithm, and then setting specific
-thresholds on the reachability, which corresponds to DBSCAN.
-
-We can see that the different clusters of OPTICS can be recovered with
-different choices of thresholds in DBSCAN.
-
+The :class:`sklearn.cluster.OPTICS` is first used with its Xi cluster detection
+method, and then setting specific thresholds on the reachability, which
+corresponds to :class:`sklearn.cluster.DBSCAN`. We can see that the different
+clusters of OPTICS's Xi method can be recovered with different choices of
+thresholds in DBSCAN.
 """
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
-#          Amy X. Zhang <axz@mit.edu>
+#          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
 
-from sklearn.cluster import OPTICS
+from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec
-
-
-import numpy as np
-
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Generate sample data
 
@@ -42,13 +35,17 @@ C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
 C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
 X = np.vstack((C1, C2, C3, C4, C5, C6))
 
-clust = OPTICS(min_samples=9, rejection_ratio=0.5)
+clust = OPTICS(min_samples=50, xi=.05, min_cluster_size=.05)
 
 # Run the fit
 clust.fit(X)
 
-_, labels_025 = clust.extract_dbscan(0.25)
-_, labels_075 = clust.extract_dbscan(0.75)
+labels_050 = cluster_optics_dbscan(reachability=clust.reachability_,
+                                   core_distances=clust.core_distances_,
+                                   ordering=clust.ordering_, eps=0.5)
+labels_200 = cluster_optics_dbscan(reachability=clust.reachability_,
+                                   core_distances=clust.core_distances_,
+                                   ordering=clust.ordering_, eps=2)
 
 space = np.arange(len(X))
 reachability = clust.reachability_[clust.ordering_]
@@ -62,40 +59,40 @@ ax3 = plt.subplot(G[1, 1])
 ax4 = plt.subplot(G[1, 2])
 
 # Reachability plot
-color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(0, 5), color):
-    Xk = space[labels == k]
-    Rk = reachability[labels == k]
-    ax1.plot(Xk, Rk, c, alpha=0.3)
+colors = ['g.', 'r.', 'b.', 'y.', 'c.']
+for klass, color in zip(range(0, 5), colors):
+    Xk = space[labels == klass]
+    Rk = reachability[labels == klass]
+    ax1.plot(Xk, Rk, color, alpha=0.3)
 ax1.plot(space[labels == -1], reachability[labels == -1], 'k.', alpha=0.3)
-ax1.plot(space, np.full_like(space, 0.75, dtype=float), 'k-', alpha=0.5)
-ax1.plot(space, np.full_like(space, 0.25, dtype=float), 'k-.', alpha=0.5)
+ax1.plot(space, np.full_like(space, 2., dtype=float), 'k-', alpha=0.5)
+ax1.plot(space, np.full_like(space, 0.5, dtype=float), 'k-.', alpha=0.5)
 ax1.set_ylabel('Reachability (epsilon distance)')
 ax1.set_title('Reachability Plot')
 
 # OPTICS
-color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(0, 5), color):
-    Xk = X[clust.labels_ == k]
-    ax2.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
+colors = ['g.', 'r.', 'b.', 'y.', 'c.']
+for klass, color in zip(range(0, 5), colors):
+    Xk = X[clust.labels_ == klass]
+    ax2.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], 'k+', alpha=0.1)
 ax2.set_title('Automatic Clustering\nOPTICS')
 
-# DBSCAN at 0.25
-color = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
-for k, c in zip(range(0, 6), color):
-    Xk = X[labels_025 == k]
-    ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3, marker='.')
-ax3.plot(X[labels_025 == -1, 0], X[labels_025 == -1, 1], 'k+', alpha=0.1)
-ax3.set_title('Clustering at 0.25 epsilon cut\nDBSCAN')
+# DBSCAN at 0.5
+colors = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
+for klass, color in zip(range(0, 6), colors):
+    Xk = X[labels_050 == klass]
+    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3, marker='.')
+ax3.plot(X[labels_050 == -1, 0], X[labels_050 == -1, 1], 'k+', alpha=0.1)
+ax3.set_title('Clustering at 0.5 epsilon cut\nDBSCAN')
 
-# DBSCAN at 0.75
-color = ['g.', 'm.', 'y.', 'c.']
-for k, c in zip(range(0, 4), color):
-    Xk = X[labels_075 == k]
-    ax4.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
-ax4.plot(X[labels_075 == -1, 0], X[labels_075 == -1, 1], 'k+', alpha=0.1)
-ax4.set_title('Clustering at 0.75 epsilon cut\nDBSCAN')
+# DBSCAN at 2.
+colors = ['g.', 'm.', 'y.', 'c.']
+for klass, color in zip(range(0, 4), colors):
+    Xk = X[labels_200 == klass]
+    ax4.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
+ax4.plot(X[labels_200 == -1, 0], X[labels_200 == -1, 1], 'k+', alpha=0.1)
+ax4.set_title('Clustering at 2.0 epsilon cut\nDBSCAN')
 
 plt.tight_layout()
 plt.show()

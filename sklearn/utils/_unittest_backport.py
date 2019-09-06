@@ -28,7 +28,7 @@ Simple usage:
 
 Further information is available in the bundled documentation, and from
 
-  http://docs.python.org/library/unittest.html
+  https://docs.python.org/library/unittest.html
 
 Copyright (c) 1999-2003 Steve Purcell
 Copyright (c) 2003-2010 Python Software Foundation

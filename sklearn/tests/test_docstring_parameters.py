@@ -3,15 +3,13 @@
 # License: BSD 3 clause
 
 import inspect
-import sys
 import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract
+from inspect import signature
 
 import sklearn
-from sklearn.base import signature
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters
@@ -19,10 +17,11 @@ from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
+import pytest
+
 PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
                                                         path=sklearn.__path__)
                       if not ("._" in pckg[1] or ".tests." in pckg[1])])
-
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -30,6 +29,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
+    'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -45,22 +45,24 @@ _METHODS_IGNORE_NONE_Y = [
 
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
-@ignore_warnings(category=DeprecationWarning)
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
     # Test module docstring formatting
 
-    # Skip test if numpydoc is not found or if python version is < 3.5
+    # Skip test if numpydoc is not found
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
+    except ImportError:
+        raise SkipTest("numpydoc is required to test the docstrings")
 
     from numpydoc import docscrape
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name == 'sklearn.utils.fixes':
+            # We cannot always control these docstrings
+            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
@@ -70,7 +72,7 @@ def test_docstring_parameters():
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
                 continue
-            if isabstract(cls):
+            if inspect.isabstract(cls):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -82,10 +84,10 @@ def test_docstring_parameters():
 
             if _is_deprecated(cls_init):
                 continue
-
             elif cls_init is not None:
                 this_incorrect += check_docstring_parameters(
-                    cls.__init__, cdoc, class_name=cname)
+                    cls.__init__, cdoc)
+
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
@@ -99,7 +101,7 @@ def test_docstring_parameters():
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
                 result = check_docstring_parameters(
-                    method, ignore=param_ignore, class_name=cname)
+                    method, ignore=param_ignore)
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -117,9 +119,10 @@ def test_docstring_parameters():
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)
-    msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
+
+    msg = '\n'.join(incorrect)
     if len(incorrect) > 0:
-        raise AssertionError("Docstring Error: " + msg)
+        raise AssertionError("Docstring Error:\n" + msg)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -135,7 +138,7 @@ def test_tabs():
         # because we don't import
         mod = importlib.import_module(modname)
         try:
-            source = getsource(mod)
+            source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
