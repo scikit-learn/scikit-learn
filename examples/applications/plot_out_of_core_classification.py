@@ -319,7 +319,7 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 # of classification accuracy over the course of the mini-batches. Accuracy is
 # measured on the first 1000 samples, held out as a validation set.
 #
-# To limit the memory consumption, we queue examples up to a fixed amount 
+# To limit the memory consumption, we queue examples up to a fixed amount
 # before feeding them to the learner.
 
 
