@@ -545,8 +545,8 @@ def test_constant_strategy_exceptions():
 
     clf = DummyClassifier(strategy='constant', constant='not-in-dataset')
     with pytest.raises(ValueError,
-        match="constant='not-in-dataset'.+"
-              "Possible values.+['class1', 'class2']"):
+                       match="constant='not-in-dataset'.+"
+                       "Possible values.+['class1', 'class2']"):
         clf.fit([[1., 2.], [2., 3.]], ['class1', 'class2'])
 
 def test_classification_sample_weight():
