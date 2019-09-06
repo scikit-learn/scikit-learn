@@ -75,6 +75,10 @@ Changelog
   1.12.
   :pr:`14510` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fixed a bug in :class:`compose.TransformedTargetRegrssor` which did not
+  pass `**fit_params` to the underlying regressor.
+  :pr:`14890` by :user:`Miguel Cabrera <mfcabrera>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -205,7 +209,7 @@ Changelog
 
 -|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
  `KeyError` when using `kernel="precomputed"`.
- :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`. 
+ :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -324,19 +328,19 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 
 - |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
   to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
   :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
-  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`, 
-  :class:`ensemble.GradientBoostingClassifier`, 
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
 
