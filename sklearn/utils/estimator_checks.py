@@ -1228,9 +1228,6 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                              " not implement '_pairwise' estimator tag"
                              "".format(name, attribute))
             assert has_pairwise_tag is True, error_message
-        else:
-            # Estimator does not raise an error - skip
-            continue
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
