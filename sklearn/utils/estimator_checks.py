@@ -1220,14 +1220,13 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         # Also check to see if non-square distance matrix raises an error
         try:
             non_square_distance = distance_matrix[:, :-1]
-            if getattr(modified_estimator, 'fit_predict', None) is not None:
+            if hasattr(modified_estimator, 'fit_predict'):
                 modified_estimator.fit_predict(non_square_distance, y_)
-            elif (getattr(modified_estimator, 'fit_transform', None)
-                    is not None):
+            elif hasattr(modified_estimator, 'fit_transform'):
                 modified_estimator.fit_transform(non_square_distance, y_)
-            elif getattr(modified_estimator, 'fit', None) is not None:
+            elif hasattr(modified_estimator, 'fit'):
                 modified_estimator.fit(non_square_distance, y_)
-                if getattr(modified_estimator, 'predict', None) is not None:
+                if hasattr(modified_estimator, 'predict'):
                     modified_estimator.predict(X)
         except ValueError:
             # Check if estimator defines _pairwise attribute
