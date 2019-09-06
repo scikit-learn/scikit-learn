@@ -94,7 +94,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False,
+                 presort='deprecated',
                  ccp_alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
@@ -315,35 +315,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
-        allowed_presort = ('auto', True, False)
-        if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
-
-        if self.presort is True and issparse(X):
-            raise ValueError("Presorting is not supported for sparse "
-                             "matrices.")
-
-        presort = self.presort
-        # Allow presort to be 'auto', which means True if the dataset is dense,
-        # otherwise it will be False.
-        if self.presort == 'auto':
-            presort = not issparse(X)
-
-        # If multiple trees are built on the same dataset, we only want to
-        # presort once. Splitters now can accept presorted indices if desired,
-        # but do not handle any presorting themselves. Ensemble algorithms
-        # which desire presorting must do presorting themselves and pass that
-        # matrix into each tree.
-        if X_idx_sorted is None and presort:
-            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
-                                             dtype=np.int32)
-
-        if presort and X_idx_sorted.shape != X.shape:
-            raise ValueError("The shape of X (X.shape = {}) doesn't match "
-                             "the shape of X_idx_sorted (X_idx_sorted"
-                             ".shape = {})".format(X.shape,
-                                                   X_idx_sorted.shape))
+        if self.presort != 'deprecated':
+            warnings.warn("The parameter 'presort' is deprecated and has no "
+                          "effect. It will be removed in v0.24. You can "
+                          "suppress this warning by not passing any value "
+                          "to the 'presort' parameter.", UserWarning)
 
         # Build tree
         criterion = self.criterion
@@ -363,8 +339,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 self.max_features_,
                                                 min_samples_leaf,
                                                 min_weight_leaf,
-                                                random_state,
-                                                self.presort)
+                                                random_state)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
@@ -725,12 +700,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    presort : bool, optional (default=False)
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. For the default settings of a decision tree on large
-        datasets, setting this to true may slow down the training process.
-        When using either a smaller dataset or a restricted depth, this may
-        speed up the training.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -831,7 +802,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort=False,
+                 presort='deprecated',
                  ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
@@ -1087,12 +1058,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    presort : bool, optional (default=False)
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. For the default settings of a decision tree on large
-        datasets, setting this to true may slow down the training process.
-        When using either a smaller dataset or a restricted depth, this may
-        speed up the training.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1184,7 +1151,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort=False,
+                 presort='deprecated',
                  ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
