@@ -241,18 +241,18 @@ The building command depends on the architecture of the Python interpreter,
 The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
-You need to download the "Build Tools for Visual Studio 2019" using this `link.
-<https://visualstudio.microsoft.com/downloads/?rr=https%3A%2F%2Fscikit-learn.org%2Fstable%2Fdevelopers%2Fadvanced_installation.htmls/>`_.
-The required product to download exists under the "Tools for Visual Studio 2019". Please DO NOT install Visual Studio 2019. 
-If you have already downloaded Visual Studio 2019 mistakenly, then it should be uninstalled and "Build Tools for Visual Studio 2019" should be reinstalled separately
+You will need `Build Tools for Visual Studio 2017
+<https://visualstudio.microsoft.com/downloads/>`_.
+
+.. warning::
+	You DO NOT need to install Visual Studio 2019. You only need the "Build Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual Studio 2019". 
 
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
     "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-Please be aware that the path above might be different from user to user. The aim is to point to the "vcvarsall.bat" file,
-whcih should be in your PC after downloading "Build Tools for Visual Studio 2019" succesfully. 
+Please be aware that the path above might be different from user to user. The aim is to point to the "vcvarsall.bat" file.
 
 And build scikit-learn from this environment::
 
