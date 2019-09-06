@@ -43,7 +43,8 @@ __all__ = ['BaseCrossValidator',
            'StratifiedShuffleSplit',
            'PredefinedSplit',
            'train_test_split',
-           'check_cv']
+           'check_cv',
+           'GroupTimeSeriesSplit']
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -2235,3 +2236,7 @@ def _build_repr(self):
         params[key] = value
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+
+
+class GroupTimeSeriesSplit(TimeSeriesSplit):
+    pass
