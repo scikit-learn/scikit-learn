@@ -88,3 +88,11 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
+
+
+# We don't want pytest to run these files since they immediately raise a
+# DeprecationWarning
+collect_ignore_glob = [
+    "sklearn/neural_network/rbm.py",  # 0.24
+    "sklearn/neural_network/multilayer_perceptron.py",  # 0.24
+]
