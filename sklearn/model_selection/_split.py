@@ -1488,29 +1488,6 @@ class GroupShuffleSplit(ShuffleSplit):
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
     >>> groups = np.array([1, 2, 3, 4, 5])
-    >>> gss = GroupShuffleSplit()
-    >>> gss.get_n_splits()
-    5
-    >>> for train_index, test_index in gss.split(X, y, groups):
-    >>> ...    print("TRAIN:", train_index, "TEST:", test_index)
-    >>> ...    X_train, X_test = X[train_index], X[test_index]
-    >>> ...    y_train, y_test = y[train_index], y[test_index]
-    >>> ...    print(X_train, X_test, y_train, y_test)
-    TRAIN: [0 2] TEST: [1]
-    [[1 2]
-     [5 6]] [[3 4]] [1 1] [2]
-    TRAIN: [0 1] TEST: [2]
-    [[1 2]
-     [3 4]] [[5 6]] [1 2] [1]
-    TRAIN: [0 2] TEST: [1]
-    [[1 2]
-     [5 6]] [[3 4]] [1 1] [2]
-    TRAIN: [0 2] TEST: [1]
-    [[1 2]
-     [5 6]] [[3 4]] [1 1] [2]
-    TRAIN: [1 2] TEST: [0]
-    [[3 4]
-     [5 6]] [[1 2]] [2 1] [1]
     >>> gss = GroupShuffleSplit(n_splits=2, train_size=.5, random_state=42)
     >>> gss.get_n_splits()
     2
