@@ -87,8 +87,7 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
 def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                max_iter=1000, tol=0.001, verbose=0, random_state=None,
                check_input=True, max_squared_sum=None,
-               warm_start_mem=None,
-               is_saga=False):
+               warm_start_mem=None, is_saga=False, callbacks=None):
     """SAG solver for Ridge and LogisticRegression
 
     SAG stands for Stochastic Average Gradient: the gradient of the loss is
@@ -308,6 +307,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                                 "the case step_size * alpha_scaled == 1")
 
     sag = sag64 if X.dtype == np.float64 else sag32
+    print(callbacks)
     num_seen, n_iter_ = sag(dataset, coef_init,
                             intercept_init, n_samples,
                             n_features, n_classes, tol,
@@ -323,7 +323,8 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                             intercept_sum_gradient,
                             intercept_decay,
                             is_saga,
-                            verbose)
+                            verbose,
+                            callbacks)
 
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "

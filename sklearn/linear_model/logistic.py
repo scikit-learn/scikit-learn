@@ -37,6 +37,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
 from ..metrics import get_scorer
+from .._callbacks import _eval_callbacks
 
 
 # .. some helper functions for logistic_regression_path ..
@@ -650,7 +651,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                               intercept_scaling=1., multi_class='auto',
                               random_state=None, check_input=True,
                               max_squared_sum=None, sample_weight=None,
-                              l1_ratio=None):
+                              l1_ratio=None, callbacks=None):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -927,19 +928,22 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             opt_res = optimize.minimize(
                 func, w0, method="L-BFGS-B", jac=True,
                 args=(X, target, 1. / C, sample_weight),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
+                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter},
+                callback=lambda xk: _eval_callbacks(callbacks, coef=xk)
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
-                                     maxiter=max_iter, tol=tol)
+                                     maxiter=max_iter, tol=tol,
+                                     callbacks=callbacks)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, None,
                 penalty, dual, verbose, max_iter, tol, random_state,
                 sample_weight=sample_weight)
+            _eval_callbacks(callbacks)
             if fit_intercept:
                 w0 = np.concatenate([coef_.ravel(), intercept_])
             else:
@@ -966,7 +970,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 X, target, sample_weight, loss, alpha,
                 beta, max_iter, tol,
                 verbose, random_state, False, max_squared_sum, warm_start_sag,
-                is_saga=(solver == 'saga'))
+                is_saga=(solver == 'saga'),
+                callbacks=callbacks)
 
         else:
             raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
@@ -994,7 +999,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           dual=False, intercept_scaling=1.,
                           multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
-                          l1_ratio=None):
+                          l1_ratio=None, callbacks=None):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -1140,7 +1145,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         multi_class=multi_class, tol=tol, verbose=verbose, dual=dual,
         penalty=penalty, intercept_scaling=intercept_scaling,
         random_state=random_state, check_input=False,
-        max_squared_sum=max_squared_sum, sample_weight=sample_weight)
+        max_squared_sum=max_squared_sum, sample_weight=sample_weight,
+        callbacks=callbacks)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
 
@@ -1585,7 +1591,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       penalty=penalty, max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight)
+                      sample_weight=sample_weight,
+                      callbacks=getattr(self, '_callbacks', []))
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
@@ -2062,7 +2069,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       random_state=self.random_state,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight,
-                      l1_ratio=l1_ratio
+                      l1_ratio=l1_ratio,
+                      callbacks=getattr(self, '_callbacks', [])
                       )
             for label in iter_encoded_labels
             for train, test in folds

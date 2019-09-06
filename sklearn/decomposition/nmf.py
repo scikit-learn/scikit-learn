@@ -20,6 +20,7 @@ from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
+from .._callbacks import _eval_callbacks
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -418,7 +419,8 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
 
 def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
                             l1_reg_H=0, l2_reg_W=0, l2_reg_H=0, update_H=True,
-                            verbose=0, shuffle=False, random_state=None):
+                            verbose=0, shuffle=False, random_state=None,
+                            callbacks=None):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
     The objective function is minimized with an alternating minimization of W
@@ -513,6 +515,10 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
         if verbose:
             print("violation:", violation / violation_init)
+
+        _eval_callbacks(callbacks, n_iter=n_iter,
+                        tol=violation/violation_init,
+                        error=violation)
 
         if violation / violation_init <= tol:
             if verbose:
@@ -702,7 +708,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
 def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0):
+                               update_H=True, verbose=0, callbacks=None):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -820,6 +826,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
                       (n_iter, iter_time - start_time, error))
 
+            _eval_callbacks(callbacks, n_iter=n_iter, error=error,
+                            tol=(previous_error - error) / error_at_init)
+
             if (previous_error - error) / error_at_init < tol:
                 break
             previous_error = error
@@ -838,7 +847,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
-                               verbose=0, shuffle=False):
+                               verbose=0, shuffle=False, callbacks=None):
     r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1051,12 +1060,13 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                                update_H=update_H,
                                                verbose=verbose,
                                                shuffle=shuffle,
-                                               random_state=random_state)
+                                               random_state=random_state,
+                                               callbacks=callbacks)
     elif solver == 'mu':
         W, H, n_iter = _fit_multiplicative_update(X, W, H, beta_loss, max_iter,
                                                   tol, l1_reg_W, l1_reg_H,
                                                   l2_reg_W, l2_reg_H, update_H,
-                                                  verbose)
+                                                  verbose, callbacks=callbacks)
 
     else:
         raise ValueError("Invalid solver parameter '%s'." % solver)
@@ -1274,7 +1284,7 @@ class NMF(TransformerMixin, BaseEstimator):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            shuffle=self.shuffle, callbacks=getattr(self, "_callbacks", []))
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1323,7 +1333,7 @@ class NMF(TransformerMixin, BaseEstimator):
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            shuffle=self.shuffle, callbacks=getattr(self, '_callbacks', []))
 
         return W
 

@@ -323,6 +323,20 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
+    def _set_callbacks(self, callbacks):
+        from sklearn._callbacks import Callback
+        if isinstance(callbacks, Callback):
+            self._callbacks = [callbacks]
+        else:
+            self._callbacks = callbacks
+
+    def _eval_callbacks(self, **kwargs):
+        from ._callbacks import _eval_callbacks
+
+        callbacks = getattr(self, '_callbacks', [])
+
+        _eval_callbacks(callbacks)
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""

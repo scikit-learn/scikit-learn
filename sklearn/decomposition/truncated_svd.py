@@ -166,6 +166,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             # conventions, so reverse its outputs.
             Sigma = Sigma[::-1]
             U, VT = svd_flip(U[:, ::-1], VT[::-1])
+            self._eval_callbacks()
 
         elif self.algorithm == "randomized":
             k = self.n_components
@@ -175,7 +176,9 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
                                  " got %d >= %d" % (k, n_features))
             U, Sigma, VT = randomized_svd(X, self.n_components,
                                           n_iter=self.n_iter,
-                                          random_state=random_state)
+                                          random_state=random_state,
+                                          callbacks=getattr(
+                                              self, '_callbacks', []))
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 

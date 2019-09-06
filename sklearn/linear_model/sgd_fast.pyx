@@ -23,6 +23,7 @@ cdef extern from "sgd_fast_helpers.h":
 
 from ..utils.weight_vector cimport WeightVector
 from ..utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
+from .._callbacks import _eval_callbacks
 
 np.import_array()
 
@@ -348,7 +349,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               int learning_rate, double eta0,
               double power_t,
               double t=1.0,
-              double intercept_decay=1.0):
+              double intercept_decay=1.0,
+              callbacks=None):
     """Plain SGD for generic loss functions and penalties.
 
     Parameters
@@ -445,7 +447,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    power_t,
                                    t,
                                    intercept_decay,
-                                   0)
+                                   0,
+                                   callbacks)
     return standard_weights, standard_intercept, n_iter_
 
 
@@ -468,7 +471,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double power_t,
                 double t=1.0,
                 double intercept_decay=1.0,
-                int average=1):
+                int average=1,
+                callbacks=None):
     """Average SGD for generic loss functions and penalties.
 
     Parameters
@@ -575,7 +579,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       power_t,
                       t,
                       intercept_decay,
-                      average)
+                      average,
+                      callbacks)
 
 
 def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
@@ -597,7 +602,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double power_t,
                double t=1.0,
                double intercept_decay=1.0,
-               int average=0):
+               int average=0,
+               callbacks=None):
 
     # get the data information into easy vars
     cdef Py_ssize_t n_samples = dataset.n_samples
@@ -744,6 +750,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 t += 1
                 count += 1
 
+
             # report epoch information
             if verbose > 0:
                 with gil:
@@ -764,6 +771,12 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if early_stopping:
                 with gil:
                     score = validation_score_cb(weights, intercept)
+                    _eval_callbacks(callbacks,
+                                    n_iter=epoch,
+                                    loss=sumloss,
+                                    convergence_criterion="loss",
+                                    average_loss=sumloss / n_samples,
+                                    validation_score=score)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -778,6 +791,13 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     no_improvement_count = 0
                 if sumloss < best_loss:
                     best_loss = sumloss
+
+                with gil:
+                    _eval_callbacks(callbacks,
+                                    n_iter=epoch,
+                                    loss=sumloss,
+                                    convergence_criterion="loss",
+                                    average_loss=sumloss / n_samples)
 
             # if there is no improvement several times in a row
             if no_improvement_count >= n_iter_no_change:

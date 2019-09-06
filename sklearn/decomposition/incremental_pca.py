@@ -201,12 +201,14 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_,
-                                 min_batch_size=self.n_components or 0):
+        for n_batch, batch in enumerate(
+                gen_batches(n_samples, self.batch_size_,
+                            min_batch_size=self.n_components or 0)):
             X_batch = X[batch]
             if sparse.issparse(X_batch):
                 X_batch = X_batch.toarray()
             self.partial_fit(X_batch, check_input=False)
+            self._eval_callbacks(n_iter=n_batch)
 
         return self
 

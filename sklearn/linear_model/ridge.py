@@ -382,7 +382,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       max_iter=None, tol=1e-3, verbose=0, random_state=None,
                       return_n_iter=False, return_intercept=False,
-                      X_scale=None, X_offset=None, check_input=True):
+                      X_scale=None, X_offset=None, check_input=True,
+                      callbacks=None):
 
     has_sw = sample_weight is not None
 
@@ -488,8 +489,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             coef_, n_iter_, _ = sag_solver(
                 X, target.ravel(), sample_weight, 'squared', alpha_i, 0,
                 max_iter, tol, verbose, random_state, False, max_squared_sum,
-                init,
-                is_saga=solver == 'saga')
+                init, is_saga=solver == 'saga',
+                callbacks=callbacks)
             if return_intercept:
                 coef[i] = coef_[:-1]
                 intercept[i] = coef_[-1]
@@ -580,7 +581,8 @@ class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=True, check_input=False)
+                return_intercept=True, check_input=False,
+                callbacks=getattr(self, '_callbacks', []))
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
 
@@ -596,7 +598,8 @@ class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=False, check_input=False, **params)
+                return_intercept=False, check_input=False,
+                callbacks=getattr(self, '_callbacks', []), **params)
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self

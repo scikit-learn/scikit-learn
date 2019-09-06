@@ -464,6 +464,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self.exp_dirichlet_component_ = np.exp(
             _dirichlet_expectation_2d(self.components_))
         self.n_batch_iter_ += 1
+        self._eval_callbacks()
         return
 
     def _more_tags(self):

@@ -18,6 +18,7 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
+from .._callbacks import _eval_callbacks
 
 
 class _LineSearchError(RuntimeError):
@@ -112,7 +113,8 @@ def _cg(fhess_p, fgrad, maxiter, tol):
 
 
 def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
-              maxiter=100, maxinner=200, line_search=True, warn=True):
+              maxiter=100, maxinner=200, line_search=True, warn=True,
+              callbacks=None):
     """
     Minimization of scalar function of one or more variables using the
     Newton-CG algorithm.
@@ -196,6 +198,8 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
                 break
 
         xk = xk + alphak * xsupi        # upcast if necessary
+        if callbacks is not None:
+            _eval_callbacks(callbacks, n_iter=k, coef=xk, tol=np.max(absgrad))
         k += 1
 
     if warn and k >= maxiter:

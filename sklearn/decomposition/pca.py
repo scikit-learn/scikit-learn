@@ -479,6 +479,8 @@ class PCA(_BasePCA):
             explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
+        self._eval_callbacks()
+
         return U, S, V
 
     def _fit_truncated(self, X, n_components, svd_solver):
@@ -525,12 +527,15 @@ class PCA(_BasePCA):
             # flip eigenvectors' sign to enforce deterministic output
             U, V = svd_flip(U[:, ::-1], V[::-1])
 
+            self._eval_callbacks()
+
         elif svd_solver == 'randomized':
             # sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
-                                     random_state=random_state)
+                                     random_state=random_state,
+                                     callbacks=getattr(self, '_callbacks', []))
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = V

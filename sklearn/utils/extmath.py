@@ -21,6 +21,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .deprecation import deprecated
+from .._callbacks import _eval_callbacks
 
 
 def squared_norm(x):
@@ -145,7 +146,7 @@ def safe_sparse_dot(a, b, dense_output=False):
 
 def randomized_range_finder(A, size, n_iter,
                             power_iteration_normalizer='auto',
-                            random_state=None):
+                            random_state=None, callbacks=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -222,6 +223,8 @@ def randomized_range_finder(A, size, n_iter,
             Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
             Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
 
+        _eval_callbacks(callbacks, n_iter=i)
+
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
     Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
@@ -230,7 +233,7 @@ def randomized_range_finder(A, size, n_iter,
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state=0, callbacks=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -332,7 +335,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         M = M.T
 
     Q = randomized_range_finder(M, n_random, n_iter,
-                                power_iteration_normalizer, random_state)
+                                power_iteration_normalizer, random_state,
+                                callbacks=callbacks)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)

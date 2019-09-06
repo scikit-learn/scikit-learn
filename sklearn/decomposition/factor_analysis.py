@@ -233,6 +233,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             old_ll = ll
 
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
+            self._eval_callbacks(n_iter=i)
         else:
             warnings.warn('FactorAnalysis did not converge.' +
                           ' You might want' +

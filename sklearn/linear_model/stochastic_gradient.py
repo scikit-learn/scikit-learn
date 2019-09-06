@@ -309,7 +309,7 @@ def _prepare_fit_binary(est, y, i):
 
 def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                pos_weight, neg_weight, sample_weight, validation_mask=None,
-               random_state=None):
+               random_state=None, callbacks=None):
     """Fit a single binary classifier.
 
     The i'th class is considered the "positive" class.
@@ -394,7 +394,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                            int(est.verbose), int(est.shuffle), seed,
                            pos_weight, neg_weight,
                            learning_rate_type, est.eta0,
-                           est.power_t, est.t_, intercept_decay)
+                           est.power_t, est.t_, intercept_decay,
+                           callbacks=callbacks)
 
     else:
         standard_coef, standard_intercept, average_coef, average_intercept, \
@@ -408,7 +409,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                                   int(est.shuffle), seed, pos_weight,
                                   neg_weight, learning_rate_type, est.eta0,
                                   est.power_t, est.t_, intercept_decay,
-                                  est.average)
+                                  est.average, callbacks=callbacks)
 
         if len(est.classes_) == 2:
             est.average_intercept_[0] = average_intercept
@@ -548,12 +549,15 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     def _fit_binary(self, X, y, alpha, C, sample_weight,
                     learning_rate, max_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept, n_iter_ = fit_binary(self, 1, X, y, alpha, C,
-                                              learning_rate, max_iter,
-                                              self._expanded_class_weight[1],
-                                              self._expanded_class_weight[0],
-                                              sample_weight,
-                                              random_state=self.random_state)
+        coef, intercept, n_iter_ = fit_binary(
+            self, 1, X, y, alpha, C,
+            learning_rate, max_iter,
+            self._expanded_class_weight[1],
+            self._expanded_class_weight[0],
+            sample_weight,
+            random_state=self.random_state,
+            callbacks=getattr(self, '_callbacks', [])
+        )
 
         self.t_ += n_iter_ * X.shape[0]
         self.n_iter_ = n_iter_
@@ -595,7 +599,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                                 max_iter, self._expanded_class_weight[i],
                                 1., sample_weight,
                                 validation_mask=validation_mask,
-                                random_state=seed)
+                                random_state=seed,
+                                callbacks=getattr(self, '_callbacks', []))
             for i, seed in enumerate(seeds))
 
         # take the maximum of n_iter_ over every binary fit
@@ -1280,7 +1285,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                             1.0, 1.0,
                             learning_rate_type,
                             self.eta0, self.power_t, self.t_,
-                            intercept_decay, self.average)
+                            intercept_decay, self.average,
+                            callbacks=getattr(self, '_callbacks', []))
 
             self.average_intercept_ = np.atleast_1d(self.average_intercept_)
             self.standard_intercept_ = np.atleast_1d(self.standard_intercept_)
@@ -1313,7 +1319,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                           1.0, 1.0,
                           learning_rate_type,
                           self.eta0, self.power_t, self.t_,
-                          intercept_decay)
+                          intercept_decay,
+                          callbacks=getattr(self, '_callbacks', []))
 
             self.t_ += self.n_iter_ * X.shape[0]
             self.intercept_ = np.atleast_1d(self.intercept_)
