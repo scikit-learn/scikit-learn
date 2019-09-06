@@ -1209,10 +1209,10 @@ def check_pairwise_estimator_tag(name, estimator_orig):
             continue
         try:
             # Construct new object of estimator with desired attribute value
-            modified_estimator = clone(estimator_orig).set_params(
+            estimator2 = clone(estimator_orig).set_params(
                                                 **{attribute: 'precomputed'})
             # Estimators may validate parameters in fit if not in set_params
-            modified_estimator.fit(distance_matrix, y_)
+            estimator2.fit(distance_matrix, y_)
         except Exception:
             # Estimator does not support given attribute value
             continue
@@ -1220,14 +1220,14 @@ def check_pairwise_estimator_tag(name, estimator_orig):
         # Also check to see if non-square distance matrix raises an error
         try:
             non_square_distance = distance_matrix[:, :-1]
-            if hasattr(modified_estimator, 'fit_predict'):
-                modified_estimator.fit_predict(non_square_distance, y_)
-            elif hasattr(modified_estimator, 'fit_transform'):
-                modified_estimator.fit_transform(non_square_distance, y_)
-            elif hasattr(modified_estimator, 'fit'):
-                modified_estimator.fit(non_square_distance, y_)
-                if hasattr(modified_estimator, 'predict'):
-                    modified_estimator.predict(X)
+            if hasattr(estimator2, 'fit_predict'):
+                estimator2.fit_predict(non_square_distance, y_)
+            elif hasattr(estimator2, 'fit_transform'):
+                estimator2.fit_transform(non_square_distance, y_)
+            elif hasattr(estimator2, 'fit'):
+                estimator2.fit(non_square_distance, y_)
+                if hasattr(estimator2, 'predict'):
+                    estimator2.predict(X)
         except ValueError:
             # Check if estimator defines _pairwise attribute
             error_message = ("{0} implements {1}='precomputed' but does"
