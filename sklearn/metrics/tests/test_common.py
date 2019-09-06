@@ -216,7 +216,6 @@ THRESHOLDED_METRICS = {
     "hinge_loss": hinge_loss,
 
     "brier_score_loss": brier_score_loss,
-    "neg_brier_score": brier_score_loss,
 
     "roc_auc_score": roc_auc_score,  # default: average="macro"
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
@@ -278,7 +277,6 @@ METRIC_UNDEFINED_BINARY = {
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-    "neg_brier_score",
 
     "micro_roc_auc",
     "samples_roc_auc",
@@ -326,7 +324,6 @@ METRICS_WITH_POS_LABEL = {
     "precision_recall_curve",
 
     "brier_score_loss",
-    "neg_brier_score",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
