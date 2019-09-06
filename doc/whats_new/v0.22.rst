@@ -450,7 +450,7 @@ Changelog
 
 - |API| Introduced new scorer `neg_brier_loss_score` to better reflect real
   behavior of now deprecated `brier_loss_score`
-  :issue:`14123` by :user:`Stefan Matcovici <stefan-matcovici>`.
+  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 Miscellaneous
 .............
