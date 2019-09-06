@@ -391,6 +391,7 @@ class VectorizerMixin(NonRectangularInputMixin):
 
         and n-grams generation.
         """
+
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
                 self._validate_custom_analyzer()
@@ -405,6 +406,7 @@ class VectorizerMixin(NonRectangularInputMixin):
                            preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
+
             return partial(_analyze, ngrams=self._char_wb_ngrams,
                            preprocessor=preprocess, decoder=self.decode)
 
@@ -467,6 +469,32 @@ class VectorizerMixin(NonRectangularInputMixin):
                 "Invalid value for ngram_range=%s "
                 "lower boundary larger than the upper boundary."
                 % str(self.ngram_range))
+
+    def _warn_for_unused_params(self):
+
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
+        if self.preprocessor is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'preprocessor' will not be used"
+                          " since 'analyzer' is callable'")
+
+        if (self.ngram_range != (1, 1) and self.ngram_range is not None
+                and callable(self.analyzer)):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
+        if self.analyzer != 'word' or callable(self.analyzer):
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.token_pattern is not None and \
+               self.token_pattern != r"(?u)\b\w\w+\b":
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since 'analyzer' != 'word'")
 
 
 class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
@@ -549,6 +577,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -574,6 +603,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -681,6 +711,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._warn_for_unused_params()
         self._validate_params()
 
         self._get_hasher().fit(X, y=y)
@@ -805,6 +836,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -834,6 +866,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -1093,6 +1126,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
         -------
         self
         """
+        self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
 
@@ -1456,6 +1490,7 @@ class TfidfVectorizer(CountVectorizer):
     preprocessor : callable or None (default=None)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default=None)
         Override the string tokenization step while preserving the
@@ -1500,6 +1535,7 @@ class TfidfVectorizer(CountVectorizer):
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used.
+        Only applies if ``analyzer is not callable``.
 
     max_df : float in range [0.0, 1.0] or int (default=1.0)
         When building the vocabulary ignore terms that have a document
@@ -1698,6 +1734,7 @@ class TfidfVectorizer(CountVectorizer):
         self : TfidfVectorizer
         """
         self._check_params()
+        self._warn_for_unused_params()
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
