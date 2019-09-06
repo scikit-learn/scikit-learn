@@ -456,9 +456,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
     assert gb.predict([[1, 0]])[0] > 0.5
 
 
-@pytest.mark.parametrize("loss", ['binary_crossentropy',
-                                  'categorical_crossentropy'])
-def test_non_uniform_weights_toy_edge_case_clf(loss):
+def test_non_uniform_weights_toy_edge_case_clf():
     X = [[1, 0],
          [1, 0],
          [1, 0],
@@ -483,3 +481,24 @@ def test_non_uniform_weights_toy_edge_case_clf(loss):
                                         min_samples_leaf=1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_array_equal(gb.predict([[1, 0]]), [1])
+
+
+@pytest.mark.parametrize(
+    "model, X, y",
+    [(HistGradientBoostingClassifier(),
+      *make_classification(n_classes=2)),
+     (HistGradientBoostingClassifier(),
+      *make_classification(n_classes=4, n_informative=16)),
+     (HistGradientBoostingRegressor(), *make_regression())])
+def test_sample_weight_effect(model, X, y):
+    n_samples = X.shape[0]
+    X_ = np.r_[X, X[:n_samples // 2, :]]
+    y_ = np.r_[y, y[:n_samples // 2, ]]
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[:n_samples // 2] = 2
+
+    no_dup_no_sw = model.fit(X, y).predict(X_)
+    dup_no_sw = model.fit(X_, y_).predict(X_)
+    no_dup_sw = model.fit(X, y, sample_weight=sample_weight)
+    assert np.all(dup_no_sw[n_samples // 2:, ] == no_dup_sw)
+    assert not np.all(no_dup_no_sw, dup_no_sw[n_samples // 2:, ])
