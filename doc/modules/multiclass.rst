@@ -20,21 +20,26 @@ regression is also supported.
 - **Multiclass classification** produce single output that is categorical variable.
   In other words, a single classification task with more than two classes.
 
+  *example:* classify a set of images of fruits which may be oranges, apples, or
+   pears. Multiclass classification makes the assumption that each sample is
+   assigned to one and only one label: a fruit can be either an apple or a pear
+   but not both at the same time.
+
   - valid :term:`multiclass` representation for
     :func:`~utils.multiclass.type_of_target` (`y`) are:
 
     - 1d or column vector containing more than two discrete values.
     - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a single element per row, where each column represents one class.
 
-  - *example:* classify a set of images of fruits which may be oranges, apples,
-    or pears. Multiclass classification makes the assumption that each sample is
-    assigned to one and only one label: a fruit can be either an apple or a pear
-    but not both at the same time.
 
 - **Multilabel classification** predict a set of binary attributes that can
   either be true or false independently of one another. In other words, assigns
   to each sample a set of target labels. (This task can also be seen as a binary
   label multioutput task)
+
+  *example:* based on an arbitrary set of features from fruit images,
+    **Multilabel classification** simultaneously predict a set of binary
+    attributes such as: grows in a tree, has stone fruit, is citric ...
 
   - valid representation :term:`multilabel` `y` is:
 
@@ -42,20 +47,19 @@ regression is also supported.
       ``(n_samples, n_classes)`` with multiple active elements per row to denote
       that the sample belongs to multiple classes. Each column represents a class.
 
-  - *example:* based on an arbitrary set of features from fruit images, **Multilabel
-    classification** simultaneously predict a set of binary attributes such as:
-    grows in a tree, has stone fruit, is citric ...
 
 - **Multioutput regression** predicts multiple outputs that are all continuous
   variables. In other words, assigns each sample a set of target values.
+
+  *example:* based on an arbitrary set of features from fruit images, predicts a
+    set of :term:`contineous` variables such as: weight, sugar content,
+    calories, etc.
 
   - valid representation :term:`multilabel` `y` is:
 
     - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
       concatenation of :term:`continuous` variables.
 
-  - *example:* based on an arbitrary set of features from fruit images, predicts
-    a set of :term:`contineous` variables such as: weight, sugar content, calories, etc.
 
 - **Multioutput-multiclass classification**
   (also known as **multi-task classification**)
@@ -64,17 +68,16 @@ regression is also supported.
   task, which only considers binary classification, as well as a
   generalization of the multi-class classification task.
 
+  *example:* The set of labels can be different for each output variable. For
+    instance, a sample could be assigned "pear" for an output variable that
+    takes possible values in a finite set of species such as "pear", "apple";
+    and "blue" or "green" for a second output variable that takes possible
+    values in a finite set of colors such as "green", "red", "blue", "yellow"...
 
   - valid representation :term:`multilabel` `y` is:
 
     - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
       concatenation of 1d :term:`multiclass` variables.
-
-  - *example:*  The set of labels can be different for each output variable.
-    For instance, a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear", "apple";
-    and "blue" or "green" for a second output variable that takes possible values
-    in a finite set of colors such as "green", "red", "blue", "yellow"...
 
   - Note that any classifiers handling multi-output
     multiclass or multi-task classification tasks,
