@@ -568,7 +568,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
-            check_is_fitted(self, 'best_estimator_')
+            check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
                 "{} object has no n_features_in_ attribute."
