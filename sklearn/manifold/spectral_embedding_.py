@@ -283,7 +283,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     elif eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
-        eigen_tol = max(1e-12, eigen_tol)
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
         # lobpcg needs double precision floats
@@ -308,6 +307,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
+
+        # Until sklearn depens on scipy>=1.4.0 we require high tolerance
+        # as explained in https://github.com/scikit-learn/scikit-learn/pull/13707#discussion_r314028509  # noqa
+        eigen_tol = max(1e-5, eigen_tol)
+
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=eigen_tol,
                                   largest=False)
         embedding = diffusion_map.T
