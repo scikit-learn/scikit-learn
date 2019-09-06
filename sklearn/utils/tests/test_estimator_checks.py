@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 import joblib
+import pytest
 
 from io import StringIO
 
@@ -21,6 +22,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import choose_check_classifiers_labels
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import RandomForestClassifier
@@ -556,6 +558,11 @@ def test_check_class_weight_balanced_linear_classifier():
                         check_class_weight_balanced_linear_classifier,
                         'estimator_name',
                         BadBalancedWeightsClassifier)
+
+
+def test_choose_check_classifiers_labels_deprecated():
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
+        choose_check_classifiers_labels(None, None, None)
 
 
 if __name__ == '__main__':
