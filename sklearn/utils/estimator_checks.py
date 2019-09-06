@@ -1196,9 +1196,7 @@ def check_pairwise_estimator_tag(name, estimator_orig):
     attributes_to_check = ['metric', 'affinity', 'kernel']
 
     # Check if _pairwise attribute is present - will be used later
-    has_pairwise_tag = (False
-                        if getattr(estimator_orig, '_pairwise', None) is None
-                        else True)
+    has_pairwise_tag = hasattr(estimator_orig, '_pairwise')
 
     # Using iris as sample data
     iris = load_iris()
