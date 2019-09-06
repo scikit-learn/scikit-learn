@@ -206,21 +206,6 @@ def test_spectral_clustering_with_arpack_amg_solvers():
                                 random_state=0)
 
 
-def test_6489_regression():
-    X = np.ones((50, 50))
-    X[[3,  3,  3,  3,  3,  3,  8,  8,  8,  8,  8,  8, 17, 17, 17, 17, 17,
-        17, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 34, 34, 35, 35, 35, 35,
-        35, 35, 45, 45, 45, 45, 45, 45, 46, 46, 46, 46, 46, 46],
-      [17, 33, 34, 35, 45, 46, 17, 33, 34, 35, 45, 46,  3,  8, 33, 34, 35,
-       46,  3,  8, 17, 35, 45, 46,  3,  8, 17, 35, 45, 46,  3,  8, 17, 33,
-       34, 45,  3,  8, 33, 34, 35, 46,  3,  8, 17, 33, 34, 45]] = 0
-
-    SpectralClustering(
-        n_clusters=5, affinity="precomputed", assign_labels="kmeans",
-        random_state=1991, eigen_tol=1e-2, eigen_solver="lobpcg",
-    ).fit_predict(X)
-
-
 def test_n_components():
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
