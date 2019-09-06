@@ -518,8 +518,8 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
-                             _UnstableArchMixin):
+class LocallyLinearEmbedding(TransformerMixin,
+                             _UnstableArchMixin, BaseEstimator):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
