@@ -14,6 +14,8 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
+from sklearn.pipeline import Pipeline
+
 from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
@@ -312,4 +314,21 @@ def test_transform_target_regressor_pass_fit_parameters():
     )
 
     regr.fit(X, y, check_input=False)
+    assert regr.transformer_.fit_counter == 1
+
+
+def test_transform_target_regressor_route_pipeline():
+    X, y = friedman
+
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+    estimators = [
+        ('normalize', StandardScaler()), ('est', regr)
+    ]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y, **{'est__check_input': False})
+
     assert regr.transformer_.fit_counter == 1
