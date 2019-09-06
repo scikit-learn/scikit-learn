@@ -15,13 +15,11 @@ import logging
 from distutils.version import LooseVersion
 
 import numpy as np
+import joblib
+from joblib import Memory
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
-from ..utils import deprecated
 from ..utils import Bunch
-from ..utils import Memory
-from ..utils._joblib import __version__ as joblib_version
-from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
@@ -65,29 +63,6 @@ TARGETS = (
                   '1365e89b3e649747777b70e692dc1592')),
 )
 
-
-@deprecated('This function was deprecated in version 0.20 and will be removed '
-            'in 0.22.')
-def scale_face(face):
-    """Scale back to 0-1 range in case of normalization for plotting.
-
-    .. deprecated:: 0.20
-    This function was deprecated in version 0.20 and will be removed in 0.22.
-
-
-    Parameters
-    ----------
-    face : array_like
-        The array to scale
-
-    Returns
-    -------
-    array_like
-        The scaled array
-    """
-    scaled = face - face.min()
-    scaled /= scaled.max()
-    return scaled
 
 #
 # Common private utilities for data fetching from the original LFW website
@@ -328,7 +303,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
@@ -369,7 +344,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path, 'rb') as index_file:
-        split_lines = [ln.strip().split(b('\t')) for ln in index_file]
+        split_lines = [ln.decode().strip().split('\t') for ln in index_file]
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
@@ -499,7 +474,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(joblib_version) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:

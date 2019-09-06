@@ -9,7 +9,6 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseMixture, _check_shape
-from ..externals.six.moves import zip
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
@@ -310,7 +309,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
         "or collapsed samples). Try to decrease the number of components, "
         "or increase reg_covar.")
 
-    if covariance_type in 'full':
+    if covariance_type == 'full':
         n_components, n_features, _ = covariances.shape
         precisions_chol = np.empty((n_components, n_features, n_features))
         for k, covariance in enumerate(covariances):
@@ -591,7 +590,7 @@ class GaussianMixture(BaseMixture):
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
                  verbose=0, verbose_interval=10):
-        super(GaussianMixture, self).__init__(
+        super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,
@@ -686,9 +685,6 @@ class GaussianMixture(BaseMixture):
 
     def _compute_lower_bound(self, _, log_prob_norm):
         return log_prob_norm
-
-    def _check_is_fitted(self):
-        check_is_fitted(self, ['weights_', 'means_', 'precisions_cholesky_'])
 
     def _get_parameters(self):
         return (self.weights_, self.means_, self.covariances_,

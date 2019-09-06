@@ -4,7 +4,6 @@ MNIST dataset T-SNE benchmark
 =============================
 
 """
-from __future__ import division, print_function
 
 # License: BSD 3 clause
 
@@ -14,9 +13,9 @@ from time import time
 import numpy as np
 import json
 import argparse
+from joblib import Memory
 
-from sklearn.utils import Memory
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors
 from sklearn.decomposition import PCA
@@ -37,7 +36,7 @@ memory = Memory(os.path.join(LOG_DIR, 'mnist_tsne_benchmark_data'),
 def load_data(dtype=np.float32, order='C', shuffle=True, seed=0):
     """Load the data, then cache and memmap the train/test split"""
     print("Loading dataset...")
-    data = fetch_mldata('MNIST original')
+    data = fetch_openml('mnist_784')
 
     X = check_array(data['data'], dtype=dtype, order=order)
     y = data["target"]

@@ -8,20 +8,11 @@ import pickle
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
 
-from sklearn.utils.fixes import divide
 from sklearn.utils.fixes import MaskedArray
-from sklearn.utils.fixes import nanmedian
-from sklearn.utils.fixes import nanpercentile
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
-
-
-def test_divide():
-    assert_equal(divide(.6, 1), .600000000000)
 
 
 def test_masked_array_obj_dtype_pickleable():
@@ -34,37 +25,10 @@ def test_masked_array_obj_dtype_pickleable():
         assert_array_equal(marr.mask, marr_pickled.mask)
 
 
-@pytest.mark.parametrize(
-    "axis, expected_median",
-    [(None, 4.0),
-     (0, np.array([1., 3.5, 3.5, 4., 7., np.nan])),
-     (1, np.array([1., 6.]))]
-)
-def test_nanmedian(axis, expected_median):
-    X = np.array([[1, 1, 1, 2, np.nan, np.nan],
-                  [np.nan, 6, 6, 6, 7, np.nan]])
-    median = nanmedian(X, axis=axis)
-    if axis is None:
-        assert median == pytest.approx(expected_median)
-    else:
-        assert_allclose(median, expected_median)
-
-
-@pytest.mark.parametrize(
-    "a, q, expected_percentile",
-    [(np.array([1, 2, 3, np.nan]), [0, 50, 100], np.array([1., 2., 3.])),
-     (np.array([1, 2, 3, np.nan]), 50, 2.),
-     (np.array([np.nan, np.nan]), [0, 50], np.array([np.nan, np.nan]))]
-)
-def test_nanpercentile(a, q, expected_percentile):
-    percentile = nanpercentile(a, q)
-    assert_allclose(percentile, expected_percentile)
-
-
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
 def test_joblib_parallel_args(monkeypatch, joblib_version):
-    import sklearn.utils._joblib
-    monkeypatch.setattr(sklearn.utils._joblib, '__version__', joblib_version)
+    import joblib
+    monkeypatch.setattr(joblib, '__version__', joblib_version)
 
     if joblib_version == '0.12.0':
         # arguments are simply passed through

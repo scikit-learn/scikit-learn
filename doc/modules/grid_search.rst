@@ -43,7 +43,7 @@ Note that it is common that a small subset of those parameters can have a large
 impact on the predictive or computation performance of the model while others
 can be left to their default values. It is recommended to read the docstring of
 the estimator class to get a finer understanding of their expected behavior,
-possibly by reading the enclosed reference to the literature.  
+possibly by reading the enclosed reference to the literature.
 
 Exhaustive Grid Search
 ======================
@@ -87,6 +87,12 @@ evaluated and the best combination is retained.
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
       for an example of :class:`GridSearchCV` being used to evaluate multiple
       metrics simultaneously.
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
+      for an example of using ``refit=callable`` interface in
+      :class:`GridSearchCV`. The example shows how this interface adds certain
+      amount of flexibility in identifying the "best" estimator. This interface
+      can also be used in multiple metrics evaluation.
 
 .. _randomized_parameter_search:
 
@@ -186,11 +192,50 @@ result in an error when using multiple metrics.
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
 for an example usage.
 
+.. _composite_grid_search:
+
 Composite estimators and parameter spaces
 -----------------------------------------
+:class:`GridSearchCV` and :class:`RandomizedSearchCV` allow searching over
+parameters of composite or nested estimators such as
+:class:`~sklearn.pipeline.Pipeline`,
+:class:`~sklearn.compose.ColumnTransformer`,
+:class:`~sklearn.ensemble.VotingClassifier` or
+:class:`~sklearn.calibration.CalibratedClassifierCV` using a dedicated
+``<estimator>__<parameter>`` syntax::
 
-:ref:`pipeline` describes building composite estimators whose
-parameter space can be searched with these tools.
+  >>> from sklearn.model_selection import GridSearchCV
+  >>> from sklearn.calibration import CalibratedClassifierCV
+  >>> from sklearn.ensemble import RandomForestClassifier
+  >>> from sklearn.datasets import make_moons
+  >>> X, y = make_moons()
+  >>> calibrated_forest = CalibratedClassifierCV(
+  ...    base_estimator=RandomForestClassifier(n_estimators=10))
+  >>> param_grid = {
+  ...    'base_estimator__max_depth': [2, 4, 6, 8]}
+  >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
+  >>> search.fit(X, y)
+  GridSearchCV(cv=5,
+               estimator=CalibratedClassifierCV(...),
+               param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
+
+Here, ``<estimator>`` is the parameter name of the nested estimator,
+in this case ``base_estimator``.
+If the meta-estimator is constructed as a collection of estimators as in
+`pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
+see :ref:`pipeline_nested_parameters`.  In practice, there can be several
+levels of nesting::
+
+  >>> from sklearn.pipeline import Pipeline
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> pipe = Pipeline([
+  ...    ('select', SelectKBest()),
+  ...    ('model', calibrated_forest)])
+  >>> param_grid = {
+  ...    'select__k': [1, 2],
+  ...    'model__base_estimator__max_depth': [2, 4, 6, 8]}
+  >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
+
 
 Model selection: development and evaluation
 -------------------------------------------

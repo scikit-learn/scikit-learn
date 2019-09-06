@@ -3,17 +3,13 @@ regression (:ref:`least_angle_regression`)
 
 The input data is mostly low rank but is a fat infinite tail.
 """
-from __future__ import print_function
-
 import gc
 import sys
 from time import time
 
-import six
-
 import numpy as np
 
-from sklearn.linear_model import lars_path, orthogonal_mp
+from sklearn.linear_model import lars_path, lars_path_gram, orthogonal_mp
 from sklearn.datasets.samples_generator import make_sparse_coded_signal
 
 
@@ -62,7 +58,8 @@ def compute_bench(samples_range, features_range):
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
             Xy = np.dot(X.T, y)
-            lars_path(X, y, Xy=Xy, Gram=G, max_iter=n_informative)
+            lars_path_gram(Xy=Xy, Gram=G, n_samples=y.size,
+                           max_iter=n_informative)
             delta = time() - tstart
             print("%0.3fs" % delta)
             lars_gram[i_f, i_s] = delta
@@ -109,7 +106,7 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
     fig = plt.figure('scikit-learn OMP vs. LARS benchmark results')
-    for i, (label, timings) in enumerate(sorted(six.iteritems(results))):
+    for i, (label, timings) in enumerate(sorted(results.items())):
         ax = fig.add_subplot(1, 2, i+1)
         vmax = max(1 - timings.min(), -1 + timings.max())
         plt.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
