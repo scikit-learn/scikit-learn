@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 UNAMESTR=`uname`
 
@@ -90,7 +91,7 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
 elif [[ "$DISTRIB" == "latest" ]]; then
     # since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
-    make_conda "python=$PYTHON_VERSION"
+    make_conda "python=$PYTHON_VERSION pip"
     python -m pip install numpy scipy joblib cython
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg pillow
