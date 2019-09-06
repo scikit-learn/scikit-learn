@@ -37,6 +37,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import GroupTimeSeriesSplit
 
 from sklearn.linear_model import Ridge
 
@@ -1571,3 +1572,61 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+def test_group_time_series_fail_groups_are_none():
+    """
+    The GroupTimeSeriesSplit with no group should work exactlhy as a
+    TimeSeriesSplit
+    """
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
+
+    # Should fail if there groups is note
+    assert_raises_regexp(ValueError,
+                         "The 'groups' parameter should not be None",
+                         next,
+                         GroupTimeSeriesSplit(n_splits=7).split(X))
+
+
+def test_group_time_series_ordering_and_group_preserved():
+    """ With this test we check that we are only evaluating
+        unseen groups in the future
+    """
+    unique_groups = ['Miguel', 'Oriana', 'Lilia', 'Juanito']
+    groups = np.array(unique_groups * 4)
+
+    n_samples = len(groups)
+    n_splits = 3
+
+    X = y = np.ones(n_samples)
+    # Fake array of time like
+    time_stamps = X * np.arange(n_samples)
+
+    gtf = GroupTimeSeriesSplit(n_splits=n_splits)
+
+    # We check two things here:
+    # 1. Elements of a group in the evaluation split should not be
+    # in the training split
+    # 2. Elements of the training split should be in the past
+    splits = gtf.split(X, y, groups)
+
+    # Get all the other entries for the groups found in test
+    for (train, test) in splits:
+
+        print(f"Test: {test}")
+        print(f"Train: {train}")
+        # verify that they are not in the test set
+        assert len(np.intersect1d(groups[train], groups[test])) == 0
+        # All the elements in the training set should be in past of the
+        # elements of the test set
+        for e in time_stamps[train]:
+            assert (e < time_stamps[test]).all()
+
+
+def test_group_time_series_more_splits_than_group():
+    # Should fail if there are more folds than groups
+    groups = np.array([1, 1, 1, 2, 2])
+    X = y = np.ones(len(groups))
+    assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
+                         next,
+                         GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
