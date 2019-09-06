@@ -1193,9 +1193,10 @@ def check_estimators_pickle(name, estimator_orig):
 
 
 def check_pairwise_estimator_tag(name, estimator_orig):
+    # Attributes that might has a 'precomputed' value
     attributes_to_check = ['metric', 'affinity', 'kernel']
 
-    # Check if _pairwise attribute is present - will be used later
+    # Check if _pairwise attribute is present
     has_pairwise_tag = hasattr(estimator_orig, '_pairwise')
 
     # Using iris as sample data
@@ -1203,15 +1204,29 @@ def check_pairwise_estimator_tag(name, estimator_orig):
     distance_matrix = pairwise_distances(X)
 
     for attribute in attributes_to_check:
-        # Check to see if attribute value is supported by estimator
-        if attribute in estimator_orig.get_params(deep=False):
+        # Check to see if attribute is supported by estimator
+        if attribute not in estimator_orig.get_params(deep=False):
+            continue
+
+        # Here we are only interested in estimators that supports
+        # 'precomputed' value for the attribute.
+        # The block below filters out estimators that do not
+        # support 'precomputed' value for the attribute.
+        if attribute not in estimator_orig.get_params(deep=False):
+            continue
+        try:
             # Construct new object of estimator with desired attribute value
             estimator2 = clone(estimator_orig).set_params(
                                                 **{attribute: 'precomputed'})
             # Estimators may validate parameters in fit if not in set_params
             estimator2.fit(distance_matrix, y_)
+        except Exception:
+            # Estimator that does not support 'precomputed' 
+            # as attribute value will continue
+            continue 
 
-        # Also check to see if non-square distance matrix raises an error
+        # If does not have _pairwise tag check if 
+        # non-square distance matrix raises an error
         try:
             non_square_distance = distance_matrix[:, :-1]
             if hasattr(estimator2, 'fit_predict'):
@@ -1223,11 +1238,13 @@ def check_pairwise_estimator_tag(name, estimator_orig):
                 if hasattr(estimator2, 'predict'):
                     estimator2.predict(X)
         except ValueError:
-            # Check if estimator defines _pairwise attribute
             error_message = ("{0} implements {1}='precomputed' but does"
                              " not implement '_pairwise' estimator tag"
                              "".format(name, attribute))
             assert has_pairwise_tag is True, error_message
+        else:
+            # Estimator does not raise an error
+            continue
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
