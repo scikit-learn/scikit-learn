@@ -1337,7 +1337,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn("The parameter 'presort' is deprecated and has no "
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
-                          "to the 'presort' parameter.", UserWarning)
+                          "to the 'presort' parameter.", DeprecationWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -1957,6 +1957,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
+        .. deprecated :: 0.22
+
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -2430,6 +2432,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
+
+        .. deprecated :: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for

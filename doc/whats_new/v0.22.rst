@@ -161,6 +161,11 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| ``presort`` is now deprecated in
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, and the parameter has no effect.
+  :pr:`14907` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -358,6 +363,11 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier`, 
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
+
+- |API| ``presort`` is now deprecated in
+  :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor`, and the parameter has no effect.
+  :pr:`14907` by `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................

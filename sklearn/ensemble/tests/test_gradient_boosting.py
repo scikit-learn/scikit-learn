@@ -1413,6 +1413,6 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     gb = Cls(presort=presort)
-    with pytest.warns(UserWarning,
+    with pytest.warns(DeprecationWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)

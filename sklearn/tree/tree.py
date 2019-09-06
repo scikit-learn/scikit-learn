@@ -319,7 +319,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn("The parameter 'presort' is deprecated and has no "
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
-                          "to the 'presort' parameter.", UserWarning)
+                          "to the 'presort' parameter.", DeprecationWarning)
 
         # Build tree
         criterion = self.criterion
@@ -703,6 +703,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
+        .. deprecated :: 0.22
+
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1060,6 +1062,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
+
+        .. deprecated :: 0.22
 
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
