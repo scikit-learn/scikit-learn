@@ -146,11 +146,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         A dict of arrays containing the score/time arrays for each scorer is
         returned. The possible keys for this ``dict`` are:
-
             ``test_score``
                 The score array for test scores on each cv split.
+                Name changes to ``test_r2`` or ``test_auc`` if there are
+                multiple scoring metrics in the scoring parameter for the
+                cross_validate method.
             ``train_score``
                 The score array for train scores on each cv split.
+                Name changes to ``train_r2`` or ``train_auc`` if there are
+                multiple scoring metrics in the scoring parameter for the
+                cross_validate method.
                 This is available only if ``return_train_score`` parameter
                 is ``True``.
             ``fit_time``
