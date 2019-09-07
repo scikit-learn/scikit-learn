@@ -227,7 +227,7 @@ div.sk-landing-bg-more-info dd {
 }
 
 div.sk-landing-bg {
-  background-color: #3499cd;
+  background-image: linear-gradient(160deg, rgba(42,98,128,1) 0%, rgba(52,153,205,1) 17%, rgba(255,243,211,1) 59%, rgba(255,178,96,1) 100%);
 }
 
 div.sk-landing-bg-more-info {
