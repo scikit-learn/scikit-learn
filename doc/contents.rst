@@ -8,7 +8,7 @@ Table Of Contents
 .. Define an order for the Table of Contents:
 
 .. toctree::
-    :numbered:
+    :maxdepth: 2
 
     preface
     tutorial/index
