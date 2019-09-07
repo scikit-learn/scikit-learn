@@ -115,7 +115,7 @@ plt.show()
 #   larger number of dimensions ``n_components``.
 #
 # The default dataset is the 20 newsgroups dataset. To run the example on the
-# digits dataset, pass the ---use-digits-dataset command line argument to this
+# digits dataset, pass the ``--use-digits-dataset`` command line argument to this
 # script.
 
 if '--use-digits-dataset' in sys.argv:
