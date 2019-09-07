@@ -118,7 +118,7 @@ plt.show()
 # digits dataset, pass the ---use-digits-dataset command line argument to this
 # script.
 
-if '---use-digits-dataset' in sys.argv:
+if '--use-digits-dataset' in sys.argv:
     data = load_digits().data[:500]
 else:
     data = fetch_20newsgroups_vectorized().data[:500]
