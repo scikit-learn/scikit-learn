@@ -593,6 +593,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import StackingRegressor
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
     ...     ('lr', RidgeCV()),
     ...     ('svr', LinearSVR(random_state=42))
@@ -604,7 +605,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     *load_diabetes(return_X_y=True), random_state=42
+    ...     X, y, random_state=42
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0.3...

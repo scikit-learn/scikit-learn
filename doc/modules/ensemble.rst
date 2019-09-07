@@ -1137,7 +1137,10 @@ hyperparameters of the individual estimators::
    >>> clf1 = LogisticRegression(random_state=1)
    >>> clf2 = RandomForestClassifier(random_state=1)
    >>> clf3 = GaussianNB()
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
 
    >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
 
@@ -1151,11 +1154,17 @@ In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
 must support ``predict_proba`` method)::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft'
+   ... )
 
 Optionally, weights can be provided for the individual classifiers::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+   >>> eclf = VotingClassifier(
+   ...     estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...     voting='soft', weights=[2,5,1]
+   ... )
 
 .. _voting_regressor:
 
@@ -1180,7 +1189,7 @@ The following example shows how to fit the VotingRegressor::
 
    >>> # Loading some example data
    >>> X, y = load_boston(return_X_y=True)
-   
+
    >>> # Training classifiers
    >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
    >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
@@ -1243,7 +1252,7 @@ to be called on the training data::
   StackingRegressor(...)
 
 During training, the `estimators` are fitted on the whole training data
-`X_train`. They will be used when calling `predict`, or `predict_proba`. To
+`X_train`. They will be used when calling `predict` or `predict_proba`. To
 generalize and avoid over-fitting, the `final_estimator` is trained on
 out-samples using :func:`sklearn.model_selection.cross_val_predict` internally.
 
@@ -1261,7 +1270,7 @@ methods, e.g.::
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.85
+   R2 score: 0.81
 
 Note that it is also possible to get the output of the stacked outputs of the
 `estimators` using the `transform` method::
@@ -1296,7 +1305,7 @@ Note that it is also possible to get the output of the stacked outputs of the
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.83
+    R2 score: 0.82
 
 .. topic:: References
 
