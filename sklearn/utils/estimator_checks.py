@@ -1840,7 +1840,9 @@ def check_supervised_y_2d(name, estimator_orig):
         return
     rnd = np.random.RandomState(0)
     n_samples = 30
-    X = pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)), estimator_orig)
+    X = pairwise_estimator_convert_X(
+        rnd.uniform(size=(n_samples, 3)), estimator_orig
+    )
     if tags['binary_only']:
         y = np.arange(n_samples) % 2
     else:
