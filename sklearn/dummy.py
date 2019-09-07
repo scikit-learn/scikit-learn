@@ -151,7 +151,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                     err_msg = ("The constant target value must be present in "
                                "the training data. You provided constant={}. "
                                "Possible values are: {}."
-                               .format(self.constant,list(self.classes_[k])))
+                               .format(self.constant, list(self.classes_[k])))
                     raise ValueError(err_msg)
 
         if self.n_outputs_ == 1 and not self.output_2d_:

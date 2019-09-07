@@ -116,7 +116,7 @@ Changelog
 ............................
 
 - |Fix| :class:`dummy.DummyClassifiers()` now handles checking the existence
-  of the provided constant in multiouput cases
+  of the provided constant in multiouput cases.
   :pr:`14908` by `Martina G. Vilas`_.
 
 :mod:`sklearn.ensemble`
@@ -204,8 +204,8 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
-  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
   `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
@@ -226,7 +226,7 @@ Changelog
 
 -|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
  `KeyError` when using `kernel="precomputed"`.
- :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`.
+ :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`. 
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -271,7 +271,7 @@ Changelog
 
 - |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
   calculates euclidean distances in the presence of missing values.
-  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
+  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
   `Thomas Fan`_.
 
 - |Feature| New ranking metrics :func:`metrics.ndcg_score` and
@@ -350,19 +350,19 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-
+  
 :mod:`sklearn.tree`
 ...................
 
 - |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
   to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
   :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
-  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestClassifier`, 
   :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesClassifier`, 
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`,
-  :class:`ensemble.GradientBoostingClassifier`,
+  :class:`ensemble.RandomTreesEmbedding`, 
+  :class:`ensemble.GradientBoostingClassifier`, 
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
 
