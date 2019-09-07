@@ -15,7 +15,6 @@ from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -287,7 +286,7 @@ def test_precision_recall_f_ignored_labels():
         # ensure the above were meaningful tests:
         for average in ['macro', 'weighted', 'micro']:
             assert (recall_13(average=average) !=
-                             recall_all(average=average))
+                    recall_all(average=average))
 
 
 def test_average_precision_score_score_non_binary_class():
@@ -1533,7 +1532,7 @@ def test_precision_recall_f1_no_labels(beta, average, zero_division):
     assert_almost_equal(p, zero_division)
     assert_almost_equal(r, zero_division)
     assert_almost_equal(f, zero_division)
-    assert_equal(s, None)
+    assert s is None
 
     assert_almost_equal(fbeta, float(zero_division == 1))
 
@@ -1591,27 +1590,35 @@ def test_prf_warnings(zero_division):
     for average in [None, 'weighted', 'macro']:
 
         msg = ('Precision and F-score are ill-defined and '
-               'being set to 0.0 in labels with no predicted samples.')
+               'being set to 0.0 in labels with no predicted samples.'
+               ' Use ``zero_division`` parameter to control'
+               ' this behavior.')
         tmp = [w, msg, f] if zero_division == "warn" else [f]
         my_assert(*tmp, [0, 1, 2], [1, 1, 2], average=average,
                   zero_division=zero_division)
 
         msg = ('Recall and F-score are ill-defined and '
-               'being set to 0.0 in labels with no true samples.')
+               'being set to 0.0 in labels with no true samples.'
+               ' Use ``zero_division`` parameter to control'
+               ' this behavior.')
         tmp = [w, msg, f] if zero_division == "warn" else [f]
         my_assert(*tmp, [1, 1, 2], [0, 1, 2], average=average,
                   zero_division=zero_division)
 
     # average of per-sample scores
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 in samples with no predicted labels.')
+           'being set to 0.0 in samples with no predicted labels.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, np.array([[1, 0], [1, 0]]),
               np.array([[1, 0], [0, 0]]), average='samples',
               zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 in samples with no true labels.')
+           'being set to 0.0 in samples with no true labels.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, np.array([[1, 0], [0, 0]]),
               np.array([[1, 0], [1, 0]]),
@@ -1619,14 +1626,18 @@ def test_prf_warnings(zero_division):
 
     # single score: micro-average
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 due to no predicted samples.')
+           'being set to 0.0 due to no predicted samples.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, np.array([[1, 1], [1, 1]]),
               np.array([[0, 0], [0, 0]]), average='micro',
               zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 due to no true samples.')
+           'being set to 0.0 due to no true samples.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, np.array([[0, 0], [0, 0]]),
               np.array([[1, 1], [1, 1]]), average='micro',
@@ -1634,26 +1645,38 @@ def test_prf_warnings(zero_division):
 
     # single positive label
     msg = ('Precision and F-score are ill-defined and '
-           'being set to 0.0 due to no predicted samples.')
+           'being set to 0.0 due to no predicted samples.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, [1, 1], [-1, -1], average='binary',
               zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
-           'being set to 0.0 due to no true samples.')
+           'being set to 0.0 due to no true samples.'
+           ' Use ``zero_division`` parameter to control'
+           ' this behavior.')
     tmp = [w, msg, f] if zero_division == "warn" else [f]
     my_assert(*tmp, [-1, -1], [1, 1], average='binary',
               zero_division=zero_division)
-    # TODO
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
-        msg = ('Recall and F-score are ill-defined and '
-               'being set to 0.0 due to no true samples.')
-        assert str(record.pop().message) == msg
-        msg = ('Precision and F-score are ill-defined and '
-               'being set to 0.0 due to no predicted samples.')
-        assert str(record.pop().message) == msg
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary",
+                                        zero_division=zero_division)
+        if zero_division == "warn":
+            msg = ('Recall and F-score are ill-defined and '
+                   'being set to 0.0 due to no true samples.'
+                   ' Use ``zero_division`` parameter to control'
+                   ' this behavior.')
+            assert str(record.pop().message) == msg
+            msg = ('Precision and F-score are ill-defined and '
+                   'being set to 0.0 due to no predicted samples.'
+                   ' Use ``zero_division`` parameter to control'
+                   ' this behavior.')
+            assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
@@ -1668,9 +1691,11 @@ def test_recall_warnings(zero_division):
                      np.array([[1, 1], [1, 1]]),
                      average='micro', zero_division=zero_division)
         if zero_division == "warn":
-            assert_equal(str(record.pop().message),
-                         'Recall is ill-defined and '
-                         'being set to 0.0 due to no true samples.')
+            assert (str(record.pop().message) ==
+                    'Recall is ill-defined and '
+                    'being set to 0.0 due to no true samples.'
+                    ' Use ``zero_division`` parameter to control'
+                    ' this behavior.')
         else:
             assert len(record) == 0
 
@@ -1678,21 +1703,24 @@ def test_recall_warnings(zero_division):
         if zero_division == "warn":
             assert (str(record.pop().message) ==
                     'Recall is ill-defined and '
-                    'being set to 0.0 due to no true samples.')
+                    'being set to 0.0 due to no true samples.'
+                    ' Use ``zero_division`` parameter to control'
+                    ' this behavior.')
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
                         average='micro', zero_division=zero_division)
         if zero_division == "warn":
             assert (str(record.pop().message) ==
                     'Precision is ill-defined and '
-                    'being set to 0.0 due to no predicted samples.')
+                    'being set to 0.0 due to no predicted samples.'
+                    ' Use ``zero_division`` parameter to control'
+                    ' this behavior.')
         else:
             assert len(record) == 0
 
@@ -1700,7 +1728,9 @@ def test_precision_warnings(zero_division):
         if zero_division == "warn":
             assert (str(record.pop().message) ==
                     'Precision is ill-defined and '
-                    'being set to 0.0 due to no predicted samples.')
+                    'being set to 0.0 due to no predicted samples.'
+                    ' Use ``zero_division`` parameter to control'
+                    ' this behavior.')
 
     assert_no_warnings(precision_score,
                        np.array([[0, 0], [0, 0]]),
@@ -1717,34 +1747,24 @@ def test_fscore_warnings(zero_division):
             score(np.array([[1, 1], [1, 1]]),
                   np.array([[0, 0], [0, 0]]),
                   average='micro', zero_division=zero_division)
-            if zero_division == "warn":
-                assert (str(record.pop().message) ==
-                        'F-score is ill-defined and '
-                        'being set to 0.0 due to no predicted samples.')
-            else:
-                assert len(record) == 0
+            assert len(record) == 0
 
             score(np.array([[0, 0], [0, 0]]),
                   np.array([[1, 1], [1, 1]]),
                   average='micro', zero_division=zero_division)
-            if zero_division == "warn":
-                assert_equal(str(record.pop().message),
-                             'F-score is ill-defined and '
-                             'being set to 0.0 due to no true samples.')
-            else:
-                assert len(record) == 0
+            assert len(record) == 0
 
-            score([0, 0], [0, 0])
+            score(np.array([[0, 0], [0, 0]]),
+                  np.array([[0, 0], [0, 0]]),
+                  average='micro', zero_division=zero_division)
             if zero_division == "warn":
                 assert (str(record.pop().message) ==
                         'F-score is ill-defined and '
-                        'being set to 0.0 due to no true samples.')
-                assert (str(record.pop().message) ==
-                        'F-score is ill-defined and '
-                        'being set to 0.0 due to no predicted samples.')
+                        'being set to 0.0 due to no true nor predicted '
+                        'samples. Use ``zero_division`` parameter to '
+                        'control this behavior.')
             else:
                 assert len(record) == 0
-
 
 
 def test_prf_average_binary_data_non_binary():
@@ -1902,7 +1922,7 @@ def test_hinge_loss_multiclass():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
@@ -1940,7 +1960,7 @@ def test_hinge_loss_multiclass_with_missing_labels():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_hinge_loss_multiclass_invariance_lists():
@@ -1967,7 +1987,7 @@ def test_hinge_loss_multiclass_invariance_lists():
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
     assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+            dummy_hinge_loss)
 
 
 def test_log_loss():
