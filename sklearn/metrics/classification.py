@@ -1063,7 +1063,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
-    >>> y_true = [0, 0, 0 0, 0, 0]
+    >>> y_true = [0, 0, 0, 0, 0, 0]
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
