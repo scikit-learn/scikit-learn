@@ -159,33 +159,31 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         -------
         self : object
         """
-        names, estimators_ = self._validate_estimators()
+        # all_estimators contains all estimators, the one to be fitted and the
+        # 'drop' string.
+        names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
-        has_estimator = False
-        for est in estimators_:
-            if est != 'drop':
-                has_estimator = True
-
+        has_estimator = any(est != 'drop' for est in all_estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
-        stack_method = [self.stack_method] * len(estimators_)
+        stack_method = [self.stack_method] * len(all_estimators)
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
-            for est in estimators_ if est != 'drop'
+            for est in all_estimators if est != 'drop'
         )
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
-        for name_est, org_est in zip(names, estimators_):
+        for name_est, org_est in zip(names, all_estimators):
             if org_est != 'drop':
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
@@ -204,21 +202,21 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         self.stack_method_ = [
             self._method_name(name, est, meth)
-            for name, est, meth in zip(names, estimators_, stack_method)
+            for name, est, meth in zip(names, all_estimators, stack_method)
         ]
 
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
-            for est, meth in zip(estimators_, self.stack_method_)
+            for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
         )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
         self.stack_method_ = [
-            meth for (meth, est) in zip(self.stack_method_, estimators_)
+            meth for (meth, est) in zip(self.stack_method_, all_estimators)
             if est != 'drop'
         ]
 
