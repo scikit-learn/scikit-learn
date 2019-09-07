@@ -341,6 +341,12 @@ div.section h6 {
   cursor: pointer;
 }
 
+@media screen and (min-width: 1240px) {
+  .sk-btn-toggle-toc {
+    border-top-left-radius: 0.5rem;
+  }
+}
+
 .sk-btn-toggle-toc:hover {
   color: white;
   background-color: #297ca7;
@@ -420,24 +426,8 @@ div.sk-sidebar-toc-logo {
   height: 52px;
 }
 
-div.sk-sidebar-toc-wrapper > ul > li > a{
-  font-weight: bold;
-}
-
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
-}
-
-div.sk-sidebar-toc-wrapper > ul,
-div.sk-sidebar-toc-wrapper ul ul {
-  list-style: none;
-  margin-left: 0;
-  padding-left: 0;
-}
-
-div.sk-sidebar-toc-wrapper ul ul ul {
-  list-style: square;
-  margin-left: 1rem;
 }
 
 div.sk-sidebar-toc-wrapper::after {
@@ -445,6 +435,27 @@ div.sk-sidebar-toc-wrapper::after {
   content: "";
   height: 3rem;
   visibility: hidden;
+}
+
+div.sk-local-toc > ul > li > a{
+  font-weight: bold;
+}
+
+div.sk-local-toc > ul,
+div.sk-local-toc ul ul {
+  list-style: none;
+  margin-left: 0;
+  padding-left: 0;
+}
+
+div.sk-local-toc ul ul ul {
+  list-style: square;
+  margin-left: 1rem;
+}
+
+
+div.sk-local-toc ul li ul li ul{
+  display: none;
 }
 
 /* content styling element style */
