@@ -1487,7 +1487,7 @@ class GroupShuffleSplit(ShuffleSplit):
     >>> from sklearn.model_selection import GroupShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
-    >>> groups = np.array([1, 2, 3, 4, 5])
+    >>> groups = np.array([1, 2, 3])
     >>> gss = GroupShuffleSplit(n_splits=2, train_size=.5, random_state=42)
     >>> gss.get_n_splits()
     2
