@@ -23,7 +23,7 @@ from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
 
 
-class BernoulliRBM(BaseEstimator, TransformerMixin):
+class BernoulliRBM(TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
