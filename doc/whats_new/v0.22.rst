@@ -408,8 +408,12 @@ Changelog
   performance improvement. :pr:`13987` by `Roman Yurchak`_.
 
 - |Fix| KernelCenterer now throws error when fit on non-square
-  class:`preprocessing.KernelCenterer`
+  :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+- |Enhancement| label_binarize now supports list of lists for multilabel data
+  :func:`preprocessing.label_binarize`
+  :pr:`14865` by :user:`Léonard Binet <leonardbinet>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -458,6 +462,10 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
   sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Enhancement| is_multilabel now detects list of lists for multilabel data
+  :func:`utils.multiclass.is_multilabel`
+  :pr:`14865` by :user:`Léonard Binet <leonardbinet>`.
 
 :mod:`sklearn.neighbors`
 ....................
