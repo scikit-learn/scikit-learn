@@ -193,7 +193,6 @@ div.gsc-results {
 /* General layout */
 
 div.section {
-  margin-bottom: 1rem;
   overflow-x: scroll;
 }
 
@@ -324,12 +323,20 @@ div.sk-page-content {
   margin-top: 52px;
 }
 
+div.section h2,
+div.section h3,
+div.section h4,
+div.section h5,
+div.section h6 {
+  margin-top: 1.2rem;
+}
+
 .sk-btn-toggle-toc {
   position: fixed;
-  bottom: 0.5rem;
-  margin-left: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 1rem;
+  bottom: 0;
+  margin: 0;
+  border-radius: 0;
+  border-top-right-radius: 0.5rem;
   z-index: 3;
   cursor: pointer;
 }
@@ -775,6 +782,7 @@ div.sphx-glr-thumbcontainer {
 
 .sk-btn-rellink:hover {
   color: black;
+  border: 1px solid black;
 }
 
 [sk-rellink-tooltip] {
@@ -795,6 +803,7 @@ div.sphx-glr-thumbcontainer {
   width: 222px;
   top: 100%;
   left: -78px;
+  border: 1px solid black;
 }
 
 [sk-rellink-tooltip]:first-child::before {
