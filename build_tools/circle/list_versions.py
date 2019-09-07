@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 
 # List all available versions of the documentation
-from __future__ import print_function
-
 import json
 import re
 import sys
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib import urlopen
-
 from distutils.version import LooseVersion
-
+from urllib.request import urlopen
 
 def json_urlread(url):
     try:
@@ -58,7 +50,7 @@ print()
 
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
 RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa
-VERSION_RE = re.compile(r"\bVERSION:\s*'([^']+)'")
+VERSION_RE = re.compile(r"scikit-learn ([\w\.\-]+) documentation</title>")
 NAMED_DIRS = ['dev', 'stable']
 
 # Gather data for each version directory, including symlinks

@@ -1672,6 +1672,16 @@ def test_prf_warnings(zero_division):
                ' this behavior.')
         assert str(record.pop().message) == msg
 
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.')
+        assert str(record.pop().message) == msg
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.')
+        assert str(record.pop().message) == msg
+
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_recall_warnings(zero_division):
@@ -1706,7 +1716,6 @@ def test_recall_warnings(zero_division):
 def test_precision_warnings(zero_division):
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
                         average='micro', zero_division=zero_division)

@@ -1,12 +1,11 @@
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #
 # License: BSD 3 clause
-from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 import array
 
-from sklearn.utils import check_random_state
+from . import check_random_state
 from ._random import sample_without_replacement
 
 __all__ = ['sample_without_replacement']

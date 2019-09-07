@@ -49,9 +49,7 @@ Nearest neighbor and the curse of dimensionality
 
         >>> import numpy as np
         >>> from sklearn import datasets
-        >>> iris = datasets.load_iris()
-        >>> iris_X = iris.data
-        >>> iris_y = iris.target
+        >>> iris_X, iris_y = datasets.load_iris(return_X_y=True)
         >>> np.unique(iris_y)
         array([0, 1, 2])
 
@@ -93,10 +91,8 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
-    >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
-    KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=None, n_neighbors=5, p=2,
-               weights='uniform')
+    >>> knn.fit(iris_X_train, iris_y_train)
+    KNeighborsClassifier()
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
     >>> iris_y_test
@@ -140,11 +136,11 @@ Linear model: from regression to sparsity
     sex, weight, blood pressure) measure on 442 patients, and an
     indication of disease progression after one year::
 
-        >>> diabetes = datasets.load_diabetes()
-        >>> diabetes_X_train = diabetes.data[:-20]
-        >>> diabetes_X_test  = diabetes.data[-20:]
-        >>> diabetes_y_train = diabetes.target[:-20]
-        >>> diabetes_y_test  = diabetes.target[-20:]
+        >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
+        >>> diabetes_X_train = diabetes_X[:-20]
+        >>> diabetes_X_test  = diabetes_X[-20:]
+        >>> diabetes_y_train = diabetes_y[:-20]
+        >>> diabetes_y_test  = diabetes_y[-20:]
 
     The task at hand is to predict disease progression from physiological
     variables.
@@ -176,22 +172,20 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    ...                                       # doctest: +NORMALIZE_WHITESPACE
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
-                     normalize=False)
-    >>> print(regr.coef_)
+    LinearRegression()
+    >>> print(regr.coef_)  # doctest: +SKIP
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
+
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and y.
-    >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
+    >>> regr.score(diabetes_X_test, diabetes_y_test)
     0.5850753022690...
 
 
@@ -256,13 +250,11 @@ This is an example of **bias/variance tradeoff**: the larger the ridge
 We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
-    >>> from __future__ import print_function
     >>> alphas = np.logspace(-4, -1, 6)
     >>> print([regr.set_params(alpha=alpha)
     ...            .fit(diabetes_X_train, diabetes_y_train)
     ...            .score(diabetes_X_test, diabetes_y_test)
     ...        for alpha in alphas])
-    ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
      0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
@@ -333,10 +325,8 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
-       max_iter=1000, normalize=False, positive=False, precompute=False,
-       random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
-    >>> print(regr.coef_)  # doctest: +NORMALIZE_WHITESPACE
+    Lasso(alpha=0.025118864315095794)
+    >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 
@@ -374,13 +364,9 @@ function or **logistic** function:
 
 ::
 
-    >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
-    ...                                       multi_class='multinomial')
-    >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
-    LogisticRegression(C=100000.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
-        multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
-        solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
+    >>> log = linear_model.LogisticRegression(C=1e5)
+    >>> log.fit(iris_X_train, iris_y_train)
+    LogisticRegression(C=100000.0)
 
 This is known as :class:`LogisticRegression`.
 
@@ -450,7 +436,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -460,11 +446,8 @@ classification --:class:`SVC` (Support Vector Classification).
 
     >>> from sklearn import svm
     >>> svc = svm.SVC(kernel='linear')
-    >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='linear', max_iter=-1, probability=False, random_state=None,
-        shrinking=True, tol=0.001, verbose=False)
+    >>> svc.fit(iris_X_train, iris_y_train)
+    SVC(kernel='linear')
 
 
 .. warning:: **Normalizing data**

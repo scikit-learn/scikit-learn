@@ -24,10 +24,6 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'label_binarize',
@@ -37,7 +33,7 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False):
+def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         if encode:
@@ -47,10 +43,11 @@ def _encode_numpy(values, uniques=None, encode=False):
             # unique sorts
             return np.unique(values)
     if encode:
-        diff = _encode_check_unknown(values, uniques)
-        if diff:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(diff))
+        if check_unknown:
+            diff = _encode_check_unknown(values, uniques)
+            if diff:
+                raise ValueError("y contains previously unseen labels: %s"
+                                 % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
@@ -74,7 +71,7 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode(values, uniques=None, encode=False):
+def _encode(values, uniques=None, encode=False, check_unknown=True):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -94,6 +91,12 @@ def _encode(values, uniques=None, encode=False):
         already have been determined in fit).
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
+    check_unknown : bool, default True
+        If True, check for values in ``values`` that are not in ``unique``
+        and raise an error. This is ignored for object dtype, and treated as
+        True in this case. This parameter is useful for
+        _BaseEncoder._transform() to avoid calling _encode_check_unknown()
+        twice.
 
     Returns
     -------
@@ -105,9 +108,14 @@ def _encode(values, uniques=None, encode=False):
 
     """
     if values.dtype == object:
-        return _encode_python(values, uniques, encode)
+        try:
+            res = _encode_python(values, uniques, encode)
+        except TypeError:
+            raise TypeError("argument must be a string or number")
+        return res
     else:
-        return _encode_numpy(values, uniques, encode)
+        return _encode_numpy(values, uniques, encode,
+                             check_unknown=check_unknown)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -160,8 +168,11 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
 
 
-class LabelEncoder(BaseEstimator, TransformerMixin):
-    """Encode labels with value between 0 and n_classes-1.
+class LabelEncoder(TransformerMixin, BaseEstimator):
+    """Encode target labels with value between 0 and n_classes-1.
+
+    This transformer should be used to encode target values, *i.e.* `y`, and
+    not the input `X`.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
@@ -180,7 +191,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> le.classes_
     array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
+    >>> le.transform([1, 1, 2, 6])
     array([0, 0, 1, 2]...)
     >>> le.inverse_transform([0, 0, 1, 2])
     array([1, 1, 2, 6])
@@ -193,15 +204,18 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     LabelEncoder()
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
-    >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
+    >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
     See also
     --------
-    sklearn.preprocessing.OrdinalEncoder : encode categorical features
-        using a one-hot or ordinal encoding scheme.
+    sklearn.preprocessing.OrdinalEncoder : Encode categorical features
+        using an ordinal encoding scheme.
+
+    sklearn.preprocessing.OneHotEncoder : Encode categorical features
+        as a one-hot numeric array.
     """
 
     def fit(self, y):
@@ -248,7 +262,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -269,7 +283,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -282,8 +296,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = np.asarray(y)
         return self.classes_[y]
 
+    def _more_tags(self):
+        return {'X_types': ['1dlabels']}
 
-class LabelBinarizer(BaseEstimator, TransformerMixin):
+
+class LabelBinarizer(TransformerMixin, BaseEstimator):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -337,7 +354,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
@@ -357,7 +374,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     >>> import numpy as np
     >>> lb.fit(np.array([[0, 1, 1], [1, 0, 0]]))
-    LabelBinarizer(neg_label=0, pos_label=1, sparse_output=False)
+    LabelBinarizer()
     >>> lb.classes_
     array([0, 1, 2])
     >>> lb.transform([0, 1, 2, 1])
@@ -417,7 +434,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """Fit label binarizer and transform multi-class labels to binary
         labels.
 
-        The output of transform is sometimes referred to    as
+        The output of transform is sometimes referred to as
         the 1-of-K coding scheme.
 
         Parameters
@@ -454,7 +471,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array or CSR matrix of shape [n_samples, n_classes]
             Shape will be [n_samples, 1] for binary problems.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         y_is_multilabel = type_of_target(y).startswith('multilabel')
         if y_is_multilabel and not self.y_type_.startswith('multilabel'):
@@ -497,7 +514,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.
@@ -514,6 +531,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y_inv = y_inv.toarray()
 
         return y_inv
+
+    def _more_tags(self):
+        return {'X_types': ['1dlabels']}
 
 
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
@@ -761,7 +781,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
+class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     """Transform between iterable of iterables and a multilabel format
 
     Although a list of sets or tuples is a very intuitive format for multilabel
@@ -794,11 +814,28 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.classes_
     array([1, 2, 3])
 
-    >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
+    >>> mlb.fit_transform([{'sci-fi', 'thriller'}, {'comedy'}])
     array([[0, 1, 1],
            [1, 0, 0]])
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
+
+    A common mistake is to pass in a list, which leads to the following issue:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit(['sci-fi', 'thriller', 'comedy'])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['-', 'c', 'd', 'e', 'f', 'h', 'i', 'l', 'm', 'o', 'r', 's', 't',
+        'y'], dtype=object)
+
+    To correct this, the list of labels should be passed in as:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit([['sci-fi', 'thriller', 'comedy']])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
 
     See also
     --------
@@ -811,7 +848,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self.sparse_output = sparse_output
 
     def fit(self, y):
-        """Fit the label sets binarizer, storing `classes_`
+        """Fit the label sets binarizer, storing :term:`classes_`
 
         Parameters
         ----------
@@ -897,7 +934,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         class_to_index = self._build_cache()
         yt = self._transform(y, class_to_index)
@@ -962,7 +999,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'
@@ -981,3 +1018,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                                  'Also got {0}'.format(unexpected))
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
+
+    def _more_tags(self):
+        return {'X_types': ['2dlabels']}

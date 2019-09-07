@@ -1,10 +1,52 @@
 version: 2
 
 jobs:
-  python3:
+  doc-min-dependencies:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.7.3-stretch
     environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
+      - MINICONDA_PATH: ~/miniconda
+      - CONDA_ENV_NAME: testenv
+      - PYTHON_VERSION: 3.5
+      - NUMPY_VERSION: 1.11.0
+      - SCIPY_VERSION: 0.17.0
+      - MATPLOTLIB_VERSION: 1.5.1
+      - CYTHON_VERSION: 0.28.5
+      - SCIKIT_IMAGE_VERSION: 0.12.3
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-min-deps-ccache-{{ .Branch }}
+            - doc-min-deps-ccache
+      - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+      - save_cache:
+          key: v1-datasets-{{ .Branch }}
+          paths:
+            - ~/scikit_learn_data
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+      - store_artifacts:
+          path: ~/log.txt
+          destination: log.txt
+
+  doc:
+    docker:
+      - image: circleci/python:3.7.3-stretch
+    environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
@@ -13,7 +55,16 @@ jobs:
       - run: ./build_tools/circle/checkout_merge_commit.sh
       - restore_cache:
           key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-ccache-{{ .Branch }}
+            - doc-ccache
       - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
       - save_cache:
           key: v1-datasets-{{ .Branch }}
           paths:
@@ -30,43 +81,25 @@ jobs:
           root: doc/_build/html
           paths: .
 
-
-  python2:
+  lint:
     docker:
-      # We use the python 3 docker image for simplicity. Python is installed
-      # through conda and the python version actually used is set via the
-      # PYTHON_VERSION environment variable.
-      - image: circleci/python:3.6.1
-    environment:
-      # Test examples run with minimal dependencies
-      - MINICONDA_PATH: ~/miniconda
-      - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: "2"
-      - NUMPY_VERSION: "1.10"
-      - SCIPY_VERSION: "0.16"
-      - MATPLOTLIB_VERSION: "1.4"
-      - SCIKIT_IMAGE_VERSION: "0.11"
-      - PANDAS_VERSION: "0.17.1"
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: v1-datasets-{{ .Branch }}-python2
-      - run: ./build_tools/circle/build_doc.sh
-      - save_cache:
-          key: v1-datasets-{{ .Branch }}-python2
-          paths:
-            - ~/scikit_learn_data
-      - store_artifacts:
-          path: doc/_build/html/stable
-          destination: doc
-      - store_artifacts:
-          path: ~/log.txt
-          destination: log.txt
+      - run:
+          name: dependencies
+          command: sudo pip install flake8
+      - run:
+          name: flake8
+          command: ./build_tools/circle/flake8_diff.sh
+      - run:
+          name: deprecated_properties_checks
+          command: ./build_tools/circle/check_deprecated_properties.sh
 
   pypy3:
     docker:
-      - image: pypy:3-6.0.0
+      - image: pypy:3.6-7.1.1
     steps:
       - restore_cache:
           keys:
@@ -82,11 +115,11 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
-      # Attach documentation generated in the 'python3' step so that it can be
+      # Attach documentation generated in the 'doc' step so that it can be
       # deployed.
       - attach_workspace:
           at: doc/_build/html
@@ -101,8 +134,13 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - python3
-      - python2
+      - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
       - pypy3:
           filters:
             branches:
@@ -110,7 +148,7 @@ workflows:
                 - 0.20.X
       - deploy:
           requires:
-            - python3
+            - doc
   pypy:
     triggers:
       - schedule:

@@ -1068,6 +1068,13 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
 
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision is undefined;
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
@@ -1185,7 +1192,14 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
 
+    Notes
+    -----
+    When ``true positive + false positive == 0`` or
+    ``true positive + false negative == 0``, f-score returns 0 and raises
+    ``UndefinedMetricWarning``. This behavior can be
+    modified with ``zero_division``.
     """
+
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
                                                  labels=labels,
@@ -1461,7 +1475,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
-    # Finally, we have all our sufficient statistics. Divide!
+    # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta ** 2
 
     # Divide, and on zero-division, set scores and/or warn according to

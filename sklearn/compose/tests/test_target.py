@@ -7,14 +7,14 @@ from sklearn.base import TransformerMixin
 
 from sklearn.dummy import DummyRegressor
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
+
+from sklearn.pipeline import Pipeline
 
 from sklearn.linear_model import LinearRegression, Lasso
 
@@ -31,20 +31,22 @@ def test_transform_target_regressor_error():
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=StandardScaler(),
                                       func=np.exp, inverse_func=np.log)
-    assert_raises_regex(ValueError, "'transformer' and functions"
-                        " 'func'/'inverse_func' cannot both be set.",
-                        regr.fit, X, y)
+    with pytest.raises(ValueError,
+                       match="'transformer' and functions"
+                       " 'func'/'inverse_func' cannot both be set."):
+        regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
     regr = TransformedTargetRegressor(regressor=Lasso(),
                                       transformer=StandardScaler())
-    assert_raises_regex(TypeError, r"fit\(\) got an unexpected keyword "
-                        "argument 'sample_weight'", regr.fit, X, y,
-                        sample_weight=sample_weight)
+    with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
+                       "keyword argument 'sample_weight'"):
+        regr.fit(X, y, sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
-    assert_raises_regex(ValueError, "When 'func' is provided, 'inverse_func'"
-                        " must also be provided", regr.fit, X, y)
+    with pytest.raises(ValueError, match="When 'func' is provided, "
+                       "'inverse_func' must also be provided"):
+        regr.fit(X, y)
 
 
 def test_transform_target_regressor_invertible():
@@ -115,8 +117,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
     # 2D vector. We check the consistency of the data shape using a 1D and 2D y
     # array.
     transformer = FunctionTransformer(func=lambda x: x + 1,
-                                      inverse_func=lambda x: x - 1,
-                                      validate=False)
+                                      inverse_func=lambda x: x - 1)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
@@ -227,7 +228,7 @@ def test_transform_target_regressor_multi_to_single():
     assert_allclose(y_pred_1d_func, y_pred_2d_func)
 
 
-class DummyCheckerArrayTransformer(BaseEstimator, TransformerMixin):
+class DummyCheckerArrayTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         assert isinstance(X, np.ndarray)
@@ -246,11 +247,11 @@ class DummyCheckerListRegressor(DummyRegressor):
 
     def fit(self, X, y, sample_weight=None):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def predict(self, X):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).predict(X)
+        return super().predict(X)
 
 
 def test_transform_target_regressor_ensure_y_array():
@@ -263,5 +264,71 @@ def test_transform_target_regressor_ensure_y_array():
                                     check_inverse=False)
     tt.fit(X.tolist(), y.tolist())
     tt.predict(X.tolist())
-    assert_raises(AssertionError, tt.fit, X, y.tolist())
-    assert_raises(AssertionError, tt.predict, X)
+    with pytest.raises(AssertionError):
+        tt.fit(X, y.tolist())
+    with pytest.raises(AssertionError):
+        tt.predict(X)
+
+
+class DummyTransformer(TransformerMixin, BaseEstimator):
+    """Dummy transformer which count how many time fit was called."""
+    def __init__(self, fit_counter=0):
+        self.fit_counter = fit_counter
+
+    def fit(self, X, y=None):
+        self.fit_counter += 1
+        return self
+
+    def transform(self, X):
+        return X
+
+    def inverse_transform(self, X):
+        return X
+
+
+@pytest.mark.parametrize("check_inverse", [False, True])
+def test_transform_target_regressor_count_fit(check_inverse):
+    # regression test for gh-issue #11618
+    # check that we only call a single time fit for the transformer
+    X, y = friedman
+    ttr = TransformedTargetRegressor(
+        transformer=DummyTransformer(), check_inverse=check_inverse
+    )
+    ttr.fit(X, y)
+    assert ttr.transformer_.fit_counter == 1
+
+
+class DummyRegressorWithExtraFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the regressor
+        assert not check_input
+        return super().fit(X, y, sample_weight)
+
+
+def test_transform_target_regressor_pass_fit_parameters():
+    X, y = friedman
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y, check_input=False)
+    assert regr.transformer_.fit_counter == 1
+
+
+def test_transform_target_regressor_route_pipeline():
+    X, y = friedman
+
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+    estimators = [
+        ('normalize', StandardScaler()), ('est', regr)
+    ]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y, **{'est__check_input': False})
+
+    assert regr.transformer_.fit_counter == 1

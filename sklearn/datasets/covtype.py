@@ -17,17 +17,17 @@ Courtesy of Jock A. Blackard and Colorado State University.
 from gzip import GzipFile
 import logging
 from os.path import dirname, exists, join
-from os import remove
+from os import remove, makedirs
 
 import numpy as np
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from ..utils import Bunch
 from .base import _pkl_filepath
-from ..utils.fixes import makedirs
-from ..externals import joblib
 from ..utils import check_random_state
 
 # The original data can be found in:
@@ -116,7 +116,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         remove(archive_path)
 
         X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32)
+        y = Xy[:, -1].astype(np.int32, copy=False)
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(y, targets_path, compress=9)
@@ -126,8 +126,10 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X, y = _refresh_cache([samples_path, targets_path], 9)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])

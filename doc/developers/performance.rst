@@ -101,7 +101,7 @@ dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_cl
 
   In [2]: from sklearn.datasets import load_digits
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
 Before starting the profiling session and engaging in tentative
 optimization iterations, it is important to measure the total execution
@@ -202,7 +202,7 @@ Now restart IPython and let us use this new toy::
 
   In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
@@ -227,13 +227,13 @@ Now restart IPython and let us use this new toy::
      178                                               # values justified in the paper
      179        48          144      3.0      0.0      alpha = 1
      180        48          113      2.4      0.0      beta = 0.1
-     181       638         1880      2.9      0.1      for n_iter in xrange(1, max_iter + 1):
+     181       638         1880      2.9      0.1      for n_iter in range(1, max_iter + 1):
      182       638       195133    305.9     10.2          grad = np.dot(WtW, H) - WtV
      183       638       495761    777.1     25.9          proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
      184       638         2449      3.8      0.1          if proj_gradient < tol:
      185        48          130      2.7      0.0              break
      186
-     187      1474         4474      3.0      0.2          for inner_iter in xrange(1, 20):
+     187      1474         4474      3.0      0.2          for inner_iter in range(1, 20):
      188      1474        83833     56.9      4.4              Hn = H - alpha * grad
      189                                                       # Hn = np.where(Hn > 0, Hn, 0)
      190      1474       194239    131.8     10.1              Hn = _pos(Hn)
@@ -328,6 +328,27 @@ memory alignment, direct blas calls...
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
+Using OpenMP
+------------
+
+Since scikit-learn can be built without OpenMP support, it's necessary to
+protect each direct call to OpenMP. This can be done using the following
+syntax::
+
+  # importing OpenMP
+  IF SKLEARN_OPENMP_SUPPORTED:
+      cimport openmp
+
+  # calling OpenMP
+  IF SKLEARN_OPENMP_SUPPORTED:
+      max_threads = openmp.omp_get_max_threads()
+  ELSE:
+      max_threads = 1
+
+.. note::
+
+   Protecting the parallel loop, ``prange``, is already done by cython.
+
 
 .. _profiling-compiled-extension:
 
@@ -339,26 +360,16 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------
 
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
-.. note::
-
-  google-perftools provides a nice 'line by line' report mode that
-  can be triggered with the ``--lines`` option. However this
-  does not seem to work correctly at the time of writing. This
-  issue can be tracked on the `project issue tracker
-  <https://github.com/gperftools/gperftools>`_.
-
-
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -369,26 +380,35 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
+``yep`` can be used to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report::
+
+  # Run yep to profile some python script
+  python -m yep -c my_file.py
+
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.prof
+
+.. note::
+
+   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   a profiling report 'line by line'.
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://pythonhosted.org/joblib
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts
-==============================================================
+A simple algorithmic trick: warm restarts
+=========================================
 
 See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_
