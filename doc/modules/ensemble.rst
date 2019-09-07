@@ -1285,7 +1285,7 @@ Note that it is also possible to get the output of the stacked outputs of the
     >>> final_layer = StackingRegressor(
     ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
     ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
-    ...     final_estimator=LinearRegression()
+    ...     final_estimator=RidgeCV()
     ...     )
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),

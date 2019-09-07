@@ -17,7 +17,7 @@ from ..base import MetaEstimatorMixin
 from .base import _parallel_fit_estimator
 
 from ..linear_model import LogisticRegression
-from ..linear_model import LinearRegression
+from ..linear_model import RidgeCV
 
 from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
@@ -533,7 +533,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `LinearRegression`.
+        The default regressor is a `RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy. Possible inputs for
@@ -577,12 +577,12 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.linear_model import RidgeCV
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import StackingRegressor
     >>> estimators = [
-    ...     ('lr', LinearRegression()),
+    ...     ('lr', RidgeCV()),
     ...     ('svr', LinearSVR(random_state=42))
     ... ]
     >>> reg = StackingRegressor(
@@ -620,7 +620,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         return names, estimators
 
     def _validate_final_estimator(self):
-        self._clone_final_estimator(default=LinearRegression())
+        self._clone_final_estimator(default=RidgeCV())
         if not is_regressor(self.final_estimator_):
             raise ValueError(
                 "'final_estimator' parameter should be a regressor. Got {}"
