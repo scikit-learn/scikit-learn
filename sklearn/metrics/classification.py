@@ -1638,7 +1638,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_pred = [0, 0, 0, 0, 0, 0]
     >>> precision_score(y_true, y_pred, average=None)
     array([0.33..., 0.        , 0.        ])
-    >>> precision_score(y_true, y_pred, zero_division=1)
+    >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
 
     Notes
@@ -1756,9 +1756,9 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     array([1., 0., 0.])
     >>> y_true = [0, 0, 0, 0, 0, 0]
     >>> recall_score(y_true, y_pred, average=None)
-    array([0.5, 0., 0.])
+    array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
-    array([0.5, 1., 1.])
+    array([0.5, 1. , 1. ])
 
     Notes
     -----
