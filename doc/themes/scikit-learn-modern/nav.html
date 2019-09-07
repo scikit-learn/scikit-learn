@@ -6,8 +6,8 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
-<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md bg-light py-0">
-  <div class="container-fluid {{ top_container_cls }}">
+<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
+  <div class="container-fluid {{ top_container_cls }} px-0">
     {%- if logo %}
       <a class="navbar-brand py-0" href="{{ pathto('index') }}">
         <img
@@ -17,7 +17,7 @@
       </a>
     {%- endif %}
     <button
-      class="sk-toggler-icon navbar-toggler"
+      class="navbar-toggler"
       type="button"
       data-toggle="collapse"
       data-target="#navbarSupportedContent"
@@ -43,13 +43,17 @@
           <a class="sk-nav-link nav-link" href="{{ pathto('auto_examples/index') }}">Examples</a>
         </li>
         <li class="nav-item dropdown">
-          <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            Documentation
-          </a>
+          <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Docs</a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/basic/tutorial') }}"></a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="#">Another action</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="#">Something else here</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/basic/tutorial') }}">Quick Start</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/index') }}">Tutorial</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('glossary') }}">Glossary</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('developers/index') }}">Development</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('faq') }}">FAQ</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('related_projects') }}">Related packages</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('roadmap') }}">Roadmap</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('about') }}">About us</a>
+            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('documentation') }}">Index</a>
           </div>
         </li>
       </ul>

@@ -146,10 +146,6 @@ div.clearer {
   width: 80%;
 }
 
-.gsc-input {
-  padding-right: 0;
-}
-
 div.gsc-input-box {
   padding-top: 0;
   padding-bottom: 0;
@@ -163,12 +159,16 @@ div.gsc-control-cse {
 
 button.gsc-search-button {
   border-radius: 0.25rem;
-  padding: 10px 10px;
+  padding: 8px;
 }
 
 button.gsc-search-button:hover,
 button.gsc-search-button:active {
   background-color: #388bb5;
+}
+
+table.gsc-search-box {
+  padding-top: 4px;
 }
 
 div.gsc-results-wrapper-visible {
@@ -186,7 +186,7 @@ div.gsc-results {
 
 @media screen and (min-width: 768px) {
   .sk-search-form {
-    width: 16rem;
+    width: 14rem;
   }
 }
 
@@ -203,17 +203,12 @@ img.sk-brand-img {
   height: 48px;
 }
 
-button.sk-nav-togger-button {
-  color: rgba(0,0,0,.5);
-  border-color: rgba(0,0,0,.1);
-}
-
-a.sk-nav-link, a.sk-dropdown-item {
-  color: rgba(23, 23, 23, 1);
+.navbar-light .navbar-nav a.nav-link, a.sk-dropdown-item  {
+  color: rgba(77, 77, 77, 1);
   font-weight: 500;
 }
 
-a.sk-nav-link:hover, a.sk-dropdown-item:hover {
+.navbar-light .navbar-nav a.nav-link:hover, a.sk-dropdown-item:hover {
   color: rgba(246, 126, 0, 1);
 }
 
