@@ -333,6 +333,8 @@ def test_stacking_set_get_params(stacking_estimator):
     ids=['StackingClassifier', 'StackingRegressor']
 )
 def test_stacking_randomness(estimator, X, y):
+    # checking that fixing the random state of the CV will lead to the same
+    # results
     estimator_full = clone(estimator)
     estimator_full.set_params(
         cv=KFold(shuffle=True, random_state=np.random.RandomState(0))
@@ -361,8 +363,6 @@ def test_stacking_randomness(estimator, X, y):
     ids=['StackingClassifier', 'StackingRegressor']
 )
 def test_check_estimators_stacking_estimator(estimator):
-    # FIXME: to be removed when meta-estimators can specified themselves
-    # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 

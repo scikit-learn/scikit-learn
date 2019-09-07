@@ -195,7 +195,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        cv = 3 if self.cv is None else self.cv
+        cv = 5 if self.cv is None else self.cv
         cv = check_cv(cv, y=y, classifier=is_classifier(self))
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
@@ -305,10 +305,11 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         The default classifier is a `LogisticRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy. Possible inputs for
+        Determines the cross-validation splitting strategy used in
+        `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
@@ -319,6 +320,12 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+           A larger number of split will provide no benefits if the number
+           of training samples is large enough. Indeed, the training time
+           will increase. ``cv`` is not used for model evaluation but for
+           prediction.
 
     stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
             default='auto'
@@ -516,7 +523,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     Note that `estimators_` are fitted on the full `X` while `final_estimator_`
     is trained using cross-validated predictions of the base estimators using
-    `cross_val_predict`).
+    `cross_val_predict`.
 
     .. versionadded:: 0.22
 
@@ -534,10 +541,11 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         The default regressor is a `RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy. Possible inputs for
+        Determines the cross-validation splitting strategy used in
+        `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
@@ -548,6 +556,12 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+           A larger number of split will provide no benefits if the number
+           of training samples is large enough. Indeed, the training time
+           will increase. ``cv`` is not used for model evaluation but for
+           prediction.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.

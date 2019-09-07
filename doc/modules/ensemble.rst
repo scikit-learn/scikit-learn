@@ -1243,10 +1243,9 @@ to be called on the training data::
   StackingRegressor(...)
 
 During training, the `estimators` are fitted on the whole training data
-`X_train`. They will be used when calling `predict`, `predict`, or
-`predict_proba`. To generalize and avoid over-fitting, the
-`final_estimator` is trained on out-samples using
-:func:`sklearn.model_selection.cross_val_predict` internally.
+`X_train`. They will be used when calling `predict`, or `predict_proba`. To
+generalize and avoid over-fitting, the `final_estimator` is trained on
+out-samples using :func:`sklearn.model_selection.cross_val_predict` internally.
 
 For :class:`StackingClassifier`, note that the output of the ``estimators`` is
 controlled by the parameter `stack_method` and it is called by each estimator.
