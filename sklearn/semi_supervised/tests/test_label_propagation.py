@@ -120,9 +120,7 @@ def test_valid_alpha():
                                random_state=0)
     for alpha in [-0.1, 0, 1, 1.1, None]:
         with pytest.raises(ValueError):
-            (lambda **kwargs:
-             label_propagation.LabelSpreading(**kwargs).
-             fit(X, y))(alpha=alpha)
+            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 def test_convergence_speed():
