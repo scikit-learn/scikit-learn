@@ -1212,7 +1212,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
 
 def _prf_divide(numerator, denominator, metric,
-                modifier, average, warn_for, zero_division):
+                modifier, average, warn_for, zero_division="warn"):
     """Performs division and handles divide-by-zero.
 
     On zero-division, sets the corresponding result elements equal to
@@ -1222,9 +1222,8 @@ def _prf_divide(numerator, denominator, metric,
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
     """
-    # TODO: check the comment line is useless
     mask = denominator == 0.0
-    # denominator = denominator.copy()
+    denominator = denominator.copy()
     denominator[mask] = 1  # avoid infs/nans
     result = numerator / denominator
 
@@ -1235,18 +1234,15 @@ def _prf_divide(numerator, denominator, metric,
     result[mask] = float(zero_division == 1)
 
     # the user will be removing warnings if zero_division is set to something
-    # different than its default value
-    if zero_division != "warn":
+    # different than its default value. If we are computing only f-score
+    # the warning will be raised only if precision and recall are ill-defined
+    if zero_division != "warn" or metric not in warn_for:
         return result
 
     # build appropriate warning
     # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
     # labels with no predicted samples. Use ``zero_division`` parameter to
     # control this behavior."
-    axis0 = 'sample'
-    axis1 = 'label'
-    if average == 'samples':
-        axis0, axis1 = axis1, axis0
 
     if metric in warn_for and 'f-score' in warn_for:
         msg_start = '{0} and F-score are'.format(metric.title())
@@ -1257,15 +1253,25 @@ def _prf_divide(numerator, denominator, metric,
     else:
         return result
 
+    msg = _build_prf_warning_message(average, modifier, msg_start, len(result))
+
+    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    return result
+
+
+def _build_prf_warning_message(average, modifier, msg_start, result_size):
+    axis0 = 'sample'
+    axis1 = 'label'
+    if average == 'samples':
+        axis0, axis1 = axis1, axis0
     msg = ('{0} ill-defined and being set to 0.0 {{0}} '
            'no {1} {2}s. Use ``zero_division`` parameter to control'
            ' this behavior.'.format(msg_start, modifier, axis0))
-    if len(mask) == 1:
+    if result_size == 1:
         msg = msg.format('due to')
     else:
         msg = msg.format('in {0}s with'.format(axis1))
-    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-    return result
+    return msg
 
 
 def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
@@ -1480,13 +1486,19 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-
     precision = _prf_divide(tp_sum, pred_sum, 'precision',
                             'predicted', average, warn_for, zero_division)
     recall = _prf_divide(tp_sum, true_sum, 'recall',
                          'true', average, warn_for, zero_division)
 
-    # TODO: make sure it warns when beta=0 and beta=inf
+    # warn for f-score only if zero_division is warn, it is in warn_for
+    # and BOTH prec and rec are ill-defined
+    if zero_division == "warn" and ("f-score",) == warn_for:
+        if (pred_sum[true_sum == 0] == 0).any():
+            msg = _build_prf_warning_message(
+                average, "true nor predicted", 'F-score is', len(true_sum)
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
     # if tp == 0 F will be 1 only if all predictions are zero, all labels are
     # zero, and zero_division=1. In all other case, 0

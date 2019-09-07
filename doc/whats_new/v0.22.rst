@@ -266,6 +266,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added a new parameter ``zero_division`` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. This allows to set returned value for
+  ill-defined metrics.
+  :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
+
 - |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
   calculates euclidean distances in the presence of missing values.
   :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
