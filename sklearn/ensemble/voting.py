@@ -129,7 +129,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         return self._get_params('estimators', deep=deep)
 
 
-class VotingClassifier(_BaseVoting, ClassifierMixin):
+class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -359,7 +359,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             return self._predict(X)
 
 
-class VotingRegressor(_BaseVoting, RegressorMixin):
+class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21

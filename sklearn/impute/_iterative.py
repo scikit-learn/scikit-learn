@@ -25,7 +25,7 @@ _ImputerTriplet = namedtuple('_ImputerTriplet', ['feat_idx',
                                                  'estimator'])
 
 
-class IterativeImputer(BaseEstimator, TransformerMixin):
+class IterativeImputer(TransformerMixin, BaseEstimator):
     """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
@@ -122,7 +122,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         See :term:`the Glossary <random_state>`.
 
     add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack onto output
+        If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on
