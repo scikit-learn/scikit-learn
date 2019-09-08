@@ -10,7 +10,6 @@ def test_rbm():
     script = """
     import pytest
 
-
     with pytest.warns(DeprecationWarning,
                       match="not work anymore in version 0.24"):
         from sklearn.neural_network.rbm import BernoulliRBM
@@ -21,7 +20,6 @@ def test_rbm():
 def test_multilayer_perceptron():
     script = """
     import pytest
-
 
     with pytest.warns(DeprecationWarning,
                       match="not work anymore in version 0.24"):
