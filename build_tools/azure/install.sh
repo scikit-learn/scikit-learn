@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 UNAMESTR=`uname`
 
@@ -18,8 +17,6 @@ if [[ "$UNAMESTR" == "Darwin" ]]; then
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 fi
-
-conda_version=$(conda -V | awk '{print $2}')
 
 make_conda() {
     TO_INSTALL="$@"
@@ -67,6 +64,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
     # for more details. restore_free_channel is defined starting from conda 4.7
+    conda_version=$(conda -V | awk '{print $2}')
     if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --set restore_free_channel true
     fi
