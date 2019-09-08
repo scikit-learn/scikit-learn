@@ -514,40 +514,12 @@ def test_regressormixin_score_multioutput():
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
 
 
-def test_validate_X_n_feature_mismatch():
-    # Make sure ValueError is raised when there is a n_features mismatch
-    # between fit and predict/transform
-
-    X = [[0, 1], [2, 3]]
-
-    ss = StandardScaler().fit(X)
-    ss.transform(X)  # All good
-
-    with pytest.raises(ValueError, match="X has 3 features, but"):
-        X_more_features = [[0, 1, 4], [2, 3, 5]]
-        ss.transform(X_more_features)
-
-
 def test_validate_X_bad_kwargs():
 
     est = BaseEstimator()
     with pytest.raises(TypeError,
                        match="got an unexpected keyword"):
         est._validate_X([1], bad_param=4)
-
-
-def test_n_features_in_attribute():
-    # Make sure n_features_in_ is correctly set.
-    # TODO: eventually move this in estimator_checks
-    X_2 = [[0, 1], [2, 3]]
-    X_3 = [[0, 1, 4], [2, 3, 5]]
-
-    ss = StandardScaler()
-    assert not hasattr(ss, 'n_features_in_')
-    ss.fit(X_2)
-    assert ss.n_features_in_ == 2
-    ss = ss.fit(X_3)
-    assert ss.n_features_in_ == 3
 
 
 def test_warns_on_get_params_non_attribute():
