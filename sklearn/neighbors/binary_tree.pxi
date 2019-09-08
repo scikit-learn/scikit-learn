@@ -289,6 +289,8 @@ metric : string or DistanceMetric object
     are valid for {BinaryTree}.
 
 Additional keywords are passed to the distance metric class.
+Note: Callable functions in the metric parameter is NOT supported for KDTree
+and Ball Tree. Function call overhead will result in very poor performance.
 
 Attributes
 ----------
