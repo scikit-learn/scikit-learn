@@ -55,28 +55,23 @@
           </a>
           {%- endif %}
         </div>
-        {%- if rellinks -%}
-          <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
-            {%- set rellinks_previous = rellinks[-1] %}
-            {%- if rellinks_previous[2] == 'P' %}
-              <a href="{{ pathto(rellinks_previous[0]) }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ rellinks_previous[1]|striptags }}">Prev</a>
-            {%- else %}
-              <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Prev</a>
-            {%- endif %}
-            {%- if parents -%}
-              <a href="{{ parents[-1].link }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title }}">Up</a>
-            {%- else %}
-              <a href="#" role="button" class="btn sk-btn-rellink disabled py-1">Up</a>
-            {%- endif %}
-
-            {%- set rellinks_next = rellinks[0] %}
-            {%- if rellinks_next[2] == 'N' %}
-              <a href="{{ pathto(rellinks_next[0]) }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ rellinks_next[1]|striptags }}">Next</a>
-            {%- else %}
-              <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Next</a>
-            {%- endif %}
-          </div>
-        {%- endif %}
+        <div class="btn-group w-100 mb-2" role="group" aria-label="rellinks">
+          {%- if prev %}
+            <a href="{{ prev.link|e }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ prev.title|striptags }}">Prev</a>
+          {%- else %}
+            <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Prev</a>
+          {%- endif %}
+          {%- if parents -%}
+            <a href="{{ parents[-1].link }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title }}">Up</a>
+          {%- else %}
+            <a href="#" role="button" class="btn sk-btn-rellink disabled py-1">Up</a>
+          {%- endif %}
+          {%- if next %}
+            <a href="{{ next.link|e }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ next.title|striptags }}">Next</a>
+          {%- else %}
+            <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Next</a>
+          {%- endif %}
+        </div>
         {%- if pagename != "install" %}
         <div class="alert alert-danger p-1 mb-2" role="alert">
           <p class="text-center mb-0">
