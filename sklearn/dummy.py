@@ -19,7 +19,7 @@ from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 
 
-class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
+class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -353,7 +353,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         return super().score(X, y, sample_weight)
 
 
-class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
+class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
