@@ -249,6 +249,10 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
+- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`  
+  now correctly scores when `cv=None`.
+  :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.manifold`
 .......................
 
