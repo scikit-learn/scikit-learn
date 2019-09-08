@@ -735,6 +735,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     nominal_attributes = None
     frame = None
+    # If as_frame=True, return data as a Dataframe
     if as_frame:
         columns = data_columns + target_columns
         frame = _convert_arff_data_dataframe(arff, columns, features_dict)
@@ -745,6 +746,42 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             y = frame[target_columns[0]]
         else:
             y = None
+    # If as_frame='auto', check wether or not the data can be stored as an array.
+    # If not, then return it as a Dataframe.
+    elif as_frame == 'auto':
+        # nominal attributes is a dict mapping from the attribute name to the
+        # possible values. Includes also the target column (which will be
+        # popped off below, before it will be packed in the Bunch object)
+        nominal_attributes = {k: v for k, v in arff['attributes']
+                              if isinstance(v, list) and
+                              k in data_columns + target_columns}
+
+        X, y = _convert_arff_data(arff['data'], col_slice_x,
+                                  col_slice_y, shape)
+
+        is_classification = {col_name in nominal_attributes
+                             for col_name in target_columns}
+        if not is_classification:
+            # No target
+            pass
+        elif all(is_classification):
+            y = np.hstack([
+                np.take(
+                    np.asarray(nominal_attributes.pop(col_name), dtype='O'),
+                    y[:, i:i + 1].astype(int, copy=False))
+                for i, col_name in enumerate(target_columns)
+            ])
+        elif any(is_classification):
+            columns = data_columns + target_columns
+            frame = _convert_arff_data_dataframe(arff, columns, features_dict)
+            X = frame[data_columns]
+            if len(target_columns) >= 2:
+                y = frame[target_columns]
+            elif len(target_columns) == 1:
+                y = frame[target_columns[0]]
+            else:
+                y = None
+    # If as_frame=False, return data as an array
     else:
         # nominal attributes is a dict mapping from the attribute name to the
         # possible values. Includes also the target column (which will be
