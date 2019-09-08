@@ -106,14 +106,13 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         upper_idx = np.triu_indices(n_features, 1)
 
         non_constant_features = n_features
-        for i, mask in enumerate(ptp_mask):
-            if not mask:
-                feat_remove_mask = np.logical_and(upper_idx[0] != i,
-                                                  upper_idx[1] != i)
-                upper_idx = (upper_idx[0][feat_remove_mask],
-                             upper_idx[1][feat_remove_mask])
-                support_mask[i] = False
-                non_constant_features -= 1
+        for i in np.flatnonzero(~ptp_mask):
+            feat_remove_mask = np.logical_and(upper_idx[0] != i,
+                                              upper_idx[1] != i)
+            upper_idx = (upper_idx[0][feat_remove_mask],
+                         upper_idx[1][feat_remove_mask])
+            support_mask[i] = False
+            non_constant_features -= 1
 
         for _ in range(non_constant_features - 1):
             max_idx = np.argmax(X_corr[upper_idx])
