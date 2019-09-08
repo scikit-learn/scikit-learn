@@ -491,11 +491,11 @@ def test_multilabel_confusion_matrix_errors():
                                                    [3, 4, 5]])
 
     # Bad labels
-    err_msg = "All labels must be in [0, n labels)"
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
+    err_msg = r"All labels must be in \[0, n labels\)"
+    with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix(y_true, y_pred, labels=[-1])
-    err_msg = "All labels must be in [0, n labels)"
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
+    err_msg = r"All labels must be in \[0, n labels\)"
+    with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix(y_true, y_pred, labels=[3])
 
     # Using samplewise outside multilabel
@@ -1151,24 +1151,24 @@ def test_multilabel_hamming_loss():
 def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
-    err_msg = "pos_label=2 is not a valid label: array([0, 1])"
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
+    err_msg = r"pos_label=2 is not a valid label: array\(\[0, 1\]\)"
+    with pytest.raises(ValueError, match=err_msg):
         jaccard_score(y_true, y_pred, average='binary', pos_label=2)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    msg1 = ("Target is multilabel-indicator but average='binary'. "
-            "Please choose another average setting, one of [None, "
-            "'micro', 'macro', 'weighted', 'samples'].")
-    with pytest.raises(ValueError, match=re.escape(msg1)):
+    msg1 = (r"Target is multilabel-indicator but average='binary'. "
+            r"Please choose another average setting, one of \[None, "
+            r"'micro', 'macro', 'weighted', 'samples'\].")
+    with pytest.raises(ValueError, match=msg1):
         jaccard_score(y_true, y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
-    msg2 = ("Target is multiclass but average='binary'. Please choose "
-            "another average setting, one of [None, 'micro', 'macro', "
-            "'weighted'].")
-    with pytest.raises(ValueError, match=re.escape(msg2)):
+    msg2 = (r"Target is multiclass but average='binary'. Please choose "
+            r"another average setting, one of \[None, 'micro', 'macro', "
+            r"'weighted'\].")
+    with pytest.raises(ValueError, match=msg2):
         jaccard_score(y_true, y_pred, average='binary')
     msg3 = ("Samplewise metrics are not available outside of multilabel "
             "classification.")
@@ -1685,14 +1685,14 @@ def test_prf_average_binary_data_non_binary():
     # Error if user does not explicitly set non-binary average mode
     y_true_mc = [1, 2, 3, 3]
     y_pred_mc = [1, 2, 3, 1]
-    msg_mc = ("Target is multiclass but average='binary'. Please "
-              "choose another average setting, one of ["
-              "None, 'micro', 'macro', 'weighted'].")
+    msg_mc = (r"Target is multiclass but average='binary'. Please "
+              r"choose another average setting, one of \["
+              r"None, 'micro', 'macro', 'weighted'\].")
     y_true_ind = np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])
     y_pred_ind = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-    msg_ind = ("Target is multilabel-indicator but average='binary'. Please "
-               "choose another average setting, one of ["
-               "None, 'micro', 'macro', 'weighted', 'samples'].")
+    msg_ind = (r"Target is multilabel-indicator but average='binary'. Please "
+               r"choose another average setting, one of \["
+               r"None, 'micro', 'macro', 'weighted', 'samples'\].")
 
     for y_true, y_pred, msg in [
         (y_true_mc, y_pred_mc, msg_mc),
@@ -1700,7 +1700,7 @@ def test_prf_average_binary_data_non_binary():
     ]:
         for metric in [precision_score, recall_score, f1_score,
                        partial(fbeta_score, beta=2)]:
-            with pytest.raises(ValueError, match=re.escape(msg)):
+            with pytest.raises(ValueError, match=msg):
                 metric(y_true, y_pred)
 
 
@@ -1948,9 +1948,9 @@ def test_log_loss():
     y_true = [2, 2]
     y_pred = [[0.2, 0.7], [0.6, 0.5]]
     y_score = np.array([[0.1, 0.9], [0.1, 0.9]])
-    error_str = ('y_true contains only one label (2). Please provide '
-                 'the true labels explicitly through the labels argument.')
-    with pytest.raises(ValueError, match=re.escape(error_str)):
+    error_str = (r'y_true contains only one label \(2\). Please provide '
+                 r'the true labels explicitly through the labels argument.')
+    with pytest.raises(ValueError, match=error_str):
         log_loss(y_true, y_pred)
 
     y_pred = [[0.2, 0.7], [0.6, 0.5], [0.2, 0.3]]
