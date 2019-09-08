@@ -1,9 +1,7 @@
-"""Spectral biclustering algorithms.
+"""Spectral biclustering algorithms."""
+# Authors : Kemal Eren
+# License: BSD 3 clause
 
-Authors : Kemal Eren
-License: BSD 3 clause
-
-"""
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
