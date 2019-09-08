@@ -33,6 +33,7 @@ jobs:
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-latest'
         PYTHON_VERSION: '*'
+        PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
