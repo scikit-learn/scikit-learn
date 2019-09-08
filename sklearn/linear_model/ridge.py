@@ -409,7 +409,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
         X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
-        y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
+        y = check_array(y, dtype=X.dtype, ensure_2d=False, order=None)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -521,7 +521,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
+class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -602,7 +602,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         return self
 
 
-class Ridge(_BaseRidge, RegressorMixin):
+class Ridge(RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
     Minimizes the objective function::
@@ -631,7 +631,7 @@ class Ridge(_BaseRidge, RegressorMixin):
     fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -864,6 +864,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     n_iter_ : array or None, shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -1481,7 +1484,8 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
-            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
+            # signature of scorer is (estimator, X, y)
+            out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
                    for i in range(len(self.alphas))]
             best = np.argmax(out)
 
@@ -1502,7 +1506,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel, MultiOutputMixin):
+class _BaseRidgeCV(MultiOutputMixin, LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1574,7 +1578,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         return self
 
 
-class RidgeCV(_BaseRidgeCV, RegressorMixin):
+class RidgeCV(RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1598,7 +1602,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     fit_intercept : bool, default True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1711,7 +1715,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1758,7 +1762,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Cross-validation values for each alpha (if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
-        ``{loss,score}_func`` function (if provided in the constructor).
+        ``{loss,score}_func`` function (if provided in the constructor). This
+        attribute exists only when ``store_cv_values`` is True.
 
     coef_ : array, shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
@@ -1771,6 +1776,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------

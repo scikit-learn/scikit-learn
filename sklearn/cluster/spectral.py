@@ -272,7 +272,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator, ClusterMixin):
+class SpectralClustering(ClusterMixin, BaseEstimator):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -373,7 +373,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    labels_ :
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
     Examples

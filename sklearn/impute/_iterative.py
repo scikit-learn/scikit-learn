@@ -14,8 +14,9 @@ from ..preprocessing import normalize
 from ..utils import check_array, check_random_state, safe_indexing
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils import is_scalar_nan
+from ..utils.mask import _get_mask
 
-from ._base import (_get_mask, MissingIndicator, SimpleImputer,
+from ._base import (MissingIndicator, SimpleImputer,
                     _check_inputs_dtype)
 
 
@@ -24,7 +25,7 @@ _ImputerTriplet = namedtuple('_ImputerTriplet', ['feat_idx',
                                                  'estimator'])
 
 
-class IterativeImputer(BaseEstimator, TransformerMixin):
+class IterativeImputer(TransformerMixin, BaseEstimator):
     """Multivariate imputer that estimates each feature from all the others.
 
     A strategy for imputing missing values by modeling each feature with
@@ -121,7 +122,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         See :term:`the Glossary <random_state>`.
 
     add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack onto output
+        If True, a :class:`MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on
@@ -627,7 +628,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """
-        check_is_fitted(self, 'initial_imputer_')
+        check_is_fitted(self)
 
         if self.add_indicator:
             X_trans_indicator = self.indicator_.transform(X)
