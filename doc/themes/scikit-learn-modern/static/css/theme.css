@@ -226,7 +226,13 @@ a.sk-nav-dropdown-item:active {
 /* LANDING PAGE STYLE */
 
 div.sk-landing-container {
-  max-width: 1240px;
+  max-width: 1400px;
+}
+
+div.index-box {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 div.sk-landing-bg-more-info dd {
@@ -286,7 +292,7 @@ img.sk-footer-funding-logo {
 /* DOCS STYLE */
 
 .navbar > .sk-docs-container {
-  max-width: 1240px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -317,7 +323,7 @@ img.sk-footer-funding-logo {
 }
 
 #sk-doc-wrapper {
-  max-width: 1240px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
@@ -348,7 +354,7 @@ div.section h6 {
   cursor: pointer;
 }
 
-@media screen and (min-width: 1240px) {
+@media screen and (min-width: 1400px) {
   .sk-btn-toggle-toc {
     border-top-left-radius: 0.5rem;
   }
@@ -380,6 +386,9 @@ nav.sk-docs-navbar {
 
   #sk-page-content-wrapper {
     padding-left: 240px;
+    max-width: 1240px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   #sk-sidebar-wrapper {
