@@ -413,7 +413,8 @@ Changelog
 
 - |Enhancement| label_binarize now supports list of lists for multilabel data
   :func:`preprocessing.label_binarize`
-  :pr:`14865` by :user:`Léonard Binet <leonardbinet>`.
+  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :user:`Léonard Binet <leonardbinet>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -465,7 +466,8 @@ Changelog
 
 - |Enhancement| is_multilabel now detects list of lists for multilabel data
   :func:`utils.multiclass.is_multilabel`
-  :pr:`14865` by :user:`Léonard Binet <leonardbinet>`.
+  :pr:`14865` by :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :user:`Léonard Binet <leonardbinet>`.
 
 :mod:`sklearn.neighbors`
 ....................
