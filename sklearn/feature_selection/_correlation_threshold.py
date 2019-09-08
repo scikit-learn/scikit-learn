@@ -83,7 +83,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         if issparse(X):
             mins, maxes = min_max_axis(X, axis=0)
             peak_to_peaks = maxes - mins
-            ptp_mask = ~np.isclose(peak_to_peaks, 0.0)
+            constant_mask = np.isclose(peak_to_peaks, 0.0)
 
             # sparse correlation
             mu, sparse_var = mean_variance_axis(X, 0)
@@ -92,11 +92,12 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             stddev = np.sqrt(np.diag(X_corr))
 
             # # only divide when feature is non constant
-            X_corr[ptp_mask, :] /= stddev[ptp_mask][:, None]
-            X_corr[:, ptp_mask] /= stddev[ptp_mask][None, :]
+            non_constant_mask = ~constant_mask
+            X_corr[non_constant_mask, :] /= stddev[non_constant_mask][:, None]
+            X_corr[:, non_constant_mask] /= stddev[non_constant_mask][None, :]
         else:
             peak_to_peaks = np.ptp(X, axis=0)
-            ptp_mask = ~np.isclose(peak_to_peaks, 0.0)
+            constant_mask = np.isclose(peak_to_peaks, 0.0)
             X_corr = np.corrcoef(X, rowvar=False)
 
         np.fabs(X_corr, out=X_corr)
@@ -106,7 +107,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         upper_idx = np.triu_indices(n_features, 1)
 
         non_constant_features = n_features
-        for i in np.flatnonzero(~ptp_mask):
+        for i in np.flatnonzero(constant_mask):
             feat_remove_mask = np.logical_and(upper_idx[0] != i,
                                               upper_idx[1] != i)
             upper_idx = (upper_idx[0][feat_remove_mask],
