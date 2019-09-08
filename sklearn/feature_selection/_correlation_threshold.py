@@ -87,14 +87,7 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
 
             # sparse correlation
             mu, sparse_var = mean_variance_axis(X, 0)
-            X_diff = X - mu[None, :]
-            X_corr = safe_sparse_dot(X_diff.T, X_diff, dense_output=True)
-            stddev = np.sqrt(np.diag(X_corr))
-
-            # # only divide when feature is non constant
-            non_constant_mask = ~constant_mask
-            X_corr[non_constant_mask, :] /= stddev[non_constant_mask][:, None]
-            X_corr[:, non_constant_mask] /= stddev[non_constant_mask][None, :]
+            X_corr = _sparse_correlation(X, mu, ~constant_mask)
         else:
             peak_to_peaks = np.ptp(X, axis=0)
             constant_mask = np.isclose(peak_to_peaks, 0.0)
@@ -166,3 +159,30 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
     def _get_support_mask(self):
         check_is_fitted(self)
         return self.support_mask_
+
+
+def _sparse_correlation(X, mu, non_constant_mask):
+    """Calcuate Pearson correlation for sparse matrices
+
+    Parameters
+    ----------
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to find correlation on.
+
+    mu : ndarray of shape (n_features,)
+        Mean of feature columns.
+
+    non_constant_mask : ndarray of shape (n_features,)
+        Boolean mask for non constant features.
+
+    Returns
+    -------
+    correlation matrix : ndarray of shape (n_features, n_features)
+    """
+    X_diff = X - mu[None, :]
+    X_corr = safe_sparse_dot(X_diff.T, X_diff, dense_output=True)
+    stddev = np.sqrt(np.diag(X_corr))
+
+    X_corr[non_constant_mask, :] /= stddev[non_constant_mask][:, None]
+    X_corr[:, non_constant_mask] /= stddev[non_constant_mask][None, :]
+    return X_corr
