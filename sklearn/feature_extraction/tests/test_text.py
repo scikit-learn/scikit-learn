@@ -1343,3 +1343,16 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
            )
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+
+@pytest.mark.parametrize('Vectorizer, X', (
+    (HashingVectorizer, [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]),
+    (CountVectorizer, JUNK_FOOD_DOCS))
+)
+def test_n_features_in(Vectorizer, X):
+    # For vectorizers, n_features_in_ does not make sense and it is always
+    # None
+    vectorizer = Vectorizer()
+    assert vectorizer.n_features_in_ is None
+    vectorizer.fit(X)
+    assert vectorizer.n_features_in_ is None
