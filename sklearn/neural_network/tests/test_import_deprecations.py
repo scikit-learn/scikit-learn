@@ -11,7 +11,7 @@ def test_rbm():
     import pytest
 
     with pytest.warns(DeprecationWarning,
-                      match="not work anymore in version 0.24"):
+                      match="removed in version 0.24"):
         from sklearn.neural_network.rbm import BernoulliRBM
     """
     assert_run_python_script(textwrap.dedent(script))
@@ -22,7 +22,7 @@ def test_multilayer_perceptron():
     import pytest
 
     with pytest.warns(DeprecationWarning,
-                      match="not work anymore in version 0.24"):
+                      match="removed in version 0.24"):
         from sklearn.neural_network.multilayer_perceptron import MLPClassifier
     """
     assert_run_python_script(textwrap.dedent(script))
