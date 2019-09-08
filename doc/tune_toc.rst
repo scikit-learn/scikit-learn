@@ -26,7 +26,7 @@
        $('.toctree-l2').hover(
            function () {
                if ($(this).children('ul').length > 0) {
-                   $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
+                   $(this).css('background-color', '#e5e5e5').children('ul').css('background-color', '#F0F0F0');
                    $(this).attr('data-content',
                        (!$(this).children('ul').is(':hidden')) ? '\u25bc' : '\u25ba');
                }
