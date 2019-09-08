@@ -1485,23 +1485,18 @@ class GroupShuffleSplit(ShuffleSplit):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupShuffleSplit
-    >>> X = np.array([[1, 2], [3, 4], [5, 6]])
-    >>> y = np.array([1, 2, 1])
-    >>> groups = np.array([1, 2, 3])
-    >>> gss = GroupShuffleSplit(n_splits=2, train_size=.5, random_state=42)
+    >>> X = np.ones(shape=(8, 2))
+    >>> y = np.ones(shape=(8, 1))
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 3, 3])
+    >>> print(groups.shape)
+    (8,)
+    >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
     >>> gss.get_n_splits()
     2
-    >>> for train_index, test_index in gss.split(X, y, groups):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
-    TRAIN: [2] TEST: [0 1]
-    [[5 6]] [[1 2]
-     [3 4]] [1] [1 2]
-    TRAIN: [0] TEST: [1 2]
-    [[1 2]] [[3 4]
-     [5 6]] [1] [2 1]
+    >>> for train_idx, test_idx in gss.split(X, y, groups):
+    ...    print("TRAIN:", train_idx, "TEST:", test_idx)
+    TRAIN: [2 3 4 5 6 7] TEST: [0 1]
+    TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
