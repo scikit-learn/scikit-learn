@@ -870,6 +870,17 @@ div.testimonial p {
   padding-left: 230px;
 }
 
+/* Algorithm cheet-sheet */
+
+div.sk-page-content img.map {
+  position: absolute;
+  max-width: unset;
+  transform-origin: left top;
+  -webkit-transform: scale(0.5);
+      -ms-transform: scale(0.5);
+          transform: scale(0.5);
+}
+
 /* pygments - highlightning */
 
 .highlight .hll { background-color: #ffffcc }

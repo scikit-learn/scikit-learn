@@ -23,57 +23,7 @@ Click on any estimator in the chart below to see its documentation.
 
 .. raw:: html
 
-    <style>
-    body {
-    	display: inline-block;
-    }
-    div.content-wrapper {
-        max-width: 100%;
-    }
-    div.bodywrapper h1 {
-        text-align: left;
-    }
-    div.content {
-        margin-left: 0;
-	height: 1300px;
-	width: 1680px;
-    }
-    div.map {
-    	position: absolute;
-	left: -145px;
-	top: 195px;
-	width: 2117px;
-  	-webkit-transform: scale(0.67); /* Saf3.1+, Chrome */
-     	-moz-transform: scale(0.67); /* FF3.5+ */
-     	-ms-transform: scale(0.67); /* IE9 */
-       	-o-transform: scale(0.67); /* Opera 10.5+ */
-        transform: scale(0.67);
-    }
-    div.body img {
-        max-width: 100%;
-    }
-    p {
-        max-width: 2150px;
-	margin-left: auto;
-	margin-right: auto;
-
-    }
-    p.logo {
-    	padding-left: 0px;
-    }
-    </style>
-
-    <body>
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-	<script type="text/javascript" src="../../_static/jquery.maphilight.min.js"></script>
-	<script type="text/javascript" src="../../_static/jquery.min.js"></script>
-	<script type="text/javascript">$(function() {
-		$('.map').maphilight({
-	            fade: true
-	        });
-	});</script>
-      <p>
-        <img src="../../_static/ml_map.png" class="map" width="2122" height="1323" alt="Move mouse over image" usemap="#imgmap">
+        <img src="../../_static/ml_map.png" class="map" alt="Move mouse over image" usemap="#imgmap">
       	    <map name="imgmap">
 	    	<area href="../../documentation.html" title="Back to Documentation" shape="poly" coords="97,1094, 76,1097, 56,1105, 40,1120, 35,1132, 34,1145, 35,1153, 40,1162, 46,1171, 54,1177, 62,1182, 72,1187, 81,1188, 100,1189, 118,1186, 127,1182, 136,1177, 146,1170, 152,1162, 155,1158, 158,1146, 158,1126, 143,1110, 138,1105, 127,1100, 97,1094"></area>
 		<area href="../../modules/linear_model.html#elastic-net" title="Elastic Net Documentation" shape="poly" coords="1556,446, 1556,446, 1556,476, 1556,476, 1556,476, 1676,476, 1676,476, 1676,476, 1676,446, 1676,446, 1676,446, 1556,446, 1556,446" data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'></area>
@@ -103,12 +53,3 @@ Click on any estimator in the chart below to see its documentation.
 		<area href="../../modules/mixture.html#bgmm" title=" Bayesian GMM Documentation" shape="poly" coords="562,994, 562,994, 562,1026, 562,1026, 562,1026, 682,1026, 682,1026, 682,1026, 682,994, 682,994, 682,994, 562,994, 562,994" data-maphilight='{"strokeColor":"0000ff","strokeWidth":5,"fillColor":"66FF66","fillOpacity":0.4}'></area>
 	    </map>
 	</img>
-      </p>
-      <script type="text/javascript">
-          // Note that this is a hack-fix for now. This should be
-	  // fixed using css, not js. See issue #2328 for reference
-          $('.map').css({'height': '1300px'});
-      </script>
-    </body>
-
-
