@@ -8,7 +8,7 @@ from sklearn.datasets import make_classification
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.pipeline import Pipeline, make_pipeline, make_union
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV, SelectFromModel
@@ -49,32 +49,31 @@ DELEGATING_METAESTIMATORS = [
                                 'predict'])
 ]
 
+TESTED_META = [
+    # pipeline
+    # this fails because tuple is converted to list in fit:
+    # Pipeline((('ss', StandardScaler()),)),
+    Pipeline([('ss', StandardScaler())]),
+    make_pipeline(StandardScaler(), LogisticRegression()),
+    # union
+    make_union(StandardScaler()),
+    # union and pipeline
+    make_pipeline(make_union(PCA(), StandardScaler()),
+                  LogisticRegression()),
+    # pipeline with clustering
+    make_pipeline(KMeans()),
+    # SelectFromModel
+    make_pipeline(SelectFromModel(LogisticRegression()),
+                  LogisticRegression()),
+    # grid-search
+    GridSearchCV(LogisticRegression(), {'C': [0.1, 1]}),
+    make_pipeline(StandardScaler(), None)
+]
 
-def test_metaestimators_check_estimator():
-    estimators = [
-        # pipeline
-        # this fails because tuple is converted to list in fit:
-        # Pipeline((('ss', StandardScaler()),)),
-        Pipeline([('ss', StandardScaler())]),
-        make_pipeline(StandardScaler(), LogisticRegression()),
-        # union
-        make_union(StandardScaler()),
-        # union and pipeline
-        make_pipeline(make_union(PCA(), StandardScaler()),
-                      LogisticRegression()),
-        # pipeline with clustering
-        make_pipeline(KMeans()),
-        # SelectFromModel
-        make_pipeline(SelectFromModel(LogisticRegression()),
-                      LogisticRegression()),
-        # grid-search
-        GridSearchCV(LogisticRegression(), {'C': [0.1, 1]})
-    ]
-    none_pipe = make_pipeline(StandardScaler(), KMeans())
-    none_pipe.set_params(kmeans=None)
-    estimators.append(none_pipe)
-    for estimator in estimators:
-        yield check_estimator, estimator
+
+@parametrize_with_checks(TESTED_META)
+def test_metaestimators_check_estimator(estimator, check):
+    check(estimator)
 
 
 def test_metaestimator_delegation():
