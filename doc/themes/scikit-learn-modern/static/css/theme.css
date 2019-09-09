@@ -492,10 +492,6 @@ div#examples div.section {
 
 /* content styling element style */
 
-div.sk-page-content img {
-  max-width: 80%;
-}
-
 div.sk-page-content h1 {
   background-color: #cde8ef;
   padding: 0.5rem;
@@ -815,7 +811,7 @@ div.sphx-glr-thumbcontainer {
 @media screen and (min-width: 1540px) {
   .sphx-glr-download-link-note {
     position: absolute;
-    left: 97%;
+    left: 98%;
     width: 20ex;
   }
 }
