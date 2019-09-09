@@ -962,6 +962,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 tol=self.tol, random_state=random_state, copy_x=self.copy_x,
                 n_jobs=self.n_jobs, algorithm=self.algorithm,
                 return_n_iter=True)
+        self.n_features_out_ = self.n_clusters
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
@@ -1611,6 +1612,7 @@ class MiniBatchKMeans(KMeans):
         if self.compute_labels:
             self.labels_, self.inertia_ = \
                     self._labels_inertia_minibatch(X, sample_weight)
+        self.n_features_out_ = self.n_clusters
 
         return self
 
@@ -1710,6 +1712,7 @@ class MiniBatchKMeans(KMeans):
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
                 X, sample_weight, x_squared_norms, self.cluster_centers_)
+        self.n_features_out_ = self.n_clusters
 
         return self
 

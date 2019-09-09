@@ -1036,6 +1036,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         ensure_min_features=2, estimator=self)
+        self.n_features_out_ = self.n_clusters
         return AgglomerativeClustering.fit(self, X.T, **params)
 
     @property

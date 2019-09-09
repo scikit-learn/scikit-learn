@@ -448,14 +448,6 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
-    @property
-    def n_features_out_(self):
-        if not hasattr(self, 'transform'):
-            raise AttributeError("{} doesn't have n_features_out_"
-                                 " as it doesn't define transform.".format(
-                                     self.__class__.__name__))
-        return self.n_clusters
-
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""

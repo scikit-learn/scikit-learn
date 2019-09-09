@@ -493,6 +493,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         self.subcluster_centers_ = centroids
 
         self._global_clustering(X)
+        self.n_features_out_ = self.n_clusters
+
         return self
 
     def _get_leaves(self):
