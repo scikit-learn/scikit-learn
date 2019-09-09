@@ -87,17 +87,20 @@ used for prediction with ``fit`` and ``predict``::
   >>> from sklearn.model_selection import train_test_split
   >>> from sklearn.metrics import accuracy_score
   ...
+  >>> # create a pipeline object
   >>> pipe = make_pipeline(
   ...     StandardScaler(),
   ...     LogisticRegression(random_state=0)
   ... )
   ...
+  >>> # Load the iris dataset and split it into train and test sets
   >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-  >>> pipe.fit(X_train, y_train)  # fit the preprocessor first, then the predictor
+  ...
+  >>> # Fit the whole pipeline and use it for predictions
+  >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
                   ('logisticregression', LogisticRegression(random_state=0))])
-
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
@@ -157,23 +160,26 @@ the best set of parameters. Read more in the :ref:`User Guide
   ...
   >>> X, y = fetch_california_housing(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-  >>> forest = RandomForestRegressor(random_state=0)
+  ...
+  >>> # define the parameter space that will be searched over
   >>> param_distributions = {'n_estimators': randint(1, 5),
   ...                        'max_depth': randint(5, 10)}
-  >>> search = RandomizedSearchCV(forest,
+  ...
+  >>> # now create a searchCV object and fit it to the data
+  >>> search = RandomizedSearchCV(estimator=RandomForestRegressor(random_state=0),
   ...                             n_iter=5,
   ...                             param_distributions=param_distributions,
   ...                             random_state=0)
-  ...
   >>> search.fit(X_train, y_train)
   RandomizedSearchCV(estimator=RandomForestRegressor(random_state=0), n_iter=5,
                      param_distributions={'max_depth': ...,
                                           'n_estimators': ...},
                      random_state=0)
-
   >>> search.best_params_
   {'max_depth': 9, 'n_estimators': 4}
+
+  >>> # The search object now acts like a normal random forest estimator
+  >>> # with max_depth=9 and n_estimators=4
   >>> search.score(X_test, y_test)
   0.73...
 
