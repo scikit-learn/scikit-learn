@@ -120,9 +120,9 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf = clf.fit(iris.data, iris.target)
+    >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the plot_tree function::
 
@@ -190,10 +190,8 @@ of external libraries and is more compact:
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> from sklearn.tree.export import export_text
     >>> iris = load_iris()
-    >>> X = iris['data']
-    >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-    >>> decision_tree = decision_tree.fit(X, y)
+    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |--- petal width (cm) <= 0.80
