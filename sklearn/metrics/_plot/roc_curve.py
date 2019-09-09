@@ -122,9 +122,10 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     response_method : {'predict_proba', 'decision_function', 'auto'} \
     default='auto'
-        Specifies whether to use `predict_proba` or `decision_function` as the
-        target response. If set to 'auto', `predict_proba` is tried first
-        and if it does not exist `decision_function` is tried next.
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. If set to 'auto',
+        :term:`predict_proba` is tried first and if it does not exist
+        :term:`decision_function` is tried next.
 
     name : str, default=None
         Name of ROC Curve for labeling. If `None`, use the name of the
