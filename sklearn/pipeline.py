@@ -989,8 +989,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                     for name, old in self.transformer_list]
 
     def _more_tags(self):
-        # hack to make common cases work:
-        # we assume the FeatureUnion can handle NaN if all the steps can
+        # The FeatureUnion can handle NaNs if all the steps can.
         return {'allow_nan': np.all([s[1]._get_tags()['allow_nan']
                                      for s in self.transformer_list])}
 
