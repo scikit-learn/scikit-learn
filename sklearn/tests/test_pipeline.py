@@ -169,8 +169,8 @@ def test_pipeline_init():
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
     assert (pipe.get_params(deep=True) ==
-                 dict(svc__a=None, svc__b=None, svc=clf,
-                      **pipe.get_params(deep=False)))
+            dict(svc__a=None, svc__b=None, svc=clf,
+                 **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -675,15 +675,15 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert (pipeline.get_params(deep=True) ==
-                      {'steps': pipeline.steps,
-                       'm2': mult2,
-                       'm3': passthrough,
-                       'last': mult5,
-                       'memory': None,
-                       'm2__mult': 2,
-                       'last__mult': 5,
-                       'verbose': False
-                       })
+            {'steps': pipeline.steps,
+             'm2': mult2,
+             'm3': passthrough,
+             'last': mult5,
+             'memory': None,
+             'm2__mult': 2,
+             'last__mult': 5,
+             'verbose': False
+             })
 
     pipeline.set_params(m2=passthrough)
     exp = 5
@@ -952,10 +952,11 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Estimator names must not contain __: got \['a__q'\]"),
-            (bad_steps2, "Names provided are not unique: \['a', 'a'\]"),
-            (bad_steps3, "Estimator names conflict with constructor "
-                         "arguments: \['%s'\]" % param),
+            (bad_steps1, r"Estimator names must not contain __:"
+             r" got \['a__q'\]"),
+            (bad_steps2, r"Names provided are not unique: \['a', 'a'\]"),
+            (bad_steps3, r"Estimator names conflict with constructor "
+                         r"arguments: \['%s'\]" % param),
         ]:
             # three ways to make invalid:
             # - construction
