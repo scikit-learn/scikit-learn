@@ -966,9 +966,10 @@ def test_iterative_imputer_catch_warning():
 
 @pytest.mark.parametrize(
     "skip_complete", [True, False]
-    [True, False]
 )
 def test_iterative_imputer_skip_non_missing(skip_complete):
+    # check the imputing strategy when missing data are present in the
+    # testing set only.
     # taken from: https://github.com/scikit-learn/scikit-learn/issues/14383
     rng = np.random.RandomState(0)
     X_train = np.array([
@@ -982,10 +983,13 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
         [np.nan, 4, 1, 2],
         [np.nan, 1, 10, 1]
     ])
-    imputer = IterativeImputer(skip_complete=skip_complete, random_state=rng)
+    imputer = IterativeImputer(
+        initial_strategy='mean', skip_complete=skip_complete, random_state=rng
+    )
     X_test_est = imputer.fit(X_train).transform(X_test)
     if skip_complete:
-        assert_allclose(X_test_est[:, 0], 6.5)
+        # impute with the initial strategy: 'mean'
+        assert_allclose(X_test_est[:, 0], np.mean(X_train[:, 0]))
     else:
         assert_allclose(X_test_est[:, 0], [11, 7, 12], rtol=1e-4)
 
