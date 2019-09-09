@@ -14,6 +14,6 @@ Table Of Contents
     tutorial/index
     user_guide
     glossary
-    auto_examples/index
+    examples
     modules/classes
     developers/index
