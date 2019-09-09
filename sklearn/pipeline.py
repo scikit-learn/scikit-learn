@@ -230,6 +230,11 @@ class Pipeline(_BaseComposition):
             return self.named_steps[ind]
         return est
 
+    def _more_tags(self):
+        # hack to make common cases work:
+        # we assume the pipeline can handle NaN if the first step can?
+        return {'allow_nan': self.steps[0][1]._get_tags()['allow_nan']}
+
     @property
     def _estimator_type(self):
         return self.steps[-1][1]._estimator_type

@@ -52,7 +52,8 @@ DELEGATING_METAESTIMATORS = [
 TESTED_META = [
     # pipeline
     # this fails because tuple is converted to list in fit:
-    # Pipeline((('ss', StandardScaler()),)),
+    Pipeline((('ss', StandardScaler()),)),
+    # all pipelines fail because they don't clone:
     Pipeline([('ss', StandardScaler())]),
     make_pipeline(StandardScaler(), LogisticRegression()),
     # union
@@ -61,12 +62,13 @@ TESTED_META = [
     make_pipeline(make_union(PCA(), StandardScaler()),
                   LogisticRegression()),
     # pipeline with clustering
-    make_pipeline(KMeans()),
+    make_pipeline(KMeans(random_state=0)),
     # SelectFromModel
     make_pipeline(SelectFromModel(LogisticRegression()),
                   LogisticRegression()),
     # grid-search
-    GridSearchCV(LogisticRegression(), {'C': [0.1, 1]}),
+    GridSearchCV(LogisticRegression(), {'C': [0.1, 1]}, cv=2),
+    # will fail tragically
     make_pipeline(StandardScaler(), None)
 ]
 
