@@ -232,7 +232,7 @@ class Pipeline(_BaseComposition):
 
     def _more_tags(self):
         # hack to make common cases work:
-        # we assume the pipeline can handle NaN if all the steps can?
+        # we assume the pipeline can handle NaN if all the steps can
         return {'allow_nan': np.all([s[1]._get_tags()['allow_nan']
                                      for s in self.steps])}
 
@@ -990,7 +990,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _more_tags(self):
         # hack to make common cases work:
-        # we assume the pipeline can handle NaN if all the steps can?
+        # we assume the FeatureUnion can handle NaN if all the steps can
         return {'allow_nan': np.all([s[1]._get_tags()['allow_nan']
                                      for s in self.transformer_list])}
 
