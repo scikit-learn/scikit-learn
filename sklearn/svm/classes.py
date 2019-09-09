@@ -593,6 +593,13 @@ class SVC(BaseSVC):
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
+    class_weight_ : array, shape = [n_class]
+        Multipliers of parameter C of class i (class_weight_[i]*C).
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple, shape = [n_dimensions_of_X]
+        Array dimensions of training vector ``X``.
+
     Examples
     --------
     >>> import numpy as np
@@ -777,6 +784,27 @@ class NuSVC(BaseSVC):
 
     classes_ : array of shape = (n_classes,)
         The unique classes labels.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
+    probA_ : array, shape = [n_class * (n_class-1) / 2]
+    probB_ : array, shape = [n_class * (n_class-1) / 2]
+        If probability=True, the parameters learned in Platt scaling to
+        produce probability estimates from decision values. If
+        probability=False, an empty array. Platt scaling uses the logistic
+        function
+        ``1 / (1 + exp(decision_value * probA_ + probB_))``
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of [1]_.
+
+    class_weight_ : array, shape = [n_class]
+        Multipliers of parameter C of class i (class_weight_[i]*C).
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple, shape = [n_dimensions_of_X]
+        Array dimensions of training vector ``X``.
 
     Examples
     --------
