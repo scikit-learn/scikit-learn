@@ -356,8 +356,8 @@ class Pipeline(_BaseComposition):
                 self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
-    @if_delegate_has_method(delegate='_final_estimator')
-    def fit_transform(self, X, y=None, **fit_params):
+    @property
+    def fit_transform(self):
         """Fit the model and transform with the final estimator
 
         Fits all the transforms one after the other and transforms the
@@ -384,6 +384,12 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_transformed_features]
             Transformed samples
         """
+        # we have a fit_transform whenever we have a transform
+        self._validate_steps()
+        self.transform
+        return self._fit_transform
+
+    def _fit_transform(self, X, y=None, **fit_params):
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
         with _print_elapsed_time('Pipeline',

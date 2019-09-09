@@ -607,7 +607,10 @@ def test_set_pipeline_steps():
     # With invalid data
     pipeline.set_params(steps=[('junk', ())])
     assert_raises(TypeError, pipeline.fit, [[1]], [1])
-    assert_raises(TypeError, pipeline.fit_transform, [[1]], [1])
+    with pytest.raises(TypeError):
+        # we can't even find out whether fit_transform
+        # exists without raising a TypeError
+        pipeline.fit_transform([[1]], [1])
 
 
 def test_pipeline_named_steps():
@@ -949,29 +952,32 @@ def test_step_name_validation():
         # we validate in construction (despite scikit-learn convention)
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
-            (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
-            (bad_steps2, "Names provided are not unique: ['a', 'a']"),
+            (bad_steps1, "Estimator names must not contain __: got \['a__q'\]"),
+            (bad_steps2, "Names provided are not unique: \['a', 'a'\]"),
             (bad_steps3, "Estimator names conflict with constructor "
-                         "arguments: ['%s']" % param),
+                         "arguments: \['%s'\]" % param),
         ]:
             # three ways to make invalid:
             # - construction
-            assert_raise_message(ValueError, message, cls,
-                                 **{param: bad_steps})
+            with pytest.raises(ValueError, match=message):
+                cls(**{param: bad_steps})
 
             # - setattr
             est = cls(**{param: [('a', Mult(1))]})
             setattr(est, param, bad_steps)
-            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+            with pytest.raises(ValueError, match=message):
+                est.fit([[1]], [1])
+
+            with pytest.raises(ValueError, match=message):
+                est.fit_transform([[1]], [1])
 
             # - set_params
             est = cls(**{param: [('a', Mult(1))]})
             est.set_params(**{param: bad_steps})
-            assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+            with pytest.raises(ValueError, match=message):
+                est.fit([[1]], [1])
+            with pytest.raises(ValueError, match=message):
+                est.fit_transform([[1]], [1])
 
 
 def test_set_params_nested_pipeline():
