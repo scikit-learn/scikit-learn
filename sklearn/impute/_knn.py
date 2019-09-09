@@ -163,7 +163,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
-
+        self.n_features_out_ = np.sum(~np.all(self._mask_fit_X, axis=0))
         return self
 
     def transform(self, X):
