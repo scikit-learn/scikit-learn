@@ -338,7 +338,8 @@ Changelog
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
 - |Enhancement| Multilabel metrics now supports list of lists as input.
-  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`,
+  :user:`Herilalaina Rakotoarison <herilalaina>`,
   :user:`Léonard Binet <leonardbinet>`.
 
 
