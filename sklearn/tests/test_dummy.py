@@ -546,9 +546,15 @@ def test_constant_strategy_multioutput():
      "Constant.*should have shape"),
     ([2, 1, 2, 2],
      {'constant': 'my-constant'},
-     "constant=my-constant.*Possible values.*[2, 1, 2, 2]")])
+     "constant=my-constant.*Possible values.*\\[1, 2]"),
+    (np.transpose([[2, 1, 2, 2], [2, 1, 2, 2]]),
+     {'constant': [2, 'unknown']},
+     "constant=\\[2, 'unknown'].*Possible values.*\\[1, 2]")],
+    ids=["no-constant", "too-many-constant", "not-enough-output",
+         "single-output", "multi-output"]
+)
 def test_constant_strategy_exceptions(y, params, err_msg):
-    X = [[0], [0], [0], [0]]  # ignored
+    X = [[0], [0], [0], [0]]
 
     clf = DummyClassifier(strategy="constant", **params)
 
