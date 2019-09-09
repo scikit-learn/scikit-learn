@@ -146,9 +146,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         elif hasattr(self, 'estimator_'):
             estimator = self.estimator_
         else:
-            raise ValueError('Either fit the model before transform or set'
-                             ' "prefit=True" while passing the fitted'
-                             ' estimator to the constructor.')
+            raise NotFittedError(
+                'Either fit the model before transform or set'
+                ' "prefit=True" while passing the fitted'
+                ' estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:

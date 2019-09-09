@@ -232,8 +232,9 @@ class Pipeline(_BaseComposition):
 
     def _more_tags(self):
         # hack to make common cases work:
-        # we assume the pipeline can handle NaN if the first step can?
-        return {'allow_nan': self.steps[0][1]._get_tags()['allow_nan']}
+        # we assume the pipeline can handle NaN if all the steps can?
+        return {'allow_nan': np.all([s[1]._get_tags()['allow_nan']
+                                     for s in self.steps])}
 
     @property
     def _estimator_type(self):
@@ -262,8 +263,7 @@ class Pipeline(_BaseComposition):
 
     def _fit(self, X, y=None, **fit_params):
         # shallow copy of steps - this should really be steps_
-        if not isinstance(self.steps, list):
-            self.steps = list(self.steps)
+        self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
@@ -987,6 +987,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_list[:] = [(name, old if old is None or old == 'drop'
                                      else next(transformers))
                                     for name, old in self.transformer_list]
+
+    def _more_tags(self):
+        # hack to make common cases work:
+        # we assume the pipeline can handle NaN if all the steps can?
+        return {'allow_nan': np.all([s[1]._get_tags()['allow_nan']
+                                     for s in self.transformer_list])}
 
 
 def make_union(*transformers, **kwargs):
