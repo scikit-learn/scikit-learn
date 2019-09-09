@@ -757,6 +757,12 @@ class PartialDependenceDisplay:
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
 
+        fig : Matplotlib figure object, optional (default=None)
+            A figure object onto which the plots will be drawn, after the
+            figure has been cleared. By default, a new one is created.
+
+            .. deprecated:: 0.22
+
         Returns
         -------
         display: :class:`~sklearn.inspection.PartialDependenceDisplay`
