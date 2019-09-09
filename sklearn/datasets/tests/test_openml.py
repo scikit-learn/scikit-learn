@@ -1158,3 +1158,18 @@ def test_fetch_openml_raises_illegal_argument():
 
     assert_raise_message(ValueError, "Neither name nor data_id are provided. "
                          "Please provide name or data_id.", fetch_openml)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
+    # Regression test for #14340
+    # 62 is the ID of the ZOO dataset
+    data_id = 62
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+
+    dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False)
+    assert dataset is not None
+    # The dataset has 17 features, including 1 ignored (animal),
+    # so we assert that we don't have the ignored feature in the final Bunch
+    assert dataset['data'].shape == (101, 16)
+    assert 'animal' not in dataset['feature_names']

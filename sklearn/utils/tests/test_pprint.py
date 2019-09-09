@@ -41,7 +41,7 @@ class LogisticRegression(BaseEstimator):
         return self
 
 
-class StandardScaler(BaseEstimator, TransformerMixin):
+class StandardScaler(TransformerMixin, BaseEstimator):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std

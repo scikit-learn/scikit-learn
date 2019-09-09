@@ -32,7 +32,7 @@ from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(BaseEstimator, TransformerMixin):
+class FactorAnalysis(TransformerMixin, BaseEstimator):
     """Factor Analysis (FA)
 
     A simple linear generative model with Gaussian latent variables.
@@ -49,7 +49,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     FactorAnalysis performs a maximum likelihood estimate of the so-called
     `loading` matrix, the transformation of the latent variables to the
-    observed ones, using expectation-maximization (EM).
+    observed ones, using SVD based approach.
 
     Read more in the :ref:`User Guide <FA>`.
 
@@ -61,7 +61,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, n_components is set to the number of features.
 
     tol : float
-        Stopping tolerance for EM algorithm.
+        Stopping tolerance for log-likelihood increase.
 
     copy : bool
         Whether to make a copy of X. If ``False``, the input X gets overwritten
@@ -154,7 +154,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """Fit the FactorAnalysis model to X using EM
+        """Fit the FactorAnalysis model to X using SVD based approach
 
         Parameters
         ----------
@@ -261,7 +261,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         X = check_array(X)
         Ih = np.eye(len(self.components_))
@@ -285,7 +285,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
@@ -299,7 +299,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision : array, shape (n_features, n_features)
             Estimated precision of data.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         n_features = self.components_.shape[1]
 
@@ -333,7 +333,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         Xr = X - self.mean_
         precision = self.get_precision()
