@@ -386,7 +386,11 @@ class Pipeline(_BaseComposition):
         """
         # we have a fit_transform whenever we have a transform
         self._validate_steps()
-        self.transform
+        if self._final_estimator != 'passthrough':
+            try:
+                self._final_estimator.transform
+            except AttributeError:
+                self._final_estimator.fit_transform
         return self._fit_transform
 
     def _fit_transform(self, X, y=None, **fit_params):

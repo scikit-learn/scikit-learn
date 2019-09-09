@@ -81,6 +81,11 @@ class Transf(NoInvTransf):
         return X
 
 
+class FitTransf(NoTrans):
+    def fit_transform(self, X, y=None):
+        return X
+
+
 class TransfFitParams(Transf):
 
     def fit(self, X, y, **fit_params):
@@ -728,6 +733,7 @@ def test_pipeline_ducktyping():
     pipeline.predict
     pipeline.transform
     pipeline.inverse_transform
+    pipeline.fit_transform
 
     pipeline = make_pipeline(Transf())
     assert not hasattr(pipeline, 'predict')
@@ -739,6 +745,7 @@ def test_pipeline_ducktyping():
     assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
+    pipeline.fit_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
     assert not hasattr(pipeline, 'predict')
@@ -749,6 +756,10 @@ def test_pipeline_ducktyping():
     assert not hasattr(pipeline, 'predict')
     pipeline.transform
     assert not hasattr(pipeline, 'inverse_transform')
+
+    pipeline = make_pipeline(FitTransf())
+    assert not hasattr(pipeline, 'transform')
+    pipeline.fit_transform
 
 
 def test_make_pipeline():
