@@ -89,7 +89,7 @@ plt.show()
 #
 # It is now possible to prune most tree-based estimators as a post-fit
 # procedure. The pruning is based on minimal cost-complexity. Read more in the
-# ref:`User Guide <minimal_cost_complexity_pruning>` for details.
+# :ref:`User Guide <minimal_cost_complexity_pruning>` for details.
 
 X, y = make_classification(random_state=0)
 
@@ -100,3 +100,14 @@ print("Average number of nodes without pruning {:.1f}".format(
 rf = RandomForestClassifier(random_state=0, ccp_alpha=0.05).fit(X, y)
 print("Average number of nodes with pruning {:.1f}".format(
     np.mean([e.tree_.node_count for e in rf.estimators_])))
+
+############################################################################
+Retrieve dataframes from OpenML
+-------------------------------
+:func:`datasets.fetch_openml` can now return pandas dataframe and thus
+properly handle datasets with heterogeneous data:
+
+from sklearn.datasets import fetch_openml
+
+titanic = fetch_openml('titanic', version=1, as_frame=True)
+print(titanic.data.head()[['pclass', ['embarked']]])
