@@ -811,6 +811,14 @@ div.sphx-glr-thumbcontainer {
   font-size: 0.9rem;
 }
 
+@media screen and (min-width: 1540px) {
+  .sphx-glr-download-link-note {
+    position: fixed;
+    right: 10pt;
+    width: 20ex;
+  }
+}
+
 /* rellinks */
 
 .sk-btn-rellink {
