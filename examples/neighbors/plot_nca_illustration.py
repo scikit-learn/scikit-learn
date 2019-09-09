@@ -21,12 +21,12 @@ from sklearn.utils.fixes import logsumexp
 print(__doc__)
 
 ##############################################################################
+# Original points
+# ---------------
 # First we create a data set of 9 samples from 3 classes, and plot the points
-# in the original space. For this example, we focus on the stochastic
-# classification of point no. 3. We draw graph nodes with respect to the
-# target point and the thickness of a link between the target point and another
-# point is proportional to their distance. We set the axes as equal so that
-# boundaries are displayed correctly as circles.
+# in the original space. For this example, we focus on the classification of
+# point no. 3. The thickness of a link between point no. 3 and another point
+# is proportional to their distance.
 
 X, y = make_classification(n_samples=9, n_features=2, n_informative=2,
                            n_redundant=0, n_classes=3, n_clusters_per_class=1,
@@ -41,7 +41,7 @@ for i in range(X.shape[0]):
 ax.set_title("Original points")
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
-ax.axis('equal')
+ax.axis('equal')  # so that boundaries are displayed correctly as circles
 
 
 def link_thickness_i(X, i):
@@ -72,6 +72,8 @@ relate_point(X, i, ax)
 plt.show()
 
 ##############################################################################
+# Learning an embedding
+# ---------------------
 # We use :class:`~sklearn.neighbors.NeighborhoodComponentsAnalysis` to learn an
 # embedding and plot the points after the transformation. We then take the
 # embedding and find the nearest neighbors.
