@@ -337,6 +337,11 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
+- |Enhancement| Multilabel metrics now supports list of lists as input.
+  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :user:`Léonard Binet <leonardbinet>`.
+
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -411,11 +416,6 @@ Changelog
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
-- |Enhancement| label_binarize now supports list of lists for multilabel data
-  :func:`preprocessing.label_binarize`
-  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
-  :user:`Léonard Binet <leonardbinet>`.
-
 :mod:`sklearn.cluster`
 ......................
 
@@ -463,11 +463,6 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
   sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Enhancement| is_multilabel now detects list of lists for multilabel data
-  :func:`utils.multiclass.is_multilabel`
-  :pr:`14865` by :user:`Srivatsan Ramesh <srivatsan-ramesh>`, :user:`Herilalaina Rakotoarison <herilalaina>`,
-  :user:`Léonard Binet <leonardbinet>`.
 
 :mod:`sklearn.neighbors`
 ....................
