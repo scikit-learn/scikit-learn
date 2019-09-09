@@ -229,6 +229,13 @@ div.sk-landing-container {
   max-width: 1400px;
 }
 
+ul.sk-landing-header-body {
+  margin-top: auto;
+  margin-bottom: auto;
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
 div.sk-landing-bg-more-info dd {
   padding-left: 0;
 }
@@ -249,7 +256,7 @@ div.sk-landing-bg-more-info {
   font-size: 3.2rem;
 }
 
-.sk-landing-header-body {
+. {
   font-size: 1.2rem;
   font-weight: 500;
 }
