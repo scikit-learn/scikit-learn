@@ -116,6 +116,13 @@ a.sk-landing-btn:hover {
   }
 }
 
+@media screen and (min-width: 1200px) {
+  .sk-px-xl-4 {
+    padding-left: 1.3rem!important;
+    padding-right: 1.3rem!important;
+  }
+}
+
 /* clearfix */
 
 div.clearer {
