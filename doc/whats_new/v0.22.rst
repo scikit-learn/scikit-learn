@@ -115,7 +115,7 @@ Changelog
 :mod:`sklearn.dummy`
 ............................
 
-- |Fix| :class:`dummy.DummyClassifiers()` now handles checking the existence
+- |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
   of the provided constant in multiouput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
