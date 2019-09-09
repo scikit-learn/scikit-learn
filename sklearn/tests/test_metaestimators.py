@@ -64,7 +64,7 @@ TESTED_META = [
     # pipeline with clustering
     make_pipeline(KMeans(random_state=0)),
     # SelectFromModel
-    make_pipeline(SelectFromModel(LogisticRegression()),
+    make_pipeline(SelectFromModel(LogisticRegression(), threshold=-np.inf),
                   LogisticRegression()),
     # grid-search
     GridSearchCV(LogisticRegression(), {'C': [0.1, 1]}, cv=2),
