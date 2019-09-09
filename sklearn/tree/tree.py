@@ -1249,8 +1249,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
     @property
     def classes_(self):
-        warnings.warn("'classes_' is to be deprecated from version 0.20 "
-                      "and will be removed in 0.22.", DeprecationWarning)
+        warnings.warn("'classes_' is to be deprecated from version 0.22 "
+                      "and will be removed in 0.24.", DeprecationWarning)
         return self._classes
 
 
