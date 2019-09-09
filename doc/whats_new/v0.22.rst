@@ -30,6 +30,8 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`impute.IterativeImputer` when `X` has features with no missing
+  values. |Feature|
 
 Details are listed in the changelog below.
 
@@ -206,6 +208,12 @@ Changelog
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
   `Thomas Fan`_.
+- |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
+  By :user:`Sergey Feldman <sergeyf>`.
+- |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
+  is False by default, which, when True, will skip computation on features that
+  have no missing values during the fit phase. :issue:`13773` by
+  :user:`Sergey Feldman <sergeyf>`.
 
 :mod:`sklearn.inspection`
 .........................

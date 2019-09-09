@@ -457,7 +457,7 @@ def test_imputation_missing_value_in_test_array(Imputer):
     imputer.fit(train).transform(test)
 
 
-@pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]]
+@pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
 def test_iterative_imputer_one_feature(X):
     # check we exit early when there is a single feature
     imputer = IterativeImputer().fit(X)
