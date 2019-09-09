@@ -17,6 +17,7 @@ from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
+from .exceptions import NotFittedError
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -352,6 +353,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return None  # Dummies don't validate the input
+
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
@@ -551,3 +566,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return None  # Dummies don't validate the input

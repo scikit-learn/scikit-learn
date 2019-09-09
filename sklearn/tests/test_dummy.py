@@ -737,3 +737,13 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+@pytest.mark.parametrize('Dummy', (DummyRegressor, DummyClassifier))
+def test_n_features_in_(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    d = Dummy()
+    assert not hasattr(d, 'n_features_in_')
+    d.fit(X, y)
+    assert d.n_features_in_ is None
