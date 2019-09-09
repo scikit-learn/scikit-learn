@@ -44,7 +44,7 @@ class CorrectNotFittedError(ValueError):
     """
 
 
-class BaseBadClassifier(BaseEstimator, ClassifierMixin):
+class BaseBadClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 

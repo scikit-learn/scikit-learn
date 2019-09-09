@@ -521,7 +521,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
+class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -602,7 +602,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         return self
 
 
-class Ridge(_BaseRidge, RegressorMixin):
+class Ridge(RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
     Minimizes the objective function::
@@ -1484,7 +1484,8 @@ class _RidgeGCV(LinearModel):
             identity_estimator.decision_function = lambda y_predict: y_predict
             identity_estimator.predict = lambda y_predict: y_predict
 
-            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
+            # signature of scorer is (estimator, X, y)
+            out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
                    for i in range(len(self.alphas))]
             best = np.argmax(out)
 
@@ -1505,7 +1506,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel, MultiOutputMixin):
+class _BaseRidgeCV(MultiOutputMixin, LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1577,7 +1578,7 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         return self
 
 
-class RidgeCV(_BaseRidgeCV, RegressorMixin):
+class RidgeCV(RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.

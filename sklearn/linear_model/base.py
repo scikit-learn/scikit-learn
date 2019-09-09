@@ -366,7 +366,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
+class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     Ordinary least squares Linear Regression.
 
