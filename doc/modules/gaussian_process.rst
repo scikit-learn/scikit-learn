@@ -45,7 +45,7 @@ The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
 regression purposes. For this, the prior of the GP needs to be specified. The
 prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
 training data's mean (for ``normalize_y=True``). The prior's
-covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
 on the passed ``optimizer``. As the LML may have multiple local optima, the
@@ -88,14 +88,14 @@ estimate the noise level of data. An illustration of the
 log-marginal-likelihood (LML) landscape shows that there exist two local
 maxima of LML.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_000.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
 The first corresponds to a model with a high noise level and a
 large length scale, which explains all variations in the data by noise.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -106,7 +106,7 @@ hyperparameters, the gradient-based optimization might also converge to the
 high-noise solution. It is thus important to repeat the optimization several
 times for different initializations.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_noisy_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_noisy.html
    :align: center
 
@@ -252,7 +252,7 @@ Gaussian based on the Laplace approximation. More details can be found in
 Chapter 3 of [RW2006]_.
 
 The GP prior mean is assumed to be zero. The prior's
-covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
 on the passed ``optimizer``. As the LML may have multiple local optima, the
@@ -306,11 +306,11 @@ The second figure shows the log-marginal-likelihood for different choices of
 the kernel's hyperparameters, highlighting the two choices of the
 hyperparameters used in the first figure by black dots.
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_000.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc.html
    :align: center
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_002.png
    :target: ../auto_examples/gaussian_process/plot_gpc.html
    :align: center
 
@@ -321,10 +321,11 @@ Illustration of GPC on the XOR dataset
 .. currentmodule:: sklearn.gaussian_process.kernels
 
 This example illustrates GPC on XOR data. Compared are a stationary, isotropic
-kernel (:class:`RBF`) and a non-stationary kernel (:class:`DotProduct`). On this particular
-dataset, the `DotProduct` kernel obtains considerably better results because the
-class-boundaries are linear and coincide with the coordinate axes. In practice,
-however, stationary kernels such as :class:`RBF` often obtain better results.
+kernel (:class:`RBF`) and a non-stationary kernel (:class:`DotProduct`). On
+this particular dataset, the :class:`DotProduct` kernel obtains considerably
+better results because the class-boundaries are linear and coincide with the
+coordinate axes. In practice, however, stationary kernels such as :class:`RBF`
+often obtain better results.
 
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html
@@ -382,7 +383,7 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
-kernel (see below). All kernels support computing analytic gradients of
+kernel (see below). All kernels support computing analytic gradients 
 of the kernel's auto-covariance with respect to :math:`\theta` via setting
 ``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
 Gaussian process (both regressor and classifier) in computing the gradient
@@ -413,9 +414,9 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
     >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
     >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[  0.,  10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
     k1 : 1**2 * RBF(length_scale=0.5)
@@ -431,14 +432,14 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
     >>> print(kernel.theta)  # Note: log-transformed
     [ 0.         -0.69314718  0.69314718]
     >>> print(kernel.bounds)  # Note: log-transformed
-    [[       -inf  2.30258509]
-     [       -inf  2.30258509]
-     [       -inf  2.30258509]]
+    [[      -inf 2.30258509]
+     [      -inf 2.30258509]
+     [      -inf 2.30258509]]
 
 
 All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
 and vice versa: instances of subclasses of :class:`Kernel` can be passed as
-``metric`` to pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
+``metric`` to ``pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
 kernel functions from pairwise can be used as GP kernels by using the wrapper
 class :class:`PairwiseKernel`. The only caveat is that the gradient of
 the hyperparameters is not analytic but numeric and all those kernels support
@@ -460,7 +461,7 @@ It depends on a parameter :math:`constant\_value`. It is defined as:
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its
 parameter :math:`noise\_level` corresponds to estimating the noise-level.
-It is defined as:e
+It is defined as:
 
 .. math::
     k(x_i, x_j) = noise\_level \text{ if } x_i == x_j \text{ else } 0
@@ -493,7 +494,7 @@ kernel as covariance function have mean square derivatives of all orders, and ar
 very smooth. The prior and posterior of a GP resulting from an RBF kernel are shown in
 the following figure:
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_000.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_001.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
@@ -534,7 +535,7 @@ allows adapting to the properties of the true underlying functional relation.
 The prior and posterior of a GP resulting from a Matérn kernel are shown in
 the following figure:
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_004.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_005.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
@@ -553,10 +554,10 @@ The kernel is given by:
 .. math::
    k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^{-\alpha}
 
-The prior and posterior of a GP resulting from an RBF kernel are shown in
+The prior and posterior of a GP resulting from a :class:`RationalQuadratic` kernel are shown in
 the following figure:
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_001.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_002.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
@@ -574,7 +575,7 @@ The kernel is given by:
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_002.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_003.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
@@ -594,7 +595,7 @@ is called the homogeneous linear kernel, otherwise it is inhomogeneous. The kern
 The :class:`DotProduct` kernel is commonly combined with exponentiation. An example with exponent 2 is
 shown in the following figure:
 
-.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_003.png
+.. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_004.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
@@ -604,287 +605,3 @@ References
 .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
-
-
-
-
-Legacy Gaussian Processes
-=========================
-
-In this section, the implementation of Gaussian processes used in scikit-learn
-until release 0.16.1 is described. Note that this implementation is deprecated
-and will be removed in version 0.18.
-
-An introductory regression example
-----------------------------------
-
-Say we want to surrogate the function :math:`g(x) = x \sin(x)`. To do so,
-the function is evaluated onto a design of experiments. Then, we define a
-GaussianProcess model whose regression and correlation models might be
-specified using additional kwargs, and ask for the model to be fitted to the
-data. Depending on the number of parameters provided at instantiation, the
-fitting procedure may recourse to maximum likelihood estimation for the
-parameters or alternatively it uses the given parameters.
-
-
-::
-
-    >>> import numpy as np
-    >>> from sklearn import gaussian_process
-    >>> def f(x):
-    ...	    return x * np.sin(x)
-    >>> X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    >>> y = f(X).ravel()
-    >>> x = np.atleast_2d(np.linspace(0, 10, 1000)).T
-    >>> gp = gaussian_process.GaussianProcess(theta0=1e-2, thetaL=1e-4, thetaU=1e-1)
-    >>> gp.fit(X, y)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    GaussianProcess(beta0=None, corr=<function squared_exponential at 0x...>,
-            normalize=True, nugget=array(2.22...-15),
-            optimizer='fmin_cobyla', random_start=1, random_state=...
-            regr=<function constant at 0x...>, storage_mode='full',
-            theta0=array([[ 0.01]]), thetaL=array([[ 0.0001]]),
-            thetaU=array([[ 0.1]]), verbose=False)
-    >>> y_pred, sigma2_pred = gp.predict(x, eval_MSE=True)
-
-
-Fitting Noisy Data
-------------------
-
-When the data to be fit includes noise, the Gaussian process model can be
-used by specifying the variance of the noise for each point.
-:class:`GaussianProcess` takes a parameter ``nugget`` which
-is added to the diagonal of the correlation matrix between training points:
-in general this is a type of Tikhonov regularization.  In the special case
-of a squared-exponential correlation function, this normalization is
-equivalent to specifying a fractional variance in the input.  That is
-
-.. math::
-   \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
-
-With ``nugget`` and ``corr`` properly set, Gaussian Processes can be
-used to robustly recover an underlying function from noisy data.
-
-
-
-Mathematical formulation
-------------------------
-
-
-The initial assumption
-^^^^^^^^^^^^^^^^^^^^^^
-
-Suppose one wants to model the output of a computer experiment, say a
-mathematical function:
-
-.. math::
-
-        g: & \mathbb{R}^{n_{\rm features}} \rightarrow \mathbb{R} \\
-           & X \mapsto y = g(X)
-
-GPML starts with the assumption that this function is *a* conditional sample
-path of *a* Gaussian process :math:`G` which is additionally assumed to read as
-follows:
-
-.. math::
-
-        G(X) = f(X)^T \beta + Z(X)
-
-where :math:`f(X)^T \beta` is a linear regression model and :math:`Z(X)` is a
-zero-mean Gaussian process with a fully stationary covariance function:
-
-.. math::
-
-        C(X, X') = \sigma^2 R(|X - X'|)
-
-:math:`\sigma^2` being its variance and :math:`R` being the correlation
-function which solely depends on the absolute relative distance between each
-sample, possibly featurewise (this is the stationarity assumption).
-
-From this basic formulation, note that GPML is nothing but an extension of a
-basic least squares linear regression problem:
-
-.. math::
-
-        g(X) \approx f(X)^T \beta
-
-Except we additionally assume some spatial coherence (correlation) between the
-samples dictated by the correlation function. Indeed, ordinary least squares
-assumes the correlation model :math:`R(|X - X'|)` is one when :math:`X = X'`
-and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
-*nugget* correlation model in the kriging literature.
-
-
-The best linear unbiased prediction (BLUP)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-We now derive the *best linear unbiased prediction* of the sample path
-:math:`g` conditioned on the observations:
-
-.. math::
-
-    \hat{G}(X) = G(X | y_1 = g(X_1), ...,
-                                y_{n_{\rm samples}} = g(X_{n_{\rm samples}}))
-
-It is derived from its *given properties*:
-
-- It is linear (a linear combination of the observations)
-
-.. math::
-
-    \hat{G}(X) \equiv a(X)^T y
-
-- It is unbiased
-
-.. math::
-
-    \mathbb{E}[G(X) - \hat{G}(X)] = 0
-
-- It is the best (in the Mean Squared Error sense)
-
-.. math::
-
-    \hat{G}(X)^* = \arg \min\limits_{\hat{G}(X)} \;
-                                            \mathbb{E}[(G(X) - \hat{G}(X))^2]
-
-So that the optimal weight vector :math:`a(X)` is solution of the following
-equality constrained optimization problem:
-
-.. math::
-
-    a(X)^* = \arg \min\limits_{a(X)} & \; \mathbb{E}[(G(X) - a(X)^T y)^2] \\
-                       {\rm s. t.} & \; \mathbb{E}[G(X) - a(X)^T y] = 0
-
-Rewriting this constrained optimization problem in the form of a Lagrangian and
-looking further for the first order optimality conditions to be satisfied, one
-ends up with a closed form expression for the sought predictor -- see
-references for the complete proof.
-
-In the end, the BLUP is shown to be a Gaussian random variate with mean:
-
-.. math::
-
-    \mu_{\hat{Y}}(X) = f(X)^T\,\hat{\beta} + r(X)^T\,\gamma
-
-and variance:
-
-.. math::
-
-    \sigma_{\hat{Y}}^2(X) = \sigma_{Y}^2\,
-    ( 1
-    - r(X)^T\,R^{-1}\,r(X)
-    + u(X)^T\,(F^T\,R^{-1}\,F)^{-1}\,u(X)
-    )
-
-where we have introduced:
-
-* the correlation matrix whose terms are defined wrt the autocorrelation
-  function and its built-in parameters :math:`\theta`:
-
-.. math::
-
-    R_{i\,j} = R(|X_i - X_j|, \theta), \; i,\,j = 1, ..., m
-
-* the vector of cross-correlations between the point where the prediction is
-  made and the points in the DOE:
-
-.. math::
-
-    r_i = R(|X - X_i|, \theta), \; i = 1, ..., m
-
-* the regression matrix (eg the Vandermonde matrix if :math:`f` is a polynomial
-  basis):
-
-.. math::
-
-    F_{i\,j} = f_i(X_j), \; i = 1, ..., p, \, j = 1, ..., m
-
-* the generalized least square regression weights:
-
-.. math::
-
-    \hat{\beta} =(F^T\,R^{-1}\,F)^{-1}\,F^T\,R^{-1}\,Y
-
-* and the vectors:
-
-.. math::
-
-    \gamma & = R^{-1}(Y - F\,\hat{\beta}) \\
-    u(X) & = F^T\,R^{-1}\,r(X) - f(X)
-
-It is important to notice that the probabilistic response of a Gaussian Process
-predictor is fully analytic and mostly relies on basic linear algebra
-operations. More precisely the mean prediction is the sum of two simple linear
-combinations (dot products), and the variance requires two matrix inversions,
-but the correlation matrix can be decomposed only once using a Cholesky
-decomposition algorithm.
-
-
-The empirical best linear unbiased predictor (EBLUP)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Until now, both the autocorrelation and regression models were assumed given.
-In practice however they are never known in advance so that one has to make
-(motivated) empirical choices for these models :ref:`correlation_models`.
-
-Provided these choices are made, one should estimate the remaining unknown
-parameters involved in the BLUP. To do so, one uses the set of provided
-observations in conjunction with some inference technique. The present
-implementation, which is based on the DACE's Matlab toolbox uses the *maximum
-likelihood estimation* technique -- see DACE manual in references for the
-complete equations. This maximum likelihood estimation problem is turned into
-a global optimization problem onto the autocorrelation parameters. In the
-present implementation, this global optimization is solved by means of the
-fmin_cobyla optimization function from scipy.optimize. In the case of
-anisotropy however, we provide an implementation of Welch's componentwise
-optimization algorithm -- see references.
-
-.. _correlation_models:
-
-Correlation Models
-------------------
-
-Common correlation models matches some famous SVM's kernels because they are
-mostly built on equivalent assumptions. They must fulfill Mercer's conditions
-and should additionally remain stationary. Note however, that the choice of the
-correlation model should be made in agreement with the known properties of the
-original experiment from which the observations come. For instance:
-
-* If the original experiment is known to be infinitely differentiable (smooth),
-  then one should use the *squared-exponential correlation model*.
-* If it's not, then one should rather use the *exponential correlation model*.
-* Note also that there exists a correlation model that takes the degree of
-  derivability as input: this is the Matern correlation model, but it's not
-  implemented here (TODO).
-
-For a more detailed discussion on the selection of appropriate correlation
-models, see the book by Rasmussen & Williams in references.
-
-.. _regression_models:
-
-
-Regression Models
------------------
-
-Common linear regression models involve zero- (constant), first- and
-second-order polynomials. But one may specify its own in the form of a Python
-function that takes the features X as input and that returns a vector
-containing the values of the functional set. The only constraint is that the
-number of functions must not exceed the number of available observations so
-that the underlying regression problem is not *underdetermined*.
-
-
-Implementation details
-----------------------
-
-The implementation is based on a translation of the DACE Matlab
-toolbox.
-
-.. topic:: References:
-
-    * `DACE, A Matlab Kriging Toolbox
-      <http://imedea.uib-csic.es/master/cambioglobal/Modulo_V_cod101615/Lab/lab_maps/krigging/DACE-krigingsoft/dace/dace.pdf>`_ S Lophaven, HB Nielsen, J
-      Sondergaard 2002,
-
-    * W.J. Welch, R.J. Buck, J. Sacks, H.P. Wynn, T.J. Mitchell, and M.D.
-      Morris (1992). Screening, predicting, and computer experiments.
-      Technometrics, 34(1) 15--25.

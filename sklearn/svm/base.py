@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -10,13 +8,13 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
-from ..utils import check_array, check_consistent_length, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_large_sparse
+from ..utils.validation import _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -57,7 +55,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -71,20 +69,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0,
+    def __init__(self, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
                  class_weight, verbose, max_iter, random_state):
 
-        if impl not in LIBSVM_IMPL:  # pragma: no cover
+        if self._impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
-                LIBSVM_IMPL, impl))
+                LIBSVM_IMPL, self._impl))
 
         if gamma == 0:
             msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
                    " gamma to a value of 1 / n_features.")
             raise ValueError(msg)
 
-        self._impl = impl
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -128,10 +125,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         Returns
         -------
         self : object
-            Returns self.
 
         Notes
-        ------
+        -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
         X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
 
@@ -146,7 +142,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+        X, y = check_X_y(X, y, dtype=np.float64,
+                         order='C', accept_sparse='csr',
+                         accept_large_sparse=False)
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -161,7 +159,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
             raise ValueError("sample_weight and X have incompatible shapes: "
@@ -170,8 +170,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
-        if self.gamma == 'auto':
-            self._gamma = 1.0 / X.shape[1]
+        if isinstance(self.gamma, str):
+            if self.gamma == 'scale':
+                # var = E[X^2] - E[X]^2 if sparse
+                X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
+                         if sparse else X.var())
+                self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
+            elif self.gamma == 'auto':
+                self._gamma = 1.0 / X.shape[1]
+            else:
+                raise ValueError(
+                    "When 'gamma' is a string, it should be either 'scale' or "
+                    "'auto'. Got '{}' instead.".format(self.gamma)
+                )
         else:
             self._gamma = self.gamma
 
@@ -190,7 +201,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ and self._dual_coef_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_
+        # internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
@@ -207,7 +219,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return column_or_1d(y, warn=True).astype(np.float64)
+        return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -229,15 +241,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
-
-        if six.PY2:
-            # In python2 ensure kernel is ascii bytes to prevent a TypeError
-            if isinstance(kernel, six.types.UnicodeType):
-                kernel = str(kernel)
-        if six.PY3:
-            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
-            if isinstance(kernel, bytes):
-                kernel = str(kernel, 'utf8')
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
@@ -279,7 +282,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if hasattr(self, "classes_"):
             n_class = len(self.classes_) - 1
-        else:   # regression
+        else:  # regression
             n_class = 1
         n_SV = self.support_vectors_.shape[0]
 
@@ -310,10 +313,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return predict(X)
 
     def _dense_predict(self, X):
-        n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
-            X = check_array(X, order='C')
+            X = check_array(X, order='C', accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(self.kernel):
@@ -367,7 +369,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return X
 
     def _decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -397,7 +399,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return dec_func
 
     def _dense_decision_function(self, X):
-        X = check_array(X, dtype=np.float64, order="C")
+        X = check_array(X, dtype=np.float64, order="C",
+                        accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(kernel):
@@ -434,9 +437,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
-        check_is_fitted(self, 'support_')
+        check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C")
+        X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
+                        accept_large_sparse=False)
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
         if self._sparse:
@@ -481,16 +485,18 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
+class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
-    def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
+    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, decision_function_shape, random_state):
+                 max_iter, decision_function_shape, random_state,
+                 break_ties):
         self.decision_function_shape = decision_function_shape
-        super(BaseSVC, self).__init__(
-            impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
+        self.break_ties = break_ties
+        super().__init__(
+            kernel=kernel, degree=degree, gamma=gamma,
+            coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             random_state=random_state)
@@ -503,14 +509,14 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                % len(cls))
+                " class" % len(cls))
 
         self.classes_ = cls
 
         return np.asarray(y, dtype=np.float64, order='C')
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -522,7 +528,18 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             Returns the decision function of the sample for each class
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
-            n_classes)
+            n_classes).
+
+        Notes
+        -----
+        If decision_function_shape='ovo', the function values are proportional
+        to the distance of the samples X to the separating hyperplane. If the
+        exact distances are required, divide the function values by the norm of
+        the weight vector (``coef_``). See also `this question
+        <https://stats.stackexchange.com/questions/14876/
+        interpreting-distance-from-hyperplane-in-svm>`_ for further details.
+        If decision_function_shape='ovr', the decision function is a monotonic
+        transformation of ovo decision function.
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
@@ -545,7 +562,17 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(BaseSVC, self).predict(X)
+        check_is_fitted(self)
+        if self.break_ties and self.decision_function_shape == 'ovo':
+            raise ValueError("break_ties must be False when "
+                             "decision_function_shape is 'ovo'")
+
+        if (self.break_ties
+                and self.decision_function_shape == 'ovr'
+                and len(self.classes_) > 2):
+            y = np.argmax(self.decision_function(X), axis=1)
+        else:
+            y = super().predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when
@@ -578,7 +605,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -617,7 +644,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -752,7 +779,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1,
                    sample_weight=None):
-    """Used by Logistic Regression (and CV) and LinearSVC.
+    """Used by Logistic Regression (and CV) and LinearSVC/LinearSVR.
 
     Preprocessing is done in this function before supplying it to liblinear.
 
@@ -875,13 +902,16 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     libsvm_sparse.set_verbosity_wrap(verbose)
     liblinear.set_verbosity_wrap(verbose)
 
+    # Liblinear doesn't support 64bit sparse matrix indices yet
+    if sp.issparse(X):
+        _check_large_sparse(X)
+
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
-    if sample_weight is None:
-        sample_weight = np.ones(X.shape[0])
-    else:
-        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
-        check_consistent_length(sample_weight, X)
+    y_ind = np.require(y_ind, requirements="W")
+
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(
@@ -893,7 +923,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
     n_iter_ = max(n_iter_)
-    if n_iter_ >= max_iter and verbose > 0:
+    if n_iter_ >= max_iter:
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 

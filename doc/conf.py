@@ -12,10 +12,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import print_function
 import sys
 import os
-from sklearn.externals.six import u
+import warnings
+import re
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -34,8 +34,10 @@ extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues',
+    'sphinx_issues'
 ]
 
 # this is needed for some reason...
@@ -43,16 +45,21 @@ extensions = [
 numpydoc_class_members_toctree = False
 
 
-# pngmath / imgmath compatibility layer for different sphinx versions
-import sphinx
-from distutils.version import LooseVersion
-if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
-    extensions.append('sphinx.ext.pngmath')
-else:
+# For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
+# (useful for viewing the doc offline)
+if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
+    imgmath_image_format = 'svg'
+else:
+    extensions.append('sphinx.ext.mathjax')
+    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
+                    'MathJax.js?config=TeX-AMS_SVG')
 
 
-autodoc_default_flags = ['members', 'inherited-members']
+autodoc_default_options = {
+    'members': True,
+    'inherited-members': True
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -66,15 +73,12 @@ source_suffix = '.rst'
 # The encoding of source files.
 #source_encoding = 'utf-8'
 
-# Generate the plots for the gallery
-plot_gallery = True
-
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
-project = u('scikit-learn')
-copyright = u('2007 - 2017, scikit-learn developers (BSD License)')
+project = 'scikit-learn'
+copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -96,16 +100,13 @@ release = sklearn.__version__
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 
-# List of documents that shouldn't be included in the build.
-#unused_docs = []
-
-# List of directories, relative to source directory, that shouldn't be
-# searched for source files.
-exclude_trees = ['_build', 'templates', 'includes']
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+default_role = 'literal'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -136,7 +137,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner': True}
+                      'sprintbanner': True, 'body_max_width': None}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -166,10 +167,6 @@ html_static_path = ['images']
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
 #html_last_updated_fmt = '%b %d, %Y'
-
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-#html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
@@ -203,50 +200,78 @@ htmlhelp_basename = 'scikit-learndoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+    # Additional stuff for the LaTeX preamble.
+    'preamble': r"""
+        \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
+        \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
+        """
+}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
-                    u('scikit-learn developers'), 'manual'), ]
+latex_documents = [('index', 'user_guide.tex', 'scikit-learn user guide',
+                    'scikit-learn developers', 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
 latex_logo = "logos/scikit-learn-logo.png"
 
-# For "manual" documents, if this is true, then toplevel headings are parts,
-# not chapters.
-#latex_use_parts = False
-
-# Additional stuff for the LaTeX preamble.
-latex_preamble = r"""
-\usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
-\usepackage{enumitem} \setlistdepth{10}
-"""
-
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
 latex_domain_indices = False
 
 trim_doctests_flags = True
 
+# intersphinx configuration
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/{.major}'.format(
+        sys.version_info), None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
+}
+
+if 'dev' in version:
+    binder_branch = 'master'
+else:
+    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
+    if match is None:
+        raise ValueError(
+            'Ill-formed version: {!r}. Expected either '
+            "a version containing 'dev' "
+            'or a version like X.Y or X.Y.Z.'.format(version))
+
+    major, minor = match.groups()
+    binder_branch = '{}.{}.X'.format(major, minor)
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
+    'show_memory': True,
     'reference_url': {
-        'sklearn': None,
-        'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
+        'sklearn': None},
+    'examples_dirs': ['../examples'],
+    'gallery_dirs': ['auto_examples'],
+    'binder': {
+        'org': 'scikit-learn',
+        'repo': 'scikit-learn',
+        'binderhub_url': 'https://mybinder.org',
+        'branch': binder_branch,
+        'dependencies': './binder/requirements.txt',
+        'use_jupyter_lab': True
+    }
 }
 
 
@@ -255,10 +280,16 @@ sphinx_gallery_conf = {
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
                    'sphx_glr_plot_gpr_co2_001.png': 350,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}
+
+
+# enable experimental module so that experimental estimators can be
+# discovered properly by sphinx
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.experimental import enable_iterative_imputer  # noqa
 
 
 def make_carousel_thumbs(app, exception):
@@ -277,19 +308,26 @@ def make_carousel_thumbs(app, exception):
 
 # Config for sphinx_issues
 
-issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+# we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
-issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):
     # to hide/show the prompt in code examples:
     app.add_javascript('js/copybutton.js')
+    app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve('sklearn',
-                                         u'https://github.com/scikit-learn/'
+                                         'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+warnings.filterwarnings("ignore", category=UserWarning,
+                        message='Matplotlib is currently using agg, which is a'
+                                ' non-GUI backend, so cannot show the figure.')
+
+# Reduces the output of estimators
+sklearn.set_config(print_changed_only=True)

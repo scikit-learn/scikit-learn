@@ -1,0 +1,8 @@
+--find-links https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+--pre
+matplotlib
+scikit-image
+pandas
+sphinx-gallery
+scikit-learn
+

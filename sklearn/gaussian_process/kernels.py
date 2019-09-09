@@ -22,15 +22,15 @@ optimization.
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
+from inspect import signature
+import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
-from ..externals import six
 from ..base import clone
-from sklearn.externals.funcsigs import signature
 
 
 def _check_length_scale(X, length_scale):
@@ -91,7 +91,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     __slots__ = ()
 
     def __new__(cls, name, value_type, bounds, n_elements=1, fixed=None):
-        if not isinstance(bounds, six.string_types) or bounds != "fixed":
+        if not isinstance(bounds, str) or bounds != "fixed":
             bounds = np.atleast_2d(bounds)
             if n_elements > 1:  # vector-valued parameter
                 if bounds.shape[0] == 1:
@@ -102,7 +102,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                                      % (name, n_elements, bounds.shape[0]))
 
         if fixed is None:
-            fixed = isinstance(bounds, six.string_types) and bounds == "fixed"
+            fixed = isinstance(bounds, str) and bounds == "fixed"
         return super(Hyperparameter, cls).__new__(
             cls, name, value_type, bounds, n_elements, fixed)
 
@@ -116,7 +116,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
                 self.fixed == other.fixed)
 
 
-class Kernel(six.with_metaclass(ABCMeta)):
+class Kernel(metaclass=ABCMeta):
     """Base class for all kernels.
 
     .. versionadded:: 0.18
@@ -158,7 +158,16 @@ class Kernel(six.with_metaclass(ABCMeta)):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            params[arg] = getattr(self, arg, None)
+            try:
+                value = getattr(self, arg)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
+            params[arg] = value
         return params
 
     def set_params(self, **params):
@@ -176,7 +185,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
             # Simple optimisation to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
+        for key, value in params.items():
             split = key.split('__', 1)
             if len(split) > 1:
                 # nested objects case
@@ -199,7 +208,13 @@ class Kernel(six.with_metaclass(ABCMeta)):
         return self
 
     def clone_with_theta(self, theta):
-        """Returns a clone of self with given hyperparameters theta. """
+        """Returns a clone of self with given hyperparameters theta.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The hyperparameters
+        """
         cloned = clone(self)
         cloned.theta = theta
         return cloned
@@ -212,10 +227,8 @@ class Kernel(six.with_metaclass(ABCMeta)):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
-        r = []
-        for attr in dir(self):
-            if attr.startswith("hyperparameter_"):
-                r.append(getattr(self, attr))
+        r = [getattr(self, attr) for attr in dir(self)
+             if attr.startswith("hyperparameter_")]
         return r
 
     @property
@@ -280,10 +293,9 @@ class Kernel(six.with_metaclass(ABCMeta)):
         bounds : array, shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
-        bounds = []
-        for hyperparameter in self.hyperparameters:
-            if not hyperparameter.fixed:
-                bounds.append(hyperparameter.bounds)
+        bounds = [hyperparameter.bounds
+                  for hyperparameter in self.hyperparameters
+                  if not hyperparameter.fixed]
         if len(bounds) > 0:
             return np.log(np.vstack(bounds))
         else:
@@ -354,7 +366,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
         """Returns whether the kernel is stationary. """
 
 
-class NormalizedKernelMixin(object):
+class NormalizedKernelMixin:
     """Mixin for kernels which are normalized: k(X, X)=1.
 
     .. versionadded:: 0.18
@@ -380,7 +392,7 @@ class NormalizedKernelMixin(object):
         return np.ones(X.shape[0])
 
 
-class StationaryKernelMixin(object):
+class StationaryKernelMixin:
     """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
 
     .. versionadded:: 0.18
@@ -395,6 +407,11 @@ class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
 
     .. versionadded:: 0.18
+
+    Parameters
+    ----------
+    kernels : list of Kernel objects
+        The other kernels
     """
 
     def __init__(self, kernels):
@@ -563,12 +580,11 @@ class KernelOperator(Kernel):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter."""
-        r = []
-        for hyperparameter in self.k1.hyperparameters:
-            r.append(Hyperparameter("k1__" + hyperparameter.name,
-                                    hyperparameter.value_type,
-                                    hyperparameter.bounds,
-                                    hyperparameter.n_elements))
+        r = [Hyperparameter("k1__" + hyperparameter.name,
+                            hyperparameter.value_type,
+                            hyperparameter.bounds, hyperparameter.n_elements)
+             for hyperparameter in self.k1.hyperparameters]
+
         for hyperparameter in self.k2.hyperparameters:
             r.append(Hyperparameter("k2__" + hyperparameter.name,
                                     hyperparameter.value_type,
@@ -999,11 +1015,13 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = self.constant_value * np.ones((X.shape[0], Y.shape[0]))
+        K = np.full((X.shape[0], Y.shape[0]), self.constant_value,
+                    dtype=np.array(self.constant_value).dtype)
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (K, self.constant_value
-                        * np.ones((X.shape[0], X.shape[0], 1)))
+                return (K, np.full((X.shape[0], X.shape[0], 1),
+                                   self.constant_value,
+                                   dtype=np.array(self.constant_value).dtype))
             else:
                 return K, np.empty((X.shape[0], X.shape[0], 0))
         else:
@@ -1026,7 +1044,8 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.constant_value * np.ones(X.shape[0])
+        return np.full(X.shape[0], self.constant_value,
+                       dtype=np.array(self.constant_value).dtype)
 
     def __repr__(self):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
@@ -1036,8 +1055,9 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
-    explains the noise-component of the signal. Tuning its parameter
-    corresponds to estimating the noise-level.
+    explains the noise of the signal as independently and identically
+    normally-distributed. The parameter noise_level equals the variance of this
+    noise.
 
     k(x_1, x_2) = noise_level if x_1 == x_2 else 0
 
@@ -1046,11 +1066,10 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     Parameters
     ----------
     noise_level : float, default: 1.0
-        Parameter controlling the noise level
+        Parameter controlling the noise level (variance)
 
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
-
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1121,7 +1140,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
         K_diag : array, shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return self.noise_level * np.ones(X.shape[0])
+        return np.full(X.shape[0], self.noise_level,
+                       dtype=np.array(self.noise_level).dtype)
 
     def __repr__(self):
         return "{0}(noise_level={1:.3g})".format(self.__class__.__name__,
@@ -1146,7 +1166,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
@@ -1259,7 +1279,7 @@ class Matern(RBF):
     .. versionadded:: 0.18
 
     Parameters
-    -----------
+    ----------
     length_scale : float or array with shape (n_features,), default: 1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
@@ -1268,7 +1288,7 @@ class Matern(RBF):
     length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on length_scale
 
-    nu: float, default: 1.5
+    nu : float, default: 1.5
         The parameter nu controlling the smoothness of the learned function.
         The smaller nu, the less smooth the approximated function is.
         For nu=inf, the kernel becomes equivalent to the RBF kernel and for
@@ -1283,7 +1303,7 @@ class Matern(RBF):
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
-        super(Matern, self).__init__(length_scale, length_scale_bounds)
+        super().__init__(length_scale, length_scale_bounds)
         self.nu = nu
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -1462,6 +1482,10 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
+        if len(np.atleast_1d(self.length_scale)) > 1:
+            raise AttributeError(
+                "RationalQuadratic kernel only supports isotropic version, "
+                "please use a single scalar for length_scale")
         X = np.atleast_2d(X)
         if Y is None:
             dists = squareform(pdist(X, metric='sqeuclidean'))
@@ -1505,7 +1529,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
     parameterized by a length-scale parameter length_scale>0 and a periodicity
@@ -1618,7 +1642,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class DotProduct(Kernel):
-    """Dot-Product kernel.
+    r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
     regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
@@ -1755,7 +1779,7 @@ class PairwiseKernel(Kernel):
 
     Parameters
     ----------
-    gamma: float >= 0, default: 1.0
+    gamma : float >= 0, default: 1.0
         Parameter gamma of the pairwise kernel specified by metric
 
     gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)

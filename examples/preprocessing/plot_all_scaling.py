@@ -8,7 +8,7 @@ Compare the effect of different scalers on data with outliers
 
 Feature 0 (median income in a block) and feature 5 (number of households) of
 the `California housing dataset
-<http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
+<https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
 different scales and contain some very large outliers. These two
 characteristics lead to difficulties to visualize the data and, more
 importantly, they can degrade the predictive performance of many machine
@@ -29,8 +29,10 @@ Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
-``QuantileTransformer`` provides a non-linear transformation in which distances
-between marginal outliers and inliers are shrunk.
+``QuantileTransformer`` provides non-linear transformations in which distances
+between marginal outliers and inliers are shrunk. ``PowerTransformer`` provides
+non-linear transformations in which data is mapped to a normal distribution to
+stabilize variance and minimize skewness.
 
 Unlike the previous transformations, normalization refers to a per sample
 transformation instead of a per feature transformation.
@@ -45,8 +47,6 @@ of the results_.
 #          Thomas Unterthiner
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import numpy as np
 
 import matplotlib as mpl
@@ -59,7 +59,8 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing.data import QuantileTransformer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
 
@@ -84,19 +85,25 @@ distributions = [
         MaxAbsScaler().fit_transform(X)),
     ('Data after robust scaling',
         RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
-    ('Data after quantile transformation (uniform pdf)',
-        QuantileTransformer(output_distribution='uniform')
-        .fit_transform(X)),
+    ('Data after power transformation (Yeo-Johnson)',
+     PowerTransformer(method='yeo-johnson').fit_transform(X)),
+    ('Data after power transformation (Box-Cox)',
+     PowerTransformer(method='box-cox').fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
         QuantileTransformer(output_distribution='normal')
         .fit_transform(X)),
+    ('Data after quantile transformation (uniform pdf)',
+        QuantileTransformer(output_distribution='uniform')
+        .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X))
+        Normalizer().fit_transform(X)),
 ]
 
 # scale the output between 0 and 1 for the colorbar
 y = minmax_scale(y_full)
 
+# plasma does not exist in matplotlib < 1.5
+cmap = getattr(cm, 'plasma_r', cm.hot_r)
 
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
@@ -148,7 +155,7 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
     ax.set_ylabel(x1_label)
 
     # The scatter plot
-    colors = cm.plasma_r(y)
+    colors = cmap(y)
     ax.scatter(X[:, 0], X[:, 1], alpha=0.5, marker='o', s=5, lw=0, c=colors)
 
     # Removing the top and the right spine for aesthetics
@@ -204,7 +211,7 @@ def make_plot(item_idx):
                       title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
-    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,
+    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cmap,
                               norm=norm, orientation='vertical',
                               label='Color mapping for values of y')
 
@@ -286,6 +293,34 @@ make_plot(3)
 
 make_plot(4)
 
+##############################################################################
+# PowerTransformer
+# ----------------
+#
+# ``PowerTransformer`` applies a power transformation to each feature to make
+# the data more Gaussian-like. Currently, ``PowerTransformer`` implements the
+# Yeo-Johnson and Box-Cox transforms. The power transform finds the optimal
+# scaling factor to stabilize variance and mimimize skewness through maximum
+# likelihood estimation. By default, ``PowerTransformer`` also applies
+# zero-mean, unit variance normalization to the transformed output. Note that
+# Box-Cox can only be applied to strictly positive data. Income and number of
+# households happen to be strictly positive, but if negative values are present
+# the Yeo-Johnson transformed is to be preferred.
+
+make_plot(5)
+make_plot(6)
+
+##############################################################################
+# QuantileTransformer (Gaussian output)
+# -------------------------------------
+#
+# ``QuantileTransformer`` has an additional ``output_distribution`` parameter
+# allowing to match a Gaussian distribution instead of a uniform distribution.
+# Note that this non-parametetric transformer introduces saturation artifacts
+# for extreme values.
+
+make_plot(7)
+
 ###################################################################
 # QuantileTransformer (uniform output)
 # ------------------------------------
@@ -302,18 +337,7 @@ make_plot(4)
 # any outlier by setting them to the a priori defined range boundaries (0 and
 # 1).
 
-make_plot(5)
-
-##############################################################################
-# QuantileTransformer (Gaussian output)
-# -------------------------------------
-#
-# ``QuantileTransformer`` has an additional ``output_distribution`` parameter
-# allowing to match a Gaussian distribution instead of a uniform distribution.
-# Note that this non-parametetric transformer introduces saturation artifacts
-# for extreme values.
-
-make_plot(6)
+make_plot(8)
 
 ##############################################################################
 # Normalizer
@@ -326,5 +350,6 @@ make_plot(6)
 # transformed data only lie in the positive quadrant. This would not be the
 # case if some original features had a mix of positive and negative values.
 
-make_plot(7)
+make_plot(9)
+
 plt.show()

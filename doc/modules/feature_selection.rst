@@ -76,8 +76,7 @@ to retrieve only the two best features as follows:
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectKBest
   >>> from sklearn.feature_selection import chi2
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
   >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
@@ -182,8 +181,7 @@ for classification::
   >>> from sklearn.svm import LinearSVC
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectFromModel
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
   >>> lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X, y)
@@ -198,7 +196,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
+    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -226,7 +224,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://users.isr.ist.utl.pt/~aguiar/CS_notes.pdf
 
 
 Tree-based feature selection
@@ -241,11 +239,10 @@ meta-transformer)::
   >>> from sklearn.ensemble import ExtraTreesClassifier
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectFromModel
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier()
+  >>> clf = ExtraTreesClassifier(n_estimators=50)
   >>> clf = clf.fit(X, y)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])

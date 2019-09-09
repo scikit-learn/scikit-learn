@@ -44,12 +44,12 @@ np.random.seed(0)
 
 def generate_data(case, sparse=False):
     """Generate regression/classification data."""
-    bunch = None
     if case == 'regression':
-        bunch = datasets.load_boston()
+        X, y = datasets.load_boston(return_X_y=True)
     elif case == 'classification':
-        bunch = datasets.fetch_20newsgroups_vectorized(subset='all')
-    X, y = shuffle(bunch.data, bunch.target)
+        X, y = datasets.fetch_20newsgroups_vectorized(subset='all',
+                                                      return_X_y=True)
+    X, y = shuffle(X, y)
     offset = int(X.shape[0] * 0.8)
     X_train, y_train = X[:offset], y[:offset]
     X_test, y_test = X[offset:], y[offset:]
@@ -129,7 +129,7 @@ classification_data = generate_data('classification', sparse=True)
 configurations = [
     {'estimator': SGDClassifier,
      'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
-                      'modified_huber', 'fit_intercept': True},
+                      'modified_huber', 'fit_intercept': True, 'tol': 1e-3},
      'changing_param': 'l1_ratio',
      'changing_param_values': [0.25, 0.5, 0.75, 0.9],
      'complexity_label': 'non_zero coefficients',

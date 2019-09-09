@@ -9,7 +9,7 @@ from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -64,15 +64,14 @@ def barycenter_weights(X, Z, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
+def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : int
         Number of neighbors for each sample.
@@ -82,9 +81,11 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
         problem. Only relevant if mode='barycenter'. If None, use the
         default.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -138,8 +139,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Tolerance for 'arpack' method.
         Not used if eigen_solver=='dense'.
 
-    max_iter : maximum number of iterations for 'arpack' method
-        not used if eigen_solver=='dense'
+    max_iter : int
+        Maximum number of iterations for 'arpack' method.
+        Not used if eigen_solver=='dense'
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -186,17 +188,16 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 def locally_linear_embedding(
         X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
         max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=1):
+        random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
+    X : {array-like, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
-        numpy array, sparse array, precomputed tree, or NearestNeighbors
-        object.
+        numpy array or a NearestNeighbors object.
 
     n_neighbors : integer
         number of neighbors to consider for each point.
@@ -254,9 +255,11 @@ def locally_linear_embedding(
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``solver`` == 'arpack'.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -270,17 +273,17 @@ def locally_linear_embedding(
     References
     ----------
 
-    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
-        by locally linear embedding.  Science 290:2323 (2000).`
-    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).
+    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
-        Proc Natl Acad Sci U S A.  100:5591 (2003).`
-    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
-        Embedding Using Multiple Weights.`
+        Proc Natl Acad Sci U S A.  100:5591 (2003).
+    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.
         http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
-        Journal of Shanghai Univ.  8:406 (2004)`
+        Journal of Shanghai Univ.  8:406 (2004)
     """
     if eigen_solver not in ('auto', 'arpack', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -298,7 +301,11 @@ def locally_linear_embedding(
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
-        raise ValueError("n_neighbors must be less than number of points")
+        raise ValueError(
+            "Expected n_neighbors <= n_samples, "
+            " but n_samples = %d, n_neighbors = %d" %
+            (N, n_neighbors)
+        )
 
     if n_neighbors <= 0:
         raise ValueError("n_neighbors must be positive")
@@ -445,7 +452,7 @@ def locally_linear_embedding(
             # compute Householder matrix which satisfies
             #  Hi*Vi.T*ones(n_neighbors) = alpha_i*ones(s)
             # using prescription from paper
-            h = alpha_i * np.ones(s_i) - np.dot(Vi.T, np.ones(n_neighbors))
+            h = np.full(s_i, alpha_i) - np.dot(Vi.T, np.ones(n_neighbors))
 
             norm_h = np.linalg.norm(h)
             if norm_h < modified_tol:
@@ -511,7 +518,8 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
+class LocallyLinearEmbedding(TransformerMixin,
+                             _UnstableArchMixin, BaseEstimator):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -579,42 +587,56 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
-    embedding_vectors_ : array-like, shape [n_components, n_samples]
+    embedding_ : array-like, shape [n_samples, n_components]
         Stores the embedding vectors
 
     reconstruction_error_ : float
-        Reconstruction error associated with `embedding_vectors_`
+        Reconstruction error associated with `embedding_`
 
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
         if applicable.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.manifold import LocallyLinearEmbedding
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> X.shape
+    (1797, 64)
+    >>> embedding = LocallyLinearEmbedding(n_components=2)
+    >>> X_transformed = embedding.fit_transform(X[:100])
+    >>> X_transformed.shape
+    (100, 2)
+
     References
     ----------
 
-    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
-        by locally linear embedding.  Science 290:2323 (2000).`
-    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).
+    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
-        Proc Natl Acad Sci U S A.  100:5591 (2003).`
-    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
-        Embedding Using Multiple Weights.`
+        Proc Natl Acad Sci U S A.  100:5591 (2003).
+    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.
         http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
-        Journal of Shanghai Univ.  8:406 (2004)`
+        Journal of Shanghai Univ.  8:406 (2004)
     """
 
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None, n_jobs=1):
+                 neighbors_algorithm='auto', random_state=None, n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
@@ -652,7 +674,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -669,7 +691,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored
+        y : Ignored
 
         Returns
         -------
@@ -695,7 +717,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        check_is_fitted(self, "nbrs_")
+        check_is_fitted(self)
 
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,

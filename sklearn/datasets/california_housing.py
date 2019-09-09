@@ -21,38 +21,45 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import exists
+from os.path import dirname, exists, join
 from os import makedirs, remove
 import tarfile
 
 import numpy as np
 import logging
 
+import joblib
+
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import _pkl_filepath
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from ..utils import Bunch
-from ..externals import joblib
 
 # The original data can be found at:
-# http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+# https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
 ARCHIVE = RemoteFileMetadata(
     filename='cal_housing.tgz',
     url='https://ndownloader.figshare.com/files/5976036',
     checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
               '3280c4a3695a2ddda4ffb5d8215ea681'))
 
-# Grab the module-level docstring to use as a description of the
-# dataset
-MODULE_DOCS = __doc__
-
 logger = logging.getLogger(__name__)
 
-def fetch_california_housing(data_home=None, download_if_missing=True):
-    """Loader for the California housing dataset from StatLib.
 
-    Read more in the :ref:`User Guide <datasets>`.
+def fetch_california_housing(data_home=None, download_if_missing=True,
+                             return_X_y=False):
+    """Load the California housing dataset (regression).
+
+    ==============   ==============
+    Samples total             20640
+    Dimensionality                8
+    Features                   real
+    Target           real 0.15 - 5.
+    ==============   ==============
+
+    Read more in the :ref:`User Guide <california_housing_dataset>`.
 
     Parameters
     ----------
@@ -60,9 +67,16 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : optional, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+
+    return_X_y : boolean, default=False.
+        If True, returns ``(data.data, data.target)`` instead of a Bunch
+        object.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -80,8 +94,12 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     dataset.DESCR : string
         Description of the California housing dataset.
 
+    (data, target) : tuple if ``return_X_y`` is True
+
+        .. versionadded:: 0.20
+
     Notes
-    ------
+    -----
 
     This dataset consists of 20,640 samples and 9 features.
     """
@@ -96,22 +114,25 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
         logger.info('Downloading Cal. housing from {} to {}'.format(
             ARCHIVE.url, data_home))
+
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 
-        fileobj = tarfile.open(
-            mode="r:gz",
-            name=archive_path).extractfile(
-                'CaliforniaHousing/cal_housing.data')
+        with tarfile.open(mode="r:gz", name=archive_path) as f:
+            cal_housing = np.loadtxt(
+                f.extractfile('CaliforniaHousing/cal_housing.data'),
+                delimiter=',')
+            # Columns are not in the same order compared to the previous
+            # URL resource on lib.stat.cmu.edu
+            columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
+            cal_housing = cal_housing[:, columns_index]
+
+            joblib.dump(cal_housing, filepath, compress=6)
         remove(archive_path)
 
-        cal_housing = np.loadtxt(fileobj, delimiter=',')
-        # Columns are not in the same order compared to the previous
-        # URL resource on lib.stat.cmu.edu
-        columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
-        cal_housing = cal_housing[:, columns_index]
-        joblib.dump(cal_housing, filepath, compress=6)
     else:
-        cal_housing = joblib.load(filepath)
+        cal_housing = _refresh_cache([filepath], 6)
+        # TODO: Revert to the following line in v0.23
+        # cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]
@@ -130,7 +151,14 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     # target in units of 100,000
     target = target / 100000.0
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
+        descr = dfile.read()
+
+    if return_X_y:
+        return data, target
+
     return Bunch(data=data,
                  target=target,
                  feature_names=feature_names,
-                 DESCR=MODULE_DOCS)
+                 DESCR=descr)

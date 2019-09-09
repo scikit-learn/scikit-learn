@@ -5,8 +5,8 @@ Empirical evaluation of the impact of k-means initialization
 
 Evaluate the ability of k-means initializations strategies to make
 the algorithm convergence robust as measured by the relative standard
-deviation of the inertia of the clustering (i.e. the sum of distances
-to the nearest cluster center).
+deviation of the inertia of the clustering (i.e. the sum of squared
+distances to the nearest cluster center).
 
 The first plot shows the best inertia reached for each combination
 of the model (``KMeans`` or ``MiniBatchKMeans``) and the init method
@@ -108,7 +108,7 @@ km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
 plt.figure()
 for k in range(n_clusters):
     my_members = km.labels_ == k
-    color = cm.spectral(float(k) / n_clusters, 1)
+    color = cm.nipy_spectral(float(k) / n_clusters, 1)
     plt.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
     cluster_center = km.cluster_centers_[k]
     plt.plot(cluster_center[0], cluster_center[1], 'o',

@@ -58,9 +58,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
@@ -74,10 +74,19 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    Attributes
+    ----------
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
 
     Examples
     --------
@@ -86,11 +95,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
       >>> neigh = NearestNeighbors(2, 0.4)
-      >>> neigh.fit(samples)  #doctest: +ELLIPSIS
+      >>> neigh.fit(samples)
       NearestNeighbors(...)
 
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
-      ... #doctest: +ELLIPSIS
       array([[2, 0]]...)
 
       >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
@@ -115,9 +123,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=1, **kwargs):
-        self._init_params(n_neighbors=n_neighbors,
-                          radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+                 p=2, metric_params=None, n_jobs=None, **kwargs):
+        super().__init__(
+              n_neighbors=n_neighbors,
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size, metric=metric, p=p,
+              metric_params=metric_params, n_jobs=n_jobs, **kwargs)

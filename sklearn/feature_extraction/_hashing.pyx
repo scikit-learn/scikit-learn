@@ -1,6 +1,9 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, cdivision=True
 
+import sys
 import array
 from cpython cimport array
 cimport cython
@@ -8,13 +11,12 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
-from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
+from ..utils.murmurhash cimport murmurhash3_bytes_s32
+from ..utils.fixes import sp_version
 
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.cdivision(True)
 def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     """Guts of FeatureHasher.transform.
 
@@ -33,12 +35,16 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     cdef array.array indices
     cdef array.array indptr
     indices = array.array("i")
-    indptr = array.array("i", [0])
+    indices_array_dtype = "q"
+    indices_np_dtype = np.longlong
+
+
+    indptr = array.array(indices_array_dtype, [0])
 
     # Since Python array does not understand Numpy dtypes, we grow the indices
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int32_t size = 0
+    cdef np.int64_t size = 0
     cdef np.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
@@ -79,4 +85,18 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
         indptr[len(indptr) - 1] = size
 
     indices_a = np.frombuffer(indices, dtype=np.int32)
-    return (indices_a, np.frombuffer(indptr, dtype=np.int32), values[:size])
+    indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
+
+    if indptr[-1] > 2147483648:  # = 2**31
+        if sp_version < (0, 14):
+            raise ValueError(('sparse CSR array has {} non-zero '
+                              'elements and requires 64 bit indexing, '
+                              ' which is unsupported with scipy {}. '
+                              'Please upgrade to scipy >=0.14')
+                             .format(indptr[-1], '.'.join(sp_version)))
+        # both indices and indptr have the same dtype in CSR arrays
+        indices_a = indices_a.astype(np.int64, copy=False)
+    else:
+        indptr_a = indptr_a.astype(np.int32, copy=False)
+
+    return (indices_a, indptr_a, values[:size])

@@ -15,17 +15,15 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
-from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
 
 
-class BernoulliRBM(BaseEstimator, TransformerMixin):
+class BernoulliRBM(TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -58,7 +56,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     verbose : int, optional
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or RandomState, optional
         A random number generator instance to define the state of the
         random permutations generator. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
@@ -75,6 +73,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Weight matrix, where n_features in the number of
         visible units and n_components is the number of hidden units.
 
+    h_samples_ : array-like, shape (batch_size, n_components)
+        Hidden Activation sampled from the model distribution,
+        where batch_size in the number of examples per minibatch and
+        n_components is the number of hidden units.
+
     Examples
     --------
 
@@ -83,15 +86,14 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
-    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=None, verbose=0)
+    BernoulliRBM(n_components=2)
 
     References
     ----------
 
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
-        http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
+        https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
 
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
@@ -119,7 +121,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         return self._mean_hiddens(X)
@@ -211,7 +213,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_new : array-like, shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
         if not hasattr(self, "random_state_"):
             self.random_state_ = check_random_state(self.random_state)
         h_ = self._sample_hiddens(v, self.random_state_)
@@ -302,7 +304,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free energy on X, then on a randomly corrupted version of X, and
         returns the log of the logistic function of the difference.
         """
-        check_is_fitted(self, "components_")
+        check_is_fitted(self)
 
         v = check_array(X, accept_sparse='csr')
         rng = check_random_state(self.random_state)
@@ -310,7 +312,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         # Randomly corrupt one feature in each sample in v.
         ind = (np.arange(v.shape[0]),
                rng.randint(0, v.shape[1], v.shape[0]))
-        if issparse(v):
+        if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
         else:
@@ -350,7 +352,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
+        for iteration in range(1, self.n_iter + 1):
             for batch_slice in batch_slices:
                 self._fit(X[batch_slice], rng)
 

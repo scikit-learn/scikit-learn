@@ -10,8 +10,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_equal
 
 
 def test_compute_class_weight():
@@ -23,7 +21,7 @@ def test_compute_class_weight():
     # total effect of samples is preserved
     class_counts = np.bincount(y)[2:]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_true(cw[0] < cw[1] < cw[2])
+    assert cw[0] < cw[1] < cw[2]
 
 
 def test_compute_class_weight_not_present():
@@ -100,14 +98,14 @@ def test_compute_class_weight_balanced_negative():
     y = np.asarray([-1, -1, 0, 0, -2, -2])
 
     cw = compute_class_weight("balanced", classes, y)
-    assert_equal(len(cw), len(classes))
+    assert len(cw) == len(classes)
     assert_array_almost_equal(cw, np.array([1., 1., 1.]))
 
     # Test with unbalanced class labels.
     y = np.asarray([-1, 0, 0, -2, -2, -2])
 
     cw = compute_class_weight("balanced", classes, y)
-    assert_equal(len(cw), len(classes))
+    assert len(cw) == len(classes)
     class_counts = np.bincount(y + 2)
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
     assert_array_almost_equal(cw, [2. / 3, 2., 1.])
@@ -122,6 +120,28 @@ def test_compute_class_weight_balanced_unordered():
     class_counts = np.bincount(y)[classes]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
     assert_array_almost_equal(cw, [2., 1., 2. / 3])
+
+
+def test_compute_class_weight_default():
+    # Test for the case where no weight is given for a present class.
+    # Current behaviour is to assign the unweighted classes a weight of 1.
+    y = np.asarray([2, 2, 2, 3, 3, 4])
+    classes = np.unique(y)
+    classes_len = len(classes)
+
+    # Test for non specified weights
+    cw = compute_class_weight(None, classes, y)
+    assert len(cw) == classes_len
+    assert_array_almost_equal(cw, np.ones(3))
+
+    # Tests for partly specified weights
+    cw = compute_class_weight({2: 1.5}, classes, y)
+    assert len(cw) == classes_len
+    assert_array_almost_equal(cw, [1.5, 1., 1.])
+
+    cw = compute_class_weight({2: 1.5, 4: 0.5}, classes, y)
+    assert len(cw) == classes_len
+    assert_array_almost_equal(cw, [1.5, 1., 0.5])
 
 
 def test_compute_sample_weight():
@@ -226,3 +246,11 @@ def test_compute_sample_weight_errors():
 
     # Incorrect length list for multi-output
     assert_raises(ValueError, compute_sample_weight, [{1: 2, 2: 1}], y_)
+
+
+def test_compute_sample_weight_more_than_32():
+    # Non-regression smoke test for #12146
+    y = np.arange(50)  # more than 32 distinct classes
+    indices = np.arange(50)  # use subsampling
+    weight = compute_sample_weight('balanced', y, indices=indices)
+    assert_array_almost_equal(weight, np.ones(y.shape[0]))

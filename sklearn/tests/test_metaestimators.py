@@ -1,14 +1,12 @@
 """Common tests for metaestimators"""
-
 import functools
 
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
 
-from sklearn.utils.testing import assert_true, assert_false, assert_raises
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.pipeline import Pipeline, make_pipeline, make_union
@@ -22,7 +20,7 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
@@ -42,9 +40,9 @@ DELEGATING_METAESTIMATORS = [
                       est, param_distributions={'param': [5]}, cv=2, n_iter=1),
                   skip_methods=['score']),
     DelegatorData('RFE', RFE,
-                  skip_methods=['transform', 'inverse_transform', 'score']),
+                  skip_methods=['transform', 'inverse_transform']),
     DelegatorData('RFECV', RFECV,
-                  skip_methods=['transform', 'inverse_transform', 'score']),
+                  skip_methods=['transform', 'inverse_transform']),
     DelegatorData('BaggingClassifier', BaggingClassifier,
                   skip_methods=['transform', 'inverse_transform', 'score',
                                 'predict_proba', 'predict_log_proba',
@@ -99,7 +97,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            check_is_fitted(self, 'coef_')
+            check_is_fitted(self)
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):
@@ -132,11 +130,11 @@ def test_metaestimator_delegation():
             return np.ones(X.shape[0])
 
         @hides
-        def score(self, X, *args, **kwargs):
+        def score(self, X, y, *args, **kwargs):
             self._check_fit()
             return 1.0
 
-    methods = [k for k in iterkeys(SubEstimator.__dict__)
+    methods = [k for k in SubEstimator.__dict__.keys()
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
 
@@ -146,27 +144,36 @@ def test_metaestimator_delegation():
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
-            assert_true(hasattr(delegate, method))
-            assert_true(hasattr(delegator, method),
-                        msg="%s does not have method %r when its delegate does"
-                            % (delegator_data.name, method))
+            assert hasattr(delegate, method)
+            assert hasattr(delegator, method), (
+                    "%s does not have method %r when its delegate does"
+                    % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
-            assert_raises(NotFittedError, getattr(delegator, method),
-                          delegator_data.fit_args[0])
+            if method == 'score':
+                assert_raises(NotFittedError, getattr(delegator, method),
+                              delegator_data.fit_args[0],
+                              delegator_data.fit_args[1])
+            else:
+                assert_raises(NotFittedError, getattr(delegator, method),
+                              delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
             # smoke test delegation
-            getattr(delegator, method)(delegator_data.fit_args[0])
+            if method == 'score':
+                getattr(delegator, method)(delegator_data.fit_args[0],
+                                           delegator_data.fit_args[1])
+            else:
+                getattr(delegator, method)(delegator_data.fit_args[0])
 
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
             delegate = SubEstimator(hidden_method=method)
             delegator = delegator_data.construct(delegate)
-            assert_false(hasattr(delegate, method))
-            assert_false(hasattr(delegator, method),
-                         msg="%s has method %r when its delegate does not"
-                             % (delegator_data.name, method))
+            assert not hasattr(delegate, method)
+            assert not hasattr(delegator, method), (
+                    "%s has method %r when its delegate does not"
+                    % (delegator_data.name, method))

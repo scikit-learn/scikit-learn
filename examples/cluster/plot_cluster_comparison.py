@@ -74,14 +74,20 @@ default_base = {'quantile': .3,
                 'damping': .9,
                 'preference': -200,
                 'n_neighbors': 10,
-                'n_clusters': 3}
+                'n_clusters': 3,
+                'min_samples': 20,
+                'xi': 0.05,
+                'min_cluster_size': 0.1}
 
 datasets = [
     (noisy_circles, {'damping': .77, 'preference': -240,
-                     'quantile': .2, 'n_clusters': 2}),
+                     'quantile': .2, 'n_clusters': 2,
+                     'min_samples': 20, 'xi': 0.25}),
     (noisy_moons, {'damping': .75, 'preference': -220, 'n_clusters': 2}),
-    (varied, {'eps': .18, 'n_neighbors': 2}),
-    (aniso, {'eps': .15, 'n_neighbors': 2}),
+    (varied, {'eps': .18, 'n_neighbors': 2,
+              'min_samples': 5, 'xi': 0.035, 'min_cluster_size': .2}),
+    (aniso, {'eps': .15, 'n_neighbors': 2,
+             'min_samples': 20, 'xi': 0.1, 'min_cluster_size': .2}),
     (blobs, {}),
     (no_structure, {})]
 
@@ -116,6 +122,9 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_clusters=params['n_clusters'], eigen_solver='arpack',
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
+    optics = cluster.OPTICS(min_samples=params['min_samples'],
+                            xi=params['xi'],
+                            min_cluster_size=params['min_cluster_size'])
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
@@ -133,6 +142,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('Ward', ward),
         ('AgglomerativeClustering', average_linkage),
         ('DBSCAN', dbscan),
+        ('OPTICS', optics),
         ('Birch', birch),
         ('GaussianMixture', gmm)
     )
@@ -169,6 +179,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
                                              '#f781bf', '#a65628', '#984ea3',
                                              '#999999', '#e41a1c', '#dede00']),
                                       int(max(y_pred) + 1))))
+        # add black color for outliers (if any)
+        colors = np.append(colors, ["#000000"])
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)

@@ -51,7 +51,7 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
@@ -63,14 +63,11 @@ cdef class Criterion:
         ----------
         y : array-like, dtype=DOUBLE_t
             y is a buffer that can store values for n_outputs target variables
-        y_stride : SIZE_t
-            y_stride is used to index the kth output value as follows:
-            y[i, k] = y[i * y_stride + k]
         sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples : DOUBLE_t
+        weighted_n_samples : double
             The total weight of the samples being considered
-        samples : array-like, dtype=DOUBLE_t
+        samples : array-like, dtype=SIZE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
         start : SIZE_t
@@ -212,9 +209,6 @@ cdef class Criterion:
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
-    cdef SIZE_t* n_classes
-    cdef SIZE_t sum_stride
-
     def __cinit__(self, SIZE_t n_outputs,
                   np.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
@@ -227,8 +221,6 @@ cdef class ClassificationCriterion(Criterion):
             The number of unique classes in each target
         """
 
-        self.y = NULL
-        self.y_stride = 0
         self.sample_weight = NULL
 
         self.samples = NULL
@@ -284,7 +276,7 @@ cdef class ClassificationCriterion(Criterion):
                  sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 
-    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride,
+    cdef int init(self, const DOUBLE_t[:, ::1] y,
                   DOUBLE_t* sample_weight, double weighted_n_samples,
                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
@@ -297,12 +289,9 @@ cdef class ClassificationCriterion(Criterion):
         ----------
         y : array-like, dtype=DOUBLE_t
             The target stored as a buffer for memory efficiency
-        y_stride : SIZE_t
-            The stride between elements in the buffer, important if there
-            are multiple targets (multi-output)
-        sample_weight : array-like, dtype=DTYPE_t
+        sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples : SIZE_t
+        weighted_n_samples : double
             The total weight of all samples
         samples : array-like, dtype=SIZE_t
             A mask on the samples, showing which ones we want to use
@@ -313,7 +302,6 @@ cdef class ClassificationCriterion(Criterion):
         """
 
         self.y = y
-        self.y_stride = y_stride
         self.sample_weight = sample_weight
         self.samples = samples
         self.start = start
@@ -346,7 +334,7 @@ cdef class ClassificationCriterion(Criterion):
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
-                c = <SIZE_t> y[i * y_stride + k]
+                c = <SIZE_t> self.y[i, k]
                 sum_total[k * self.sum_stride + c] += w
 
             self.weighted_n_node_samples += w
@@ -421,7 +409,6 @@ cdef class ClassificationCriterion(Criterion):
             The new ending position for which to move samples from the right
             child to the left child.
         """
-        cdef DOUBLE_t* y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
 
@@ -456,8 +443,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = (k * self.sum_stride +
-                                   <SIZE_t> y[i * self.y_stride + k])
+                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
                     sum_left[label_index] += w
 
                 self.weighted_n_left += w
@@ -472,8 +458,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = (k * self.sum_stride +
-                                   <SIZE_t> y[i * self.y_stride + k])
+                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
                     sum_left[label_index] -= w
 
                 self.weighted_n_left -= w
@@ -518,7 +503,7 @@ cdef class ClassificationCriterion(Criterion):
 
 
 cdef class Entropy(ClassificationCriterion):
-    """Cross Entropy impurity criterion.
+    r"""Cross Entropy impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -599,7 +584,7 @@ cdef class Entropy(ClassificationCriterion):
 
 
 cdef class Gini(ClassificationCriterion):
-    """Gini Index impurity criterion.
+    r"""Gini Index impurity criterion.
 
     This handles cases where the target is a classification taking values
     0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
@@ -651,9 +636,9 @@ cdef class Gini(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left : DTYPE_t
+        impurity_left : double pointer
             The memory address to save the impurity of the left node to
-        impurity_right : DTYPE_t
+        impurity_right : double pointer
             The memory address to save the impurity of the right node to
         """
 
@@ -693,7 +678,7 @@ cdef class Gini(ClassificationCriterion):
 
 
 cdef class RegressionCriterion(Criterion):
-    """Abstract regression criterion.
+    r"""Abstract regression criterion.
 
     This handles cases where the target is a continuous value, and is
     evaluated by computing the variance of the target values left and right
@@ -703,8 +688,6 @@ cdef class RegressionCriterion(Criterion):
         var = \sum_i^n (y_i - y_bar) ** 2
             = (\sum_i^n y_i ** 2) - n_samples * y_bar ** 2
     """
-
-    cdef double sq_sum_total
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
         """Initialize parameters for this criterion.
@@ -719,8 +702,6 @@ cdef class RegressionCriterion(Criterion):
         """
 
         # Default values
-        self.y = NULL
-        self.y_stride = 0
         self.sample_weight = NULL
 
         self.samples = NULL
@@ -756,14 +737,13 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
         self.y = y
-        self.y_stride = y_stride
         self.sample_weight = sample_weight
         self.samples = samples
         self.start = start
@@ -789,7 +769,7 @@ cdef class RegressionCriterion(Criterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i * y_stride + k]
+                y_ik = self.y[i, k]
                 w_y_ik = w * y_ik
                 self.sum_total[k] += w_y_ik
                 self.sq_sum_total += w_y_ik * y_ik
@@ -832,14 +812,12 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
-        cdef DOUBLE_t* y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         # Update statistics up to new_pos
         #
@@ -847,7 +825,7 @@ cdef class RegressionCriterion(Criterion):
         #           sum_left[x] +  sum_right[x] = sum_total[x]
         # and that sum_total is known, we are going to update
         # sum_left from the direction that require the least amount
-        # of computations, i.e. from pos to new_pos or from end to new_po.
+        # of computations, i.e. from pos to new_pos or from end to new_pos.
 
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
@@ -857,8 +835,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i * self.y_stride + k]
-                    sum_left[k] += w * y_ik
+                    sum_left[k] += w * self.y[i, k]
 
                 self.weighted_n_left += w
         else:
@@ -871,8 +848,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i * self.y_stride + k]
-                    sum_left[k] -= w * y_ik
+                    sum_left[k] -= w * self.y[i, k]
 
                 self.weighted_n_left -= w
 
@@ -952,8 +928,6 @@ cdef class MSE(RegressionCriterion):
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
 
-
-        cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t pos = self.pos
@@ -961,6 +935,7 @@ cdef class MSE(RegressionCriterion):
 
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
+        cdef DOUBLE_t y_ik
 
         cdef double sq_sum_left = 0.0
         cdef double sq_sum_right
@@ -969,7 +944,6 @@ cdef class MSE(RegressionCriterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         for p in range(start, pos):
             i = samples[p]
@@ -978,7 +952,7 @@ cdef class MSE(RegressionCriterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i * self.y_stride + k]
+                y_ik = self.y[i, k]
                 sq_sum_left += w * y_ik * y_ik
 
         sq_sum_right = self.sq_sum_total - sq_sum_left
@@ -994,7 +968,7 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] /= self.n_outputs
 
 cdef class MAE(RegressionCriterion):
-    """Mean absolute error impurity criterion
+    r"""Mean absolute error impurity criterion
 
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
@@ -1019,8 +993,6 @@ cdef class MAE(RegressionCriterion):
         """
 
         # Default values
-        self.y = NULL
-        self.y_stride = 0
         self.sample_weight = NULL
 
         self.samples = NULL
@@ -1049,19 +1021,17 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef int init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
                   SIZE_t end) nogil except -1:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
 
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
 
         # Initialize fields
         self.y = y
-        self.y_stride = y_stride
         self.sample_weight = sample_weight
         self.samples = samples
         self.start = start
@@ -1087,12 +1057,10 @@ cdef class MAE(RegressionCriterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = y[i * y_stride + k]
-
                 # push method ends up calling safe_realloc, hence `except -1`
                 # push all values to the right side,
                 # since pos = start initially anyway
-                (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+                (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
 
             self.weighted_n_node_samples += w
         # calculate the node medians
@@ -1177,12 +1145,10 @@ cdef class MAE(RegressionCriterion):
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
 
-        cdef DOUBLE_t* y = self.y
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         # Update statistics up to new_pos
         #
@@ -1198,11 +1164,10 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i * self.y_stride + k]
                     # remove y_ik and its weight w from right and add to left
-                    (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
+                    (<WeightedMedianCalculator> right_child[k]).remove(self.y[i, k], w)
                     # push method ends up calling safe_realloc, hence except -1
-                    (<WeightedMedianCalculator> left_child[k]).push(y_ik, w)
+                    (<WeightedMedianCalculator> left_child[k]).push(self.y[i, k], w)
 
                 self.weighted_n_left += w
         else:
@@ -1215,10 +1180,9 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = y[i * self.y_stride + k]
                     # remove y_ik and its weight w from left and add to right
-                    (<WeightedMedianCalculator> left_child[k]).remove(y_ik, w)
-                    (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+                    (<WeightedMedianCalculator> left_child[k]).remove(self.y[i, k], w)
+                    (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
 
                 self.weighted_n_left -= w
 
@@ -1238,32 +1202,30 @@ cdef class MAE(RegressionCriterion):
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]"""
 
-        cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
-
-        cdef double impurity = 0.0
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t impurity = 0.0
 
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                y_ik = y[i * self.y_stride + k]
+                if sample_weight != NULL:
+                    w = sample_weight[i]
 
-                impurity += <double> fabs((<double> y_ik) - <double> self.node_medians[k])
+                impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
+
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil:
+    cdef void children_impurity(self, double* p_impurity_left,
+                                double* p_impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end]).
         """
 
-        cdef DOUBLE_t* y = self.y
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
@@ -1272,37 +1234,37 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
         cdef DOUBLE_t median
+        cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t impurity_left = 0.0
+        cdef DOUBLE_t impurity_right = 0.0
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
-
-        impurity_left[0] = 0.0
-        impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> left_child[k]).get_median()
             for p in range(start, pos):
                 i = samples[p]
 
-                y_ik = y[i * self.y_stride + k]
+                if sample_weight != NULL:
+                    w = sample_weight[i]
 
-                impurity_left[0] += <double>fabs((<double> y_ik) -
-                                                 <double> median)
-        impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
+                impurity_left += fabs(self.y[i, k] - median) * w
+        p_impurity_left[0] = impurity_left / (self.weighted_n_left * 
+                                              self.n_outputs)
 
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
             for p in range(pos, end):
                 i = samples[p]
 
-                y_ik = y[i * self.y_stride + k]
+                if sample_weight != NULL:
+                    w = sample_weight[i]
 
-                impurity_right[0] += <double>fabs((<double> y_ik) -
-                                                  <double> median)
-        impurity_right[0] /= <double>((self.weighted_n_right) *
-                                      self.n_outputs)
+                impurity_right += fabs(self.y[i, k] - median) * w
+        p_impurity_right[0] = impurity_right / (self.weighted_n_right * 
+                                                self.n_outputs)
 
 
 cdef class FriedmanMSE(MSE):
