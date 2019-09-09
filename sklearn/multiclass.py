@@ -181,12 +181,6 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
 
-    coef_ : array, shape = [n_classes, n_features]
-        Stack of weight vectors
-
-    intercept_ : array, shape = [n_classes]
-        Vector of intercept values
-
     """
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
