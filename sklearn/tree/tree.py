@@ -73,7 +73,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
+class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -597,7 +597,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 # Public estimators
 # =============================================================================
 
-class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
+class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     """A decision tree classifier.
 
     Read more in the :ref:`User Guide <tree>`.
@@ -917,7 +917,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
@@ -958,7 +958,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         proba = self.predict_proba(X)
 
@@ -972,7 +972,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             return proba
 
 
-class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
+class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
 
     Read more in the :ref:`User Guide <tree>`.

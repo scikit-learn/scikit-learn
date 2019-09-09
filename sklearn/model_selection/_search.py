@@ -397,7 +397,7 @@ def _check_param_grid(param_grid):
                                  "to be a non-empty sequence.".format(name))
 
 
-class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
+class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation.
     """
 
@@ -618,8 +618,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         groups : array-like, with shape (n_samples,), optional
             Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" `cv`
-            instance (e.g., `GroupKFold`).
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator

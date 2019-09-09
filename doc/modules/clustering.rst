@@ -434,21 +434,24 @@ given sample.
 Spectral clustering
 ===================
 
-:class:`SpectralClustering` does a low-dimension embedding of the
-affinity matrix between samples, followed by a KMeans in the low
-dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
-SpectralClustering requires the number of clusters to be specified. It
-works well for a small number of clusters but is not advised when using
-many clusters.
+:class:`SpectralClustering` performs a low-dimension embedding of the
+affinity matrix between samples, followed by clustering, e.g., by KMeans,
+of the components of the eigenvectors in the low dimensional space.
+It is especially computationally efficient if the affinity matrix is sparse
+and the `amg` solver is used for the eigenvalue problem (Note, the `amg` solver
+requires that the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.)
 
-For two clusters, it solves a convex relaxation of the `normalised
-cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
-the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights of the edges inside each
-cluster. This criteria is especially interesting when working on images:
-graph vertices are pixels, and edges of the similarity graph are a
-function of the gradient of the image.
+The present version of SpectralClustering requires the number of clusters
+to be specified in advance. It works well for a small number of clusters,
+but is not advised for many clusters.
+
+For two clusters, SpectralClustering solves a convex relaxation of the
+`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+problem on the similarity graph: cutting the graph in two so that the weight of
+the edges cut is small compared to the weights of the edges inside each
+cluster. This criteria is especially interesting when working on images, where
+graph vertices are pixels, and weights of the edges of the similarity graph are
+computed using a function of a gradient of the image.
 
 
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
@@ -495,12 +498,11 @@ Different label assignment strategies
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
-The ``"kmeans"`` strategy can match finer details of the data, but it can be
-more unstable. In particular, unless you control the ``random_state``, it
-may not be reproducible from run-to-run, as it depends on a random
-initialization. On the other hand, the ``"discretize"`` strategy is 100%
-reproducible, but it tends to create parcels of fairly even and
-geometrical shape.
+``"kmeans"`` strategy can match finer details, but can be unstable.
+In particular, unless you control the ``random_state``, it may not be
+reproducible from run-to-run, as it depends on random initialization.
+The alternative ``"discretize"`` strategy is 100% reproducible, but tends
+to create parcels of fairly even and geometrical shape.
 
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
@@ -511,7 +513,7 @@ geometrical shape.
 Spectral Clustering Graphs
 --------------------------
 
-Spectral Clustering can also be used to cluster graphs by their spectral
+Spectral Clustering can also be used to partition graphs via their spectral
 embeddings.  In this case, the affinity matrix is the adjacency matrix of the
 graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
@@ -538,6 +540,10 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
+ * `"Preconditioned Spectral Clustering for Stochastic
+   Block Partition Streaming Graph Challenge"
+   <https://arxiv.org/abs/1708.07481>`_
+   David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
 
@@ -942,10 +948,10 @@ represented as children of a larger parent cluster.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
 for the given data. The data is essentially lossy compressed to a set of
-Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
-subclusters called Characteristic Feature subclusters (CF Subclusters)
+Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Clustering Feature subclusters (CF Subclusters)
 and these CF Subclusters located in the non-terminal CF Nodes
 can have CF Nodes as children.
 
