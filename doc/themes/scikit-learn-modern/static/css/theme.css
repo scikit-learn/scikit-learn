@@ -766,6 +766,12 @@ div.highlight:hover span.copybutton::after {
   right: 0;
 }
 
+/* world */
+
+img.avatar {
+  width: 130px;
+}
+
 /* table */
 table.align-default {
   margin-left: auto;
