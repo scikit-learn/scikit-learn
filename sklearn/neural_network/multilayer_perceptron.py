@@ -1,14 +1,13 @@
 import warnings
 
 from ._multilayer_perceptron import *  # noqa
+from ..utils.deprecation import _get_deprecation_message
 
 
-msg = ("The `sklearn.neural_nework.multilayer_perceptron` module is "
-       "deprecated in version 0.22 and will be removed in version 0.24. "
-       "The corresponding classes / functions "
-       "should instead be imported from sklearn.neural_nework. "
-       "Anything that cannot be imported from sklearn.neural_network is now "
-       "part of the private API.")
+msg = _get_deprecation_message(
+       deprecated_path='sklearn.neural_network.multilayer_perceptron',
+       correct_path='sklearn.neural_network'
+)
 
 # TODO: remove entire file in 0.24
 warnings.warn(msg, DeprecationWarning)
