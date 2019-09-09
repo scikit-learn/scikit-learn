@@ -10,8 +10,6 @@ import joblib
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
@@ -55,7 +53,8 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'brier_score_loss',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
-               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
+               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
+               'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -170,7 +169,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithoutFit()
     pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
-    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
+    with pytest.raises(TypeError, match=pattern):
+        scoring_validator(estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
@@ -182,7 +182,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator.fit([[1]], [1])
     pattern = (r"If no scoring is specified, the estimator passed should have"
                r" a 'score' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
+    with pytest.raises(TypeError, match=pattern):
+        scoring_validator(estimator)
 
     scorer = scoring_validator(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
@@ -259,9 +260,8 @@ def test_check_scoring_and_check_multimetric_scoring():
     for scoring in ((make_scorer(precision_score),  # Tuple of callables
                      make_scorer(accuracy_score)), [5],
                     (make_scorer(precision_score),), (), ('f1', 'f1')):
-        assert_raises_regexp(ValueError, error_message_regexp,
-                             _check_multimetric_scoring, estimator,
-                             scoring=scoring)
+        with pytest.raises(ValueError, match=error_message_regexp):
+            _check_multimetric_scoring(estimator, scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():
@@ -287,8 +287,8 @@ def test_check_scoring_gridsearchcv():
 def test_make_scorer():
     # Sanity check on the make_scorer factory function.
     f = lambda *args: 0
-    assert_raises(ValueError, make_scorer, f, needs_threshold=True,
-                  needs_proba=True)
+    with pytest.raises(ValueError):
+        make_scorer(f, needs_threshold=True, needs_proba=True)
 
 
 def test_classification_scores():
@@ -460,11 +460,12 @@ def test_raises_on_score_list():
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
-    assert_raises(ValueError, cross_val_score, clf, X, y,
-                  scoring=f1_scorer_no_average)
+    with pytest.raises(ValueError):
+        cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    assert_raises(ValueError, grid_search.fit, X, y)
+    with pytest.raises(ValueError):
+        grid_search.fit(X, y)
 
 
 @ignore_warnings
@@ -537,11 +538,11 @@ def test_scorer_memmap_input(name):
 
 
 def test_scoring_is_not_metric():
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), f1_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), roc_auc_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         Ridge(), r2_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         KMeans(), cluster_module.adjusted_rand_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(LogisticRegression(), f1_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(LogisticRegression(), roc_auc_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(Ridge(), r2_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(KMeans(), cluster_module.adjusted_rand_score)
