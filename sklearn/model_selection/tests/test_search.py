@@ -1695,7 +1695,9 @@ def test_custom_run_search():
     for attr in dir(gscv):
         if attr[0].islower() and attr[-1:] == '_' and \
            attr not in {'cv_results_', 'best_estimator_',
-                        'refit_time_'}:
+                        'refit_time_',
+                        'classes_'  # TODO: remove in 0.24
+                        }:
             assert getattr(gscv, attr) == getattr(mycv, attr), \
                    "Attribute %s not equal" % attr
 
