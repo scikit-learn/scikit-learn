@@ -79,7 +79,7 @@ def test_plot_precision_recall(pyplot, response_method, data_binary,
     assert viz.estimator_name == "LogisticRegression"
 
     # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqal
+    import matplotlib as mpl  # noqa
     assert isinstance(viz.line_, mpl.lines.Line2D)
     assert viz.line_.get_alpha() == 0.8
     assert isinstance(viz.ax_, mpl.axes.Axes)
