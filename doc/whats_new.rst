@@ -24,8 +24,8 @@ Legend for changelogs
 - |API|: you will need to change your code to have the same effect in the
   future; or a feature will be removed in the future.
 
-.. include:: whats_new/v0.22.rst
-.. include:: whats_new/v0.21.rst
+.. include:: whats_new/v0.22.inc
+.. include:: whats_new/v0.21.inc
 
 .. _previous_releases_whats_new:
 
