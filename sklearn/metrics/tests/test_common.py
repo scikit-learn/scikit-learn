@@ -935,6 +935,22 @@ def test_multilabel_representation_invariance():
                                     "indicator formats." % name)
 
 
+@pytest.mark.parametrize('name', sorted(MULTILABELS_METRICS))
+def test_raise_value_error_multilabel_sequences(name):
+    # make sure the multilabel-sequence format raises ValueError
+    multilabel_sequences = [
+        [[1], [2], [0, 1]],
+        [(), (2), (0, 1)],
+        [[]],
+        [()],
+        np.array([[], [1, 2]], dtype='object')]
+
+    metric = ALL_METRICS[name]
+    for seq in multilabel_sequences:
+        with pytest.raises(ValueError):
+            metric(seq, seq)
+
+
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
 def test_normalize_option_binary_classification(name):
     # Test in the binary case
