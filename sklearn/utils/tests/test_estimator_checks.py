@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import MagicMock
 import sys
 
 import numpy as np
@@ -21,6 +22,14 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_supervised_y_no_nan
+from sklearn.utils.estimator_checks import check_dtype_object
+from sklearn.utils.estimator_checks import check_complex_data
+from sklearn.utils.estimator_checks import check_fit2d_predict1d
+from sklearn.utils.estimator_checks import check_estimators_empty_data_messages
+from sklearn.utils.estimator_checks import check_regressors_no_decision_function
+from sklearn.utils.estimator_checks import check_classifiers_regression_target
+from sklearn.utils.estimator_checks import check_fit_non_negative
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import RandomForestClassifier
@@ -33,7 +42,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
-
+import sklearn.base
 
 class CorrectNotFittedError(ValueError):
     """Exception class to raise if estimator is used before fitting.
@@ -43,7 +52,7 @@ class CorrectNotFittedError(ValueError):
     """
 
 
-class BaseBadClassifier(ClassifierMixin, BaseEstimator):
+class BaseBadClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
         return self
 
@@ -304,7 +313,6 @@ class RequiresPositiveYRegressor(LinearRegression):
     def _more_tags(self):
         return {"requires_positive_y": True}
 
-
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -533,6 +541,42 @@ def test_check_estimator_required_parameters_skip():
                                   r"which requires parameters "
                                   r"\['special_parameter'\]",
                                   check_estimator, MyEstimator)
+
+
+def test_error_message_strictmode(monkeypatch):
+    # test if strict=True is passed then error messages match with current mesage
+    # if strict=False then check_estimator should be okay with diffrent error message
+
+    def error_side_effect(*arg, **kwarg):
+        raise ValueError("test")
+    est = SVC(kernel='precomputed')
+    est.fit = MagicMock(side_effect=error_side_effect)
+    monkeypatch.setattr(sklearn.base, "clone", lambda *arg, **kwarg:est)
+
+    check_supervised_y_no_nan("estimator_name", est, False)
+    assert_raises(ValueError,
+                  check_supervised_y_no_nan, "estimator_name", est, True)
+
+    check_complex_data("estimator_name", est, False)
+    assert_raises(AssertionError,
+                  check_complex_data, "estimator_name", est, True)
+
+
+def test_error_message_strictmode_check_dtype_object(monkeypatch):
+    # fit method of clonned estimator should raise valueerror on
+    # 3rd execution to test strict mode for check_dtype_object
+    execution_count = 0
+    def error_side_effect(*arg, **kwarg):
+        execution_count += 1
+        if execution_count == 3:
+            raise ValueError("test")
+
+    est_orig = SVC(kernel='precomputed')
+    check_dtype_object("estimator_name", est_orig, False)
+    monkeypatch.setattr(sklearn.base, "clone", lambda *arg, **kwarg:error_side_effect)
+    execution_count = 0
+    assert_raises(ValueError,
+                  check_dtype_object, "estimator_name", est_orig, True)
 
 
 def run_tests_without_pytest():
