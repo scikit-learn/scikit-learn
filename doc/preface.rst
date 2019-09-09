@@ -1,6 +1,8 @@
 .. This helps define the TOC ordering for "about us" sections. Particularly
    useful for PDF output as this section is not linked from elsewhere.
 
+:globalsidebartoc: True
+
 .. _preface_menu:
 
 .. include:: includes/big_toc_css.rst

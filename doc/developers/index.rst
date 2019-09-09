@@ -1,3 +1,5 @@
+:globalsidebartoc: True
+
 .. _developers_guide:
 
 =================

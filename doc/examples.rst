@@ -1,3 +1,5 @@
+:globalsidebartoc: True
+
 .. title:: Examples
 
 .. _examples:

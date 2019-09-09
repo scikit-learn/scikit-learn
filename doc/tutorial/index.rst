@@ -1,5 +1,6 @@
-.. _tutorial_menu:
+:globalsidebartoc: True
 
+.. _tutorial_menu:
 
 
 .. include:: ../includes/big_toc_css.rst

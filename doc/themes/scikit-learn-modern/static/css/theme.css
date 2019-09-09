@@ -456,24 +456,24 @@ div.sk-sidebar-toc-wrapper::after {
   visibility: hidden;
 }
 
-div.sk-local-toc > ul > li > a{
+div.sk-sidebar-toc > ul > li > a{
   font-weight: bold;
 }
 
-div.sk-local-toc > ul,
-div.sk-local-toc ul ul {
+div.sk-sidebar-toc > ul,
+div.sk-sidebar-toc ul ul {
   list-style: none;
   margin-left: 0;
   padding-left: 0;
 }
 
-div.sk-local-toc ul ul ul {
+div.sk-sidebar-toc ul ul ul {
   list-style: square;
   margin-left: 1rem;
 }
 
 
-div.sk-local-toc ul li ul li ul{
+div.sk-sidebar-toc ul li ul li ul{
   display: none;
 }
 

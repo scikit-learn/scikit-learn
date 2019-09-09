@@ -1,6 +1,8 @@
 .. include:: includes/big_toc_css.rst
 .. include:: tune_toc.rst
 
+:globalsidebartoc: True
+
 =================
 Table Of Contents
 =================
