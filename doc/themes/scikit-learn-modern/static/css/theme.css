@@ -204,12 +204,6 @@ div.gsc-results {
   }
 }
 
-/* General layout */
-
-div.section {
-  overflow-x: scroll;
-}
-
 /* navbar */
 
 img.sk-brand-img {
@@ -483,17 +477,6 @@ div.sk-sidebar-toc ul ul ul {
 div.sk-sidebar-toc ul li ul li ul{
   display: none;
 }
-
-/* Examples */
-
-div#examples {
-  overflow-x: visible;
-}
-
-div#examples div.section {
-  overflow-x: visible;
-}
-
 
 /* content styling element style */
 
