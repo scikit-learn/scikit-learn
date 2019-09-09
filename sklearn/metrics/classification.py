@@ -2378,6 +2378,6 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
                 np.array_equal(labels, [-1])):
             pos_label = 1
         else:
-            pos_label = labels.max()
+            pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
