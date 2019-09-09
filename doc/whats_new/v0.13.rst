@@ -129,7 +129,7 @@ Changelog
 
 - Partial dependence plots for :ref:`gradient_boosting` in
   :func:`ensemble.partial_dependence.partial_dependence` by `Peter
-  Prettenhofer`_. See :ref:`sphx_glr_auto_examples_ensemble_plot_partial_dependence.py` for an
+  Prettenhofer`_. See :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py` for an
   example.
 
 - The table of contents on the website has now been made expandable by

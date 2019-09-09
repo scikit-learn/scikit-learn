@@ -17,8 +17,8 @@ from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(BaseEstimator, ComponentsMixin, TransformerMixin,
-               metaclass=ABCMeta):
+class _BasePCA(ComponentsMixin, TransformerMixin,
+               BaseEstimator, metaclass=ABCMeta):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
@@ -123,7 +123,7 @@ class _BasePCA(BaseEstimator, ComponentsMixin, TransformerMixin,
         IncrementalPCA(batch_size=3, n_components=2)
         >>> ipca.transform(X) # doctest: +SKIP
         """
-        check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
+        check_is_fitted(self)
 
         X = check_array(X)
         if self.mean_ is not None:

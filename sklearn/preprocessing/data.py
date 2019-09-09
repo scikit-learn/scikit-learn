@@ -196,7 +196,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class _BaseScaler(BaseEstimator, TransformerMixin):
+class _BaseScaler(TransformerMixin, BaseEstimator):
     @property
     def n_features_out_(self):
         return self.scale_.shape[0]
@@ -339,8 +339,8 @@ class MinMaxScaler(_BaseScaler):
     def partial_fit(self, X, y=None):
         """Online computation of min and max on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         Parameters
         ----------
@@ -393,7 +393,7 @@ class MinMaxScaler(_BaseScaler):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -410,7 +410,7 @@ class MinMaxScaler(_BaseScaler):
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed. It cannot be sparse.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
@@ -512,8 +512,8 @@ class StandardScaler(_BaseScaler):
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
-    standard deviation are then stored to be used on later data using the
-    `transform` method.
+    standard deviation are then stored to be used on later data using
+    :meth:`transform`.
 
     Standardization of a dataset is a common requirement for many
     machine learning estimators: they might behave badly if the
@@ -653,8 +653,8 @@ class StandardScaler(_BaseScaler):
     def partial_fit(self, X, y=None):
         """Online computation of mean and std on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         The algorithm for incremental mean and std is given in Equation 1.5a,b
         in Chan, Tony F., Gene H. Golub, and Randall J. LeVeque. "Algorithms
@@ -762,7 +762,7 @@ class StandardScaler(_BaseScaler):
         copy : bool, optional (default: None)
             Copy the input X or not.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr', copy=copy,
@@ -798,7 +798,7 @@ class StandardScaler(_BaseScaler):
         X_tr : array-like, shape [n_samples, n_features]
             Transformed array.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
         if sparse.issparse(X):
@@ -921,8 +921,8 @@ class MaxAbsScaler(_BaseScaler):
     def partial_fit(self, X, y=None):
         """Online computation of max absolute value of X for later scaling.
         All of X is processed as a single batch. This is intended for cases
-        when `fit` is not feasible due to very large number of `n_samples`
-        or because X is read from a continuous stream.
+        when :meth:`fit` is not feasible due to very large number of
+        `n_samples` or because X is read from a continuous stream.
 
         Parameters
         ----------
@@ -963,7 +963,7 @@ class MaxAbsScaler(_BaseScaler):
         X : {array-like, sparse matrix}
             The data that should be scaled.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -982,7 +982,7 @@ class MaxAbsScaler(_BaseScaler):
         X : {array-like, sparse matrix}
             The data that should be transformed back.
         """
-        check_is_fitted(self, 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1212,7 +1212,7 @@ class RobustScaler(_BaseScaler):
         X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1235,7 +1235,7 @@ class RobustScaler(_BaseScaler):
         X : array-like
             The data used to scale along the specified axis.
         """
-        check_is_fitted(self, 'center_', 'scale_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1334,7 +1334,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
     return X
 
 
-class PolynomialFeatures(BaseEstimator, TransformerMixin):
+class PolynomialFeatures(TransformerMixin, BaseEstimator):
     """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
@@ -1421,7 +1421,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     @property
     def powers_(self):
-        check_is_fitted(self, 'n_input_features_')
+        check_is_fitted(self)
 
         combinations = self._combinations(self.n_input_features_, self.degree,
                                           self.interaction_only,
@@ -1509,7 +1509,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        check_is_fitted(self, ['n_input_features_', 'n_output_features_'])
+        check_is_fitted(self)
 
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
@@ -1708,7 +1708,7 @@ def normalize(X, norm='l2', axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(BaseEstimator, TransformerMixin):
+class Normalizer(TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1847,7 +1847,7 @@ def binarize(X, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(BaseEstimator, TransformerMixin):
+class Binarizer(TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
     Values greater than the threshold map to 1, while values less than
@@ -1939,7 +1939,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return {'stateless': True}
 
 
-class KernelCenterer(BaseEstimator, TransformerMixin):
+class KernelCenterer(TransformerMixin, BaseEstimator):
     """Center a kernel matrix
 
     Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
@@ -2028,7 +2028,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         -------
         K_new : numpy array of shape [n_samples1, n_samples2]
         """
-        check_is_fitted(self, 'K_fit_all_')
+        check_is_fitted(self)
 
         K = check_array(K, copy=copy, dtype=FLOAT_DTYPES)
 
@@ -2105,7 +2105,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(BaseEstimator, TransformerMixin):
+class QuantileTransformer(TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2425,7 +2425,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     def _check_is_fitted(self, X):
         """Check the inputs before transforming"""
-        check_is_fitted(self, 'quantiles_')
+        check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
             raise ValueError('X does not have the same number of features as'
@@ -2649,7 +2649,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                          " axis={}".format(axis))
 
 
-class PowerTransformer(BaseEstimator, TransformerMixin):
+class PowerTransformer(TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
@@ -2800,7 +2800,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X_trans : array-like, shape (n_samples, n_features)
             The transformed data.
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_positive=True, check_shape=True)
 
         transform_function = {'box-cox': boxcox,
@@ -2846,7 +2846,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             The original data
         """
-        check_is_fitted(self, 'lambdas_')
+        check_is_fitted(self)
         X = self._check_input(X, check_shape=True)
 
         if self.standardize:
