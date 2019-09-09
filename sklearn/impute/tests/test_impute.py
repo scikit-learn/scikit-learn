@@ -965,7 +965,7 @@ def test_iterative_imputer_catch_warning():
 
 
 @pytest.mark.parametrize(
-    "skip_complete",
+    "skip_complete", [True, False]
     [True, False]
 )
 def test_iterative_imputer_skip_non_missing(skip_complete):
