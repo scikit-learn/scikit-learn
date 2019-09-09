@@ -338,6 +338,7 @@ img.sk-footer-funding-logo {
 div.sk-page-content {
   background-color: white;
   margin-top: 52px;
+  position: relative;
 }
 
 div.section h2,
@@ -813,8 +814,8 @@ div.sphx-glr-thumbcontainer {
 
 @media screen and (min-width: 1540px) {
   .sphx-glr-download-link-note {
-    position: fixed;
-    right: 10pt;
+    position: absolute;
+    left: 97%;
     width: 20ex;
   }
 }
