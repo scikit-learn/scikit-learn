@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -101,8 +105,7 @@ Usage examples:
 
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import cross_val_score
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data, iris.target
+    >>> X, y = datasets.load_iris(return_X_y=True)
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
@@ -2134,8 +2137,7 @@ dataset::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
