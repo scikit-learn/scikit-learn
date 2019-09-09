@@ -91,7 +91,9 @@ def pytest_runtest_teardown(item, nextitem):
 
 
 # We don't want pytest to run these files since they immediately raise a
-# DeprecationWarning
+# DeprecationWarning and that would make CI unhappy.
+# These files don't contain any real code, they just raise a warning. We still
+# ensure these warnings are properly raised in the tests.
 collect_ignore_glob = [
     "sklearn/neural_network/rbm.py",  # 0.24
     "sklearn/neural_network/multilayer_perceptron.py",  # 0.24
