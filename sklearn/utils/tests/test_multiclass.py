@@ -12,6 +12,8 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
@@ -123,6 +125,7 @@ EXAMPLES = {
     ],
     'unknown': [
         [[]],
+        np.array([[]], dtype=object),
         [()],
         # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
@@ -132,6 +135,9 @@ EXAMPLES = {
 
         # and also confusable as sequences of sequences
         [{0: 'a', 1: 'b'}, {0: 'a'}],
+
+        # ndim 0
+        np.array(0),
 
         # empty second dimension
         np.array([[], []]),

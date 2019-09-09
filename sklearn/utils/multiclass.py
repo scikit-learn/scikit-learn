@@ -292,40 +292,43 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2:
+    if y.ndim not in (1, 2):  # [[[1, 2]]]
         return 'unknown'
-    if not issparse(y) and y.dtype == object and len(y) \
-            and not isinstance(y.flat[0], str):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
-    if issparse(y) and y.dtype == object and y.shape[0] \
-            and not isinstance(y.data[0], str):
-        return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"] (sparse)
-
-    if y.ndim == 2 and y.shape[1] == 0:
+    if not min(y.shape):
+        if y.ndim == 1:
+            return 'binary'  # []
         return 'unknown'  # [[]]
+    # [obj_1] and not ["label_1"]
+    if not issparse(y) and y.dtype == object and \
+            not isinstance(y.flat[0], str):
+        return 'unknown'
+    if issparse(y) and y.dtype == object and not isinstance(y.data[0], str):
+        return 'unknown'
 
+    # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
-    # check float and contains non-integer float values
+    # Check float and contains non-integer float values
     if y.dtype.kind == 'f':
+        # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
         if not issparse(y) and np.any(y != y.astype(int)):
-            # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
             _assert_all_finite(y)
             return 'continuous' + suffix
         if issparse(y) and np.any(y.data != y.data.astype(int)):
-            # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
             assert_all_finite(y)
             return 'continuous' + suffix
 
+    # Check multiclass
     if len(np.unique(y)) > 2:
         return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]]
-    if not issparse(y) and y.ndim >= 2 and len(y[0]) > 1:
-        return 'multiclass' + suffix  # [[1, 2]] or [[0],[1]]
-    if issparse(y) and y.ndim >= 2:
-        return 'multiclass' + suffix  # [[1, 2]]
+    # [[1, 2]]
+    if not issparse(y) and y.ndim == 2 and len(y[0]) > 1:
+        return 'multiclass' + suffix
+    if issparse(y) and y.ndim == 2 and len(y.getrow(0).data) > 1:
+        return 'multiclass' + suffix
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]
 
