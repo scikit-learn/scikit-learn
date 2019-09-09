@@ -560,7 +560,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             self.n_iter_ = 0
             return Xt
 
-        # edge case: a single feature. can't do anything except initial
+        # Edge case: a single feature. We return the initial ...
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
             return Xt
