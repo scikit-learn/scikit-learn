@@ -392,7 +392,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         """
         frac_of_missing_values = mask_missing_values.mean(axis=0)
         if self.skip_complete:
-            missing_values_idx = np.nonzero(frac_of_missing_values)[0]
+            missing_values_idx = np.flatnonzero(frac_of_missing_values)
         else:
             missing_values_idx = np.arange(np.shape(frac_of_missing_values)[0])
         if self.imputation_order == 'roman':
