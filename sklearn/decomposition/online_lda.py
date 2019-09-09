@@ -621,7 +621,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(
-            X, check_n_features=True,
+            X, check_n_features=False,
             whom="LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
@@ -746,7 +746,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, check_n_features=True,
+        X = self._check_non_neg_array(X, check_n_features=False,
                                       whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
@@ -777,7 +777,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._check_non_neg_array(
-            X, check_n_features=True,
+            X, check_n_features=False,
             whom="LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
