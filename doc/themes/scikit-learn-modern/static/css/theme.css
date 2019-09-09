@@ -97,7 +97,7 @@ a.sk-landing-btn {
 }
 
 a.sk-landing-btn:hover {
-  background-color: #ed9e4c;
+  background-color: #ffb05f;
 }
 
 .sk-donate-btn {
@@ -476,6 +476,17 @@ div.sk-local-toc ul ul ul {
 div.sk-local-toc ul li ul li ul{
   display: none;
 }
+
+/* Examples */
+
+div#examples {
+  overflow-x: visible;
+}
+
+div#examples div.section {
+  overflow-x: visible;
+}
+
 
 /* content styling element style */
 
