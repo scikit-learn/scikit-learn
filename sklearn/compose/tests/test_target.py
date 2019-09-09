@@ -14,6 +14,8 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
+from sklearn.pipeline import Pipeline
+
 from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
@@ -226,7 +228,7 @@ def test_transform_target_regressor_multi_to_single():
     assert_allclose(y_pred_1d_func, y_pred_2d_func)
 
 
-class DummyCheckerArrayTransformer(BaseEstimator, TransformerMixin):
+class DummyCheckerArrayTransformer(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         assert isinstance(X, np.ndarray)
@@ -268,7 +270,7 @@ def test_transform_target_regressor_ensure_y_array():
         tt.predict(X)
 
 
-class DummyTransformer(BaseEstimator, TransformerMixin):
+class DummyTransformer(TransformerMixin, BaseEstimator):
     """Dummy transformer which count how many time fit was called."""
     def __init__(self, fit_counter=0):
         self.fit_counter = fit_counter
@@ -294,3 +296,39 @@ def test_transform_target_regressor_count_fit(check_inverse):
     )
     ttr.fit(X, y)
     assert ttr.transformer_.fit_counter == 1
+
+
+class DummyRegressorWithExtraFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the regressor
+        assert not check_input
+        return super().fit(X, y, sample_weight)
+
+
+def test_transform_target_regressor_pass_fit_parameters():
+    X, y = friedman
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y, check_input=False)
+    assert regr.transformer_.fit_counter == 1
+
+
+def test_transform_target_regressor_route_pipeline():
+    X, y = friedman
+
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraFitParams(),
+        transformer=DummyTransformer()
+    )
+    estimators = [
+        ('normalize', StandardScaler()), ('est', regr)
+    ]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y, **{'est__check_input': False})
+
+    assert regr.transformer_.fit_counter == 1

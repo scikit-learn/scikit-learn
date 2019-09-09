@@ -24,7 +24,7 @@ from .bagging import BaseBagging
 __all__ = ["IsolationForest"]
 
 
-class IsolationForest(BaseBagging, OutlierMixin):
+class IsolationForest(OutlierMixin, BaseBagging):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm
@@ -87,10 +87,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
         is performed.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel for both :meth:`fit` and
+        :meth:`predict`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     behaviour : str, default='deprecated'
         This parameter has not effect, is deprecated, and will be removed.
