@@ -341,6 +341,11 @@ div.sk-page-content {
   position: relative;
 }
 
+div.sk-page-content {
+  table-layout: fixed;
+  max-width: 100%;
+}
+
 div.section h2,
 div.section h3,
 div.section h4,
@@ -769,7 +774,7 @@ div.highlight:hover span.copybutton::after {
 /* world */
 
 img.avatar {
-  width: 130px;
+  width: 100%;
 }
 
 /* table */
