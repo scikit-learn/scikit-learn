@@ -248,10 +248,13 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            if scoring == 'brier_score_loss':
+                scorer = brier_score_loss_scorer
+            else:
+                scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
-                             'Use sorted(sklearn.metrics.valid_scorers()) '
+                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
                              'to get valid options.' % scoring)
     else:
         scorer = scoring
@@ -504,18 +507,6 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     return cls(score_func, sign, kwargs)
 
 
-def valid_scorers():
-    """Creates a list of non-deprecated scorers
-
-        Returns
-        -------
-        valid_scorers : list
-            List of scorers that are not deprecated
-    """
-    return [scorer for scorer in SCORERS
-            if SCORERS[scorer]._deprecation_msg is None]
-
-
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
@@ -604,7 +595,6 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
-               brier_score_loss=brier_score_loss_scorer,
                neg_brier_score_loss=neg_brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,

@@ -18,7 +18,7 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer, valid_scorers)
+                                    _passthrough_scorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
@@ -52,8 +52,8 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'neg_brier_score_loss',
-               'brier_score_loss', 'jaccard', 'jaccard_weighted',
-               'jaccard_macro', 'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
+               'jaccard', 'jaccard_weighted', 'jaccard_macro',
+               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
                'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
 
 # All supervised cluster scorers (They behave like classification metric)
@@ -557,8 +557,3 @@ def test_deprecated_scorer():
     deprecated_scorer = get_scorer('brier_score_loss')
     with pytest.warns(DeprecationWarning):
         deprecated_scorer(clf, X_test, y_test)
-
-
-def test_valid_scorers():
-    scorers = valid_scorers()
-    assert "brier_score_loss" not in scorers
