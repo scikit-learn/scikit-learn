@@ -797,13 +797,6 @@ table.docutils td:last-child p {
 
 /* gallery */
 
-div.sphx-glr-example-title::before {
-  content: " ";
-  height: 70px;
-  margin-top: -70px;
-  display: block;
-}
-
 div.sphx-glr-thumbcontainer {
   min-height: 250px;
   font-size: 0.9rem;
@@ -814,6 +807,7 @@ div.sphx-glr-thumbcontainer {
     position: absolute;
     left: 98%;
     width: 20ex;
+    top: 50px;
   }
 }
 
