@@ -76,12 +76,12 @@
         background-color: #FFFFFF;
         font-size: 85% ;
         font-weight: normal;
+        margin-left: 0;
     }
 
     div.body li.toctree-l2 ul {
         padding-left: 40px ;
     }
-
 
     div.body li.toctree-l2:before {
         content: attr(data-content) ;
@@ -95,12 +95,14 @@
         font-size: 88% ;
         list-style-type: square;
         font-weight: normal;
+        margin-left: 0;
     }
 
     div.body li.toctree-l4 {
         font-size: 93% ;
         list-style-type: circle;
         font-weight: normal;
+        margin-left: 0;
     }
 
     div.body div.topic li.toctree-l1 {

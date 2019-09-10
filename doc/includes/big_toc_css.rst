@@ -20,12 +20,18 @@
         font-size: 70%;
         list-style-type: square;
         font-weight: normal;
+        margin-left: 40px;
     }
 
     div.body li.toctree-l3 {
         font-size: 85%;
         list-style-type: circle;
         font-weight: normal;
+        margin-left: 40px;
+    }
+
+    div.body li.toctree-l4 {
+        margin-left: 40px;
     }
  
   </style>
