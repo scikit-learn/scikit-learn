@@ -1955,7 +1955,7 @@ class BinnedStratifiedKFold(StratifiedKFold):
     def _make_test_folds(self, X, y):
         percentiles = np.percentile(
             y, np.linspace(0, 100, self.n_bins + 1))
-        bins = np.digitize(y, bins=percentiles[1:-1])
+        bins = np.searchsorted(percentiles[1:-1], y)
         return super()._make_test_folds(X, bins)
 
 
