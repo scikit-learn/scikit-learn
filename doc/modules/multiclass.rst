@@ -56,7 +56,9 @@ regression is also supported.
   to be predicted for each sample is greater or equal to 2.
 
   For example, prediction of weight, sugar content and number of calories using
-  features extracted from images of fruit. Each sample is one image of a fruit.
+  features extracted from images of fruit. Each sample is one image of a fruit
+  and for each sample weight, sugar content and number of calories are all
+  output.
 
   - valid representation :term:`multilabel` `y` is:
 
