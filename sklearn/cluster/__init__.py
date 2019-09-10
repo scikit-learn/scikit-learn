@@ -6,14 +6,14 @@ algorithms.
 from .spectral import spectral_clustering, SpectralClustering
 from .mean_shift_ import (mean_shift, MeanShift,
                           estimate_bandwidth, get_bin_seeds)
-from .affinity_propagation_ import affinity_propagation, AffinityPropagation
+from ._affinity_propagation import affinity_propagation, AffinityPropagation
 from .hierarchical import (ward_tree, AgglomerativeClustering, linkage_tree,
                            FeatureAgglomeration)
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
-from .dbscan_ import dbscan, DBSCAN
+from ._dbscan import dbscan, DBSCAN
 from .optics_ import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)
-from .bicluster import SpectralBiclustering, SpectralCoclustering
+from ._bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
 
 __all__ = ['AffinityPropagation',
