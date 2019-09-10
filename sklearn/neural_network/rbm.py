@@ -1,13 +1,11 @@
 import warnings
 
 from ._rbm import *  # noqa
-from ..utils.deprecation import _get_deprecation_message
+from ..utils.deprecation import _raise_dep_warning_if_not_pytest
 
-
-msg = _get_deprecation_message(
-       deprecated_path='sklearn.neural_network.rbm',
-       correct_path='sklearn.neural_network'
-)
 
 # TODO: remove entire file in 0.24
-warnings.warn(msg, DeprecationWarning)
+deprecated_path = 'sklearn.neural_network.rbm'
+correct_path = 'sklearn.neural_network'
+
+_raise_dep_warning_if_not_pytest(deprecated_path, correct_path)
