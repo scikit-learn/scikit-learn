@@ -228,7 +228,6 @@ a.sk-nav-dropdown-item:active {
 
 div.sk-landing-container {
   max-width: 1400px;
-  font-size: 0.96rem;
 }
 
 ul.sk-landing-header-body {
@@ -248,6 +247,7 @@ div.sk-landing-bg {
 
 div.sk-landing-bg-more-info {
   background-color: #f8f8f8;
+  font-size: 0.96rem;
 }
 
 .sk-card-title {
