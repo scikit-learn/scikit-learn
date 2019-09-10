@@ -2000,8 +2000,8 @@ def test_classes_deprecated():
     clf = DecisionTreeRegressor()
     clf = clf.fit(X, y)
 
-    match = ("'classes_' is to be deprecated from version 0.22 and "
-             "will be removed in 0.24.")
+    match = ("the classes_ attribute is to be deprecated from version "
+             "0.22 and will be removed in 0.24.")
 
     with pytest.warns(DeprecationWarning, match=match):
         n = clf.classes_
