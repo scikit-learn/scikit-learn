@@ -19,11 +19,12 @@ regression is also supported.
 
 - **Multiclass classification**: classification task which labels each
   sample as **one** of a number of classes, where the number of classes is
-  greater than 2. Each sample can only be labelled as one class. 
+  greater than 2. Each sample can only be labelled as one class.
 
   For example, classification of a set of images of fruit, where each image may
   either be of an orange, an apples, or a pear. Multiclass classification makes
-  the assumption that each sample is assigned to one and only one label.
+  the assumption that each sample is assigned to one and only one label - one
+  sample cannot for example be bother a pear and an an apple at the same time.
   
   - Valid :term:`multiclass` representations for
     :func:`~utils.multiclass.type_of_target` (`y`) are:
@@ -99,26 +100,25 @@ permit changing the way they handle more than two classes
 because this may have an effect on classifier performance
 (either in terms of generalization error or required computational resources).
 
-Summary
--------
+**Summary**
 
-+-----------------+-------------+-------------+
-|                 | Number of   | Classes per | 
-|                 | attributes  | attribute   | 
-+=================+=============+=============+
-| Multiclass      |  1          | >2          |
-| classification  |             |             |
-+-----------------+-------------+-------------+
-| Multilabel      | >1          |  2          | 
-| classification  |             |             |
-+-----------------+-------------+-------------+
-| Multioutput     | >1          | Continuous  |
-| regression      |             |             |
-+-----------------+-------------+-------------+
-| Multioutput-    | >1          | >2          |
-| multiclass      |             |             |
-| classification  |             |             |
-+-----------------+-------------+-------------+
++-----------------+-------------+-------------+------------------------------------------+
+|                 | Number of   | Classes per | Valid                                    |
+|                 | attributes  | attribute   | :func:`~utils.multiclass.type_of_target` |
++=================+=============+=============+==========================================+
+| Multiclass      |  1          | >2          | - 'multiclass'                           |
+| classification  |             |             | - sparse binary                          |
++-----------------+-------------+-------------+------------------------------------------+
+| Multilabel      | >1          |  2          | - 'multilabel-indicator'                 |
+| classification  |             |             | - dense or sparse binary                           |
++-----------------+-------------+-------------+------------------------------------------+
+| Multioutput     | >1          | Continuous  | - 'continuous-multioutput'               |
+| regression      |             |             |                                          |
++-----------------+-------------+-------------+------------------------------------------+
+| Multioutput-    | >1          | >2          | - 'multiclass-multioutput'               |
+| multiclass      |             |             |                                          |
+| classification  |             |             |                                          |
++-----------------+-------------+-------------+------------------------------------------+
 
 Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
