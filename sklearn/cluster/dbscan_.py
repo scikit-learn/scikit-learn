@@ -16,6 +16,7 @@ from scipy import sparse
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
 from ..neighbors import NearestNeighbors
+from ..utils.validation import _validate_bad_defaults
 
 from ._dbscan_inner import dbscan_inner
 
@@ -40,6 +41,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         on the distances of points within a cluster. This is the most
         important DBSCAN parameter to choose appropriately for your data set
         and distance function.
+
+        Note that there is no good default value for this parameter. An
+        optimal value depends on the data at hand as well as the used metric.
 
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
@@ -208,6 +212,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         important DBSCAN parameter to choose appropriately for your data set
         and distance function.
 
+        Note that there is no good default value for this parameter. An
+        optimal value depends on the data at hand as well as the used metric.
+
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
@@ -315,7 +322,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
-    def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
+    _bad_defaults = {'eps': 0.5}
+
+    def __init__(self, eps='warn', min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):
         self.eps = eps
@@ -353,6 +362,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         """
         X = check_array(X, accept_sparse='csr')
+        _validate_bad_defaults(self)
         clust = dbscan(X, sample_weight=sample_weight,
                        **self.get_params())
         self.core_sample_indices_, self.labels_ = clust

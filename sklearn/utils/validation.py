@@ -1089,3 +1089,22 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return np.allclose(x, y, rtol=rtol, atol=atol)
     raise ValueError("Can only compare two sparse matrices, not a sparse "
                      "matrix and an array")
+
+
+def _validate_bad_defaults(obj):
+    if not hasattr(obj, "_bad_defaults"):
+        return
+
+    obj_values = {param: getattr(obj, param) for param in obj._bad_defaults}
+    bad_params = [param for param, value in obj_values.items()
+                  if value == 'warn']
+    if bad_params:
+        msg = ("There is no good default value for the following "
+               "parameters in {}. Please consult the documentation "
+               "on how to set them for your data.\n\t".format(
+                   obj.__class__.__name__))
+        msg += '\n\t'.join(["'{}' - using default value: {}".format(
+            param, obj._bad_defaults[param]) for param in bad_params])
+        warnings.warn(msg, UserWarning)
+    for param in bad_params:
+        setattr(obj, param, obj._bad_defaults[param])

@@ -11,6 +11,7 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
+from sklearn.base import BaseEstimator
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
@@ -42,7 +43,8 @@ from sklearn.utils.validation import (
     _num_samples,
     check_scalar,
     _check_sample_weight,
-    _allclose_dense_sparse)
+    _allclose_dense_sparse,
+    _validate_bad_defaults)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -938,3 +940,39 @@ def test_allclose_dense_sparse_raise(toarray):
            "and an array")
     with pytest.raises(ValueError, match=msg):
         _allclose_dense_sparse(x, y)
+
+
+def test_validate_bad_params():
+    msg1 = ("There is no good default value for the following parameters in "
+            "A. Please consult the documentation on how to set them for your "
+            "data."
+            "	'param_a' - using default value: 1"
+            "	'param_b' - using default value: kmeans")
+    msg2 = ("There is no good default value for the following parameters in "
+            "A. Please consult the documentation on how to set them for your "
+            "data."
+            "	'param_b' - using default value: kmeans")
+
+    class A(BaseEstimator):
+        _bad_defaults = {'param_a': 1, 'param_b': 'kmeans'}
+
+        def __init__(self, param_a='warn', param_b='warn', param_c='warn',
+                     param_d=0):
+            self.param_a = param_a
+            self.param_b = param_b
+            self.param_c = param_c
+            self.param_d = param_d
+
+        def fit(self, X=None, y=None):
+            _validate_bad_defaults(self)
+            return self
+
+    with pytest.warns(UserWarning, match=msg1):
+        A().fit()
+
+    with pytest.warns(UserWarning, match=msg2):
+        A(param_a=1).fit()
+
+    with warnings.catch_warnings(record=True) as warns:
+        A(param_a=1, param_b='dbscan').fit()
+    assert not warns
