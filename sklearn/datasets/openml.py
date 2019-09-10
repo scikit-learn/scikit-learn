@@ -1,9 +1,7 @@
 import gzip
 import json
 import os
-from io import BytesIO
 import hashlib
-import shutil
 from os.path import join
 from warnings import warn
 from contextlib import closing
@@ -63,7 +61,7 @@ def _retry_with_clean_cache(openml_path, data_home):
     return decorator
 
 
-def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
+def _openml_url_bytes(openml_path, data_home, expected_md5_checksum=None):
     """
     Returns a resource from OpenML.org. Caches it to data_home if required.
 
@@ -79,8 +77,8 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
 
     Returns
     -------
-    result : stream
-        A stream to the OpenML resource
+    result : bytes
+        Byte content of resource
     """
     def is_gzip(_fsrc):
         return _fsrc.info().get('Content-Encoding', '') == 'gzip'
@@ -88,40 +86,38 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
     req = Request(_OPENML_PREFIX + openml_path)
     req.add_header('Accept-encoding', 'gzip')
 
-    def _md5_validated_stream(input_stream, md5_checksum):
+    def _md5_validated_bytes(bytes_content, md5_checksum):
         """
         Consume binary stream to validate checksum,
         return a new stream with same content
 
         Parameters
         ----------
-        input_stream : io.BufferedIOBase
-            Input stream with a read() method to get content in bytes
+        bytes_content : bytes
 
         md5_checksum: str
-            Expected md5 checksum
+            Expected md5 checksum of bytes
 
         Returns
         -------
-        BytesIO stream with the same content as input_stream for consumption
+        bytes
         """
-        with closing(input_stream):
-            bytes_content = input_stream.read()
-            actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
-            if md5_checksum != actual_md5_checksum:
-                raise ValueError("md5checksum: {} does not match expected: "
-                                 "{}".format(actual_md5_checksum,
-                                             md5_checksum))
-            return BytesIO(bytes_content)
+        actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
+        if md5_checksum != actual_md5_checksum:
+            raise ValueError("md5checksum: {} does not match expected: "
+                             "{}".format(actual_md5_checksum,
+                                         md5_checksum))
+        return bytes_content
 
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
             fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
+        bytes_content = fsrc.read()
         if expected_md5_checksum:
             # validating checksum reads and consumes the stream
-            return _md5_validated_stream(fsrc, expected_md5_checksum)
-        return fsrc
+            return _md5_validated_bytes(bytes_content, expected_md5_checksum)
+        return bytes_content
 
     local_path = _get_local_path(openml_path, data_home)
     if not os.path.exists(local_path):
@@ -135,18 +131,23 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
             with closing(urlopen(req)) as fsrc:
                 if is_gzip(fsrc):   # unzip it for checksum validation
                     fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
+                bytes_content = fsrc.read()
                 if expected_md5_checksum:
-                    fsrc = _md5_validated_stream(fsrc, expected_md5_checksum)
+                    bytes_content = _md5_validated_bytes(bytes_content,
+                                                         expected_md5_checksum)
                 with gzip.GzipFile(local_path, 'wb') as fdst:
-                    shutil.copyfileobj(fsrc, fdst)
+                    fdst.write(bytes_content)
         except Exception:
             if os.path.exists(local_path):
                 os.unlink(local_path)
             raise
+    else:
+        with gzip.GzipFile(local_path, "rb") as gzip_file:
+            bytes_content = gzip_file.read()
 
     # XXX: First time, decompression will not be necessary (by using fsrc), but
     # it will happen nonetheless
-    return gzip.GzipFile(local_path, 'rb')
+    return bytes_content
 
 
 def _get_json_content_from_openml_api(url, error_message, raise_if_error,
@@ -183,8 +184,7 @@ def _get_json_content_from_openml_api(url, error_message, raise_if_error,
 
     @_retry_with_clean_cache(url, data_home)
     def _load_json():
-        with closing(_open_openml_url(url, data_home)) as response:
-            return json.loads(response.read().decode("utf-8"))
+        return json.loads(_openml_url_bytes(url, data_home).decode("utf-8"))
 
     try:
         return _load_json()
@@ -489,16 +489,16 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True,
 
     @_retry_with_clean_cache(url, data_home)
     def _arff_load():
-        with closing(_open_openml_url(url, data_home, expected_md5_checksum)) \
-                as response:
-            if sparse is True:
-                return_type = _arff.COO
-            else:
-                return_type = _arff.DENSE_GEN
+        bytes_content = _openml_url_bytes(url, data_home,
+                                          expected_md5_checksum)
+        if sparse is True:
+            return_type = _arff.COO
+        else:
+            return_type = _arff.DENSE_GEN
 
-            arff_file = _arff.loads(response.read().decode('utf-8'),
-                                    encode_nominal=encode_nominal,
-                                    return_type=return_type)
+        arff_file = _arff.loads(bytes_content.decode('utf-8'),
+                                encode_nominal=encode_nominal,
+                                return_type=return_type)
         return arff_file
 
     return _arff_load()

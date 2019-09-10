@@ -12,7 +12,7 @@ import shutil
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import (_open_openml_url,
+from sklearn.datasets.openml import (_openml_url_bytes,
                                      _get_data_description_by_id,
                                      _download_data_arff,
                                      _get_local_path,
@@ -922,13 +922,13 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
     openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
-    response1 = _open_openml_url(openml_path, cache_directory)
+    response1 = _openml_url_bytes(openml_path, cache_directory)
     # assert file exists
     location = _get_local_path(openml_path, cache_directory)
     assert os.path.isfile(location)
     # redownload, to utilize cache
-    response2 = _open_openml_url(openml_path, cache_directory)
-    assert response1.read() == response2.read()
+    response2 = _openml_url_bytes(openml_path, cache_directory)
+    assert response1 == response2
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -949,7 +949,7 @@ def test_open_openml_url_unlinks_local_path(
     monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
-        _open_openml_url(openml_path, cache_directory)
+        _openml_url_bytes(openml_path, cache_directory)
 
     assert not os.path.exists(location)
 
