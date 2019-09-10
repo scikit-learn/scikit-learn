@@ -499,8 +499,7 @@ def test_multidimensional_X():
 class ClassifierWithoutWeight(DummyClassifier):
     """Classifier not supporting `sample_weight`."""
     def fit(self, X, y):
-        super().fit(X, y)
-        return self
+        return super().fit(X, y)  # pragma: no cover
 
 
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
