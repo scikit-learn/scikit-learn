@@ -100,11 +100,11 @@ REGRESSION_METRICS = {
     "median_absolute_error": median_absolute_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
-    "mean_normal_deviance": partial(mean_tweedie_deviance, p=0),
+    "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance":
-    partial(mean_tweedie_deviance, p=1.4),
+    partial(mean_tweedie_deviance, power=1.4),
 }
 
 CLASSIFICATION_METRICS = {
