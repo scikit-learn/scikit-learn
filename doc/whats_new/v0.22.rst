@@ -428,11 +428,7 @@ Changelog
   :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
 
 - |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
-  sparse matrix. 
-  |Fix| The documented behavior of the ``dense_output`` parameter of
-  :func:`utils.safe_sparse_dot` was not the intended behavior and now matches
-  the actual behavior of the function.
-  :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+  sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ....................
