@@ -1394,22 +1394,24 @@ def test_classification_toy_max_samples(name):
     assert perfect_score, msg
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
-def test_little_tree_with_small_max_samples(name):
+@pytest.mark.parametrize(
+    'forest_class', [RandomForestClassifier, RandomForestRegressor]
+)
+def test_little_tree_with_small_max_samples(forest_class):
     rng = np.random.RandomState(1)
 
     X = rng.randn(10000, 2)
     y = rng.randn(10000) > 0
 
     # First fit with no restriction on max samples
-    est1 = FOREST_CLASSIFIERS_REGRESSORS[name](
+    est1 = forest_class(
         n_estimators=1,
         random_state=rng,
-        max_samples=None
+        max_samples=None,
     )
 
     # Second fit with max samples restricted to just 2
-    est2 = FOREST_CLASSIFIERS_REGRESSORS[name](
+    est2 = forest_class(
         n_estimators=1,
         random_state=rng,
         max_samples=2,
