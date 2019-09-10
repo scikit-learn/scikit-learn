@@ -90,7 +90,7 @@
         font-size: 1rem;
         color: #777;
         display: inline-block;
-        width: 1.25rem;
+        width: 1.5rem;
     }
 
     div.body li.toctree-l3 {
