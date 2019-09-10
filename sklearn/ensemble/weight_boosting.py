@@ -38,6 +38,7 @@ from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
 
@@ -117,20 +118,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_data(X, y)
 
-        if sample_weight is None:
-            # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(_num_samples(X), dtype=np.float64)
-            sample_weight[:] = 1. / _num_samples(X)
-        else:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            # Normalize existing weights
-            sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
-
-            # Check that the sample weights sum is positive
-            if sample_weight.sum() <= 0:
-                raise ValueError(
-                    "Attempting to fit with a non-positive "
-                    "weighted number of samples.")
+        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight /= sample_weight.sum()
+        if sample_weight.sum() <= 0:
+            raise ValueError("Attempting to fit with a non-positive weighted "
+                             "number of samples.")
 
         # Check parameters
         self._validate_estimator()
