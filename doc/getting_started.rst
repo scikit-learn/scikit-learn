@@ -93,14 +93,15 @@ used for prediction with ``fit`` and ``predict``::
   ...     LogisticRegression(random_state=0)
   ... )
   ...
-  >>> # Load the iris dataset and split it into train and test sets
+  >>> # load the iris dataset and split it into train and test sets
   >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   ...
-  >>> # Fit the whole pipeline and use it for predictions
+  >>> # fit the whole pipeline
   >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
                   ('logisticregression', LogisticRegression(random_state=0))])
+  >>> # we can now use it like any other estimator
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
 
@@ -178,7 +179,7 @@ the best set of parameters. Read more in the :ref:`User Guide
   >>> search.best_params_
   {'max_depth': 9, 'n_estimators': 4}
 
-  >>> # The search object now acts like a normal random forest estimator
+  >>> # the search object now acts like a normal random forest estimator
   >>> # with max_depth=9 and n_estimators=4
   >>> search.score(X_test, y_test)
   0.73...
