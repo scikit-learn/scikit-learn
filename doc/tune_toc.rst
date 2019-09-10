@@ -55,8 +55,7 @@
     div.body li.toctree-l1 {
         padding: 5px 0 0;
         list-style-type: none;
-        font-size: 150% ;
-        font-family: Arial, sans-serif;
+        font-size: 150%;
         background-color: #f2f2f2;
         font-weight: normal;
         color: #20435c;
@@ -66,8 +65,11 @@
         }
 
     div.body li.toctree-l1 a {
-        padding: 0 0 0 10px ;
-        color: #314F64 ;
+        color: #314F64;
+    }
+
+    div.body li.toctree-l1 > a {
+        margin-left: 0.75rem;
     }
 
     div.body li.toctree-l2 {
@@ -84,11 +86,11 @@
     }
 
     div.body li.toctree-l2:before {
-        content: attr(data-content) ;
-        font-size: 85% ;
-        color: #777 ;
+        content: attr(data-content);
+        font-size: 1rem;
+        color: #777;
         display: inline-block;
-        width: 10px;
+        width: 1.25rem;
     }
 
     div.body li.toctree-l3 {
