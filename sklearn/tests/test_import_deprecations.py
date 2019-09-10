@@ -18,7 +18,7 @@ def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning
 
-    #TODO: remove in 0.24
+    # TODO: remove in 0.24
 
     expected_message = (
         "The {deprecated_path} module is  deprecated in version "

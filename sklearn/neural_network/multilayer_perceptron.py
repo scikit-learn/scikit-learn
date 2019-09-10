@@ -1,5 +1,3 @@
-import warnings
-
 from ._multilayer_perceptron import *  # noqa
 from ..utils.deprecation import _raise_dep_warning_if_not_pytest
 
