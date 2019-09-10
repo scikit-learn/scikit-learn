@@ -87,7 +87,7 @@ regression is also supported.
       concatenation of 1d :term:`multiclass` variables.
 
   - Note that any classifiers handling multioutput-multiclass
-   (also known as multitask classification) tasks,
+    (also known as multitask classification) tasks,
     support the multilabel classification task as a special case.
     Multitask classification is similar to the multioutput
     classification task with different model formulations. For
