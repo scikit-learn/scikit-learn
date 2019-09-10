@@ -24,7 +24,7 @@ from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 from sklearn.base import RegressorMixin
-from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.cluster._bicluster import BiclusterMixin
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
