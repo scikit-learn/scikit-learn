@@ -17,29 +17,31 @@ The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 by decomposing such problems into binary classification problems. ``multioutput``
 regression is also supported.
 
-- **Multiclass classification** produce single output that is categorical variable.
-  In other words, a single classification task with more than two classes.
+- **Multiclass classification**: classification task which labels each
+  sample as **one** of a number of classes, where the number of classes is
+  greater than 2. Each sample can only be labelled as one class. 
 
-  *example:* classify a set of images of fruits which may be oranges, apples, or
-   pears. Multiclass classification makes the assumption that each sample is
-   assigned to one and only one label: a fruit can be either an apple or a pear
-   but not both at the same time.
-
-  - valid :term:`multiclass` representation for
+  For example, classification of a set of images of fruit, where each image may
+  either be of an orange, an apples, or a pear. Multiclass classification makes
+  the assumption that each sample is assigned to one and only one label.
+  
+  - Valid :term:`multiclass` representations for
     :func:`~utils.multiclass.type_of_target` (`y`) are:
 
     - 1d or column vector containing more than two discrete values.
-    - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a single element per row, where each column represents one class.
+    - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
+      single element per row, where each column represents one class.
 
 
-- **Multilabel classification** predict a set of binary attributes that can
-  either be true or false independently of one another. In other words, assigns
-  to each sample a set of target labels. (This task can also be seen as a binary
-  label multioutput task)
+- **Multilabel classification**: classification task which labels each sample
+  with a set of binary attributes (either True or False) independently of
+  one another. The number of binary attributes is greater or equal to 2.
 
-  *example:* based on an arbitrary set of features from fruit images,
-    **Multilabel classification** simultaneously predict a set of binary
-    attributes such as: grows in a tree, has stone fruit, is citric ...
+  For example, classification of 2 fruit attributes, crispy or not crispy and
+  sour or not sour, using features extracted from a set of images of fruit.
+  Each sample is an image of one fruit, labels for both binary attributes are
+  output for each sample and each attribute is labelled independently of the
+  other attribute.
 
   - valid representation :term:`multilabel` `y` is:
 
@@ -48,12 +50,12 @@ regression is also supported.
       that the sample belongs to multiple classes. Each column represents a class.
 
 
-- **Multioutput regression** predicts multiple outputs that are all continuous
-  variables. In other words, assigns each sample a set of target values.
+- **Multioutput regression**: predicts multiple numerical properties for each
+  sample. Each property is a continuous variable and the number of properties
+  to be predicted for each sample is greater or equal to 2.
 
-  *example:* based on an arbitrary set of features from fruit images, predicts a
-    set of :term:`contineous` variables such as: weight, sugar content,
-    calories, etc.
+  For example, prediction of weight, sugar content and number of calories using
+  features extracted from images of fruit. Each sample is one image of a fruit.
 
   - valid representation :term:`multilabel` `y` is:
 
@@ -62,27 +64,31 @@ regression is also supported.
 
 
 - **Multioutput-multiclass classification**
-  (also known as **multi-task classification**)
-  means that a single estimator has to handle several joint classification
-  tasks. This is both a generalization of the multi-label classification
-  task, which only considers binary classification, as well as a
-  generalization of the multi-class classification task.
+  (also known as **multitask classification**):
+  classification task which labels each sample with a set of **non-binary**
+  attributes. Both the number of attributes and the number of classes per
+  attribute is greater than 2. A single estimator thus handles several joint
+  classification tasks. This is both a generalization of the multi**label**
+  classification task, which only considers binary attributes, as well as a
+  generalization of the multi**class** classification task, where only one
+  attribute is considered.
 
-  *example:* The set of labels can be different for each output variable. For
-    instance, a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear", "apple";
-    and "blue" or "green" for a second output variable that takes possible
-    values in a finite set of colors such as "green", "red", "blue", "yellow"...
+  For example, classification of the attributes "type of fruit" and "colour"
+  for a set of images of fruit. The attribute "type of fruit" has the possible
+  classes: "apple", "pear" and "orange". The attribute "colour" has the
+  possible classes: "green", "red", "yellow" and "orange". Each sample is an
+  image of a fruit, a label is output for both attributes and each label is
+  one of the possible classes of the corresponding attribute.
 
   - valid representation :term:`multilabel` `y` is:
 
     - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
       concatenation of 1d :term:`multiclass` variables.
 
-  - Note that any classifiers handling multi-output
-    multiclass or multi-task classification tasks,
-    support the multi-label classification task as a special case.
-    Multi-task classification is similar to the multi-output
+  - Note that any classifiers handling multioutput-multiclass
+   (also known as multitask classification) tasks,
+    support the multilabel classification task as a special case.
+    Multitask classification is similar to the multioutput
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
 
@@ -92,6 +98,27 @@ but the meta-estimators offered by :mod:`sklearn.multiclass`
 permit changing the way they handle more than two classes
 because this may have an effect on classifier performance
 (either in terms of generalization error or required computational resources).
+
+Summary
+-------
+
++-----------------+-------------+-------------+
+|                 | Number of   | Classes per | 
+|                 | attributes  | attribute   | 
++=================+=============+=============+
+| Multiclass      |  1          | >2          |
+| classification  |             |             |
++-----------------+-------------+-------------+
+| Multilabel      | >1          |  2          | 
+| classification  |             |             |
++-----------------+-------------+-------------+
+| Multioutput     | >1          | Continuous  |
+| regression      |             |             |
++-----------------+-------------+-------------+
+| Multioutput-    | >1          | >2          |
+| multiclass      |             |             |
+| classification  |             |             |
++-----------------+-------------+-------------+
 
 Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
