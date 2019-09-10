@@ -194,7 +194,7 @@ the best set of parameters. Read more in the :ref:`User Guide
     training and testing data. Indeed, since you pre-processed the data
     using the whole dataset, some information about the test sets are
     available to the train sets. This will lead to over-estimating the
-    generaliztion power of the estimator.
+    generalization power of the estimator.
 
     Using a pipeline for cross-validation and searching will keep you from
     this common pitfall.
