@@ -16,7 +16,9 @@ from sklearn.utils.testing import assert_run_python_script
     # ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
     # ('sklearn.cluster.bicluster', 'SpectralBiclustering'),
     # ('sklearn.cluster.birch', 'Birch'),
-    ('sklearn.cluster.dbscan_', 'DBSCAN'),
+    # ('sklearn.cluster.dbscan_', 'DBSCAN'),
+    # ('sklearn.cluster.hierarchical', 'FeatureAgglomeration'),
+    ('sklearn.cluster.k_means_', 'KMeans'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible

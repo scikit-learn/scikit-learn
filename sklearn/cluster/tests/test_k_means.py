@@ -22,8 +22,8 @@ from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster.k_means_ import _labels_inertia
-from sklearn.cluster.k_means_ import _mini_batch_step
+from sklearn.cluster._k_means import _labels_inertia
+from sklearn.cluster._k_means import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
