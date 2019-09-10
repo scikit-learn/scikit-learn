@@ -44,7 +44,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -250,7 +251,7 @@ else [n_classes, n_features]
         return self
 
 
-class LinearSVR(LinearModel, RegressorMixin):
+class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
 
     Similar to SVR with parameter kernel='linear', but implemented in terms of
@@ -273,8 +274,8 @@ class LinearSVR(LinearModel, RegressorMixin):
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term. The penalty is a squared
-        l2 penalty. The bigger this parameter, the less regularization is used.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     loss : string, optional (default='epsilon_insensitive')
         Specifies the loss function. The epsilon-insensitive loss
@@ -454,7 +455,9 @@ class SVC(BaseSVC):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive. The penalty
+        is a squared l2 penalty.
 
     kernel : string, optional (default='rbf')
         Specifies the kernel type to be used in the algorithm.
@@ -821,7 +824,7 @@ class NuSVC(BaseSVC):
             random_state=random_state)
 
 
-class SVR(BaseLibSVM, RegressorMixin):
+class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -866,7 +869,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
+        The penalty is a squared l2 penalty.
 
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -905,6 +910,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -951,7 +959,7 @@ class SVR(BaseLibSVM, RegressorMixin):
             class_weight=None, max_iter=max_iter, random_state=None)
 
 
-class NuSVR(BaseLibSVM, RegressorMixin):
+class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -1076,7 +1084,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM, OutlierMixin):
+class OneClassSVM(OutlierMixin, BaseLibSVM):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.

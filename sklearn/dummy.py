@@ -19,7 +19,7 @@ from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 
 
-class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
+class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -143,13 +143,16 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        if (self.strategy == "constant" and
-                any(constant[k] not in self.classes_[k]
-                    for k in range(self.n_outputs_))):
-            # Checking in case of constant strategy if the constant
-            # provided by the user is in y.
-            raise ValueError("The constant target value must be "
-                             "present in training data")
+        if self.strategy == "constant":
+            for k in range(self.n_outputs_):
+                if not any(constant[k][0] == c for c in self.classes_[k]):
+                    # Checking in case of constant strategy if the constant
+                    # provided by the user is in y.
+                    err_msg = ("The constant target value must be present in "
+                               "the training data. You provided constant={}. "
+                               "Possible values are: {}."
+                               .format(self.constant, list(self.classes_[k])))
+                    raise ValueError(err_msg)
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             self.n_classes_ = self.n_classes_[0]
@@ -353,7 +356,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         return super().score(X, y, sample_weight)
 
 
-class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
+class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.

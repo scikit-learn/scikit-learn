@@ -251,6 +251,7 @@ the checks that are failing. scikit-learn provides a pytest specific decorator,
 :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
 multiple estimators::
 
+  from sklearn.utils.estimator_checks import parametrize_with_checks
   from sklearn.linear_model import LogisticRegression
   from sklearn.tree import DecisionTreeRegressor
 
