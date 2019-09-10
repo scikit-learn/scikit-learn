@@ -498,7 +498,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
+class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
@@ -1019,15 +1019,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         coefs[:, nonzeros] /= X_scale[nonzeros][:, np.newaxis]
 
     intercepts = y_offset[:, np.newaxis] - np.dot(X_offset, coefs)
-    if sparse.issparse(X_test):
-        n_order, n_features, n_alphas = coefs.shape
-        # Work around for sparse matrices since coefs is a 3-D numpy array.
-        coefs_feature_major = np.rollaxis(coefs, 1)
-        feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
-        X_test_coefs = safe_sparse_dot(X_test, feature_2d)
-        X_test_coefs = X_test_coefs.reshape(X_test.shape[0], n_order, -1)
-    else:
-        X_test_coefs = safe_sparse_dot(X_test, coefs)
+    X_test_coefs = safe_sparse_dot(X_test, coefs)
     residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
@@ -1035,7 +1027,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
+class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1231,7 +1223,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         return self
 
 
-class LassoCV(LinearModelCV, RegressorMixin):
+class LassoCV(RegressorMixin, LinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1397,7 +1389,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
             random_state=random_state, selection=selection)
 
 
-class ElasticNetCV(LinearModelCV, RegressorMixin):
+class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1917,7 +1909,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
 
-class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
+class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2105,7 +2097,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         return {'multioutput_only': True}
 
 
-class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
+class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
