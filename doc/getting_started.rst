@@ -36,13 +36,13 @@ The :term:`fit` method generally accepts 2 inputs:
   is typically ``(n_samples, n_features)``, which means that samples are
   represented as rows and features are represented as columns.
 - The target values :term:`y` which are real numbers for regression tasks, or
-  integers for classification (they can also be strings). For unsupervized
-  learning tasks, ``y`` does not need to be specified. ``y`` is usually 1d
-  array where the ``i`` th entry corresponds to the target of the ``i`` th
-  sample (row) of ``X``.
+  integers for classification (or any other discrete set of values). For
+  unsupervized learning tasks, ``y`` does not need to be specified. ``y`` is
+  usually 1d array where the ``i`` th entry corresponds to the target of the
+  ``i`` th sample (row) of ``X``.
 
 Both ``X`` and ``y`` are usually expected to be numpy arrays or equivalent
-:term:`array-like`, data types, though some estimators work with other
+:term:`array-like` data types, though some estimators work with other
 formats such as sparse matrices.
 
 Once the estimator is fitted, it can be used for predicting target values of
@@ -57,7 +57,7 @@ Transformers and pre-processors
 -------------------------------
 
 Machine learning worflows are often composed of different parts. A typical
-pipeline consists of a pre-processing step that transforms or impute the
+pipeline consists of a pre-processing step that transforms or imputes the
 data, and a final predictor that predicts target values.
 
 In ``scikit-learn``, pre-processors and transformers follow the same API as
@@ -84,8 +84,8 @@ Transformers and estimators (predictors) can be combined together into a
 single unifying object: a :class:`~sklearn.pipeline.Pipeline`. The pipeline
 offers the same API as a regular estimator: it can be fitted and used for
 prediction with ``fit`` and ``predict``. As we will see later, using a
-pipeline will also prevent you from disclosing some testing data in your
-training data.
+pipeline will also prevent you from data leakage, i.e. disclosing some
+testing data in your training data.
 
 In the following example, we :ref:`load the Iris dataset <datasets>`, split it
 into train and test sets, and compute the accuracy score of a pipeline on
@@ -150,7 +150,7 @@ All estimators have parameters (often called hyper-parameters in the
 literature) that can be tuned. The generalization power of an estimator
 often critically depends on a few parameters. For example a
 :class:`~sklearn.ensemble.RandomForestRegressor` has a ``n_estimators``
-parameters that determines the number of trees in the forest, and a
+parameter that determines the number of trees in the forest, and a
 ``max_depth`` parameter that determines the maximum depth of each tree.
 Quite often, it is not clear what the exact values of these parameters
 should be since they depend on the data at hand.
@@ -199,16 +199,17 @@ the best set of parameters. Read more in the :ref:`User Guide
 
     In practice, you almost always want to :ref:`search over a pipeline
     <composite_grid_search>`, instead of a single estimator. One of the main
-    reason is that if you apply a pre-processing step to the whole dataset
+    reasons is that if you apply a pre-processing step to the whole dataset
     without using a pipeline, and then perform any kind of cross-validation,
     you would be breaking the fundamental assumption of independence between
     training and testing data. Indeed, since you pre-processed the data
     using the whole dataset, some information about the test sets are
     available to the train sets. This will lead to over-estimating the
-    generalization power of the estimator.
+    generalization power of the estimator (you can read more in the `kaggle
+    post <https://www.kaggle.com/alexisbcook/data-leakage>`_.
 
-    Using a pipeline for cross-validation and searching will keep you from
-    this common pitfall.
+    Using a pipeline for cross-validation and searching will largely keep
+    you from this common pitfall.
 
 
 Next steps
