@@ -24,7 +24,8 @@ Here is a simple example where we fit a
 
   >>> from sklearn.ensemble import RandomForestClassifier
   >>> clf = RandomForestClassifier(random_state=0)
-  >>> X = [[1, 2, 3], [11, 12, 13]]  # 2 samples, 3 features
+  >>> X = [[ 1,  2,  3],  # 2 samples, 3 features
+  ...      [11, 12, 13]]
   >>> y = [0, 1]  # classes of each sample
   >>> clf.fit(X, y)
   RandomForestClassifier(random_state=0)
@@ -37,7 +38,7 @@ The :term:`fit` method generally accepts 2 inputs:
 - The target values :term:`y` which are real numbers for regression tasks, or
   integers for classification (they can also be strings). For unsupervized
   learning tasks, ``y`` does not need to be specified. ``y`` is usually 1d
-  array where the ``i``th entry corresponds to the target of the ``i``th
+  array where the ``i`` th entry corresponds to the target of the ``i`` th
   sample (row) of ``X``.
 
 Both ``X`` and ``y`` are usually expected to be numpy arrays or equivalent
@@ -52,18 +53,18 @@ new data. You don't need to re-train the estimator::
   >>> clf.predict([[4, 5, 6], [14, 15, 16]])  # predict classes of new data
   array([0, 1])
 
-Transformers and Pipelines
---------------------------
+Transformers and pre-processors
+-------------------------------
 
 Machine learning worflows are often composed of different parts. A typical
-pipeline consists of a pre-processing step that transforms the data, and a
-final predictor that predicts target values.
+pipeline consists of a pre-processing step that transforms or impute the
+data, and a final predictor that predicts target values.
 
 In ``scikit-learn``, pre-processors and transformers follow the same API as
 the estimator objects (they actually all inherit from the same
-``BaseEstimator`` class). These objects don't have a :term:`predict` method
-but rather a :term:`transform` method that outputs a newly transformed
-sample matrix ``X``::
+``BaseEstimator`` class). The transformer objects don't have a
+:term:`predict` method but rather a :term:`transform` method that outputs a
+newly transformed sample matrix ``X``::
 
   >>> from sklearn.preprocessing import StandardScaler
   >>> X = [[0, 15],
@@ -72,13 +73,23 @@ sample matrix ``X``::
   array([[-1.,  1.],
          [ 1., -1.]])
 
-Transformers and estimators (predictors) can be combined together into a single
-unifying object: a :class:`~sklearn.pipeline.Pipeline`.
+Sometimes, you want to apply different transformations to different features:
+the :ref:`ColumnTransformer<column_transformer>` is designed for these
+use-cases.
+
+Pipelines: chaining pre-preocessors and estimators
+--------------------------------------------------
+
+Transformers and estimators (predictors) can be combined together into a
+single unifying object: a :class:`~sklearn.pipeline.Pipeline`. The pipeline
+offers the same API as a regular estimator: it can be fitted and used for
+prediction with ``fit`` and ``predict``. As we will see later, using a
+pipeline will also prevent you from disclosing some testing data in your
+training data.
 
 In the following example, we :ref:`load the Iris dataset <datasets>`, split it
-into train and test sets, and compute its accuracy score on the test data. The
-pipeline offers the same API as a regular estimator: it can be fitted and
-used for prediction with ``fit`` and ``predict``::
+into train and test sets, and compute the accuracy score of a pipeline on
+the test data::
 
   >>> from sklearn.preprocessing import StandardScaler
   >>> from sklearn.linear_model import LogisticRegression
@@ -117,9 +128,9 @@ tools for model evaluation, in particular for :ref:`cross-validation
 
 We here briefly show how to perform a 5-fold cross-validation procedure,
 using the :func:`~sklearn.model_selection.cross_validate` helper. Note that
-it is also possible to manually iterate over the folds, and to use different
-data splitting strategies. Please refer to our :ref:`User Guide
-<cross_validation>` for more details::
+it is also possible to manually iterate over the folds, use different
+data splitting strategies, and use custom scoring functions. Please refer to
+our :ref:`User Guide <cross_validation>` for more details::
 
   >>> from sklearn.datasets import make_regression
   >>> from sklearn.linear_model import LinearRegression
@@ -129,7 +140,7 @@ data splitting strategies. Please refer to our :ref:`User Guide
   >>> lr = LinearRegression()
   ...
   >>> result = cross_validate(lr, X, y)  # defaults to 5-fold CV
-  >>> result['test_score']
+  >>> result['test_score']  # r_squared score is high because dataset is easy
   array([1., 1., 1., 1., 1.])
 
 Automatic parameter searches
@@ -203,8 +214,10 @@ the best set of parameters. Read more in the :ref:`User Guide
 Next steps
 ----------
 
-This guide should give you an overview of some of the main features of the
-library, but there is much more to ``scikit-learn``!
+We have briefly covered estimator fitting and predicting, pre-processing
+steps, pipelines, cross-validation tools and automatic hyper-parameter
+searches. This guide should give you an overview of some of the main
+features of the library, but there is much more to ``scikit-learn``!
 
 Please refer to our :ref:`user_guide` for details on all the tools that we
 provide. You can also find an exhaustive list of the public API in the
