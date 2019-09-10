@@ -184,6 +184,21 @@ the best set of parameters. Read more in the :ref:`User Guide
   >>> search.score(X_test, y_test)
   0.73...
 
+.. note::
+
+    In practice, you almost always want to :ref:`search over a pipeline
+    <composite_grid_search>`, instead of a single estimator. One of the main
+    reason is that if you apply a pre-processing step to the whole dataset
+    without using a pipeline, and then perform any kind of cross-validation,
+    you would be breaking the fundamental assumption of independence between
+    training and testing data. Indeed, since you pre-processed the data
+    using the whole dataset, some information about the test sets are
+    available to the train sets. This will lead to over-estimating the
+    generaliztion power of the estimator.
+
+    Using a pipeline for cross-validation and searching will keep you from
+    this common pitfall.
+
 
 Next steps
 ----------
