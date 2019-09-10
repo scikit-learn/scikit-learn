@@ -734,7 +734,7 @@ def test_k_means_function():
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster.k_means_ import _init_centroids
+    from sklearn.cluster._k_means import _init_centroids
 
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
@@ -921,7 +921,7 @@ def test_sample_weight_length():
 
 
 def test_check_normalize_sample_weight():
-    from sklearn.cluster.k_means_ import _check_normalize_sample_weight
+    from sklearn.cluster._k_means import _check_normalize_sample_weight
     sample_weight = None
     checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
     assert _num_samples(X) == _num_samples(checked_sample_weight)

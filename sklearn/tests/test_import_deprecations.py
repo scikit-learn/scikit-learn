@@ -11,14 +11,18 @@ from sklearn.utils.testing import assert_run_python_script
 # appropriate error message.
 
 @pytest.mark.parametrize('deprecated_path, importee', (
-    # ('sklearn.neural_network.rbm', 'BernoulliRBM'),
-    # ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
-    # ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
-    # ('sklearn.cluster.bicluster', 'SpectralBiclustering'),
-    # ('sklearn.cluster.birch', 'Birch'),
-    # ('sklearn.cluster.dbscan_', 'DBSCAN'),
-    # ('sklearn.cluster.hierarchical', 'FeatureAgglomeration'),
+    ('sklearn.neural_network.rbm', 'BernoulliRBM'),
+    ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
+
+    ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
+    ('sklearn.cluster.bicluster', 'SpectralBiclustering'),
+    ('sklearn.cluster.birch', 'Birch'),
+    ('sklearn.cluster.dbscan_', 'DBSCAN'),
+    ('sklearn.cluster.hierarchical', 'FeatureAgglomeration'),
     ('sklearn.cluster.k_means_', 'KMeans'),
+    ('sklearn.cluster.mean_shift_', 'MeanShift'),
+    ('sklearn.cluster.optics_', 'OPTICS'),
+    ('sklearn.cluster.spectral', 'SpectralClustering'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
