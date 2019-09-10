@@ -1106,5 +1106,7 @@ def _validate_bad_defaults(obj):
         msg += '\n\t'.join(["'{}' - using default value: {!r}".format(
             param, obj._bad_defaults[param]) for param in bad_params])
         warnings.warn(msg, UserWarning)
+    all_params = obj.get_params()
     for param in bad_params:
-        setattr(obj, param, obj._bad_defaults[param])
+        all_params[param] = obj._bad_defaults[param]
+    return all_params

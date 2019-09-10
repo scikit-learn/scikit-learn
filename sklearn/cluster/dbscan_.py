@@ -35,7 +35,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         A feature array, or array of distances between samples if
         ``metric='precomputed'``.
 
-    eps : float, optional
+    eps : float, default=0.5
         The maximum distance between two samples for one to be considered
         as in the neighborhood of the other. This is not a maximum bound
         on the distances of points within a cluster. This is the most
@@ -214,6 +214,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         Note that there is no good default value for this parameter. An
         optimal value depends on the data at hand as well as the used metric.
+        If not specified, a warning is raised and the default value of 0.5 is
+        used.
 
     min_samples : int, optional
         The number of samples (or total weight) in a neighborhood for a point
@@ -362,9 +364,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         """
         X = check_array(X, accept_sparse='csr')
-        _validate_bad_defaults(self)
+        all_params = _validate_bad_defaults(self)
         clust = dbscan(X, sample_weight=sample_weight,
-                       **self.get_params())
+                       **all_params)
         self.core_sample_indices_, self.labels_ = clust
         if len(self.core_sample_indices_):
             # fix for scipy sparse indexing issue
