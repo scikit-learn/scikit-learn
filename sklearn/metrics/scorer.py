@@ -25,7 +25,7 @@ import numpy as np
 
 from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error,
-               mean_tweedie_deviance, accuracy_score,
+               mean_poisson_deviance, mean_gamma_deviance, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
@@ -462,12 +462,12 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     Notes
     -----
     If `needs_proba=False` and `needs_threshold=False`, the score
-    function is supposed to accept the output of `predict`. If
+    function is supposed to accept the output of :term:`predict`. If
     `needs_proba=True`, the score function is supposed to accept the
-    output of `predict_proba` (For binary `y_true`, the score function is
+    output of :term:`predict_proba` (For binary `y_true`, the score function is
     supposed to accept probability of the positive class). If
     `needs_threshold=True`, the score function is supposed to accept the
-    output of `decision_function`.
+    output of :term:`decision_function`.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
@@ -499,11 +499,11 @@ neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                                  greater_is_better=False,
                                                  squared=False)
 neg_mean_poisson_deviance_scorer = make_scorer(
-    mean_tweedie_deviance, p=1., greater_is_better=False
+    mean_poisson_deviance, greater_is_better=False
 )
 
 neg_mean_gamma_deviance_scorer = make_scorer(
-    mean_tweedie_deviance, p=2., greater_is_better=False
+    mean_gamma_deviance, greater_is_better=False
 )
 
 # Standard Classification Scores
@@ -558,6 +558,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                roc_auc_ovr=roc_auc_ovr_scorer,
                roc_auc_ovo=roc_auc_ovo_scorer,
+               roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
+               roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,

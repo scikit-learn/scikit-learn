@@ -1819,9 +1819,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     If Y is given (default is None), then the returned matrix is the pairwise
     kernel between the arrays from both X and Y.
 
-    Valid values for metric are::
+    Valid values for metric are:
         ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
-         'laplacian', 'sigmoid', 'cosine']
+        'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1843,7 +1843,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         pair of instances (rows) and the resulting value recorded. The callable
         should take two rows from X as input and return the corresponding
         kernel value as a single number. This means that callables from
-        `sklearn.metrics.pairwise` are not allowed, as they operate on
+        :mod:`sklearn.metrics.pairwise` are not allowed, as they operate on
         matrices, not single samples. Use the string identifying the kernel
         instead.
 
