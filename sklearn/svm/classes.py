@@ -911,6 +911,9 @@ class SVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     intercept_ : array, shape = [1]
         Constants in decision function.
 

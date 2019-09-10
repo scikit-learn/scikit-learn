@@ -157,6 +157,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _get_tags(self):
         tags = super()._get_tags()
-        tags.update({'no_validation': True,
+        tags.update({'no_validation': not self.validate,
                      'stateless': True})
         return tags

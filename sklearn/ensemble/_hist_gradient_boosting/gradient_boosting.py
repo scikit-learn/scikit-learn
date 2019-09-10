@@ -322,6 +322,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
+                if self.loss_.need_update_leaves_values:
+                    self.loss_.update_leaves_values(grower, y_train,
+                                                    raw_predictions[k, :])
+
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_
                 )
@@ -677,7 +681,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'least_squares'}, optional (default='least_squares')
+    loss : {'least_squares', 'least_absolute_deviation'}, \
+            optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
         "least squares" loss actually implements an "half least squares loss"
         to simplify the computation of the gradient.
@@ -775,7 +780,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.98...
     """
 
-    _VALID_LOSSES = ('least_squares',)
+    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
