@@ -289,7 +289,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
+class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
@@ -402,7 +402,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -453,7 +453,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : numpy array of shape [n_components, n_features]
@@ -573,7 +573,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : CSR matrix with shape [n_components, n_features]

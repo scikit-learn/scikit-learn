@@ -101,7 +101,7 @@ dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_cl
 
   In [2]: from sklearn.datasets import load_digits
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
 Before starting the profiling session and engaging in tentative
 optimization iterations, it is important to measure the total execution
@@ -202,7 +202,7 @@ Now restart IPython and let us use this new toy::
 
   In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
@@ -403,11 +403,7 @@ kcachegrind
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://joblib.readthedocs.io
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:

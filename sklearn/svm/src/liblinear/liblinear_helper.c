@@ -4,7 +4,7 @@
 
 /*
  * Convert matrix to sparse representation suitable for liblinear. x is
- * expected to be an array of length dims[0]*dims[1].
+ * expected to be an array of length n_samples*n_features.
  *
  * Whether the matrix is densely or sparsely populated, the fastest way to
  * convert it to liblinear's sparse format is to calculate the amount of memory
@@ -15,35 +15,46 @@
  *
  * If bias is > 0, we append an item at the end.
  */
-static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
-                                             int n_nonzero, double bias)
+static struct feature_node **dense_to_sparse(char *x, int double_precision,
+        int n_samples, int n_features, int n_nonzero, double bias)
 {
+    float *x32 = (float *)x;
+    double *x64 = (double *)x;
     struct feature_node **sparse;
     int i, j;                           /* number of nonzero elements in row i */
     struct feature_node *T;             /* pointer to the top of the stack */
     int have_bias = (bias > 0);
 
-    sparse = malloc (dims[0] * sizeof(struct feature_node *));
+    sparse = malloc (n_samples * sizeof(struct feature_node *));
     if (sparse == NULL)
         return NULL;
 
-    n_nonzero += (have_bias+1) * dims[0];
+    n_nonzero += (have_bias+1) * n_samples;
     T = malloc (n_nonzero * sizeof(struct feature_node));
     if (T == NULL) {
         free(sparse);
         return NULL;
     }
 
-    for (i=0; i<dims[0]; ++i) {
+    for (i=0; i<n_samples; ++i) {
         sparse[i] = T;
 
-        for (j=1; j<=dims[1]; ++j) {
-            if (*x != 0) {
-                T->value = *x;
-                T->index = j;
-                ++ T;
+        for (j=1; j<=n_features; ++j) {
+            if (double_precision) {
+                if (*x64 != 0) {
+                    T->value = *x64;
+                    T->index = j;
+                    ++ T;
+                }
+                ++ x64; /* go to next element */
+            } else {
+                if (*x32 != 0) {
+                    T->value = *x32;
+                    T->index = j;
+                    ++ T;
+                }
+                ++ x32; /* go to next element */
             }
-            ++ x; /* go to next element */
         }
 
         /* set bias element */
@@ -63,11 +74,14 @@ static struct feature_node **dense_to_sparse(double *x, npy_intp *dims,
 
 
 /*
- * Convert scipy.sparse.csr to libsvm's sparse data structure
+ * Convert scipy.sparse.csr to liblinear's sparse data structure
  */
-static struct feature_node **csr_to_sparse(double *values, int *indices,
-        int *indptr, int n_samples, int n_features, int n_nonzero, double bias)
+static struct feature_node **csr_to_sparse(char *x, int double_precision,
+        int *indices, int *indptr, int n_samples, int n_features, int n_nonzero,
+        double bias)
 {
+    float *x32 = (float *)x;
+    double *x64 = (double *)x;
     struct feature_node **sparse;
     int i, j=0, k=0, n;
     struct feature_node *T;
@@ -89,8 +103,8 @@ static struct feature_node **csr_to_sparse(double *values, int *indices,
         n = indptr[i+1] - indptr[i]; /* count elements in row i */
 
         for (j=0; j<n; ++j) {
-            T->value = values[k];
-            T->index = indices[k] + 1; /* libsvm uses 1-based indexing */
+            T->value = double_precision ? x64[k] : x32[k];
+            T->index = indices[k] + 1; /* liblinear uses 1-based indexing */
             ++T;
             ++k;
         }
@@ -110,26 +124,22 @@ static struct feature_node **csr_to_sparse(double *values, int *indices,
     return sparse;
 }
 
-struct problem * set_problem(char *X, char *Y, npy_intp *dims, int n_nonzero,
-        double bias, char* sample_weight)
+struct problem * set_problem(char *X, int double_precision_X, int n_samples,
+        int n_features, int n_nonzero, double bias, char* sample_weight,
+        char *Y)
 {
     struct problem *problem;
     /* not performant but simple */
     problem = malloc(sizeof(struct problem));
     if (problem == NULL) return NULL;
-    problem->l = (int) dims[0];
-
-    if (bias > 0) {
-        problem->n = (int) dims[1] + 1;
-    } else {
-        problem->n = (int) dims[1];
-    }
-
+    problem->l = n_samples;
+    problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
     problem->sample_weight = (double *) sample_weight;
-    problem->x = dense_to_sparse((double *) X, dims, n_nonzero, bias);
+    problem->x = dense_to_sparse(X, double_precision_X, n_samples, n_features,
+                        n_nonzero, bias);
     problem->bias = bias;
-    problem->sample_weight = sample_weight;
+
     if (problem->x == NULL) { 
         free(problem);
         return NULL;
@@ -138,27 +148,20 @@ struct problem * set_problem(char *X, char *Y, npy_intp *dims, int n_nonzero,
     return problem;
 }
 
-struct problem * csr_set_problem (char *values, char *indices, char *indptr,
-        char *Y, int n_samples, int n_features, int n_nonzero, double bias,
-        char *sample_weight) {
-
+struct problem * csr_set_problem (char *X, int double_precision_X,
+        char *indices, char *indptr, int n_samples, int n_features,
+        int n_nonzero, double bias, char *sample_weight, char *Y)
+{
     struct problem *problem;
     problem = malloc (sizeof (struct problem));
     if (problem == NULL) return NULL;
     problem->l = n_samples;
-    problem->sample_weight = (double *) sample_weight;
-
-    if (bias > 0){
-        problem->n = (int) n_features + 1;
-    } else {
-        problem->n = (int) n_features;
-    }
-
+    problem->n = n_features + (bias > 0);
     problem->y = (double *) Y;
-    problem->x = csr_to_sparse((double *) values, (int *) indices,
+    problem->sample_weight = (double *) sample_weight;
+    problem->x = csr_to_sparse(X, double_precision_X, (int *) indices,
                         (int *) indptr, n_samples, n_features, n_nonzero, bias);
     problem->bias = bias;
-    problem->sample_weight = sample_weight;
 
     if (problem->x == NULL) {
         free(problem);

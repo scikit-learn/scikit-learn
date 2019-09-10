@@ -9,8 +9,9 @@
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
-from scipy.optimize import fmin_l_bfgs_b
 import warnings
+
+import scipy.optimize
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
@@ -26,6 +27,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.optimize import _check_optimize_result
 
 
 _STOCHASTIC_SOLVERS = ['sgd', 'adam']
@@ -352,10 +354,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         # Initialize lists
-        activations = [X]
-        activations.extend(np.empty((batch_size, n_fan_out))
-                           for n_fan_out in layer_units[1:])
-        deltas = [np.empty_like(a_layer) for a_layer in activations]
+        activations = [X] + [None] * (len(layer_units) - 1)
+        deltas = [None] * (len(activations) - 1)
 
         coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
@@ -414,11 +414,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              % self.n_iter_no_change)
 
         # raise ValueError if not registered
-        supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        if self.activation not in supported_activations:
+        if self.activation not in ACTIVATIONS:
             raise ValueError("The activation '%s' is not supported. Supported "
-                             "activations are %s." % (self.activation,
-                                                      supported_activations))
+                             "activations are %s."
+                             % (self.activation, list(sorted(ACTIVATIONS))))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
@@ -458,34 +457,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         else:
             iprint = -1
 
-        optimal_parameters, self.loss_, d = fmin_l_bfgs_b(
-            x0=packed_coef_inter,
-            func=self._loss_grad_lbfgs,
-            maxfun=self.max_fun,
-            maxiter=self.max_iter,
-            iprint=iprint,
-            pgtol=self.tol,
-            args=(X, y, activations, deltas, coef_grads, intercept_grads))
-        self.n_iter_ = d['nit']
-        if d['warnflag'] == 1:
-            if d['nit'] >= self.max_iter:
-                warnings.warn(
-                    "LBFGS Optimizer: Maximum iterations (%d) "
-                    "reached and the optimization hasn't converged yet."
-                    % self.max_iter, ConvergenceWarning)
-            if d['funcalls'] >= self.max_fun:
-                warnings.warn(
-                    "LBFGS Optimizer: Maximum function evaluations (%d) "
-                    "reached and the optimization hasn't converged yet."
-                    % self.max_fun, ConvergenceWarning)
-        elif d['warnflag'] == 2:
-            warnings.warn(
-                "LBFGS Optimizer: Optimization hasn't converged yet, "
-                "cause of LBFGS stopping: %s."
-                % d['task'], ConvergenceWarning)
-
-
-        self._unpack(optimal_parameters)
+        opt_res = scipy.optimize.minimize(
+                self._loss_grad_lbfgs, packed_coef_inter,
+                method="L-BFGS-B", jac=True,
+                options={
+                    "maxfun": self.max_fun,
+                    "maxiter": self.max_iter,
+                    "iprint": iprint,
+                    "gtol": self.tol
+                },
+                args=(X, y, activations, deltas, coef_grads, intercept_grads))
+        self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
+        self.loss_ = opt_res.fun
+        self._unpack(opt_res.x)
 
     def _fit_stochastic(self, X, y, activations, deltas, coef_grads,
                         intercept_grads, layer_units, incremental):
@@ -704,7 +688,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return y_pred
 
 
-class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
+class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
 
     This model optimizes the log-loss function using LBFGS or stochastic
@@ -983,7 +967,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1084,7 +1068,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1096,7 +1080,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             return y_pred
 
 
-class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
+class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
     This model optimizes the squared-loss using LBFGS or stochastic gradient
@@ -1345,7 +1329,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self, "coefs_")
+        check_is_fitted(self)
         y_pred = self._predict(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()

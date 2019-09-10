@@ -63,6 +63,11 @@ class OverrideTag(NaNTag):
 
 
 class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    def _more_tags(self):
+        return dict()
+
+
+class InheritDiamondOverwriteTag(DiamondOverwriteTag):
     pass
 
 
@@ -293,7 +298,7 @@ def test_score_sample_weight():
 
 def test_clone_pandas_dataframe():
 
-    class DummyEstimator(BaseEstimator, TransformerMixin):
+    class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
@@ -408,7 +413,7 @@ class DontPickleAttributeMixin:
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+class MultiInheritanceEstimator(DontPickleAttributeMixin, BaseEstimator):
     def __init__(self, attribute_pickled=5):
         self.attribute_pickled = attribute_pickled
         self._attribute_not_pickled = None
@@ -475,13 +480,14 @@ def test_tag_inheritance():
     assert nan_tag_est._get_tags()['allow_nan']
     assert not no_nan_tag_est._get_tags()['allow_nan']
 
-    invalid_tags_est = OverrideTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        invalid_tags_est._get_tags()
+    redefine_tags_est = OverrideTag()
+    assert not redefine_tags_est._get_tags()['allow_nan']
 
     diamond_tag_est = DiamondOverwriteTag()
-    with pytest.raises(TypeError, match="Inconsistent values for tag"):
-        diamond_tag_est._get_tags()
+    assert diamond_tag_est._get_tags()['allow_nan']
+
+    inherit_diamond_tag_est = InheritDiamondOverwriteTag()
+    assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
 # XXX: Remove in 0.23
@@ -505,3 +511,18 @@ def test_regressormixin_score_multioutput():
            "built-in scorer 'r2' uses "
            "multioutput='uniform_average').")
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
+
+
+def test_warns_on_get_params_non_attribute():
+    class MyEstimator(BaseEstimator):
+        def __init__(self, param=5):
+            pass
+
+        def fit(self, X, y=None):
+            return self
+
+    est = MyEstimator()
+    with pytest.warns(FutureWarning, match='AttributeError'):
+        params = est.get_params()
+
+    assert params['param'] is None
