@@ -109,7 +109,7 @@ because this may have an effect on classifier performance
 | Multiclass      |  1          | >2          | - 'multiclass'                           |
 | classification  |             |             | - sparse binary                          |
 +-----------------+-------------+-------------+------------------------------------------+
-| Multilabel      | >1          |  2          | - 'multilabel-indicator'                 |
+| Multilabel      | >1          |  2 (0 or 1) | - 'multilabel-indicator'                 |
 | classification  |             |             | - dense or sparse binary                           |
 +-----------------+-------------+-------------+------------------------------------------+
 | Multioutput     | >1          | Continuous  | - 'continuous-multioutput'               |
