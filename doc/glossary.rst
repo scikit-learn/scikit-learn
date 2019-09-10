@@ -854,10 +854,10 @@ Class APIs and Estimator Types
     feature extractors
         A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object of :term:`features` for each sample
-        (and thus a 2-dimensional array-like for a set of samples).  In other
-        words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        produces an :term:`array-like` object of :term:`features` for each
+        sample (and thus a 2-dimensional array-like for a set of samples).  In
+        other words, it (lossily) maps a non-rectangular data representation
+        into :term:`rectangular` data.
 
         Feature extractors must implement at least:
 
@@ -977,7 +977,7 @@ such as:
         Cross-validation estimators are named `EstimatorCV` and tend to be
         roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
         advantage of using a cross-validation estimator over the canonical
-        `Estimator` class along with :ref:`grid search <grid_search>` is
+        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
         that they can take advantage of warm-starting by reusing precomputed
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the

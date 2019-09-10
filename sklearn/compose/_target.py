@@ -14,7 +14,7 @@ from ..preprocessing import FunctionTransformer
 __all__ = ['TransformedTargetRegressor']
 
 
-class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression
@@ -148,7 +148,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                               " you are sure you want to proceed regardless"
                               ", set 'check_inverse=False'", UserWarning)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -160,9 +160,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,) optional
-            Array of weights that are assigned to individual samples.
-            If not provided, then each sample is given unit weight.
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of the underlying
+            regressor.
+
 
         Returns
         -------
@@ -197,10 +198,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         else:
             self.regressor_ = clone(self.regressor)
 
-        if sample_weight is None:
-            self.regressor_.fit(X, y_trans)
-        else:
-            self.regressor_.fit(X, y_trans, sample_weight=sample_weight)
+        self.regressor_.fit(X, y_trans, **fit_params)
 
         return self
 

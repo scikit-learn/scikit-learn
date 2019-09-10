@@ -20,7 +20,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(BaseEstimator, TransformerMixin):
+class TruncatedSVD(TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -51,7 +51,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     algorithm : string {'randomized', 'lobpcg', 'arpack'}, default="randomized"
         SVD solver to use.
         randomized :
-            run randomized SVD as in [1].
+            run randomized SVD due to Halko (2009).
         lobpcg :
             run Locally Optimal Block Preconditioned Conjugate Gradient [2]
             for a normal matrix X'*X or X*X', whichever of the two is of
@@ -61,11 +61,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             :func:`scipy.sparse.linalg.svds`. It requires strictly
             0 < n_components < min(X.shape).
 
-    n_iter : int, default=5
-        Number of iterations for algorithm 'randomized' and 'lobpcg'.
-        The default is larger than the default in
-        :func:`sklearn.utils.extmath.randomized_svd` to handle
-        sparse matrices that may have large slowly decaying spectrum.
+    n_iter : int, optional (default 5)
+        Number of iterations for randomized SVD solver. Not used by ARPACK. The
+        default is larger than the default in
+        `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
+        may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance or None, optional, default = None
         If int, random_state is the seed used by the random number generator;
