@@ -462,12 +462,12 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     Notes
     -----
     If `needs_proba=False` and `needs_threshold=False`, the score
-    function is supposed to accept the output of `predict`. If
+    function is supposed to accept the output of :term:`predict`. If
     `needs_proba=True`, the score function is supposed to accept the
-    output of `predict_proba` (For binary `y_true`, the score function is
+    output of :term:`predict_proba` (For binary `y_true`, the score function is
     supposed to accept probability of the positive class). If
     `needs_threshold=True`, the score function is supposed to accept the
-    output of `decision_function`.
+    output of :term:`decision_function`.
     """
     sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
@@ -558,6 +558,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                roc_auc_ovr=roc_auc_ovr_scorer,
                roc_auc_ovo=roc_auc_ovo_scorer,
+               roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
+               roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,

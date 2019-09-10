@@ -68,7 +68,7 @@ def plot_on_dataset(X, y, ax, name):
 
     for label, param in zip(labels, params):
         print("training: %s" % label)
-        mlp = MLPClassifier(verbose=0, random_state=0,
+        mlp = MLPClassifier(random_state=0,
                             max_iter=max_iter, **param)
 
         # some parameter combinations will not converge as can be seen on the

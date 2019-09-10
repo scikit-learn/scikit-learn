@@ -414,11 +414,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              % self.n_iter_no_change)
 
         # raise ValueError if not registered
-        supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        if self.activation not in supported_activations:
+        if self.activation not in ACTIVATIONS:
             raise ValueError("The activation '%s' is not supported. Supported "
-                             "activations are %s." % (self.activation,
-                                                      supported_activations))
+                             "activations are %s."
+                             % (self.activation, list(sorted(ACTIVATIONS))))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
@@ -689,7 +688,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return y_pred
 
 
-class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
+class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
 
     This model optimizes the log-loss function using LBFGS or stochastic
@@ -1081,7 +1080,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             return y_pred
 
 
-class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
+class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron regressor.
 
     This model optimizes the squared-loss using LBFGS or stochastic gradient
