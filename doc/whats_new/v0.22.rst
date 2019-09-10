@@ -456,6 +456,9 @@ Changelog
   a proper error message is raised if X contains some negative entries.
   :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
 
+- |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
+  sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.neighbors`
 ....................
 
