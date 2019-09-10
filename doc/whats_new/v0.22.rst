@@ -399,9 +399,8 @@ Changelog
 
 - A new random variable, :class:`utils.random.loguniform` implements a
   log-uniform random variable for use in RandomizedSearchCV. For example, the
-  outcomes ``1``, ``10`` and ``100`` are all equally likely for ``loguniform(0,
-  2)``. See :issue:`11232` by :user:`Scott Sievert <stsievert>` and
-  :user:`Nathaniel Saul <sauln>`.
+  outcomes ``1``, ``10`` and ``100`` are all equally likely for ``loguniform(10 ** 0, 10 ** 2)``. See :issue:`11232` by
+  :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`.
 
 :mod:`sklearn.neighbors`
 ....................

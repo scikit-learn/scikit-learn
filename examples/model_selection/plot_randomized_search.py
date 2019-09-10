@@ -54,7 +54,7 @@ def report(results, n_top=3):
 # specify parameters and distributions to sample from
 param_dist = {'average': [True, False],
               'l1_ratio': stats.uniform(0, 1),
-              'alpha': loguniform(-4, 0, base=10)}
+              'alpha': loguniform(10 ** -4, 10 ** 0)}
 
 # run randomized search
 n_iter_search = 20
