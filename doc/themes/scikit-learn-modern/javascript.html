@@ -82,25 +82,29 @@ $(document).ready(function() {
         var target = document.getElementById( hash.slice(1) );
         if ( target === null ) { return false; }
 
-        return target.getBoundingClientRect().top < 2;
+        var top = target.getBoundingClientRect().top;
+        return (top < 2) && (top > -2);
     };
 
     // Hide navbar on load if hash target is on top
     var navBar = document.getElementById("navbar");
     var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
     if (hashTargetOnTop()) {
+        // hide navbar
         navBar.style.top = navBarHeightHidden;
     }
 
     var prevScrollpos = window.pageYOffset;
     hideOnScroll = function(lastScrollTop) {
-        var currentScrollPos = window.pageYOffset;
-        if (lastScrollTop > 2 && (prevScrollpos <= currentScrollPos) || hashTargetOnTop()){
+        console.log(lastScrollTop > 2, prevScrollpos <= lastScrollTop, hashTargetOnTop());
+        if (lastScrollTop > 2 && (prevScrollpos <= lastScrollTop) || hashTargetOnTop()){
+            // hide navbar
             navBar.style.top = navBarHeightHidden;
         } else {
+            // show navbar
             navBar.style.top = "0";
         }
-            prevScrollpos = currentScrollPos;
+        prevScrollpos = lastScrollTop;
     };
 
     /*** high preformance scroll event listener***/
