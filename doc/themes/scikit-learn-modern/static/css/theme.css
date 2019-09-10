@@ -348,6 +348,15 @@ div.section h6 {
   margin-top: 1.2rem;
 }
 
+div.section {
+  overflow-x: scroll;
+}
+
+#examples,
+#examples div.section {
+  overflow-x: visible;
+}
+
 .sk-btn-toggle-toc {
   position: fixed;
   bottom: 0;
