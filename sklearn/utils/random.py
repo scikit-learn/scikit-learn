@@ -99,17 +99,15 @@ def random_choice_csc(n_samples, classes, class_probability=None,
                          dtype=int)
 
 
-class loguniform(scipy.stats.rv_continuous):
+class loguniform(scipy.stats.reciprocal):
     """A class supporting log-uniform random variables.
 
     Parameters
     ----------
     low : float
-        The log minimum value
+        The minimum value
     high : float
-        The log maximum value
-    base : float
-        The base for the exponent.
+        The maximum value
 
     Methods
     -------
@@ -126,44 +124,8 @@ class loguniform(scipy.stats.rv_continuous):
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
     are random variales that are equally likely to be returned.
 
+    This class is an alias to ``scipy.stats.reciprocal``, which uses the
+    reciprocal distribution:
+    https://en.wikipedia.org/wiki/Reciprocal_distribution
+
     """
-
-    def __init__(self, low=-1, high=0, base=10, **kwargs):
-        """
-        Create a log-uniform random variable.
-        """
-        self._low = low
-        self._high = high
-        self._base = base
-        super(loguniform, self).__init__(
-            a=base ** low,
-            b=base ** high,
-            **kwargs
-        )
-
-    def _rvs(self):
-        """
-        Generates random variables with ``base**low <= rv <= base**high``
-        where ``rv`` is the return value of this function.
-
-        Parameters
-        ----------
-        size : int or tuple, optional
-            The size of the random variable.
-        random_state : int, RandomState, optional
-            A seed (int) or random number generator (RandomState).
-
-        Returns
-        -------
-        rv : float or np.ndarray
-            Either a single log-uniform random variable or an array of them
-        """
-        unif = self._random_state.uniform(self._low, self._high,
-                                          size=self._size)
-        rvs = np.power(self._base, unif)
-        return rvs
-
-    def _cdf(self, x):
-        hi, lo = self._high, self._low
-        logx = np.log(x) / np.log(self._base)
-        return (logx - lo) / (hi - lo)

@@ -185,8 +185,8 @@ def test_random_choice_csc_errors():
 @pytest.mark.parametrize("low,high,base",
                          [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
 def test_loguniform(low, high, base):
-    rv = loguniform(low, high, base=base)
-    assert isinstance(rv, scipy.stats.rv_continuous)
+    rv = loguniform(base ** low, base ** high)
+    assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
     rvs = rv.rvs(size=2000, random_state=0)
 
     # Test the basics; right bounds, right size
@@ -200,43 +200,17 @@ def test_loguniform(low, high, base):
     assert np.abs(counts - counts.mean()).max() <= 40
 
     # Test that random_state works
-    assert loguniform(low, high, base=base).rvs(random_state=0) == loguniform(
-        low, high, base=base
-    ).rvs(random_state=0)
+    assert (
+        loguniform(base ** low, base ** high).rvs(random_state=0)
+        == loguniform(base ** low, base ** high).rvs(random_state=0)
+    )
 
 
-def test_log_uniform_default_base(low=-1, high=0):
-    rv = loguniform(low, high)
+def test_loguniform_default_base(low=-1, high=1):
+    rv = loguniform(10 ** low, 10 ** high)
     rvs = rv.rvs(size=100)
     assert isinstance(rvs, np.ndarray)
     assert (10 ** low <= rvs).all() and (rvs <= 10 ** high).all()
-
-
-def test_log_api_w_scipy(low=1, high=2):
-    def _check_rvs(rvs, low, high):
-        return low <= rvs.min() <= rvs.max() <= high
-
-    # API difference: loguniform has [low, high] not uniform's [low, pdf_width]
-    log = loguniform(low, high)
-    uni = scipy.stats.uniform(low, high - low)
-    assert isinstance(log.rvs(), float)
-    assert isinstance(uni.rvs(), float)
-
-    assert len(log.rvs(size=3)) == 3
-    assert len(uni.rvs(size=3)) == 3
-    assert _check_rvs(log.rvs(size=10), 10 ** low, 10 ** high)
-    assert _check_rvs(uni.rvs(size=10), low, high)
-
-    urvs = scipy.stats.uniform.rvs(size=4)
-    assert 0 <= urvs.min() <= urvs.max() <= 1
-
-
-@pytest.mark.xfail(raises=TypeError, reason="not developed")
-def test_uniform_api(self):
-    scipy.stats.uniform.rvs(size=4)
-    with pytest.raises(TypeError):
-        loguniform.rvs(size=4)
-    raise TypeError
 
 
 def test_our_rand_r():
