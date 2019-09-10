@@ -26,7 +26,6 @@
   {% endif %}
 
   <link rel="stylesheet" href="{{ pathto('_static/css/vendor/bootstrap.min.css', 1) }}" type="text/css" />
-  <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
   {%- for css in css_files %}
     {%- if css|attr("rel") %}
   <link rel="{{ css.rel }}" href="{{ pathto(css.filename, 1) }}" type="text/css"{% if css.title is not none %} title="{{ css.title }}"{% endif %} />
@@ -34,6 +33,7 @@
   <link rel="stylesheet" href="{{ pathto(css, 1) }}" type="text/css" />
     {%- endif %}
   {%- endfor %}
+  <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
 
 {%- block extrahead %} {% endblock %}
 </head>
