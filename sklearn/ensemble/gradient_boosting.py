@@ -1337,7 +1337,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn("The parameter 'presort' is deprecated and has no "
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
-                          "to the 'presort' parameter.", DeprecationWarning)
+                          "to the 'presort' parameter. We also recommend "
+                          "using HistGradientBoosting models instead.",
+                          DeprecationWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
