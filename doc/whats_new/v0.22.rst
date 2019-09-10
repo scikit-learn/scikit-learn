@@ -179,6 +179,8 @@ Changelog
 - |API| ``presort`` is now deprecated in
   :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, and the parameter has no effect.
+  Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` instead.
   :pr:`14907` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_extraction`
