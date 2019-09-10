@@ -1096,8 +1096,8 @@ def _validate_bad_defaults(obj):
         return
 
     obj_values = {param: getattr(obj, param) for param in obj._bad_defaults}
-    bad_params = [param for param, value in obj_values.items()
-                  if value == 'warn']
+    bad_params = sorted([param for param, value in obj_values.items()
+                        if value == 'warn'])
     if bad_params:
         msg = ("There is no good default value for the following "
                "parameters in {}. Please consult the documentation "
