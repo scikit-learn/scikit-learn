@@ -1103,7 +1103,7 @@ def _validate_bad_defaults(obj):
                "parameters in {}. Please consult the documentation "
                "on how to set them for your data.\n\t".format(
                    obj.__class__.__name__))
-        msg += '\n\t'.join(["'{}' - using default value: {}".format(
+        msg += '\n\t'.join(["'{}' - using default value: {!r}".format(
             param, obj._bad_defaults[param]) for param in bad_params])
         warnings.warn(msg, UserWarning)
     for param in bad_params:

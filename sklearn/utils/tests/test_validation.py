@@ -946,12 +946,12 @@ def test_validate_bad_params():
     msg1 = ("There is no good default value for the following parameters in "
             "A. Please consult the documentation on how to set them for your "
             "data."
-            "	'param_a' - using default value: 1"
-            "	'param_b' - using default value: kmeans")
+            "\n	'param_a' - using default value: 1"
+            "\n	'param_b' - using default value: 'kmeans'")
     msg2 = ("There is no good default value for the following parameters in "
             "A. Please consult the documentation on how to set them for your "
             "data."
-            "	'param_b' - using default value: kmeans")
+            "\n	'param_b' - using default value: 'kmeans'")
 
     class A(BaseEstimator):
         _bad_defaults = {'param_a': 1, 'param_b': 'kmeans'}
