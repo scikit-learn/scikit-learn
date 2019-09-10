@@ -1101,9 +1101,9 @@ def _validate_bad_defaults(obj):
     if bad_params:
         msg = ("There is no good default value for the following "
                "parameters in {}. Please consult the documentation "
-               "on how to set them for your data.\n\t".format(
+               "on how to set them for your data.\n    ".format(
                    obj.__class__.__name__))
-        msg += '\n\t'.join(["'{}' - using default value: {!r}".format(
+        msg += '\n    '.join(["'{}' - using default value: {!r}".format(
             param, obj._bad_defaults[param]) for param in bad_params])
         warnings.warn(msg, UserWarning)
     all_params = obj.get_params()

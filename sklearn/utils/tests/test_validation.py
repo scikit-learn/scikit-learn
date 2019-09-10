@@ -946,14 +946,16 @@ def test_validate_bad_params():
     msg1 = ("There is no good default value for the following parameters in "
             "A. Please consult the documentation on how to set them for your "
             "data."
-            "\n	'param_a' - using default value: 1"
-            "\n	'param_b' - using default value: 'kmeans'")
+            "\n    'param_a' - using default value: 1"
+            "\n    'param_b' - using default value: 'kmeans'")
     msg2 = ("There is no good default value for the following parameters in "
             "A. Please consult the documentation on how to set them for your "
             "data."
-            "\n	'param_b' - using default value: 'kmeans'")
+            "\n    'param_b' - using default value: 'kmeans'")
 
     class A(BaseEstimator):
+        # The param_c should not warn as a result of _validate_bad_defaults
+        # since it's not included in _bad_defaults
         _bad_defaults = {'param_a': 1, 'param_b': 'kmeans'}
 
         def __init__(self, param_a='warn', param_b='warn', param_c='warn',
