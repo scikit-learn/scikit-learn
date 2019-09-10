@@ -96,7 +96,6 @@ $(document).ready(function() {
 
     var prevScrollpos = window.pageYOffset;
     hideOnScroll = function(lastScrollTop) {
-        console.log(lastScrollTop > 2, prevScrollpos <= lastScrollTop, hashTargetOnTop());
         if (lastScrollTop > 2 && (prevScrollpos <= lastScrollTop) || hashTargetOnTop()){
             // hide navbar
             navBar.style.top = navBarHeightHidden;
