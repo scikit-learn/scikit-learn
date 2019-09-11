@@ -202,7 +202,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
+class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -212,10 +212,10 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and `predict`.
+        An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for `fit`.
+        The number of jobs to run in parallel for :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -297,7 +297,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
+class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -307,7 +307,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit`, `score` and `predict_proba`.
+        An estimator object implementing :term:`fit`, :term:`score` and
+        :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -364,7 +365,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
@@ -515,7 +516,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         return Y_pred
 
 
-class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
+class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -675,7 +676,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
                 'multioutput_only': True}
 
 
-class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
+class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using

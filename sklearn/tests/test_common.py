@@ -11,13 +11,16 @@ import warnings
 import sys
 import re
 import pkgutil
-import functools
+from inspect import isgenerator
+from functools import partial
 
 import pytest
+
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 from sklearn.base import RegressorMixin
@@ -25,16 +28,18 @@ from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _yield_all_checks,
     _safe_tags,
     _construct_instance,
     set_checking_parameters,
+    _set_check_estimator_ids,
     check_parameters_default_constructible,
-    check_class_weight_balanced_linear_classifier)
+    check_class_weight_balanced_linear_classifier,
+    parametrize_with_checks)
 
 
 def test_all_estimator_no_base_class():
@@ -54,6 +59,24 @@ def test_parameters_default_constructible(name, Estimator):
     check_parameters_default_constructible(name, Estimator)
 
 
+def _sample_func(x, y=1):
+    pass
+
+
+@pytest.mark.parametrize("val, expected", [
+    (partial(_sample_func, y=1), "_sample_func(y=1)"),
+    (_sample_func, "_sample_func"),
+    (partial(_sample_func, 'world'), "_sample_func"),
+    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+    (LogisticRegression(random_state=1, solver='newton-cg',
+                        class_weight='balanced', warm_start=True),
+     "LogisticRegression(class_weight='balanced',random_state=1,"
+     "solver='newton-cg',warm_start=True)")
+])
+def test_set_check_estimator_ids(val, expected):
+    assert _set_check_estimator_ids(val) == expected
+
+
 def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
@@ -65,39 +88,38 @@ def _tested_estimators():
         except SkipTest:
             continue
 
-        yield name, estimator
+        yield estimator
 
 
-def _generate_checks_per_estimator(check_generator, estimators):
-    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        for name, estimator in estimators:
-            for check in check_generator(name, estimator):
-                yield estimator, check
-
-
-def _rename_partial(val):
-    if isinstance(val, functools.partial):
-        kwstring = "".join(["{}={}".format(k, v)
-                            for k, v in val.keywords.items()])
-        return "{}({})".format(val.func.__name__, kwstring)
-    # FIXME once we have short reprs we can use them here!
-    if hasattr(val, "get_params") and not isinstance(val, type):
-        return type(val).__name__
-
-
-@pytest.mark.parametrize(
-        "estimator, check",
-        _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_estimators()),
-        ids=_rename_partial
-)
+@parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         set_checking_parameters(estimator)
-        name = estimator.__class__.__name__
-        check(name, estimator)
+        check(estimator)
+
+
+def test_check_estimator_generate_only():
+    estimator_cls_gen_checks = check_estimator(LogisticRegression,
+                                               generate_only=True)
+    all_instance_gen_checks = check_estimator(LogisticRegression(),
+                                              generate_only=True)
+    assert isgenerator(estimator_cls_gen_checks)
+    assert isgenerator(all_instance_gen_checks)
+
+    estimator_cls_checks = list(estimator_cls_gen_checks)
+    all_instance_checks = list(all_instance_gen_checks)
+
+    # all classes checks include check_parameters_default_constructible
+    assert len(estimator_cls_checks) == len(all_instance_checks) + 1
+
+    # TODO: meta-estimators like GridSearchCV has required parameters
+    # that do not have default values. This is expected to change in the future
+    with pytest.raises(SkipTest):
+        for estimator, check in check_estimator(GridSearchCV,
+                                                generate_only=True):
+            check(estimator)
 
 
 @ignore_warnings(category=DeprecationWarning)
