@@ -832,6 +832,16 @@ div.sphx-glr-thumbcontainer {
   visibility: hidden;
 }
 
+.sphx-glr-script-out .highlight pre {
+  padding-top: 1ex;
+  padding-right: 1ex;
+}
+
+.sphx-glr-script-out div.highlight {
+  padding: 0;
+}
+
+
 @media screen and (min-width: 1540px) {
   .sphx-glr-download-link-note {
     position: absolute;
