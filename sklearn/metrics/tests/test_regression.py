@@ -118,7 +118,7 @@ def test_regression_metrics_at_limits():
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], power=power),
                     2 / (2 - power))
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 2.
