@@ -648,6 +648,9 @@ In general have the following in mind:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
+* Before submitting you pull request check if your modifications have introduced
+  new sphinx warnings and try to fix them.
+
 .. _generated_doc_CI:
 
 Generated documentation on CircleCI
