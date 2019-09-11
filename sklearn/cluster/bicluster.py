@@ -115,7 +115,7 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         y : Ignored
 
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_X(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
         self._fit(X)
         return self

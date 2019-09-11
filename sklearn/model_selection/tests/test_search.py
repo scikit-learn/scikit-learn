@@ -1780,12 +1780,17 @@ def test_random_search_bad_cv():
 
 
 def test_n_features_in():
-    # make sure grid search delegates n_features_in to the best estimator
+    # make sure grid search and random search delegate n_features_in to the
+    # best estimator
     n_features = 4
     X, y = make_classification(n_features=n_features)
     gbdt = HistGradientBoostingClassifier()
     param_grid = {'max_iter': [3, 4]}
     gs = GridSearchCV(gbdt, param_grid)
+    rs = RandomizedSearchCV(gbdt, param_grid, n_iter=1)
     assert not hasattr(gs, 'n_features_in_')
+    assert not hasattr(rs, 'n_features_in_')
     gs.fit(X, y)
+    rs.fit(X, y)
     assert gs.n_features_in_ == n_features
+    assert rs.n_features_in_ == n_features

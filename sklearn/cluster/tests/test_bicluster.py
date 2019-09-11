@@ -256,3 +256,13 @@ def test_wrong_shape():
     data = np.arange(27).reshape((3, 3, 3))
     with pytest.raises(ValueError):
         model.fit(data)
+
+
+@pytest.mark.parametrize('est', (SpectralBiclustering(), SpectralCoclustering()))
+def test_n_features_in_(est):
+
+    X, _, _ = make_biclusters((3, 3), 3, random_state=0)
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X)
+    assert est.n_features_in_ == 3
