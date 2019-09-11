@@ -38,6 +38,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
                 pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
+    # TODO: Remove when openssl gets fixed. This is a temporary fixto get
+    # `fetch_*` to work on the CI.
+    TO_INSTALL="$TO_INSTALL openssl=1.1.1c"
+
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
     else
