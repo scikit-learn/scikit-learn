@@ -4,7 +4,6 @@ from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
-from sklearn.utils.testing import assert_raises, assert_raises_regex
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -90,15 +89,18 @@ def test_regression_metrics_at_limits():
     assert_almost_equal(max_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
-    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
-                        "used when targets contain negative values.",
-                        mean_squared_log_error, [-1.], [-1.])
-    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
-                        "used when targets contain negative values.",
-                        mean_squared_log_error, [1., 2., 3.], [1., -2., 3.])
-    assert_raises_regex(ValueError, "Mean Squared Logarithmic Error cannot be "
-                        "used when targets contain negative values.",
-                        mean_squared_log_error, [1., -2., 3.], [1., 2., 3.])
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
+        mean_squared_log_error([-1.], [-1.])
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
+        mean_squared_log_error([1., 2., 3.], [1., -2., 3.])
+    err_msg = ("Mean Squared Logarithmic Error cannot be used when targets "
+               "contain negative values.")
+    with pytest.raises(ValueError, match=err_msg):
+        mean_squared_log_error([1., -2., 3.], [1., 2., 3.])
 
     # Tweedie deviance error
     power = -1.2
@@ -116,7 +118,7 @@ def test_regression_metrics_at_limits():
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], power=power),
                     2 / (2 - power))
-    msg = "only be used on non-negative y and strictly positive y_pred."
+    msg = "only be used on non-negative y_true and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 2.
@@ -162,7 +164,8 @@ def test__check_reg_targets():
                 assert_array_equal(y_check1, y1)
                 assert_array_equal(y_check2, y2)
         else:
-            assert_raises(ValueError, _check_reg_targets, y1, y2, None)
+            with pytest.raises(ValueError):
+                _check_reg_targets(y1, y2, None)
 
 
 def test__check_reg_targets_exception():
@@ -170,11 +173,8 @@ def test__check_reg_targets_exception():
     expected_message = ("Allowed 'multioutput' string values are.+"
                         "You provided multioutput={!r}".format(
                             invalid_multioutput))
-    assert_raises_regex(ValueError, expected_message,
-                        _check_reg_targets,
-                        [1, 2, 3],
-                        [[1], [2], [3]],
-                        invalid_multioutput)
+    with pytest.raises(ValueError, match=expected_message):
+        _check_reg_targets([1, 2, 3], [[1], [2], [3]], invalid_multioutput)
 
 
 def test_regression_multioutput_array():

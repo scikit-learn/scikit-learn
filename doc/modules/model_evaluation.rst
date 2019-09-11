@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -2028,8 +2032,8 @@ Mean Poisson, Gamma, and Tweedie deviances
 The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
 deviance error
 <https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
-with a ``power`` parameter. This is a metric that elicits predicted expectation
-values of regression targets.
+with a ``power`` parameter (:math:`p`). This is a metric that elicits
+predicted expectation values of regression targets.
 
 Following special cases exist,
 
@@ -2039,16 +2043,17 @@ Following special cases exist,
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
 and :math:`y_i` is the corresponding true value, then the mean Tweedie
-deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+deviance error (D) for power :math:`p`, estimated over :math:`n_{\text{samples}}`
+is defined as
 
 .. math::
 
   \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
-  (y_i-\hat{y}_i)^2, & \text{for }\text{power}=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for power}=1\text{ (Poisson)}\\
-  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for power}=2\text{ (Gamma)}\\
+  (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
   \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
   & \text{otherwise}
@@ -2074,7 +2079,7 @@ prediction difference of the second point,::
     >>> mean_tweedie_deviance([100.], [150.], power=0)
     2500.0
 
-If we increase ``p`` to 1,::
+If we increase ``power`` to 1,::
 
     >>> mean_tweedie_deviance([1.0], [1.5], power=1)
     0.18...

@@ -30,6 +30,8 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`impute.IterativeImputer` when `X` has features with no missing
+  values. |Feature|
 
 Details are listed in the changelog below.
 
@@ -75,6 +77,10 @@ Changelog
   1.12.
   :pr:`14510` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fixed a bug in :class:`compose.TransformedTargetRegrssor` which did not
+  pass `**fit_params` to the underlying regressor.
+  :pr:`14890` by :user:`Miguel Cabrera <mfcabrera>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -112,6 +118,13 @@ Changelog
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
+:mod:`sklearn.dummy`
+............................
+
+- |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
+  of the provided constant in multiouput cases.
+  :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -132,6 +145,8 @@ Changelog
   - |Feature| :func:`inspection.partial_dependence` and
     :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
+  - |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now supports
+    the 'least_absolute_deviation' loss. :pr:`13896` by `Nicolas Hug`_.
   - |Fix| Estimators now bin the training and validation data separately to
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
   - |Fix| Fixed a bug where early stopping would break with string targets.
@@ -161,8 +176,22 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| ``presort`` is now deprecated in
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, and the parameter has no effect.
+  Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` instead.
+  :pr:`14907` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
+
+- |Enhancement| A warning  will  now be raised  if a parameter choice means
+  that another parameter will be unused on calling the fit() method for
+  :class:`feature_extraction.text.HashingVectorizer`,
+  :class:`feature_extraction.text.CountVectorizer` and
+  :class:`feature_extraction.text.TfidfVectorizer`.
+  :pr:`14602` by :user:`Gaurav Chawla <getgaurav2>`.
 
 - |Fix| Functions created by build_preprocessor and build_analyzer of
   :class:`feature_extraction.text.VectorizerMixin` can now be pickled.
@@ -187,6 +216,21 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
+
+- |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
+  By :user:`Sergey Feldman <sergeyf>`.
+
+- |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
+  is False by default, which, when True, will skip computation on features that
+  have no missing values during the fit phase. :issue:`13773` by
+  :user:`Sergey Feldman <sergeyf>`.
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -199,6 +243,13 @@ Changelog
   method for :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+-|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
+ `KeyError` when using `kernel="precomputed"`.
+ :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -224,8 +275,31 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
+- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`  
+  now correctly scores when `cv=None`.
+  :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
+  :class:`manifold.SpectralEmedding` and `clustering.SpectralClustering`)
+  computed wrong eigenvalues with ``eigen_solver='amg'`` when
+  ``n_samples < 5 * n_components``. :pr:`14647` by `Andreas Müller`_.
+
+- |Fix| Fixed a bug in :func:`manifold.spectral_embedding`  used in
+  :class:`manifold.SpectralEmbedding` and :class:`cluster.spectral.SpectralClustering`
+  where ``eigen_solver="amg"`` would sometimes result in a LinAlgError.
+  :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
+  :pr:`13707` by :user:`Scott White <whitews>`
+
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metric, which
+  calculates euclidean distances in the presence of missing values.
+  :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+  `Thomas Fan`_.
 
 - |Feature| New ranking metrics :func:`metrics.ndcg_score` and
   :func:`metrics.dcg_score` have been added to compute Discounted Cumulative
@@ -259,9 +333,6 @@ Changelog
 - |Enhancement| Allow computing averaged metrics in the case of no true positives.
   :pr:`14595` by `Andreas Müller`_.
 
-:mod:`sklearn.metrics`
-......................
-
 - |Fix| Raise a ValueError in :func:`metrics.silhouette_score` when a
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
@@ -276,6 +347,11 @@ Changelog
 
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
+
+- |Efficiency| Improved performance of multimetric scoring in
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV`. :pr:`14593` by `Thomas Fan`_.
 
 - |Fix| Reimplemented :class:`model_selection.StratifiedKFold` to fix an issue
   where one test set could be `n_classes` larger than another. Test sets should
@@ -322,6 +398,11 @@ Changelog
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
 
+- |API| ``presort`` is now deprecated in
+  :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor`, and the parameter has no effect.
+  :pr:`14907` by `Adrin Jalali`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -360,8 +441,9 @@ Changelog
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame.
-  :pr:`14035` by :user:`Guillaume Lemaitre <glemaitre>`.
+  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
+  refactoring was done.
+  :pr:`14035` and :pr:`14475` by `Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :func:`~utils.estimator_checks.check_estimator` can now generate
   checks by setting `generate_only=True`. Previously, running
@@ -378,6 +460,9 @@ Changelog
   X to be non-negative) is now used by `check_estimator` to make sure
   a proper error message is raised if X contains some negative entries.
   :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
+
+- |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
+  sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ....................

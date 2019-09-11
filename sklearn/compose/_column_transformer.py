@@ -20,7 +20,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _check_key_type
+from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -33,7 +33,7 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "item instead of a scalar.")
 
 
-class ColumnTransformer(_BaseComposition, TransformerMixin):
+class ColumnTransformer(TransformerMixin, _BaseComposition):
     """Applies transformers to columns of an array or pandas DataFrame.
 
     This estimator allows different columns or column subsets of the input
@@ -57,10 +57,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -309,7 +309,8 @@ boolean mask array or callable
 
         # Make it possible to check for reordered named columns on transform
         if (hasattr(X, 'columns') and
-                any(_check_key_type(cols, str) for cols in self._columns)):
+                any(_determine_key_type(cols) == 'str'
+                    for cols in self._columns)):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
@@ -667,10 +668,10 @@ def make_column_transformer(*transformers, **kwargs):
         transformer objects to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -755,6 +756,6 @@ def _is_negative_indexing(key):
     def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
     if isinstance(key, slice):
         return is_neg(key.start) or is_neg(key.stop)
-    elif _check_key_type(key, int):
+    elif _determine_key_type(key) == 'int':
         return np.any(np.asarray(key) < 0)
     return False

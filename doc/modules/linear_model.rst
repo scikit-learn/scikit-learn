@@ -146,9 +146,10 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> reg.alpha_
     0.01
 
-Specifying the value of the `cv` attribute will trigger the use of
-cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
-cross-validation, rather than Generalized Cross-Validation.
+Specifying the value of the :term:`cv` attribute will trigger the use of
+cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
+example `cv=10` for 10-fold cross-validation, rather than Generalized
+Cross-Validation.
 
 .. topic:: References
 
