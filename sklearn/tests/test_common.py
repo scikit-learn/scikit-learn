@@ -23,8 +23,7 @@ from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin
-from sklearn.cluster._bicluster import BiclusterMixin
+from sklearn.base import RegressorMixin, BiclusterMixin
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
