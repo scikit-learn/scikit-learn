@@ -21,10 +21,12 @@ regression is also supported.
   sample as **one** of a number of classes, where the number of classes is
   greater than 2. Each sample can only be labelled as one class.
 
-  For example, classification of a set of images of fruit, where each image may
-  either be of an orange, an apples, or a pear. Multiclass classification makes
-  the assumption that each sample is assigned to one and only one label - one
-  sample cannot for example be bother a pear and an an apple at the same time.
+  For example, classification using features extracted from a set of images of
+  fruit, where each image may either be of an orange, an apples, or a pear.
+  Each image is one sample and is labelled as one of the 3 possible classes.
+  Multiclass classification makes the assumption that each sample is assigned
+  to one and only one label - one sample cannot, for example, be both a pear
+  and an apple at the same time.
   
   - Valid :term:`multiclass` representations for
     :func:`~utils.multiclass.type_of_target` (`y`) are:
