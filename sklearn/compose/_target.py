@@ -17,10 +17,10 @@ __all__ = ['TransformedTargetRegressor']
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
-    Useful for applying a non-linear transformation to the target ``y`` in regression
-    problems. This transformation can be given as a Transformer such as the
-    QuantileTransformer or as a function and its inverse such as ``log`` and
-    ``exp``.
+    Useful for applying a non-linear transformation to the target ``y`` in
+    regression problems. This transformation can be given as a Transformer
+    such as the QuantileTransformer or as a function and its inverse such as
+    ``log`` and ``exp``.
 
     The computation during ``fit`` is::
 
@@ -38,7 +38,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         transformer.inverse_transform(regressor.predict(X))
 
-    Read more in the :ref:`User Guide <preprocessing_targets>`.
+    Read more in the :ref:`User Guide <transformed_target_regressor>`.
 
     Parameters
     ----------
@@ -101,9 +101,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     output will be reshaped to a have the same number of dimensions as ``y``.
 
     See :ref:`examples/compose/plot_transformed_target.py
-    <sphx_glr_auto_examples_compose_plot_transformed_target.py>` and
-    `Transforming target in regression
-    <https://scikit-learn.org/stable/modules/compose.html#transformed-target-regressor>`_.
+    <sphx_glr_auto_examples_compose_plot_transformed_target.py>`.
 
     """
     def __init__(self, regressor=None, transformer=None,
