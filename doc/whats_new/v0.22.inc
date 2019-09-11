@@ -30,6 +30,8 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`impute.IterativeImputer` when `X` has features with no missing
+  values. |Feature|
 
 Details are listed in the changelog below.
 
@@ -116,6 +118,13 @@ Changelog
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
+:mod:`sklearn.dummy`
+............................
+
+- |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
+  of the provided constant in multiouput cases.
+  :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -167,6 +176,13 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| ``presort`` is now deprecated in
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, and the parameter has no effect.
+  Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` instead.
+  :pr:`14907` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -206,6 +222,14 @@ Changelog
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
   `Thomas Fan`_.
+
+- |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
+  By :user:`Sergey Feldman <sergeyf>`.
+
+- |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
+  is False by default, which, when True, will skip computation on features that
+  have no missing values during the fit phase. :issue:`13773` by
+  :user:`Sergey Feldman <sergeyf>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -324,6 +348,11 @@ Changelog
 - |Enhancement| :class:`model_selection.RandomizedSearchCV` now accepts lists
   of parameter distributions. :pr:`14549` by `Andreas Müller`_.
 
+- |Efficiency| Improved performance of multimetric scoring in
+  :func:`model_selection.cross_validate`,
+  :class:`model_selection.GridSearchCV`, and
+  :class:`model_selection.RandomizedSearchCV`. :pr:`14593` by `Thomas Fan`_.
+
 - |Fix| Reimplemented :class:`model_selection.StratifiedKFold` to fix an issue
   where one test set could be `n_classes` larger than another. Test sets should
   now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
@@ -368,6 +397,11 @@ Changelog
   :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
+
+- |API| ``presort`` is now deprecated in
+  :class:`tree.DecisionTreeClassifier` and
+  :class:`tree.DecisionTreeRegressor`, and the parameter has no effect.
+  :pr:`14907` by `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -426,6 +460,9 @@ Changelog
   X to be non-negative) is now used by `check_estimator` to make sure
   a proper error message is raised if X contains some negative entries.
   :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
+
+- |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
+  sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ....................

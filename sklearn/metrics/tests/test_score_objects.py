@@ -3,11 +3,13 @@ import tempfile
 import shutil
 import os
 import numbers
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 import joblib
 
+from numpy.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import ignore_warnings
@@ -18,10 +20,11 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+                                    _passthrough_scorer, _MultimetricScorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
@@ -546,3 +549,112 @@ def test_scoring_is_not_metric():
         check_scoring(Ridge(), r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
         check_scoring(KMeans(), cluster_module.adjusted_rand_score)
+
+
+@pytest.mark.parametrize(
+    ("scorers,expected_predict_count,"
+     "expected_predict_proba_count,expected_decision_func_count"),
+    [({'a1': 'accuracy', 'a2': 'accuracy',
+       'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+        'ra1': 'roc_auc', 'ra2': 'roc_auc'}, 1, 1, 1),
+     (['roc_auc', 'accuracy'], 1, 0, 1),
+     (['neg_log_loss', 'accuracy'], 1, 1, 0)])
+def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
+                                              expected_predict_proba_count,
+                                              expected_decision_func_count):
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    mock_est = Mock()
+    fit_func = Mock(return_value=mock_est)
+    predict_func = Mock(return_value=y)
+
+    pos_proba = np.random.rand(X.shape[0])
+    proba = np.c_[1 - pos_proba, pos_proba]
+    predict_proba_func = Mock(return_value=proba)
+    decision_function_func = Mock(return_value=pos_proba)
+
+    mock_est.fit = fit_func
+    mock_est.predict = predict_func
+    mock_est.predict_proba = predict_proba_func
+    mock_est.decision_function = decision_function_func
+
+    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+    results = multi_scorer(mock_est, X, y)
+
+    assert set(scorers) == set(results)  # compare dict keys
+
+    assert predict_func.call_count == expected_predict_count
+    assert predict_proba_func.call_count == expected_predict_proba_count
+    assert decision_function_func.call_count == expected_decision_func_count
+
+
+def test_multimetric_scorer_calls_method_once_classifier_no_decision():
+    predict_proba_call_cnt = 0
+
+    class MockKNeighborsClassifier(KNeighborsClassifier):
+        def predict_proba(self, X):
+            nonlocal predict_proba_call_cnt
+            predict_proba_call_cnt += 1
+            return super().predict_proba(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockKNeighborsClassifier(n_neighbors=1)
+    clf.fit(X, y)
+
+    scorers = ['roc_auc', 'neg_log_loss']
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_proba_call_cnt == 1
+
+
+def test_multimetric_scorer_calls_method_once_regressor_threshold():
+    predict_called_cnt = 0
+
+    class MockDecisionTreeRegressor(DecisionTreeRegressor):
+        def predict(self, X):
+            nonlocal predict_called_cnt
+            predict_called_cnt += 1
+            return super().predict(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockDecisionTreeRegressor()
+    clf.fit(X, y)
+
+    scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_called_cnt == 1
+
+
+def test_multimetric_scorer_sanity_check():
+    # scoring dictionary returned is the same as calling each scorer seperately
+    scorers = {'a1': 'accuracy', 'a2': 'accuracy',
+               'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+               'ra1': 'roc_auc', 'ra2': 'roc_auc'}
+
+    X, y = make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+
+    result = multi_scorer(clf, X, y)
+
+    seperate_scores = {
+        name: get_scorer(name)(clf, X, y)
+        for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
+
+    for key, value in result.items():
+        score_name = scorers[key]
+        assert_allclose(value, seperate_scores[score_name])
