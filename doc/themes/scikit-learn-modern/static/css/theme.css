@@ -303,7 +303,7 @@ img.sk-footer-funding-logo {
 
 #sk-sidebar-wrapper {
   height: 100%;
-  overflow-y: scroll;
+  overflow-y: hidden;
   overflow-x: hidden;
   position: fixed;
   margin-left: -240px;
@@ -465,6 +465,11 @@ div.sk-sidebar-toc-logo {
 
 div.sk-sidebar-toc-wrapper {
   font-size: 0.9rem;
+  width: 120%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  height: 100vh;
+  padding-right: 1.75rem;
 }
 
 div.sk-sidebar-toc-wrapper::after {
