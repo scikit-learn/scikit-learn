@@ -167,6 +167,19 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Addition of ``max_samples`` argument allows limiting
+  size of bootstrap samples to be less than size of dataset. Added to
+  :class:`ensemble.forest.ForestClassifier`,
+  :class:`ensemble.forest.ForestRegressor`,
+  :class:`ensemble.forest.RandomForestClassifier`,
+  :class:`ensemble.forest.RandomForestRegressor`,
+  :class:`ensemble.forest.ExtraTreesClassifier`,
+  :class:`ensemble.forest.ExtraTreesRegressor`,
+  :class:`ensemble.forest.RandomTreesEmbedding`. :pr:`14682` by
+  :user:`Matt Hancock <notmatthancock>` and
+  :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
+
+
 :mod:`sklearn.feature_extraction`
 .................................
 
