@@ -24,7 +24,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import warnings
 
-from .base import BaseEnsemble
+from ._base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator

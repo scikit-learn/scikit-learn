@@ -19,7 +19,7 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
-from .bagging import BaseBagging
+from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
