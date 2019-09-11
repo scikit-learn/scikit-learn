@@ -44,7 +44,7 @@ from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
-from ..tree.tree import DecisionTreeRegressor
+from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
