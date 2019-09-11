@@ -19,6 +19,7 @@ if [[ "$UNAMESTR" == "Darwin" ]]; then
 fi
 
 make_conda() {
+    conda update conda
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV
