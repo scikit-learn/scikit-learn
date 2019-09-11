@@ -812,16 +812,22 @@ def test_gower_distances():
          [np.nan, np.nan, np.nan, np.nan]]
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [4, 4, 4, 0]
+    D_expected = np.zeros((4, 4))
+    for i in range(0, 4):
+        for j in range(0, 4):
             # The calculations below shows how it compares observation
             # by observation, attribute by attribute.
-            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]] +
-                                abs(X[i][2] - X[j][2]) +
-                                abs(X[i][3] - X[j][3])) / n_cols
+            sum = ([1, 0][X[i][0] == X[j][0]] +
+                   [1, 0][X[i][1] == X[j][1]] +
+                   abs(X[i][2] - X[j][2]) +
+                   abs(X[i][3] - X[j][3]))
+
+            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
+                                         out=np.array([np.nan]),
+                                         where=(non_missing_cols[j] != 0)
+                                                & (non_missing_cols[i] != 0))
 
     assert_array_almost_equal(D_expected, D)
 
@@ -845,14 +851,20 @@ def test_gower_distances():
          [np.nan, np.nan, np.nan, np.nan]]
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]] +
-                                abs(X[i][2] - X[j][2]) +
-                                [1, 0][X[i][3] == X[j][3]]) / n_cols
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [4, 4, 4, 0]
+    D_expected = np.zeros((4, 4))
+    for i in range(0, 4):
+        for j in range(0, 4):
+            sum = ([1, 0][X[i][0] == X[j][0]] +
+                   [1, 0][X[i][1] == X[j][1]] +
+                   abs(X[i][2] - X[j][2]) +
+                   [1, 0][X[i][3] == X[j][3]])
+
+            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
+                                         out=np.array([np.nan]),
+                                         where=(non_missing_cols[j] != 0)
+                                                & (non_missing_cols[i] != 0))
 
     D = gower_distances(X, categorical_features=[True, True, False, True],
                         scale=False)
@@ -878,12 +890,11 @@ def test_gower_distances():
     X = np.array(X, dtype=np.object)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    D_expected = np.zeros((4, 4))
+    for i in range(0, 4):
+        for j in range(0, 4):
             D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]]) / n_cols
+                                [1, 0][X[i][1] == X[j][1]]) / 2
 
     D = gower_distances(X)
 
@@ -917,12 +928,18 @@ def test_gower_distances():
 
     D = gower_distances(X, categorical_features=[True, True])
 
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = ([1, 0][X[i][0] == X[j][0]] +
-                                [1, 0][X[i][1] == X[j][1]]) / n_cols
+    D_expected = np.zeros((4, 4))
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [2, 2, 2, 0]
+    for i in range(0, 4):
+        for j in range(0, 4):
+            sum = ([1, 0][X[i][0] == X[j][0]] +
+                   [1, 0][X[i][1] == X[j][1]])
+
+            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
+                                         out=np.array([np.nan]),
+                                         where=(non_missing_cols[j] != 0)
+                                                & (non_missing_cols[i] != 0))
 
     assert_array_almost_equal(D_expected, D)
 
@@ -935,12 +952,15 @@ def test_gower_distances():
     D = gower_distances(X)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = (abs(X[i][0] - X[j][0]) +
-                                abs(X[i][1] - X[j][1])) / n_cols
+    D_expected = np.zeros((4, 4))
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [2, 2, 2, 0]
+    for i in range(0, 4):
+        for j in range(0, 4):
+            sum = abs(X[i][0] - X[j][0]) + abs(X[i][1] - X[j][1])
+            D_expected[i][j] = np.divide(sum, non_missing_cols[i],
+                                         out=np.array([np.nan]),
+                                         where=non_missing_cols[i] != 0)
 
     assert_array_almost_equal(D_expected, D)
 
@@ -953,12 +973,11 @@ def test_gower_distances():
     D = gower_distances(X)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    D_expected = np.zeros((4, 4))
+    for i in range(0, 4):
+        for j in range(0, 4):
             D_expected[i][j] = (abs(X[i][0] - X[j][0]) +
-                                abs(X[i][1] - X[j][1])) / n_cols
+                                abs(X[i][1] - X[j][1])) / 2
 
     assert_array_almost_equal(D_expected, D)
 
@@ -977,34 +996,35 @@ def test_gower_distances():
     D = gower_distances(X, Y)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = X.shape[0], Y.shape[0]
-    D_expected = np.zeros((n_rows, n_cols))
-    for i in range(0, n_rows):
-        for j in range(0, n_cols):
+    D_expected = np.zeros((3, 1))
+    for i in range(0, 3):
+        for j in range(0, 1):
             D_expected[i][j] = \
                 ([1, 0][X[i][0] == Y[j][0]] +
                  abs(X[i][1] - Y[j][1]) +
                  abs(X[i][2] - Y[j][2]) +
                  abs(X[i][3] - Y[j][3]) +
-                 [1, 0][X[i][4] == Y[j][4]]) / X.shape[1]
+                 [1, 0][X[i][4] == Y[j][4]]) / 5
 
     assert_array_almost_equal(D_expected, D)
 
     # Test to obtain a non-squared distance matrix with numeric data only
-    X = np.array([[1.0, 0.0, 0.0], [0.181818, 0.0, 1], [0.0, 0.0, 0.160377]],
+    X = np.array([[1.0, 0.0, 0.0],
+                  [0.181818, 0.0, 1],
+                  [0.0, 0.0, 0.160377]],
                  dtype=object)
+
     Y = np.array([[0.090909, 0.0, 0.500109]], dtype=object)
     D = gower_distances(X, Y)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = X.shape[0], Y.shape[0]
-    D_expected = np.zeros((n_rows, n_cols))
-    for i in range(0, n_rows):
-        for j in range(0, n_cols):
+    D_expected = np.zeros((3, 1))
+    for i in range(0, 3):
+        for j in range(0, 1):
             D_expected[i][j] = \
                 (abs(X[i][0] - Y[j][0]) +
                  abs(X[i][1] - Y[j][1]) +
-                 abs(X[i][2] - Y[j][2])) / X.shape[1]
+                 abs(X[i][2] - Y[j][2])) / 3
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1015,11 +1035,10 @@ def test_gower_distances():
     D = gower_distances(X)
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
-            D_expected[i][j] = (abs(X[i][0] - X[j][0])) / n_cols
+    D_expected = np.zeros((3, 3))
+    for i in range(0, 3):
+        for j in range(0, 3):
+            D_expected[i][j] = (abs(X[i][0] - X[j][0])) / 1
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1064,12 +1083,11 @@ def test_gower_distances():
           [0.07643522, 1.0]]
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    D_expected = np.zeros((3, 3))
+    for i in range(0, 3):
+        for j in range(0, 3):
             D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
-                                abs(Xn[i][1] - Yn[j][1])) / n_cols
+                                abs(Xn[i][1] - Yn[j][1])) / 2
 
     assert_array_almost_equal(D_expected, D)
     # Test the use of range parameters
@@ -1120,32 +1138,35 @@ def test_gower_distances():
           [0.07643522, 1.0, 'F', 0]]
 
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    D_expected = np.zeros((3, 3))
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [4, 4, 3]
+
+    for i in range(0, 3):
+        for j in range(0, 3):
             # The calculations below shows how it compares observation
             # by observation, attribute by attribute.
-            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
-                                abs(Xn[i][1] - Yn[j][1]) +
-                                [1, 0][Xn[i][2] == Yn[j][2]] +
-                                abs(Xn[i][3] - Yn[j][3])) / n_cols
+            D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
+                                 abs(Xn[i][1] - Yn[j][1]) +
+                                 [1, 0][Xn[i][2] == Yn[j][2]] +
+                                 abs(Xn[i][3] - Yn[j][3])) /
+                                 non_missing_cols[i])
 
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
     assert_array_almost_equal(D_expected, D)
 
-    # Test extra parameters categorical_values passed in kwargs
+    # Test categorical_values passed in kwargs
     # Simplified calculation of Gower distance for expected values
-    n_rows, n_cols = np.shape(X)
-    D_expected = np.zeros((n_rows, n_rows))
-    for i in range(0, n_rows):
-        for j in range(0, n_rows):
+    D_expected = np.zeros((3, 3))
+    for i in range(0, 3):
+        for j in range(0, 3):
             # The calculations below shows how it compares observation
             # by observation, attribute by attribute.
-            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
-                                abs(Xn[i][1] - Yn[j][1]) +
-                                [1, 0][Xn[i][2] == Yn[j][2]] +
-                                [1, 0][Xn[i][3] == Yn[j][3]]) / n_cols
+            D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
+                                 abs(Xn[i][1] - Yn[j][1]) +
+                                 [1, 0][Xn[i][2] == Yn[j][2]] +
+                                 [1, 0][Xn[i][3] == Yn[j][3]]) /
+                                 non_missing_cols[i])
 
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2,
                            categorical_features=[False, False, True, True])

@@ -771,7 +771,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     X = np.asarray(X, dtype=np.object)
 
     cat_mask, num_mask = \
-        _detect_categorical_features(X, categorical_features)
+        detect_categorical_features(X, categorical_features)
 
     # Calculates the min and max values, and if requested, scale the
     # input values in order to obtain the distances between 0 and 1,
@@ -805,20 +805,26 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         if X.shape[0] != Y.shape[0] or X is not Y:
             j_start = 0
 
-        # Calculates the similarities for categorical columns
-        cat_dists = (X[i, cat_mask] != Y[j_start:, cat_mask]) | \
-                    (_object_dtype_isnan(X[i, cat_mask]) |
-                     _object_dtype_isnan(Y[j_start:, cat_mask]))
+        # Makes the comparisson for np.nan for arrays with dtype=np.object,
+        # this is necessary as some deployments returns True for
+        # np.nan == np.nan
+        cat_nan_cols = (_object_dtype_isnan(X[i, cat_mask]) |
+                        _object_dtype_isnan(Y[j_start:, cat_mask]))
 
+        # Calculates the similarities for categorical columns
+        cat_dists = ((X[i, cat_mask] != Y[j_start:, cat_mask]) | cat_nan_cols)
         # Calculates the Manhattan distances for numerical columns
-        num_dists = abs(X[i, num_mask].astype(np.float32) -
-                        Y[j_start:, num_mask].astype(np.float32)) / ranges
+        num_dists = abs(X[i, num_mask] -
+                        Y[j_start:, num_mask]) / ranges
+
         # Calculates the number of non missing columns
-        n_missing = X.shape[1] - (np.isnan(cat_dists).sum(axis=1) +
-                                  np.isnan(num_dists).sum(axis=1))
+        n_missing = X.shape[1] - (cat_nan_cols.sum(axis=1) +
+                                  _object_dtype_isnan(num_dists).sum(axis=1))
         # Gets the final results
-        results = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
-        results /= n_missing
+        sum = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
+
+        results = np.divide(sum, n_missing, out=np.full(sum.shape, np.nan, dtype=np.object),
+                            where=(n_missing != np.zeros(sum.shape)))
 
         D[i, j_start:] = results
         if X is Y:
@@ -827,7 +833,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     return D
 
 
-def _detect_categorical_features(X, categorical_features=None):
+def detect_categorical_features(X, categorical_features=None):
     """Identifies the numerical and non-numerical (categorical) columns
     of an array.
 
@@ -842,7 +848,8 @@ def _detect_categorical_features(X, categorical_features=None):
         with the numerical indexes of the categorical attribtes.
 
         If the categorical_features array is None, they will be automatically
-        detected in X.
+        detected in X. Numerical columns are identified as a subtype of
+        np.number, whilist categorical columns are not a subtype of np.number.
 
     Returns
     -------
@@ -1487,7 +1494,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         if 'categorical_features' in kwds:
             categorical_features = kwds['categorical_features']
 
-        _, num_mask = _detect_categorical_features(X, categorical_features)
+        _, num_mask = detect_categorical_features(X, categorical_features)
 
         scale = None
         if 'scale' in kwds:
