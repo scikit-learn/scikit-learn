@@ -73,9 +73,9 @@ regression is also supported.
   classification task which labels each sample with a set of **non-binary**
   attributes. Both the number of attributes and the number of classes per
   attribute is greater than 2. A single estimator thus handles several joint
-  classification tasks. This is both a generalization of the multi**label**
+  classification tasks. This is both a generalization of the multi\ *label*
   classification task, which only considers binary attributes, as well as a
-  generalization of the multi**class** classification task, where only one
+  generalization of the multi\ *class* classification task, where only one
   attribute is considered.
 
   For example, classification of the attributes "type of fruit" and "colour"
