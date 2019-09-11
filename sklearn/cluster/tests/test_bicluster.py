@@ -258,7 +258,8 @@ def test_wrong_shape():
         model.fit(data)
 
 
-@pytest.mark.parametrize('est', (SpectralBiclustering(), SpectralCoclustering()))
+@pytest.mark.parametrize('est',
+                         (SpectralBiclustering(), SpectralCoclustering()))
 def test_n_features_in_(est):
 
     X, _, _ = make_biclusters((3, 3), 3, random_state=0)

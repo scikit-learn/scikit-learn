@@ -116,7 +116,7 @@ def test_n_features_in():
     # For vectorizers, n_features_in_ does not make sense and it is always
     # None
     dv = DictVectorizer()
-    assert dv.n_features_in_ is None
+    assert not hasattr(dv, 'n_features_in_')
     d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
     dv.fit(d)
-    assert dv.n_features_in_ is None
+    assert not hasattr(dv, 'n_features_in_')

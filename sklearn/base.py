@@ -583,15 +583,6 @@ class TransformerMixin:
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class NonRectangularInputMixin:
-    """Mixin class for all estimators with non-rectangular input.
-
-    For now only vectorizers are relevant for this mixin.
-    """
-
-    n_features_in_ = None
-
-
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"

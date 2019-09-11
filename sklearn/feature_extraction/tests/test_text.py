@@ -1350,9 +1350,8 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
     (CountVectorizer, JUNK_FOOD_DOCS))
 )
 def test_n_features_in(Vectorizer, X):
-    # For vectorizers, n_features_in_ does not make sense and it is always
-    # None
+    # For vectorizers, n_features_in_ does not make sense
     vectorizer = Vectorizer()
-    assert vectorizer.n_features_in_ is None
+    assert not hasattr(vectorizer, 'n_features_in_')
     vectorizer.fit(X)
-    assert vectorizer.n_features_in_ is None
+    assert not hasattr(vectorizer, 'n_features_in_')

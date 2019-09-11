@@ -25,7 +25,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, NonRectangularInputMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
@@ -181,7 +181,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(NonRectangularInputMixin):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
