@@ -1511,38 +1511,50 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
 
 @pytest.mark.parametrize('beta', [1])
 @pytest.mark.parametrize('average', ["macro", "micro", "weighted", "samples"])
-@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+@pytest.mark.parametrize('zero_division', [0, 1])
 def test_precision_recall_f1_no_labels(beta, average, zero_division):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    func = precision_recall_fscore_support
-    my_assert = (assert_warns if zero_division == "warn"
-                 else assert_no_warnings)
-    tmp = ([UndefinedMetricWarning, func] if zero_division == "warn"
-           else [func])
-    p, r, f, s = my_assert(*tmp, y_true, y_pred, average=average,
-                           beta=beta, zero_division=zero_division)
-    tmp = ([UndefinedMetricWarning, fbeta_score] if zero_division == "warn"
-           else [fbeta_score])
-    fbeta = my_assert(*tmp, y_true, y_pred, beta=beta,
-                      average=average, zero_division=zero_division)
+    p, r, f, s = assert_no_warnings(precision_recall_fscore_support, y_true,
+                                    y_pred, average=average, beta=beta,
+                                    zero_division=zero_division)
+    fbeta = assert_no_warnings(fbeta_score, y_true, y_pred, beta=beta,
+                               average=average, zero_division=zero_division)
 
-    zero_division = float(zero_division == 1)
+    zero_division = float(zero_division)
     assert_almost_equal(p, zero_division)
     assert_almost_equal(r, zero_division)
     assert_almost_equal(f, zero_division)
     assert s is None
 
-    assert_almost_equal(fbeta, float(zero_division == 1))
+    assert_almost_equal(fbeta, float(zero_division))
 
 
-@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
-def test_precision_recall_f1_no_labels_average_none(zero_division):
+@pytest.mark.parametrize('beta', [1])
+@pytest.mark.parametrize('average', ["macro", "micro", "weighted", "samples"])
+def test_precision_recall_f1_no_labels_warn(beta, average):
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    beta = 1
+    func = precision_recall_fscore_support
+    p, r, f, s = assert_warns(UndefinedMetricWarning, func, y_true, y_pred,
+                              average=average, beta=beta)
+    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score, y_true, y_pred,
+                         average=average, beta=beta)
+
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert s is None
+
+    assert_almost_equal(fbeta, 0)
+
+
+@pytest.mark.parametrize('zero_division', [0, 1])
+def test_precision_recall_f1_no_labels_average_none(zero_division):
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
 
     # tp = [0, 0, 0]
     # fn = [0, 0, 0]
@@ -1552,19 +1564,14 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
 
-    func = precision_recall_fscore_support
-    my_assert = (assert_warns if zero_division == "warn"
-                 else assert_no_warnings)
-    tmp = ([UndefinedMetricWarning, func] if zero_division == "warn"
-           else [func])
-    p, r, f, s = my_assert(*tmp, y_true, y_pred, average=None,
-                           beta=beta, zero_division=zero_division)
-    tmp = ([UndefinedMetricWarning, fbeta_score] if zero_division == "warn"
-           else [fbeta_score])
-    fbeta = my_assert(*tmp, y_true, y_pred, beta=beta,
-                      average=None, zero_division=zero_division)
+    p, r, f, s = assert_no_warnings(precision_recall_fscore_support,
+                                    y_true, y_pred,
+                                    average=None, beta=1,
+                                    zero_division=zero_division)
+    fbeta = assert_no_warnings(fbeta_score, y_true, y_pred, beta=1,
+                               average=None, zero_division=zero_division)
 
-    zero_division = float(zero_division == 1)
+    zero_division = float(zero_division)
     assert_array_almost_equal(
         p, [zero_division, zero_division, zero_division], 2
     )
@@ -1581,102 +1588,159 @@ def test_precision_recall_f1_no_labels_average_none(zero_division):
     )
 
 
-@pytest.mark.parametrize('zero_division', ["warn", 0, 1])
+def test_precision_recall_f1_no_labels_average_none_warn():
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    # tp = [0, 0, 0]
+    # fn = [0, 0, 0]
+    # fp = [0, 0, 0]
+    # support = [0, 0, 0]
+    # |y_hat_i inter y_i | = [0, 0, 0]
+    # |y_i| = [0, 0, 0]
+    # |y_hat_i| = [0, 0, 0]
+
+    p, r, f, s = assert_warns(UndefinedMetricWarning,
+                              precision_recall_fscore_support,
+                              y_true, y_pred, average=None, beta=1)
+    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score, y_true, y_pred,
+                         beta=1, average=None)
+
+    assert_array_almost_equal(p, [0, 0, 0], 2)
+    assert_array_almost_equal(r, [0, 0, 0], 2)
+    assert_array_almost_equal(f, [0, 0, 0], 2)
+    assert_array_almost_equal(s, [0, 0, 0], 2)
+
+    assert_array_almost_equal(fbeta, [0, 0, 0], 2)
+
+
+@pytest.mark.parametrize('zero_division', ["warn"])
 def test_prf_warnings(zero_division):
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
-    my_assert = (assert_warns_message
-                 if zero_division == "warn" else assert_no_warnings)
     for average in [None, 'weighted', 'macro']:
 
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 in labels with no predicted samples.'
                ' Use ``zero_division`` parameter to control'
                ' this behavior.')
-        tmp = [w, msg, f] if zero_division == "warn" else [f]
-        my_assert(*tmp, [0, 1, 2], [1, 1, 2], average=average,
-                  zero_division=zero_division)
+        assert_warns_message(w, msg, f, [0, 1, 2], [1, 1, 2], average=average,
+                             zero_division=zero_division)
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 in labels with no true samples.'
                ' Use ``zero_division`` parameter to control'
                ' this behavior.')
-        tmp = [w, msg, f] if zero_division == "warn" else [f]
-        my_assert(*tmp, [1, 1, 2], [0, 1, 2], average=average,
-                  zero_division=zero_division)
+        assert_warns_message(w, msg, f, [1, 1, 2], [0, 1, 2], average=average,
+                             zero_division=zero_division)
 
     # average of per-sample scores
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 in samples with no predicted labels.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, np.array([[1, 0], [1, 0]]),
-              np.array([[1, 0], [0, 0]]), average='samples',
-              zero_division=zero_division)
+    assert_warns_message(w, msg, f, np.array([[1, 0], [1, 0]]),
+                         np.array([[1, 0], [0, 0]]), average='samples',
+                         zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 in samples with no true labels.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, np.array([[1, 0], [0, 0]]),
-              np.array([[1, 0], [1, 0]]),
-              average='samples', zero_division=zero_division)
+    assert_warns_message(w, msg, f, np.array([[1, 0], [0, 0]]),
+                         np.array([[1, 0], [1, 0]]),
+                         average='samples', zero_division=zero_division)
 
     # single score: micro-average
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, np.array([[1, 1], [1, 1]]),
-              np.array([[0, 0], [0, 0]]), average='micro',
-              zero_division=zero_division)
+    assert_warns_message(w, msg, f, np.array([[1, 1], [1, 1]]),
+                         np.array([[0, 0], [0, 0]]), average='micro',
+                         zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 due to no true samples.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, np.array([[0, 0], [0, 0]]),
-              np.array([[1, 1], [1, 1]]), average='micro',
-              zero_division=zero_division)
+    assert_warns_message(w, msg, f, np.array([[0, 0], [0, 0]]),
+                         np.array([[1, 1], [1, 1]]), average='micro',
+                         zero_division=zero_division)
 
     # single positive label
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, [1, 1], [-1, -1], average='binary',
-              zero_division=zero_division)
+    assert_warns_message(w, msg, f, [1, 1], [-1, -1], average='binary',
+                         zero_division=zero_division)
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 due to no true samples.'
            ' Use ``zero_division`` parameter to control'
            ' this behavior.')
-    tmp = [w, msg, f] if zero_division == "warn" else [f]
-    my_assert(*tmp, [-1, -1], [1, 1], average='binary',
-              zero_division=zero_division)
+    assert_warns_message(w, msg, f, [-1, -1], [1, 1], average='binary',
+                         zero_division=zero_division)
 
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_recall_fscore_support([0, 0], [0, 0], average="binary",
                                         zero_division=zero_division)
-        if zero_division == "warn":
-            msg = ('Recall and F-score are ill-defined and '
-                   'being set to 0.0 due to no true samples.'
-                   ' Use ``zero_division`` parameter to control'
-                   ' this behavior.')
-            assert str(record.pop().message) == msg
-            msg = ('Precision and F-score are ill-defined and '
-                   'being set to 0.0 due to no predicted samples.'
-                   ' Use ``zero_division`` parameter to control'
-                   ' this behavior.')
-            assert str(record.pop().message) == msg
-        else:
-            assert len(record) == 0
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.'
+               ' Use ``zero_division`` parameter to control'
+               ' this behavior.')
+        assert str(record.pop().message) == msg
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.'
+               ' Use ``zero_division`` parameter to control'
+               ' this behavior.')
+        assert str(record.pop().message) == msg
+
+
+@pytest.mark.parametrize('zero_division', [0, 1])
+def test_prf_no_warnings_if_zero_division_set(zero_division):
+    # average of per-label scores
+    f = precision_recall_fscore_support
+    for average in [None, 'weighted', 'macro']:
+
+        assert_no_warnings(f, [0, 1, 2], [1, 1, 2], average=average,
+                           zero_division=zero_division)
+
+        assert_no_warnings(f, [1, 1, 2], [0, 1, 2], average=average,
+                           zero_division=zero_division)
+
+    # average of per-sample scores
+    assert_no_warnings(f, np.array([[1, 0], [1, 0]]),
+                       np.array([[1, 0], [0, 0]]), average='samples',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, np.array([[1, 0], [0, 0]]),
+                       np.array([[1, 0], [1, 0]]),
+                       average='samples', zero_division=zero_division)
+
+    # single score: micro-average
+    assert_no_warnings(f, np.array([[1, 1], [1, 1]]),
+                       np.array([[0, 0], [0, 0]]), average='micro',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, np.array([[0, 0], [0, 0]]),
+                       np.array([[1, 1], [1, 1]]), average='micro',
+                       zero_division=zero_division)
+
+    # single positive label
+    assert_no_warnings(f, [1, 1], [-1, -1], average='binary',
+                       zero_division=zero_division)
+
+    assert_no_warnings(f, [-1, -1], [1, 1], average='binary',
+                       zero_division=zero_division)
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary",
+                                        zero_division=zero_division)
+        assert len(record) == 0
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])

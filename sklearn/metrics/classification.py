@@ -43,13 +43,13 @@ from ..exceptions import UndefinedMetricWarning
 
 def _check_zero_division(zero_division):
     if isinstance(zero_division, str):
-        if zero_division != "warn":
-            raise ValueError('zero_division must be one of ["warn", 0, 1]')
+        if zero_division == "warn":
+            return
     elif isinstance(zero_division, (int, float)):
-        if zero_division not in [0, 1]:
-            raise ValueError('zero_division must be one of ["warn", 0, 1]')
-    else:
-        raise TypeError('zero_division must be one of ["warn", 0, 1]')
+        if zero_division in [0, 1]:
+            return
+    raise ValueError(f'Got zero_division={zero_division}.'
+                     f' Must be one of ["warn", 0, 1]')
 
 
 def _check_targets(y_true, y_pred):
@@ -1029,10 +1029,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         Sample weights.
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 when both precision and recall are zero
-        (calculated using the same value for this parameter).
-        If ``zero_division != "warn"``, warnings are suppressed
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
 
     Returns
     -------
@@ -1154,10 +1153,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         Sample weights.
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 when both precision and recall are zero
-        (calculated using the same value for this parameter).
-        If ``zero_division != "warn"``, warnings are suppressed
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
 
     Returns
     -------
@@ -1231,7 +1229,7 @@ def _prf_divide(numerator, denominator, metric,
         return result
 
     # if ``zero_division=1``, set those with denominator == 0 equal to 1
-    result[mask] = float(zero_division == 1)
+    result[mask] = 0.0 if zero_division in ["warn", 0] else 1.0
 
     # the user will be removing warnings if zero_division is set to something
     # different than its default value. If we are computing only f-score
@@ -1398,10 +1396,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         Sample weights.
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 for precision, recall, and F-measure when
-        their computation implies a zero division. If
-        ``zero_division != "warn"``, warnings are suppressed
+        Sets the value to return when there is a zero division:
+           - recall: when there are no positive labels
+           - precision: when there are no positive predictions
+           - f-score: both
+        If set to "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1514,13 +1513,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
+            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
             # precision is zero_division if there are no positive predictions
             # recall is zero_division if there are no positive labels
             # fscore is zero_division if all labels AND predictions are
             # negative
-            return (float(zero_division == 1) if pred_sum.sum() == 0 else 0,
-                    float(zero_division == 1),
-                    float(zero_division == 1) if pred_sum.sum() == 0 else 0,
+            return (zero_division_value if pred_sum.sum() == 0 else 0,
+                    zero_division_value,
+                    zero_division_value if pred_sum.sum() == 0 else 0,
                     None)
 
     elif average == 'samples':
@@ -1607,9 +1607,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         Sample weights.
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 when there are no positive predictions.
-        If ``zero_division != "warn"``, warnings are suppressed
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1725,9 +1724,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         Sample weights.
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 when there are no positive labels.
-        If ``zero_division != "warn"``, warnings are suppressed
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1886,10 +1884,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         If True, return output as dict
 
     zero_division : "warn", 0 or 1, default="warn"
-        Sets the behavior when there is a zero division. If set to
-        ("warn"|0)/1, returns 0/1 for precision, recall, and f1 when their
-        computation implies a zero division. If ``zero_division != "warn"``,
-        warnings are suppressed
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
