@@ -11,6 +11,14 @@ from sklearn.utils.testing import assert_run_python_script
 # appropriate error message.
 
 @pytest.mark.parametrize('deprecated_path, importee', (
+    ('sklearn.tree.tree', 'DecisionTreeClassifier'),
+    ('sklearn.tree.tree', 'DecisionTreeRegressor'),
+    ('sklearn.tree.tree', 'ExtraTreeClassifier'),
+    ('sklearn.tree.tree', 'ExtraTreeRegressor'),
+    ('sklearn.tree.export', 'export_graphviz'),
+    ('sklearn.tree.export', 'plot_tree'),
+    ('sklearn.tree.export', 'export_text'),
+
     ('sklearn.neural_network.rbm', 'BernoulliRBM'),
     ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
 ))
