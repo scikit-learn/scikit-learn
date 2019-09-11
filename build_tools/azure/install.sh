@@ -40,7 +40,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # TODO: Remove when openssl gets fixed. This is a temporary fixto get
     # `fetch_*` to work on the CI.
-    TO_INSTALL="$TO_INSTALL openssl=1.1.1c"
+    TO_INSTALL="$TO_INSTALL openssl<=1.1.1c"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
