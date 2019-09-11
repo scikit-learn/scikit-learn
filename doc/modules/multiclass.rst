@@ -112,7 +112,7 @@ because this may have an effect on classifier performance
 | classification  |             |             | - sparse binary                          |
 +-----------------+-------------+-------------+------------------------------------------+
 | Multilabel      | >1          |  2 (0 or 1) | - 'multilabel-indicator'                 |
-| classification  |             |             | - dense or sparse binary                           |
+| classification  |             |             | - dense or sparse binary                 |
 +-----------------+-------------+-------------+------------------------------------------+
 | Multioutput     | >1          | Continuous  | - 'continuous-multioutput'               |
 | regression      |             |             |                                          |
