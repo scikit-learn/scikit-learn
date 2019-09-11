@@ -1,4 +1,10 @@
 /* Elements */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  -ms-overflow-style: scrollbar;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
 a {
   color: #2878A2;
   word-wrap: break-word;
@@ -195,6 +201,7 @@ div.gsc-results-wrapper-visible {
 
 div.gsc-results {
   overflow-y: scroll;
+  overflow-x: hidden;
   height: 680px;
 }
 
@@ -297,6 +304,7 @@ img.sk-footer-funding-logo {
 #sk-sidebar-wrapper {
   height: 100%;
   overflow-y: scroll;
+  overflow-x: hidden;
   position: fixed;
   margin-left: -240px;
   width: 240px;
