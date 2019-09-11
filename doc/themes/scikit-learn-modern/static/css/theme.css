@@ -845,9 +845,9 @@ div.sphx-glr-thumbcontainer {
 @media screen and (min-width: 1540px) {
   .sphx-glr-download-link-note {
     position: absolute;
+    position: absolute;
     left: 98%;
     width: 20ex;
-    top: 50px;
   }
 }
 
