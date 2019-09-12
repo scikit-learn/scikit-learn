@@ -265,6 +265,10 @@ div.sk-landing-bg-more-info {
   font-size: 3.2rem;
 }
 
+.sk-landing-subheader {
+  letter-spacing: 0.17rem;
+}
+
 .sk-landing-call-header {
   color: #ff9c34;
   font-weight: 700;
