@@ -204,7 +204,7 @@ Changelog
   :pr:`14907` by `Adrin Jalali`_.
 
 - |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
-  by the max of the samples with non-null weights.
+  by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Add test for :class:`ensemble.AdaBoostClassifier` to raise consistent
