@@ -51,10 +51,11 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
 ###############################################################################
 # Stack of predictors on a single data set
 ###############################################################################
-# It is sometimes tedious to find the best regressor which will best perform
-# on a given dataset. Stacking allows to combine several learners outputs.
-# The performance of stacking is usually close to the best model and sometimes
-# it can outperform each individual model.
+# It is sometimes tedious to find the model which will best perform on a given
+# dataset. Stacking provide an alternative by combining the outputs of several
+# learners, without the need to choose a model specifically. The performance of
+# stacking is usually close to the best model and sometimes it can outperform
+# the prediction performance of each individual model.
 #
 # Here, we combine 3 learners (linear and non-linear) and use a ridge regressor
 # to combine their outputs together.
@@ -109,5 +110,6 @@ plt.subplots_adjust(top=0.9)
 plt.show()
 
 ###############################################################################
-# The stacked regressor will discard the `KNearestNeighborsRegressor` and
-# combine the strength of `LassoCV` and `AdaBoostRegressor`.
+# The stacked regressor will discard the predictions given by the
+# `KNearestNeighborsRegressor` and combine the strength of `LassoCV` and
+# `AdaBoostRegressor`.
