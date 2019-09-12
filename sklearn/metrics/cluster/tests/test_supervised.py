@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -16,7 +17,7 @@ from sklearn.metrics.cluster.supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
-        assert_almost_equal, assert_raise_message, ignore_warnings)
+        assert_almost_equal, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
 
 
@@ -35,16 +36,16 @@ def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = ('labels_true and labels_pred must have same size,'
                     ' got 2 and 3')
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1], [1, 1, 1])
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [[0, 1], [1, 0]], [1, 1, 1])
+        expected = r"labels_true must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1, 0], [[1, 1], [0, 0]])
+        expected = r"labels_pred must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
 def test_generalized_average():
@@ -261,10 +262,8 @@ def test_contingency_matrix_sparse():
     C = contingency_matrix(labels_a, labels_b)
     C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
-    C_sparse = assert_raise_message(ValueError,
-                                    "Cannot set 'eps' when sparse=True",
-                                    contingency_matrix, labels_a, labels_b,
-                                    eps=1e-10, sparse=True)
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse=True"):
+        contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
 
 
 @ignore_warnings(category=FutureWarning)

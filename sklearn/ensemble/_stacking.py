@@ -32,7 +32,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
 
-class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
+class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
     _required_parameters = ['estimators']
@@ -279,7 +279,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         )
 
 
-class StackingClassifier(_BaseStacking, ClassifierMixin):
+class StackingClassifier(ClassifierMixin, _BaseStacking):
     """Stack of estimators with a final classifier.
 
     Stacked generalization consists in stacking the output of individual
@@ -508,7 +508,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         return self._transform(X)
 
 
-class StackingRegressor(_BaseStacking, RegressorMixin):
+class StackingRegressor(RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
 
     Stacked generalization consists in stacking the output of individual

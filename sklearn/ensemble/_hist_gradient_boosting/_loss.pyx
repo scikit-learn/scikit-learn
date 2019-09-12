@@ -27,10 +27,22 @@ def _update_gradients_least_squares(
 
     n_samples = raw_predictions.shape[0]
     for i in prange(n_samples, schedule='static', nogil=True):
-        # Note: a more correct exp is 2 * (raw_predictions - y_true) but
-        # since we use 1 for the constant hessian value (and not 2) this
-        # is strictly equivalent for the leaves values.
         gradients[i] = raw_predictions[i] - y_true[i]
+
+
+def _update_gradients_least_absolute_deviation(
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions):  # IN
+
+    cdef:
+        int n_samples
+        int i
+
+    n_samples = raw_predictions.shape[0]
+    for i in prange(n_samples, schedule='static', nogil=True):
+        # gradient = sign(raw_predicition - y_pred)
+        gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
 
 
 def _update_gradients_hessians_binary_crossentropy(

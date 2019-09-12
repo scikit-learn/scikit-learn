@@ -390,9 +390,9 @@ learners::
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.ensemble import AdaBoostClassifier
 
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = AdaBoostClassifier(n_estimators=100)
-    >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
+    >>> scores = cross_val_score(clf, X, y, cv=5)
     >>> scores.mean()
     0.9...
 
@@ -456,7 +456,7 @@ trees.
   Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
   These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
@@ -825,7 +825,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`_.
+`LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -877,6 +877,13 @@ controls the number of iterations of the boosting process::
   >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
   0.8965
+
+Available losses for regression are 'least_squares' and
+'least_absolute_deviation', which is less sensitive to outliers. For
+classification, 'binary_crossentropy' is used for binary classification and
+'categorical_crossentropy' is used for multiclass classification. By default
+the loss is 'auto' and will select the appropriate loss depending on
+:term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -999,7 +1006,7 @@ Finally, many parts of the implementation of
 Voting Classifier
 ========================
 
-The idea behind the `VotingClassifier` is to combine
+The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
@@ -1022,8 +1029,8 @@ E.g., if the prediction for a given sample is
 the VotingClassifier (with ``voting='hard'``) would classify the sample
 as "class 1" based on the majority class label.
 
-In the cases of a tie, the `VotingClassifier` will select the class based
-on the ascending sort order. E.g., in the following scenario
+In the cases of a tie, the :class:`VotingClassifier` will select the class
+based on the ascending sort order. E.g., in the following scenario
 
 - classifier 1 -> class 2
 - classifier 2 -> class 1
@@ -1094,7 +1101,7 @@ Here, the predicted class label is 2, since it has the
 highest average probability.
 
 The following example illustrates how the decision regions may change
-when a soft `VotingClassifier` is used based on an linear Support
+when a soft :class:`VotingClassifier` is used based on an linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> from sklearn import datasets
@@ -1130,7 +1137,7 @@ Using the `VotingClassifier` with `GridSearchCV`
 ------------------------------------------------
 
 The :class:`VotingClassifier` can also be used together with
-:class:`sklearn.model_selection.GridSearchCV` in order to tune the
+:class:`~sklearn.model_selection.GridSearchCV` in order to tune the
 hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
@@ -1162,7 +1169,7 @@ Optionally, weights can be provided for the individual classifiers::
 Voting Regressor
 ================
 
-The idea behind the `VotingRegressor` is to combine conceptually
+The idea behind the :class:`VotingRegressor` is to combine conceptually
 different machine learning regressors and return the average predicted values.
 Such a regressor can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.

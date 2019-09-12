@@ -11,7 +11,7 @@ def _identity(X):
     return X
 
 
-class FunctionTransformer(BaseEstimator, TransformerMixin):
+class FunctionTransformer(TransformerMixin, BaseEstimator):
     """Constructs a transformer from an arbitrary callable.
 
     A FunctionTransformer forwards its X (and optionally y) arguments to a
@@ -156,5 +156,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         return func(X, **(kw_args if kw_args else {}))
 
     def _more_tags(self):
-        return {'no_validation': True,
+        return {'no_validation': not self.validate,
                 'stateless': True}
