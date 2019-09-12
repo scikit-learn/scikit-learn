@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..dummy import DummyClassifier
 from .validation import _num_samples, check_array
 
 
@@ -138,8 +139,14 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
 
 class _NoSampleWeightWrapper(BaseEstimator):
-    """Wrap estimator which will not expose `sample_weight`."""
-    def __init__(self, est):
+    """Wrap estimator which will not expose `sample_weight`.
+
+    Parameters
+    ----------
+    est : estimator, default=None
+        The estimator to wrap.
+    """
+    def __init__(self, est=None):
         self.est = est
 
     def fit(self, X, y):
@@ -150,3 +157,6 @@ class _NoSampleWeightWrapper(BaseEstimator):
 
     def predict_proba(self, X):
         return self.est.predict_proba(X)
+
+    def _more_tags(self):
+        return {'_skip_test': True}
