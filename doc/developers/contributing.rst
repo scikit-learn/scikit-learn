@@ -349,7 +349,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    for any system, but please avoid reformatting parts of the file that your
    pull request doesn't change, as it distracts from code review.
 
-6. Follow the `coding-guidelines`_ (see below).
+6. Follow the :ref:`coding-guidelines`.
 
 7. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
@@ -766,56 +766,6 @@ There are four other tags to help new contributors:
     issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
-
-
-.. _coding-guidelines:
-
-Coding guidelines
-=================
-
-The following are some guidelines on how new code should be written. Of
-course, there are special cases and there will be exceptions to these
-rules. However, following these rules when submitting new code makes
-the review easier so new code can be integrated in less time.
-
-Uniformly formatted code makes it easier to share code ownership. The
-scikit-learn project tries to closely follow the official Python guidelines
-detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008>`_ that
-detail how code should be formatted and indented. Please read it and
-follow it.
-
-In addition, we add the following guidelines:
-
-* Use underscores to separate words in non class names: ``n_samples``
-  rather than ``nsamples``.
-
-* Avoid multiple statements on one line. Prefer a line return after
-  a control flow statement (``if``/``for``).
-
-* Use relative imports for references inside scikit-learn.
-
-* Unit tests are an exception to the previous rule;
-  they should use absolute imports, exactly as client code would.
-  A corollary is that, if ``sklearn.foo`` exports a class or function
-  that is implemented in ``sklearn.foo.bar.baz``,
-  the test should import it from ``sklearn.foo``.
-
-* **Please don't use** ``import *`` **in any case**. It is considered harmful
-  by the `official Python recommendations
-  <https://docs.python.org/2/howto/doanddont.html#from-module-import>`_.
-  It makes the code harder to read as the origin of symbols is no
-  longer explicitly referenced, but most important, it prevents
-  using a static analysis tool like `pyflakes
-  <https://divmod.readthedocs.io/en/latest/products/pyflakes.html>`_ to automatically
-  find bugs in scikit-learn.
-
-* Use the `numpy docstring standard
-  <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_
-  in all your docstrings.
-
-
-A good example of code that we like can be found `here
-<https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01>`_.
 
 .. _backwards-compatibility:
 

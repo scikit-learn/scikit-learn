@@ -534,14 +534,32 @@ def test_constant_strategy_multioutput():
     _check_predict_proba(clf, X, y)
 
 
-def test_constant_strategy_exceptions():
-    X = [[0], [0], [0], [0]]  # ignored
-    y = [2, 1, 2, 2]
-    clf = DummyClassifier(strategy="constant", random_state=0)
-    assert_raises(ValueError, clf.fit, X, y)
-    clf = DummyClassifier(strategy="constant", random_state=0,
-                          constant=[2, 0])
-    assert_raises(ValueError, clf.fit, X, y)
+@pytest.mark.parametrize('y, params, err_msg', [
+    ([2, 1, 2, 2],
+     {'random_state': 0},
+     "Constant.*has to be specified"),
+    ([2, 1, 2, 2],
+     {'constant': [2, 0]},
+     "Constant.*should have shape"),
+    (np.transpose([[2, 1, 2, 2], [2, 1, 2, 2]]),
+     {'constant': 2},
+     "Constant.*should have shape"),
+    ([2, 1, 2, 2],
+     {'constant': 'my-constant'},
+     "constant=my-constant.*Possible values.*\\[1, 2]"),
+    (np.transpose([[2, 1, 2, 2], [2, 1, 2, 2]]),
+     {'constant': [2, 'unknown']},
+     "constant=\\[2, 'unknown'].*Possible values.*\\[1, 2]")],
+    ids=["no-constant", "too-many-constant", "not-enough-output",
+         "single-output", "multi-output"]
+)
+def test_constant_strategy_exceptions(y, params, err_msg):
+    X = [[0], [0], [0], [0]]
+
+    clf = DummyClassifier(strategy="constant", **params)
+
+    with pytest.raises(ValueError, match=err_msg):
+        clf.fit(X, y)
 
 
 def test_classification_sample_weight():

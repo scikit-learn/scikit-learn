@@ -22,10 +22,10 @@ jobs:
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
-      condition: eq(variables['DISTRIB'], 'conda')
+      condition: startsWith(variables['DISTRIB'], 'conda')
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
-      condition: eq(variables['DISTRIB'], 'conda')
+      condition: startsWith(variables['DISTRIB'], 'conda')
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
