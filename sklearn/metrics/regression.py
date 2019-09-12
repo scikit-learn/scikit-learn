@@ -626,7 +626,7 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
+def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -642,20 +642,21 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     sample_weight : array-like, shape (n_samples,), optional
         Sample weights.
 
-    p : float, optional
-        Tweedie power parameter. Either p <= 0 or p >= 1.
+    power : float, default=0
+        Tweedie power parameter. Either power <= 0 or power >= 1.
 
         The higher `p` the less weight is given to extreme
         deviations between true and predicted targets.
 
-        - p < 0: Extreme stable distribution. Requires: y_pred > 0.
-        - p = 0 : Normal distribution, output corresponds to
+        - power < 0: Extreme stable distribution. Requires: y_pred > 0.
+        - power = 0 : Normal distribution, output corresponds to
           mean_squared_error. y_true and y_pred can be any real numbers.
-        - p = 1 : Poisson distribution. Requires: y_true >= 0 and y_pred > 0.
+        - power = 1 : Poisson distribution. Requires: y_true >= 0 and
+          y_pred > 0.
         - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
           and y_pred > 0.
-        - p = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
-        - p = 3 : Inverse Gaussian distribution. Requires: y_true > 0
+        - power = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
+        - power = 3 : Inverse Gaussian distribution. Requires: y_true > 0
           and y_pred > 0.
         - otherwise : Positive stable distribution. Requires: y_true > 0
           and y_pred > 0.
@@ -670,7 +671,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
     >>> from sklearn.metrics import mean_tweedie_deviance
     >>> y_true = [2, 0, 1, 4]
     >>> y_pred = [0.5, 0.5, 2., 2.]
-    >>> mean_tweedie_deviance(y_true, y_pred, p=1)
+    >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
     y_type, y_true, y_pred, _ = _check_reg_targets(
@@ -683,34 +684,35 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    message = ("Mean Tweedie deviance error with p={} can only be used on "
-               .format(p))
-    if p < 0:
+    message = ("Mean Tweedie deviance error with power={} can only be used on "
+               .format(power))
+    if power < 0:
         # 'Extreme stable', y_true any realy number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
-        dev = 2 * (np.power(np.maximum(y_true, 0), 2-p)/((1-p) * (2-p)) -
-                   y_true * np.power(y_pred, 1-p)/(1-p) +
-                   np.power(y_pred, 2-p)/(2-p))
-    elif p == 0:
+        dev = 2 * (np.power(np.maximum(y_true, 0), 2 - power)
+                   / ((1 - power) * (2 - power))
+                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
+                   + np.power(y_pred, 2 - power)/(2 - power))
+    elif power == 0:
         # Normal distribution, y_true and y_pred any real number
         dev = (y_true - y_pred)**2
-    elif p < 1:
-        raise ValueError("Tweedie deviance is only defined for p<=0 and "
-                         "p>=1.")
-    elif p == 1:
+    elif power < 1:
+        raise ValueError("Tweedie deviance is only defined for power<=0 and "
+                         "power>=1.")
+    elif power == 1:
         # Poisson distribution, y_true >= 0, y_pred > 0
         if (y_true < 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "non-negative y_true and strictly "
                              "positive y_pred.")
         dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
-    elif p == 2:
+    elif power == 2:
         # Gamma distribution, y_true and y_pred > 0
         if (y_true <= 0).any() or (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_true and y_pred.")
         dev = 2 * (np.log(y_pred/y_true) + y_true/y_pred - 1)
     else:
-        if p < 2:
+        if power < 2:
             # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
             if (y_true < 0).any() or (y_pred <= 0).any():
                 raise ValueError(message + "non-negative y_true and strictly "
@@ -720,9 +722,9 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, p=0):
                 raise ValueError(message + "strictly positive y_true and "
                                            "y_pred.")
 
-        dev = 2 * (np.power(y_true, 2-p)/((1-p) * (2-p)) -
-                   y_true * np.power(y_pred, 1-p)/(1-p) +
-                   np.power(y_pred, 2-p)/(2-p))
+        dev = 2 * (np.power(y_true, 2 - power)/((1 - power) * (2 - power))
+                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
+                   + np.power(y_pred, 2 - power)/(2 - power))
 
     return np.average(dev, weights=sample_weight)
 
@@ -760,7 +762,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     1.4260...
     """
     return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, p=1
+        y_true, y_pred, sample_weight=sample_weight, power=1
     )
 
 
@@ -798,5 +800,5 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
     1.0568...
     """
     return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, p=2
+        y_true, y_pred, sample_weight=sample_weight, power=2
     )
