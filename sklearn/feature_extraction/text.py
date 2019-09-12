@@ -1263,10 +1263,6 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-@deprecated("TfidfTransformer is deprecated in version 0.22 "
-            "and will be removed in version 0.24. Use "
-            "make_pipeline(CountVectorizer(), TfidfTransformer()) "
-            "instead.")
 class TfidfTransformer(TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
@@ -1446,6 +1442,10 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         return {'X_types': 'sparse'}
 
 
+@deprecated("TfidfTransformer is deprecated in version 0.22 "
+            "and will be removed in version 0.24. Use "
+            "make_pipeline(CountVectorizer(), TfidfTransformer()) "
+            "instead.")
 class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 

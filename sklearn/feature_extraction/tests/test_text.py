@@ -35,7 +35,7 @@ from sklearn.utils.testing import (assert_almost_equal,
                                    clean_warning_registry,
                                    SkipTest, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
-                                   skip_if_32bit)
+                                   skip_if_32bit, ignore_warnings)
 from collections import defaultdict
 from functools import partial
 import pickle
@@ -269,6 +269,8 @@ def test_countvectorizer_custom_vocabulary():
         assert len(inv) == X.shape[0]
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
@@ -335,6 +337,8 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -355,6 +359,8 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidf_no_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],
@@ -396,6 +402,8 @@ def test_sublinear_tf():
     assert tfidf[2] < 3
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer():
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
@@ -509,6 +517,8 @@ def test_vectorizer():
         v3.build_analyzer()
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
                          sublinear_tf=False)
@@ -609,6 +619,8 @@ def test_feature_names():
         assert idx == cv.vocabulary_.get(name)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
@@ -742,6 +754,8 @@ def test_hashed_binary_occurrences():
     assert X.dtype == np.float64
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_inverse_transform(Vectorizer):
     # raw documents
@@ -762,6 +776,8 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -798,6 +814,8 @@ def test_count_vectorizer_pipeline_grid_selection():
     assert best_vectorizer.ngram_range == (1, 1)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -837,6 +855,8 @@ def test_vectorizer_pipeline_grid_selection():
     assert not best_vectorizer.fixed_vocabulary_
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_pipeline_cross_validation():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -876,6 +896,8 @@ def test_vectorizer_unicode():
     assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidf_vectorizer_with_fixed_vocabulary():
     # non regression smoke test for inheritance issues
     vocabulary = ['pizza', 'celeri']
@@ -886,6 +908,8 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     assert vect.fixed_vocabulary_
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_pickling_vectorizer():
     instances = [
         HashingVectorizer(),
@@ -965,6 +989,8 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         assert cv.get_feature_names() == unpickled_cv.get_feature_names()
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_stop_words_removal():
     # Ensure that deleting the stop_words_ attribute doesn't affect transform
 
@@ -1008,6 +1034,8 @@ def test_transformer_idf_setter():
         orig.transform(X).toarray())
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidf_vectorizer_setter():
     orig = TfidfVectorizer(use_idf=True)
     orig.fit(JUNK_FOOD_DOCS)
@@ -1018,6 +1046,8 @@ def test_tfidf_vectorizer_setter():
         orig.transform(JUNK_FOOD_DOCS).toarray())
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidfvectorizer_invalid_idf_attr():
     vect = TfidfVectorizer(use_idf=True)
     vect.fit(JUNK_FOOD_DOCS)
@@ -1049,6 +1079,8 @@ def test_hashingvectorizer_nan_in_docs():
     assert_raise_message(exception, message, func)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidfvectorizer_binary():
     # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
     v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
@@ -1060,12 +1092,16 @@ def test_tfidfvectorizer_binary():
     assert_array_equal(X2.ravel(), [1, 1, 1, 0])
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_tfidfvectorizer_export_idf():
     vect = TfidfVectorizer(use_idf=True)
     vect.fit(JUNK_FOOD_DOCS)
     assert_array_almost_equal(vect.idf_, vect._tfidf.idf_)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_vocab_clone():
     vect_vocab = TfidfVectorizer(vocabulary=["the"])
     vect_vocab_clone = clone(vect_vocab)
@@ -1074,6 +1110,8 @@ def test_vectorizer_vocab_clone():
     assert vect_vocab_clone.vocabulary_ == vect_vocab.vocabulary_
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize('Vectorizer',
                          (CountVectorizer, TfidfVectorizer, HashingVectorizer))
 def test_vectorizer_string_object_as_input(Vectorizer):
@@ -1104,6 +1142,8 @@ def test_tfidf_transformer_sparse():
     assert X_trans_csc.format == X_trans_csr.format
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     "vectorizer_dtype, output_dtype, warning_expected",
     [(np.int32, np.float64, True),
@@ -1129,15 +1169,18 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
     assert X_idf.dtype == output_dtype
 
 
-@pytest.mark.parametrize("vec", [
-        HashingVectorizer(ngram_range=(2, 1)),
-        CountVectorizer(ngram_range=(2, 1)),
-        TfidfVectorizer(ngram_range=(2, 1))
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
+@pytest.mark.parametrize("Estimator, ngram_range", [
+        (HashingVectorizer, (2, 1)),
+        (CountVectorizer, (2, 1)),
+        (TfidfVectorizer, (2, 1))
     ])
-def test_vectorizers_invalid_ngram_range(vec):
+def test_vectorizers_invalid_ngram_range(Estimator, ngram_range):
     # vectorizers could be initialized with invalid ngram range
     # test for raising error message
-    invalid_range = vec.ngram_range
+    vec = Estimator(ngram_range=ngram_range)
+    invalid_range = ngram_range
     message = ("Invalid value for ngram_range=%s "
                "lower boundary larger than the upper boundary."
                % str(invalid_range))
@@ -1162,6 +1205,8 @@ def _check_stop_words_consistency(estimator):
                                                    tokenize)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @fails_if_pypy
 def test_vectorizer_stop_words_inconsistent():
     lstr = "['and', 'll', 've']"
@@ -1216,6 +1261,8 @@ def test_countvectorizer_sort_features_64bit_sparse_indices():
     assert INDICES_DTYPE == Xs.indices.dtype
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @fails_if_pypy
 @pytest.mark.parametrize('Estimator',
                          [CountVectorizer, TfidfVectorizer, HashingVectorizer])
@@ -1245,6 +1292,8 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     assert _check_stop_words_consistency(vec) is True
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     'Estimator',
     [CountVectorizer,
@@ -1265,6 +1314,8 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
                   input=input_type).fit_transform(data)
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     'Estimator',
     [CountVectorizer,
@@ -1288,6 +1339,8 @@ def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     assert warn_msg in ' '.join([str(el) for el in records])
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     'Estimator',
     [CountVectorizer,
@@ -1309,6 +1362,8 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
         Estimator(analyzer=analyzer, input='file').fit_transform([f])
 
 
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.parametrize(
     'Vectorizer',
     [CountVectorizer, HashingVectorizer, TfidfVectorizer]
@@ -1346,3 +1401,14 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
            )
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+
+# TODO: TfidfVectorizer is deprecated in 0.22 and will be removed in 0.24
+@ignore_warnings(category=DeprecationWarning)
+def test_deprecation_tfidfvectorizer():
+    msg = (r"TfidfTransformer is deprecated in version 0.22 "
+           r"and will be removed in version 0.24. Use "
+           r"make_pipeline\(CountVectorizer\(\), TfidfTransformer\(\)\) "
+           r"instead.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        TfidfVectorizer().fit(['a document'])
