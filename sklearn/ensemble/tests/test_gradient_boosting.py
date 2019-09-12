@@ -24,6 +24,7 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.mocking import _NoSampleWeightWrapper
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1329,20 +1330,6 @@ def test_early_stopping_stratified():
             ValueError,
             match='The least populated class in y has only 1 member'):
         gbc.fit(X, y)
-
-
-class _NoSampleWeightWrapper(BaseEstimator):
-    def __init__(self, est):
-        self.est = est
-
-    def fit(self, X, y):
-        self.est.fit(X, y)
-
-    def predict(self, X):
-        return self.est.predict(X)
-
-    def predict_proba(self, X):
-        return self.est.predict_proba(X)
 
 
 def _make_multiclass():

@@ -176,6 +176,14 @@ Changelog
   `predict_proba` give consistent results.
   :pr:`14114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Add test for :class:`ensemble.AdaBoostClassifier` to raise consistent
+  error message when base estimator does not support `sample_weight`.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -243,10 +251,6 @@ Changelog
 -|FIX| Fixed a bug where :class:`kernel_approximation.Nystroem` raised a
  `KeyError` when using `kernel="precomputed"`.
  :pr:`14706` by :user:`Venkatachalam N <venkyyuvy>`.
-
-- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
-  by the max of the samples with non-null weights.
-  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.linear_model`
 ...........................

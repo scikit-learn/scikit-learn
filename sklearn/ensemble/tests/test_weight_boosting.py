@@ -25,6 +25,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
+from sklearn.utils.mocking import _NoSampleWeightWrapper
 from sklearn import datasets
 
 
@@ -496,16 +497,10 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
-class ClassifierWithoutWeight(DummyClassifier):
-    """Classifier not supporting `sample_weight`."""
-    def fit(self, X, y):
-        return super().fit(X, y)  # pragma: no cover
-
-
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
-    base_estimator = ClassifierWithoutWeight()
+    base_estimator = _NoSampleWeightWrapper(DummyClassifier())
     clf = AdaBoostClassifier(
         base_estimator=base_estimator, algorithm=algorithm
     )
@@ -515,32 +510,42 @@ def test_adaboostclassifier_without_sample_weight(algorithm):
         clf.fit(X, y)
 
 
-def test_adaboost_regressor_sample_weight():
+def test_adaboostregressor_sample_weight():
     # check that giving weight will have an influence on the error computed
     # for a weak learner
-    X, y = datasets.make_regression(n_features=50, random_state=0)
+    rng = np.random.RandomState(42)
+    X = np.linspace(0, 100, num=10000)
+    y = (.8 * X + 0.2) + (rng.rand(X.shape[0]) * 0.0001)
+    X = X.reshape(-1, 1)
 
-    # add an arbitrary outlier to make sure
-    X = np.vstack([X, X.sum(axis=0)])
-    y = np.hstack([y, 10])
+    # add an arbitrary outlier
+    X[-1] *= 10
+    y[-1] = 10000
 
+    # random_state=0 ensure that the underlying boostrap will use the outlier
     regr_no_outlier = AdaBoostRegressor(
-        base_estimator=LinearRegression(), n_estimators=4, random_state=0
+        base_estimator=LinearRegression(), n_estimators=1, random_state=0
     )
     regr_with_weight = clone(regr_no_outlier)
+    regr_with_outlier = clone(regr_no_outlier)
 
-    # fit 2 models:
+    # fit 3 models:
+    # - a model containing the outlier
     # - a model without the outlier
     # - a model containing the outlier but with a null sample-weight
-    # Therefore, the error of the first weak learner will be identical.
+    regr_with_outlier.fit(X, y)
     regr_no_outlier.fit(X[:-1], y[:-1])
-    sample_weight = np.array([1.] * (y.size - 1) + [0.])
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 0
     regr_with_weight.fit(X, y, sample_weight=sample_weight)
 
-    # check that the error is similar with 1 decimal
-    assert (regr_no_outlier.estimator_errors_[0] ==
-            pytest.approx(regr_with_weight.estimator_errors_[0], abs=1e-1))
+    score_with_outlier = regr_with_outlier.score(X[:-1], y[:-1])
+    score_no_outlier = regr_no_outlier.score(X[:-1], y[:-1])
+    score_with_weight = regr_with_weight.score(X[:-1], y[:-1])
 
+    assert score_with_outlier < score_no_outlier
+    assert score_with_outlier < score_with_weight
+    assert score_no_outlier == pytest.approx(score_with_weight)
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
