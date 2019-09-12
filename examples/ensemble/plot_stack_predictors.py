@@ -47,6 +47,7 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
     ax.legend([extra], [scores], loc='upper left')
     ax.set_title(title)
 
+
 ###############################################################################
 # Stack of predictors on a single data set
 ###############################################################################
