@@ -26,7 +26,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, force_all_finite=True):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -40,10 +40,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
-            X_temp = check_array(X, dtype=None)
+            X_temp = check_array(X, dtype=None, force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=np.object)
+                X = check_array(X, dtype=np.object, force_all_finite=force_all_finite)
             else:
                 X = X_temp
             needs_validation = False
@@ -71,7 +71,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite='allow-nan')
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -99,7 +99,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X, force_all_finite=('allow-nan'))
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)

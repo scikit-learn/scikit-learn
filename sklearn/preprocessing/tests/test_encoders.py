@@ -220,6 +220,31 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
 
 
+@pytest.mark.parametrize("X", [
+    [['def', 1, np.nan], ['abc', 2, np.nan]],
+    np.array([[10, 1, np.nan], [5, 2, np.nan]]),
+    np.array([['b', 'A', np.nan], ['a', 'B', np.nan]], dtype=object)
+    ], ids=['mixed', 'numeric', 'object'])
+def test_one_hot_encoder_with_nan(X):
+    Xtr = check_categorical_onehot(np.array(X)[:, [0]])
+    assert_allclose(Xtr, [[0, 1], [1, 0]])
+
+    Xtr = check_categorical_onehot(np.array(X)[:, [0, 1]])
+    assert_allclose(Xtr, [[0, 1, 1, 0], [1, 0, 0, 1]])
+
+    Xtr = OneHotEncoder(categories='auto').fit_transform(X)
+    assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
+
+def test_ohe_handle_unknow_sparse_nan():
+    # TODO
+    pass
+
+
+def test_ohe_handle_unknow_nan():
+    # TODO
+    pass
+
+
 @pytest.mark.parametrize('sparse_', [False, True])
 @pytest.mark.parametrize('drop', [None, 'first'])
 def test_one_hot_encoder_inverse(sparse_, drop):
@@ -444,18 +469,14 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
 @pytest.mark.parametrize("as_data_frame", [False, True],
                          ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
-def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
+def test_one_hot_encoder_accept_nan(X, as_data_frame, handle_unknown):
     if as_data_frame:
         pd = pytest.importorskip('pandas')
         X = pd.DataFrame(X)
 
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
+    ohe.fit(X)
+    ohe.fit_transform(X)
 
     if as_data_frame:
         X_partial = X.iloc[:1, :]
@@ -463,9 +484,7 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
         X_partial = X[:1, :]
 
     ohe.fit(X_partial)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
+    ohe.transform(X)
 
 
 @pytest.mark.parametrize("X", [
@@ -521,24 +540,6 @@ def test_ordinal_encoder_inverse():
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
-
-
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
-                               np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-def test_ordinal_encoder_raise_missing(X):
-    ohe = OrdinalEncoder()
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    ohe.fit(X[:1, :])
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
 
 
 def test_ordinal_encoder_raise_categories_shape():
@@ -600,6 +601,11 @@ def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
+
+def test_one_hot_encoder_accept_nan():
+    enc = OneHotEncoder()
+    X = [[np.nan, 1], ['Female', np.nan]] 
+    enc.fit_transform(X)
 
 
 def test_one_hot_encoder_drop_manual():

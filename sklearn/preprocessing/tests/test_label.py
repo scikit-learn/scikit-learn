@@ -206,6 +206,19 @@ def test_label_encoder_negative_ints():
                        [0, 1, 4, 4, 5, -1, -1])
     assert_raises(ValueError, le.transform, [0, 6])
 
+def test_label_encode_with_nan():
+    assert len(_encode(np.asarray([np.nan, np.nan], dtype=float))) == 1
+    assert len(_encode(np.asarray([np.nan, np.nan], dtype=object))) == 1
+    assert len(_encode(np.asarray([4, 'm', np.nan]))) == 3
+    assert len(_encode(np.asarray([4, np.nan]))) == 2
+    
+    assert len(_encode(np.asarray([np.nan, np.nan],dtype=float), encode=True)[1]) == 2
+    assert len(_encode(np.asarray([np.nan, np.nan],dtype=object), encode=True)[1]) == 2
+    assert len(_encode(np.asarray([4, 'm', np.nan, np.nan, np.nan]), encode=True)[1]) == 5
+    assert len(_encode(np.asarray([4, np.nan, np.nan, np.nan]), encode=True)[1]) == 4
+
+def test_label_encode_with_mixed_type():   
+    assert len(_encode(np.asarray([4, 'm']))) == 2
 
 @pytest.mark.parametrize("dtype", ['str', 'object'])
 def test_label_encoder_str_bad_shape(dtype):
