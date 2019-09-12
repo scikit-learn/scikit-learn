@@ -25,7 +25,7 @@ from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_checkerboard
 from sklearn.datasets import samples_generator as sg
-from sklearn.cluster.bicluster import SpectralBiclustering
+from sklearn.cluster import SpectralBiclustering
 from sklearn.metrics import consensus_score
 
 n_clusters = (4, 3)
