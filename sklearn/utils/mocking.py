@@ -1,7 +1,6 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..dummy import DummyClassifier
 from .validation import _num_samples, check_array
 
 
