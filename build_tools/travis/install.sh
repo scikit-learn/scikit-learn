@@ -63,6 +63,10 @@ make_conda() {
 
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
+
+    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
+    # to work on the CI.
+    conda install -c rdonnelly --yes openssl
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -92,10 +96,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
     fi
 	  make_conda $TO_INSTALL
-
-    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
-    # to work on the CI.
-    conda install -c rdonnelly --yes openssl
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
