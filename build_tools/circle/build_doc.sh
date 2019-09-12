@@ -130,7 +130,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler "openssl<=1.1.1c"
+  joblib memory_profiler
 
 source activate testenv
 # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`

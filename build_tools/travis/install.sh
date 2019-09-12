@@ -63,6 +63,10 @@ make_conda() {
 
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
+
+    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
+    # to work on the CI.
+    conda install -c rdonnelly openssl
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -105,9 +109,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
-    make_conda python=3.7 "openssl<=1.1.1c"
-    # TODO: Remove openssl ssl pinning above. This is a temporary fix to get
-    # `fetch_*` to work on the CI.
+    make_conda python=3.7
     pip install --upgrade pip setuptools
 
     echo "Installing numpy and scipy master wheels"
