@@ -64,6 +64,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # for more details. For Python 3.5 we use the conda-forge channel
     # as a workaround.
     if [[ "$PYTHON_VERSION" == "3.5" ]]; then
+	conda update conda
         conda config --add channels conda-forge
         conda config --set channel_priority flexible
     fi
