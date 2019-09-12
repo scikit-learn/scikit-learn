@@ -30,7 +30,7 @@ import pandas as pd
 from sklearn.datasets import fetch_openml
 from sklearn.dummy import DummyRegressor
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import PoissonRegressor, LinearRegression
+from sklearn.linear_model import Ridge, PoissonRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
@@ -152,22 +152,28 @@ dummy.fit(df_train, df_train.Frequency,
 ##############################################################################
 #
 # The Poisson deviance cannot be computed on negative values predicted by the
-# model, so we set the minimum predicted value to eps,
+# model, so all models need to return positive preditions if we intend to
+# use this metric,
 
 
-def score_estimator(estimator, df_test, eps=1e-5):
+def score_estimator(estimator, df_test):
     """Score an estimatr on the test set"""
 
+    y_pred = estimator.predict(df_test)
+
     print("MSE: %.3f" % mean_squared_error(
-              df_test.Frequency.values, estimator.predict(df_test),
+              df_test.Frequency.values, y_pred,
               df_test.Exposure.values))
     print("MAE: %.3f" % mean_absolute_error(
-              df_test.Frequency.values, estimator.predict(df_test),
+              df_test.Frequency.values, y_pred,
               df_test.Exposure.values))
 
+    # ignore negative predictions
+    mask = y_pred > 0
+
     print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-            df_test.Frequency.values, np.fmax(estimator.predict(df_test), eps),
-            df_test.Exposure.values))
+            df_test.Frequency.values[mask], y_pred[mask],
+            df_test.Exposure.values[mask]))
 
 
 print("DummyRegressor")
@@ -178,16 +184,16 @@ score_estimator(dummy, df_test)
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-linregr = make_pipeline(column_trans, LinearRegression())
+linregr = make_pipeline(column_trans, Ridge(alpha=1.0))
 linregr.fit(df_train, df_train.Frequency,
-            linearregression__sample_weight=df_train.Exposure)
+            ridge__sample_weight=df_train.Exposure)
 
 
 print('Number Negatives: %s / total: %s' % (
       (linregr.predict(df_train) < 0).sum(),
       df_train.shape[0]))
 
-print("LinearRegression")
+print("Ridge")
 score_estimator(linregr, df_test)
 
 ##############################################################################
@@ -196,7 +202,7 @@ score_estimator(linregr, df_test)
 
 glm_freq = make_pipeline(
     column_trans,
-    PoissonRegressor(alpha=0, max_iter=1000)
+    PoissonRegressor(alpha=1/df_train.shape[0], max_iter=1000)
 )
 glm_freq.fit(df_train, df_train.Frequency,
              poissonregressor__sample_weight=df_train.Exposure)
