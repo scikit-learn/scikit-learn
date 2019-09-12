@@ -26,12 +26,12 @@ from time import time
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
@@ -68,6 +68,9 @@ op.add_option("--all_categories",
 op.add_option("--use_hashing",
               action="store_true",
               help="Use a hashing vectorizer.")
+op.add_option("--no-idf",
+                action="store_false", dest="use_idf", default=True,
+                help="Disable Inverse Document Frequency feature weighting.")
 op.add_option("--n_features",
               action="store", type=int, default=2 ** 16,
               help="n_features when using the hashing vectorizer.")
@@ -150,13 +153,20 @@ y_train, y_test = data_train.target, data_test.target
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
-                                   n_features=opts.n_features)
-    X_train = vectorizer.transform(data_train.data)
+    vectorizer = HashingVectorizer(n_features=opts.n_features,
+                                   stop_words='english', alternate_sign=False,
+                                   norm=None)
 else:
-    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+    vectorizer = CountVectorizer(max_df=0.5, max_features=opts.n_features,
                                  stop_words='english')
-    X_train = vectorizer.fit_transform(data_train.data)
+
+if opts.use_idf:
+    # Perform an IDF normalization on the output of HashingVectorizer
+    fe = make_pipeline(vectorizer, TfidfTransformer())
+else:
+    fe = vectorizer
+
+X_train = fe.fit_transform(data_train.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_train.shape)
@@ -164,7 +174,7 @@ print()
 
 print("Extracting features from the test data using the same vectorizer")
 t0 = time()
-X_test = vectorizer.transform(data_test.data)
+X_test = fe.transform(data_test.data)
 duration = time() - t0
 print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print("n_samples: %d, n_features: %d" % X_test.shape)

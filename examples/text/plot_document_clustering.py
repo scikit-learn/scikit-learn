@@ -9,20 +9,16 @@ a scipy.sparse matrix to store the features instead of standard numpy arrays.
 
 Two feature extraction methods can be used in this example:
 
-  - TfidfVectorizer uses a in-memory vocabulary (a python dict) to map the most
+  - CountVectorizer uses a in-memory vocabulary (a python dict) to map the most
     frequent words to features indices and hence compute a word occurrence
-    frequency (sparse) matrix. The word frequencies are then reweighted using
-    the Inverse Document Frequency (IDF) vector collected feature-wise over
-    the corpus.
-
+    frequency (sparse) matrix. 
   - HashingVectorizer hashes word occurrences to a fixed dimensional space,
     possibly with collisions. The word count vectors are then normalized to
     each have l2-norm equal to one (projected to the euclidean unit-ball) which
     seems to be important for k-means to work in high dimensional space.
 
-    HashingVectorizer does not provide IDF weighting as this is a stateless
-    model (the fit method does nothing). When IDF weighting is needed it can
-    be added by pipelining its output to a TfidfTransformer instance.
+Additionally, Inverse Document Frequency (IDF) weighting and L2 normalization
+can be applied by pipelining the vectorizer with a TfidfTransformer instance.
 
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
@@ -54,7 +50,7 @@ necessary to get a good convergence.
 # License: BSD 3 clause
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.decomposition import TruncatedSVD
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import make_pipeline
@@ -140,21 +136,20 @@ print("Extracting features from the training dataset "
       "using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    if opts.use_idf:
-        # Perform an IDF normalization on the output of HashingVectorizer
-        hasher = HashingVectorizer(n_features=opts.n_features,
+    vectorizer = HashingVectorizer(n_features=opts.n_features,
                                    stop_words='english', alternate_sign=False,
                                    norm=None)
-        vectorizer = make_pipeline(hasher, TfidfTransformer())
-    else:
-        vectorizer = HashingVectorizer(n_features=opts.n_features,
-                                       stop_words='english',
-                                       alternate_sign=False, norm='l2')
 else:
-    vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
-                                 min_df=2, stop_words='english',
-                                 use_idf=opts.use_idf)
-X = vectorizer.fit_transform(dataset.data)
+    vectorizer = CountVectorizer(max_df=0.5, max_features=opts.n_features,
+                                 min_df=2, stop_words='english')
+
+if opts.use_idf:
+    # Perform an IDF normalization on the output of HashingVectorizer
+    fe = make_pipeline(vectorizer, TfidfTransformer())
+else:
+    fe = vectorizer
+
+X = fe.fit_transform(dataset.data)
 
 print("done in %fs" % (time() - t0))
 print("n_samples: %d, n_features: %d" % X.shape)

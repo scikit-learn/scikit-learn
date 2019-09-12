@@ -37,7 +37,7 @@ def tokens(doc):
     """Extract tokens from doc.
 
     This uses a simple regex to break strings into tokens. For a more
-    principled approach, see CountVectorizer or TfidfVectorizer.
+    principled approach, see CountVectorizer.
     """
     return (tok.lower() for tok in re.findall(r"\w+", doc))
 

@@ -35,7 +35,7 @@ from sklearn.datasets.twenty_newsgroups import strip_newsgroup_footer
 from sklearn.datasets.twenty_newsgroups import strip_newsgroup_quoting
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
@@ -92,11 +92,15 @@ pipeline = Pipeline([
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)
-            ('subject', TfidfVectorizer(min_df=50), 0),
+            ('subject', Pipeline([
+                ('vect', CountVectorizer(min_df=50)),
+                ('tfidf', TfidfTransformer()),
+            ]), 0),
 
             # Pipeline for standard bag-of-words model for body (second column)
             ('body_bow', Pipeline([
-                ('tfidf', TfidfVectorizer()),
+                ('vect', CountVectorizer()),
+                ('tfidf', TfidfTransformer()),
                 ('best', TruncatedSVD(n_components=50)),
             ]), 1),
 

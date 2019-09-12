@@ -31,7 +31,8 @@ import numpy as np
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.pipeline import Pipeline
 from sklearn.metrics.cluster import v_measure_score
 
 print(__doc__)
@@ -47,7 +48,7 @@ def number_normalizer(tokens):
     return ("#NUMBER" if token[0].isdigit() else token for token in tokens)
 
 
-class NumberNormalizingVectorizer(TfidfVectorizer):
+class NumberNormalizingVectorizer(CountVectorizer):
     def build_tokenizer(self):
         tokenize = super().build_tokenizer()
         return lambda doc: list(number_normalizer(tokenize(doc)))
@@ -65,7 +66,10 @@ categories = ['alt.atheism', 'comp.graphics',
 newsgroups = fetch_20newsgroups(categories=categories)
 y_true = newsgroups.target
 
-vectorizer = NumberNormalizingVectorizer(stop_words='english', min_df=5)
+vectorizer = Pipeline([
+    ('vect', NumberNormalizingVectorizer(stop_words='english', min_df=5)),
+    ('idf', TfidfTransformer())
+])
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
 kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
@@ -89,7 +93,7 @@ print("Done in {:.2f}s. V-measure: {:.4f}".format(
     time() - start_time,
     v_measure_score(y_kmeans, y_true)))
 
-feature_names = vectorizer.get_feature_names()
+feature_names = vectorizer.named_steps['vect'].get_feature_names()
 document_names = list(newsgroups.target_names[i] for i in newsgroups.target)
 
 
