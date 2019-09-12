@@ -182,72 +182,93 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def _array_indexing(array, key, axis):
-    """Index an array consistently across NumPy version."""
+def _array_indexing(array, key, key_dtype, axis):
+    """Index an array or scipy.sparse consistently across NumPy version."""
     if np_version < (1, 12) or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
-        key_array = np.asarray(key)
-        if np.issubdtype(key_array.dtype, np.bool_):
-            key = key_array
+        if key_dtype == 'bool':
+            key = np.asarray(key)
     return array[key] if axis == 0 else array[:, key]
 
 
-def _pandas_indexing(X, key, axis, by_name):
+def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
     if hasattr(key, 'shape'):
         # Work-around for indexing with read-only key in pandas
         # FIXME: solved in pandas 0.25
         key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
-    indexer = 'loc' if by_name else 'iloc'
-    return (getattr(X, indexer)[:, key] if axis else getattr(X, indexer)[key])
+    # check whether we should index with loc or iloc
+    indexer = X.iloc if key_dtype == 'int' else X.loc
+    return indexer[:, key] if axis else indexer[key]
 
 
-def _list_indexing(X, key):
+def _list_indexing(X, key, key_dtype):
     """Index a Python list."""
-    if not isinstance(key, Iterable) or isinstance(indexable, slice):
+    if np.isscalar(key) or isinstance(key, slice):
         # key is a slice or a scalar
         return X[key]
-    key_set = set(key)
-    if (len(key_set) == 2 and
-            all(isinstance(k, (bool, np.bool_)) for k in key_set)):
+    if key_dtype == 'bool':
         # key is a boolean array-like
         return list(compress(X, key))
     # key is a integer array-like of key
     return [X[idx] for idx in key]
 
 
-def _check_key_type(key, superclass):
-    """Check that scalar, list or slice is of a certain type.
-
-    This is only used in _safe_indexing_column and _get_column_indices to check
-    if the ``key`` (column specification) is fully integer or fully
-    string-like.
+def _determine_key_type(key):
+    """Determine the data type of key.
 
     Parameters
     ----------
-    key : scalar, list, slice, array-like
-        The column specification to check.
-    superclass : int or str
-        The type for which to check the `key`.
+    key : scalar, slice or array-like
+        The key from which we want to infer the data type.
+
+    Returns
+    -------
+    dtype : {'int', 'str', 'bool', None}
+        Returns the data type of key.
     """
-    if isinstance(key, superclass):
-        return True
+    err_msg = ("No valid specification of the columns. Only a scalar, list or "
+               "slice of all integers or all strings, or boolean mask is "
+               "allowed")
+
+    dtype_to_str = {int: 'int', str: 'str', bool: 'bool', np.bool_: 'bool'}
+    array_dtype_to_str = {'i': 'int', 'u': 'int', 'b': 'bool', 'O': 'str',
+                          'U': 'str', 'S': 'str'}
+
+    if key is None:
+        return None
+    if isinstance(key, tuple(dtype_to_str.keys())):
+        try:
+            return dtype_to_str[type(key)]
+        except KeyError:
+            raise ValueError(err_msg)
     if isinstance(key, slice):
-        return (isinstance(key.start, (superclass, type(None))) and
-                isinstance(key.stop, (superclass, type(None))))
+        if key.start is None and key.stop is None:
+            return None
+        key_start_type = _determine_key_type(key.start)
+        key_stop_type = _determine_key_type(key.stop)
+        if key_start_type is not None and key_stop_type is not None:
+            if key_start_type != key_stop_type:
+                raise ValueError(err_msg)
+        if key_start_type is not None:
+            return key_start_type
+        return key_stop_type
     if isinstance(key, list):
-        return all(isinstance(x, superclass) for x in set(key))
+        unique_key = set(key)
+        key_type = {_determine_key_type(elt) for elt in unique_key}
+        if not key_type:
+            return None
+        if len(key_type) != 1:
+            raise ValueError(err_msg)
+        return key_type.pop()
     if hasattr(key, 'dtype'):
-        if superclass is int:
-            return key.dtype.kind == 'i'
-        elif superclass is bool:
-            return key.dtype.kind == 'b'
-        else:
-            # superclass = str
-            return key.dtype.kind in ('O', 'U', 'S')
-    return False
+        try:
+            return array_dtype_to_str[key.dtype.kind]
+        except KeyError:
+            raise ValueError(err_msg)
+    raise ValueError(err_msg)
 
 
 def safe_indexing(X, indices, axis=0):
@@ -259,19 +280,21 @@ def safe_indexing(X, indices, axis=0):
         Data from which to sample rows, items or columns. `list` are only
         supported when `axis=0`.
     indices : bool, int, str, slice, array-like
-        - To select a single element (i.e. row or column), `indices` can be one
-          of the following: `bool` or `int` which are supported by all types of
-          `X`. `indices` being a `str` is only supported for `X` being a
-          dataframe. The selected subset will be 1D, unless `X` is a sparse
-          matrix in which case it will be 2D.
-        - To select multiple elements (i.e. rows or columns), `indices` can be
-          one of the following: `list`, `array`, `slice`. The type used in
-          these containers can be one of the following: `int` and `str`.
-          However, `str` is only supported when `X` is a dataframe.
-          The selected subset will be 2D.
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
     axis : int, default=0
-        The axis along which `X` will be subsampled. ``axis=0`` will select
-        rows while ``axis=1`` will select columns.
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
 
     Returns
     -------
@@ -285,25 +308,18 @@ def safe_indexing(X, indices, axis=0):
     """
     if indices is None:
         return X
-    if _check_key_type(indices, int):
-        by_name = False
-    elif _check_key_type(indices, str):
-        by_name = True
-    elif _check_key_type(indices, bool):
-        # boolean mask
-        by_name = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            by_name = True
-    else:
-        raise ValueError("No valid specification of the columns. Only a "
-                         "scalar, list or slice of all integers or all "
-                         "strings, or boolean mask is allowed")
 
     if axis not in (0, 1):
         raise ValueError(
             "'axis' should be either 0 (to index rows) or 1 (to index "
             " column). Got {} instead.".format(axis)
+        )
+
+    indices_dtype = _determine_key_type(indices)
+
+    if axis == 0 and indices_dtype == 'str':
+        raise ValueError(
+            "String indexing is not supported with 'axis=0'"
         )
 
     if axis == 1 and X.ndim != 2:
@@ -313,16 +329,18 @@ def safe_indexing(X, indices, axis=0):
             "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
         )
 
-    if by_name and not hasattr(X, 'loc'):
-        raise ValueError("Specifying the columns using strings is only "
-                         "supported for pandas DataFrames")
+    if axis == 1 and indices_dtype == 'str' and not hasattr(X, 'loc'):
+        raise ValueError(
+            "Specifying the columns using strings is only supported for "
+            "pandas DataFrames"
+        )
 
     if hasattr(X, "iloc"):
-        return _pandas_indexing(X, indices, axis=axis, by_name=by_name)
+        return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
-        return _array_indexing(X, indices, axis=axis)
+        return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
-        return _list_indexing(X, indices)
+        return _list_indexing(X, indices, indices_dtype)
 
 
 def _get_column_indices(X, key):
@@ -333,8 +351,12 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if (_check_key_type(key, int)
-            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+    key_dtype = _determine_key_type(key)
+
+    if isinstance(key, list) and not key:
+        # we get an empty list
+        return []
+    elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
             idx = safe_indexing(np.arange(n_columns), key)
@@ -344,7 +366,7 @@ def _get_column_indices(X, key):
                 .format(n_columns - 1, n_columns)
             ) from e
         return np.atleast_1d(idx).tolist()
-    elif _check_key_type(key, str):
+    elif key_dtype == 'str':
         try:
             all_columns = list(X.columns)
         except AttributeError:

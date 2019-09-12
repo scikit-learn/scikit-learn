@@ -1068,7 +1068,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     return W, H, n_iter
 
 
-class NMF(BaseEstimator, TransformerMixin):
+class NMF(TransformerMixin, BaseEstimator):
     r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1239,6 +1239,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
 
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.

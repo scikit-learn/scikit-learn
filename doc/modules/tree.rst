@@ -120,9 +120,9 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf = clf.fit(iris.data, iris.target)
+    >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the plot_tree function::
 
@@ -190,10 +190,8 @@ of external libraries and is more compact:
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> from sklearn.tree.export import export_text
     >>> iris = load_iris()
-    >>> X = iris['data']
-    >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-    >>> decision_tree = decision_tree.fit(X, y)
+    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |--- petal width (cm) <= 0.80
@@ -321,17 +319,6 @@ largest reduction in entropy.  This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
-
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
 
 
 Tips on practical use
@@ -534,16 +521,57 @@ Mean Absolute Error:
 
 where :math:`X_m` is the training data in node :math:`m`
 
+
+.. _minimal_cost_complexity_pruning:
+
+Minimal Cost-Complexity Pruning
+===============================
+
+Minimal cost-complexity pruning is an algorithm used to prune a tree to avoid
+over-fitting, described in Chapter 3 of [BRE]_. This algorithm is parameterized
+by :math:`\alpha\ge0` known as the complexity parameter. The complexity
+parameter is used to define the cost-complexity measure, :math:`R_\alpha(T)` of
+a given tree :math:`T`:
+
+.. math::
+
+  R_\alpha(T) = R(T) + \alpha|T|
+
+where :math:`|T|` is the number of terminal nodes in :math:`T` and :math:`R(T)`
+is traditionally defined as the total misclassification rate of the terminal
+nodes. Alternatively, scikit-learn uses the total sample weighted impurity of
+the terminal nodes for :math:`R(T)`. As shown above, the impurity of a node
+depends on the criterion. Minimal cost-complexity pruning finds the subtree of
+:math:`T` that minimizes :math:`R_\alpha(T)`.
+
+The cost complexity measure of a single node is
+:math:`R_\alpha(t)=R(t)+\alpha`. The branch, :math:`T_t`, is defined to be a
+tree where node :math:`t` is its root. In general, the impurity of a node
+is greater than the sum of impurities of its terminal nodes,
+:math:`R(T_t)<R(t)`. However, the cost complexity measure of a node,
+:math:`t`, and its branch, :math:`T_t`, can be equal depending on
+:math:`\alpha`. We define the effective :math:`\alpha` of a node to be the
+value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or
+:math:`\alpha_{eff}(t)=\frac{R(t)-R(T_t)}{|T|-1}`. A non-terminal node
+with the smallest value of :math:`\alpha_{eff}` is the weakest link and will
+be pruned. This process stops when the pruned tree's minimal
+:math:`\alpha_{eff}` is greater than the ``ccp_alpha`` parameter.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_tree_plot_cost_complexity_pruning.py`
+  
 .. topic:: References:
+
+    .. [BRE] L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification
+      and Regression Trees. Wadsworth, Belmont, CA, 1984.
 
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
 
-    * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
-      Regression Trees. Wadsworth, Belmont, CA, 1984.
+    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan
+      Kaufmann, 1993.
 
-    * J.R. Quinlan. C4. 5: programs for machine learning. Morgan Kaufmann, 1993.
-
-    * T. Hastie, R. Tibshirani and J. Friedman.
-      Elements of Statistical Learning, Springer, 2009.
+    * T. Hastie, R. Tibshirani and J. Friedman. Elements of Statistical
+      Learning, Springer, 2009.

@@ -41,7 +41,8 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
-    _check_sample_weight)
+    _check_sample_weight,
+    _allclose_dense_sparse)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -661,10 +662,15 @@ def test_check_is_fitted():
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
 
+    # to be removed in 0.23
     assert_warns_message(
         DeprecationWarning,
         "Passing attributes to check_is_fitted is deprecated",
         check_is_fitted, ard, ['coef_'])
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing all_or_any to check_is_fitted is deprecated",
+        check_is_fitted, ard, all_or_any=any)
 
 
 def test_check_consistent_length():
@@ -905,3 +911,30 @@ def test_check_sample_weight():
     X = np.ones((5, 2), dtype=np.int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
+
+
+@pytest.mark.parametrize("toarray", [
+    np.array, sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_equals(toarray):
+    base = np.arange(9).reshape(3, 3)
+    x, y = toarray(base), toarray(base)
+    assert _allclose_dense_sparse(x, y)
+
+
+@pytest.mark.parametrize("toarray", [
+    np.array, sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_not_equals(toarray):
+    base = np.arange(9).reshape(3, 3)
+    x, y = toarray(base), toarray(base + 1)
+    assert not _allclose_dense_sparse(x, y)
+
+
+@pytest.mark.parametrize("toarray", [sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_raise(toarray):
+    x = np.arange(9).reshape(3, 3)
+    y = toarray(x + 1)
+
+    msg = ("Can only compare two sparse matrices, not a sparse matrix "
+           "and an array")
+    with pytest.raises(ValueError, match=msg):
+        _allclose_dense_sparse(x, y)

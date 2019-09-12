@@ -1160,8 +1160,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores = list()
 
-    if isinstance(scoring, str):
-        scoring = get_scorer(scoring)
+    scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1676,11 +1675,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of `Cs` values and `l1_ratios` values, the best
-    hyperparameter is selected by the cross-validator `StratifiedKFold`, but
-    it can be changed using the `cv` parameter. The 'newton-cg', 'sag',
-    'saga' and 'lbfgs' solvers can warm-start the coefficients (see
-    :term:`Glossary<warm_start>`).
+    For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
+    is selected by the cross-validator
+    :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
+    using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    solvers can warm-start the coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1814,7 +1813,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Note that this only applies to the solver and not the cross-validation
+        generator.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -2240,7 +2241,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           "This warning will disappear in version 0.22.",
                           ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-        if isinstance(scoring, str):
-            scoring = get_scorer(scoring)
+
+        scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)

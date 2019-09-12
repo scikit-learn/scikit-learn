@@ -58,7 +58,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
+class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes

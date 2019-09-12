@@ -32,8 +32,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-boston = datasets.load_boston()
-X_r, y_r = boston.data, boston.target
+X_r, y_r = datasets.load_boston(return_X_y=True)
 
 
 def test_estimator_init():
@@ -334,7 +333,7 @@ def test_sample_weight():
 
     # check that _parallel_fit_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
-    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
+    class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
             raise TypeError('Error unrelated to sample_weight.')
     clf = ClassifierErrorFit()
@@ -344,7 +343,7 @@ def test_sample_weight():
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
-    class MockClassifier(BaseEstimator, ClassifierMixin):
+    class MockClassifier(ClassifierMixin, BaseEstimator):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert 'sample_weight' in sample_weight
