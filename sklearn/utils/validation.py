@@ -431,6 +431,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
             DeprecationWarning, stacklevel=2)
+    # If a non-ndarray object supporting nep13 and nep18, we pass it through
+    # see https://numpy.org/neps/nep-0013-ufunc-overrides.html
+    # and https://numpy.org/neps/nep-0018-array-function-protocol.html
+    if not isinstance(array, np.ndarray) and\
+            hasattr(array, '__array_function__') and\
+            hasattr(array, '__array_ufunc__'):
+        return array
 
     # store reference to original array to check if copy is needed when
     # function returns
