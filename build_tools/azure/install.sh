@@ -36,7 +36,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
-    else
+    elif [[ "$PYTHON_VERSION" != "3.5" ]]; then
+        # Python 3.5 used conda-forge channel with openblas by default
         TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
@@ -63,7 +64,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # as a workaround.
     if [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --add channels conda-forge
-        conda config --set channel_priority strict
+        conda config --set channel_priority flexible
     fi
 
 	make_conda $TO_INSTALL
