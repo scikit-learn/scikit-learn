@@ -25,7 +25,9 @@ make_conda() {
 
     # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
     # to work on the CI.
-    conda install -c rdonnelly --yes openssl
+    if [[ "$PYTHON_VERSION" == "*" ]]; then
+        conda install -c rdonnelly --yes openssl
+    fi
 }
 
 version_ge() {
