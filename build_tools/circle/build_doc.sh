@@ -131,10 +131,12 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib memory_profiler "openssl<=1.1.1c"
-# TODO: Remove openssl ssl pinning above. This is a temporary fix to get
-# `fetch_*` to work on the CI.
 
 source activate testenv
+# TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
+# to work on the CI.
+conda install -c rdonnelly openssl
+
 pip install sphinx-gallery==0.3.1
 pip install numpydoc==0.9
 

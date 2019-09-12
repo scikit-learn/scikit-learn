@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 UNAMESTR=`uname`
 
@@ -23,6 +22,18 @@ make_conda() {
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV
+
+    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
+    # to work on the CI.
+    conda install -c rdonnelly openssl
+}
+
+version_ge() {
+    # The two version numbers are seperated with a new line is piped to sort
+    # -rV. The -V activates for version number sorting and -r sorts in
+    # decending order. If the first argument is the top element of the sort, it
+    # is greater than or equal to the second argument.
+    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -30,10 +41,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
                 pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    # TODO: Remove when openssl gets fixed. This is a temporary fix to get
-    # `fetch_*` to work on the CI.
-    TO_INSTALL="$TO_INSTALL openssl<=1.1.1c"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
@@ -60,13 +67,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # Old packages coming from the 'free' conda channel have been removed but
     # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
-    # for more details. For Python 3.5 we use the conda-forge channel
-    # as a workaround.
-    if [[ "$PYTHON_VERSION" == "3.6" ]]; then
+    # for more details. restore_free_channel is defined starting from conda 4.7
+    conda_version=$(conda -V | awk '{print $2}')
+    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --set restore_free_channel true
     fi
 
-    make_conda $TO_INSTALL
+	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
     fi
@@ -86,9 +93,7 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
 elif [[ "$DISTRIB" == "conda-latest" ]]; then
     # since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
-    make_conda "python=$PYTHON_VERSION" "openssl<=1.1.1c"
-    # TODO: Remove openssl ssl pinning above. This is a temporary fix to get
-    # `fetch_*` to work on the CI.
+    make_conda "python=$PYTHON_VERSION"
     python -m pip install numpy scipy joblib cython
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg pillow
