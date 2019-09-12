@@ -1278,11 +1278,14 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
 def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     data = ['this is text, not file or filename']
     warn_msg = 'Since v0.21, vectorizer'
+    warns_expected = [ChangedBehaviorWarning]
+    if issubclass(Estimator, TfidfVectorizer):
+        warns_expected.append(DeprecationWarning)
     with pytest.raises((FileNotFoundError, AttributeError)):
-        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
+        with pytest.warns(tuple(warns_expected)) as records:
             Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
-    assert len(records) == 1
-    assert warn_msg in str(records[0])
+    assert len(records) == len(warns_expected)
+    assert warn_msg in ' '.join([str(el) for el in records])
 
 
 @pytest.mark.parametrize(

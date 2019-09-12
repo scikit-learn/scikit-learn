@@ -330,8 +330,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     fetch_20newsgroups with a custom
     :class:`sklearn.feature_extraction.text.CountVectorizer`,
     :class:`sklearn.feature_extraction.text.HashingVectorizer`,
-    :class:`sklearn.feature_extraction.text.TfidfTransformer` or
-    :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
+    :class:`sklearn.feature_extraction.text.TfidfTransformer`
 
     =================   ==========
     Classes                     20

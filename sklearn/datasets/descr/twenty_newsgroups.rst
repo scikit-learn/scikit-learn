@@ -99,12 +99,15 @@ for statistical analysis. This can be achieved with the utilities of the
 example that extract `TF-IDF`_ vectors of unigram tokens
 from a subset of 20news::
 
-  >>> from sklearn.feature_extraction.text import TfidfVectorizer
+  >>> from sklearn.feature_extraction.text import (
+  ...     CountVectorizer, TfidfTransformer
+  ... )
+  >>> from sklearn.pipeline import make_pipeline
   >>> categories = ['alt.atheism', 'talk.religion.misc',
   ...               'comp.graphics', 'sci.space']
   >>> newsgroups_train = fetch_20newsgroups(subset='train',
   ...                                       categories=categories)
-  >>> vectorizer = TfidfVectorizer()
+  >>> vectorizer = make_pipeline(CountVectorizer(), TfidfTransformer())
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> vectors.shape
   (2034, 34118)

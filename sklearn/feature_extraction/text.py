@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT
+from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
@@ -957,7 +957,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
 
     See also
     --------
-    HashingVectorizer, TfidfVectorizer
+    HashingVectorizer
 
     Notes
     -----
@@ -1263,6 +1263,10 @@ def _make_int_array():
     return array.array(str("i"))
 
 
+@deprecated("TfidfTransformer is deprecated in version 0.22 "
+            "and will be removed in version 0.24. Use "
+            "make_pipeline(CountVectorizer(), TfidfTransformer()) "
+            "instead.")
 class TfidfTransformer(TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
