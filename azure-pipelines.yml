@@ -24,7 +24,7 @@ jobs:
         CYTHON_VERSION: '*'
         PYTEST_VERSION: '*'
         PILLOW_VERSION: '4.0.0'
-        MATPLOTLIB_VERSION: '1.5.3'
+        MATPLOTLIB_VERSION: '2.0.2'
         # later version of joblib are not packaged in conda for Python 3.5
         JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'

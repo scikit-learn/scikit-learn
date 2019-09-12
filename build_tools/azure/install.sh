@@ -37,8 +37,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
-    elif [[ "$PYTHON_VERSION" != "3.5" ]]; then
-        # Python 3.5 used conda-forge channel with openblas by default
+    else
         TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
@@ -63,12 +62,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
     # for more details. For Python 3.5 we use the conda-forge channel
     # as a workaround.
-    if [[ "$PYTHON_VERSION" == "3.5" ]]; then
-        conda config --add channels conda-forge
-        conda config --set channel_priority flexible
-    fi
 
-	make_conda $TO_INSTALL
+    make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
     fi
