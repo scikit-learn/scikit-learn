@@ -11,7 +11,7 @@ Two feature extraction methods can be used in this example:
 
   - CountVectorizer uses a in-memory vocabulary (a python dict) to map the most
     frequent words to features indices and hence compute a word occurrence
-    frequency (sparse) matrix. 
+    frequency (sparse) matrix.
   - HashingVectorizer hashes word occurrences to a fixed dimensional space,
     possibly with collisions. The word count vectors are then normalized to
     each have l2-norm equal to one (projected to the euclidean unit-ball) which

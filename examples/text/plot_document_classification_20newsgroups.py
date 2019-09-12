@@ -69,8 +69,8 @@ op.add_option("--use_hashing",
               action="store_true",
               help="Use a hashing vectorizer.")
 op.add_option("--no-idf",
-                action="store_false", dest="use_idf", default=True,
-                help="Disable Inverse Document Frequency feature weighting.")
+              action="store_false", dest="use_idf", default=True,
+              help="Disable Inverse Document Frequency feature weighting.")
 op.add_option("--n_features",
               action="store", type=int, default=2 ** 16,
               help="n_features when using the hashing vectorizer.")
