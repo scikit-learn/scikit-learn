@@ -1153,16 +1153,16 @@ class CategoricalNB(BaseDiscreteNB):
                                    sample_weight=sample_weight)
 
     def _check_X(self, X):
-        # force_all_finite has to be checked independently of the dtype
-        # requirement, otherwise X is converted to int before it is checked
-        # for nan and inf and no error is raised
+        # FIXME: we can avoid calling check_array twice after #14872 is merged.
+        # return check_array(X, y, dtype='int', accept_sparse=False,
+        #                   force_all_finite=True)
         X = check_array(X, accept_sparse=False, force_all_finite=True)
         return check_array(X, dtype='int')
 
     def _check_X_y(self, X, y):
-        # force_all_finite has to be checked independently of the dtype
-        # requirement, otherwise X is converted to int before it is checked
-        # for nan and inf and no error is raised
+        # FIXME: we can avoid calling check_array twice after #14872 is merged.
+        # return check_array(X, y, dtype='int', accept_sparse=False,
+        #                   force_all_finite=True)
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
         return check_X_y(X, y, dtype='int')
 
