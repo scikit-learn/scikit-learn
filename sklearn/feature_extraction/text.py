@@ -614,6 +614,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
@@ -877,6 +878,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
@@ -1506,6 +1508,7 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
