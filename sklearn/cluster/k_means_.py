@@ -954,7 +954,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
 
         # This validates twice but there is not clean way to avoid validation
-        # in k_means.
+        # in k_means(). Please see issue 14897.
         order = "C" if self.copy_x else None
         self._validate_X(X, accept_sparse='csr',
                          dtype=[np.float64, np.float32], order=order,
