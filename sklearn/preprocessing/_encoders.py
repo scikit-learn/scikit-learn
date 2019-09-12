@@ -4,9 +4,11 @@
 
 import numpy as np
 from scipy import sparse
+from itertools import count
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils import safe_indexing
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
@@ -19,16 +21,23 @@ __all__ = [
 ]
 
 
-class _BaseEncoder(TransformerMixin, BaseEstimator):
-    """
-    Base class for encoders that includes the code to categorize and
+class _EncoderUnion(TransformerMixin, BaseEstimator):
+    """Base class for encoders that includes the code to categorize and
     transform the input features.
 
+    The encoders passed to `_fit_list` must define:
+
+    1. `fit(X)` where `X` is a ndarray of shape (n_samples,)
+    2. `transform(X)` where `X` is a ndarray of shape (n_samples,)
+    3. `inverse_transform(X)` where `X` is an encoded ndarray of sparse array
     """
 
+    @property
+    def categories_(self):
+        return [encoder.categories_ for encoder in self._encoders]
+
     def _check_X(self, X):
-        """
-        Perform custom check_array:
+        """Perform custom check_array:
         - convert list of strings to object dtype
         - check for missing values for object dtype data (check_array does
           not do that)
@@ -52,103 +61,111 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             # to keep the dtype information to be used in the encoder.
             needs_validation = True
 
-        n_samples, n_features = X.shape
+        n_features = X.shape[1]
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = safe_indexing(X, i, axis=1)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
             X_columns.append(Xi)
 
-        return X_columns, n_samples, n_features
+        return X_columns
 
-    def _get_feature(self, X, feature_idx):
-        if hasattr(X, 'iloc'):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
+    def _check_categories(self, n_features):
+        """Check categories are consistent with n_features"""
+        categories = self.categories
 
-    def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        if (self.categories != 'auto' and
+                len(self.categories) != n_features):
+            raise ValueError("Shape mismatch: if categories is an array, "
+                             "it has to be of shape (n_features,).")
 
-        if self.categories != 'auto':
-            if len(self.categories) != n_features:
-                raise ValueError("Shape mismatch: if categories is an array,"
-                                 " it has to be of shape (n_features,).")
+        if isinstance(self.categories, str) and self.categories == 'auto':
+            categories = ['auto'] * n_features
+        else:
+            categories = self.categories
 
-        self.categories_ = []
+        return categories
 
-        for i in range(n_features):
-            Xi = X_list[i]
-            if self.categories == 'auto':
-                cats = _encode(Xi)
-            else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype != object:
-                    if not np.all(np.sort(cats) == cats):
-                        raise ValueError("Unsorted categories are not "
-                                         "supported for numerical categories")
-                if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi, cats)
-                    if diff:
-                        msg = ("Found unknown categories {0} in column {1}"
-                               " during fit".format(diff, i))
-                        raise ValueError(msg)
-            self.categories_.append(cats)
+    def _fit_list(self, X_list, encoders):
+        """Fit encoders on X_list"""
+        assert len(X_list) == len(encoders)
 
-    def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        for X_col, encoder in zip(X_list, encoders):
+            encoder.fit(X_col)
 
-        X_int = np.zeros((n_samples, n_features), dtype=np.int)
-        X_mask = np.ones((n_samples, n_features), dtype=np.bool)
+        # map from X_trans indicies to indicies from the original X
+        X_trans_to_orig_idx = []
+        X_trans_idx = 0
+        for encoder in encoders:
+            n_feat_out = encoder.n_features_out_
+            begin, end = X_trans_idx, X_trans_idx + n_feat_out
+            X_trans_to_orig_idx.append((begin, end))
+            X_trans_idx += n_feat_out
 
+        self._X_trans_to_orig_idx = X_trans_to_orig_idx
+        self._encoders = encoders
+
+    def _transform_list(self, X_list):
+        """Transform X_list with encoders"""
+        n_features = len(X_list)
         if n_features != len(self.categories_):
             raise ValueError(
                 "The number of features in X is different to the number of "
                 "features of the fitted data. The fitted data had {} features "
                 "and the X has {} features."
-                .format(len(self.categories_,), n_features)
-            )
+                .format(len(self.categories_,), n_features))
 
-        for i in range(n_features):
-            Xi = X_list[i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
-                                                     return_mask=True)
+        X_trs = []
+        for encoder, X_col in zip(self._encoders, X_list):
+            X_trs.append(encoder.transform(X_col))
+        return self._hstack(X_trs)
 
-            if not np.all(valid_mask):
-                if handle_unknown == 'error':
-                    msg = ("Found unknown categories {0} in column {1}"
-                           " during transform".format(diff, i))
-                    raise ValueError(msg)
-                else:
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (self.categories_[i].dtype.kind in ('U', 'S')
-                            and self.categories_[i].itemsize > Xi.itemsize):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    else:
-                        Xi = Xi.copy()
+    def _hstack(self, Xs):
+        if any(sparse.issparse(X_tran) for X_tran in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _encode_check_unknown was
-            # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                 check_unknown=False)
-            X_int[:, i] = encoded
+    def inverse_transform(self, X):
+        """Convert the data back into the original representation.
 
-        return X_int, X_mask
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape \
+            (n_samples, n_encoded_features)
+            The transformed data.
+
+        Returns
+        -------
+        X_tr : ndarray of shape (n_samples, n_features)
+            Inverse transformed array.
+        """
+        check_is_fitted(self)
+        X = check_array(X, accept_sparse='csr')
+
+        n_features = sum(encoder.n_features_out_ for encoder in self._encoders)
+
+        # validate shape of passed X
+        msg = ("Shape of the passed X data is not correct. Expected {0} "
+               "columns, got {1}.")
+        if X.shape[1] != n_features:
+            raise ValueError(msg.format(n_features, X.shape[1]))
+
+        X_trs = []
+        for encoder, (begin, end) in zip(self._encoders,
+                                         self._X_trans_to_orig_idx):
+            X_slice = safe_indexing(X, slice(begin, end), axis=1)
+            X_trs.append(encoder.inverse_transform(X_slice))
+        return self._hstack(X_trs)
 
     def _more_tags(self):
         return {'X_types': ['categorical']}
 
 
-class OneHotEncoder(_BaseEncoder):
+class OneHotEncoder(_EncoderUnion):
     """Encode categorical features as a one-hot numeric array.
 
     The input to this transformer should be an array-like of integers or
@@ -264,233 +281,105 @@ class OneHotEncoder(_BaseEncoder):
       iterables and a multilabel format, e.g. a (samples x classes) binary
       matrix indicating the presence of a class label.
     """
-
     def __init__(self, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
+
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
 
-    def _validate_keywords(self):
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
-            raise ValueError(msg)
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter is "
-                "specified, as both would create categories that are all "
-                "zero.")
+    @property
+    def drop_idx_(self):
+        return np.array([encoder.drop_idx_ for encoder in self._encoders])
 
-    def _compute_drop_idx(self):
-        if self.drop is None:
-            return None
-        elif (isinstance(self.drop, str) and self.drop == 'first'):
-            return np.zeros(len(self.categories_), dtype=np.int_)
-        elif not isinstance(self.drop, str):
-            try:
-                self.drop = np.asarray(self.drop, dtype=object)
-                droplen = len(self.drop)
-            except (ValueError, TypeError):
-                msg = ("Wrong input for parameter `drop`. Expected "
-                       "'first', None or array of objects, got {}")
-                raise ValueError(msg.format(type(self.drop)))
-            if droplen != len(self.categories_):
-                msg = ("`drop` should have length equal to the number "
-                       "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
-            missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                             if val not in self.categories_[i]]
-            if any(missing_drops):
-                msg = ("The following categories were supposed to be "
-                       "dropped, but were not found in the training "
-                       "data.\n{}".format(
-                           "\n".join(
-                                ["Category: {}, Feature: {}".format(c, v)
-                                    for c, v in missing_drops])))
-                raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
-                             for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=np.int_)
-        else:
-            msg = ("Wrong input for parameter `drop`. Expected "
-                   "'first', None or array of objects, got {}")
-            raise ValueError(msg.format(type(self.drop)))
+    def _fit(self, X):
+        """Validate keywords and fit `X` and return `X_list`."""
+        self._validate_keywords()
+        X_list = self._check_X(X)
+        n_features = len(X_list)
+
+        categories = self._check_categories(n_features)
+        drop_kwargs = self._check_drop(n_features)
+
+        encoders = [
+            _SingleOneHotEncoder(categories=cat,
+                                 dtype=self.dtype,
+                                 handle_unknown=self.handle_unknown,
+                                 sparse=self.sparse,
+                                 feature_idx=idx,
+                                 **drop_kwarg)
+            for idx, cat, drop_kwarg in zip(count(), categories, drop_kwargs)]
+
+        self._fit_list(X_list, encoders)
+
+        # validate encoders
+        missing_drops = []
+        for idx, encoder in enumerate(encoders):
+            drop_idx = encoder.drop_idx_
+            if isinstance(drop_idx, str) and drop_idx == 'missing':
+                missing_drops.append((idx, encoder.drop))
+
+        if any(missing_drops):
+            msg = ("The following categories were supposed to be "
+                   "dropped, but were not found in the training "
+                   "data.\n{}".format("\n".join(
+                            ["Category: {}, Feature: {}".format(c, v)
+                                for c, v in missing_drops])))
+            raise ValueError(msg)
+
+        return X_list
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
-            The data to determine the categories of each feature.
+        X : array-like of shape (n_samples, n_features)
+            The data to determine the categroies of each feature.
 
         Returns
         -------
         self
         """
-        self._validate_keywords()
-        self._fit(X, handle_unknown=self.handle_unknown)
-        self.drop_idx_ = self._compute_drop_idx()
+        self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to fit(X).transform(X) but more convenient.
-
-        Parameters
-        ----------
-        X : array-like, shape [n_samples, n_features]
-            The data to encode.
-
-        Returns
-        -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
-        """
-        self._validate_keywords()
-        return super().fit_transform(X, y)
-
     def transform(self, X):
-        """Transform X using one-hot encoding.
+        """Transform X to encoding
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
-            Transformed input.
+        X_out : {ndarray, sparse matrix} of shape \
+            (n_samples, n_encoded_features)
+            Transformed array. When `sparse=True`, `X_out` is a sparse array.
         """
         check_is_fitted(self)
-        # validation of X happens in _check_X called by _transform
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        X_list = self._check_X(X)
+        return self._transform_list(X_list)
 
-        n_samples, n_features = X_int.shape
-
-        if self.drop is not None:
-            to_drop = self.drop_idx_.reshape(1, -1)
-
-            # We remove all the dropped categories from mask, and decrement all
-            # categories that occur after them to avoid an empty column.
-
-            keep_cells = X_int != to_drop
-            X_mask &= keep_cells
-            X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - 1 for cats in self.categories_]
-        else:
-            n_values = [len(cats) for cats in self.categories_]
-
-        mask = X_mask.ravel()
-        n_values = np.array([0] + n_values)
-        feature_indices = np.cumsum(n_values)
-        indices = (X_int + feature_indices[:-1]).ravel()[mask]
-        indptr = X_mask.sum(axis=1).cumsum()
-        indptr = np.insert(indptr, 0, 0)
-        data = np.ones(n_samples * n_features)[mask]
-
-        out = sparse.csr_matrix((data, indices, indptr),
-                                shape=(n_samples, feature_indices[-1]),
-                                dtype=self.dtype)
-        if not self.sparse:
-            return out.toarray()
-        else:
-            return out
-
-    def inverse_transform(self, X):
-        """Convert the back data to the original representation.
-
-        In case unknown categories are encountered (all zeros in the
-        one-hot encoding), ``None`` is used to represent this category.
+    def fit_transform(self, X, y=None):
+        """Fit encoder to X and transform X.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
-            The transformed data.
+        X : array-like of shape (n_samples, n_features)
+            The data to encode.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
-            Inverse transformed array.
-
+        X_out : {ndarray, sparse matrix} of shape \
+            (n_samples, n_encoded_features)
+            Transformed array. When `sparse=True`, `X_out` is a sparse array.
         """
-        check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
-
-        n_samples, _ = X.shape
-        n_features = len(self.categories_)
-        if self.drop is None:
-            n_transformed_features = sum(len(cats)
-                                         for cats in self.categories_)
-        else:
-            n_transformed_features = sum(len(cats) - 1
-                                         for cats in self.categories_)
-
-        # validate shape of passed X
-        msg = ("Shape of the passed X data is not correct. Expected {0} "
-               "columns, got {1}.")
-        if X.shape[1] != n_transformed_features:
-            raise ValueError(msg.format(n_transformed_features, X.shape[1]))
-
-        # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
-        X_tr = np.empty((n_samples, n_features), dtype=dt)
-
-        j = 0
-        found_unknown = {}
-
-        for i in range(n_features):
-            if self.drop is None:
-                cats = self.categories_[i]
-            else:
-                cats = np.delete(self.categories_[i], self.drop_idx_[i])
-            n_categories = len(cats)
-
-            # Only happens if there was a column with a unique
-            # category. In this case we just fill the column with this
-            # unique category value.
-            if n_categories == 0:
-                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
-                j += n_categories
-                continue
-            sub = X[:, j:j + n_categories]
-            # for sparse X argmax returns 2D matrix, ensure 1D array
-            labels = np.asarray(_argmax(sub, axis=1)).flatten()
-            X_tr[:, i] = cats[labels]
-            if self.handle_unknown == 'ignore':
-                unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
-                # ignored unknown categories: we have a row of all zero
-                if unknown.any():
-                    found_unknown[i] = unknown
-            # drop will either be None or handle_unknown will be error. If
-            # self.drop is not None, then we can safely assume that all of
-            # the nulls in each column are the dropped value
-            elif self.drop is not None:
-                dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
-                if dropped.any():
-                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
-
-            j += n_categories
-
-        # if ignored are found: potentially need to upcast result to
-        # insert None values
-        if found_unknown:
-            if X_tr.dtype != object:
-                X_tr = X_tr.astype(object)
-
-            for idx, mask in found_unknown.items():
-                X_tr[mask, idx] = None
-
-        return X_tr
+        X_list = self._fit(X)
+        return self._transform_list(X_list)
 
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
@@ -526,8 +415,203 @@ class OneHotEncoder(_BaseEncoder):
 
         return np.array(feature_names, dtype=object)
 
+    def _validate_keywords(self):
+        if self.handle_unknown not in ('error', 'ignore'):
+            msg = ("handle_unknown should be either 'error' or 'ignore', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
+        # If we have both dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "`handle_unknown` must be 'error' when the drop parameter is "
+                "specified, as both would create categories that are all "
+                "zero.")
 
-class OrdinalEncoder(_BaseEncoder):
+    def _check_drop(self, n_features):
+        if self.drop is None:
+            return [{'drop': None}] * n_features
+        if isinstance(self.drop, str) and self.drop == 'first':
+            return [{'drop_first': True}] * n_features
+        if not isinstance(self.drop, str):
+            try:
+                drops = np.asarray(self.drop, dtype=object)
+                drops_len = len(drops)
+            except (ValueError, TypeError):
+                msg = ("Wrong input for parameter `drop`. Expected "
+                       "'first', None or array of objects, got {}")
+                raise ValueError(msg.format(type(self.drop)))
+            if drops_len != n_features:
+                msg = ("`drop` should have length equal to the number "
+                       "of features ({}), got {}")
+                raise ValueError(msg.format(n_features,
+                                            len(self.drop)))
+            return [{'drop': drop} for drop in drops]
+        else:
+            msg = ("Wrong input for parameter `drop`. Expected "
+                   "'first', None or array of objects, got {}")
+            raise ValueError(msg.format(type(self.drop)))
+
+
+class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
+    """One hot encoder for a single categorical feature."""
+    def __init__(self, categories='auto', drop=None, drop_first=False,
+                 dtype=np.float64, handle_unknown='error',
+                 sparse=True, feature_idx=0):
+        self.categories = categories
+        self.dtype = dtype
+        self.handle_unknown = handle_unknown
+        self.drop = drop
+        self.drop_first = drop_first
+        self.sparse = sparse
+        self.feature_idx = feature_idx
+
+    def fit(self, X):
+        """Fit one hot encoder for a single categorical feature.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,)
+            Categorical feature to encode.
+
+        Returns
+        ------
+        self
+        """
+        if isinstance(self.categories, str) and self.categories == 'auto':
+            cats = _encode(X)
+        else:  # categories were given
+            cats = np.array(self.categories, dtype=X.dtype)
+            if X.dtype != object and not np.all(np.sort(cats) == cats):
+                raise ValueError("Unsorted categories are not "
+                                 "supported for numerical categories")
+
+            if self.handle_unknown == 'error':
+                diff = _encode_check_unknown(X, cats)
+                if diff:
+                    msg = ("Found unknown categories {0} in column {1} "
+                           "during fit".format(diff, self.feature_idx))
+                    raise ValueError(msg)
+
+        self.categories_ = cats
+
+        # compute drop idx
+        if self.drop_first:
+            self.drop_idx_ = 0
+        elif self.drop is None:
+            self.drop_idx_ = None
+        elif self.drop not in self.categories_:
+            self.drop_idx_ = 'missing'
+        else:
+            self.drop_idx_ = np.where(self.categories_ == self.drop)[0][0]
+
+        if self.drop_idx_ is not None:
+            self.n_features_out_ = len(self.categories_) - 1
+        else:
+            self.n_features_out_ = len(self.categories_)
+        return self
+
+    def transform(self, X):
+        """Transform a single categorical feature.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,)
+            Categorical feature to encode.
+
+        Returns
+        -------
+        X_tr : {ndarray, sparse matrix} of shape \
+            (n_samples, n_encoded_features)
+            Encoded feature. If `sparse=True` a sparse matrix is returned.
+        """
+        diff, X_mask = _encode_check_unknown(X, self.categories_,
+                                             return_mask=True)
+        if not np.all(X_mask):
+            if self.handle_unknown == 'error':
+                msg = ("Found unknown categories {0} in column {1} "
+                       "during transform".format(diff, self.feature_idx))
+                raise ValueError(msg)
+
+            # cast Xi into the largest string type necessary
+            # to handle different lengths of numpy strings
+            if (self.categories_.dtype.kind in ('U', 'S')
+                    and self.categories_.itemsize > X.itemsize):
+                X = X.astype(self.categories_.dtype)
+            else:
+                X = X.copy()
+            X[~X_mask] = self.categories_[0]
+
+        _, X_encoded = _encode(X, self.categories_, encode=True,
+                               check_unknown=False)
+
+        if self.drop_idx_ is not None:
+            keep_cells = X_encoded != self.drop_idx_
+            X_mask &= keep_cells
+
+            # adjust encoding to remove the dropped column
+            X_encoded[X_encoded > self.drop_idx_] -= 1
+
+        n_samples = X.shape[0]
+        X_mask_non_zero = np.flatnonzero(X_mask)
+
+        out = sparse.lil_matrix((n_samples, self.n_features_out_),
+                                dtype=self.dtype)
+        out[X_mask_non_zero, X_encoded[X_mask]] = 1
+
+        if self.sparse:
+            return out
+        else:
+            return out.toarray()
+
+    def inverse_transform(self, X):
+        """Inverse transform to a single categorical feature.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples,)
+            The transformed data of a single feature.
+
+        Returns
+        -------
+        X_tr : ndarray of shape (n_samples, 1)
+            Inverse transform.
+        """
+        # Only happens if there was a column with a unique
+        # category. In this case we just fill the column with this
+        # unique category value.
+        if self.n_features_out_ == 0:
+            value = self.categories_[self.drop_idx_]
+            return np.full((X.shape[0], 1), value)
+
+        if self.drop_idx_ is None:
+            cats = self.categories_
+        else:
+            cats = np.delete(self.categories_, self.drop_idx_)
+
+        # for sparse X argmax returns 2D matrix, ensure 1D array
+        labels = np.asarray(_argmax(X, axis=1)).flatten()
+        X_tr = cats[labels]
+        if self.handle_unknown == 'ignore':
+            unknown = np.asarray(X.sum(axis=1) == 0).flatten()
+            # ignored unknown categories: we have a row of all zero
+            if unknown.any():
+                if X_tr.dtype != object:
+                    X_tr = X_tr.astype(object)
+                X_tr[unknown] = None
+        # drop will either be None or handle_unknown will be error. If
+        # self.drop is not None, then we can safely assume that all of
+        # the nulls in each column are the dropped value
+        elif self.drop_idx_ is not None:
+            dropped = np.asarray(X.sum(axis=1) == 0).flatten()
+            if dropped.any():
+                X_tr[dropped] = self.categories_[self.drop_idx_]
+
+        return X_tr[:, None]
+
+
+class OrdinalEncoder(_EncoderUnion):
     """Encode categorical features as an integer array.
 
     The input to this transformer should be an array-like of integers or
@@ -586,77 +670,154 @@ class OrdinalEncoder(_BaseEncoder):
     sklearn.preprocessing.LabelEncoder : encodes target labels with values
       between 0 and n_classes-1.
     """
-
     def __init__(self, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
 
+    def _fit(self, X):
+        """Validate keywords and fit `X` and return `X_list`."""
+        X_list = self._check_X(X)
+        categories = self._check_categories(len(X_list))
+
+        encoders = [_SingleOrdinalEncoder(categories=cat,
+                                          dtype=self.dtype,
+                                          feature_idx=idx)
+                    for idx, cat in enumerate(categories)]
+
+        self._fit_list(X_list, encoders)
+        return X_list
+
     def fit(self, X, y=None):
-        """Fit the OrdinalEncoder to X.
+        """Fit OneHotEncoder to X.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
-            The data to determine the categories of each feature.
+        X : array-like of shape (n_samples, n_features)
+            The data to determine the categroies of each feature.
 
         Returns
         -------
         self
-
         """
         self._fit(X)
-
         return self
 
     def transform(self, X):
-        """Transform X to ordinal codes.
+        """Transform X to encoding
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data to encode.
 
         Returns
         -------
-        X_out : sparse matrix or a 2-d array
-            Transformed input.
-
+        X_out : ndarray of shape (n_samples, n_encoded_features)
+            Transformed array.
         """
-        X_int, _ = self._transform(X)
-        return X_int.astype(self.dtype, copy=False)
+        check_is_fitted(self)
+        X_list = self._check_X(X)
+        return self._transform_list(X_list)
 
-    def inverse_transform(self, X):
-        """Convert the data back to the original representation.
+    def fit_transform(self, X, y=None):
+        """Fit encoder to X and transform X.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
-            The transformed data.
+        X : array-like of shape (n_samples, n_features)
+            The data to encode.
 
         Returns
         -------
-        X_tr : array-like, shape [n_samples, n_features]
-            Inverse transformed array.
-
+        X_out : ndarray of shape (n_samples, n_encoded_features)
+            Transformed array.
         """
-        check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X_list = self._fit(X)
+        return self._transform_list(X_list)
 
-        n_samples, _ = X.shape
-        n_features = len(self.categories_)
 
-        # validate shape of passed X
-        msg = ("Shape of the passed X data is not correct. Expected {0} "
-               "columns, got {1}.")
-        if X.shape[1] != n_features:
-            raise ValueError(msg.format(n_features, X.shape[1]))
+class _SingleOrdinalEncoder(TransformerMixin, BaseEstimator):
+    """Ordinal Encoder for a single categorical feature."""
+    def __init__(self, categories='auto', dtype=np.float64, feature_idx=0):
+        self.categories = categories
+        self.dtype = dtype
+        self.feature_idx = feature_idx
 
-        # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
-        X_tr = np.empty((n_samples, n_features), dtype=dt)
+    def fit(self, X, y=None):
+        """Fit ordinal encoder on a single categorical feature.
 
-        for i in range(n_features):
-            labels = X[:, i].astype('int64', copy=False)
-            X_tr[:, i] = self.categories_[i][labels]
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,)
+            Categorical feature to encode.
 
-        return X_tr
+        Returns
+        -------
+        self
+        """
+        if isinstance(self.categories, str) and self.categories == 'auto':
+            cats = _encode(X)
+        else:  # categories were given
+            cats = np.array(self.categories, dtype=X.dtype)
+            if X.dtype != object and not np.all(np.sort(cats) == cats):
+                raise ValueError("Unsorted categories are not "
+                                 "supported for numerical categories")
+            diff = _encode_check_unknown(X, cats)
+            if diff:
+                msg = ("Found unknown categories {0} in column {1} "
+                       "during fit".format(diff, self.feature_idx))
+                raise ValueError(msg)
+
+        self.categories_ = cats
+        self.n_features_out_ = 1
+        return self
+
+    def transform(self, X):
+        """Transform on an single categorical feature.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,)
+            Categorical feature to encode.
+
+        Returns
+        -------
+        X_tr : ndarray of shape (n_samples, 1)
+            Encoded categorical feature.
+        """
+        diff, valid_mask = _encode_check_unknown(X, self.categories_,
+                                                 return_mask=True)
+        if not np.all(valid_mask):
+            if self.handle_unknown == 'error':
+                msg = ("Found unknown categories {0} in column {1} "
+                       "during transform".format(diff, self.feature_idx))
+                raise ValueError(msg)
+
+            # cast Xi into the largest string type necessary
+            # to handle different lengths of numpy strings
+            if (self.categories_.dtype.kind in ('U', 'S')
+                    and self.categories_.itemsize > X.itemsize):
+                X = X.astype(self.categories_.dtype)
+            else:
+                X = X.copy()
+            X[~valid_mask] = self.categories_[0]
+
+        _, encoded = _encode(X, self.categories_, encode=True,
+                             check_unknown=False)
+        return encoded[:, None].astype(self.dtype)
+
+    def inverse_transform(self, X):
+        """Convert the data back into the original representation.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples,)
+            Transformed data.
+
+        Returns
+        -------
+        X_tr : ndarry of shape (n_samples, 1)
+            Inverse transformed array.
+        """
+        labels = X.astype('int64', copy=False)
+        return self.categories_[labels]
