@@ -17,7 +17,7 @@ from ..base import MetaEstimatorMixin
 from .base import _parallel_fit_estimator
 
 from ..linear_model import LogisticRegression
-from ..linear_model import LinearRegression
+from ..linear_model import RidgeCV
 
 from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
@@ -159,33 +159,31 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         -------
         self : object
         """
-        names, estimators_ = self._validate_estimators()
+        # all_estimators contains all estimators, the one to be fitted and the
+        # 'drop' string.
+        names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
-        has_estimator = False
-        for est in estimators_:
-            if est != 'drop':
-                has_estimator = True
-
+        has_estimator = any(est != 'drop' for est in all_estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
 
-        stack_method = [self.stack_method] * len(estimators_)
+        stack_method = [self.stack_method] * len(all_estimators)
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
-            for est in estimators_ if est != 'drop'
+            for est in all_estimators if est != 'drop'
         )
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
-        for name_est, org_est in zip(names, estimators_):
+        for name_est, org_est in zip(names, all_estimators):
             if org_est != 'drop':
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
@@ -197,28 +195,28 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        cv = 3 if self.cv is None else self.cv
+        cv = 5 if self.cv is None else self.cv
         cv = check_cv(cv, y=y, classifier=is_classifier(self))
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
 
         self.stack_method_ = [
             self._method_name(name, est, meth)
-            for name, est, meth in zip(names, estimators_, stack_method)
+            for name, est, meth in zip(names, all_estimators, stack_method)
         ]
 
         predictions = Parallel(n_jobs=self.n_jobs)(
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
-            for est, meth in zip(estimators_, self.stack_method_)
+            for est, meth in zip(all_estimators, self.stack_method_)
             if est != 'drop'
         )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
         self.stack_method_ = [
-            meth for (meth, est) in zip(self.stack_method_, estimators_)
+            meth for (meth, est) in zip(self.stack_method_, all_estimators)
             if est != 'drop'
         ]
 
@@ -307,10 +305,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         The default classifier is a `LogisticRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy. Possible inputs for
+        Determines the cross-validation splitting strategy used in
+        `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
@@ -321,6 +320,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+           A larger number of split will provide no benefits if the number
+           of training samples is large enough. Indeed, the training time
+           will increase. ``cv`` is not used for model evaluation but for
+           prediction.
 
     stack_method : {'auto', 'predict_proba', 'decision_function', 'predict'}, \
             default='auto'
@@ -518,7 +523,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     Note that `estimators_` are fitted on the full `X` while `final_estimator_`
     is trained using cross-validated predictions of the base estimators using
-    `cross_val_predict`).
+    `cross_val_predict`.
 
     .. versionadded:: 0.22
 
@@ -533,13 +538,14 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `LinearRegression`.
+        The default regressor is a `RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
-        Determines the cross-validation splitting strategy. Possible inputs for
+        Determines the cross-validation splitting strategy used in
+        `cross_val_predict` to train `final_estimator`. Possible inputs for
         cv are:
 
-        * None, to use the default 3-fold cross validation,
+        * None, to use the default 5-fold cross validation,
         * integer, to specify the number of folds in a (Stratified) KFold,
         * An object to be used as a cross-validation generator,
         * An iterable yielding train, test splits.
@@ -550,6 +556,12 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
+
+        .. note::
+           A larger number of split will provide no benefits if the number
+           of training samples is large enough. Indeed, the training time
+           will increase. ``cv`` is not used for model evaluation but for
+           prediction.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for `fit` of all `estimators`.
@@ -577,12 +589,13 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
-    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.linear_model import RidgeCV
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import StackingRegressor
+    >>> X, y = load_diabetes(return_X_y=True)
     >>> estimators = [
-    ...     ('lr', LinearRegression()),
+    ...     ('lr', RidgeCV()),
     ...     ('svr', LinearSVR(random_state=42))
     ... ]
     >>> reg = StackingRegressor(
@@ -592,7 +605,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     ... )
     >>> from sklearn.model_selection import train_test_split
     >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     *load_diabetes(return_X_y=True), random_state=42
+    ...     X, y, random_state=42
     ... )
     >>> reg.fit(X_train, y_train).score(X_test, y_test)
     0.3...
@@ -620,7 +633,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         return names, estimators
 
     def _validate_final_estimator(self):
-        self._clone_final_estimator(default=LinearRegression())
+        self._clone_final_estimator(default=RidgeCV())
         if not is_regressor(self.final_estimator_):
             raise ValueError(
                 "'final_estimator' parameter should be a regressor. Got {}"

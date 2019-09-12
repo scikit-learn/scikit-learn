@@ -20,15 +20,17 @@ import pytest
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _yield_all_checks,
     _construct_instance,
     set_checking_parameters,
     _set_check_estimator_ids,
