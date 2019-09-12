@@ -105,7 +105,9 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
-    make_conda python=3.7
+    make_conda python=3.7 "openssl<=1.1.1c"
+    # TODO: Remove openssl ssl pinning above. This is a temporary fix to get
+    # `fetch_*` to work on the CI.
     pip install --upgrade pip setuptools
 
     echo "Installing numpy and scipy master wheels"

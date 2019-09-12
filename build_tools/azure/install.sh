@@ -93,7 +93,9 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
 elif [[ "$DISTRIB" == "conda-latest" ]]; then
     # since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
-    make_conda "python=$PYTHON_VERSION"
+    make_conda "python=$PYTHON_VERSION" "openssl<=1.1.1c"
+    # TODO: Remove openssl ssl pinning above. This is a temporary fix to get
+    # `fetch_*` to work on the CI.
     python -m pip install numpy scipy joblib cython
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg pillow
