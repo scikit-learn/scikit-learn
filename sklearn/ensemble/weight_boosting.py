@@ -1035,19 +1035,20 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         error_vect = np.abs(y_predict - y)
         sample_mask = sample_weight > 0
-        error_max = error_vect[sample_mask].max()
+        masked_sample_weight = sample_weight[sample_mask]
+        masked_error_vector = error_vect[sample_mask]
 
+        error_max = masked_error_vector.max()
         if error_max != 0:
-            error_vect /= error_max
+            masked_error_vector /= error_max
 
         if self.loss == 'square':
-            error_vect **= 2
+            masked_error_vector **= 2
         elif self.loss == 'exponential':
-            error_vect = 1. - np.exp(- error_vect)
+            masked_error_vector = 1. - np.exp(-masked_error_vector)
 
         # Calculate the average loss
-        estimator_error = (sample_weight[sample_mask] *
-                           error_vect[sample_mask]).sum()
+        estimator_error = (masked_sample_weight * masked_error_vector).sum()
 
         if estimator_error <= 0:
             # Stop if fit is perfect
@@ -1066,8 +1067,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         if not iboost == self.n_estimators - 1:
             sample_weight[sample_mask] *= np.power(
-                beta,
-                (1. - error_vect[sample_mask]) * self.learning_rate)
+                beta, (1. - masked_error_vector) * self.learning_rate
+            )
 
         return sample_weight, estimator_weight, estimator_error
 
