@@ -928,7 +928,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] H. Drucker, "`Improving Regressors using Boosting Techniques", 1997.
+    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
     def __init__(self,

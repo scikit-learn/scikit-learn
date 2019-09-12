@@ -207,10 +207,6 @@ Changelog
   by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Add test for :class:`ensemble.AdaBoostClassifier` to raise consistent
-  error message when base estimator does not support `sample_weight`.
-  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.feature_extraction`
 .................................
 
