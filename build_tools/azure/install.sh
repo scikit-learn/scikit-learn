@@ -62,6 +62,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
     # for more details. For Python 3.5 we use the conda-forge channel
     # as a workaround.
+    if [[ "$PYTHON_VERSION" == "3.6" ]]; then
+        conda config --set restore_free_channel true
+    fi
 
     make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
