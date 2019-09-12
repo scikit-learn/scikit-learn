@@ -348,11 +348,11 @@ def test_partial_dependence_error(estimator, params, err_msg):
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-def test_partial_dependence_unknown_feature_indices(estimator):
+@pytest.mark.parametrize('features', [-1, 10000])
+def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
-    features = 10000
     err_msg = 'all features must be in'
     with pytest.raises(ValueError, match=err_msg):
         partial_dependence(estimator, X, [features])

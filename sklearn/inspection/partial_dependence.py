@@ -20,6 +20,7 @@ from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
 from ..utils import safe_indexing
+from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
@@ -191,7 +192,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
-    features : list or array-like of int
+    features : array-like of {int, str}
         The target features for which the partial dependency should be
         computed.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
@@ -356,6 +357,18 @@ def partial_dependence(estimator, X, features, response_method='auto',
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
+            )
+
+    if _determine_key_type(features) == 'int':
+        raise_err = False
+        if isinstance(features, Iterable):
+            raise_err = np.all(np.less(features, 0))
+        elif isinstance(features, numbers.Integral):
+            raise_err = features < 0
+
+        if raise_err:
+            raise ValueError(
+                'all features must be in [0, {}]'.format(X.shape[0] - 1)
             )
 
     features_indices = np.asarray(
