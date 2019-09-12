@@ -63,10 +63,6 @@ make_conda() {
 
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
-
-    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
-    # to work on the CI.
-    conda install -c rdonnelly --yes openssl
 }
 
 if [[ "$DISTRIB" == "conda" ]]; then
@@ -120,6 +116,10 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing pillow master"
     pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest==4.6.4 pytest-cov
+
+    # TODO: Remove openssl ssl fix. This is a temporary fix to get `fetch_*`
+    # to work on the CI.
+    conda install -c rdonnelly --yes openssl
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
