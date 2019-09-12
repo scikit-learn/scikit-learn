@@ -1289,6 +1289,11 @@ Note that it is also possible to get the output of the stacked outputs of the
          [25.19..., 25.54..., 22.92...],
          [18.93..., 19.26..., 17.03... ]])
 
+In practise, a stacking predictor predict as good as the best predictor of the
+base layer and even sometimes outputperform it by combining the different
+strength of the these predictors. However, training a stacking predictor is
+computationally expensive.
+
 .. note::
    For :class:`StackingClassifier`, when using `stack_method_='predict_proba'`,
    the first column is dropped since it is collinear with other columns.
