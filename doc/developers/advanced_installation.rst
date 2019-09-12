@@ -142,24 +142,39 @@ Mac OSX
 -------
 
 The default C compiler, Apple-clang, on Mac OSX does not directly support
-OpenMP. The first solution to build scikit-learn is to install another C
-compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
-support on the default Apple-clang. In the following we present how to
-configure this second option.
+OpenMP. We present two solutions to enable OpenMP support (you need to do only
+one).
 
-You first need to install the OpenMP library::
+- Install another C compiler.
 
-    brew install libomp
+    If you use the conda package manager, you can install C compilers from the
+    conda-forge channel::
 
-Then you need to set the following environment variables::
+        conda install conda-forge::compilers
 
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+    You then need to set the following environment variables::
+
+        export CFLAGS="$CFLAGS -I<path>/include"
+        export LDFLAGS="$LDFLAGS -L<path>/lib -Wl,rpath,<path>/lib"
+
+    assuming <path> is the path to your conda environment (it should be
+    <path to conda>/envs/<env name>).
+
+- Enable OpenMP support on default Apple-clang.
+
+    You first need to install the OpenMP library::
+
+        brew install libomp
+
+    Then you need to set the following environment variables::
+
+        export CC=/usr/bin/clang
+        export CXX=/usr/bin/clang++
+        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+        export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+        export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
 Finally you can build the package using the standard command.
 
