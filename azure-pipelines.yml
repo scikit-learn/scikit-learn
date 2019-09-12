@@ -13,13 +13,13 @@ jobs:
         PYTHON_VERSION: '3.5'
         JOBLIB_VERSION: '0.11'
         SKLEARN_NO_OPENMP: 'True'
-      # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
-      py35_conda_openblas:
+      # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
+      py36_conda_openblas:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '3.5'
+        PYTHON_VERSION: '3.6'
         INSTALL_MKL: 'false'
-        NUMPY_VERSION: '1.11.0'
-        SCIPY_VERSION: '0.17.1'
+        NUMPY_VERSION: '1.12.0'
+        SCIPY_VERSION: '0.18.1'
         PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
         PYTEST_VERSION: '*'
