@@ -15,6 +15,7 @@ from scipy.stats.mstats import mquantiles
 from joblib import Parallel, delayed
 
 from ..base import is_classifier, is_regressor
+from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
@@ -291,7 +292,13 @@ def partial_dependence(estimator, X, features, response_method='auto',
         raise ValueError(
             "'estimator' must be a fitted regressor or classifier."
         )
-    check_is_fitted(estimator)
+
+    if isinstance(estimator, Pipeline):
+        for est in estimator:
+            if est not in (None, 'drop'):
+                check_is_fitted(est)
+    else:
+        check_is_fitted(estimator)
 
     if (is_classifier(estimator) and
             isinstance(estimator.classes_[0], np.ndarray)):
