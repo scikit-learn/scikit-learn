@@ -455,7 +455,12 @@ class OneHotEncoder(_EncoderUnion):
 
 
 class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
-    """One hot encoder for a single categorical feature."""
+    """One hot encoder for a single categorical feature.
+
+    When calling `fit`, the attribute `drop_idx_` will be set to 'missing'
+    when the drop category is not found in the dataset or given by
+    categories. `drop_idx_` should be checked be the caller to make sure
+    the encoder is valid."""
     def __init__(self, categories='auto', drop=None, drop_first=False,
                  dtype=np.float64, handle_unknown='error',
                  sparse=True, feature_idx=0):
@@ -502,6 +507,8 @@ class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
         elif self.drop is None:
             self.drop_idx_ = None
         elif self.drop not in self.categories_:
+            # This is an error state. Caller should check this value and
+            # handle according.
             self.drop_idx_ = 'missing'
         else:
             self.drop_idx_ = np.where(self.categories_ == self.drop)[0][0]
