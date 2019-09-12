@@ -129,6 +129,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+        self.n_features_in_ = None  # No input validation is done for X
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -356,20 +357,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @property
-    def n_features_in_(self):
-        # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() fails if the estimator isn't fitted.
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
-
-        return None  # Dummies don't validate the input
-
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
@@ -441,6 +428,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                              % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
+        self.n_features_in_ = None  # No input validation is done for X
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
@@ -569,17 +557,3 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    @property
-    def n_features_in_(self):
-        # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() fails if the estimator isn't fitted.
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
-
-        return None  # Dummies don't validate the input
