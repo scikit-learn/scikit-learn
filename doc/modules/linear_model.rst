@@ -146,9 +146,10 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> reg.alpha_
     0.01
 
-Specifying the value of the `cv` attribute will trigger the use of
-cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
-cross-validation, rather than Generalized Cross-Validation.
+Specifying the value of the :term:`cv` attribute will trigger the use of
+cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
+example `cv=10` for 10-fold cross-validation, rather than Generalized
+Cross-Validation.
 
 .. topic:: References
 
@@ -216,11 +217,11 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 
 Setting regularization parameter
@@ -384,11 +385,11 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 .. _multi_task_elastic_net:
 
