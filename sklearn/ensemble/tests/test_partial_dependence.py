@@ -7,8 +7,8 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
-from sklearn.ensemble import partial_dependence
-from sklearn.ensemble import plot_partial_dependence
+from sklearn.ensemble.partial_dependence import partial_dependence
+from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets

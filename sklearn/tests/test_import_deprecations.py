@@ -34,8 +34,6 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.ensemble.gradient_boosting', 'GradientBoostingRegressor'),
     ('sklearn.ensemble.voting', 'VotingClassifier'),
     ('sklearn.ensemble.voting', 'VotingRegressor'),
-    ('sklearn.ensemble.partial_dependence', 'partial_dependence'),
-    ('sklearn.ensemble.partial_dependence', 'plot_partial_dependence'),
 
     ('sklearn.neural_network.rbm', 'BernoulliRBM'),
     ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
