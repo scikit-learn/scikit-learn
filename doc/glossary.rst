@@ -1547,6 +1547,10 @@ functions or non-estimator constructors.
         picklable.  This means, for instance, that lambdas cannot be used
         as estimator parameters.
 
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a
         ``random_state`` parameter may be provided to control the random number
@@ -1634,6 +1638,15 @@ functions or non-estimator constructors.
         to a subset of the data, then fine-tune the parameter search on the
         full dataset. For classification, all data in a sequence of
         ``warm_start`` calls to ``fit`` must include samples from each class.
+
+    ``working_memory``
+
+        The optimal size of temporary arrays used by some algoritms.
+        Some calculations when implemented using standard numpy vectorized
+        operations involve using a large amount of temporary memory.
+        Where computations can be performed in fixed-memory chunks the user is
+        allowed to hint at the maximum size of this working memory (defaulting
+        to 1GB). 
 
 .. _glossary_attributes:
 
