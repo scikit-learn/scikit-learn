@@ -145,22 +145,28 @@ The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. We present two solutions to enable OpenMP support (you need to do only
 one).
 
-- Install another C compiler.
+Using conda
+~~~~~~~~~~~
 
-    If you use the conda package manager, you can install C compilers from the
+    One solution is to install another compiler which supports OpenMP. If you
+    use the conda package manager, you can install C compilers from the
     conda-forge channel::
 
         conda install conda-forge::compilers
 
     You then need to set the following environment variables::
 
-        export CFLAGS="$CFLAGS -I<path>/include"
-        export LDFLAGS="$LDFLAGS -L<path>/lib -Wl,rpath,<path>/lib"
+        export CFLAGS="$CFLAGS -I$CONDA_PREFIX/include"
+        export LDFLAGS="$LDFLAGS -L$CONDA_PREFIX/lib -Wl,rpath,$CONDA_PREFIX/lib"
 
-    assuming <path> is the path to your conda environment (it should be
-    <path to conda>/envs/<env name>).
+    If ``$CONDA_PREFIX`` is not set, replace it by the path to the desired
+    conda environment.
 
-- Enable OpenMP support on default Apple-clang.
+Using homebrew
+~~~~~~~~~~~~~~
+
+    Another solution is to enable OpenMP support for the clang compiler shipped
+    by default on macOS.
 
     You first need to install the OpenMP library::
 
