@@ -395,7 +395,7 @@ Changelog
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.neighbors`
-....................
+........................
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
