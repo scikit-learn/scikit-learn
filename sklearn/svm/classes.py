@@ -593,11 +593,11 @@ class SVC(BaseSVC):
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
-    class_weight_ : array, shape = [n_class]
-        Multipliers of parameter C of class i (class_weight_[i]*C).
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
-    shape_fit_ : tuple, shape = [n_dimensions_of_X]
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
     Examples
@@ -786,24 +786,24 @@ class NuSVC(BaseSVC):
         The unique classes labels.
 
     fit_status_ : int
-        0 if correctly fitted, 1 otherwise (will raise warning)
+        0 if correctly fitted, 1 if the algorithm did not converge.
 
-    probA_ : array, shape = [n_class * (n_class-1) / 2]
-    probB_ : array, shape = [n_class * (n_class-1) / 2]
+    probA_ : ndarray, shape of (n_class * (n_class-1) / 2,)
+    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
         If probability=True, the parameters learned in Platt scaling to
         produce probability estimates from decision values. If
-        probability=False, an empty array. Platt scaling uses the logistic
+        `probability=False`, an empty array. Platt scaling uses the logistic
         function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
-    class_weight_ : array, shape = [n_class]
-        Multipliers of parameter C of class i (class_weight_[i]*C).
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C of each class.
         Computed based on the ``class_weight`` parameter.
 
-    shape_fit_ : tuple, shape = [n_dimensions_of_X]
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
     Examples
