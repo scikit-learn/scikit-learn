@@ -484,47 +484,10 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
-- |API| `requires_positive_X` estimator tag (for models that require
-  X to be non-negative) is now used by `check_estimator` to make sure
-  a proper error message is raised if X contains some negative entries.
-  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
-
-- |Enhancement| :func:`utils.safe_sparse_dot` works between 3D+ ndarray and
-  sparse matrix. :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
 
-:mod:`sklearn.neighbors`
-....................
-
-- |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
-  predicting probabilities by using `predict_proba` and supports more
-  outlier_label options: 'most_frequent', or different outlier_labels
-  for multi-outputs.
-  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
-
-- |Efficiency| Efficiency improvements for
-  :func:`neighbors.RadiusNeighborsClassifier.predict`.
-  :pr:`9597` by :user:`Wenbo Zhao <webber26232>`.
-
-- |Fix| KNearestRegressor now throws error when fit on non-square data and
-  metric = precomputed.  :class:`neighbors.NeighborsBase`
-  :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-
-:mod:`sklearn.neural_network`
-.............................
-
-- |Feature| Add `max_fun` parameter in
-  :class:`neural_network.BaseMultilayerPerceptron`,
-  :class:`neural_network.MLPRegressor`, and
-  :class:`neural_network.MLPClassifier` to give control over
-  maximum number of function evaluation to not meet ``tol`` improvement.
-  :issue:`9274` by :user:`Daniel Perry <daniel-perry>`.
-
-:mod:`sklearn.cross_decomposition`
-..................................
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
