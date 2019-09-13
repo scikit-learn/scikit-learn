@@ -116,6 +116,13 @@ Changelog
   need to store the entire dense matrix at once.
   :pr:`13960` by :user:`Scott Gigante <scottgigante>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- The ``outputs_2d_`` attribute is deprecated in
+  :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`. It is
+  equivalent to ``n_outputs != 1``.
+
 :mod:`sklearn.ensemble`
 .......................
 
