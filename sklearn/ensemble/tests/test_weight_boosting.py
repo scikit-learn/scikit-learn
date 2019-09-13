@@ -142,9 +142,10 @@ def test_iris():
                       np.abs(clf_samme.predict_proba(iris.data) - prob_samme))
 
 
-def test_boston():
+@pytest.mark.parametrize('loss', ['linear', 'square', 'exponential'])
+def test_boston(loss):
     # Check consistency on dataset boston house prices.
-    reg = AdaBoostRegressor(random_state=0)
+    reg = AdaBoostRegressor(loss=loss, random_state=0)
     reg.fit(boston.data, boston.target)
     score = reg.score(boston.data, boston.target)
     assert score > 0.85
@@ -562,3 +563,16 @@ def test_adaboost_consistent_predict(algorithm):
         np.argmax(model.predict_proba(X_test), axis=1),
         model.predict(X_test)
     )
+
+@pytest.mark.parametrize(
+    'model, X, y',
+    [(AdaBoostClassifier(), *datasets.load_iris(return_X_y=True)),
+     (AdaBoostRegressor(), *datasets.load_boston(return_X_y=True))]
+)
+def test_adaboost_negative_weight_error(model, X, y):
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = -10
+
+    err_msg = "sample_weight cannot contain negative weight"
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y, sample_weight=sample_weight)
