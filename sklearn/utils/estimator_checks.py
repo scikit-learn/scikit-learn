@@ -51,6 +51,7 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
+from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..datasets import load_iris, load_boston, make_blobs
@@ -1912,7 +1913,14 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                         ", ".join(map(str, classifier.classes_))))
 
 
+# TODO: remove in 0.24
+@deprecated("choose_check_classifiers_labels is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def choose_check_classifiers_labels(name, y, y_names):
+    return _choose_check_classifiers_labels(name, y, y_names)
+
+
+def _choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
 
@@ -1944,12 +1952,12 @@ def check_classifiers_classes(name, classifier_orig):
 
     for X, y, y_names in problems:
         for y_names_i in [y_names, y_names.astype('O')]:
-            y_ = choose_check_classifiers_labels(name, y, y_names_i)
+            y_ = _choose_check_classifiers_labels(name, y, y_names_i)
             check_classifiers_predictions(X, y_, name, classifier_orig)
 
     labels_binary = [-1, 1]
     y_names_binary = np.take(labels_binary, y_binary)
-    y_binary = choose_check_classifiers_labels(name, y_binary, y_names_binary)
+    y_binary = _choose_check_classifiers_labels(name, y_binary, y_names_binary)
     check_classifiers_predictions(X_binary, y_binary, name, classifier_orig)
 
 

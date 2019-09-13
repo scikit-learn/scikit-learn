@@ -466,6 +466,33 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
+def test_ridge_loo_cv_asym_scoring():
+    # checking on asymmetric scoring
+    scoring = 'explained_variance'
+    n_samples, n_features = 10, 5
+    n_targets = 1
+    X, y = _make_sparse_offset_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets,
+        random_state=0, shuffle=False, noise=1, n_informative=5
+    )
+
+    alphas = [1e-3, .1, 1., 10., 1e3]
+    loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    gcv_ridge = RidgeCV(fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    loo_ridge.fit(X, y)
+    gcv_ridge.fit(X, y)
+
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('n_features', [8, 20])
@@ -1043,6 +1070,7 @@ def test_ridge_fit_intercept_sparse_error(solver):
     err_msg = "solver='{}' does not support".format(solver)
     with pytest.raises(ValueError, match=err_msg):
         sparse_ridge.fit(X_csr, y)
+
 
 def test_ridge_fit_intercept_sparse_sag():
     X, y = _make_sparse_offset_regression(
