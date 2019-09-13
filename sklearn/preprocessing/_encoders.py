@@ -293,7 +293,8 @@ class OneHotEncoder(_EncoderUnion):
 
     @property
     def drop_idx_(self):
-        return np.array([encoder.drop_idx_ for encoder in self._encoders])
+        return np.array([encoder.drop_idx_ for encoder in self._encoders],
+                        dtype=np.int_)
 
     def _fit(self, X):
         """Validate keywords and fit `X` and return `X_list`."""
@@ -407,11 +408,11 @@ class OneHotEncoder(_EncoderUnion):
                                                len(input_features)))
 
         feature_names = []
-        for i in range(len(cats)):
-            names = [
-                input_features[i] + '_' + str(t) for t in cats[i]]
+        for input_feat, cat, encoder in zip(input_features, cats,
+                                            self._encoders):
+            names = [input_feat + '_' + str(t) for t in cat]
             if self.drop is not None:
-                names.pop(self.drop_idx_[i])
+                names.pop(encoder.drop_idx_)
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
