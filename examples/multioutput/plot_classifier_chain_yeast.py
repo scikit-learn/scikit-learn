@@ -10,7 +10,7 @@ For this example we will use the `yeast
 data point has at least one label. As a baseline we first train a logistic
 regression classifier for each of the 14 labels. To evaluate the performance of
 these classifiers we predict on a held-out test set and calculate the
-:ref:`jaccard score <jaccard_score>` for each sample.
+:ref:`jaccard score <jaccard_similarity_score>` for each sample.
 
 Next we create 10 classifier chains. Each classifier chain contains a
 logistic regression model for each of the 14 labels. The models in each

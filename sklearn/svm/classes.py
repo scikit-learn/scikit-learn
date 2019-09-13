@@ -827,11 +827,14 @@ class NuSVC(BaseSVC):
         Scalable linear Support Vector Machine for classification using
         liblinear.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'nu_svc'
