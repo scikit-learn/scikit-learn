@@ -97,7 +97,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
-        The decision tree to be exported to GraphViz.
+        The decision tree to be plotted.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
