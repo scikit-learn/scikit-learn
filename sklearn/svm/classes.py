@@ -584,9 +584,9 @@ class SVC(BaseSVC):
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
-        If probability=True, it corresponds to the parameters learned in 
+        If `probability=True`, it corresponds to the parameters learned in 
         Platt scaling to produce probability estimates from decision values.
-        If probability=False, it's an empty array. Platt scaling uses the 
+        If `probability=False`, it's an empty array. Platt scaling uses the 
         logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
@@ -790,9 +790,9 @@ class NuSVC(BaseSVC):
 
     probA_ : ndarray, shape of (n_class * (n_class-1) / 2,)
     probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
-        If probability=True, it corresponds to the parameters learned in 
+        If `probability=True`, it corresponds to the parameters learned in 
         Platt scaling to produce probability estimates from decision values.
-        If probability=False, it's an empty array. Platt scaling uses the 
+        If `probability=False`, it's an empty array. Platt scaling uses the 
         logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
