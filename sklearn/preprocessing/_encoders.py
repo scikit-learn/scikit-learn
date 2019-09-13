@@ -119,7 +119,8 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
 
         X_trs = []
         for encoder, X_col in zip(self._encoders, X_list):
-            X_trs.append(encoder.transform(X_col))
+            if encoder.n_features_out_ != 0:
+                X_trs.append(encoder.transform(X_col))
         return self._hstack(X_trs)
 
     def _hstack(self, Xs):
