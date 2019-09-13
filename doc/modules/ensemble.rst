@@ -456,7 +456,7 @@ trees.
   Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
   These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
@@ -825,7 +825,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`_.
+`LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
