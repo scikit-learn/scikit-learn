@@ -61,10 +61,9 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
             # to keep the dtype information to be used in the encoder.
             needs_validation = True
 
-        n_features = X.shape[1]
         X_columns = []
 
-        for i in range(n_features):
+        for i in range(X.shape[1]):
             Xi = safe_indexing(X, i, axis=1)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
@@ -90,12 +89,10 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
 
     def _fit_list(self, X_list, encoders):
         """Fit encoders on X_list"""
-        assert len(X_list) == len(encoders)
-
         for X_col, encoder in zip(X_list, encoders):
             encoder.fit(X_col)
 
-        # map from X_trans indicies to indicies from the original X
+        # map from X_trans indices to indices from the original X
         X_trans_to_orig_idx = []
         X_trans_idx = 0
         for encoder in encoders:
@@ -115,7 +112,8 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
                 "The number of features in X is different to the number of "
                 "features of the fitted data. The fitted data had {} features "
                 "and the X has {} features."
-                .format(len(self.categories_,), n_features))
+                .format(len(self.categories_,), n_features)
+            )
 
         X_trs = []
         for encoder, X_col in zip(self._encoders, X_list):
