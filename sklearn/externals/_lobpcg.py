@@ -30,6 +30,7 @@ __all__ = ['lobpcg']
 
 
 def bmat(*args, **kwargs):
+    import warnings
     with warnings.catch_warnings(record=True):
         warnings.filterwarnings(
             'ignore', '.*the matrix subclass is not the recommended way.*')
