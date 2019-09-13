@@ -711,3 +711,19 @@ def test_plot_partial_dependence_fig(pyplot):
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert pyplot.gcf() is fig
+
+
+def test_plot_partial_dependence_dataframe(pyplot):
+    pd = pytest.importorskip('pandas')
+    boston = load_boston()
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+    y = boston.target
+
+    grid_resolution = 25
+
+    clf = HistGradientBoostingRegressor(max_iter=50)
+    clf.fit(df, y)
+    plot_partial_dependence(
+        clf, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
