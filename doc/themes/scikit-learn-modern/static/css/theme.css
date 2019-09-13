@@ -237,6 +237,10 @@ div.sk-landing-container {
   max-width: 1400px;
 }
 
+div.sk-landing-container .text-white {
+    text-shadow: 0px 0px 4px rgb(42, 98, 128);
+}
+
 ul.sk-landing-header-body {
   margin-top: auto;
   margin-bottom: auto;
