@@ -811,7 +811,7 @@ class _SingleOrdinalEncoder(TransformerMixin, BaseEstimator):
 
         _, encoded = _encode(X, self.categories_, encode=True,
                              check_unknown=False)
-        return encoded[:, None].astype(self.dtype)
+        return encoded[:, None].astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
         """Convert the data back into the original representation.
