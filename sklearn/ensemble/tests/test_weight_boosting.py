@@ -564,6 +564,7 @@ def test_adaboost_consistent_predict(algorithm):
         model.predict(X_test)
     )
 
+
 @pytest.mark.parametrize(
     'model, X, y',
     [(AdaBoostClassifier(), *datasets.load_iris(return_X_y=True)),
