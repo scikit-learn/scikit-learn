@@ -450,12 +450,14 @@ def all_estimators(include_meta_estimators=None,
     ----------
     include_meta_estimators : boolean, default=False
         Deprecated, ignored.
+
         .. deprecated:: 0.21
            ``include_meta_estimators`` has been deprecated and has no effect in
            0.21 and will be removed in 0.23.
 
     include_other : boolean, default=False
         Deprecated, ignored.
+
         .. deprecated:: 0.21
            ``include_other`` has been deprecated and has not effect in 0.21 and
            will be removed in 0.23.
@@ -469,6 +471,7 @@ def all_estimators(include_meta_estimators=None,
 
     include_dont_test : boolean, default=False
         Deprecated, ignored.
+
         .. deprecated:: 0.21
            ``include_dont_test`` has been deprecated and has no effect in 0.21
            and will be removed in 0.23.
@@ -511,7 +514,9 @@ def all_estimators(include_meta_estimators=None,
         if IS_PYPY and ('_svmlight_format' in modname or
                         'feature_extraction._hashing' in modname):
             continue
-        module = __import__(modname, fromlist="dummy")
+        # Ignore deprecation warnings triggered at import time.
+        with ignore_warnings(category=DeprecationWarning):
+            module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
 
