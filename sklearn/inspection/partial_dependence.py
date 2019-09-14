@@ -406,10 +406,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
-          should be computed
+          should be computed.
+
         Ignored in binary classification or classical regression settings.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto') :
+            optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of

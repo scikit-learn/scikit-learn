@@ -12,7 +12,6 @@ This module defines export functions for decision trees.
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
 from io import StringIO
-
 from numbers import Integral
 
 import numpy as np
@@ -96,7 +95,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
-        The decision tree to be exported to GraphViz.
+        The decision tree to be plotted.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -832,7 +831,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree import export_text
+    >>> from sklearn.tree.export import export_text
     >>> iris = load_iris()
     >>> X = iris['data']
     >>> y = iris['target']

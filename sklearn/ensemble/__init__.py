@@ -4,11 +4,13 @@ classification, regression and anomaly detection.
 """
 
 from ._base import BaseEnsemble
+from ._forest import BaseForest
 from ._forest import RandomForestClassifier
 from ._forest import RandomForestRegressor
 from ._forest import RandomTreesEmbedding
 from ._forest import ExtraTreesClassifier
 from ._forest import ExtraTreesRegressor
+from ._bagging import BaseBagging
 from ._bagging import BaggingClassifier
 from ._bagging import BaggingRegressor
 from ._iforest import IsolationForest
@@ -20,7 +22,7 @@ from ._voting import VotingClassifier
 from ._voting import VotingRegressor
 from . import partial_dependence
 
-__all__ = ["BaseEnsemble",
+__all__ = ["BaseEnsemble", "BaseBagging",
            "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "BaggingClassifier",

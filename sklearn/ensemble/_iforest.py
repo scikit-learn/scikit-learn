@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-
 import numbers
 import numpy as np
 from scipy.sparse import issparse
@@ -19,7 +18,7 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
-from ._bagging import BaseBagging
+from . import BaseBagging
 
 __all__ = ["IsolationForest"]
 
@@ -68,7 +67,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         on the scores of the samples.
 
             - If 'auto', the threshold is determined as in the
-            original paper.
+              original paper.
             - If float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
