@@ -646,11 +646,15 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
+dl.field-list > dt:after {
+  content: ":";
+}
+
 @media screen and (min-width: 768px) {
-  dl.field-list > dd {
+  dl.class dl.field-list > dd, dl.function dl.field-list > dd {
     flex-basis: 88%;
   }
-  dl.field-list > dt {
+  dl.class dl.field-list > dt, dl.function dl.field-list > dt {
     flex-basis: 12%;
   }
 }

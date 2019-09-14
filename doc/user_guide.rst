@@ -16,6 +16,7 @@ User Guide
 
 .. toctree::
    :numbered:
+   :maxdepth: 3
 
    supervised_learning.rst
    unsupervised_learning.rst
