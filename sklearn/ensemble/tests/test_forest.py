@@ -1361,39 +1361,6 @@ def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
         est.fit(X, y)
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-def test_classification_toy_max_samples(name):
-    # Test that the toy example is separable via a bootstrap size of only 2
-
-    rng = np.random.RandomState(1)
-    max_tries = 100
-
-    # The toy example is separable using just one
-    # decision stump, and choosing 2 examples from the full
-    # 6-example dataset *if* the 2 examples are chosen correctly.
-    est = FOREST_CLASSIFIERS[name](
-        n_estimators=1,
-        bootstrap=True,
-        max_samples=2,
-        max_depth=1,
-        random_state=rng,
-    )
-
-    # Each call to fit uses a different bootstrap sample of size two. If we
-    # fit multiple times, we expect that we eventually hit a case where
-    # the two examples chosen for the bootstrap sample are from the opposite
-    # class and yield a perfect score across the entire dataset.
-    perfect_score = False
-    for _ in range(max_tries):
-        est.fit(X, y)
-        if est.score(X, y) == 1.0:
-            perfect_score = True
-            break
-
-    msg = "Perfect accuracy is achievable with `max_samples=2` on toy data"
-    assert perfect_score, msg
-
-
 @pytest.mark.parametrize(
     'ForestClass', [RandomForestClassifier, RandomForestRegressor]
 )
