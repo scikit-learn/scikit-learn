@@ -138,26 +138,15 @@ div.clearer {
 /* Button */
 
 .sk-btn-primary {
-  background-color: #3499cd;
-  border-color: #3499cd;
+  background-color: #30799C;
+  border-color: #30799C;
   color: white;
 }
 
 .sk-btn-primary:hover,
 .sk-btn-primary:active {
-  background-color: #388bb5;
-  border-color: #388bb5;
-}
-
-.sk-btn-primary-outline {
+  background-color: #3499cd;
   border-color: #3499cd;
-  color: #3499cd;
-}
-
-.sk-btn-primary-outline:hover,
-.sk-btn-primary-outline:active {
-  background-color: #388bb5;
-  color: white;
 }
 
 /* Search */
@@ -197,6 +186,8 @@ div.gsc-results-wrapper-visible {
   position: absolute;
   right: 1rem;
   box-shadow: -4px 9px 20px -4px rgba(0,0,0,0.56);
+  width: 600px;
+  max-width: 100%;
 }
 
 div.gsc-results {
@@ -208,6 +199,10 @@ div.gsc-results {
 @media screen and (min-width: 768px) {
   .sk-search-form {
     width: 14rem;
+  }
+
+  div.gsc-results-wrapper-visible {
+    width: 100%;
   }
 }
 
@@ -231,6 +226,23 @@ a.sk-nav-dropdown-item:active {
   background-color: rgba(246, 126, 0, 1);
 }
 
+.nav-more-item-mobile-items {
+  display: inherit;
+}
+
+.nav-more-item-dropdown {
+  display: none;
+}
+
+@media screen and (min-width: 768px) {
+  .nav-more-item-dropdown {
+    display: inherit;
+  }
+
+  .nav-more-item-mobile-items {
+    display: none;
+  }
+}
 /* LANDING PAGE STYLE */
 
 div.sk-landing-container {
@@ -274,7 +286,7 @@ div.sk-landing-bg-more-info {
 }
 
 .sk-landing-call-header {
-  color: #ff9c34;
+  color: #E07200;
   font-weight: 700;
 }
 
@@ -300,6 +312,10 @@ img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
   margin: 0 8px;
+}
+
+ul.sk-landing-call-list li {
+  margin-bottom: 0.25rem;
 }
 
 /* DOCS STYLE */
@@ -347,8 +363,8 @@ img.sk-footer-funding-logo {
 
 div.sk-page-content {
   background-color: white;
-  margin-top: 52px;
   position: relative;
+  margin-top: 0.5rem;
 }
 
 div.sk-page-content {
@@ -375,6 +391,9 @@ div.section h6 {
 }
 
 @media screen and (min-width: 1400px) {
+  div.sk-page-content {
+    margin-top: 52px;
+  }
   .sk-btn-toggle-toc {
     border-top-left-radius: 0.5rem;
   }
@@ -394,7 +413,6 @@ footer.sk-content-footer {
 nav.sk-docs-navbar {
   width: 100%;
   z-index: 3;
-  position: fixed;
   -webkit-transition: top .2s ease-in-out;
   -moz-transition: top .2s ease-in-out .05s;
   -o-transition: top .2s ease-in-out .05s;
@@ -402,6 +420,10 @@ nav.sk-docs-navbar {
 }
 
 @media screen and (min-width: 768px) {
+
+  nav.sk-docs-navbar {
+    position: fixed;
+  }
 
   #sk-page-content-wrapper {
     padding-left: 240px;

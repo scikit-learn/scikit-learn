@@ -54,7 +54,12 @@
         <li class="nav-item">
           <a class="sk-nav-link nav-link" href="{{ pathto('auto_examples/index') }}">Examples</a>
         </li>
-        <li class="nav-item dropdown">
+        {%- for title, link in drop_down_navigation %}
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link nav-more-item-mobile-items" href="{{ pathto(link) }}">{{ title }}</a>
+        </li>
+        {%- endfor %}
+        <li class="nav-item dropdown nav-more-item-dropdown">
           <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
             {%- for title, link in drop_down_navigation %}

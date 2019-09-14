@@ -89,19 +89,29 @@ $(document).ready(function() {
     // Hide navbar on load if hash target is on top
     var navBar = document.getElementById("navbar");
     var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
-    if (hashTargetOnTop()) {
-        // hide navbar
+    var $window = $(window);
+
+    hideNavBar = function() {
         navBar.style.top = navBarHeightHidden;
+    };
+
+    showNavBar = function() {
+        navBar.style.top = "0";
+    }
+
+    if (hashTargetOnTop() && ($window.width() >= 768)) {
+        hideNavBar()
     }
 
     var prevScrollpos = window.pageYOffset;
     hideOnScroll = function(lastScrollTop) {
+        if ($window.width() < 768) {
+            return;
+        }
         if (lastScrollTop > 2 && (prevScrollpos <= lastScrollTop) || hashTargetOnTop()){
-            // hide navbar
-            navBar.style.top = navBarHeightHidden;
+            hideNavBar()
         } else {
-            // show navbar
-            navBar.style.top = "0";
+            showNavBar()
         }
         prevScrollpos = lastScrollTop;
     };
@@ -112,7 +122,6 @@ $(document).ready(function() {
         window.mozRequestAnimationFrame ||
         window.msRequestAnimationFrame ||
         window.oRequestAnimationFrame;
-    var $window = $(window);
     var lastScrollTop = $window.scrollTop();
 
     if (raf) {
