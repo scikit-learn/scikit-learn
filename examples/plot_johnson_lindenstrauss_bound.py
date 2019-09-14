@@ -157,7 +157,7 @@ for n_components in n_components_range:
         projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
-    min_dist = min(projected_dists.max(), dists.min())
+    min_dist = min(projected_dists.min(), dists.min())
     max_dist = max(projected_dists.max(), dists.max())
     plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu,
                extent=[min_dist, max_dist, min_dist, max_dist])
