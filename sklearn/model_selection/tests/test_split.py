@@ -979,6 +979,16 @@ def test_repeated_cv_value_errors():
         assert_raises(ValueError, cv, n_repeats=0)
         assert_raises(ValueError, cv, n_repeats=1.5)
 
+def test_repeated_cv_repr():
+    n_splits = 2
+    n_repeats = 6
+    rkf = RepeatedKFold(n_splits, n_repeats)
+    rskf = RepeatedStratifiedKFold(n_splits, n_repeats)
+    rkf_repr = 'RepeatedKFold(n_repeats=6, n_splits=2, random_state=None)'
+    rskf_repr = \
+        'RepeatedStratifiedKFold(n_repeats=6, n_splits=2, random_state=None)'
+    for cv, cv_repr in zip([rkf, rskf], [rkf_repr, rskf_repr]):
+        assert cv_repr == repr(cv)
 
 def test_repeated_kfold_determinstic_split():
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
