@@ -390,10 +390,12 @@ div.section h6 {
   cursor: pointer;
 }
 
-@media screen and (min-width: 1400px) {
+@media screen and (min-width: 768px) {
   div.sk-page-content {
     margin-top: 52px;
   }
+}
+@media screen and (min-width: 1400px) {
   .sk-btn-toggle-toc {
     border-top-left-radius: 0.5rem;
   }
