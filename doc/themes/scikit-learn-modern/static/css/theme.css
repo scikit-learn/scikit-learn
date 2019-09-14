@@ -37,7 +37,7 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  padding: 0.2rem;
+  padding: 0.1rem;
   white-space: nowrap;
 }
 
@@ -728,6 +728,10 @@ div.admonition, div.deprecated {
 
 div.admonition {
   background-color: #eee;
+}
+
+div.admonition p, div.admonition dl, div.admonition dd {
+  margin-bottom: 0
 }
 
 div.deprecated {
