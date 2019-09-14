@@ -94,6 +94,10 @@ div.highlight a {
   text-decoration: underline;
 }
 
+.versionmodified {
+  font-style: italic;
+}
+
 a.sk-landing-btn {
   background-color: #ff9c34;
   color: black;
@@ -715,12 +719,21 @@ div.admonition p.admonition-title + p, div.deprecated p {
   display: inline;
 }
 
-div.admonition {
+div.admonition, div.deprecated {
   padding: 0.5rem;
-  background-color: #eee;
   border-radius: 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
+}
+
+div.admonition {
+  background-color: #eee;
+}
+
+div.deprecated {
+  color: #b94a48;
+  background-color: #F3E5E5;
+  border: 1px solid #eed3d7;
 }
 
 div.seealso {
