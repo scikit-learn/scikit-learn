@@ -746,6 +746,14 @@ div.seealso {
   color: #AF8A4B;
 }
 
+div.versionchanged {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #FFFBE8;
+  border: 1px solid #fbeed5;
+  border-radius: 0.5rem;
+}
+
 dt.label {
   float: left;
   padding-right: 0.5rem;
