@@ -527,7 +527,7 @@ div.sk-sidebar-toc ul li ul li ul{
 }
 
 div.sk-sidebar-toc span {
-  white-space: normal;
+  white-space: pre;
 }
 
 div.sk-sidebar-global-toc ul ul {
