@@ -155,6 +155,15 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
+def test_least_absolute_deviation():
+    # For coverage only.
+    X, y = make_regression(n_samples=500, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation',
+                                         random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt.score(X, y) > .9
+
+
 def test_binning_train_validation_are_separated():
     # Make sure training and validation data are binned separately.
     # See issue 13926
