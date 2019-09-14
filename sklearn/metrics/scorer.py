@@ -18,8 +18,9 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta
 from collections.abc import Iterable
+from functools import partial
+from collections import Counter
 
 import numpy as np
 
@@ -44,7 +45,82 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _BaseScorer(metaclass=ABCMeta):
+def _cached_call(cache, estimator, method, *args, **kwargs):
+    """Call estimator with method and args and kwargs."""
+    if cache is None:
+        return getattr(estimator, method)(*args, **kwargs)
+
+    try:
+        return cache[method]
+    except KeyError:
+        result = getattr(estimator, method)(*args, **kwargs)
+        cache[method] = result
+        return result
+
+
+class _MultimetricScorer:
+    """Callable for multimetric scoring used to avoid repeated calls
+    to `predict_proba`, `predict`, and `decision_function`.
+
+    `_MultimetricScorer` will return a dictionary of scores corresponding to
+    the scorers in the dictionary. Note that `_MultimetricScorer` can be
+    created with a dictionary with one key  (i.e. only one actual scorer).
+
+    Parameters
+    ----------
+    scorers : dict
+        Dictionary mapping names to callable scorers.
+    """
+    def __init__(self, **scorers):
+        self._scorers = scorers
+
+    def __call__(self, estimator, *args, **kwargs):
+        """Evaluate predicted target values."""
+        scores = {}
+        cache = {} if self._use_cache(estimator) else None
+        cached_call = partial(_cached_call, cache)
+
+        for name, scorer in self._scorers.items():
+            if isinstance(scorer, _BaseScorer):
+                score = scorer._score(cached_call, estimator,
+                                      *args, **kwargs)
+            else:
+                score = scorer(estimator, *args, **kwargs)
+            scores[name] = score
+        return scores
+
+    def _use_cache(self, estimator):
+        """Return True if using a cache is beneficial.
+
+        Caching may be beneficial when one of these conditions holds:
+          - `_ProbaScorer` will be called twice.
+          - `_PredictScorer` will be called twice.
+          - `_ThresholdScorer` will be called twice.
+          - `_ThresholdScorer` and `_PredictScorer` are called and
+             estimator is a regressor.
+          - `_ThresholdScorer` and `_ProbaScorer` are called and
+             estimator does not have a `decision_function` attribute.
+
+        """
+        if len(self._scorers) == 1:  # Only one scorer
+            return False
+
+        counter = Counter([type(v) for v in self._scorers.values()])
+
+        if any(counter[known_type] > 1 for known_type in
+               [_PredictScorer, _ProbaScorer, _ThresholdScorer]):
+            return True
+
+        if counter[_ThresholdScorer]:
+            if is_regressor(estimator) and counter[_PredictScorer]:
+                return True
+            elif (counter[_ProbaScorer] and
+                  not hasattr(estimator, "decision_function")):
+                return True
+        return False
+
+
+class _BaseScorer:
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -58,12 +134,6 @@ class _BaseScorer(metaclass=ABCMeta):
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def _factory_args(self):
-        """Return non-default make_scorer arguments for repr."""
-        return ""
-
-
-class _PredictScorer(_BaseScorer):
     def __call__(self, estimator, X, y_true, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
 
@@ -87,8 +157,43 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
+        return self._score(partial(_cached_call, None), estimator, X, y_true,
+                           sample_weight=sample_weight)
 
-        y_pred = estimator.predict(X)
+    def _factory_args(self):
+        """Return non-default make_scorer arguments for repr."""
+        return ""
+
+
+class _PredictScorer(_BaseScorer):
+    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+        """Evaluate predicted target values for X relative to y_true.
+
+        Parameters
+        ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+
+        estimator : object
+            Trained estimator to use for scoring. Must have a predict_proba
+            method; the output of that is used to compute the score.
+
+        X : array-like or sparse matrix
+            Test data that will be fed to estimator.predict.
+
+        y_true : array-like
+            Gold standard target values for X.
+
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Score function applied to prediction of estimator on X.
+        """
+        y_pred = method_caller(estimator, "predict", X)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
@@ -99,11 +204,15 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
         ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+
         clf : object
             Trained classifier to use for scoring. Must have a predict_proba
             method; the output of that is used to compute the score.
@@ -124,7 +233,7 @@ class _ProbaScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
         y_type = type_of_target(y)
-        y_pred = clf.predict_proba(X)
+        y_pred = method_caller(clf, "predict_proba", X)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
@@ -145,11 +254,15 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
         ----------
+        method_caller : callable
+            Returns predictions given an estimator, method name, and other
+            arguments, potentially caching results.
+
         clf : object
             Trained classifier to use for scoring. Must have either a
             decision_function method or a predict_proba method; the output of
@@ -176,17 +289,17 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = clf.predict(X)
+            y_pred = method_caller(clf, "predict", X)
         else:
             try:
-                y_pred = clf.decision_function(X)
+                y_pred = method_caller(clf, "decision_function", X)
 
                 # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred = clf.predict_proba(X)
+                y_pred = method_caller(clf, "predict_proba", X)
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:

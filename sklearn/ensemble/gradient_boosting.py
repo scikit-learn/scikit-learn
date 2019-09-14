@@ -1172,7 +1172,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto',
+                 warm_start=False, presort='deprecated',
                  validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-4):
 
@@ -1234,7 +1234,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort,
                 ccp_alpha=self.ccp_alpha)
 
             if self.subsample < 1.0:
@@ -1334,10 +1333,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "integer. %r was passed"
                              % self.n_iter_no_change)
 
-        allowed_presort = ('auto', True, False)
-        if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
+        if self.presort != 'deprecated':
+            warnings.warn("The parameter 'presort' is deprecated and has no "
+                          "effect. It will be removed in v0.24. You can "
+                          "suppress this warning by not passing any value "
+                          "to the 'presort' parameter. We also recommend "
+                          "using HistGradientBoosting models instead.",
+                          DeprecationWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -1527,20 +1529,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        if self.presort is True and issparse(X):
-            raise ValueError(
-                "Presorting is not supported for sparse matrices.")
-
-        presort = self.presort
-        # Allow presort to be 'auto', which means True if the dataset is dense,
-        # otherwise it will be False.
-        if presort == 'auto':
-            presort = not issparse(X)
-
         X_idx_sorted = None
-        if presort:
-            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
-                                             dtype=np.int32)
 
         # fit the boosting stages
         n_stages = self._fit_stages(
@@ -1967,14 +1956,10 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : bool or 'auto', optional (default='auto')
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. Auto mode by default will use presorting on dense data and
-        default to normal sorting on sparse data. Setting presort to true on
-        sparse data will raise an error.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
-        .. versionadded:: 0.17
-           *presort* parameter.
+        .. deprecated :: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -2082,7 +2067,7 @@ shape (n_estimators, ``loss_.K``)
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto', validation_fraction=0.1,
+                 presort='deprecated', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
@@ -2447,14 +2432,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : bool or 'auto', optional (default='auto')
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. Auto mode by default will use presorting on dense data and
-        default to normal sorting on sparse data. Setting presort to true on
-        sparse data will raise an error.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
-        .. versionadded:: 0.17
-           optional parameter *presort*.
+        .. deprecated :: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -2548,7 +2529,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto', validation_fraction=0.1,
+                 warm_start=False, presort='deprecated',
+                 validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
