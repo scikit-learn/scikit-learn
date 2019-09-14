@@ -163,7 +163,7 @@ div.clearer {
 /* Search */
 
 .sk-search-form {
-  width: 80%;
+  width: 90%;
 }
 
 div.gsc-input-box {
@@ -399,7 +399,6 @@ nav.sk-docs-navbar {
   -moz-transition: top .2s ease-in-out .05s;
   -o-transition: top .2s ease-in-out .05s;
   transition: top .2s ease-in-out .05s;
-  position: fixed;
 }
 
 @media screen and (min-width: 768px) {

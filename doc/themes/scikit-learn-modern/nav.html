@@ -6,6 +6,18 @@
   {%- set top_container_cls = "sk-landing-container" %}
 {%- endif %}
 
+{%- set drop_down_navigation = [
+  ('Quick Start', 'tutorial/basic/tutorial'),
+  ('Tutorial', 'tutorial/index'),
+  ('Glossary', 'glossary'),
+  ('Development', 'developers/index'),
+  ('FAQ', 'faq'),
+  ('Related packages', 'related_projects'),
+  ('Roadmap', 'roadmap'),
+  ('About us', 'about'),
+  ('Documentation', 'documentation')]
+-%}
+
 <nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
   <div class="container-fluid {{ top_container_cls }} px-0">
     {%- if logo %}
@@ -45,15 +57,9 @@
         <li class="nav-item dropdown">
           <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
           <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/basic/tutorial') }}">Quick Start</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('tutorial/index') }}">Tutorial</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('glossary') }}">Glossary</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('developers/index') }}">Development</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('faq') }}">FAQ</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('related_projects') }}">Related packages</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('roadmap') }}">Roadmap</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('about') }}">About us</a>
-            <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto('documentation') }}">Documentation</a>
+            {%- for title, link in drop_down_navigation %}
+              <a class="sk-nav-dropdown-item dropdown-item" href="{{ pathto(link) }}">{{ title}}</a>
+            {%- endfor %}
           </div>
         </li>
       </ul>
