@@ -1,6 +1,8 @@
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
+# distutils: extra_compile_args=-fopenmp
+# distutils: extra_link_args=-fopenmp
 #
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
@@ -10,10 +12,8 @@
 import numpy as np
 cimport numpy as np
 from cython cimport floating
-from libc.string cimport memset
-
-from ..utils._cython_blas cimport _asum
-
+from cython.parallel import prange
+from libc.math cimport fabs
 
 np.import_array()
 
@@ -51,18 +51,61 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     ...                  Y.data, Y.indices, Y.indptr,
     ...                  X.shape[1], D)
     """
-    cdef double[::1] row = np.empty(n_features)
-    cdef np.npy_intp ix, iy, j
+    """Pairwise L1 distances for CSR matrices.
+    Usage:
+    >>> D = np.zeros(X.shape[0], Y.shape[0])
+    >>> cython_manhattan(X.data, X.indices, X.indptr,
+    ...                  Y.data, Y.indices, Y.indptr,
+    ...                  D)
+    """
+    cdef np.npy_intp px, py, i, j, ix, iy
+    cdef double d = 0.0
+
+    cdef int m = D.shape[0]
+    cdef int n = D.shape[1]
 
     with nogil:
-        for ix in range(D.shape[0]):
-            for iy in range(D.shape[1]):
-                # Simple strategy: densify current row of X, then subtract the
-                # corresponding row of Y.
-                memset(&row[0], 0, n_features * sizeof(double))
-                for j in range(X_indptr[ix], X_indptr[ix + 1]):
-                    row[X_indices[j]] = X_data[j]
-                for j in range(Y_indptr[iy], Y_indptr[iy + 1]):
-                    row[Y_indices[j]] -= Y_data[j]
+        for px in prange(m):
+            for py in range(n):
+                i = X_indptr[px]
+                j = Y_indptr[py]
+                d = 0.0
+                while i < X_indptr[px+1] and j < Y_indptr[py+1]:
+                    if i < X_indptr[px+1]: ix = X_indices[i]
+                    if j < Y_indptr[py+1]: iy = Y_indices[j]
 
-                D[ix, iy] = _asum(n_features, &row[0], 1)
+                    if ix==iy:
+                        d = d+fabs(X_data[i]-Y_data[j])
+                        i = i+1
+                        j = j+1
+                    elif ix<iy:
+                        d = d+fabs(X_data[i])
+                        i = i+1
+                    else:
+                        d = d+fabs(Y_data[j])
+                        j = j+1
+
+                if i== X_indptr[px+1]:
+                    while j < Y_indptr[py+1]:
+                        iy = Y_indices[j]
+                        d = d+fabs(Y_data[j])
+                        j = j+1
+                else:
+                    while i < X_indptr[px+1]:
+                        ix = X_indices[i]
+                        d = d+fabs(X_data[i])
+                        i = i+1
+
+                D[px,py] = d
+
+
+def _dense_manhattan(floating[:,:] x,floating[:,:] y, floating[:,:] out):
+    cdef double s = 0.0
+    cdef np.npy_intp i, j, k
+    with nogil:
+        for i in prange(x.shape[0]):
+            for j in range(y.shape[0]):
+                s = 0
+                for k in range(x.shape[1]):
+                    s = s + fabs(x[i,k]-y[j,k])
+                out[i,j]=s

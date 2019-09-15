@@ -29,7 +29,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils.mask import _get_mask
 
-from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan, _dense_manhattan
 from ..exceptions import DataConversionWarning
 
 
@@ -774,9 +774,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     if sum_over_features:
         return distance.cdist(X, Y, 'cityblock')
 
-    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-    D = np.abs(D, D)
-    return D.reshape((-1, X.shape[1]))
+    D = np.empty(shape=(X.shape[0],Y.shape[0]))
+    _dense_manhattan(X,Y,D)
+    return D
 
 
 def cosine_distances(X, Y=None):
