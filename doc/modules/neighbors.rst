@@ -721,4 +721,4 @@ added space complexity in the operation.
       Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
     `Wikipedia entry on Neighborhood Components Analysis
-    <https://en.wikipedia.org/wiki/Neighbourhood\_components\_analysis>`_
+    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

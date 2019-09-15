@@ -1188,7 +1188,7 @@ def dcg_score(y_true, y_score, k=None,
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
-    <https://en.wikipedia.org/wiki/Discounted\_cumulative\_gain>`_
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
 
     Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
