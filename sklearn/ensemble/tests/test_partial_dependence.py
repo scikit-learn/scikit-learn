@@ -6,7 +6,6 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
-from sklearn.utils.testing import assert_raises
 from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
@@ -128,27 +127,30 @@ def test_partial_dependecy_input():
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
-    assert_raises(ValueError, partial_dependence,
-                  clf, [0], grid=None, X=None)
+    with pytest.raises(ValueError):
+        partial_dependence(clf, [0], grid=None, X=None)
 
-    assert_raises(ValueError, partial_dependence,
-                  clf, [0], grid=[0, 1], X=X)
+    with pytest.raises(ValueError):
+        partial_dependence(clf, [0], grid=[0, 1], X=X)
 
     # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, partial_dependence,
-                  {}, [0], X=X)
+    with pytest.raises(ValueError):
+        partial_dependence({}, [0], X=X)
 
     # Gradient boosting estimator must be fit
-    assert_raises(ValueError, partial_dependence,
-                  GradientBoostingClassifier(), [0], X=X)
+    with pytest.raises(ValueError):
+        partial_dependence(GradientBoostingClassifier(), [0], X=X)
 
-    assert_raises(ValueError, partial_dependence, clf, [-1], X=X)
+    with pytest.raises(ValueError):
+        partial_dependence(clf, [-1], X=X)
 
-    assert_raises(ValueError, partial_dependence, clf, [100], X=X)
+    with pytest.raises(ValueError):
+        partial_dependence(clf, [100], X=X)
 
     # wrong ndim for grid
     grid = np.random.rand(10, 2, 1)
-    assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
+    with pytest.raises(ValueError):
+        partial_dependence(clf, [0], grid=grid)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -193,33 +195,33 @@ def test_plot_partial_dependence_input(pyplot):
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
 
     # not fitted yet
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [0])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, X, [0])
 
     clf.fit(X, y)
 
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, np.array(X)[:, :0], [0])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, np.array(X)[:, :0], [0])
 
     # first argument must be an instance of BaseGradientBoosting
-    assert_raises(ValueError, plot_partial_dependence,
-                  {}, X, [0])
+    with pytest.raises(ValueError):
+        plot_partial_dependence({}, X, [0])
 
     # must be larger than -1
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [-1])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, X, [-1])
 
     # too large feature value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [100])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, X, [100])
 
     # str feature but no feature_names
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, ['foobar'])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, X, ['foobar'])
 
     # not valid features value
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, X, [{'foo': 'bar'}])
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, X, [{'foo': 'bar'}])
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
@@ -250,14 +252,14 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert all(ax.has_data for ax in axs)
 
     # label not in gbrt.classes_
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, iris.data, [0, 1], label='foobar',
-                  grid_resolution=grid_resolution)
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, iris.data, [0, 1], label='foobar',
+                                grid_resolution=grid_resolution)
 
     # label not provided
-    assert_raises(ValueError, plot_partial_dependence,
-                  clf, iris.data, [0, 1],
-                  grid_resolution=grid_resolution)
+    with pytest.raises(ValueError):
+        plot_partial_dependence(clf, iris.data, [0, 1],
+                                grid_resolution=grid_resolution)
 
 
 @pytest.mark.parametrize(
