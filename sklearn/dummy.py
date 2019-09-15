@@ -357,7 +357,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     @deprecated(
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
-        "n_outputs_ != 1."
+        "n_outputs_ > 1."
     )
     @property
     def outputs_2d_(self):
