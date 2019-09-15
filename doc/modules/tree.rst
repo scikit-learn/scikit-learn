@@ -320,17 +320,6 @@ largest reduction in entropy.  This has a cost of
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
 
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
-
 
 Tips on practical use
 =====================
