@@ -102,12 +102,12 @@ print("Average number of nodes with pruning {:.1f}".format(
     np.mean([e.tree_.node_count for e in rf.estimators_])))
 
 ############################################################################
-Retrieve dataframes from OpenML
--------------------------------
-:func:`datasets.fetch_openml` can now return pandas dataframe and thus
-properly handle datasets with heterogeneous data:
+# Retrieve dataframes from OpenML
+# -------------------------------
+# :func:`datasets.fetch_openml` can now return pandas dataframe and thus
+# properly handle datasets with heterogeneous data:
 
 from sklearn.datasets import fetch_openml
 
 titanic = fetch_openml('titanic', version=1, as_frame=True)
-print(titanic.data.head()[['pclass', ['embarked']]])
+print(titanic.data.head()[['pclass', 'embarked']])
