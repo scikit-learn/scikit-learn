@@ -18,6 +18,7 @@ from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 from .exceptions import NotFittedError
+from .utils import deprecated
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
@@ -121,8 +122,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
-
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -156,7 +155,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
                                .format(self.constant, list(self.classes_[k])))
                     raise ValueError(err_msg)
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
             self.class_prior_ = self.class_prior_[0]
@@ -187,7 +186,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -196,7 +195,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1 and not self.output_2d_:
+            if self.n_outputs_ == 1:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -233,7 +232,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             elif self.strategy == "constant":
                 y = np.tile(self.constant, (n_samples, 1))
 
-            if self.n_outputs_ == 1 and not self.output_2d_:
+            if self.n_outputs_ == 1:
                 y = np.ravel(y)
 
         return y
@@ -265,7 +264,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -296,7 +295,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
             P.append(out)
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             P = P[0]
 
         return P
@@ -356,6 +355,15 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    @deprecated(
+        "The outputs_2d_ attribute is deprecated in version 0.22 "
+        "and will be removed in version 0.24. It is equivalent to "
+        "n_outputs_ > 1."
+    )
+    @property
+    def outputs_2d_(self):
+        return self.n_outputs_ != 1
 
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -432,8 +440,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
-        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
-
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
         self.n_outputs_ = y.shape[1]
@@ -473,7 +479,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                                         accept_sparse=['csr', 'csc', 'coo'],
                                         ensure_2d=False, ensure_min_samples=0)
 
-            if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
+            if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
                     "Constant target value should have "
                     "shape (%d, 1)." % y.shape[1])
@@ -511,7 +517,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     dtype=np.array(self.constant_).dtype)
         y_std = np.zeros((n_samples, self.n_outputs_))
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             y = np.ravel(y)
             y_std = np.ravel(y_std)
 
@@ -557,3 +563,12 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    @deprecated(
+        "The outputs_2d_ attribute is deprecated in version 0.22 "
+        "and will be removed in version 0.24. It is equivalent to "
+        "n_outputs_ > 1."
+    )
+    @property
+    def outputs_2d_(self):
+        return self.n_outputs_ != 1

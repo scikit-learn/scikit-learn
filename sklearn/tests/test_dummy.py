@@ -765,3 +765,12 @@ def test_n_features_in_(Dummy):
     assert not hasattr(d, 'n_features_in_')
     d.fit(X, y)
     assert d.n_features_in_ is None
+
+
+@pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
+def test_outputs_2d_deprecation(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    with pytest.warns(DeprecationWarning,
+                      match="will be removed in version 0.24"):
+        Dummy().fit(X, y).outputs_2d_
