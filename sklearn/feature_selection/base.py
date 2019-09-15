@@ -95,7 +95,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         -------
         X_r : array of shape [n_samples, n_original_features]
             `X` with columns of zeros inserted where features would have
-            been removed by `transform`.
+            been removed by :meth:`transform`.
         """
         if issparse(X):
             X = X.tocsc()

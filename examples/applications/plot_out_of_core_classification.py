@@ -11,16 +11,6 @@ that the features space remains the same over time we leverage a
 HashingVectorizer that will project each example into the same feature space.
 This is especially useful in the case of text classification where new
 features (words) may appear in each batch.
-
-The dataset used in this example is Reuters-21578 as provided by the UCI ML
-repository. It will be automatically downloaded and uncompressed on first run.
-
-The plot represents the learning curve of the classifier: the evolution
-of classification accuracy over the course of the mini-batches. Accuracy is
-measured on the first 1000 samples, held out as a validation set.
-
-To limit the memory consumption, we queue examples up to a fixed amount before
-feeding them to the learner.
 """
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
@@ -57,6 +47,10 @@ def _not_in_sphinx():
 # Reuters Dataset related routines
 # --------------------------------
 #
+# The dataset used in this example is Reuters-21578 as provided by the UCI ML
+# repository. It will be automatically downloaded and uncompressed on first
+# run.
+
 
 
 class ReutersParser(HTMLParser):
@@ -320,6 +314,13 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 ###############################################################################
 # Plot results
 # ------------
+#
+# The plot represents the learning curve of the classifier: the evolution
+# of classification accuracy over the course of the mini-batches. Accuracy is
+# measured on the first 1000 samples, held out as a validation set.
+#
+# To limit the memory consumption, we queue examples up to a fixed amount
+# before feeding them to the learner.
 
 
 def plot_accuracy(x, y, x_legend):
