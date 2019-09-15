@@ -5,7 +5,6 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
@@ -37,33 +36,40 @@ X_r, y_r = datasets.load_boston(return_X_y=True)
 
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
-    msg = ('Invalid `estimators` attribute, `estimators` should be'
-           ' a list of (string, estimator) tuples')
-    assert_raise_message(AttributeError, msg, eclf.fit, X, y)
+    msg = (r'Invalid `estimators` attribute, `estimators` should be'
+           r' a list of \(string, estimator\) tuples')
+    with pytest.raises(AttributeError, match=msg):
+        eclf.fit(X, y)
 
     clf = LogisticRegression(random_state=1)
 
     eclf = VotingClassifier(estimators=[('lr', clf)], voting='error')
-    msg = ('Voting must be \'soft\' or \'hard\'; got (voting=\'error\')')
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+    msg = (r'Voting must be \'soft\' or \'hard\'; got \(voting=\'error\'\)')
+    with pytest.raises(ValueError, match=msg):
+        eclf.fit(X, y)
 
     eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
     msg = ('Number of `estimators` and weights must be equal'
            '; got 2 weights, 1 estimators')
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        eclf.fit(X, y)
 
     eclf = VotingClassifier(estimators=[('lr', clf), ('lr', clf)],
                             weights=[1, 2])
-    msg = "Names provided are not unique: ['lr', 'lr']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+    msg = r"Names provided are not unique: \['lr', 'lr'\]"
+    with pytest.raises(ValueError, match=msg):
+        eclf.fit(X, y)
 
     eclf = VotingClassifier(estimators=[('lr__', clf)])
-    msg = "Estimator names must not contain __: got ['lr__']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+    msg = r"Estimator names must not contain __: got \['lr__'\]"
+    with pytest.raises(ValueError, match=msg):
+        eclf.fit(X, y)
 
     eclf = VotingClassifier(estimators=[('estimators', clf)])
-    msg = "Estimator names conflict with constructor arguments: ['estimators']"
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+    msg = (r"Estimator names conflict with constructor arguments: "
+           r"\['estimators'\]")
+    with pytest.raises(ValueError, match=msg):
+        eclf.fit(X, y)
 
 
 def test_predictproba_hardvoting():
@@ -86,16 +92,16 @@ def test_notfitted():
     ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.predict_proba, X)
-    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
-                         eclf.transform, X)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.predict, X_r)
-    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
-                         ereg.transform, X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.predict_proba(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingClassifier'):
+        eclf.transform(X)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.predict(X_r)
+    with pytest.raises(NotFittedError, match=msg % 'VotingRegressor'):
+        ereg.transform(X_r)
 
 
 def test_majority_label_iris():
@@ -333,7 +339,7 @@ def test_sample_weight():
 
     # check that _parallel_fit_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
-    class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
+    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
         def fit(self, X, y, sample_weight):
             raise TypeError('Error unrelated to sample_weight.')
     clf = ClassifierErrorFit()
@@ -343,7 +349,7 @@ def test_sample_weight():
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
-    class MockClassifier(ClassifierMixin, BaseEstimator):
+    class MockClassifier(BaseEstimator, ClassifierMixin):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert 'sample_weight' in sample_weight
@@ -418,8 +424,8 @@ def test_set_estimator_none(drop):
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = 'All estimators are None or "drop". At least one is required!'
-    assert_raise_message(
-        ValueError, msg, eclf2.set_params(lr=drop, rf=drop, nb=drop).fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        eclf2.set_params(lr=drop, rf=drop, nb=drop).fit(X, y)
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])

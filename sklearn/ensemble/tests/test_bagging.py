@@ -7,15 +7,14 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 import numpy as np
 import joblib
+import pytest
 
 from sklearn.base import BaseEstimator
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -401,28 +400,28 @@ def test_error():
     base = DecisionTreeClassifier()
 
     # Test max_samples
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_samples=-1).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_samples=0.0).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_samples=2.0).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_samples=1000).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_samples="foobar").fit, X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_samples=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_samples=0.0).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_samples=2.0).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_samples=1000).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_samples="foobar").fit(X, y)
 
     # Test max_features
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_features=-1).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_features=0.0).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_features=2.0).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_features=5).fit, X, y)
-    assert_raises(ValueError,
-                  BaggingClassifier(base, max_features="foobar").fit, X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_features=-1).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_features=0.0).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_features=2.0).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_features=5).fit(X, y)
+    with pytest.raises(ValueError):
+        BaggingClassifier(base, max_features="foobar").fit(X, y)
 
     # Test support of decision_function
     assert not hasattr(BaggingClassifier(base).fit(X, y), 'decision_function')
@@ -467,11 +466,12 @@ def test_parallel_classification():
     assert_array_almost_equal(decisions1, decisions2)
 
     X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
-    assert_raise_message(ValueError, "Number of features of the model "
-                         "must match the input. Model n_features is {0} "
-                         "and input n_features is {1} "
-                         "".format(X_test.shape[1], X_err.shape[1]),
-                         ensemble.decision_function, X_err)
+    err_msg = ("Number of features of the model "
+               "must match the input. Model n_features is {0} "
+               "and input n_features is {1} "
+               "".format(X_test.shape[1], X_err.shape[1]))
+    with pytest.raises(ValueError, match=err_msg):
+        ensemble.decision_function(X_err)
 
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
@@ -595,8 +595,9 @@ def test_bagging_sample_weight_unsupported_but_passed():
     rng = check_random_state(0)
 
     estimator.fit(iris.data, iris.target).predict(iris.data)
-    assert_raises(ValueError, estimator.fit, iris.data, iris.target,
-                  sample_weight=rng.randint(10, size=(iris.data.shape[0])))
+    with pytest.raises(ValueError):
+        estimator.fit(iris.data, iris.target, sample_weight=rng.randint(10,
+                      size=(iris.data.shape[0])))
 
 
 def test_warm_start(random_state=42):
@@ -629,7 +630,8 @@ def test_warm_start_smaller_n_estimators():
     clf = BaggingClassifier(n_estimators=5, warm_start=True)
     clf.fit(X, y)
     clf.set_params(n_estimators=4)
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_warm_start_equal_n_estimators():
@@ -675,7 +677,8 @@ def test_warm_start_with_oob_score_fails():
     # Check using oob_score and warm_start simultaneously fails
     X, y = make_hastie_10_2(n_samples=20, random_state=1)
     clf = BaggingClassifier(n_estimators=5, warm_start=True, oob_score=True)
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_oob_score_removed_on_warm_start():
@@ -687,7 +690,8 @@ def test_oob_score_removed_on_warm_start():
     clf.set_params(warm_start=True, oob_score=False, n_estimators=100)
     clf.fit(X, y)
 
-    assert_raises(AttributeError, getattr, clf, "oob_score_")
+    with pytest.raises(AttributeError):
+        getattr(clf, "oob_score_")
 
 
 def test_oob_score_consistency():
@@ -831,9 +835,11 @@ def test_bagging_regressor_with_missing_inputs():
         # Verify that exceptions can be raised by wrapper regressor
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(regressor)
-        assert_raises(ValueError, pipeline.fit, X, y)
+        with pytest.raises(ValueError):
+            pipeline.fit(X, y)
         bagging_regressor = BaggingRegressor(pipeline)
-        assert_raises(ValueError, bagging_regressor.fit, X, y)
+        with pytest.raises(ValueError):
+            bagging_regressor.fit(X, y)
 
 
 def test_bagging_classifier_with_missing_inputs():
@@ -861,9 +867,11 @@ def test_bagging_classifier_with_missing_inputs():
     # Verify that exceptions can be raised by wrapper classifier
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(classifier)
-    assert_raises(ValueError, pipeline.fit, X, y)
+    with pytest.raises(ValueError):
+        pipeline.fit(X, y)
     bagging_classifier = BaggingClassifier(pipeline)
-    assert_raises(ValueError, bagging_classifier.fit, X, y)
+    with pytest.raises(ValueError):
+        bagging_classifier.fit(X, y)
 
 
 def test_bagging_small_max_features():
