@@ -264,120 +264,49 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     pp. 411-430*
 
     """
-    random_state = check_random_state(random_state)
-    fun_args = {} if fun_args is None else fun_args
-    # make interface compatible with other decompositions
-    # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES,
-                    ensure_min_samples=2).T
 
-    alpha = fun_args.get('alpha', 1.0)
-    if not 1 <= alpha <= 2:
-        raise ValueError('alpha must be in [1,2]')
+    est = FastICA(n_components=n_components, algorithm=algorithm,
+            whiten=whiten, fun=fun, fun_args=fun_args,
+            max_iter=max_iter, tol=tol, w_init=w_init,
+            random_state=random_state)
+    sources = est._fit(X, compute_sources=compute_sources)
 
-    if fun == 'logcosh':
-        g = _logcosh
-    elif fun == 'exp':
-        g = _exp
-    elif fun == 'cube':
-        g = _cube
-    elif callable(fun):
-        def g(x, fun_args):
-            return fun(x, **fun_args)
-    else:
-        exc = ValueError if isinstance(fun, str) else TypeError
-        raise exc("Unknown function %r;"
-                  " should be one of 'logcosh', 'exp', 'cube' or callable"
-                  % fun)
-
-    n, p = X.shape
-
-    if not whiten and n_components is not None:
-        n_components = None
-        warnings.warn('Ignoring n_components with whiten=False.')
-
-    if n_components is None:
-        n_components = min(n, p)
-    if (n_components > min(n, p)):
-        n_components = min(n, p)
-        warnings.warn('n_components is too large: it will be set to %s' % n_components)
-
+    # if self.whiten:
+    #     whitening = K
+    # unmixing = W
+    # sources = S
+    # self.n_iter_ = n_iter
     if whiten:
-        # Centering the columns (ie the variables)
-        X_mean = X.mean(axis=-1)
-        X -= X_mean[:, np.newaxis]
-
-        # Whitening and preprocessing by PCA
-        u, d, _ = linalg.svd(X, full_matrices=False)
-
-        del _
-        K = (u / d).T[:n_components]  # see (6.33) p.140
-        del u, d
-        X1 = np.dot(K, X)
-        # see (13.6) p.267 Here X1 is white and data
-        # in X has been projected onto a subspace by PCA
-        X1 *= np.sqrt(p)
-    else:
-        # X must be casted to floats to avoid typing issues with numpy
-        # 2.0 and the line below
-        X1 = as_float_array(X, copy=False)  # copy has been taken care of
-
-    if w_init is None:
-        w_init = np.asarray(random_state.normal(size=(n_components,
-                            n_components)), dtype=X1.dtype)
-
-    else:
-        w_init = np.asarray(w_init)
-        if w_init.shape != (n_components, n_components):
-            raise ValueError('w_init has invalid shape -- should be %(shape)s'
-                             % {'shape': (n_components, n_components)})
-
-    kwargs = {'tol': tol,
-              'g': g,
-              'fun_args': fun_args,
-              'max_iter': max_iter,
-              'w_init': w_init}
-
-    if algorithm == 'parallel':
-        W, n_iter = _ica_par(X1, **kwargs)
-    elif algorithm == 'deflation':
-        W, n_iter = _ica_def(X1, **kwargs)
-    else:
-        raise ValueError('Invalid algorithm: must be either `parallel` or'
-                         ' `deflation`.')
-    del X1
-
-    if whiten:
-        if compute_sources:
-            S = np.dot(np.dot(W, K), X).T
-        else:
-            S = None
         if return_X_mean:
             if return_n_iter:
-                return K, W, S, X_mean, n_iter
+                # return K, W, S, X_mean, n_iter
+                return est.whitening_, est._W, sources, est.mean_, est.n_iter_
             else:
-                return K, W, S, X_mean
+                # return K, W, S, X_mean
+                return est.whitening_, est._W, sources, est.mean_
         else:
             if return_n_iter:
-                return K, W, S, n_iter
+                # return K, W, S, n_iter
+                return est.whitening_, est._W, sources, est.n_iter_
             else:
-                return K, W, S
+                # return K, W, S
+                return est.whitening_, est._W, sources
 
     else:
-        if compute_sources:
-            S = np.dot(W, X).T
-        else:
-            S = None
         if return_X_mean:
             if return_n_iter:
-                return None, W, S, None, n_iter
+                # return None, W, S, None, n_iter
+                return None, sources, None, est.n_iter_
             else:
-                return None, W, S, None
+                # return None, W, S, None
+                return None, sources, None
         else:
             if return_n_iter:
-                return None, W, S, n_iter
+                # return None, W, S, n_iter
+                return None, est._W, sources, est.n_iter_
             else:
-                return None, W, S
+                # return None, W, S
+                return None, est._W, sources
 
 
 class FastICA(TransformerMixin, BaseEstimator):
@@ -502,12 +431,112 @@ class FastICA(TransformerMixin, BaseEstimator):
             X_new : array-like, shape (n_samples, n_components)
         """
         fun_args = {} if self.fun_args is None else self.fun_args
-        whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
-            X=X, n_components=self.n_components, algorithm=self.algorithm,
-            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
-            max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-            random_state=self.random_state, return_X_mean=True,
-            compute_sources=compute_sources, return_n_iter=True)
+        random_state = check_random_state(self.random_state)
+
+        # make interface compatible with other decompositions
+        # a copy is required only for non whitened data
+        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                        ensure_min_samples=2).T
+
+        alpha = fun_args.get('alpha', 1.0)
+        if not 1 <= alpha <= 2:
+            raise ValueError('alpha must be in [1,2]')
+
+        if self.fun == 'logcosh':
+            g = _logcosh
+        elif self.fun == 'exp':
+            g = _exp
+        elif self.fun == 'cube':
+            g = _cube
+        elif callable(self.fun):
+            def g(x, fun_args):
+                return self.fun(x, **fun_args)
+        else:
+            exc = ValueError if isinstance(self.fun, str) else TypeError
+            raise exc("Unknown function %r;"
+                    " should be one of 'logcosh', 'exp', 'cube' or callable"
+                    % self.fun)
+
+        n, p = X.shape
+
+        n_components = self.n_components
+        if not self.whiten and n_components is not None:
+            n_components = None
+            warnings.warn('Ignoring n_components with whiten=False.')
+
+        if n_components is None:
+            n_components = min(n, p)
+        if (n_components > min(n, p)):
+            n_components = min(n, p)
+            warnings.warn('n_components is too large: it will be set to %s' % n_components)
+
+        if self.whiten:
+            # Centering the columns (ie the variables)
+            X_mean = X.mean(axis=-1)
+            X -= X_mean[:, np.newaxis]
+
+            # Whitening and preprocessing by PCA
+            u, d, _ = linalg.svd(X, full_matrices=False)
+
+            del _
+            K = (u / d).T[:n_components]  # see (6.33) p.140
+            del u, d
+            X1 = np.dot(K, X)
+            # see (13.6) p.267 Here X1 is white and data
+            # in X has been projected onto a subspace by PCA
+            X1 *= np.sqrt(p)
+        else:
+            # X must be casted to floats to avoid typing issues with numpy
+            # 2.0 and the line below
+            X1 = as_float_array(X, copy=False)  # copy has been taken care of
+
+        w_init = self.w_init
+        if w_init is None:
+            w_init = np.asarray(random_state.normal(size=(n_components,
+                                n_components)), dtype=X1.dtype)
+
+        else:
+            w_init = np.asarray(w_init)
+            if w_init.shape != (n_components, n_components):
+                raise ValueError('w_init has invalid shape -- should be %(shape)s'
+                                % {'shape': (n_components, n_components)})
+
+        kwargs = {'tol': self.tol,
+                'g': g,
+                'fun_args': fun_args,
+                'max_iter': self.max_iter,
+                'w_init': w_init}
+
+        if self.algorithm == 'parallel':
+            W, n_iter = _ica_par(X1, **kwargs)
+        elif self.algorithm == 'deflation':
+            W, n_iter = _ica_def(X1, **kwargs)
+        else:
+            raise ValueError('Invalid algorithm: must be either `parallel` or'
+                            ' `deflation`.')
+        del X1
+
+        if compute_sources:
+            if self.whiten:
+                S = np.dot(np.dot(W, K), X).T
+            else:
+                S = np.dot(W, X).T
+        else:
+            S = None
+
+        if self.whiten:
+            whitening = K
+        unmixing = W
+        sources = S
+        self.n_iter_ = n_iter
+
+
+        # whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
+        #     X=X, n_components=self.n_components, algorithm=self.algorithm,
+        #     whiten=self.whiten, fun=self.fun, fun_args=fun_args,
+        #     max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
+        #     random_state=self.random_state, return_X_mean=True,
+        #     compute_sources=compute_sources, return_n_iter=True)
 
         if self.whiten:
             self.components_ = np.dot(unmixing, whitening)
@@ -521,6 +550,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         if compute_sources:
             self.__sources = sources
 
+        # TODO: set that to W for tests to pass
+        self._W = self.components_
         return sources
 
     def fit_transform(self, X, y=None):
