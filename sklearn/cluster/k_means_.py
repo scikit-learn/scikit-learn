@@ -296,7 +296,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         algorithm=algorithm
     ).fit(X, sample_weight=sample_weight)
     if return_n_iter:
-        return est.cluster_centers_, est.labels_, est.inertia_ , est.n_iter_
+        return est.cluster_centers_, est.labels_, est.inertia_, est.n_iter_
     else:
         return est.cluster_centers_, est.labels_, est.inertia_
 
@@ -842,7 +842,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         n_init = self.n_init
         if n_init <= 0:
             raise ValueError("Invalid number of initializations."
-                            " n_init=%d must be bigger than zero." % n_init)
+                             " n_init=%d must be bigger than zero." % n_init)
 
         if self.max_iter <= 0:
             raise ValueError(
@@ -918,12 +918,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             kmeans_single = _kmeans_single_elkan
         else:
             raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
-                            " %s" % str(algorithm))
+                             " %s" % str(algorithm))
 
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         if effective_n_jobs(self.n_jobs) == 1:
-            # For a single thread, less memory is needed if we just store one set
-            # of the best results (as opposed to one set per run per thread).
+            # For a single thread, less memory is needed if we just store one
+            # set of the best results (as opposed to one set per run per
+            # thread).
             for seed in seeds:
                 # run a k-means once
                 labels, inertia, centers, n_iter_ = kmeans_single(
@@ -940,13 +941,15 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         else:
             # parallelisation of k-means runs
             results = Parallel(n_jobs=self.n_jobs, verbose=0)(
-                delayed(kmeans_single)(X, sample_weight, self.n_clusters,
-                                    max_iter=self.max_iter, init=init,
-                                    verbose=self.verbose, tol=tol,
-                                    precompute_distances=precompute_distances,
-                                    x_squared_norms=x_squared_norms,
-                                    # Change seed to ensure variety
-                                    random_state=seed)
+                delayed(kmeans_single)(
+                    X, sample_weight, self.n_clusters,
+                    max_iter=self.max_iter, init=init,
+                    verbose=self.verbose, tol=tol,
+                    precompute_distances=precompute_distances,
+                    x_squared_norms=x_squared_norms,
+                    # Change seed to ensure variety
+                    random_state=seed
+                )
                 for seed in seeds)
             # Get results with the lowest inertia
             labels, inertia, centers, n_iters = zip(*results)
