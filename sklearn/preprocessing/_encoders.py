@@ -83,7 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            if self.categories == 'auto':
+            if self.categories in ['auto', 'lexicographic']:
                 cats = _encode(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
