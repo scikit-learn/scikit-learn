@@ -2671,7 +2671,6 @@ def check_n_features_in(name, estimator_orig):
     # Make sure that n_features_in_ attribute doesn't exist until fit is
     # called, and that its value is correct.
 
-    print(name)
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
