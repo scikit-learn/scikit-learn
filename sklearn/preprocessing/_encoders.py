@@ -571,7 +571,7 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc = OrdinalEncoder(categories='lexicographic')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    OrdinalEncoder()
+    OrdinalEncoder(categories='lexicographic')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
@@ -611,7 +611,7 @@ class OrdinalEncoder(_BaseEncoder):
         checkd_X = check_array(X, dtype=None)
         contain_str = checkd_X.dtype == object or np.issubdtype(
             checkd_X.dtype, np.str_)
-        if self.categories != 'lexicographic' and contain_str:
+        if self.categories == 'auto' and contain_str:
             warnings.warn(
                 "From version 0.24, OrdinalEncoder's categories='auto' "
                 "setting will not work with string-valued features. "
