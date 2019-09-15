@@ -17,7 +17,6 @@ from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from .exceptions import NotFittedError
 from .utils import deprecated
 
 
