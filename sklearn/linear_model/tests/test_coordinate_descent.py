@@ -11,7 +11,6 @@ from sklearn.datasets import load_boston
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -783,10 +782,10 @@ def test_enet_l1_ratio():
     X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
     y = np.array([12, 10, 11, 21, 5])
 
-    assert_raise_message(ValueError, msg, ElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y)
-    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
-        l1_ratio=0, random_state=42).fit, X, y[:, None])
+    with pytest.raises(ValueError, match=msg):
+        ElasticNetCV(l1_ratio=0, random_state=42).fit(X, y)
+    with pytest.raises(ValueError, match=msg):
+        MultiTaskElasticNetCV(l1_ratio=0, random_state=42).fit(X, y[:, None])
 
     # Test that l1_ratio=0 is allowed if we supply a grid manually
     alphas = [0.1, 10]
