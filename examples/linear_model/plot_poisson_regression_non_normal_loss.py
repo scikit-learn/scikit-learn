@@ -152,7 +152,6 @@ dummy.fit(df_train, df_train.Frequency,
           dummyregressor__sample_weight=df_train.Exposure)
 
 
-
 def score_estimator(estimator, df_test):
     """Score an estimatr on the test set"""
 
