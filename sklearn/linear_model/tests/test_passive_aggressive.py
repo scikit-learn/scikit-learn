@@ -5,7 +5,6 @@ import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
 
 from sklearn.base import ClassifierMixin
 from sklearn.utils import check_random_state
@@ -136,7 +135,8 @@ def test_classifier_correctness(loss):
 def test_classifier_undefined_methods():
     clf = PassiveAggressiveClassifier(max_iter=100)
     for meth in ("predict_proba", "predict_log_proba", "transform"):
-        assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
+        with pytest.raises(AttributeError):
+            (lambda x: getattr(clf, x))(meth)
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -168,7 +168,8 @@ def test_class_weights():
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
-    assert_raises(ValueError, clf.partial_fit, X, y, classes=np.unique(y))
+    with pytest.raises(ValueError):
+        clf.partial_fit(X, y, classes=np.unique(y))
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -203,7 +204,8 @@ def test_wrong_class_weight_label():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight={0: 0.5}, max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -215,10 +217,12 @@ def test_wrong_class_weight_format():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight=[0.5], max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
     clf = PassiveAggressiveClassifier(class_weight="the larch", max_iter=100)
-    assert_raises(ValueError, clf.fit, X2, y2)
+    with pytest.raises(ValueError):
+        clf.fit(X2, y2)
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -287,4 +291,5 @@ def test_regressor_correctness(loss):
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     for meth in ("transform",):
-        assert_raises(AttributeError, lambda x: getattr(reg, x), meth)
+        with pytest.raises(AttributeError):
+            (lambda x: getattr(reg, x))(meth)
