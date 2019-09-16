@@ -368,7 +368,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
         if raise_err:
             raise ValueError(
-                'all features must be in [0, {}]'.format(X.shape[0] - 1)
+                'all features must be in [0, {}]'.format(X.shape[1] - 1)
             )
 
     features_indices = np.asarray(
