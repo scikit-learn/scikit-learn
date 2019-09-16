@@ -202,7 +202,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         return self
 
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Predict using the base regressor, applying inverse.
 
         The regressor is used to predict and the ``inverse_func`` or
@@ -212,7 +212,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
-
+        
+        **predict_params : dict of string -> object
+            Parameters passed to the ``predict`` method of the underlying
+            regressor.
+            
         Returns
         -------
         y_hat : array, shape = (n_samples,)
@@ -220,7 +224,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
         """
         check_is_fitted(self)
-        pred = self.regressor_.predict(X)
+        pred = self.regressor_.predict(X, **predict_params)
         if pred.ndim == 1:
             pred_trans = self.transformer_.inverse_transform(
                 pred.reshape(-1, 1))
