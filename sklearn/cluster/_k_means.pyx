@@ -171,6 +171,7 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
         weight_in_clusters[new_cluster_id] = weight
         weight_in_clusters[old_cluster_id] -= weight
 
+
 cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
                                           int[::1] X_indices,
                                           int[::1] X_indptr,
