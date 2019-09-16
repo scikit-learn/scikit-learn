@@ -2685,7 +2685,7 @@ def check_n_features_in(name, estimator_orig):
         y = rng.normal(size=n_samples)
     else:
         y = rng.randint(low=0, high=2, size=n_samples)
-    y = enforce_estimator_tags_y(estimator, y)
+    y = _enforce_estimator_tags_y(estimator, y)
 
     assert not hasattr(estimator, 'n_features_in_')
     estimator.fit(X, y)
