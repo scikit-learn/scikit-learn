@@ -23,6 +23,21 @@ from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
 
+# WARNING: to read before any modification of this file.
+#
+# A number of intermediary results in `fetch_openml` are cached
+# with joblib.Memory which implies that,
+#  1) Cache will be invalidated for any change in the cached functions
+#     (including if the position of the function in the file changes).
+#     Therefore cosmetic changes to this file should be avoided to
+#     avoid unnecessary dataset re-downloads.
+#  2) Cache will *not* be invalidated, if functions called from within
+#     cached functions change (e.g. any private function in this file),
+#     while keeping its length unmodified.
+#     If you modify these functions, and if the total file length is
+#     unchanged, please also add a cosmetic modification (e.g. in a comment)
+#     to the cached functions from which they are called.
+
 __all__ = ['fetch_openml']
 
 _OPENML_PREFIX = "https://openml.org/"
