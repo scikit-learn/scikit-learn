@@ -157,7 +157,7 @@ Using conda
     You then need to set the following environment variables::
 
         export CFLAGS="$CFLAGS -I$CONDA_PREFIX/include"
-        export LDFLAGS="$LDFLAGS -L$CONDA_PREFIX/lib -Wl,rpath,$CONDA_PREFIX/lib"
+        export LDFLAGS="$LDFLAGS -L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib"
 
     If ``$CONDA_PREFIX`` is not set, replace it by the path to the desired
     conda environment.
