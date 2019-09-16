@@ -27,7 +27,7 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
-from ..utils._clibs import thread_limits_context
+from ..externals._threadpoolctl import threadpool_limits
 from ..exceptions import ConvergenceWarning
 from ._k_means import _inertia_dense
 from ._k_means import _inertia_sparse
@@ -519,7 +519,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-    sample_weight = _check_sample_weight(X, sample_weight)
+    sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -977,7 +977,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         # limit number of threads in second level of nested parallelism
         # (i.e. BLAS) to avoid oversubsciption.
-        with thread_limits_context(limits=1, subset="blas"):
+        with threadpool_limits(limits=1, user_api="blas"):
             for seed in seeds:
                 # run a k-means once
                 labels, inertia, centers, n_iter_ = kmeans_single(
