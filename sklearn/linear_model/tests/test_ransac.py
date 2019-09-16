@@ -8,8 +8,6 @@ from numpy.testing import assert_array_equal
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_raises
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
@@ -62,7 +60,8 @@ def test_ransac_is_data_valid():
                                        is_data_valid=is_data_valid,
                                        random_state=0)
 
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_is_model_valid():
@@ -77,7 +76,8 @@ def test_ransac_is_model_valid():
                                        is_model_valid=is_model_valid,
                                        random_state=0)
 
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_max_trials():
@@ -86,7 +86,8 @@ def test_ransac_max_trials():
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, max_trials=0,
                                        random_state=0)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
     # there is a 1e-9 chance it will take these many trials. No good reason
     # 1e-2 isn't enough, can still happen
@@ -98,6 +99,7 @@ def test_ransac_max_trials():
         ransac_estimator.set_params(min_samples=2, random_state=i)
         ransac_estimator.fit(X, y)
         assert ransac_estimator.n_trials_ < max_trials + 1
+
 
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
@@ -157,7 +159,8 @@ def test_ransac_resid_thresh_no_inliers():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 5
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -173,7 +176,8 @@ def test_ransac_no_valid_data():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 5
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -189,7 +193,8 @@ def test_ransac_no_valid_model():
                                        max_trials=5)
 
     msg = ("RANSAC could not find a valid consensus set")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 0
     assert ransac_estimator.n_skips_invalid_model_ == 5
@@ -206,7 +211,8 @@ def test_ransac_exceed_max_skips():
                                        max_skips=3)
 
     msg = ("RANSAC skipped more iterations than `max_skips`")
-    assert_raises_regexp(ValueError, msg, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ransac_estimator.fit(X, y)
     assert ransac_estimator.n_skips_no_inliers_ == 0
     assert ransac_estimator.n_skips_invalid_data_ == 4
     assert ransac_estimator.n_skips_invalid_model_ == 0
@@ -327,9 +333,12 @@ def test_ransac_min_n_samples():
     assert_array_almost_equal(ransac_estimator1.predict(X),
                               ransac_estimator6.predict(X))
 
-    assert_raises(ValueError, ransac_estimator3.fit, X, y)
-    assert_raises(ValueError, ransac_estimator4.fit, X, y)
-    assert_raises(ValueError, ransac_estimator7.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator3.fit(X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator4.fit(X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator7.fit(X, y)
 
 
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
@@ -444,10 +453,12 @@ def test_ransac_dynamic_max_trials():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=-0.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        stop_probability=1.1)
-    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y)
 
 
 def test_ransac_fit_sample_weight():
@@ -493,4 +504,5 @@ def test_ransac_fit_sample_weight():
     # sample_weight, raises error
     base_estimator = Lasso()
     ransac_estimator = RANSACRegressor(base_estimator)
-    assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+    with pytest.raises(ValueError):
+        ransac_estimator.fit(X, y, weights)
