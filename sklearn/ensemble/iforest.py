@@ -68,7 +68,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         on the scores of the samples.
 
             - If 'auto', the threshold is determined as in the
-            original paper.
+              original paper.
             - If float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22

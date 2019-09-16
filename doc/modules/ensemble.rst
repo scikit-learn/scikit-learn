@@ -456,7 +456,7 @@ trees.
   Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
   These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
@@ -825,7 +825,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`_.
+`LightGBM <https://github.com/Microsoft/LightGBM>`__.
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -877,6 +877,13 @@ controls the number of iterations of the boosting process::
   >>> clf = HistGradientBoostingClassifier(max_iter=100).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)
   0.8965
+
+Available losses for regression are 'least_squares' and
+'least_absolute_deviation', which is less sensitive to outliers. For
+classification, 'binary_crossentropy' is used for binary classification and
+'categorical_crossentropy' is used for multiclass classification. By default
+the loss is 'auto' and will select the appropriate loss depending on
+:term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
