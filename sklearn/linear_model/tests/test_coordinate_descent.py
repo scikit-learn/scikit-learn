@@ -11,8 +11,6 @@ from sklearn.datasets import load_boston
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -449,7 +447,8 @@ def test_multioutput_enetcv_error():
     X = rng.randn(10, 2)
     y = rng.randn(10, 2)
     clf = ElasticNetCV()
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
 
 
 def test_multitask_enet_and_lasso_cv():
@@ -524,12 +523,15 @@ def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
                 LassoCV(precompute="invalid")]:
-        assert_raises_regex(ValueError, ".*should be.*True.*False.*auto.*"
-                            "array-like.*Got 'invalid'", clf.fit, X, y)
+        err_msg = (".*should be.*True.*False.*auto.*"
+                   "array-like.*Got 'invalid'")
+        with pytest.raises(ValueError, match=err_msg):
+            clf.fit(X, y)
 
     # Precompute = 'auto' is not supported for ElasticNet
-    assert_raises_regex(ValueError, ".*should be.*True.*False.*array-like.*"
-                        "Got 'auto'", ElasticNet(precompute='auto').fit, X, y)
+    err_msg = (".*should be.*True.*False.*array-like.*Got 'auto'")
+    with pytest.raises(ValueError):
+        ElasticNet(precompute='auto').fit(X, y)
 
 
 def test_warm_start_convergence():
@@ -619,7 +621,8 @@ def test_random_descent():
 
     # Raise error when selection is not in cyclic or random.
     clf_random = ElasticNet(selection='invalid')
-    assert_raises(ValueError, clf_random.fit, X, y)
+    with pytest.raises(ValueError):
+        clf_random.fit(X, y)
 
 
 def test_enet_path_positive():
@@ -636,7 +639,8 @@ def test_enet_path_positive():
     # For multi output, positive parameter is not allowed
     # Test that an error is raised
     for path in [enet_path, lasso_path]:
-        assert_raises(ValueError, path, X, Y, positive=True)
+        with pytest.raises(ValueError):
+            path(X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -664,7 +668,8 @@ def test_check_input_false():
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, check_input=False)
 
 
 @pytest.mark.parametrize("check_input", [True, False])
