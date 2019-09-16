@@ -295,108 +295,16 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         Returned only if `return_n_iter` is set to True.
 
     """
-    if precompute_distances != 'not-used':
-        warnings.warn("'precompute_distances' was deprecated in version"
-                      "0.21 and will be removed in 0.23.", DeprecationWarning)
-
-    if n_init <= 0:
-        raise ValueError("Invalid number of initializations."
-                         " n_init=%d must be bigger than zero." % n_init)
-    random_state = check_random_state(random_state)
-
-    if max_iter <= 0:
-        raise ValueError('Number of iterations should be a positive number,'
-                         ' got %d instead' % max_iter)
-
-    X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                    order='C', copy=copy_x)
-    # verify that the number of samples given is larger than k
-    if _num_samples(X) < n_clusters:
-        raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-            _num_samples(X), n_clusters))
-
-    tol = _tolerance(X, tol)
-
-    # Validate init array
-    if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
-        _validate_center_shape(X, n_clusters, init)
-
-        if n_init != 1:
-            warnings.warn(
-                'Explicit initial center position passed: '
-                'performing only one init in k-means instead of n_init=%d'
-                % n_init, RuntimeWarning, stacklevel=2)
-            n_init = 1
-
-    # subtract of mean of x for more accurate distance computations
-    if not sp.issparse(X):
-        X_mean = X.mean(axis=0)
-        # The copy was already done above
-        X -= X_mean
-
-        if hasattr(init, '__array__'):
-            init -= X_mean
-
-    # precompute squared norms of data points
-    x_squared_norms = row_norms(X, squared=True)
-
-    best_labels, best_inertia, best_centers = None, None, None
-
-    if algorithm == "elkan" and n_clusters == 1:
-        warnings.warn("algorithm='elkan' doesn't make sense for a single "
-                      "cluster. Using 'full' instead.", RuntimeWarning)
-        algorithm = "full"
-
-    if algorithm == "auto":
-        algorithm = "full" if n_clusters == 1 else "elkan"
-
-    if algorithm == "full":
-        kmeans_single = _kmeans_single_lloyd
-    elif algorithm == "elkan":
-        kmeans_single = _kmeans_single_elkan
-    else:
-        raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
-                         " %s" % str(algorithm))
-
-    # seeds for the initializations of the kmeans runs.
-    seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
-
-    # limit number of threads in second level of nested parallelism (i.e. BLAS)
-    # to avoid oversubsciption
-    if n_jobs is None:
-        n_jobs = 1
-
-    with thread_limits_context(limits=1, subset="blas"):
-        for seed in seeds:
-            # run a k-means once
-            labels, inertia, centers, n_iter_ = kmeans_single(
-                X, sample_weight, n_clusters, max_iter=max_iter, init=init,
-                verbose=verbose, tol=tol, x_squared_norms=x_squared_norms,
-                random_state=seed, n_jobs=n_jobs)
-            # determine if these results are the best so far
-            if best_inertia is None or inertia < best_inertia:
-                best_labels = labels.copy()
-                best_centers = centers.copy()
-                best_inertia = inertia
-                best_n_iter = n_iter_
-
-    if not sp.issparse(X):
-        if not copy_x:
-            X += X_mean
-        best_centers += X_mean
-
-    distinct_clusters = len(set(best_labels))
-    if distinct_clusters < n_clusters:
-        warnings.warn("Number of distinct clusters ({}) found smaller than "
-                      "n_clusters ({}). Possibly due to duplicate points "
-                      "in X.".format(distinct_clusters, n_clusters),
-                      ConvergenceWarning, stacklevel=2)
-
+    est = KMeans(
+        n_clusters=n_clusters, init=init, n_init=n_init, max_iter=max_iter,
+        verbose=verbose, precompute_distances=precompute_distances, tol=tol,
+        random_state=random_state, copy_x=copy_x, n_jobs=n_jobs,
+        algorithm=algorithm
+    ).fit(X, sample_weight=sample_weight)
     if return_n_iter:
-        return best_centers, best_labels, best_inertia, best_n_iter
+        return est.cluster_centers_, est.labels_, est.inertia_, est.n_iter_
     else:
-        return best_centers, best_labels, best_inertia
+        return est.cluster_centers_, est.labels_, est.inertia_
 
 
 def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
@@ -991,15 +899,116 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             are assigned equal weight.
 
         """
-        self.cluster_centers_, self.labels_, self.inertia_, self.n_iter_ = \
-            k_means(
-                X, n_clusters=self.n_clusters, sample_weight=sample_weight,
-                init=self.init, n_init=self.n_init,
-                max_iter=self.max_iter, verbose=self.verbose,
-                precompute_distances=self.precompute_distances,
-                tol=self.tol, random_state=self.random_state,
-                copy_x=self.copy_x, n_jobs=self.n_jobs,
-                algorithm=self.algorithm, return_n_iter=True)
+        random_state = check_random_state(self.random_state)
+
+        if self.precompute_distances != 'not-used':
+            warnings.warn("'precompute_distances' was deprecated in version"
+                          "0.21 and will be removed in 0.23.",
+                          DeprecationWarning)
+
+        n_init = self.n_init
+        if n_init <= 0:
+            raise ValueError("Invalid number of initializations."
+                             " n_init=%d must be bigger than zero." % n_init)
+
+        if self.max_iter <= 0:
+            raise ValueError(
+                'Number of iterations should be a positive number,'
+                ' got %d instead' % self.max_iter
+            )
+
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
+                        order='C', copy=self.copy_x)
+        # verify that the number of samples given is larger than k
+        if _num_samples(X) < self.n_clusters:
+            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
+                _num_samples(X), self.n_clusters))
+
+        tol = _tolerance(X, self.tol)
+
+        # Validate init array
+        init = self.init
+        if hasattr(init, '__array__'):
+            init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
+            _validate_center_shape(X, self.n_clusters, init)
+
+            if n_init != 1:
+                warnings.warn(
+                    'Explicit initial center position passed: '
+                    'performing only one init in k-means instead of n_init=%d'
+                    % n_init, RuntimeWarning, stacklevel=2)
+                n_init = 1
+
+        # subtract of mean of x for more accurate distance computations
+        if not sp.issparse(X):
+            X_mean = X.mean(axis=0)
+            # The copy was already done above
+            X -= X_mean
+
+            if hasattr(init, '__array__'):
+                init -= X_mean
+
+        # precompute squared norms of data points
+        x_squared_norms = row_norms(X, squared=True)
+
+        best_labels, best_inertia, best_centers = None, None, None
+
+        algorithm = self.algorithm
+        if algorithm == "elkan" and self.n_clusters == 1:
+            warnings.warn("algorithm='elkan' doesn't make sense for a single "
+                          "cluster. Using 'full' instead.", RuntimeWarning)
+            algorithm = "full"
+
+        if algorithm == "auto":
+            algorithm = "full" if self.n_clusters == 1 else "elkan"
+
+        if algorithm == "full":
+            kmeans_single = _kmeans_single_lloyd
+        elif algorithm == "elkan":
+            kmeans_single = _kmeans_single_elkan
+        else:
+            raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
+                             " {}".format(str(algorithm)))
+
+        # seeds for the initializations of the kmeans runs.
+        seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
+
+        n_jobs = 1 if self.n_jobs is None else self.n_jobs
+
+        # limit number of threads in second level of nested parallelism
+        # (i.e. BLAS) to avoid oversubsciption.
+        with thread_limits_context(limits=1, subset="blas"):
+            for seed in seeds:
+                # run a k-means once
+                labels, inertia, centers, n_iter_ = kmeans_single(
+                    X, sample_weight, self.n_clusters, max_iter=self.max_iter,
+                    init=init, verbose=self.verbose, tol=tol,
+                    x_squared_norms=x_squared_norms, random_state=seed,
+                    n_jobs=n_jobs)
+                # determine if these results are the best so far
+                if best_inertia is None or inertia < best_inertia:
+                    best_labels = labels.copy()
+                    best_centers = centers.copy()
+                    best_inertia = inertia
+                    best_n_iter = n_iter_
+
+        if not sp.issparse(X):
+            if not self.copy_x:
+                X += X_mean
+            best_centers += X_mean
+
+        distinct_clusters = len(set(best_labels))
+        if distinct_clusters < self.n_clusters:
+            warnings.warn(
+                "Number of distinct clusters ({}) found smaller than "
+                "n_clusters ({}). Possibly due to duplicate points "
+                "in X.".format(distinct_clusters, self.n_clusters),
+                ConvergenceWarning, stacklevel=2)
+
+        self.cluster_centers_ = best_centers
+        self.labels_ = best_labels
+        self.inertia_ = best_inertia
+        self.n_iter_ = best_n_iter
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
