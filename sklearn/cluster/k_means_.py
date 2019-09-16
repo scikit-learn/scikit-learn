@@ -378,7 +378,6 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-
     sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
     # init
@@ -602,7 +601,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
 
-    sample_weight = _check_sample_weight(X, sample_weight)
+    sample_weight = _check_normalize_sample_weight(sample_weight, X)
     labels = np.full(n_samples, -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
     center_shift = np.zeros_like(weight_in_clusters)
