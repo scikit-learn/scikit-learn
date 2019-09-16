@@ -109,7 +109,8 @@ Making a release
        $ twine upload dist/*
 
 7. For major/minor (not bug-fix release), update the symlink for ``stable``
-   in https://github.com/scikit-learn/scikit-learn.github.io::
+   and the ``latestStable`` variable in
+   https://github.com/scikit-learn/scikit-learn.github.io::
 
        $ cd /tmp
        $ git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
@@ -118,6 +119,7 @@ Making a release
        $ git checkout master
        $ rm stable
        $ ln -s 0.999 stable
+       $ sed -i "s/latestStable = '.*/latestStable = '0.999';" versionwarning.js
        $ git commit -m "Update stable to point to 0.999" stable
        $ git push origin master
 
@@ -204,3 +206,6 @@ For the docs to render properly, please also import
 ``enable_my_experimental_feature`` in ``doc/conf.py``, else sphinx won't be
 able to import the corresponding modules. Note that using ``from
 sklearn.experimental import *`` **does not work**.
+
+Note that some experimental classes / functions are not included in the
+:mod:`sklearn.experimental` module: ``sklearn.datasets.fetch_openml``.

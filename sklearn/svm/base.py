@@ -8,11 +8,12 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
-from ..utils import check_array, check_consistent_length, check_random_state
+from ..utils import check_array, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
+from ..utils.validation import _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
@@ -158,7 +159,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
             raise ValueError("sample_weight and X have incompatible shapes: "
@@ -434,7 +437,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
-        check_is_fitted(self, 'support_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
                         accept_large_sparse=False)
@@ -482,7 +485,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
+class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
@@ -559,7 +562,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if self.break_ties and self.decision_function_shape == 'ovo':
             raise ValueError("break_ties must be False when "
                              "decision_function_shape is 'ovo'")
@@ -602,7 +605,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -641,7 +644,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -906,11 +909,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     y_ind = np.require(y_ind, requirements="W")
-    if sample_weight is None:
-        sample_weight = np.ones(X.shape[0])
-    else:
-        sample_weight = np.array(sample_weight, dtype=np.float64, order='C')
-        check_consistent_length(sample_weight, X)
+
+    sample_weight = _check_sample_weight(sample_weight, X,
+                                         dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
     raw_coef_, n_iter_ = liblinear.train_wrap(

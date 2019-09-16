@@ -89,6 +89,19 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -242,9 +255,22 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    Attributes
+    ----------
+    effective_metric_ : string or callable
+        The distance metric to use. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
 
     Examples
     --------
@@ -321,11 +347,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
-        if np.max(np.isnan(y_pred)):
+        if np.any(np.isnan(y_pred)):
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
             warnings.warn(empty_warning_msg)
-
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()

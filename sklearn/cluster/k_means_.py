@@ -25,7 +25,7 @@ from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._clibs import thread_limits_context
 from ..exceptions import ConvergenceWarning
@@ -113,34 +113,30 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
         candidate_ids = np.searchsorted(stable_cumsum(closest_dist_sq),
                                         rand_vals)
+        # XXX: numerical imprecision can result in a candidate_id out of range
+        np.clip(candidate_ids, None, closest_dist_sq.size - 1,
+                out=candidate_ids)
 
         # Compute distances to center candidates
         distance_to_candidates = euclidean_distances(
             X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
 
-        # Decide which candidate is the best
-        best_candidate = None
-        best_pot = None
-        best_dist_sq = None
-        for trial in range(n_local_trials):
-            # Compute potential when including center candidate
-            new_dist_sq = np.minimum(closest_dist_sq,
-                                     distance_to_candidates[trial])
-            new_pot = new_dist_sq.sum()
+        # update closest distances squared and potential for each candidate
+        np.minimum(closest_dist_sq, distance_to_candidates,
+                   out=distance_to_candidates)
+        candidates_pot = distance_to_candidates.sum(axis=1)
 
-            # Store result if it is the best local trial so far
-            if (best_candidate is None) or (new_pot < best_pot):
-                best_candidate = candidate_ids[trial]
-                best_pot = new_pot
-                best_dist_sq = new_dist_sq
+        # Decide which candidate is the best
+        best_candidate = np.argmin(candidates_pot)
+        current_pot = candidates_pot[best_candidate]
+        closest_dist_sq = distance_to_candidates[best_candidate]
+        best_candidate = candidate_ids[best_candidate]
 
         # Permanently add best center candidate found in local tries
         if sp.issparse(X):
             centers[c] = X[best_candidate].toarray()
         else:
             centers[c] = X[best_candidate]
-        current_pot = best_pot
-        closest_dist_sq = best_dist_sq
 
     return centers
 
@@ -170,19 +166,19 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-def _check_sample_weight(X, sample_weight):
+def _check_normalize_sample_weight(sample_weight, X):
     """Set sample_weight if None, and check for correct dtype"""
-    n_samples = X.shape[0]
-    if sample_weight is None:
-        return np.ones(n_samples, dtype=X.dtype)
-    else:
-        sample_weight = np.asarray(sample_weight)
-        if n_samples != len(sample_weight):
-            raise ValueError("n_samples=%d should be == len(sample_weight)=%d"
-                             % (n_samples, len(sample_weight)))
+
+    sample_weight_was_none = sample_weight is None
+
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    if not sample_weight_was_none:
         # normalize the weights to sum up to n_samples
+        # an array of 1 (i.e. samples_weight is None) is already normalized
+        n_samples = len(sample_weight)
         scale = n_samples / sample_weight.sum()
-        return (sample_weight * scale).astype(X.dtype, copy=False)
+        sample_weight *= scale
+    return sample_weight
 
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
@@ -474,7 +470,8 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-    sample_weight = _check_sample_weight(X, sample_weight)
+
+    sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -799,7 +796,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
+class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     """K-Means clustering
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -890,7 +887,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
 
-    labels_ :
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
     inertia_ : float
@@ -1075,7 +1072,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X_new : array, shape (n_samples, n_clusters)
             X transformed in the new space.
         """
-        check_is_fitted(self, 'cluster_centers_')
+        check_is_fitted(self)
 
         X = self._check_test_data(X)
         return self._transform(X)
@@ -1105,7 +1102,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         labels : array, shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, 'cluster_centers_')
+        check_is_fitted(self)
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -1133,7 +1130,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         score : float
             Opposite of the value of X on the K-means objective.
         """
-        check_is_fitted(self, 'cluster_centers_')
+        check_is_fitted(self)
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -1531,7 +1528,7 @@ class MiniBatchKMeans(KMeans):
             raise ValueError("n_samples=%d should be >= n_clusters=%d"
                              % (n_samples, self.n_clusters))
 
-        sample_weight = _check_sample_weight(X, sample_weight)
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
         n_init = self.n_init
         if hasattr(self.init, '__array__'):
@@ -1680,7 +1677,7 @@ class MiniBatchKMeans(KMeans):
         """
         if self.verbose:
             print('Computing label assignment and total inertia')
-        sample_weight = _check_sample_weight(X, sample_weight)
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
         results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
@@ -1706,7 +1703,7 @@ class MiniBatchKMeans(KMeans):
 
         """
 
-        X = check_array(X, accept_sparse="csr", order='C',
+        X = check_array(X, accept_sparse="csr", order="C",
                         dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
         if hasattr(self.init, '__array__'):
@@ -1715,7 +1712,7 @@ class MiniBatchKMeans(KMeans):
         if n_samples == 0:
             return self
 
-        sample_weight = _check_sample_weight(X, sample_weight)
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
         x_squared_norms = row_norms(X, squared=True)
         self.random_state_ = getattr(self, "random_state_",
@@ -1783,7 +1780,7 @@ class MiniBatchKMeans(KMeans):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, 'cluster_centers_')
+        check_is_fitted(self)
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]

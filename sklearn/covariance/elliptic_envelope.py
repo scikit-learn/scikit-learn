@@ -9,7 +9,7 @@ from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
 
-class EllipticEnvelope(MinCovDet, OutlierMixin):
+class EllipticEnvelope(OutlierMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.
@@ -147,7 +147,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             compatibility with other outlier detection algorithms.
 
         """
-        check_is_fitted(self, 'offset_')
+        check_is_fitted(self)
         negative_mahal_dist = self.score_samples(X)
         return negative_mahal_dist - self.offset_
 
@@ -163,7 +163,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         negative_mahal_distances : array-like, shape (n_samples, )
             Opposite of the Mahalanobis distances.
         """
-        check_is_fitted(self, 'offset_')
+        check_is_fitted(self)
         return -self.mahalanobis(X)
 
     def predict(self, X):
