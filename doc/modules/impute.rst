@@ -137,7 +137,7 @@ out to be a particular instance of different sequential imputation algorithms
 that can all be implemented with :class:`IterativeImputer` by passing in
 different regressors to be used for predicting missing feature values. In the
 case of missForest, this regressor is a Random Forest.
-See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
+See :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
 
 
 .. _multiple_imputation:
