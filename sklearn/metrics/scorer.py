@@ -249,6 +249,7 @@ def get_scorer(scoring):
     if isinstance(scoring, str):
         try:
             if scoring == 'brier_score_loss':
+                # deprecated
                 scorer = brier_score_loss_scorer
             else:
                 scorer = SCORERS[scoring]
@@ -554,14 +555,14 @@ roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_threshold=True,
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                                   needs_proba=True)
-neg_brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                          greater_is_better=False,
-                                          needs_proba=True)
+neg_brier_score_scorer = make_scorer(brier_score_loss,
+                                     greater_is_better=False,
+                                     needs_proba=True)
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
 deprecation_msg = ('Scoring method brier_score_loss was renamed to '
-                   'neg_brier_score_loss in version 0.22 and will '
+                   'neg_brier_score in version 0.22 and will '
                    'be removed in 0.24.')
 brier_score_loss_scorer._deprecation_msg = deprecation_msg
 
@@ -595,7 +596,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
-               neg_brier_score_loss=neg_brier_score_loss_scorer,
+               neg_brier_score=neg_brier_score_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,

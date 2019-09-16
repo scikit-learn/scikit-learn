@@ -463,7 +463,7 @@ Changelog
 :mod:`sklearn.metrics`
 ..................................
 
-- |API| scoring="neg_brier_score_loss" should be used instead of
+- |API| scoring="neg_brier_score" should be used instead of
   scoring="brier_score_loss" which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
