@@ -361,10 +361,12 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     if _determine_key_type(features) == 'int':
         raise_err = False
-        if isinstance(features, Iterable):
+        if (isinstance(features, Iterable) or
+                isinstance(features, numbers.Integral)):
+            # _get_column_indices() support negative indexing. Here, we limit
+            # the indexing to be positive. The upper bound will be checked
+            # by _get_column_indices()
             raise_err = np.all(np.less(features, 0))
-        elif isinstance(features, numbers.Integral):
-            raise_err = features < 0
 
         if raise_err:
             raise ValueError(

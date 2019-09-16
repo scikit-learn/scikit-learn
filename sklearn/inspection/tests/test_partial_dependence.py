@@ -368,10 +368,10 @@ def test_partial_dependence_unknown_feature_string(estimator):
     df = pd.DataFrame(X)
     estimator.fit(df, y)
 
-    features = 'random'
+    features = ['random']
     err_msg = 'A given column is not a column of the dataframe'
     with pytest.raises(ValueError, match=err_msg):
-        partial_dependence(estimator, df, [features])
+        partial_dependence(estimator, df, features)
 
 
 @pytest.mark.parametrize(
