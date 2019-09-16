@@ -4,12 +4,12 @@ from scipy import linalg
 from itertools import product
 
 import pytest
+import re
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 
@@ -924,13 +924,13 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
         def fit_ridge_not_ok_2():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
-        assert_raise_message(ValueError,
-                             "Sample weights must be 1D array or scalar",
-                             fit_ridge_not_ok)
+        with pytest.raises(ValueError,
+                           match="Sample weights must be 1D array or scalar"):
+            fit_ridge_not_ok()
 
-        assert_raise_message(ValueError,
-                             "Sample weights must be 1D array or scalar",
-                             fit_ridge_not_ok_2)
+        with pytest.raises(ValueError,
+                           match="Sample weights must be 1D array or scalar"):
+            fit_ridge_not_ok_2()
 
 
 def test_sparse_design_with_sample_weights():
@@ -1005,7 +1005,8 @@ def test_raises_value_error_if_solver_not_supported():
         y = np.ones(3)
         ridge_regression(X, y, alpha=1., solver=wrong_solver)
 
-    assert_raise_message(exception, message, func)
+    with pytest.raises(exception, match=re.escape(message)):
+        func()
 
 
 def test_sparse_cg_max_iter():
