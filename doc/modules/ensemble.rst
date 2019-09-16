@@ -1235,7 +1235,7 @@ list of names and estimators::
   >>> from sklearn.svm import SVR
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
-  ...               ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))]
+  ...               ('svr', SVR(C=1, gamma=1e-6))]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1271,8 +1271,8 @@ availability, tested in the order of preference: `predict_proba`,
 `decision_function` and `predict`.
 
 A :class:`StackingRegressor` and :class:`StackingClassifier` can be used as
-any other regressor or classifier, exposing a `predict` and `predict_proba`
-methods, e.g.::
+any other regressor or classifier, exposing a `predict`, `predict_proba`, and
+`decision_function` methods, e.g.::
 
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score

@@ -76,6 +76,9 @@ def test_stacking_classifier_iris(cv, final_estimator):
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
+    if final_estimator is None:
+        # LogisticRegression has decision_function method
+        clf.decision_function(X_test)
 
     X_trans = clf.transform(X_test)
     assert X_trans.shape[1] == 3
@@ -352,6 +355,9 @@ def test_stacking_randomness(estimator, X, y):
     )
 
 
+# These warnings are raised due to _BaseComposition
+@pytest.mark.filterwarnings("ignore:TypeError occurred during set_params")
+@pytest.mark.filterwarnings("ignore:Estimator's parameters changed after")
 @pytest.mark.parametrize(
     "estimator",
     [StackingClassifier(

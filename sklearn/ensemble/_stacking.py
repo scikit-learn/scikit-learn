@@ -195,8 +195,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
         # take a copy.
-        cv = 5 if self.cv is None else self.cv
-        cv = check_cv(cv, y=y, classifier=is_classifier(self))
+        cv = check_cv(self.cv, y=y, classifier=is_classifier(self))
         if hasattr(cv, 'random_state') and cv.random_state is None:
             cv.random_state = np.random.RandomState()
 
@@ -494,6 +493,26 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         check_is_fitted(self)
         return self.final_estimator_.predict_proba(self.transform(X))
+
+    @if_delegate_has_method(delegate='final_estimator_')
+    def decision_function(self, X):
+        """Predict decision function for samples in X using
+        `final_estimator_.decision_function`.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        decisions : ndarray of shape (n_samples,), (n_samples, n_classes), \
+            or (n_samples, n_classes * (n_classes-1) / 2)
+            The decision function computed the final estimator.
+        """
+        check_is_fitted(self)
+        return self.final_estimator_.decision_function(self.transform(X))
 
     def transform(self, X):
         """Return class labels or probabilities for X for each estimator.
