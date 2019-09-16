@@ -14,7 +14,7 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_get_data_description_by_id,
                                      _download_data_arff,
                                      _feature_to_dtype,
-                                     _CacheWithRetry)
+                                     _make_memory)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
@@ -903,7 +903,7 @@ def test_decode_emotions(monkeypatch):
     _test_features_list(data_id)
 
 
-def test_cache_with_retry(tmpdir):
+def test_memory_exception_passthrough(tmpdir):
     cache_dir = str(tmpdir.mkdir('scikit_learn_data'))
 
     def _load_data():
@@ -911,11 +911,11 @@ def test_cache_with_retry(tmpdir):
                         msg='Simulated mock error',
                         hdrs=None, fp=None)
 
-    cache = _CacheWithRetry(cache_dir, data_id=None)
+    memory = _make_memory(cache_dir, data_id=None)
 
     error_msg = "Simulated mock error"
     with pytest.raises(HTTPError, match=error_msg):
-        cache(_load_data)()
+        memory.cache(_load_data)()
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])

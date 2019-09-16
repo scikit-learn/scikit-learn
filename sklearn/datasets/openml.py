@@ -33,38 +33,15 @@ _DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
-class _CacheWithRetry:
-    """Apply a function with a joblib.Memory cache
-
-    If first call fails, likely due to pickling issue, clean the
-    cache and try again.
+def _make_memory(data_home, data_id):
+    """Create a joblib.Memory instance in a dataset specific subfolder
     """
-    def __init__(self, data_home, data_id):
-        if data_home is not None:
-            # Use dataset specific cache location, so it can be separately
-            # cleaned
-            self.memory = Memory(join(data_home, 'cache', str(data_id)),
-                                 verbose=0)
-        else:
-            self.memory = None
-        self.data_home = data_home
-
-    def __call__(self, func, **kwargs):
-        # TODO: the retry could be handled in joblib (maybe it already is?)
-        memory = self.memory
-        if memory is not None and self.data_home is not None:
-            try:
-                return memory.cache(func)(**kwargs)
-            except HTTPError:
-                raise
-            except Exception:
-                warn("Invalid cache, redownloading file", RuntimeWarning)
-
-            # attemting to download data with cleared cache
-            memory.clear()
-            return memory.cache(func)(**kwargs)
-        else:
-            return func(**kwargs)
+    if data_home is not None:
+        # Use dataset specific cache location, so it can be separately
+        # cleaned
+        return Memory(join(data_home, 'cache', str(data_id)), verbose=0)
+    else:
+        return Memory(None)
 
 
 def _open_openml_url(openml_path):
@@ -589,8 +566,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                 "Dataset data_id={} and name={} passed, but you can only "
                 "specify a numeric data_id or a name, not "
                 "both.".format(data_id, name))
-        data_info = _CacheWithRetry(data_home, data_id=None)(
-            _get_data_info_by_name, name=name, version=version)
+        memory = _make_memory(data_home, data_id=None)
+        data_info = memory.cache(_get_data_info_by_name)(
+                name=name, version=version
+        )
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
@@ -604,10 +583,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             "Neither name nor data_id are provided. Please provide name or "
             "data_id.")
 
-    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
+    memory = _make_memory(data_home, data_id)
 
-    data_description = _apply_cached_with_retry(_get_data_description_by_id,
-                                                data_id=data_id)
+    data_description = memory.cache(_get_data_description_by_id)(
+        data_id=data_id
+    )
 
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have "
@@ -630,8 +610,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if as_frame and return_sparse:
         raise ValueError('Cannot return dataframe with sparse data')
 
-    bunch = _apply_cached_with_retry(
-        _fetch_openml_inner, data_id=data_id, target_column=target_column,
+    bunch = memory.cache(_fetch_openml_inner)(
+        data_id=data_id, target_column=target_column,
         as_frame=as_frame, return_sparse=return_sparse,
         file_id=data_description['file_id'], data_home=data_home)
 
@@ -646,11 +626,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
 def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
                         file_id, data_home):
-    _apply_cached_with_retry = _CacheWithRetry(data_home, data_id)
+    memory = _make_memory(data_home, data_id)
 
     # download data features, meta-info about column types
-    features_list = _apply_cached_with_retry(_get_data_features,
-                                             data_id=data_id)
+    features_list = memory.cache(_get_data_features)(data_id=data_id)
     if not as_frame:
         for feature in features_list:
             if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
@@ -702,8 +681,7 @@ def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
     if not return_sparse:
         # The shape must include the ignored features to keep the right indexes
         # during the arff data conversion.
-        data_qualities = _apply_cached_with_retry(_get_data_qualities,
-                                                  data_id=data_id)
+        data_qualities = memory.cache(_get_data_qualities)(data_id=data_id)
         shape = _get_num_samples(data_qualities), len(features_list)
     else:
         shape = None
@@ -712,8 +690,7 @@ def _fetch_openml_inner(data_id, target_column, as_frame, return_sparse,
     kwargs = dict(file_id=file_id, sparse=return_sparse,
                   encode_nominal=not as_frame)
     if LooseVersion(joblib.__version__) >= LooseVersion('0.12.0'):
-        arff = _CacheWithRetry(data_home, data_id)(_download_data_arff,
-                                                   **kwargs)
+        arff = memory.cache(_download_data_arff)(**kwargs)
     else:
         # in some cases liac-arff returns a generator with data which
         # cannot be pickled with joblib < 0.12
