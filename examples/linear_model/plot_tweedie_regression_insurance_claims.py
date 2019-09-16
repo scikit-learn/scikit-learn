@@ -197,16 +197,6 @@ glm_freq = PoissonRegressor(alpha=1e-2)
 glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
 
 
-def mean_deviance(estimator, y, y_pred, weights):
-    if hasattr(estimator, "_family_instance"):
-        if weights is None:
-            weights = np.ones_like(y)
-        return (estimator._family_instance.deviance(y, y_pred, weights)
-                / np.sum(weights))
-    else:
-        return np.nan
-
-
 def score_estimator(
     estimator, X_train, X_test, df_train, df_test, target, weights
 ):
@@ -221,18 +211,25 @@ def score_estimator(
 
         for score_label, metric in [
             ("D² explained", None),
-            ("mean deviance", partial(mean_deviance, estimator)),
+            ("mean deviance", mean_tweedie_deviance),
             ("mean abs. error", mean_absolute_error),
             ("mean squared error", mean_squared_error),
         ]:
-            if estimator.__class__.__name__ == "ClaimProdEstimator":
-                # ClaimProdEstimator is the product of frequency and severity
-                # models, denormalized by the exposure values.
-                # It does not fully follow the scikit-learn API and we
-                # must handle it separately.
-                y_pred = estimator.predict(X, exposure=df.Exposure.values)
+            if isinstance(estimator, tuple) and len(estimator) == 2:
+                # Score the model consisting of the product of frequency and
+                # severity models, denormalized by the exposure values.
+                est_freq, est_sev = estimator
+                y_pred = (df.Exposure.values * est_freq.predict(X)
+                          * est_sev.predict(X))
+                power = 1.5
             else:
                 y_pred = estimator.predict(X)
+                power = getattr(getattr(estimator, "_family_instance"),
+                                "power")
+
+            if score_label == "mean deviance":
+                metric = partial(mean_tweedie_deviance, power=power)
+
             if metric is None:
                 if not hasattr(estimator, "score"):
                     continue
@@ -248,7 +245,8 @@ def score_estimator(
         pd.DataFrame(res)
         .set_index(["metric", "subset"])
         .score.unstack(-1)
-        .round(3)
+        .round(2)
+        .loc[:, ['train', 'test']]
     )
     return res
 
@@ -425,48 +423,16 @@ plot_obs_pred(
 # 4. Total claim amount -- Compound Poisson distribution
 # -------------------------------------------------------
 #
-# As mentionned in the introduction, the total claim amount can be modeled
+# As mentioned in the introduction, the total claim amount can be modeled
 # either as the product of the frequency model by the severity model,
+# denormalized by exposure. In the following code sample, the
+# ``score_estimator`` is extended to score such a model. The mean deviance
+# is computed assuming a Tweedie distribution with ``power=1.5`` to be
+# comparable with the model from the following section,
 
-
-class ClaimProdEstimator:
-    """Total claim amount estimator.
-
-    Computed as the product of the frequency model by the serverity model,
-    denormalized by exposure. For scores, use Tweedie deviance with
-    `power=1.5`.
-    """
-
-    def __init__(self, est_freq, est_sev):
-        from sklearn.linear_model._glm.distribution import TweedieDistribution
-
-        self.est_freq = est_freq
-        self.est_sev = est_sev
-        self._family_instance = TweedieDistribution(power=1.5)
-
-    def predict(self, X, exposure):
-        """Predict the total claim amount.
-
-        The predict method is not compatible with the scikit-learn API.
-        """
-        return exposure * self.est_freq.predict(X) * self.est_sev.predict(X)
-
-    def score(self, X, y, sample_weight=None):
-        """Compute D², the percentage of deviance explained."""
-        # TODO: use d2_score directly once it is available
-        mu = self.predict(X, exposure=sample_weight)
-        dev = mean_tweedie_deviance(
-            y, mu, sample_weight=sample_weight, power=1.5)
-        y_mean = np.average(y, weights=sample_weight) * np.ones_like(y)
-        dev_null = mean_tweedie_deviance(
-            y, y_mean, sample_weight=sample_weight, power=1.5)
-        return 1. - dev / dev_null
-
-
-est_prod = ClaimProdEstimator(glm_freq, glm_sev)
 
 scores = score_estimator(
-    est_prod,
+    (glm_freq, glm_sev),
     X_train,
     X_test,
     df_train,
@@ -479,7 +445,8 @@ print(scores)
 
 ##############################################################################
 #
-# or as a unique Compound Poisson model, also corresponding to a Tweedie model
+# Indeed, an alternative approach for modeling the total loss is with a unique
+# Compound Poisson model, also corresponding to a Tweedie model
 # with a power :math:`p \in (1, 2)`. We determine the optimal hyperparameter
 # ``p`` with a grid search,
 
@@ -535,7 +502,7 @@ for subset_label, X, df in [
             "subset": subset_label,
             "observed": df.ClaimAmount.values.sum(),
             "predicted, frequency*severity model": np.sum(
-                est_prod.predict(X, exposure=df.Exposure.values)
+                df.Exposure.values*glm_freq.predict(X)*glm_sev.predict(X)
             ),
             "predicted, tweedie, power=%.2f"
             % glm_total.best_estimator_.family.power: np.sum(
@@ -545,5 +512,3 @@ for subset_label, X, df in [
     )
 
 print(pd.DataFrame(res).set_index("subset").T)
-
-plt.show()

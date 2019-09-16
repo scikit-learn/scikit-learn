@@ -295,5 +295,3 @@ for axi in axes:
 # Thus, among the considered estimators, ``PoissonRegressor`` is better suited
 # for modeling the long tail distribution of the data as compared to the
 # ``Ridge`` and ``RandomForestRegressor`` estimators.
-
-plt.show()
