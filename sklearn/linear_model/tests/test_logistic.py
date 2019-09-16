@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
@@ -199,7 +198,8 @@ def test_predict_iris():
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_multinomial_validation(solver):
     lr = LogisticRegression(C=-1, solver=solver, multi_class='multinomial')
-    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+    with pytest.raises(ValueError):
+        lr.fit([[0, 1], [1, 0]], [0, 1])
 
 
 @pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
@@ -321,11 +321,12 @@ def test_inconsistent_input():
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
-    assert_raises(ValueError, clf.fit, X, y_wrong)
+    with pytest.raises(ValueError):
+        clf.fit(X, y_wrong)
 
     # Wrong dimensions for test data
-    assert_raises(ValueError, clf.fit(X_, y_).predict,
-                  rng.random_sample((3, 12)))
+    with pytest.raises(ValueError):
+        clf.fit(X_, y_).predict(rng.random_sample((3, 12)))
 
 
 def test_write_parameters():
@@ -343,7 +344,8 @@ def test_nan():
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
     logistic = LogisticRegression(random_state=0)
-    assert_raises(ValueError, logistic.fit, Xnan, Y1)
+    with pytest.raises(ValueError):
+        logistic.fit(Xnan, Y1)
 
 
 def test_consistency_path():
