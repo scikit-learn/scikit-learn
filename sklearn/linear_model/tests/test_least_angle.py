@@ -9,7 +9,6 @@ from scipy import linalg
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import TempMemmap
@@ -95,8 +94,8 @@ def test_lars_path_gram_equivalent(method, return_path):
 def test_x_none_gram_none_raises_value_error():
     # Test that lars_path with no X and Gram raises exception
     Xy = np.dot(X.T, y)
-    assert_raises(ValueError, linear_model.lars_path, None, y, Gram=None,
-                  Xy=Xy)
+    with pytest.raises(ValueError):
+        linear_model.lars_path(None, y, Gram=None, Xy=Xy)
 
 
 def test_all_precomputed():
@@ -484,7 +483,8 @@ def test_lasso_lars_ic():
 
     # test error on unknown IC
     lars_broken = linear_model.LassoLarsIC('<unknown>')
-    assert_raises(ValueError, lars_broken.fit, X, y)
+    with pytest.raises(ValueError):
+        lars_broken.fit(X, y)
 
 
 def test_lars_path_readonly_data():
