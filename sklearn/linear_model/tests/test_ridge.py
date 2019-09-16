@@ -9,9 +9,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 
@@ -308,7 +306,8 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-    assert_raises(ValueError, ridge.fit, X, y)
+    with pytest.raises(ValueError):
+        ridge.fit(X, y)
 
 
 @pytest.mark.parametrize('n_col', [(), (1,), (3,)])
@@ -734,7 +733,8 @@ def test_ridge_sparse_svd():
     X = sp.csc_matrix(rng.rand(100, 10))
     y = rng.rand(100)
     ridge = Ridge(solver='svd', fit_intercept=False)
-    assert_raises(TypeError, ridge.fit, X, y)
+    with pytest.raises(TypeError):
+        ridge.fit(X, y)
 
 
 def test_class_weights():
@@ -841,8 +841,8 @@ def test_ridgecv_store_cv_values():
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
     r = RidgeCV(cv=3, store_cv_values=True)
-    assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
-                        r.fit, x, y)
+    with pytest.raises(ValueError, match='cv!=None and store_cv_values'):
+        r.fit(x, y)
 
 
 def test_ridge_classifier_cv_store_cv_values():
@@ -981,15 +981,13 @@ def test_ridgecv_negative_alphas():
 
     # Negative integers
     ridge = RidgeCV(alphas=(-1, -10, -100))
-    assert_raises_regex(ValueError,
-                        "alphas must be positive",
-                        ridge.fit, X, y)
+    with pytest.raises(ValueError, match="alphas must be positive"):
+        ridge.fit(X, y)
 
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
-    assert_raises_regex(ValueError,
-                        "alphas must be positive",
-                        ridge.fit, X, y)
+    with pytest.raises(ValueError, match="alphas must be positive"):
+        ridge.fit(X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
@@ -1117,14 +1115,13 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     alpha, atol, tol = 1e-3, 1e-4, 1e-6
 
     if solver not in ['sag', 'auto'] and return_intercept:
-        assert_raises_regex(ValueError,
-                            "In Ridge, only 'sag' solver",
-                            ridge_regression, X_testing, y,
-                            alpha=alpha,
-                            solver=solver,
-                            sample_weight=sample_weight,
-                            return_intercept=return_intercept,
-                            tol=tol)
+        with pytest.raises(ValueError, match="In Ridge, only 'sag' solver"):
+            ridge_regression(X_testing, y,
+                             alpha=alpha,
+                             solver=solver,
+                             sample_weight=sample_weight,
+                             return_intercept=return_intercept,
+                             tol=tol)
         return
 
     out = ridge_regression(X_testing, y, alpha=alpha,
@@ -1144,7 +1141,8 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
-    assert_raises(ValueError, RidgeClassifier().fit, X, y)
+    with pytest.raises(ValueError):
+        RidgeClassifier().fit(X, y)
 
 
 @pytest.mark.parametrize(
