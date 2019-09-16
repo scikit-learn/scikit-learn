@@ -139,11 +139,15 @@ Changelog
   `Adrin Jalali`_.
 
 :mod:`sklearn.dummy`
-............................
+....................
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
   of the provided constant in multiouput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
+
+- |API| The ``outputs_2d_`` attribute is deprecated in
+  :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`. It is
+  equivalent to ``n_outputs > 1``. :pr:`14933` by `Nicolas Hug`_
 
 :mod:`sklearn.ensemble`
 .......................
@@ -397,7 +401,7 @@ Changelog
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.neighbors`
-....................
+........................
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
@@ -489,6 +493,10 @@ Changelog
 - |Feature| Added a pytest specific decorator,
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
+
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
