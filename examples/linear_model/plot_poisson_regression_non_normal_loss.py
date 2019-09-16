@@ -23,6 +23,8 @@ print(__doc__)
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 # License: BSD 3 clause
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -36,7 +38,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
@@ -149,11 +151,6 @@ dummy = make_pipeline(
 dummy.fit(df_train, df_train.Frequency,
           dummyregressor__sample_weight=df_train.Exposure)
 
-##############################################################################
-#
-# The Poisson deviance cannot be computed on negative values predicted by the
-# model, so all models need to return positive preditions if we intend to
-# use this metric,
 
 
 def score_estimator(estimator, df_test):
@@ -168,11 +165,17 @@ def score_estimator(estimator, df_test):
               df_test.Frequency.values, y_pred,
               df_test.Exposure.values))
 
-    # ignore negative predictions
+    # ignore negative predictions, as they are invalid for
+    # the Poisson deviance
     mask = y_pred > 0
+    if (~mask).any():
+        warnings.warn("estimator yields negative predictions for {} samples "
+                      "out of {}. These will be ignored while computing the "
+                      "poisson deviance".format((~mask).sum(), mask.shape[0]))
 
     print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-            df_test.Frequency.values[mask], y_pred[mask],
+            df_test.Frequency.values[mask],
+            y_pred[mask],
             df_test.Exposure.values[mask]))
 
 
@@ -184,14 +187,21 @@ score_estimator(dummy, df_test)
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-linregr = make_pipeline(column_trans, Ridge(alpha=1.0))
+linregr = make_pipeline(
+    column_trans,
+    Ridge(alpha=1.0)
+)
 linregr.fit(df_train, df_train.Frequency,
             ridge__sample_weight=df_train.Exposure)
 
-
-print('Number Negatives: %s / total: %s' % (
-      (linregr.predict(df_train) < 0).sum(),
-      df_train.shape[0]))
+##############################################################################
+#
+# The Poisson deviance cannot be computed on negative values predicted by the
+# model. For models that do return a few negative predictions
+# (e.g. :class:`linear_model.Ridge`) we ignore the corresponding samples,
+# meaning that the obtained Poisson deviance is approximate. An alternative
+# apporach could be to use class:`compose.TransformedTargetRegressor`
+# meta-estimator to map ``y_pred`` to strictly positive domain.
 
 print("Ridge")
 score_estimator(linregr, df_test)
@@ -212,40 +222,38 @@ score_estimator(glm_freq, df_test)
 
 ##############################################################################
 #
-# Finally, we will consider a non linear model with Gradient boosting that
-# still minimizes the least square error. Gradient Boosting Decision Trees do
+# Finally, we will consider a non linear model with a random forest that
+# still minimizes the least square error.  Random forest does
 # not require for categorical data to be one hot encoded, therefore here we use
-# a simpler pre-processing pipeline without ``KBinsDiscretizer`` and with
-# ``OrdinalEncoder`` instead of ``OneHotEncoder``.
+# a simpler pre-processing pipeline with :class:`preprocessing.OrdinalEncoder`,
 
 
 gbr = make_pipeline(
     ColumnTransformer(
         [
             (
-                "Veh_Brand_Gas_Region",
-                OrdinalEncoder(),
+                "Veh_Brand_Gas_Region", OrdinalEncoder(),
                 ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
             ),
-            ("Continious", "passthrough", ["VehAge", "DrivAge", "BonusMalus"]),
-            ("Density_log", make_pipeline(
-                FunctionTransformer(np.log, validate=False), StandardScaler()),
-                ["Density"]),
+            (
+                "Continious", "passthrough",
+                ["VehAge", "DrivAge", "BonusMalus", "Density"]
+            ),
         ],
         remainder="drop",
     ),
-    GradientBoostingRegressor()
+    RandomForestRegressor(min_weight_fraction_leaf=1e-2)
 )
 gbr.fit(df_train, df_train.Frequency.values,
-        gradientboostingregressor__sample_weight=df_train.Exposure.values)
+        randomforestregressor__sample_weight=df_train.Exposure.values)
 
 
-print("GradientBoostingRegressor")
+print("RandomForestRegressor")
 score_estimator(gbr, df_test)
 
 ##############################################################################
 #
-# In this example, although Gradient boosting minimizes the least square error,
+# In this example, although random forest minimizes the least square error,
 # because of a higher predictive power it also results in a smaller Poisson
 # deviance than the Poisson regression model.
 #
@@ -281,11 +289,12 @@ for axi in axes:
 # The experimental data presents a long tail distribution for ``y``. In all
 # models we predict the mean expected value, so we will have necessairily fewer
 # extreme values. Additionally normal distribution used in ``Ridge`` and
-# ``GradientBoostingRegressor`` has a constant variance, while for the Poisson
+# ``RandomForestRegressor`` has a constant variance, while for the Poisson
 # distribution used in ``PoissonRegressor``, the variance is proportional to
 # the mean predicted value.
 #
-# Thus, among the considered estimators,
-# ``PoissonRegressor`` and ``GradientBoostingRegressor`` are better suited for
-# modeling the long tail distribution of the data as compared to the ``Ridge``
-# estimator.
+# Thus, among the considered estimators, ``PoissonRegressor`` is better suited
+# for modeling the long tail distribution of the data as compared to the
+# ``Ridge`` and ``RandomForestRegressor`` estimators.
+
+plt.show()
