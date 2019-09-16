@@ -17,9 +17,10 @@ from .utils.validation import check_is_fitted
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
+from .utils import deprecated
 
 
-class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
+class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -120,8 +121,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
-
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -143,15 +142,18 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
          self.n_classes_,
          self.class_prior_) = class_distribution(y, sample_weight)
 
-        if (self.strategy == "constant" and
-                any(constant[k] not in self.classes_[k]
-                    for k in range(self.n_outputs_))):
-            # Checking in case of constant strategy if the constant
-            # provided by the user is in y.
-            raise ValueError("The constant target value must be "
-                             "present in training data")
+        if self.strategy == "constant":
+            for k in range(self.n_outputs_):
+                if not any(constant[k][0] == c for c in self.classes_[k]):
+                    # Checking in case of constant strategy if the constant
+                    # provided by the user is in y.
+                    err_msg = ("The constant target value must be present in "
+                               "the training data. You provided constant={}. "
+                               "Possible values are: {}."
+                               .format(self.constant, list(self.classes_[k])))
+                    raise ValueError(err_msg)
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
             self.class_prior_ = self.class_prior_[0]
@@ -182,7 +184,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -191,7 +193,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1 and not self.output_2d_:
+            if self.n_outputs_ == 1:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -228,7 +230,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             elif self.strategy == "constant":
                 y = np.tile(self.constant, (n_samples, 1))
 
-            if self.n_outputs_ == 1 and not self.output_2d_:
+            if self.n_outputs_ == 1:
                 y = np.ravel(y)
 
         return y
@@ -260,7 +262,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -291,7 +293,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
             P.append(out)
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             P = P[0]
 
         return P
@@ -352,8 +354,17 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
+    @deprecated(
+        "The outputs_2d_ attribute is deprecated in version 0.22 "
+        "and will be removed in version 0.24. It is equivalent to "
+        "n_outputs_ > 1."
+    )
+    @property
+    def outputs_2d_(self):
+        return self.n_outputs_ != 1
 
-class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
+
+class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
@@ -426,8 +437,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
-        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
-
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
         self.n_outputs_ = y.shape[1]
@@ -467,7 +476,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
                                         accept_sparse=['csr', 'csc', 'coo'],
                                         ensure_2d=False, ensure_min_samples=0)
 
-            if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
+            if self.n_outputs_ != 1 and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
                     "Constant target value should have "
                     "shape (%d, 1)." % y.shape[1])
@@ -505,7 +514,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
                     dtype=np.array(self.constant_).dtype)
         y_std = np.zeros((n_samples, self.n_outputs_))
 
-        if self.n_outputs_ == 1 and not self.output_2d_:
+        if self.n_outputs_ == 1:
             y = np.ravel(y)
             y_std = np.ravel(y_std)
 
@@ -551,3 +560,12 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
+
+    @deprecated(
+        "The outputs_2d_ attribute is deprecated in version 0.22 "
+        "and will be removed in version 0.24. It is equivalent to "
+        "n_outputs_ > 1."
+    )
+    @property
+    def outputs_2d_(self):
+        return self.n_outputs_ != 1

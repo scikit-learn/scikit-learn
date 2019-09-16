@@ -289,11 +289,25 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
+
+        # The Laplacian matrix is always singular, having at least one zero
+        # eigenvalue, corresponding to the trivial eigenvector, which is a
+        # constant. Using a singular matrix for preconditioning may result in
+        # random failures in LOBPCG and is not supported by the existing
+        # theory:
+        #     see https://doi.org/10.1007/s10208-015-9297-1
+        # Shift the Laplacian so its diagononal is not all ones. The shift
+        # does change the eigenpairs however, so we'll feed the shifted
+        # matrix to the solver and afterward set it back to the original.
+        diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
+        laplacian += diag_shift
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
+        laplacian -= diag_shift
+
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
+        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
                                   largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -375,8 +389,7 @@ class SpectralEmbedding(BaseEstimator):
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
-        to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        to be installed. It can be faster on very large, sparse problems.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
