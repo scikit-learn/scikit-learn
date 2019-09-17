@@ -6,8 +6,9 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils import IS_PYPY
-from ..base import BaseEstimator, TransformerMixin
+from sklearn.utils import IS_PYPY, check_random_state
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.exceptions import NotFittedError
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
@@ -84,13 +85,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, alternate_sign=True):
+                 dtype=np.float64, alternate_sign=True, random_state=0):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.alternate_sign = alternate_sign
+        self.random_state = random_state
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -123,6 +125,15 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         """
         # repeat input validation for grid search (which calls set_params)
         self._validate_params(self.n_features, self.input_type)
+
+        # optional if random_state is left to an integer seed
+        if isinstance(self.random_state, int):
+            self.seed_ = self.random_state
+        else:
+            self.random_state = check_random_state(self.random_state)
+            self.seed_ = int(self.random_state.get_state()[1][0])
+            # randint(np.iinfo(np.uint32).max)
+
         return self
 
     def transform(self, raw_X):
@@ -149,11 +160,18 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         # expose the seed for HashingVectorizer
-        if not hasattr(self, "_seed"):
-            self._seed = 0
+        if isinstance(self.random_state, int):
+            seed = self.random_state   # stateless estimator
+        elif hasattr(self, "seed_"):
+            seed = self.seed_
+        else:
+            raise NotFittedError("FeaturHasher needs to be fitted"
+                                 "when random_state is not a fixed integer"
+                                 "got random_state=%s" % self.random_state)
+
         indices, indptr, values = \
             _hashing_transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign, seed=self._seed)
+                               self.alternate_sign, seed=seed)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:

@@ -2,9 +2,12 @@
 import numpy as np
 from numpy.testing import assert_array_equal
 
+import pytest
+
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (assert_raises, ignore_warnings,
                                    fails_if_pypy)
+from sklearn.exceptions import NotFittedError
 
 pytestmark = fails_if_pypy
 
@@ -57,10 +60,28 @@ def test_feature_hasher_seed():
 
     # assert a different random_state gives a different output
     h = FeatureHasher(n_features, input_type="string",
-                      alternate_sign=False)
-    h._seed = 1
+                      alternate_sign=False, random_state=1)
     X = h.transform(raw_X)
     assert_array_equal(X.indices, [44, 114, 125, 39, 44, 125])
+
+
+@pytest.mark.parametrize("random_state", [None, np.random.RandomState(0)])
+def test_feature_hasher_random_state_not_int(random_state):
+    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
+             ["bar".encode("ascii"), "baz", "quux"]]
+    n_features = 2 ** 7
+
+    # assert random_state=None should be fitted
+    h = FeatureHasher(n_features, input_type="string",
+                      alternate_sign=False, random_state=random_state)
+    assert_raises(NotFittedError, h.transform, {'raw_X': raw_X})
+
+    h.fit(raw_X)
+    X = h.transform(raw_X)
+
+    h = FeatureHasher(n_features, input_type="string",
+                      alternate_sign=False, random_state=random_state)
+    X = h.fit_transform(raw_X)
 
 
 def test_feature_hasher_pairs():
