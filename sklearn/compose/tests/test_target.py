@@ -332,3 +332,39 @@ def test_transform_target_regressor_route_pipeline():
     pip.fit(X, y, **{'est__check_input': False})
 
     assert regr.transformer_.fit_counter == 1
+
+class DummyRegressorWithExtraPredictParams(DummyRegressor):
+    def predict(self, X, return_std=False, check_input=True):
+        # on the test below we force this to false, we make sure this is
+        # actually passed to the regressor
+        assert not check_input
+        return super().predict(X, return_std)
+
+
+def test_transform_target_regressor_pass_predict_parameters():
+    X, y = friedman
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraPredictParams(),
+        transformer=DummyTransformer()
+    )
+
+    regr.fit(X, y)
+    regr.predict(X, check_input=False)
+
+
+def test_transform_target_regressor_route_pipeline_with_predict_parameters():
+    X, y = friedman
+
+    regr = TransformedTargetRegressor(
+        regressor=DummyRegressorWithExtraPredictParams(),
+        transformer=DummyTransformer()
+    )
+    estimators = [
+        ('normalize', StandardScaler()), ('est', regr)
+    ]
+
+    pip = Pipeline(estimators)
+    pip.fit(X, y)
+    # Unlike **fit_params in fit Pipeline method, **predict_params in predict
+    # Pipeline method are given directly to the last step of the Pipeline.
+    pip.predict(X, check_input=False)
