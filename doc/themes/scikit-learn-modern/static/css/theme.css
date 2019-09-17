@@ -756,6 +756,10 @@ div.versionchanged {
   border-radius: 0.5rem;
 }
 
+div.versionchanged p {
+  margin-bottom: 0;
+}
+
 dt.label {
   float: left;
   padding-right: 0.5rem;
