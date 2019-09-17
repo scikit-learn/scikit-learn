@@ -169,22 +169,16 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
     gb_1 = GradientBoosting(n_iter_no_change=5, max_iter=2,
                             random_state=random_state)
     gb_1.fit(X, y)
-    train_val_seed_1 = gb_1._train_val_split_seed
-    small_trainset_seed_1 = gb_1._small_trainset_seed
+    random_seed_1 = gb_1._random_seed
 
     random_state = _get_rng(rng_type)
     gb_2 = GradientBoosting(n_iter_no_change=5, max_iter=2,
                             random_state=random_state, warm_start=True)
     gb_2.fit(X, y)  # inits state
-    train_val_seed_2 = gb_2._train_val_split_seed
-    small_trainset_seed_2 = gb_2._small_trainset_seed
+    random_seed_2 = gb_2._random_seed
     gb_2.fit(X, y)  # clears old state and equals est
-    train_val_seed_3 = gb_2._train_val_split_seed
-    small_trainset_seed_3 = gb_2._small_trainset_seed
+    random_seed_3 = gb_2._random_seed
 
     # Check that all seeds are equal
-    assert train_val_seed_1 == train_val_seed_2
-    assert small_trainset_seed_1 == small_trainset_seed_2
-
-    assert train_val_seed_2 == train_val_seed_3
-    assert small_trainset_seed_2 == small_trainset_seed_3
+    assert random_seed_1 == random_seed_2
+    assert random_seed_2 == random_seed_3
