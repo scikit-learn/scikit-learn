@@ -69,7 +69,7 @@ from sklearn.utils import shuffle
 print(__doc__)
 
 
-class NMSlibTransformer(BaseEstimator, TransformerMixin):
+class NMSlibTransformer(TransformerMixin, BaseEstimator):
     """Wrapper for using nmslib as sklearn's KNeighborsTransformer"""
 
     def __init__(self, n_neighbors=5, metric='euclidean', method='sw-graph',
@@ -121,7 +121,7 @@ class NMSlibTransformer(BaseEstimator, TransformerMixin):
         return kneighbors_graph
 
 
-class AnnoyTransformer(BaseEstimator, TransformerMixin):
+class AnnoyTransformer(TransformerMixin, BaseEstimator):
     """Wrapper for using annoy.AnnoyIndex as sklearn's KNeighborsTransformer"""
 
     def __init__(self, n_neighbors=5, metric='euclidean', n_trees=10,
