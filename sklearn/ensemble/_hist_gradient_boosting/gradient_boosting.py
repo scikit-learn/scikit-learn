@@ -107,7 +107,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # The rng state must be preserved if warm_start is True
         rng = check_random_state(self.random_state)
         if not (self.warm_start and self._is_fitted()):
-            self._random_seed = rng.randint(np.iinfo(np.uint32).max)
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max,
+                                            dtype='u8')
 
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
