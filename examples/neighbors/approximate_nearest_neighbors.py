@@ -13,6 +13,11 @@ distances, and thus assumes that precomputed euclidean distances are squared.
 In future versions, a parameter in TSNE will control the optional squaring of
 precomputed distances (see #12401).
 
+Note: In :class:`KNeighborsTransformer` we use the definition which includes
+each training point as its own neighbor in the count of `n_neighbors`, and for
+compatibility reasons, one extra neighbor is computed when
+`mode == 'distance'`. Please note that we do the same in the proposed wrappers.
+
 Sample output:
 
 Benchmarking on MNIST_2000:

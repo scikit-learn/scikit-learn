@@ -569,6 +569,19 @@ implementation with special data types. The precomputed neighbors
   (as opposed to radius neighborhood), at least k neighbors must be stored in
   each row.
 
+.. note::
+  When a specific number of neighbors is queried (using
+  :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
+  since it can either include each training point as its own neighbor, or 
+  exclude them. Neither choice is perfect, since including them leads to a
+  different number of neighbors during training and testing, while excluding
+  them leads to a difference between `fit(X).transform(X)` and
+  `fit_transform(X)`, which is against scikit-learn API.
+  In :class:`KNeighborsTransformer` we use the definition which includes each
+  training point as its own neighbor in the count of `n_neighbors`, but for
+  compatibility reasons, one extra neighbor will be computed when
+  `mode == 'distance'`.
+
 .. topic:: Examples:
   * :ref:`sphx_glr_auto_examples_neighbors_neighbors_in_pipeline_api.py`: an
     example of pipelining KNeighborsTransformer and TSNE, and of using custom
