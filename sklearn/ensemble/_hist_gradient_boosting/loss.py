@@ -210,14 +210,14 @@ class LeastAbsoluteDeviation(BaseLoss):
     # (https://statweb.stanford.edu/~jhf/ftp/trebst.pdf) for the theory.
     need_update_leaves_values = True
 
-    def __call__(self, y_true, raw_predictions, average=True):
+    def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         loss = np.abs(y_true - raw_predictions)
-        return loss.mean() if average else loss
+        return loss
 
-    def get_baseline_prediction(self, y_train, prediction_dim):
+    def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         return np.median(y_train)
 
     @staticmethod
