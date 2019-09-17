@@ -90,7 +90,7 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                         d = d + fabs(X_data[i])
                         i = i + 1
 
-                D[px,py] = d
+                D[px, py] = d
 
 
 def _dense_manhattan(floating[:,:] x,floating[:,:] y, floating[:,:] out):
@@ -101,5 +101,5 @@ def _dense_manhattan(floating[:,:] x,floating[:,:] y, floating[:,:] out):
             for j in range(y.shape[0]):
                 s = 0
                 for k in range(x.shape[1]):
-                    s = s + fabs(x[i,k] - y[j,k])
-                out[i,j]=s
+                    s = s + fabs(x[i, k] - y[j, k])
+                out[i, j]=s

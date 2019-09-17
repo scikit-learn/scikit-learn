@@ -765,17 +765,19 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
 
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
+        X.sort_indices()
+        Y.sort_indices()
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr,
                           Y.data, Y.indices, Y.indptr,
-                          X.shape[1], D)
+                          D)
         return D
 
     if sum_over_features:
         return distance.cdist(X, Y, 'cityblock')
 
-    D = np.empty(shape=(X.shape[0],Y.shape[0]))
-    _dense_manhattan(X,Y,D)
+    D = np.empty(shape=(X.shape[0], Y.shape[0]))
+    _dense_manhattan(X, Y, D)
     return D
 
 
