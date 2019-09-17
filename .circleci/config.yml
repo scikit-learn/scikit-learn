@@ -5,13 +5,15 @@ jobs:
     docker:
       - image: circleci/python:3.7.3-stretch
     environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3.5
       - NUMPY_VERSION: 1.11.0
       - SCIPY_VERSION: 0.17.0
-      - PANDAS_VERSION: 0.18.0
       - MATPLOTLIB_VERSION: 1.5.1
+      - CYTHON_VERSION: 0.28.5
       - SCIKIT_IMAGE_VERSION: 0.12.3
     steps:
       - checkout
@@ -43,6 +45,8 @@ jobs:
     docker:
       - image: circleci/python:3.7.3-stretch
     environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3

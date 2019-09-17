@@ -17,11 +17,9 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater, assert_in, assert_less
-from sklearn.utils.testing import assert_raises_regexp, assert_warns
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
-from sklearn.utils.testing import ignore_warnings, assert_raises
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
@@ -57,7 +55,7 @@ def test_libsvm_iris():
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.9
         assert hasattr(clf, "coef_") == (k == 'linear')
 
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
@@ -65,18 +63,18 @@ def test_libsvm_iris():
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
     pred = svm.libsvm.predict(iris.data, *model)
-    assert_greater(np.mean(pred == iris.target), .95)
+    assert np.mean(pred == iris.target) > .95
 
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64),
                            kernel='linear')
     pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
-    assert_greater(np.mean(pred == iris.target), .95)
+    assert np.mean(pred == iris.target) > .95
 
     pred = svm.libsvm.cross_validation(iris.data,
                                        iris.target.astype(np.float64), 5,
                                        kernel='linear',
                                        random_seed=0)
-    assert_greater(np.mean(pred == iris.target), .95)
+    assert np.mean(pred == iris.target) > .95
 
     # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
     # we should get deterministic results (assuming that there is no other
@@ -99,7 +97,8 @@ def test_precomputed():
     # Gram matrix for test data (rectangular matrix)
     KT = np.dot(T, np.array(X).T)
     pred = clf.predict(KT)
-    assert_raises(ValueError, clf.predict, KT.T)
+    with pytest.raises(ValueError):
+        clf.predict(KT.T)
 
     assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
@@ -168,7 +167,7 @@ def test_svr():
                 svm.LinearSVR(C=10.),
                 svm.LinearSVR(C=10.)):
         clf.fit(diabetes.data, diabetes.target)
-        assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
+        assert clf.score(diabetes.data, diabetes.target) > 0.02
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
@@ -233,7 +232,8 @@ def test_svr_errors():
     # Bad kernel
     clf = svm.SVR(kernel=lambda x, y: np.array([[1.0]]))
     clf.fit(X, y)
-    assert_raises(ValueError, clf.predict, X)
+    with pytest.raises(ValueError):
+        clf.predict(X)
 
 
 def test_oneclass():
@@ -243,12 +243,13 @@ def test_oneclass():
     pred = clf.predict(T)
 
     assert_array_equal(pred, [1, -1, -1])
-    assert_equal(pred.dtype, np.dtype('intp'))
+    assert pred.dtype == np.dtype('intp')
     assert_array_almost_equal(clf.intercept_, [-1.218], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
                               [[0.750, 0.750, 0.750, 0.750]],
                               decimal=3)
-    assert_raises(AttributeError, lambda: clf.coef_)
+    with pytest.raises(AttributeError):
+        (lambda: clf.coef_)()
 
 
 def test_oneclass_decision_function():
@@ -272,9 +273,9 @@ def test_oneclass_decision_function():
 
     # predict things
     y_pred_test = clf.predict(X_test)
-    assert_greater(np.mean(y_pred_test == 1), .9)
+    assert np.mean(y_pred_test == 1) > .9
     y_pred_outliers = clf.predict(X_outliers)
-    assert_greater(np.mean(y_pred_outliers == -1), .9)
+    assert np.mean(y_pred_outliers == -1) > .9
     dec_func_test = clf.decision_function(X_test)
     assert_array_equal((dec_func_test > 0).ravel(), y_pred_test == 1)
     dec_func_outliers = clf.decision_function(X_outliers)
@@ -360,7 +361,7 @@ def test_decision_function_shape():
     clf = svm.SVC(kernel='linear', C=0.1,
                   decision_function_shape='ovr').fit(iris.data, iris.target)
     dec = clf.decision_function(iris.data)
-    assert_equal(dec.shape, (len(iris.data), 3))
+    assert dec.shape == (len(iris.data), 3)
     assert_array_equal(clf.predict(iris.data), np.argmax(dec, axis=1))
 
     # with five classes:
@@ -370,14 +371,14 @@ def test_decision_function_shape():
     clf = svm.SVC(kernel='linear', C=0.1,
                   decision_function_shape='ovr').fit(X_train, y_train)
     dec = clf.decision_function(X_test)
-    assert_equal(dec.shape, (len(X_test), 5))
+    assert dec.shape == (len(X_test), 5)
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
     clf = svm.SVC(kernel='linear', C=0.1,
                   decision_function_shape='ovo').fit(X_train, y_train)
     dec = clf.decision_function(X_train)
-    assert_equal(dec.shape, (len(X_train), 10))
+    assert dec.shape == (len(X_train), 10)
 
 
 def test_svr_predict():
@@ -473,14 +474,17 @@ def test_auto_weight():
 def test_bad_input():
     # Test that it gives proper exception on deficient input
     # impossible value of C
-    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
+    with pytest.raises(ValueError):
+        svm.SVC(C=-1).fit(X, Y)
 
     # impossible value of nu
     clf = svm.NuSVC(nu=0.0)
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
     Y2 = Y[:-1]  # wrong dimensions for labels
-    assert_raises(ValueError, clf.fit, X, Y2)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y2)
 
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
@@ -495,23 +499,28 @@ def test_bad_input():
 
     # error for precomputed kernelsx
     clf = svm.SVC(kernel='precomputed')
-    assert_raises(ValueError, clf.fit, X, Y)
+    with pytest.raises(ValueError):
+        clf.fit(X, Y)
 
     # sample_weight bad dimensions
     clf = svm.SVC()
-    assert_raises(ValueError, clf.fit, X, Y, sample_weight=range(len(X) - 1))
+    with pytest.raises(ValueError):
+        clf.fit(X, Y, sample_weight=range(len(X) - 1))
 
     # predict with sparse input when trained with dense
     clf = svm.SVC().fit(X, Y)
-    assert_raises(ValueError, clf.predict, sparse.lil_matrix(X))
+    with pytest.raises(ValueError):
+        clf.predict(sparse.lil_matrix(X))
 
     Xt = np.array(X).T
     clf.fit(np.dot(X, Xt), Y)
-    assert_raises(ValueError, clf.predict, X)
+    with pytest.raises(ValueError):
+        clf.predict(X)
 
     clf = svm.SVC()
     clf.fit(X, Y)
-    assert_raises(ValueError, clf.predict, Xt)
+    with pytest.raises(ValueError):
+        clf.predict(Xt)
 
 
 @pytest.mark.parametrize(
@@ -548,7 +557,7 @@ def test_sparse_precomputed():
         clf.fit(sparse_gram, [0, 1])
         assert not "reached"
     except TypeError as e:
-        assert_in("Sparse precomputed", str(e))
+        assert "Sparse precomputed" in str(e)
 
 
 def test_linearsvc_parameters():
@@ -566,20 +575,19 @@ def test_linearsvc_parameters():
                 (penalty, dual) == ('l1', True) or
                 loss == 'foo' or penalty == 'bar'):
 
-            assert_raises_regexp(ValueError,
-                                 "Unsupported set of arguments.*penalty='%s.*"
-                                 "loss='%s.*dual=%s"
-                                 % (penalty, loss, dual),
-                                 clf.fit, X, y)
+            with pytest.raises(ValueError, match="Unsupported set of "
+                               "arguments.*penalty='%s.*loss='%s.*dual=%s"
+                               % (penalty, loss, dual)):
+                clf.fit(X, y)
         else:
             clf.fit(X, y)
 
     # Incorrect loss value - test if explicit error message is raised
-    assert_raises_regexp(ValueError, ".*loss='l3' is not supported.*",
-                         svm.LinearSVC(loss="l3").fit, X, y)
+    with pytest.raises(ValueError, match=".*loss='l3' is not supported.*"):
+        svm.LinearSVC(loss="l3").fit(X, y)
 
 
-# FIXME remove in 1.0
+# FIXME remove in 0.23
 def test_linearsvx_loss_penalty_deprecations():
     X, y = [[0.0], [1.0]], [0, 1]
 
@@ -590,25 +598,25 @@ def test_linearsvx_loss_penalty_deprecations():
     # LinearSVC
     # loss l1 --> hinge
     assert_warns_message(DeprecationWarning,
-                         msg % ("l1", "hinge", "loss='l1'", "1.0"),
+                         msg % ("l1", "hinge", "loss='l1'", "0.23"),
                          svm.LinearSVC(loss="l1").fit, X, y)
 
     # loss l2 --> squared_hinge
     assert_warns_message(DeprecationWarning,
-                         msg % ("l2", "squared_hinge", "loss='l2'", "1.0"),
+                         msg % ("l2", "squared_hinge", "loss='l2'", "0.23"),
                          svm.LinearSVC(loss="l2").fit, X, y)
 
     # LinearSVR
     # loss l1 --> epsilon_insensitive
     assert_warns_message(DeprecationWarning,
                          msg % ("l1", "epsilon_insensitive", "loss='l1'",
-                                "1.0"),
+                                "0.23"),
                          svm.LinearSVR(loss="l1").fit, X, y)
 
     # loss l2 --> squared_epsilon_insensitive
     assert_warns_message(DeprecationWarning,
                          msg % ("l2", "squared_epsilon_insensitive",
-                                "loss='l2'", "1.0"),
+                                "loss='l2'", "0.23"),
                          svm.LinearSVR(loss="l2").fit, X, y)
 
 
@@ -715,7 +723,7 @@ def test_crammer_singer_binary():
         acc = svm.LinearSVC(fit_intercept=fit_intercept,
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
-        assert_greater(acc, 0.9)
+        assert acc > 0.9
 
 
 def test_linearsvc_iris():
@@ -723,8 +731,8 @@ def test_linearsvc_iris():
     # Also, test symbolic class names (classes_).
     target = iris.target_names[iris.target]
     clf = svm.LinearSVC(random_state=0).fit(iris.data, target)
-    assert_equal(set(clf.classes_), set(iris.target_names))
-    assert_greater(np.mean(clf.predict(iris.data) == target), 0.8)
+    assert set(clf.classes_) == set(iris.target_names)
+    assert np.mean(clf.predict(iris.data) == target) > 0.8
 
     dec = clf.decision_function(iris.data)
     pred = iris.target_names[np.argmax(dec, 1)]
@@ -754,7 +762,7 @@ def test_dense_liblinear_intercept_handling(classifier=svm.LinearSVC):
     clf.intercept_scaling = 100
     clf.fit(X, y)
     intercept1 = clf.intercept_
-    assert_less(intercept1, -1)
+    assert intercept1 < -1
 
     # when intercept_scaling is sufficiently high, the intercept value
     # doesn't depend on intercept_scaling value
@@ -798,9 +806,10 @@ def test_immutable_coef_property():
         svm.OneClassSVM(kernel='linear').fit(iris.data),
     ]
     for clf in svms:
-        assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
-        assert_raises((RuntimeError, ValueError),
-                      clf.coef_.__setitem__, (0, 0), 0)
+        with pytest.raises(AttributeError):
+            clf.__setattr__('coef_', np.arange(3))
+        with pytest.raises((RuntimeError, ValueError)):
+            clf.coef_.__setitem__((0, 0), 0)
 
 
 def test_linearsvc_verbose():
@@ -847,7 +856,8 @@ def test_svc_clone_with_callable_kernel():
 
 def test_svc_bad_kernel():
     svc = svm.SVC(kernel=lambda x, y: x)
-    assert_raises(ValueError, svc.fit, X, Y)
+    with pytest.raises(ValueError):
+        svc.fit(X, Y)
 
 
 def test_timeout():
@@ -860,12 +870,12 @@ def test_unfitted():
     X = "foo!"  # input validation not required when SVM not fitted
 
     clf = svm.SVC()
-    assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
-                         clf.predict, X)
+    with pytest.raises(Exception, match=r".*\bSVC\b.*\bnot\b.*\bfitted\b"):
+        clf.predict(X)
 
     clf = svm.NuSVR()
-    assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
-                         clf.predict, X)
+    with pytest.raises(Exception, match=r".*\bNuSVR\b.*\bnot\b.*\bfitted\b"):
+        clf.predict(X)
 
 
 # ignore convergence warnings from max_iter=1
@@ -883,11 +893,11 @@ def test_linear_svm_convergence_warnings():
 
     lsvc = svm.LinearSVC(random_state=0, max_iter=2)
     assert_warns(ConvergenceWarning, lsvc.fit, X, Y)
-    assert_equal(lsvc.n_iter_, 2)
+    assert lsvc.n_iter_ == 2
 
     lsvr = svm.LinearSVR(random_state=0, max_iter=2)
     assert_warns(ConvergenceWarning, lsvr.fit, iris.data, iris.target)
-    assert_equal(lsvr.n_iter_, 2)
+    assert lsvr.n_iter_ == 2
 
 
 def test_svr_coef_sign():
@@ -919,7 +929,7 @@ def test_lsvc_intercept_scaling_zero():
 
     lsvc = svm.LinearSVC(fit_intercept=False)
     lsvc.fit(X, Y)
-    assert_equal(lsvc.intercept_, 0.)
+    assert lsvc.intercept_ == 0.
 
 
 def test_hasattr_predict_proba():
@@ -950,7 +960,7 @@ def test_decision_function_shape_two_class():
         for estimator in [svm.SVC, svm.NuSVC]:
             clf = OneVsRestClassifier(
                 estimator(decision_function_shape="ovr")).fit(X, y)
-            assert_equal(len(clf.predict(X)), len(y))
+            assert len(clf.predict(X)) == len(y)
 
 
 def test_ovr_decision_function():
@@ -988,7 +998,7 @@ def test_ovr_decision_function():
     pred_class_deci_val = deci_val[range(8), y_pred].reshape((4, 2))
 
     # Assert pred_class_deci_val > 0 here
-    assert_greater(np.min(pred_class_deci_val), 0.0)
+    assert np.min(pred_class_deci_val) > 0.0
 
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point

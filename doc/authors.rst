@@ -9,6 +9,10 @@
     </style>
     <tr>
     <td>
+    <a href='https://github.com/jeremiedbb'><img src='https://avatars2.githubusercontent.com/u/34657725?v=4' class='avatar' /></a> <br />
+    <p>Jérémie Du Boisberranger</p>
+    </td>
+    <td>
     <a href='https://github.com/jorisvandenbossche'><img src='https://avatars2.githubusercontent.com/u/1020496?v=4' class='avatar' /></a> <br />
     <p>Joris Van den Bossche</p>
     </td>
@@ -32,12 +36,12 @@
     <a href='https://github.com/yarikoptic'><img src='https://avatars3.githubusercontent.com/u/39889?v=4' class='avatar' /></a> <br />
     <p>Yaroslav Halchenko</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/NicolasHug'><img src='https://avatars2.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
     <p>Nicolas Hug</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/adrinjalali'><img src='https://avatars3.githubusercontent.com/u/1663864?v=4' class='avatar' /></a> <br />
     <p>Adrin Jalali</p>
@@ -62,12 +66,12 @@
     <a href='https://github.com/jnothman'><img src='https://avatars2.githubusercontent.com/u/78827?v=4' class='avatar' /></a> <br />
     <p>Joel Nothman</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/qinhanmin2014'><img src='https://avatars2.githubusercontent.com/u/12003569?v=4' class='avatar' /></a> <br />
     <p>Hanmin Qin</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/bthirion'><img src='https://avatars1.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
     <p>Bertrand Thirion</p>
