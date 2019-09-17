@@ -88,6 +88,7 @@ $(document).ready(function() {
 
     // Hide navbar on load if hash target is on top
     var navBar = document.getElementById("navbar");
+    var navBarToggler = document.getElementById("sk-navbar-toggler");
     var navBarHeightHidden = "-" + navBar.getBoundingClientRect().height + "px";
     var $window = $(window);
 
@@ -99,13 +100,13 @@ $(document).ready(function() {
         navBar.style.top = "0";
     }
 
-    if (hashTargetOnTop() && ($window.width() >= 768)) {
+    if (hashTargetOnTop()) {
         hideNavBar()
     }
 
     var prevScrollpos = window.pageYOffset;
     hideOnScroll = function(lastScrollTop) {
-        if ($window.width() < 768) {
+        if (($window.width() < 768) && (navBarToggler.getAttribute("aria-expanded") === 'true')) {
             return;
         }
         if (lastScrollTop > 2 && (prevScrollpos <= lastScrollTop) || hashTargetOnTop()){

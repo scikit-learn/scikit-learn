@@ -191,7 +191,7 @@ div.gsc-results-wrapper-visible {
   right: 1rem;
   box-shadow: -4px 9px 20px -4px rgba(0,0,0,0.56);
   width: 600px;
-  max-width: 100%;
+  max-width: 95%;
 }
 
 div.gsc-results {
@@ -394,11 +394,10 @@ div.section h6 {
   cursor: pointer;
 }
 
-@media screen and (min-width: 768px) {
-  div.sk-page-content {
-    margin-top: 52px;
-  }
+div.sk-page-content {
+  margin-top: 52px;
 }
+
 @media screen and (min-width: 1400px) {
   .sk-btn-toggle-toc {
     border-top-left-radius: 0.5rem;
@@ -423,12 +422,24 @@ nav.sk-docs-navbar {
   -moz-transition: top .2s ease-in-out .05s;
   -o-transition: top .2s ease-in-out .05s;
   transition: top .2s ease-in-out .05s;
+  position: fixed;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+div.sk-navbar-collapse {
+  padding-bottom: 9rem;
 }
 
 @media screen and (min-width: 768px) {
 
   nav.sk-docs-navbar {
-    position: fixed;
+    overflow-y: visible;
+    max-height: none;
+  }
+
+  div.sk-navbar-collapse {
+    padding-bottom: 0;
   }
 
   #sk-page-content-wrapper {
@@ -1002,7 +1013,7 @@ div.testimonial p {
 
 div.sk-page-content img.map {
   position: absolute;
-  max-width: unset;
+  max-width: none;
   transform-origin: left top;
   -webkit-transform: scale(0.5);
       -ms-transform: scale(0.5);
