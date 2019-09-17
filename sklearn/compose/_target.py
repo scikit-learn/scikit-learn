@@ -212,11 +212,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         ----------
         X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
-        
+
         **predict_params : dict of string -> object
             Parameters passed to the ``predict`` method of the underlying
             regressor.
-            
+
         Returns
         -------
         y_hat : array, shape = (n_samples,)
