@@ -77,11 +77,11 @@ def test_feature_hasher_random_state_not_int(random_state):
     assert_raises(NotFittedError, h.transform, {'raw_X': raw_X})
 
     h.fit(raw_X)
-    X = h.transform(raw_X)
+    h.transform(raw_X)
 
     h = FeatureHasher(n_features, input_type="string",
                       alternate_sign=False, random_state=random_state)
-    X = h.fit_transform(raw_X)
+    h.fit_transform(raw_X)
 
 
 def test_feature_hasher_pairs():

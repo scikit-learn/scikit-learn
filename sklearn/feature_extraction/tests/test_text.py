@@ -1056,10 +1056,10 @@ def test_hashingvectorizer_random_state_not_int(random_state):
 
     # assert ok if fitted
     hv.fit(text)
-    X = hv.transform(text)
+    hv.transform(text)
 
     hv = HashingVectorizer(random_state=random_state)
-    X = hv.fit_transform(text)
+    hv.fit_transform(text)
 
 
 def test_tfidfvectorizer_binary():
