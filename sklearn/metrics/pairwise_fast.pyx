@@ -42,7 +42,6 @@ def _chi2_kernel_fast(floating[:, :] X,
 def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                       floating[::1] Y_data, int[:] Y_indices, int[:] Y_indptr,
                       double[:, ::1] D):
-    """
     """Pairwise L1 distances for CSR matrices.
     Usage:
     >>> D = np.zeros(X.shape[0], Y.shape[0])
