@@ -454,7 +454,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         if computed, value of the objective function (to be maximized)
 
     intercept_ : float
-        Independent term in decision function. Set to 0.0 if ``fit_intercept = False``
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
         
     Examples
     --------
