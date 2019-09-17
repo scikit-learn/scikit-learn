@@ -751,13 +751,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
-    train_score_ : ndarray, shape (`n_iter_ + 1`,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (`n_iter_ + 1`,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
