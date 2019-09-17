@@ -154,6 +154,6 @@ $(document).ready(function() {
 </script>
 {%- if pagename != 'index' and pagename != 'documentation' %}
     {% if theme_mathjax_path %}
-<script async type="text/javascript" src="{{ theme_mathjax_path }}"></script>
+<script id="MathJax-script" async src="{{ theme_mathjax_path }}"></script>
     {% endif %}
 {%- endif %}

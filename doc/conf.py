@@ -52,9 +52,8 @@ if os.environ.get('NO_MATHJAX'):
     imgmath_image_format = 'svg'
 else:
     extensions.append('sphinx.ext.mathjax')
-    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
-                    'MathJax.js?config=TeX-AMS_SVG')
-
+    mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
+                    'tex-chtml.js')
 
 autodoc_default_options = {
     'members': True,
