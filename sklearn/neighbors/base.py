@@ -223,18 +223,14 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
             'neighbors used or recompute the graph with more neighbors.'
             % (n_neighbors, row_nnz_min))
 
-    # if each sample has the same number of provided neighbors
-    if row_nnz.max() == row_nnz_min:
-
-        def extract(a):
+    def extract(a):
+        # if each sample has the same number of provided neighbors
+        if row_nnz.max() == row_nnz_min:
             return a.reshape(n_samples, -1)[:, :n_neighbors]
-
-    else:
-        idx = np.tile(np.arange(n_neighbors), n_samples)
-        idx = idx.reshape(n_samples, n_neighbors)
-        idx += graph.indptr[:-1, np.newaxis]
-
-        def extract(a):
+        else:
+            idx = np.tile(np.arange(n_neighbors), n_samples)
+            idx = idx.reshape(n_samples, n_neighbors)
+            idx += graph.indptr[:-1, np.newaxis]
             return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
 
     if return_distance:

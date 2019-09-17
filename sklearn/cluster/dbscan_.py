@@ -160,8 +160,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                        n_jobs=n_jobs)
     neighbors_model.fit(X)
     # This has worst case O(n^2) memory complexity
-    neighborhoods = neighbors_model.radius_neighbors(
-        X, eps, return_distance=False)
+    neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
 
     if sample_weight is None:
         n_neighbors = np.array([len(neighbors)
