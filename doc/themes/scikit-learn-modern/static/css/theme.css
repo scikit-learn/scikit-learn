@@ -637,6 +637,17 @@ dl.field-list > dd {
   margin-bottom: 0;
 }
 
+@media screen and (min-width: 768px) {
+  dl.field-list > dt {
+    flex-basis: 110px;
+  }
+  dl.field-list > dd {
+    flex: 1 0 calc(100% - 110px);
+    max-width: calc(100% - 110px);
+  }
+
+}
+
 dt.field-odd, dt.field-even {
   background-color: #F0F7FA;
   padding: 4px 0 0 4px;
@@ -664,7 +675,7 @@ dl.field-list > dt:after {
 }
 
 dd {
-  padding-left: 1.5rem;
+  padding-left: 1rem;
 }
 
 .rubric {
