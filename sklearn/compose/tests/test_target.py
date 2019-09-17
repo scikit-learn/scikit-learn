@@ -333,6 +333,7 @@ def test_transform_target_regressor_route_pipeline():
 
     assert regr.transformer_.fit_counter == 1
 
+
 class DummyRegressorWithExtraPredictParams(DummyRegressor):
     def predict(self, X, return_std=False, check_input=True):
         # on the test below we force this to false, we make sure this is
