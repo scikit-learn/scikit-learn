@@ -157,11 +157,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins,
                                       random_state=self._random_seed)
-        X_binned_train = self._bin_data(X_train, self._random_seed,
-                                        is_training_data=True)
+        X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, self._random_seed,
-                                          is_training_data=False)
+            X_binned_val = self._bin_data(X_val, is_training_data=False)
         else:
             X_binned_val = None
 
@@ -484,7 +482,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, rng, is_training_data):
+    def _bin_data(self, X, is_training_data):
         """Bin data X.
 
         If is_training_data, then set the bin_mapper_ attribute.
