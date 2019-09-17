@@ -105,11 +105,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         y = self._encode_y(y)
 
         # The rng state must be preserved if warm_start is True
-        if (self.warm_start and hasattr(self, '_rng')):
-            rng = self._rng
-        else:
-            rng = check_random_state(self.random_state)
-            self._rng = rng
+        rng = check_random_state(self.random_state)
+        if not (self.warm_start and self._is_fitted()):
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max)
 
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
@@ -138,12 +136,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
             # warm starting.
-            if not (self._is_fitted() and self.warm_start):
-                self._train_val_split_seed = rng.randint(1024)
 
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
-                random_state=self._train_val_split_seed)
+                random_state=self._random_seed)
         else:
             X_train, y_train = X, y
             X_val, y_val = None, None
@@ -159,10 +155,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # actual total number of bins. Everywhere in the code, the
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
-        self.bin_mapper_ = _BinMapper(n_bins=n_bins, random_state=rng)
-        X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
+        self.bin_mapper_ = _BinMapper(n_bins=n_bins,
+                                      random_state=self._random_seed)
+        X_binned_train = self._bin_data(X_train, self._random_seed,
+                                        is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, rng, is_training_data=False)
+            X_binned_val = self._bin_data(X_val, self._random_seed,
+                                          is_training_data=False)
         else:
             X_binned_val = None
 
@@ -241,13 +240,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
 
-                    # Save the seed for the small trainset generator
-                    self._small_trainset_seed = rng.randint(1024)
-
                     # Compute the subsample set
                     (X_binned_small_train,
                      y_small_train) = self._get_small_trainset(
-                        X_binned_train, y_train, self._small_trainset_seed)
+                        X_binned_train, y_train, self._random_seed)
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
@@ -276,7 +272,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
                 X_binned_small_train, y_small_train = self._get_small_trainset(
-                    X_binned_train, y_train, self._small_trainset_seed)
+                    X_binned_train, y_train, self._random_seed)
 
             # Initialize the gradients and hessians
             gradients, hessians = self.loss_.init_gradients_and_hessians(
@@ -400,7 +396,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        for var in ('train_score_', 'validation_score_', '_rng'):
+        for var in ('train_score_', 'validation_score_'):
             if hasattr(self, var):
                 delattr(self, var)
 
