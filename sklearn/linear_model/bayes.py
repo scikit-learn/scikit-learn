@@ -456,7 +456,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
-        
+
     Examples
     --------
     >>> from sklearn import linear_model
