@@ -1,6 +1,7 @@
 .. This helps define the TOC ordering for "about us" sections. Particularly
    useful for PDF output as this section is not linked from elsewhere.
 
+.. Places global toc into the sidebar
 :globalsidebartoc: True
 
 .. _preface_menu:

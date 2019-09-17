@@ -1,3 +1,4 @@
+.. Places global toc into the sidebar
 :globalsidebartoc: True
 
 .. title:: User guide: contents
