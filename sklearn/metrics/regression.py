@@ -189,6 +189,77 @@ def mean_absolute_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
+def mean_absolute_percentage_error(y_true, y_pred,
+                                   sample_weight=None,
+                                   multioutput='uniform_average'):
+    """Mean absolute percentage error regression loss
+
+    Read more in the :ref:`User Guide <mean_absolute_percentage_error>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+        Estimated target values.
+
+    sample_weight : array-like of shape = (n_samples), optional
+        Sample weights.
+
+    multioutput : string in ['raw_values', 'uniform_average']
+        or array-like of shape (n_outputs)
+        Defines aggregating of multiple output values.
+        Array-like value defines weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
+
+
+    Returns
+    -------
+    loss : float or ndarray of floats
+        If multioutput is 'raw_values', then mean absolute percentage error is returned
+        for each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average of all output errors is returned.
+
+        MAPE output is non-negative floating point. The best value is 0.0.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_absolute_percentage_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    14.58...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> mean_absolute_percentage_error(y_true, y_pred)
+    26.68...
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    array([15.27777778, 38.0952381 ])
+    >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    31.24...
+    """
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    output_errors = np.average(np.abs((y_pred - y_true) / (1 + np.abs(y_true))),
+                               weights=sample_weight, axis=0) * 100.0
+    if isinstance(multioutput, str):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
+
+
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
