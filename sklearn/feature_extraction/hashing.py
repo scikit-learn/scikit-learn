@@ -67,6 +67,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
+    random_state : {int, np.random.RandomStateInstance, None}, default=0
+       Pseudo-random number generator that defines the seed of the hashing
+       function. See :term:`random_state`.
 
     Examples
     --------

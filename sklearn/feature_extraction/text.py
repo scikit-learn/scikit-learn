@@ -642,6 +642,10 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    random_state : {int, np.random.RandomStateInstance, None}, default=0
+       Pseudo-random number generator that defines the seed of the hashing
+       function. See :term:`random_state`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
