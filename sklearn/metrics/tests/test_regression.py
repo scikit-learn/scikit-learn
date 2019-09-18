@@ -33,7 +33,7 @@ def test_regression_metrics(n_samples=50):
                                            np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
-    assert_almost_equal(mean_absolute_percentage_error(y_true,y_pred),
+    assert_almost_equal(mean_absolute_percentage_error(y_true, y_pred),
                         8.99, decimal=2)
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
@@ -190,13 +190,14 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
-    mape = mean_absolute_percentage_error(y_true, y_pred, multioutput='raw_values')
+    mape = mean_absolute_percentage_error(y_true, y_pred,
+                                          multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
-    assert_array_almost_equal(mape, [ 5.844, 16.145], decimal=2)
+    assert_array_almost_equal(mape, [5.844, 16.145], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
 

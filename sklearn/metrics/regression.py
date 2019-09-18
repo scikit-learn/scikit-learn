@@ -248,7 +248,8 @@ def mean_absolute_percentage_error(y_true, y_pred,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average(np.abs((y_pred - y_true) / (1 + np.abs(y_true))),
+    mape = np.abs((y_pred - y_true) / (1 + np.abs(y_true)))
+    output_errors = np.average(mape,
                                weights=sample_weight, axis=0) * 100.0
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
