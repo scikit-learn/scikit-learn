@@ -580,7 +580,9 @@ class IterativeImputer(_BaseImputer):
         start_t = time()
         if not self.sample_posterior:
             Xt_previous = Xt.copy()
-            normalized_tol = self.tol * np.max(np.abs(X_[~mask_missing_values]))
+            normalized_tol = self.tol * np.max(
+                np.abs(X_[~mask_missing_values])
+            )
         for self.n_iter_ in range(1, self.max_iter + 1):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)

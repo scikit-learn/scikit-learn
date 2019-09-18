@@ -4,7 +4,6 @@
 
 from __future__ import division
 
-from abc import abstractmethod
 import numbers
 import warnings
 
@@ -87,7 +86,6 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             self._copy = getattr(self, 'copy', True)
             self.indicator_ = None
 
-    @abstractmethod
     def _transform_indicator(self, X, X_trans_imputer):
         """Concatenate imputed data with data from missing indicator."""
         if self.add_indicator:
