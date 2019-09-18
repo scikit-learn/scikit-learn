@@ -74,7 +74,9 @@ def test_feature_hasher_random_state_not_int(random_state):
     # assert random_state=None should be fitted
     h = FeatureHasher(n_features, input_type="string",
                       alternate_sign=False, random_state=random_state)
-    assert_raises(NotFittedError, h.transform, {'raw_X': raw_X})
+    with pytest.raises(NotFittedError,
+                       match="FeaturHasher needs to be fitted"):
+        h.transform(raw_X)
 
     h.fit(raw_X)
     h.transform(raw_X)

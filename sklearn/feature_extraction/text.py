@@ -683,11 +683,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self._validate_params()
 
         # optional if random_state is left to an integer seed
-        if isinstance(self.random_state, int):
-            self.seed = self.random_state
-        else:
-            self.random_state = check_random_state(self.random_state)
-            self.seed = int(self.random_state.get_state()[1][0])
+        self.seed = check_random_state(self.random_state)
+        self.seed = int(self.seed.get_state()[1][0])
 
         self._get_hasher().fit(X, y=y)
         return self

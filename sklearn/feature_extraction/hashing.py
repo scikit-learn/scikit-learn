@@ -127,12 +127,8 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
 
         # optional if random_state is left to an integer seed
-        if isinstance(self.random_state, int):
-            self.seed_ = self.random_state
-        else:
-            self.random_state = check_random_state(self.random_state)
-            self.seed_ = int(self.random_state.get_state()[1][0])
-            # randint(np.iinfo(np.uint32).max)
+        self.seed_ = check_random_state(self.random_state)
+        self.seed_ = int(self.seed_.get_state()[1][0])
 
         return self
 
