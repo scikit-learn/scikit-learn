@@ -35,14 +35,6 @@ __all__ = [
 ]
 
 
-def get_encoding(uniques, values):
-    if np.diff(uniques) > 0:
-        return np.searchsorted(uniques, values)
-    else:
-        table = {val: i for i, val in enumerate(uniques)}
-        return np.array([table[v] for v in values])
-
-
 def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
                   allow_nan=False):
     # only used in _encode below, see docstring there for details
