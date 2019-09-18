@@ -266,31 +266,27 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     """
 
     est = FastICA(n_components=n_components, algorithm=algorithm,
-            whiten=whiten, fun=fun, fun_args=fun_args,
-            max_iter=max_iter, tol=tol, w_init=w_init,
-            random_state=random_state)
+                  whiten=whiten, fun=fun, fun_args=fun_args,
+                  max_iter=max_iter, tol=tol, w_init=w_init,
+                  random_state=random_state)
     sources = est._fit(X, compute_sources=compute_sources)
 
-    # if self.whiten:
-    #     whitening = K
-    # unmixing = W
-    # sources = S
-    # self.n_iter_ = n_iter
     if whiten:
         if return_X_mean:
             if return_n_iter:
                 # return K, W, S, X_mean, n_iter
-                return est.whitening_, est._W, sources, est.mean_, est.n_iter_
+                return (est.whitening_, est._unmixing, sources, est.mean_,
+                        est.n_iter_)
             else:
                 # return K, W, S, X_mean
-                return est.whitening_, est._W, sources, est.mean_
+                return est.whitening_, est._unmixing, sources, est.mean_
         else:
             if return_n_iter:
                 # return K, W, S, n_iter
-                return est.whitening_, est._W, sources, est.n_iter_
+                return est.whitening_, est._unmixing, sources, est.n_iter_
             else:
                 # return K, W, S
-                return est.whitening_, est._W, sources
+                return est.whitening_, est._unmixing, sources
 
     else:
         if return_X_mean:
@@ -303,10 +299,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         else:
             if return_n_iter:
                 # return None, W, S, n_iter
-                return None, est._W, sources, est.n_iter_
+                return None, est._unmixing, sources, est.n_iter_
             else:
                 # return None, W, S
-                return None, est._W, sources
+                return None, est._unmixing, sources
 
 
 class FastICA(TransformerMixin, BaseEstimator):
@@ -360,7 +356,10 @@ class FastICA(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     components_ : 2D array, shape (n_components, n_features)
-        The unmixing matrix.
+        The linear operator to apply to the data to get the independent
+        sources. This is equal to the unmixing matrix when ``whiten`` is
+        False, and equal to ``np.dot(unmixing_matrix, whitening_)`` when
+        ``whiten`` is True.
 
     mixing_ : array, shape (n_features, n_components)
         The mixing matrix.
@@ -453,9 +452,11 @@ class FastICA(TransformerMixin, BaseEstimator):
                 return self.fun(x, **fun_args)
         else:
             exc = ValueError if isinstance(self.fun, str) else TypeError
-            raise exc("Unknown function %r;"
-                    " should be one of 'logcosh', 'exp', 'cube' or callable"
-                    % self.fun)
+            raise exc(
+                "Unknown function %r;"
+                " should be one of 'logcosh', 'exp', 'cube' or callable"
+                % self.fun
+            )
 
         n, p = X.shape
 
@@ -468,7 +469,10 @@ class FastICA(TransformerMixin, BaseEstimator):
             n_components = min(n, p)
         if (n_components > min(n, p)):
             n_components = min(n, p)
-            warnings.warn('n_components is too large: it will be set to %s' % n_components)
+            warnings.warn(
+                'n_components is too large: it will be set to %s'
+                % n_components
+            )
 
         if self.whiten:
             # Centering the columns (ie the variables)
@@ -492,20 +496,21 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         w_init = self.w_init
         if w_init is None:
-            w_init = np.asarray(random_state.normal(size=(n_components,
-                                n_components)), dtype=X1.dtype)
+            w_init = np.asarray(random_state.normal(
+                size=(n_components, n_components)), dtype=X1.dtype)
 
         else:
             w_init = np.asarray(w_init)
             if w_init.shape != (n_components, n_components):
-                raise ValueError('w_init has invalid shape -- should be %(shape)s'
-                                % {'shape': (n_components, n_components)})
+                raise ValueError(
+                    'w_init has invalid shape -- should be %(shape)s'
+                    % {'shape': (n_components, n_components)})
 
         kwargs = {'tol': self.tol,
-                'g': g,
-                'fun_args': fun_args,
-                'max_iter': self.max_iter,
-                'w_init': w_init}
+                  'g': g,
+                  'fun_args': fun_args,
+                  'max_iter': self.max_iter,
+                  'w_init': w_init}
 
         if self.algorithm == 'parallel':
             W, n_iter = _ica_par(X1, **kwargs)
@@ -513,7 +518,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             W, n_iter = _ica_def(X1, **kwargs)
         else:
             raise ValueError('Invalid algorithm: must be either `parallel` or'
-                            ' `deflation`.')
+                             ' `deflation`.')
         del X1
 
         if compute_sources:
@@ -524,35 +529,22 @@ class FastICA(TransformerMixin, BaseEstimator):
         else:
             S = None
 
-        if self.whiten:
-            whitening = K
-        unmixing = W
-        sources = S
         self.n_iter_ = n_iter
 
-
-        # whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
-        #     X=X, n_components=self.n_components, algorithm=self.algorithm,
-        #     whiten=self.whiten, fun=self.fun, fun_args=fun_args,
-        #     max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-        #     random_state=self.random_state, return_X_mean=True,
-        #     compute_sources=compute_sources, return_n_iter=True)
-
         if self.whiten:
-            self.components_ = np.dot(unmixing, whitening)
+            self.components_ = np.dot(W, K)
             self.mean_ = X_mean
-            self.whitening_ = whitening
+            self.whitening_ = K
         else:
-            self.components_ = unmixing
+            self.components_ = W
 
         self.mixing_ = linalg.pinv(self.components_)
+        self._unmixing = W
 
         if compute_sources:
-            self.__sources = sources
+            self.__sources = S
 
-        # TODO: set that to W for tests to pass
-        self._W = self.components_
-        return sources
+        return S
 
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
