@@ -3,8 +3,6 @@ import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
 
-import pytest
-
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
@@ -53,7 +51,8 @@ def test_feature_hasher_seed():
              ["bar".encode("ascii"), "baz", "quux"]]
     n_features = 2 ** 7
 
-    # assert we maintain the precedent behaviour
+    #  assert we maintain the precedent behaviour
+    #  where random_state=0
     h = FeatureHasher(n_features, input_type="string",
                       alternate_sign=False)
     X = h.transform(raw_X)
