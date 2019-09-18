@@ -36,7 +36,7 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(np.around(mean_absolute_percentage_error(y_true,
                                                                  y_pred),
                                   decimals=2),
-                        8.99, decimal=2)
+                        9.0, decimal=2)
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
@@ -81,7 +81,7 @@ def test_multioutput_regression():
 
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
                       decimals=2)
-    assert_almost_equal(error, 24.99, decimal=2)
+    assert_almost_equal(error, 25.0, decimal=2)
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
