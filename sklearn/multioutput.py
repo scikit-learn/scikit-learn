@@ -185,7 +185,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets predicted across multiple predictors.
             Note: Separate models are generated for each predictor.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not hasattr(self.estimator, "predict"):
             raise ValueError("The base estimator should implement"
                              " a predict method")
@@ -202,7 +202,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
+class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -212,10 +212,10 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and `predict`.
+        An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for `fit`.
+        The number of jobs to run in parallel for :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -297,7 +297,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
+class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -307,7 +307,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit`, `score` and `predict_proba`.
+        An estimator object implementing :term:`fit`, :term:`score` and
+        :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -324,6 +325,28 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def __init__(self, estimator, n_jobs=None):
         super().__init__(estimator, n_jobs)
+
+    def fit(self, X, Y, sample_weight=None):
+        """Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+        Y : array-like of shape (n_samples, n_classes)
+            The target values.
+        sample_weight : array-like of shape (n_samples,) or None
+            Sample weights. If None, then samples are equally weighted.
+            Only supported if the underlying classifier supports sample
+            weights.
+
+        Returns
+        -------
+        self : object
+        """
+        super().fit(X, Y, sample_weight)
+        self.classes_ = [estimator.classes_ for estimator in self.estimators_]
+        return self
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -342,9 +365,9 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         p : array of shape = [n_samples, n_classes], or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
                     for estimator in self.estimators_]):
             raise ValueError("The base estimator should implement "
@@ -370,7 +393,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         scores : float
             accuracy_score of self.predict(X) versus y
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         n_outputs_ = len(self.estimators_)
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
@@ -420,7 +443,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             if self.order_ == 'random':
                 self.order_ = random_state.permutation(Y.shape[1])
         elif sorted(self.order_) != list(range(Y.shape[1])):
-                raise ValueError("invalid order")
+            raise ValueError("invalid order")
 
         self.estimators_ = [clone(self.base_estimator)
                             for _ in range(Y.shape[1])]
@@ -472,7 +495,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
 
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -493,7 +516,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         return Y_pred
 
 
-class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
+class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -653,7 +676,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
                 'multioutput_only': True}
 
 
-class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
+class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using

@@ -45,7 +45,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() -
-                                   {'haversine'}))
+                                   {'haversine', 'nan_euclidean'}))
 
 
 def _check_weights(weights):
@@ -103,7 +103,7 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
+class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod
@@ -388,7 +388,7 @@ class KNeighborsMixin:
                [2]]...)
 
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -543,7 +543,7 @@ class KNeighborsMixin:
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 
@@ -691,7 +691,7 @@ class RadiusNeighborsMixin:
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
 
         if X is not None:
             query_is_train = False
@@ -828,7 +828,7 @@ class RadiusNeighborsMixin:
         --------
         kneighbors_graph
         """
-        check_is_fitted(self, ["_fit_method", "_fit_X"], all_or_any=any)
+        check_is_fitted(self)
         if X is not None:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
 

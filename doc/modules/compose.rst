@@ -256,9 +256,7 @@ variable::
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> boston = load_boston()
-  >>> X = boston.data
-  >>> y = boston.target
+  >>> X, y = load_boston(return_X_y=True)
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,

@@ -913,9 +913,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+
+        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
             Alternating Least Squares (Fast HALS).
-        'mu' is a Multiplicative Update solver.
+
+        - 'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1068,7 +1070,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     return W, H, n_iter
 
 
-class NMF(BaseEstimator, TransformerMixin):
+class NMF(TransformerMixin, BaseEstimator):
     r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1240,6 +1242,9 @@ class NMF(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.shuffle = shuffle
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def fit_transform(self, X, y=None, W=None, H=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -1312,7 +1317,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1339,5 +1344,5 @@ class NMF(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
         """
-        check_is_fitted(self, 'n_components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)
