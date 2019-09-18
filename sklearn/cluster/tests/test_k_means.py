@@ -1010,3 +1010,13 @@ def test_warning_elkan_1_cluster():
                       match="algorithm='elkan' doesn't make sense for a single"
                             " cluster"):
         kmeans.fit(X)
+
+
+def test_error_wrong_algorithm():
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
+                    algorithm='wrong')
+
+    with pytest.raises(ValueError,
+                       match="Algorithm must be 'auto', 'full' or 'elkan'"):
+        kmeans.fit(X)
