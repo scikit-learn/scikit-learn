@@ -242,7 +242,9 @@ def test_label_encode_with_nan():
                          [np.asarray([np.nan, np.nan], dtype=float),
                           np.asarray([np.nan, np.nan], dtype=object)])
 def test_label_encode_raise_nan(values):
-    assert_raises(ValueError, _encode, values, allow_nan=False)
+    msg = 'Values contains NaN'
+    with pytest.raises(ValueError, match=msg):
+        _encode(values, allow_nan=False)
 
 
 @pytest.mark.parametrize("dtype", ['str', 'object'])

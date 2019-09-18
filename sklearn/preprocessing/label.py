@@ -25,7 +25,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..impute._base import _get_mask
+from ..utils.mask import _get_mask
 
 __all__ = [
     'label_binarize',
@@ -45,7 +45,7 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
             # np.nan is always sorted last
             if len(uniques) and is_scalar_nan(uniques[-1]):
                 if not allow_nan:
-                    raise ValueError('nan found in values and allow_nan=False')
+                    raise ValueError('Values contains NaN and allow_nan=False')
                 nan_idx = np.searchsorted(uniques, np.nan)
                 uniques = uniques[:nan_idx+1]
                 if encode:
@@ -57,7 +57,7 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
             # np.nan is always sorted last
             if len(uniques) and is_scalar_nan(uniques[-1]):
                 if not allow_nan:
-                    raise ValueError('nan found in values and allow_nan=False')
+                    raise ValueError('Values contains NaN and allow_nan=False')
                 nan_idx = np.searchsorted(uniques, np.nan)
                 uniques = uniques[:nan_idx+1]
             return uniques
@@ -79,9 +79,9 @@ def _encode_python(values, uniques=None, encode=False, allow_nan=False):
         missing_mask = _get_mask(values, np.nan)
         if np.any(missing_mask):
             if not allow_nan:
-                raise ValueError('nan found in values and allow_nan=False')
+                raise ValueError('Values contains NaN and allow_nan=False')
             else:
-                # sorted([4, np.nan]) != np.sort([4, np.nan])
+                # need np.sort to ensure nan is sorted last
                 uniques = np.sort(list(set(values[~missing_mask]) | {np.nan}))
         else:
             uniques = sorted(set(values))
@@ -194,16 +194,20 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
     """
     if values.dtype == object:
         uniques_set = set(uniques)
-        diff = np.array(list(set(values) - uniques_set))
-        # set([np.nan]) - set([np.nan]) returns set()
-        # but set(np.array([np.nan])) - set(np.array([np.nan])) return {nan}
-        if len(diff) and any(_get_mask(diff, np.nan)):
+        values_set = set(values)
+        array_values_set = np.array(values_set)
+        is_nan_in_value = np.any(_object_dtype_isnan(array_values_set))
+        if is_nan_in_value:
             if not allow_nan:
-                raise ValueError('Nan found during check_unknown')
+                raise ValueError('Values contains NaN')
+            elif any(_get_mask(uniques, np.nan)):
+                diff = np.array(array_values_set - uniques_set)
+                diff = diff[~_get_mask(diff, np.nan)]
             else:
-                if any(_get_mask(uniques_set, np.nan)) and\
-                   any(_get_mask(set(values), np.nan)):
-                    diff = diff[~_get_mask(diff, np.nan)]
+                diff = list(values_set - uniques_set)
+        else:
+            diff = list(values_set - uniques_set)
+
         if return_mask:
             if len(diff):
                 valid_mask = np.array([val in uniques_set for val in values])
@@ -214,15 +218,21 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
             return diff
     else:
         unique_values = np.unique(values)
-        diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
-        # np.setdiff1d([np.nan],[np.nan]) returns [np.nan]
-        if any(_get_mask(diff, np.nan)):
+        mask_nan_in_values = _get_mask(unique_values, np.nan)
+        if np.any(mask_nan_in_values):
             if not allow_nan:
-                raise ValueError('Nan found during check_unknown')
+                raise ValueError('Values conatins NaN')
             else:
-                if any(_get_mask(unique_values, np.nan)) and\
-                   any(_get_mask(uniques, np.nan)):
-                    diff = [x for x in diff if not is_scalar_nan(x)]
+                mask_nan_in_uniques = _get_mask(uniques, np.nan)
+                if np.any(mask_nan_in_uniques):
+                    diff = np.setdiff1d(unique_values[~mask_nan_in_values],
+                                        uniques[~mask_nan_in_uniques],
+                                        assume_unique=True)
+                else:
+                    diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
+        else:
+            diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
+
         if return_mask:
             if diff:
                 valid_mask = np.in1d(values, uniques)
