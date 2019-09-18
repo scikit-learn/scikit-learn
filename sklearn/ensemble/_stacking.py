@@ -395,7 +395,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     ...     X, y, stratify=y, random_state=42
     ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test)
-    0.9...
+    0.8...
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
