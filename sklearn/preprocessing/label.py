@@ -229,7 +229,8 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
                                         uniques[~mask_nan_in_uniques],
                                         assume_unique=True)
                 else:
-                    diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
+                    diff = np.setdiff1d(unique_values, uniques,
+                                        assume_unique=True)
         else:
             diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
 
