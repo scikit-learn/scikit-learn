@@ -240,9 +240,6 @@ def mean_absolute_percentage_error(y_true, y_pred,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
     26.68...
-    >>> mean_absolute_percentage_error(y_true, y_pred,
-                                       multioutput='raw_values')
-    array([15.27777778, 38.0952381 ])
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
     31.24...
     """
