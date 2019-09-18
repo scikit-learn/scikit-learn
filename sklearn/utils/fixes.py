@@ -38,11 +38,11 @@ try:  # SciPy >= 0.19
 except ImportError:
     from scipy.misc import comb, logsumexp  # noqa
 
-if sp_version >= (1, 3):
+if sp_version >= (1, 4):
     from scipy.sparse.linalg import lobpcg
 else:
-    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
-    # once support for sp_version < (1, 3) is dropped
+    # Backport of lobpcg functionality from scipy 1.4.0, can be removed
+    # once support for sp_version < (1, 4) is dropped
     from ..externals._lobpcg import lobpcg  # noqa
 
 if sp_version >= (1, 3):

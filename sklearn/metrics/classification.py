@@ -659,7 +659,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Read more in the :ref:`User Guide <jaccard_score>`.
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
