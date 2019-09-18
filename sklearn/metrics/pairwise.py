@@ -774,11 +774,13 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         return D
 
     if sum_over_features:
-        return distance.cdist(X, Y, 'cityblock')
+        D = np.empty(shape=(X.shape[0], Y.shape[0]))
+        _dense_manhattan(X, Y, D)
+        return D
 
-    D = np.empty(shape=(X.shape[0], Y.shape[0]))
-    _dense_manhattan(X, Y, D)
-    return D
+    D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+    D = np.abs(D, D)
+    return D.reshape((-1, X.shape[1]))
 
 
 def cosine_distances(X, Y=None):
