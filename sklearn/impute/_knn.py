@@ -1,5 +1,7 @@
 import numpy as np
+from scipy import sparse
 
+from ._base import MissingIndicator
 from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances
@@ -32,7 +34,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
 
-    weights : str or callable, default='uniform'
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights. All points in each neighborhood are
@@ -44,7 +46,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : str or callable, default='nan_euclidean'
+    metric : {'nan_euclidean'} or callable, default='nan_euclidean'
         Distance metric for searching neighbors. Possible values:
 
         - 'nan_euclidean'
@@ -53,9 +55,23 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           accepts two arrays, X and Y, and a `missing_values` keyword in
           `kwds` and returns a scalar distance value.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
+
+    add_indicator : bool, default=False
+        If True, a :class:`MissingIndicator` transform will stack onto output
+        of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on
+        the missing indicator even if there are missing values at
+        transform/test time.
+
+    Attributes
+    ----------
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     References
     ----------
@@ -78,13 +94,15 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean", copy=True):
+                 weights="uniform", metric="nan_euclidean", copy=True,
+                 add_indicator=False):
 
         self.missing_values = missing_values
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
         self.copy = copy
+        self.add_indicator = add_indicator
 
     def _calc_impute(self, dist_pot_donors, n_neighbors,
                      fit_X_col, mask_fit_X_col):
@@ -164,6 +182,13 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values, error_on_new=False)
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
 
         return self
 
@@ -263,7 +288,12 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                                       mask_fit_X[potential_donors_idx, col])
             X[receivers_idx, col] = value
 
-        return X[:, valid_idx]
+        if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(X)
+            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
+            X = hstack((X[:, valid_idx], X_trans_indicator))
+
+        return X
 
     def _more_tags(self):
         return {'allow_nan': is_scalar_nan(self.missing_values)}
