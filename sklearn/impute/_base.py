@@ -75,7 +75,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         self.add_indicator = add_indicator
 
     def _fit_indicator(self, X):
-        """Fit a MissingIndicator if required."""
+        """Fit a MissingIndicator and trigger a copy of X as well."""
         if self.add_indicator:
             self._copy = True
             self.indicator_ = MissingIndicator(
