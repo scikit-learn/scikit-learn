@@ -938,6 +938,7 @@ def _apply_on_subsets(func, X):
     n_features = X.shape[1]
     result_by_batch = [func(batch.reshape(1, n_features))
                        for batch in X]
+
     # func can output tuple (e.g. score_samples)
     if type(result_full) == tuple:
         result_full = result_full[0]
@@ -946,6 +947,7 @@ def _apply_on_subsets(func, X):
     if sparse.issparse(result_full):
         result_full = result_full.A
         result_by_batch = [x.A for x in result_by_batch]
+
     return np.ravel(result_full), np.ravel(result_by_batch)
 
 

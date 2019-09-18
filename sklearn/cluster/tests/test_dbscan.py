@@ -95,6 +95,23 @@ def test_dbscan_sparse_precomputed(include_self):
     assert_array_equal(labels_dense, labels_sparse)
 
 
+def test_dbscan_sparse_precomputed_different_eps():
+    # test that precomputed neighbors graph is filtered if computed with
+    # a radius larger than DBSCAN's eps.
+    lower_eps = 0.2
+    nn = NearestNeighbors(radius=lower_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_lower = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
+
+    higher_eps = lower_eps + 0.7
+    nn = NearestNeighbors(radius=higher_eps).fit(X)
+    D_sparse = nn.radius_neighbors_graph(X, mode='distance')
+    dbscan_higher = dbscan(D_sparse, eps=lower_eps, metric='precomputed')
+
+    assert_array_equal(dbscan_lower[0], dbscan_higher[0])
+    assert_array_equal(dbscan_lower[1], dbscan_higher[1])
+
+
 @pytest.mark.parametrize('use_sparse', [True, False])
 @pytest.mark.parametrize('metric', ['precomputed', 'minkowski'])
 def test_dbscan_input_not_modified(use_sparse, metric):
