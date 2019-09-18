@@ -750,7 +750,8 @@ def check_sample_weights_invariance(name, estimator_orig):
         estimator2.fit(X, y=y, sample_weight=None)
         estimator3.fit(X2, y=y2, sample_weight=weights)
 
-        for method in ["predict", "transform"]:
+        for method in ["predict", "predict_proba",
+                       "decision_function", "transform"]:
             if hasattr(estimator_orig, method):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
