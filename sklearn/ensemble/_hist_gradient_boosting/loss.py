@@ -225,13 +225,14 @@ class LeastAbsoluteDeviation(BaseLoss):
         return raw_predictions
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
-                                      raw_predictions):
+                                      raw_predictions, sample_weight):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         _update_gradients_least_absolute_deviation(gradients, y_true,
-                                                   raw_predictions)
+                                                   raw_predictions,
+                                                   sample_weight)
 
     def update_leaves_values(self, grower, y_true, raw_predictions):
         # Update the values predicted by the tree with
