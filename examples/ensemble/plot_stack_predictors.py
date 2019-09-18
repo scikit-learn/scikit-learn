@@ -61,14 +61,17 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
 # to combine their outputs together.
 
 from sklearn.ensemble import StackingRegressor
-from sklearn.ensemble import AdaBoostRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
-from sklearn.neighbors import KNeighborsRegressor
 
-estimators = [('KNN', KNeighborsRegressor(n_neighbors=1)),
-              ('Lasso', LassoCV()),
-              ('AdaBoost', AdaBoostRegressor(random_state=0))]
+estimators = [
+    ('RandomForest', RandomForestRegressor(random_state=42)),
+    ('Lasso', LassoCV()),
+    ('GradientBoosting', HistGradientBoostingRegressor(random_state=0))
+]
 stacking_regressor = StackingRegressor(
     estimators=estimators, final_estimator=RidgeCV()
 )
@@ -110,6 +113,4 @@ plt.subplots_adjust(top=0.9)
 plt.show()
 
 ###############################################################################
-# The stacked regressor will discard the predictions given by the
-# `KNearestNeighborsRegressor` and combine the strength of `LassoCV` and
-# `AdaBoostRegressor`.
+# The stacked regressor will combine the strengths of the different regressors.
