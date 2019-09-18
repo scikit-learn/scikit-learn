@@ -136,46 +136,12 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
-    if not eps > 0.0:
-        raise ValueError("eps must be positive.")
 
-    X = check_array(X, accept_sparse='csr')
-    if sample_weight is not None:
-        sample_weight = np.asarray(sample_weight)
-        check_consistent_length(X, sample_weight)
-
-    # Calculate neighborhood for all samples. This leaves the original point
-    # in, which needs to be considered later (i.e. point i is in the
-    # neighborhood of point i. While True, its useless information)
-
-    if metric == 'precomputed' and sparse.issparse(X):
-        # set the diagonal to explicit values, as a point is its own neighbor
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
-            X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
-
-    neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
-                                       leaf_size=leaf_size, metric=metric,
-                                       metric_params=metric_params, p=p,
-                                       n_jobs=n_jobs)
-    neighbors_model.fit(X)
-    # This has worst case O(n^2) memory complexity
-    neighborhoods = neighbors_model.radius_neighbors(X, return_distance=False)
-
-    if sample_weight is None:
-        n_neighbors = np.array([len(neighbors)
-                                for neighbors in neighborhoods])
-    else:
-        n_neighbors = np.array([np.sum(sample_weight[neighbors])
-                                for neighbors in neighborhoods])
-
-    # Initially, all samples are noise.
-    labels = np.full(X.shape[0], -1, dtype=np.intp)
-
-    # A list of all core samples found.
-    core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
-    dbscan_inner(core_samples, neighborhoods, labels)
-    return np.where(core_samples)[0], labels
+    est = DBSCAN(eps=eps, min_samples=min_samples, metric=metric,
+                 metric_params=metric_params, algorithm=algorithm,
+                 leaf_size=leaf_size, p=p, n_jobs=n_jobs)
+    est.fit(X, sample_weight=sample_weight)
+    return est.core_sample_indices_, est.labels_
 
 
 class DBSCAN(ClusterMixin, BaseEstimator):
@@ -341,9 +307,51 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
         """
         X = check_array(X, accept_sparse='csr')
-        clust = dbscan(X, sample_weight=sample_weight,
-                       **self.get_params())
-        self.core_sample_indices_, self.labels_ = clust
+
+        if not self.eps > 0.0:
+            raise ValueError("eps must be positive.")
+
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
+            check_consistent_length(X, sample_weight)
+
+        # Calculate neighborhood for all samples. This leaves the original
+        # point in, which needs to be considered later (i.e. point i is in the
+        # neighborhood of point i. While True, its useless information)
+        if self.metric == 'precomputed' and sparse.issparse(X):
+            # set the diagonal to explicit values, as a point is its own
+            # neighbor
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
+                X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+
+        neighbors_model = NearestNeighbors(
+            radius=self.eps, algorithm=self.algorithm,
+            leaf_size=self.leaf_size, metric=self.metric,
+            metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
+        neighbors_model.fit(X)
+        # This has worst case O(n^2) memory complexity
+        neighborhoods = neighbors_model.radius_neighbors(X,
+                                                         return_distance=False)
+
+        if sample_weight is None:
+            n_neighbors = np.array([len(neighbors)
+                                    for neighbors in neighborhoods])
+        else:
+            n_neighbors = np.array([np.sum(sample_weight[neighbors])
+                                    for neighbors in neighborhoods])
+
+        # Initially, all samples are noise.
+        labels = np.full(X.shape[0], -1, dtype=np.intp)
+
+        # A list of all core samples found.
+        core_samples = np.asarray(n_neighbors >= self.min_samples,
+                                  dtype=np.uint8)
+        dbscan_inner(core_samples, neighborhoods, labels)
+
+        self.core_sample_indices_ = np.where(core_samples)[0]
+        self.labels_ = labels
+
         if len(self.core_sample_indices_):
             # fix for scipy sparse indexing issue
             self.components_ = X[self.core_sample_indices_].copy()
