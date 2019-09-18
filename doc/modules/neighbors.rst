@@ -567,25 +567,29 @@ implementation with special data types. The precomputed neighbors
   (see https://github.com/scipy/scipy/issues/5807).
 * if the algorithm being passed the precomputed matrix uses k nearest neighbors
   (as opposed to radius neighborhood), at least k neighbors must be stored in
-  each row.
+  each row (or k+1, as explained in the following note).
 
 .. note::
   When a specific number of neighbors is queried (using
   :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
   since it can either include each training point as its own neighbor, or 
   exclude them. Neither choice is perfect, since including them leads to a
-  different number of neighbors during training and testing, while excluding
-  them leads to a difference between `fit(X).transform(X)` and
+  different number of non-self neighbors during training and testing, while
+  excluding them leads to a difference between `fit(X).transform(X)` and
   `fit_transform(X)`, which is against scikit-learn API.
   In :class:`KNeighborsTransformer` we use the definition which includes each
-  training point as its own neighbor in the count of `n_neighbors`, but for
-  compatibility reasons, one extra neighbor will be computed when
-  `mode == 'distance'`.
+  training point as its own neighbor in the count of `n_neighbors`. However,
+  for compatibility reasons with other estimators which use the other
+  definition, one extra neighbor will be computed when `mode == 'distance'`.
+  To maximise compatiblity with all estimators, a safe choice is to always
+  include one extra neighbor in a custom nearest neighbors estimator, since
+  unnecessary neighbors will be filtered by following estimators.
 
 .. topic:: Examples:
+
   * :ref:`sphx_glr_auto_examples_neighbors_neighbors_in_pipeline_api.py`: an
-    example of pipelining KNeighborsTransformer and TSNE, and of using custom
-    nearest neighbors estimator.
+    example of pipelining KNeighborsTransformer and TSNE, and of two custom
+    nearest neighbors estimators based on external packages.
 
 .. _nca:
 
