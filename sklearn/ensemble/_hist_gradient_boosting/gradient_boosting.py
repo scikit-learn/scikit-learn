@@ -180,9 +180,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins, random_state=rng)
-        X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
+        X_binned_train = self._bin_data(X_train, sample_weight_train, rng,
+                                        is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, rng, is_training_data=False)
+            X_binned_val = self._bin_data(X_val, sample_weight_val, rng,
+                                          is_training_data=False)
         else:
             X_binned_val = None
 
@@ -544,7 +546,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, rng, is_training_data):
+    def _bin_data(self, X, sample_weight, rng, is_training_data):
         """Bin data X.
 
         If is_training_data, then set the bin_mapper_ attribute.
@@ -557,7 +559,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
         if is_training_data:
-            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
+            X_binned = self.bin_mapper_.fit(
+                X, None, sample_weight).transform(X)  # F-aligned array
         else:
             X_binned = self.bin_mapper_.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
