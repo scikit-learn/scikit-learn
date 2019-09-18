@@ -36,7 +36,7 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(np.around(mean_absolute_percentage_error(y_true,
                                                                  y_pred),
                                   decimals=2),
-                        9.0, decimal=2)
+                        900e+13, decimal=-13)
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
@@ -81,7 +81,7 @@ def test_multioutput_regression():
 
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
                       decimals=2)
-    assert_almost_equal(error, 25.0, decimal=2)
+    assert_almost_equal(error, 375e+14, decimal=-14)
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
@@ -200,7 +200,7 @@ def test_regression_multioutput_array():
 
     assert_array_almost_equal(mse, [0.125, 0.5625], decimal=2)
     assert_array_almost_equal(mae, [0.25, 0.625], decimal=2)
-    assert_array_almost_equal(mape, [5.844, 16.145], decimal=2)
+    assert_array_almost_equal(mape, [7.78, 22.62], decimal=2)
     assert_array_almost_equal(r, [0.95, 0.93], decimal=2)
     assert_array_almost_equal(evs, [0.95, 0.93], decimal=2)
 
@@ -260,7 +260,7 @@ def test_regression_custom_weights():
     assert_almost_equal(msew, 0.39, decimal=2)
     assert_almost_equal(rmsew, 0.62, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
-    assert_almost_equal(mapew, 12.025, decimal=2)
+    assert_almost_equal(mapew, 16.68, decimal=2)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)
 

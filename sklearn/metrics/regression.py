@@ -235,18 +235,21 @@ def mean_absolute_percentage_error(y_true, y_pred,
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    14.58...
+    32.73...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_percentage_error(y_true, y_pred)
-    26.68...
+    55.15...
     >>> mean_absolute_percentage_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    31.24...
+    61.98...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
-    mape = np.abs((y_pred - y_true) / (1 + np.abs(y_true)))
+    epsilon = np.finfo(float).eps
+    a_max = np.max(np.abs(y_true))
+    denom = np.clip(np.abs(y_true), epsilon, a_max)
+    mape = np.abs((y_pred - y_true) / denom)
     output_errors = np.average(mape,
                                weights=sample_weight, axis=0) * 100.0
     if isinstance(multioutput, str):
