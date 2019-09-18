@@ -248,6 +248,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = np.finfo(float).eps
     a_max = np.max(np.abs(y_true))
+    a_max = max(epsilon, a_max)
     denom = np.clip(np.abs(y_true), epsilon, a_max)
     mape = np.abs((y_pred - y_true) / denom)
     output_errors = np.average(mape,

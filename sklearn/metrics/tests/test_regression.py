@@ -36,7 +36,7 @@ def test_regression_metrics(n_samples=50):
     assert_almost_equal(np.around(mean_absolute_percentage_error(y_true,
                                                                  y_pred),
                                   decimals=2),
-                        900e+13, decimal=-13)
+                        9007199254741000.0, decimal=-13)
     assert_almost_equal(max_error(y_true, y_pred), 1.)
     assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
