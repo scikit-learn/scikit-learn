@@ -1052,7 +1052,9 @@ def test_hashingvectorizer_random_state_not_int(random_state):
     text = ['hello world', 'hello hello', 'hello goodbye']
     # assert random_seed=None should be fitted
     hv = HashingVectorizer(random_state=random_state)
-    assert_raises(NotFittedError, hv.transform, {'X': text})
+    with pytest.raises(NotFittedError,
+                       match="HashingVectorizer needs to be fitted"):
+        h.transform(text)
 
     # assert ok if fitted
     hv.fit(text)
