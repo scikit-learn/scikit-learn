@@ -25,7 +25,7 @@ print(__doc__)
 import matplotlib.pyplot as plt
 
 
-def plot_regression_results(ax, y_true, y_pred, title, scores):
+def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
     """Scatter plot of the predicted vs true targets."""
     ax.plot([y_true.min(), y_true.max()],
             [y_true.min(), y_true.max()],
@@ -45,6 +45,7 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
     extra = plt.Rectangle((0, 0), 0, 0, fc="w", fill=False,
                           edgecolor='none', linewidth=0)
     ax.legend([extra], [scores], loc='upper left')
+    title = title + '\n Evaluation in {:.2f} seconds'.format(elapsed_time)
     ax.set_title(title)
 
 
@@ -62,15 +63,15 @@ def plot_regression_results(ax, y_true, y_pred, title, scores):
 
 from sklearn.ensemble import StackingRegressor
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import LassoCV
 from sklearn.linear_model import RidgeCV
 
 estimators = [
-    ('RandomForest', RandomForestRegressor(random_state=42)),
+    ('Random Forest', RandomForestRegressor(random_state=42)),
     ('Lasso', LassoCV()),
-    ('GradientBoosting', HistGradientBoostingRegressor(random_state=0))
+    ('Gradient Boosting', HistGradientBoostingRegressor(random_state=0))
 ]
 stacking_regressor = StackingRegressor(
     estimators=estimators, final_estimator=RidgeCV()
@@ -82,6 +83,7 @@ stacking_regressor = StackingRegressor(
 # performance of each individual predictor as well as the stack of the
 # regressors.
 
+import time
 import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.model_selection import cross_validate, cross_val_predict
@@ -93,9 +95,11 @@ axs = np.ravel(axs)
 
 for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
                                                stacking_regressor)]):
+    start_time = time.time()
     score = cross_validate(est, X, y,
                            scoring=['r2', 'neg_mean_absolute_error'],
                            n_jobs=-1, verbose=0)
+    elapsed_time = time.time() - time.time()
 
     y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
     plot_regression_results(
@@ -105,7 +109,8 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
         .format(np.mean(score['test_r2']),
                 np.std(score['test_r2']),
                 -np.mean(score['test_neg_mean_absolute_error']),
-                np.std(score['test_neg_mean_absolute_error'])))
+                np.std(score['test_neg_mean_absolute_error'])),
+        elapsed_time)
 
 plt.suptitle('Single predictors versus stacked predictors')
 plt.tight_layout()
@@ -114,3 +119,5 @@ plt.show()
 
 ###############################################################################
 # The stacked regressor will combine the strengths of the different regressors.
+# However, we also see that training the stacked regressor is much more
+# computationally expensive.
