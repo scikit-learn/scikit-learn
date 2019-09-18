@@ -228,9 +228,8 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
         if row_nnz.max() == row_nnz_min:
             return a.reshape(n_samples, -1)[:, :n_neighbors]
         else:
-            idx = np.tile(np.arange(n_neighbors), n_samples)
-            idx = idx.reshape(n_samples, n_neighbors)
-            idx += graph.indptr[:-1, np.newaxis]
+            idx = np.tile(np.arange(n_neighbors), (n_samples, 1))
+            idx += graph.indptr[:-1, None]
             return a.take(idx, mode='clip').reshape(n_samples, n_neighbors)
 
     if return_distance:
