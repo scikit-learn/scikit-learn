@@ -10,6 +10,9 @@ cpdef _openmp_effective_n_threads(n_threads=None):
       ``openmp.omp_get_max_threads()`` and ``joblib.cpu_count()``.
       The result of ``omp_get_max_threads`` can be influenced by environment
       variable ``OMP_NUM_THREADS`` or at runtime by ``omp_set_num_threads``.
+      The value returned by ``joblib.cpu_count()`` can be controlled by
+      setting the ``LOKY_MAX_CPU_COUNT`` environment variable (instead of
+      returning the number of available CPU cores).
     - For ``n_threads > 0``, use this as the maximal number of threads for
       parallel OpenMP calls.
     - For ``n_threads < 0``, use the maximal number of threads minus
