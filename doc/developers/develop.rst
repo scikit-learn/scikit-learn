@@ -226,6 +226,8 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. _rolling_your_own_estimator:
+
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
@@ -243,6 +245,29 @@ The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
+
+Setting `generate_only=True` returns a generator that yields (estimator, check)
+tuples where the check can be called independently from each other, i.e.
+`check(estimator)`. This allows all checks to be run independently and report
+the checks that are failing. scikit-learn provides a pytest specific decorator, 
+:func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
+multiple estimators::
+
+  from sklearn.utils.estimator_checks import parametrize_with_checks
+  from sklearn.linear_model import LogisticRegression
+  from sklearn.tree import DecisionTreeRegressor
+
+  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+  def test_sklearn_compatible_estimator(estimator, check):
+      check(estimator)
+
+This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
+the name of the underlying estimator and check in the test name. This allows
+`pytest -k` to be used to specify which tests to run.
+
+.. code-block: bash
+   
+   pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
