@@ -23,6 +23,7 @@ from sklearn.preprocessing.label import label_binarize
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
 from sklearn.preprocessing.label import _encode
+from sklearn.preprocessing.label import _encode_check_unknown
 
 from sklearn import datasets
 
@@ -718,3 +719,33 @@ def test_encode_check_unknown_nan_object(uniques, values):
                        match='y contains previously unseen label'):
         _encode(values, uniques, encode=True, check_unknown=True,
                 allow_nan=True)
+
+
+@pytest.mark.parametrize("return_mask", [True, False])
+@pytest.mark.parametrize(
+        "uniques, values",
+        [(np.array(['a', 'b', 'c'], dtype=object),
+          np.array(['a', 'b', 'c', np.nan], dtype=object)),
+         (np.array([np.nan, 'b', 'c'], dtype=object),
+          np.array([np.nan, 'b', 'c', 'd'], dtype=object)),
+         (np.array([1, 2, 3]),
+          np.array([1, 2, 3, np.nan])),
+         (np.array([np.nan, 2, 3]),
+          np.array([np.nan, 2, 3, 4]))])
+def test_check_unknown_nan_raise(uniques, values, return_mask):
+    # test for the check_unknown parameter of _encode() with nan present
+
+    with pytest.raises(ValueError,
+                       match='Values contains NaN'):
+        _encode_check_unknown(values, uniques, return_mask=return_mask,
+                              allow_nan=False)
+
+
+def test_nan_unique():
+    # TODO
+    pass
+
+
+def test_table_with_nan():
+    # TODO
+    pass

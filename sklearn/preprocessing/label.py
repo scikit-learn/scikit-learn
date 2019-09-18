@@ -35,31 +35,43 @@ __all__ = [
 ]
 
 
+def _nan_unique(ar, return_inverse=False, allow_nan=False):
+    # mimic np.unique with allow_nan option
+
+    if return_inverse:
+        uniques, inverse = np.unique(ar, return_inverse=True)
+    else:
+        uniques = np.unique(ar)
+
+    nan_idx = None
+    # np.nan is always sorted last
+    if len(uniques) and is_scalar_nan(uniques[-1]):
+        if not allow_nan:
+            raise ValueError('Values contains NaN and allow_nan=False')
+        nan_idx = np.searchsorted(uniques, np.nan)
+        uniques = uniques[:nan_idx+1]
+
+    if return_inverse and nan_idx is not None:
+        inverse[inverse > nan_idx] = nan_idx
+
+    if return_inverse:
+        return uniques, inverse
+    else:
+        return uniques
+
+
 def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
                   allow_nan=False):
     # only used in _encode below, see docstring there for details
 
     if uniques is None:
         if encode:
-            uniques, encoded = np.unique(values, return_inverse=True)
-            # np.nan is always sorted last
-            if len(uniques) and is_scalar_nan(uniques[-1]):
-                if not allow_nan:
-                    raise ValueError('Values contains NaN and allow_nan=False')
-                nan_idx = np.searchsorted(uniques, np.nan)
-                uniques = uniques[:nan_idx+1]
-                if encode:
-                    encoded[encoded > nan_idx] = nan_idx
+            uniques, encoded = _nan_unique(values, return_inverse=True,
+                                           allow_nan=allow_nan)
             return uniques, encoded
         else:
             # unique sorts
-            uniques = np.unique(values)
-            # np.nan is always sorted last
-            if len(uniques) and is_scalar_nan(uniques[-1]):
-                if not allow_nan:
-                    raise ValueError('Values contains NaN and allow_nan=False')
-                nan_idx = np.searchsorted(uniques, np.nan)
-                uniques = uniques[:nan_idx+1]
+            uniques = _nan_unique(values, allow_nan=allow_nan)
             return uniques
     if encode:
         if check_unknown:
@@ -71,6 +83,25 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
         return uniques, encoded
     else:
         return uniques
+
+
+class TableWithNan(object):
+    #  hash table which allows nan as a key
+
+    def __init__(self):
+        self.dict = dict()
+        self.nan_value = None
+
+    def get(self, key):
+        if is_scalar_nan(key) and self.nan_value is not None:
+            return self.nan_value
+        return self.dict[key]
+
+    def set(self, key, value):
+        if is_scalar_nan(key):
+            self.nan_value = value
+        else:
+            self.dict[key] = value
 
 
 def _encode_python(values, uniques=None, encode=False, allow_nan=False):
@@ -87,28 +118,14 @@ def _encode_python(values, uniques=None, encode=False, allow_nan=False):
             uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
-        table = dict()
+        # hash is not enough to identify nan
+        table = TableWithNan()
         for i, val in enumerate(uniques):
-            if is_scalar_nan(val):
-                # table[nan] always raise KeyError
-                nan_index = i
-            else:
-                table[val] = i
+            table.set(val, i)
         try:
-            encoded = []
-            for val in values:
-                if is_scalar_nan(val):
-                    encoded.append(nan_index)
-                else:
-                    encoded.append(table[val])
-            encoded = np.array(encoded)
+            encoded = np.array([table.get(val) for val in values])
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
-        except UnboundLocalError as e:
-            # 'nan_index' referenced before assignment
-            raise ValueError("y contains previously unseen label nan, "
-                             "consider using allow_nan=True. %s"
                              % str(e))
         return uniques, encoded
     else:
@@ -143,7 +160,7 @@ def _encode(values, uniques=None, encode=False, check_unknown=True,
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
         twice.
     allow_nan : bool, default False
-        if True, encode np.nan as another category. Otherwise raise an error
+        if True, encode `np.nan` as another category. Otherwise raise an error
         if nan are present
 
     Returns
@@ -182,6 +199,8 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
     return_mask : bool, default False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
+    allow_nan : bool, default False
+        If False, raise an error if NaN are present.
 
     Returns
     -------
@@ -195,21 +214,20 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
     if values.dtype == object:
         uniques_set = set(uniques)
         values_set = set(values)
-        array_values_set = np.array(values_set)
-        is_nan_in_value = np.any(_object_dtype_isnan(array_values_set))
+        is_nan_in_value = any([is_scalar_nan(val) for val in values_set])
         if is_nan_in_value:
             if not allow_nan:
                 raise ValueError('Values contains NaN')
             elif any(_get_mask(uniques, np.nan)):
-                diff = np.array(array_values_set - uniques_set)
-                diff = diff[~_get_mask(diff, np.nan)]
+                diff = np.array(values_set - uniques_set)
+                diff = list(diff[~_get_mask(diff, np.nan)])
             else:
                 diff = list(values_set - uniques_set)
         else:
             diff = list(values_set - uniques_set)
 
         if return_mask:
-            if len(diff):
+            if diff:
                 valid_mask = np.array([val in uniques_set for val in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
@@ -221,7 +239,7 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
         mask_nan_in_values = _get_mask(unique_values, np.nan)
         if np.any(mask_nan_in_values):
             if not allow_nan:
-                raise ValueError('Values conatins NaN')
+                raise ValueError('Values contains NaN')
             else:
                 mask_nan_in_uniques = _get_mask(uniques, np.nan)
                 if np.any(mask_nan_in_uniques):
