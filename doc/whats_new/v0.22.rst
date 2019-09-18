@@ -163,6 +163,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor.
+  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Caio Oliveira <caioaao>`.
+
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`:

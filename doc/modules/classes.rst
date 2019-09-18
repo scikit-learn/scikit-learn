@@ -422,6 +422,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
