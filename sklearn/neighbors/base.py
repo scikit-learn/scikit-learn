@@ -854,6 +854,8 @@ class RadiusNeighborsMixin:
             return_distance == False, setting sort_results = True will
             result in an error.
 
+            .. versionadded:: 0.22
+
         Returns
         -------
         neigh_dist : array, shape (n_samples,) of arrays
@@ -1027,6 +1029,8 @@ class RadiusNeighborsMixin:
             If True, the distances and indices will be sorted before being
             returned. If False, the results will not be sorted.
             Only used with mode='distance'.
+
+            .. versionadded:: 0.22
 
         Returns
         -------
