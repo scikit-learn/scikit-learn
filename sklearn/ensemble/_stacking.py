@@ -104,8 +104,8 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         """Concatenate the predictions of each first layer learner.
 
         This helper is in charge of ensuring the preditions are 2D arrays and
-        it will drop one of the probability column when using probabilities.
-        Indeed, the p(y|c=0) = 1 - sum_{k=1}^{K} p(y|c=k)
+        it will drop one of the probability column when using probabilities
+        in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
@@ -113,9 +113,11 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
             if preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
-                if self.stack_method_[est_idx] == 'predict_proba':
-                    # Remove the first column when using probabilities. It is
-                    # collinear with others.
+                if (self.stack_method_[est_idx] == 'predict_proba' and
+                        len(self.classes_) == 2):
+                    # Remove the first column when using probabilities in
+                    # binary classification because both features are perfectly
+                    # collinear.
                     X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
@@ -361,9 +363,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     Notes
     -----
     When `predict_proba` is used by each estimator (i.e. most of the time for
-    `stack_method='auto'` or specifically for `stack_method='predict_proba'`)
-    one of the column predicted by each estimator will be dropped since they
-    are collinear.
+    `stack_method='auto'` or specifically for `stack_method='predict_proba'`),
+    The first column predicted by each estimator will be dropped in the case
+    of a binary classification problem. Indeed, both feature will be perfectly
+    collinear.
 
     References
     ----------

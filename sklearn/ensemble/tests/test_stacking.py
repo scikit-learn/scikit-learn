@@ -53,14 +53,12 @@ X_iris, y_iris = load_iris(return_X_y=True)
     "final_estimator", [None, RandomForestClassifier(random_state=42)]
 )
 def test_stacking_classifier_iris(cv, final_estimator):
-
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    estimators = [('lr', LogisticRegression()),
-                  ('svc', LinearSVC())]
+    estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     clf = StackingClassifier(
         estimators=estimators, final_estimator=final_estimator, cv=cv
     )
@@ -70,7 +68,7 @@ def test_stacking_classifier_iris(cv, final_estimator):
     assert clf.score(X_test, y_test) > 0.8
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == 5
+    assert X_trans.shape[1] == 6
 
     clf.set_params(lr='drop')
     clf.fit(X_train, y_train)
@@ -82,6 +80,31 @@ def test_stacking_classifier_iris(cv, final_estimator):
 
     X_trans = clf.transform(X_test)
     assert X_trans.shape[1] == 3
+
+
+def test_stacking_classifier_drop_column_binary_classification():
+    # check that a column is dropped in binary classification
+    X, y = load_breast_cancer(return_X_y=True)
+    X_train, X_test, y_train, _ = train_test_split(
+        scale(X), y, stratify=y, random_state=42
+    )
+
+    # both classifiers implement 'predict_proba' and will both drop one column
+    estimators = [('lr', LogisticRegression()),
+                  ('rf', RandomForestClassifier(random_state=42))]
+    clf = StackingClassifier(estimators=estimators, cv=3)
+
+    clf.fit(X_train, y_train)
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape[1] == 2
+
+    # LinearSVC does not implement 'predict_proba' and will not drop one column
+    estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
+    clf.set_params(estimators=estimators)
+
+    clf.fit(X_train, y_train)
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape[1] == 2
 
 
 def test_stacking_classifier_drop_estimator():

@@ -1296,7 +1296,9 @@ computationally expensive.
 
 .. note::
    For :class:`StackingClassifier`, when using `stack_method_='predict_proba'`,
-   the first column is dropped since it is collinear with other columns.
+   the first column is dropped when the problem is a binary classification
+   problem. Indeed, both probability columns predicted by each estimator are
+   perfectly collinear.
 
 .. note::
    Multiple stacking layers can be achieved by assigning `final_estimator` to
