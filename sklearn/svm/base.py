@@ -159,7 +159,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
                              (X.shape[0], y.shape[0]))
 
         if self.kernel == "precomputed" and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+            raise ValueError("Precomputed matrix must be a square matrix."
+                             " Input is a {}x{} matrix."
+                             .format(X.shape[0], X.shape[1]))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
             raise ValueError("sample_weight and X have incompatible shapes: "
@@ -435,7 +437,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
-        check_is_fitted(self, 'support_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
                         accept_large_sparse=False)
@@ -483,7 +485,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
+class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
@@ -560,7 +562,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if self.break_ties and self.decision_function_shape == 'ovo':
             raise ValueError("break_ties must be False when "
                              "decision_function_shape is 'ovo'")
@@ -603,7 +605,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----
@@ -642,7 +644,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         T : array-like, shape (n_samples, n_classes)
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
 
         Notes
         -----

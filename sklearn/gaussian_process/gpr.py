@@ -19,8 +19,8 @@ from ..utils.validation import check_X_y, check_array
 from ..utils.optimize import _check_optimize_result
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
-                               MultiOutputMixin):
+class GaussianProcessRegressor(MultiOutputMixin,
+                               RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -210,10 +210,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True)
+                        theta, eval_gradient=True, clone_kernel=False)
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta)
+                    return -self.log_marginal_likelihood(theta,
+                                                         clone_kernel=False)
 
             # First optimize starting from theta specified in kernel
             optima = [(self._constrained_optimization(obj_func,
@@ -241,7 +242,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
-                self.log_marginal_likelihood(self.kernel_.theta)
+                self.log_marginal_likelihood(self.kernel_.theta,
+                                             clone_kernel=False)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -386,7 +388,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             y_samples = np.hstack(y_samples)
         return y_samples
 
-    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False,
+                                clone_kernel=True):
         """Returns log-marginal likelihood of theta for training data.
 
         Parameters
@@ -400,6 +403,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
+
+        clone_kernel : bool, default=True
+            If True, the kernel attribute is copied. If False, the kernel
+            attribute is modified, but may result in a performance improvement.
 
         Returns
         -------
@@ -417,7 +424,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
                     "Gradient can only be evaluated for theta!=None")
             return self.log_marginal_likelihood_value_
 
-        kernel = self.kernel_.clone_with_theta(theta)
+        if clone_kernel:
+            kernel = self.kernel_.clone_with_theta(theta)
+        else:
+            kernel = self.kernel_
+            kernel.theta = theta
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)

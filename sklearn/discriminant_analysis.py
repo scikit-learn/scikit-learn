@@ -186,7 +186,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_features,)
+    intercept_ : array, shape (n_classes,)
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)
@@ -383,8 +383,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         U, S, V = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
-        if rank < n_features:
-            warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
         scalings = (V[:rank] / std).T / S[:rank]
 
@@ -507,7 +505,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+        check_is_fitted(self)
 
         X = check_array(X)
         if self.solver == 'svd':
@@ -530,7 +528,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         decision = self.decision_function(X)
         if self.classes_.size == 2:
@@ -555,7 +553,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
+class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated
@@ -610,6 +608,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         For each class k an array of shape [n_k]. It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -703,7 +704,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         return self
 
     def _decision_function(self, X):
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         X = check_array(X)
         norm2 = []
