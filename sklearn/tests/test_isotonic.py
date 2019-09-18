@@ -490,7 +490,7 @@ def test_isotonic_mismatched_dtype():
     y = [2, 1, 4, 3, 5]
     for dtype in (np.int32, np.int64, np.float64):
         y_np = np.array(y, dtype=dtype)
-        X = np.arange(len(y)).astype(np.float32)
+        X = np.arange(len(y), dtype=np.float32).reshape((-1, 1))
         reg.fit(X, y_np)
         assert reg.predict(X).dtype == X.dtype
 
