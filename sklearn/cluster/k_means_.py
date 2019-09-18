@@ -182,7 +182,7 @@ def _check_normalize_sample_weight(sample_weight, X):
 
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
-            precompute_distances='not-used', n_init=10, max_iter=300,
+            precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
             n_jobs=None, algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
@@ -230,9 +230,10 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         True : always precompute distances
 
         False : never precompute distances
-        .. deprecated:: 0.21
-            'precompute_distances' was deprecated in version 0.21 and will be
-            removed in 0.23.
+
+        .. deprecated:: 0.22
+            'precompute_distances' was deprecated in version 0.22 and will be
+            removed in 0.24.
 
     n_init : int, (default=10)
         Number of time the k-means algorithm will be run with different
@@ -753,9 +754,10 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         True : always precompute distances
 
         False : never precompute distances
-        .. deprecated:: 0.21
-            'precompute_distances' was deprecated in version 0.21 and will be
-            removed in 0.23.
+
+        .. deprecated:: 0.22
+            'precompute_distances' was deprecated in version 0.22 and will be
+            removed in 0.24.
 
     verbose : int, optional (default=0)
         Verbosity mode.
@@ -853,7 +855,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     """
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
-                 max_iter=300, tol=1e-4, precompute_distances='not-used',
+                 max_iter=300, tol=1e-4, precompute_distances='deprecated',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=None, algorithm='auto'):
 
@@ -900,9 +902,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         """
         random_state = check_random_state(self.random_state)
 
-        if self.precompute_distances != 'not-used':
-            warnings.warn("'precompute_distances' was deprecated in version"
-                          "0.21 and will be removed in 0.23.",
+        if self.precompute_distances != 'deprecated':
+            warnings.warn("'precompute_distances' was deprecated in version "
+                          "0.22 and will be removed in 0.24.",
                           DeprecationWarning)
 
         n_init = self.n_init
