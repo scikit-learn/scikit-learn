@@ -274,34 +274,26 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     if whiten:
         if return_X_mean:
             if return_n_iter:
-                # return K, W, S, X_mean, n_iter
                 return (est.whitening_, est._unmixing, sources, est.mean_,
                         est.n_iter_)
             else:
-                # return K, W, S, X_mean
                 return est.whitening_, est._unmixing, sources, est.mean_
         else:
             if return_n_iter:
-                # return K, W, S, n_iter
                 return est.whitening_, est._unmixing, sources, est.n_iter_
             else:
-                # return K, W, S
                 return est.whitening_, est._unmixing, sources
 
     else:
         if return_X_mean:
             if return_n_iter:
-                # return None, W, S, None, n_iter
                 return None, sources, None, est.n_iter_
             else:
-                # return None, W, S, None
                 return None, sources, None
         else:
             if return_n_iter:
-                # return None, W, S, n_iter
                 return None, est._unmixing, sources, est.n_iter_
             else:
-                # return None, W, S
                 return None, est._unmixing, sources
 
 
