@@ -993,9 +993,20 @@ def test_result_of_kmeans_equal_in_diff_n_jobs():
 def test_precompute_distance_deprecated(precompute_distances):
     # FIXME: remove in 0.24
     depr_msg = "'precompute_distances' was deprecated in version 0.22"
-    X, _ = make_blobs(n_samples=100, n_features=2, centers=2, random_state=0)
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
     kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
 
     with pytest.warns(DeprecationWarning, match=depr_msg):
+        kmeans.fit(X)
+
+
+def test_warning_elkan_1_cluster():
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=1, random_state=0)
+    kmeans = KMeans(n_clusters=1, n_init=1, init='random', random_state=0,
+                    algorithm='elkan')
+
+    with pytest.warns(RuntimeWarning,
+                      match="algorithm='elkan' doesn't make sense for a single"
+                            " cluster"):
         kmeans.fit(X)
