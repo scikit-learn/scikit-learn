@@ -43,9 +43,14 @@ def get_encoding(uniques, values):
         return np.array([table[v] for v in values])
 
 
-def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
+def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
+                  allow_nan=False):
     # only used in _encode below, see docstring there for details
-    # excpect that `values` and `uniques` do not contains nan
+
+    if allow_nan:
+        # `np.unique` does not work here
+        return _encode_python(values, uniques, encode,
+                              allow_nan)
     if uniques is None:
         if encode:
             uniques, encoded = np.unique(values, return_inverse=True)
@@ -59,40 +64,21 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
             if diff:
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(diff))
-        encoded = get_encoding(uniques, values)
+        encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
         return uniques
 
 
-def _encode_python(values, uniques=None, encode=False):
-    # only used in _encode below, see docstring there for details.
-    if uniques is None:
-        try:
-            uniques = sorted(set(values))
-        except TypeError: 
-            # Couldn't sort with mixed type (str and float)
-            uniques = (set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-    if encode:
-        table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
-        return uniques, encoded
-    else:
-        return uniques
-
-
-def _encode_python_with_nan(values, uniques=None, encode=False):
+def _encode_python(values, uniques=None, encode=False, allow_nan=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
-        missing_vals = _get_mask(values, np.nan)
-        assert np.any(missing_vals)
-        # set([nan, nan]) = {nan, nan}
-        uniques = set(values[~missing_vals]) | {np.nan}
+        if allow_nan:
+            missing_mask = _get_mask(values, np.nan)
+            if np.any(missing_mask):
+                uniques = sorted(set(values[~missing_mask]) | {np.nan})
+        else:
+            uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         table = dict()
@@ -118,19 +104,12 @@ def _encode_python_with_nan(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode_numpy_with_nan(values, uniques=None, encode=False, check_unknown=True):
-    # `np.unique` does not work here 
-    _encode_python_with_nan(values, uniques, encode)
-
-
-def _encode(values, uniques=None, encode=False, check_unknown=True):
+def _encode(values, uniques=None, encode=False, check_unknown=True,
+            allow_nan=False):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype or if values contains nan,
     and numpy method for all other dtypes.
-    If values contains nan or mixed type (e.g. str and float)
-    sorted become meaningless (but still nice to have since it 
-    speed up the `get_encoding`)
 
     Parameters
     ----------
@@ -158,30 +137,16 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         If ``encode=True``.
 
     """
-    nan_in_uniques = False
-    # TODO use instead _assert_all_finite
-    if uniques is not None and np.any(_get_mask(uniques, np.nan)):
-        nan_in_uniques = True
-
     if values.dtype == object:
         try:
-            if np.any(_object_dtype_isnan(values)) or \
-               nan_in_uniques:
-                res = _encode_python_with_nan(values, uniques, encode)
-            else:
-                res = _encode_python(values, uniques, encode)
+            res = _encode_python(values, uniques, encode, allow_nan)
         except TypeError:
             raise TypeError("argument must be a string or number")
         return res
     else:
-        if (values.dtype.kind == 'f' and np.isnan(values)) or \
-            nan_in_uniques:
-            # couldn't use `_encode_numpy` if `values` contains nan
-            res = _encode_python_with_nan(values, uniques, encode)
-        else:
-            res = _encode_numpy(values, uniques, encode,
-                             check_unknown=check_unknown)
-        return res
+        return _encode_numpy(values, uniques, encode,
+                             check_unknown, allow_nan)
+
 
 def _encode_check_unknown(values, uniques, return_mask=False):
     """
@@ -212,11 +177,12 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     if values.dtype == object:
         uniques_set = set(uniques)
         diff = list(set(values) - uniques_set)
-        # set([np.nan]) - set([np.nan]) returns set([np.nan])
-        if diff and any(_object_dtype_isnan(diff)):
-            if any(_object_dtype_isnan(uniques_set)) and\
-                any(_object_dtype_isnan(set(values))):
-                diff = diff[~_object_dtype_isnan(diff)]
+        # set([np.nan]) - set([np.nan]) returns set()
+        # but set(np.array([np.nan])) - set(np.array([np.nan])) return {nan}
+        if diff and any(_get_mask(diff, np.nan)):
+            if any(_get_mask(uniques_set, np.nan)) and\
+               any(_get_mask(set(values), np.nan)):
+                diff = diff[~_get_mask(diff, np.nan)]
         if return_mask:
             if diff:
                 valid_mask = np.array([val in uniques_set for val in values])
@@ -227,11 +193,11 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
     else:
         unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
+        diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
         # np.setdiff1d([np.nan],[np.nan]) returns [np.nan]
-        if any(is_scalar_nan(diff)):
-            if any(is_scalar_nan(unique_values)) and\
-                any(is_scalar_nan(uniques)):
+        if any(_get_mask(diff, np.nan)):
+            if any(_get_mask(unique_values, np.nan)) and\
+               any(_get_mask(uniques, np.nan)):
                 diff = [x for x in diff if not is_scalar_nan(x)]
         if return_mask:
             if diff:

@@ -602,11 +602,6 @@ def test_one_hot_encoder_warning():
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
-def test_one_hot_encoder_accept_nan():
-    enc = OneHotEncoder()
-    X = [[np.nan, 1], ['Female', np.nan]] 
-    enc.fit_transform(X)
-
 
 def test_one_hot_encoder_drop_manual():
     cats_to_drop = ['def', 12, 3, 56]
