@@ -1054,7 +1054,7 @@ def test_hashingvectorizer_random_state_not_int(random_state):
     hv = HashingVectorizer(random_state=random_state)
     with pytest.raises(NotFittedError,
                        match="HashingVectorizer needs to be fitted"):
-        h.transform(text)
+        hv.transform(text)
 
     # assert ok if fitted
     hv.fit(text)
