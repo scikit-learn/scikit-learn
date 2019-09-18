@@ -288,6 +288,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                                       mask_fit_X[potential_donors_idx, col])
             X[receivers_idx, col] = value
 
+        X = X[:, valid_idx]
         if self.add_indicator:
             X_trans_indicator = self.indicator_.transform(X)
             hstack = sparse.hstack if sparse.issparse(X) else np.hstack
