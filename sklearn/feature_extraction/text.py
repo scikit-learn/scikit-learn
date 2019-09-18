@@ -866,7 +866,8 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. An ``ngram_range`` of (1, 2) means unigrams and bigrams,
+        (2, 2) means only bigrams.
         Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
