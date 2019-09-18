@@ -190,6 +190,8 @@ def test_regression_multioutput_array():
 
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
+
+    # mean_absolute_percentage_error tests
     mape = mean_absolute_percentage_error(y_true, y_pred,
                                           multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
