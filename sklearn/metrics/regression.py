@@ -222,8 +222,8 @@ def mean_absolute_percentage_error(y_true, y_pred,
     Returns
     -------
     loss : float or ndarray of floats
-        If multioutput is 'raw_values', then mean absolute percentage error is returned
-        for each output separately.
+        If multioutput is 'raw_values', then mean absolute percentage error 
+        is returned for each output separately.
         If multioutput is 'uniform_average' or an ndarray of weights, then the
         weighted average of all output errors is returned.
 
