@@ -205,7 +205,7 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
         diff = np.array(list(set(values) - uniques_set))
         # set([np.nan]) - set([np.nan]) returns set()
         # but set(np.array([np.nan])) - set(np.array([np.nan])) return {nan}
-        if diff and any(_get_mask(diff, np.nan)):
+        if len(diff) and any(_get_mask(diff, np.nan)):
             if not allow_nan:
                 raise ValueError('Nan found during check_unknown')
             else:
@@ -213,7 +213,7 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
                    any(_get_mask(set(values), np.nan)):
                     diff = diff[~_get_mask(diff, np.nan)]
         if return_mask:
-            if diff:
+            if len(diff):
                 valid_mask = np.array([val in uniques_set for val in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
