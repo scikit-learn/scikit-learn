@@ -4,8 +4,9 @@
 
 from __future__ import division
 
-import warnings
+from abc import abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 import numpy.ma as ma
@@ -64,7 +65,76 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
-class SimpleImputer(TransformerMixin, BaseEstimator):
+class _BaseImputer(TransformerMixin, BaseEstimator):
+    """Base class for all imputers.
+
+    It add automatically support for `add_indicator`.
+    """
+
+    def __init__(self, missing_values=np.nan, add_indicator=False):
+        self.missing_values = missing_values
+        self.add_indicator = add_indicator
+
+    @abstractmethod
+    def _fit(self, X, y=None):
+        """Specialized fit method implemented by each imputer."""
+
+    def fit(self, X, y=None):
+        """Fit the imputer on X.
+
+        Parameters
+        ----------
+        X : array-like shape of (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        Returns
+        -------
+        self : object
+        """
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values, error_on_new=False)
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
+        self._fit(X, y)
+        return self
+
+    @abstractmethod
+    def _transform(self, X):
+        """Specialized transform method implemented by each imputer."""
+
+    def _concatenate_indicator(self, X, X_trans_imputer):
+        """Concatenate indicator if required"""
+        if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(X)
+            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
+            X_trans_imputer = hstack((X_trans_imputer, X_trans_indicator))
+        return X_trans_imputer
+
+    def transform(self, X):
+        """Impute all missing values in X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input data to complete.
+
+        Returns
+        -------
+        X : array-like of shape (n_samples, n_output_features)
+            The imputed dataset. `n_output_features` is the number of features
+            that is not always missing during `fit`.
+        """
+        X_trans_imputer = self._transform(X)
+        return self._concatenate_indicator(X, X_trans_imputer)
+
+    def _more_tags(self):
+        return {'allow_nan': is_scalar_nan(self.missing_values)}
+
+
+class SimpleImputer(_BaseImputer):
     """Imputation transformer for completing missing values.
 
     Read more in the :ref:`User Guide <impute>`.
@@ -153,12 +223,14 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
-        self.missing_values = missing_values
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
-        self.add_indicator = add_indicator
 
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
@@ -199,7 +271,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
         return X
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit the imputer on X.
 
         Parameters
@@ -249,13 +321,6 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
-
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False)
-            self.indicator_.fit(X)
-        else:
-            self.indicator_ = None
 
         return self
 
@@ -347,7 +412,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
             # fill_value in each column
             return np.full(X.shape[1], fill_value, dtype=X.dtype)
 
-    def transform(self, X):
+    def _transform(self, X):
         """Impute all missing values in X.
 
         Parameters
@@ -406,14 +471,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
             X[coordinates] = values
 
-        if self.add_indicator:
-            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X = hstack((X, X_trans_indicator))
-
         return X
-
-    def _more_tags(self):
-        return {'allow_nan': True}
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):

@@ -1,8 +1,6 @@
 import numpy as np
-from scipy import sparse
 
-from ._base import MissingIndicator
-from ..base import BaseEstimator, TransformerMixin
+from ._base import _BaseImputer
 from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import _NAN_METRICS
@@ -14,7 +12,7 @@ from ..utils.mask import _get_mask
 from ..utils.validation import check_is_fitted
 
 
-class KNNImputer(TransformerMixin, BaseEstimator):
+class KNNImputer(_BaseImputer):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
     Each sample's missing values are imputed using the mean value from
@@ -96,13 +94,14 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     def __init__(self, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):
-
-        self.missing_values = missing_values
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
         self.copy = copy
-        self.add_indicator = add_indicator
 
     def _calc_impute(self, dist_pot_donors, n_neighbors,
                      fit_X_col, mask_fit_X_col):
@@ -150,7 +149,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         return np.ma.average(donors, axis=1, weights=weight_matrix).data
 
-    def fit(self, X, y=None):
+    def _fit(self, X, y=None):
         """Fit the imputer on X.
 
         Parameters
@@ -182,17 +181,9 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
-
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False)
-            self.indicator_.fit(X)
-        else:
-            self.indicator_ = None
-
         return self
 
-    def transform(self, X):
+    def _transform(self, X):
         """Impute all missing values in X.
 
         Parameters
@@ -262,7 +253,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
             # distances for samples that needed imputation for column
             dist_subset = (dist[dist_idx_map[receivers_idx]]
-                               [:, potential_donors_idx])
+                           [:, potential_donors_idx])
 
             # receivers with all nan distances impute with mean
             all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
@@ -280,7 +271,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                 # receivers with at least one defined distance
                 receivers_idx = receivers_idx[~all_nan_dist_mask]
                 dist_subset = (dist[dist_idx_map[receivers_idx]]
-                                   [:, potential_donors_idx])
+                               [:, potential_donors_idx])
 
             n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
             value = self._calc_impute(dist_subset, n_neighbors,
@@ -288,13 +279,4 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                                       mask_fit_X[potential_donors_idx, col])
             X[receivers_idx, col] = value
 
-        X = X[:, valid_idx]
-        if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(X)
-            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X = hstack((X[:, valid_idx], X_trans_indicator))
-
-        return X
-
-    def _more_tags(self):
-        return {'allow_nan': is_scalar_nan(self.missing_values)}
+        return X[:, valid_idx]
