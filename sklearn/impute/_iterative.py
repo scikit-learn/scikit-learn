@@ -508,11 +508,8 @@ class IterativeImputer(_BaseImputer):
 
         return Xt, X_filled, mask_missing_values
 
-    def _fit_transform(self, X):
-        """Fit and impute X.
-
-        Imputation can happen efficiently right after fit instead of calling
-        fit(X, y).transform(X) which will be computationally wasteful.
+    def fit_transform(self, X, y=None):
+        """Fits the imputer on X and return the transformed X.
 
         Parameters
         ----------
@@ -527,6 +524,7 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
+        super()._fit_indicator(X)
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
 
@@ -549,21 +547,22 @@ class IterativeImputer(_BaseImputer):
 
         if hasattr(self._estimator, 'random_state'):
             self._estimator.random_state = self.random_state_
+
         self.imputation_sequence_ = []
 
         self._min_value = -np.inf if self.min_value is None else self.min_value
         self._max_value = np.inf if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X_, Xt, mask_missing_values = self._initial_imputation(X)
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
-            return Xt
+            return super()._transform_indicator(X, Xt)
 
         # Edge case: a single feature. We return the initial ...
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
-            return Xt
+            return super()._transform_indicator(X, Xt)
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -577,11 +576,11 @@ class IterativeImputer(_BaseImputer):
         n_samples, n_features = Xt.shape
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
-                  % (X.shape,))
+                  % (X_.shape,))
         start_t = time()
         if not self.sample_posterior:
             Xt_previous = Xt.copy()
-            normalized_tol = self.tol * np.max(np.abs(X[~mask_missing_values]))
+            normalized_tol = self.tol * np.max(np.abs(X_[~mask_missing_values]))
         for self.n_iter_ in range(1, self.max_iter + 1):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -620,31 +619,10 @@ class IterativeImputer(_BaseImputer):
             if not self.sample_posterior:
                 warnings.warn("[IterativeImputer] Early stopping criterion not"
                               " reached.", ConvergenceWarning)
-        Xt[~mask_missing_values] = X[~mask_missing_values]
-        return Xt
+        Xt[~mask_missing_values] = X_[~mask_missing_values]
+        return super()._transform_indicator(X, Xt)
 
-    def fit_transform(self, X, y=None):
-        """Fits the imputer on X and return the transformed X.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Input data, where "n_samples" is the number of samples and
-            "n_features" is the number of features.
-
-        y : ignored.
-
-        Returns
-        -------
-        Xt : array-like, shape (n_samples, n_features)
-            The imputed input data.
-        """
-        X_trans_imputer = self._fit_transform(X)
-        # because we want to benefit from transformed X at fit, we need to
-        # concatenate the missing indicator in fit_transform.
-        return self._concatenate_indicator(X, X_trans_imputer)
-
-    def _transform(self, X):
+    def transform(self, X):
         """Imputes all missing values in X.
 
         Note that this is stochastic, and that if random_state is not fixed,
@@ -662,16 +640,16 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X_, Xt, mask_missing_values = self._initial_imputation(X)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
-            return Xt
+            return super()._transform_indicator(X, Xt)
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
-                  % (X.shape,))
+                  % (X_.shape,))
         start_t = time()
         for it, estimator_triplet in enumerate(self.imputation_sequence_):
             Xt, _ = self._impute_one_feature(
@@ -689,11 +667,11 @@ class IterativeImputer(_BaseImputer):
                           % (i_rnd + 1, self.n_iter_, time() - start_t))
                 i_rnd += 1
 
-        Xt[~mask_missing_values] = X[~mask_missing_values]
+        Xt[~mask_missing_values] = X_[~mask_missing_values]
 
-        return Xt
+        return super()._transform_indicator(X, Xt)
 
-    def _fit(self, X, y=None):
+    def fit(self, X, y=None):
         """Fits the imputer on X and return self.
 
         Parameters
@@ -709,5 +687,5 @@ class IterativeImputer(_BaseImputer):
         self : object
             Returns self.
         """
-        self._fit_transform(X)
+        self.fit_transform(X)
         return self
