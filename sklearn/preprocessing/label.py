@@ -19,7 +19,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils import is_scalar_nan
-from ..utils.fixes import _object_dtype_isnan
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples

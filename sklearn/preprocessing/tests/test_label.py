@@ -219,35 +219,6 @@ def test_label_encoder_negative_ints():
         le.transform([0, 6])
 
 
-def test_label_encode_with_nan():
-
-    # encode all nan within one category
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=float),
-               allow_nan=True)) == 1
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=object),
-               allow_nan=True)) == 1
-    assert len(_encode(np.asarray([4, np.nan, np.nan]), allow_nan=True)) == 2
-
-    # the encoded size corresponds to the values size
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=float),
-               encode=True, allow_nan=True)[1]) == 2
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=object),
-               encode=True, allow_nan=True)[1]) == 2
-
-    encoded = _encode(np.asarray([4, 5, np.nan, np.nan, np.nan]),
-                      encode=True, allow_nan=True)[1]
-    assert_array_equal(encoded, [0, 1, 2, 2, 2])
-
-
-@pytest.mark.parametrize("values",
-                         [np.asarray([np.nan, np.nan], dtype=float),
-                          np.asarray([np.nan, np.nan], dtype=object)])
-def test_label_encode_raise_nan(values):
-    msg = 'Values contains NaN'
-    with pytest.raises(ValueError, match=msg):
-        _encode(values, allow_nan=False)
-
-
 @pytest.mark.parametrize("dtype", ['str', 'object'])
 def test_label_encoder_str_bad_shape(dtype):
     le = LabelEncoder()
@@ -642,6 +613,7 @@ def test_inverse_binarize_multiclass():
     assert_array_equal(got, np.array([1, 1, 0]))
 
 
+@pytest.mark.parametrize("allow_nan", [True, False])
 @pytest.mark.parametrize(
         "values, expected",
         [(np.array([2, 1, 3, 1, 3], dtype='int64'),
@@ -651,19 +623,44 @@ def test_inverse_binarize_multiclass():
          (np.array(['b', 'a', 'c', 'a', 'c']),
           np.array(['a', 'b', 'c']))],
         ids=['int64', 'object', 'str'])
-def test_encode_util(values, expected):
+def test_encode_util(values, expected, allow_nan):
     uniques = _encode(values)
     assert_array_equal(uniques, expected)
-    uniques, encoded = _encode(values, encode=True)
+    uniques, encoded = _encode(values, encode=True, allow_nan=allow_nan)
     assert_array_equal(uniques, expected)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
-    _, encoded = _encode(values, uniques, encode=True)
+    _, encoded = _encode(values, uniques, encode=True, allow_nan=allow_nan)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
 
-@pytest.mark.parametrize(
-        "allow_nan",
-        [True, False])
+@pytest.mark.parametrize("dtype", [float, object])
+def test_label_encode_with_nan(dtype):
+
+    # encode all nan within one category
+    assert len(_encode(np.asarray([np.nan, np.nan, float('nan')], dtype=dtype),
+               allow_nan=True)) == 1
+    assert len(_encode(np.asarray([4, np.nan, float('nan')], dtype=dtype),
+               allow_nan=True)) == 2
+
+    # the encoded size corresponds to the values size
+    assert len(_encode(np.asarray([np.nan, np.nan], dtype=dtype),
+               encode=True, allow_nan=True)[1]) == 2
+
+    encoded = _encode(np.asarray([4, 5, np.nan, np.nan, np.nan], dtype=dtype),
+                      encode=True, allow_nan=True)[1]
+    assert_array_equal(encoded, [0, 1, 2, 2, 2])
+
+
+@pytest.mark.parametrize("values",
+                         [np.asarray([np.nan, np.nan], dtype=float),
+                          np.asarray([np.nan, np.nan], dtype=object)])
+def test_label_encode_raise_nan(values):
+    msg = 'Values contains NaN'
+    with pytest.raises(ValueError, match=msg):
+        _encode(values, allow_nan=False)
+
+
+@pytest.mark.parametrize("allow_nan", [True, False])
 def test_encode_check_unknown(allow_nan):
     # test for the check_unknown parameter of _encode()
     uniques = np.array([1, 2, 3])
