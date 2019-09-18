@@ -683,8 +683,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         self._validate_params()
 
         # optional if random_state is left to an integer seed
-        self.seed = check_random_state(self.random_state)
-        self.seed = int(self.seed.get_state()[1][0])
+        self.seed_ = check_random_state(self.random_state)
+        self.seed_ = int(self.seed_.get_state()[1][0])
 
         self._get_hasher().fit(X, y=y)
         return self
@@ -714,8 +714,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         analyzer = self.build_analyzer()
 
         if isinstance(self.random_state, int):
-            self.seed = self.random_state   # stateless estimator
-        elif not hasattr(self, "seed"):
+            self.seed_ = self.random_state   # stateless estimator
+        elif not hasattr(self, "seed_"):
             raise NotFittedError("HashingVectorizer needs to be fitted "
                                  "when random_state is not a fixed integer "
                                  "got random_state=%s" % self.random_state)
@@ -751,7 +751,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
                              alternate_sign=self.alternate_sign,
-                             random_state=self.seed)
+                             random_state=self.seed_)
 
     def _more_tags(self):
         return {'X_types': ['string']}
