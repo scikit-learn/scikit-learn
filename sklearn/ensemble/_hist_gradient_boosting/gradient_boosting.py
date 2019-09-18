@@ -104,8 +104,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
 
-        # The rng state must be preserved if warm_start is True
         rng = check_random_state(self.random_state)
+
+        # When warm starting, we want to re-use the same seed that was used
+        # the first time fit was called (e.g. for subsampling or for the
+        # train/val split).
         if not (self.warm_start and self._is_fitted()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max,
                                             dtype='u8')
