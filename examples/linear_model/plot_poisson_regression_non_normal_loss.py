@@ -39,6 +39,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.utils import gen_batches
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
@@ -295,3 +296,93 @@ for axi in axes:
 # Thus, among the considered estimators, ``PoissonRegressor`` is better suited
 # for modeling the long tail distribution of the data as compared to the
 # ``Ridge`` and ``RandomForestRegressor`` estimators.
+#
+# To ensure that estimators yield reasonable predictions for different
+# policyholder types, we can bin test samples according to `y_pred` returned by
+# each model. Then for each bin, compare the mean predicted `y_pred`, with
+# the mean observed target.
+
+
+def _lift_curve(y_true, y_pred, sample_weights=None, n_bins=100):
+    """Compare predictions and observations for bins
+    ordered by y_pred
+
+    We order the samples by ``y_pred`` and split it in bins.
+    In each bin the observed mean is compared with the predicted
+    mean.
+
+    Parameters
+    ----------
+    y_true: array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+    y_pred: array-like of shape (n_samples,)
+        Estimated target values.
+    sample_weight : array-like of shape (n_samples,)
+        Sample weights.
+    n_bins: int
+        number of bins to use
+
+    Returns
+    -------
+    bin_centers: ndarray of shape (n_bins,)
+        bin centers
+    y_true_bin: ndarray of shape (n_bins,)
+        average y_pred for each bin
+    y_pred_bin: ndarray of shape (n_bins,)
+        average y_pred for each bin
+    """
+    idx_sort = np.argsort(y_pred)
+
+    bin_centers = np.arange(0, 1, 1/n_bins) + 0.5/n_bins
+
+    y_pred_bin = np.zeros(n_bins)
+    y_true_bin = np.zeros(n_bins)
+    bin_size = len(y_true) // n_bins
+    for n, sl in enumerate(gen_batches(len(y_true), bin_size)):
+        weights = sample_weights[idx_sort][sl]
+        y_pred_bin[n] = np.average(
+               y_pred[idx_sort][sl], weights=weights
+        )
+        y_true_bin[n] = np.average(
+            y_true[idx_sort][sl],
+            weights=weights
+        )
+    return bin_centers, y_true_bin, y_pred_bin
+
+
+fig, ax = plt.subplots(1, 3, figsize=(12, 3.2))
+plt.subplots_adjust(wspace=0.3)
+
+
+for axi, (label, model, color) in zip(ax, [
+        ('Ridge', linregr, 'b'),
+        ('PoissonRegressor', glm_freq, 'k'),
+        ('Random Forest', gbr, 'r')
+]):
+    y_pred = model.predict(df_test)
+
+    q, y_true_seg, y_pred_seg = _lift_curve(
+        df_test.Frequency.values,
+        y_pred,
+        sample_weights=df_test.Exposure.values,
+        n_bins=10)
+
+    axi.plot(q, y_pred_seg, 'o'+color, label="predictions", ms=5)
+    axi.step(q, y_true_seg, '--'+color, label="observations",
+             where='mid')
+    axi.set_xlim(0, 1.0)
+    axi.set(
+        title=label,
+        xlabel='Fraction of samples sorted by y_pred',
+        ylabel='Mean Frequency (y_pred)'
+
+    )
+
+    axi.legend()
+
+
+##############################################################################
+#
+# On the above figure, ``PoissonRegressor`` is the model which presents the
+# best consistency between predicted and observed targets, both for low
+# and high target values.
