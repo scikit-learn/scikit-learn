@@ -350,7 +350,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     components_ : 2D array, shape (n_components, n_features)
         The linear operator to apply to the data to get the independent
         sources. This is equal to the unmixing matrix when ``whiten`` is
-        False, and equal to ``np.dot(unmixing_matrix, whitening_)`` when
+        False, and equal to ``np.dot(unmixing_matrix, self.whitening_)`` when
         ``whiten`` is True.
 
     mixing_ : array, shape (n_features, n_components)
