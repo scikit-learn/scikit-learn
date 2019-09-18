@@ -208,20 +208,30 @@ def test_label_encoder_negative_ints():
 
 
 def test_label_encode_with_nan():
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=float), allow_nan=True)) == 1
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=object), allow_nan=True)) == 1
-    assert len(_encode(np.asarray([4, np.nan]), allow_nan=True)) == 2
 
+    # encode all nan within one category
+    assert len(_encode(np.asarray([np.nan, np.nan], dtype=float),
+               allow_nan=True)) == 1
+    assert len(_encode(np.asarray([np.nan, np.nan], dtype=object),
+               allow_nan=True)) == 1
+    assert len(_encode(np.asarray([4, np.nan, np.nan]), allow_nan=True)) == 2
+
+    # the encoded size corresponds to the values size
     assert len(_encode(np.asarray([np.nan, np.nan], dtype=float),
                encode=True, allow_nan=True)[1]) == 2
     assert len(_encode(np.asarray([np.nan, np.nan], dtype=object),
                encode=True, allow_nan=True)[1]) == 2
-    assert len(_encode(np.asarray([4, np.nan, np.nan, np.nan]),
-               encode=True, allow_nan=True)[1]) == 4
+
+    encoded = _encode(np.asarray([4, 5, np.nan, np.nan, np.nan]),
+                      encode=True, allow_nan=True)[1]
+    assert_array_equal(encoded, [0, 1, 2, 2, 2])
 
 
-def test_label_encode_with_mixed_type():   
-    assert len(_encode(np.asarray([4, 'm']))) == 2
+@pytest.mark.parametrize("values",
+                         [np.asarray([np.nan, np.nan], dtype=float),
+                          np.asarray([np.nan, np.nan], dtype=object)])
+def test_label_encode_raise_nan(values):
+    assert_raises(ValueError, _encode, values, allow_nan=False)
 
 
 @pytest.mark.parametrize("dtype", ['str', 'object'])
@@ -623,7 +633,10 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
 
-def test_encode_check_unknown():
+@pytest.mark.parametrize(
+        "allow_nan",
+        [True, False])
+def test_encode_check_unknown(allow_nan):
     # test for the check_unknown parameter of _encode()
     uniques = np.array([1, 2, 3])
     values = np.array([1, 2, 3, 4])
@@ -631,14 +644,50 @@ def test_encode_check_unknown():
     # Default is True, raise error
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=True)
+        _encode(values, uniques, encode=True, check_unknown=True,
+                allow_nan=allow_nan)
 
     # dont raise error if False
-    _encode(values, uniques, encode=True, check_unknown=False)
+    _encode(values, uniques, encode=True, check_unknown=False,
+            allow_nan=allow_nan)
 
     # parameter is ignored for object dtype
     uniques = np.array(['a', 'b', 'c'], dtype=object)
     values = np.array(['a', 'b', 'c', 'd'], dtype=object)
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
-        _encode(values, uniques, encode=True, check_unknown=False)
+        _encode(values, uniques, encode=True, check_unknown=False,
+                allow_nan=allow_nan)
+
+
+@pytest.mark.parametrize(
+        "uniques, values",
+        [(np.array([1, 2, 3]),
+          np.array([1, 2, 3, np.nan])),
+         (np.array([np.nan, 2, 3]),
+          np.array([np.nan, 2, 3, 4]))])
+def test_encode_check_unknown_nan_float(uniques, values):
+    # test for the check_unknown parameter of _encode() with nan present
+
+    with pytest.raises(ValueError,
+                       match='y contains previously unseen label'):
+        _encode(values, uniques, encode=True, check_unknown=True,
+                allow_nan=True)
+
+    # dont raise error if False
+    _encode(values, uniques, encode=True, check_unknown=False, allow_nan=True)
+
+
+@pytest.mark.parametrize(
+        "uniques, values",
+        [(np.array(['a', 'b', 'c'], dtype=object),
+          np.array(['a', 'b', 'c', np.nan], dtype=object)),
+         (np.array([np.nan, 'b', 'c'], dtype=object),
+          np.array([np.nan, 'b', 'c', 'd'], dtype=object))])
+def test_encode_check_unknown_nan_object(uniques, values):
+    # test for the check_unknown parameter of _encode() with nan present
+    # parameter check_unknown is ignored for object dtype
+    with pytest.raises(ValueError,
+                       match='y contains previously unseen label'):
+        _encode(values, uniques, encode=True, check_unknown=True,
+                allow_nan=True)

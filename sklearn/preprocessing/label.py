@@ -47,20 +47,31 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
                   allow_nan=False):
     # only used in _encode below, see docstring there for details
 
-    if allow_nan:
-        # `np.unique` does not work here
-        return _encode_python(values, uniques, encode,
-                              allow_nan)
     if uniques is None:
         if encode:
             uniques, encoded = np.unique(values, return_inverse=True)
+            # np.nan is always sorted last
+            if len(uniques) and is_scalar_nan(uniques[-1]):
+                if not allow_nan:
+                    raise ValueError('nan found in values and allow_nan=False')
+                nan_idx = np.searchsorted(uniques, np.nan)
+                uniques = uniques[:nan_idx+1]
+                if encode:
+                    encoded[encoded > nan_idx] = nan_idx
             return uniques, encoded
         else:
             # unique sorts
-            return np.unique(values)
+            uniques = np.unique(values)
+            # np.nan is always sorted last
+            if len(uniques) and is_scalar_nan(uniques[-1]):
+                if not allow_nan:
+                    raise ValueError('nan found in values and allow_nan=False')
+                nan_idx = np.searchsorted(uniques, np.nan)
+                uniques = uniques[:nan_idx+1]
+            return uniques
     if encode:
         if check_unknown:
-            diff = _encode_check_unknown(values, uniques)
+            diff = _encode_check_unknown(values, uniques, allow_nan=allow_nan)
             if diff:
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(diff))
@@ -73,10 +84,13 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
 def _encode_python(values, uniques=None, encode=False, allow_nan=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
-        if allow_nan:
-            missing_mask = _get_mask(values, np.nan)
-            if np.any(missing_mask):
-                uniques = sorted(set(values[~missing_mask]) | {np.nan})
+        missing_mask = _get_mask(values, np.nan)
+        if np.any(missing_mask):
+            if not allow_nan:
+                raise ValueError('nan found in values and allow_nan=False')
+            else:
+                # sorted([4, np.nan]) != np.sort([4, np.nan])
+                uniques = np.sort(list(set(values[~missing_mask]) | {np.nan}))
         else:
             uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -99,6 +113,11 @@ def _encode_python(values, uniques=None, encode=False, allow_nan=False):
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
+        except UnboundLocalError as e:
+            # 'nan_index' referenced before assignment
+            raise ValueError("y contains previously unseen label nan, "
+                             "consider using allow_nan=True. %s"
+                             % str(e))
         return uniques, encoded
     else:
         return uniques
@@ -108,8 +127,12 @@ def _encode(values, uniques=None, encode=False, check_unknown=True,
             allow_nan=False):
     """Helper function to factorize (find uniques) and encode values.
 
-    Uses pure python method for object dtype or if values contains nan,
-    and numpy method for all other dtypes.
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+    The numpy method has the limitation that the `uniques` need to
+    be sorted. Importantly, this is not checked but assumed to already be
+    the case. The calling method needs to ensure this for all non-object
+    values.
 
     Parameters
     ----------
@@ -127,6 +150,9 @@ def _encode(values, uniques=None, encode=False, check_unknown=True,
         True in this case. This parameter is useful for
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
         twice.
+    allow_nan : bool, default False
+        if True, encode np.nan as another category. Otherwise raise an error
+        if nan are present
 
     Returns
     -------
@@ -148,7 +174,7 @@ def _encode(values, uniques=None, encode=False, check_unknown=True,
                              check_unknown, allow_nan)
 
 
-def _encode_check_unknown(values, uniques, return_mask=False):
+def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
     """
     Helper function to check for unknowns in values to be encoded.
 
@@ -176,13 +202,16 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     """
     if values.dtype == object:
         uniques_set = set(uniques)
-        diff = list(set(values) - uniques_set)
+        diff = np.array(list(set(values) - uniques_set))
         # set([np.nan]) - set([np.nan]) returns set()
         # but set(np.array([np.nan])) - set(np.array([np.nan])) return {nan}
         if diff and any(_get_mask(diff, np.nan)):
-            if any(_get_mask(uniques_set, np.nan)) and\
-               any(_get_mask(set(values), np.nan)):
-                diff = diff[~_get_mask(diff, np.nan)]
+            if not allow_nan:
+                raise ValueError('Nan found during check_unknown')
+            else:
+                if any(_get_mask(uniques_set, np.nan)) and\
+                   any(_get_mask(set(values), np.nan)):
+                    diff = diff[~_get_mask(diff, np.nan)]
         if return_mask:
             if diff:
                 valid_mask = np.array([val in uniques_set for val in values])
@@ -196,9 +225,12 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
         # np.setdiff1d([np.nan],[np.nan]) returns [np.nan]
         if any(_get_mask(diff, np.nan)):
-            if any(_get_mask(unique_values, np.nan)) and\
-               any(_get_mask(uniques, np.nan)):
-                diff = [x for x in diff if not is_scalar_nan(x)]
+            if not allow_nan:
+                raise ValueError('Nan found during check_unknown')
+            else:
+                if any(_get_mask(unique_values, np.nan)) and\
+                   any(_get_mask(uniques, np.nan)):
+                    diff = [x for x in diff if not is_scalar_nan(x)]
         if return_mask:
             if diff:
                 valid_mask = np.in1d(values, uniques)
