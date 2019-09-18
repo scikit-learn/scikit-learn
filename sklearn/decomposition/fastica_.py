@@ -450,7 +450,7 @@ class FastICA(TransformerMixin, BaseEstimator):
                 % self.fun
             )
 
-        n, p = X.shape
+        n_samples, n_features = X.shape
 
         n_components = self.n_components
         if not self.whiten and n_components is not None:
@@ -458,9 +458,9 @@ class FastICA(TransformerMixin, BaseEstimator):
             warnings.warn('Ignoring n_components with whiten=False.')
 
         if n_components is None:
-            n_components = min(n, p)
-        if (n_components > min(n, p)):
-            n_components = min(n, p)
+            n_components = min(n_samples, n_features)
+        if (n_components > min(n_samples, n_features)):
+            n_components = min(n_samples, n_features)
             warnings.warn(
                 'n_components is too large: it will be set to %s'
                 % n_components
@@ -480,7 +480,7 @@ class FastICA(TransformerMixin, BaseEstimator):
             X1 = np.dot(K, X)
             # see (13.6) p.267 Here X1 is white and data
             # in X has been projected onto a subspace by PCA
-            X1 *= np.sqrt(p)
+            X1 *= np.sqrt(n_features)
         else:
             # X must be casted to floats to avoid typing issues with numpy
             # 2.0 and the line below
