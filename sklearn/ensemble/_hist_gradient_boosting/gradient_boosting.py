@@ -92,7 +92,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         y : array-like, shape=(n_samples,)
             Target values.
 
-        sample_weight : array-like of shape(n_samples,) default=None
+        sample_weight : array-like of shape (n_samples,) default=None
             Weights of training data.
 
         Returns
@@ -108,6 +108,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
         check_consistent_length(X, y)
+        # Do not create unit sample weights by default to later skip some
+        # computation
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
