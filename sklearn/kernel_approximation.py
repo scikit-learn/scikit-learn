@@ -21,7 +21,7 @@ from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class RBFSampler(BaseEstimator, TransformerMixin):
+class RBFSampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -125,7 +125,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -239,7 +239,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
+class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
@@ -429,7 +429,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return {'stateless': True}
 
 
-class Nystroem(BaseEstimator, TransformerMixin):
+class Nystroem(TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel

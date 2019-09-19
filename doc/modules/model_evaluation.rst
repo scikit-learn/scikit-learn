@@ -61,7 +61,7 @@ Scoring                           Function                                      
 'accuracy'                        :func:`metrics.accuracy_score`
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
+'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -2028,18 +2032,19 @@ Mean Poisson, Gamma, and Tweedie deviances
 The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
 deviance error
 <https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
-with power parameter `p`. This is a metric that elicits predicted expectation
-values of regression targets.
+with a ``power`` parameter (:math:`p`). This is a metric that elicits
+predicted expectation values of regression targets.
 
 Following special cases exist,
 
-- when `p=0` it is equivalent to :func:`mean_squared_error`.
-- when `p=1` it is equivalent to :func:`mean_poisson_deviance`.
-- when `p=2` it is equivalent to :func:`mean_gamma_deviance`.
+- when ``power=0`` it is equivalent to :func:`mean_squared_error`.
+- when ``power=1`` it is equivalent to :func:`mean_poisson_deviance`.
+- when ``power=2`` it is equivalent to :func:`mean_gamma_deviance`.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
 and :math:`y_i` is the corresponding true value, then the mean Tweedie
-deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+deviance error (D) for power :math:`p`, estimated over :math:`n_{\text{samples}}`
+is defined as
 
 .. math::
 
@@ -2047,47 +2052,48 @@ deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
-  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
   \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
   & \text{otherwise}
   \end{cases}
 
-Tweedie deviance is a homogeneous function of degree ``2-p``.
-Thus, Gamma distribution with `p=2` means that simultaneously scaling `y_true`
-and `y_pred` has no effect on the deviance. For Poisson distribution `p=1`
-the deviance scales linearly, and for Normal distribution (`p=0`),
-quadratically.  In general, the higher `p` the less weight is given to extreme
-deviations between true and predicted targets.
+Tweedie deviance is a homogeneous function of degree ``2-power``.
+Thus, Gamma distribution with ``power=2`` means that simultaneously scaling
+``y_true`` and ``y_pred`` has no effect on the deviance. For Poisson
+distribution ``power=1`` the deviance scales linearly, and for Normal
+distribution (``power=0``), quadratically.  In general, the higher
+``power`` the less weight is given to extreme deviations between true
+and predicted targets.
 
 For instance, let's compare the two predictions 1.0 and 100 that are both
 50% of their corresponding true value.
 
-The mean squared error (``p=0``) is very sensitive to the
+The mean squared error (``power=0``) is very sensitive to the
 prediction difference of the second point,::
 
     >>> from sklearn.metrics import mean_tweedie_deviance
-    >>> mean_tweedie_deviance([1.0], [1.5], p=0)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=0)
     0.25
-    >>> mean_tweedie_deviance([100.], [150.], p=0)
+    >>> mean_tweedie_deviance([100.], [150.], power=0)
     2500.0
 
-If we increase ``p`` to 1,::
+If we increase ``power`` to 1,::
 
-    >>> mean_tweedie_deviance([1.0], [1.5], p=1)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=1)
     0.18...
-    >>> mean_tweedie_deviance([100.], [150.], p=1)
+    >>> mean_tweedie_deviance([100.], [150.], power=1)
     18.9...
 
-the difference in errors decreases. Finally, by setting, ``p=2``::
+the difference in errors decreases. Finally, by setting, ``power=2``::
 
-    >>> mean_tweedie_deviance([1.0], [1.5], p=2)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=2)
     0.14...
-    >>> mean_tweedie_deviance([100.], [150.], p=2)
+    >>> mean_tweedie_deviance([100.], [150.], power=2)
     0.14...
 
-we would get identical errors. The deviance when `p=2` is thus only
+we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
 .. _clustering_metrics:

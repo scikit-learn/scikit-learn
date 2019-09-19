@@ -328,12 +328,12 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
     # check that _parallel_fit_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
-    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
+    class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
             raise TypeError('Error unrelated to sample_weight.')
     clf = ClassifierErrorFit()
@@ -343,7 +343,7 @@ def test_sample_weight():
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
-    class MockClassifier(BaseEstimator, ClassifierMixin):
+    class MockClassifier(ClassifierMixin, BaseEstimator):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert 'sample_weight' in sample_weight
@@ -524,7 +524,7 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     ids=['VotingRegressor', 'VotingClassifier']
 )
 def test_check_estimators_voting_estimator(estimator):
-    # FIXME: to be removed when meta-estimators can be specified themselves
+    # FIXME: to be removed when meta-estimators can specified themselves
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
