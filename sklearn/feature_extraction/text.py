@@ -602,7 +602,9 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
         Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
@@ -863,10 +865,12 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n)
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
         Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
@@ -1534,10 +1538,12 @@ class TfidfVectorizer(CountVectorizer):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n) (default=(1, 1))
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
         Only applies if ``analyzer is not callable``.
 
     max_df : float in range [0.0, 1.0] or int (default=1.0)
