@@ -131,13 +131,6 @@ class _BaseScorer:
         # XXX deprecation_msg property again and remove __call__'s body again
         self._deprecation_msg = None
 
-    @abstractmethod
-    def __call__(self, estimator, X, y, sample_weight=None):
-        if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg,
-                          category=DeprecationWarning,
-                          stacklevel=2)
-
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self._kwargs.items()])
@@ -169,6 +162,10 @@ class _BaseScorer:
         score : float
             Score function applied to prediction of estimator on X.
         """
+        if self._deprecation_msg is not None:
+            warnings.warn(self._deprecation_msg,
+                          category=DeprecationWarning,
+                          stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)
 
@@ -205,9 +202,6 @@ class _PredictScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
-        super(_PredictScorer, self).__call__(estimator, X, y_true,
-                                             sample_weight=sample_weight)
 
         y_pred = method_caller(estimator, "predict", X)
         if sample_weight is not None:
@@ -248,9 +242,6 @@ class _ProbaScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
-        super(_ProbaScorer, self).__call__(clf, X, y,
-                                           sample_weight=sample_weight)
 
         y_type = type_of_target(y)
         y_pred = method_caller(clf, "predict_proba", X)
@@ -304,9 +295,6 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-
-        super(_ThresholdScorer, self).__call__(clf, X, y,
-                                               sample_weight=sample_weight)
 
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
