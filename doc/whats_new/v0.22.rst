@@ -452,6 +452,14 @@ Changelog
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
+:mod:`sklearn.isotonic`
+..................................
+
+- |Fix| Fixed a bug where :class:`isotonic.IsotonicRegression.fit` raised error
+  when `X.dtype == 'float32'` and `X.dtype != y.dtype`.
+  :pr:`14902` by :user:`Lucas <lostcoaster>`.
+
+
 Miscellaneous
 .............
 
