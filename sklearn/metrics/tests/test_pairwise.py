@@ -948,7 +948,7 @@ def test_gower_distances():
             D_expected[i][j] = np.divide(sum, non_missing_cols[j],
                                          out=np.array([np.nan]),
                                          where=(non_missing_cols[j] != 0)
-                                                & (non_missing_cols[i] != 0))
+                                         & (non_missing_cols[i] != 0))
 
     assert_array_almost_equal(D_expected, D)
 
@@ -985,7 +985,7 @@ def test_gower_distances():
             D_expected[i][j] = np.divide(sum, non_missing_cols[j],
                                          out=np.array([np.nan]),
                                          where=(non_missing_cols[j] != 0)
-                                                & (non_missing_cols[i] != 0))
+                                         & (non_missing_cols[i] != 0))
 
     D = gower_distances(X, categorical_features=[True, True, False, True],
                         scale=False)
@@ -1060,7 +1060,7 @@ def test_gower_distances():
             D_expected[i][j] = np.divide(sum, non_missing_cols[j],
                                          out=np.array([np.nan]),
                                          where=(non_missing_cols[j] != 0)
-                                                & (non_missing_cols[i] != 0))
+                                         & (non_missing_cols[i] != 0))
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1271,7 +1271,7 @@ def test_gower_distances():
                                  abs(Xn[i][1] - Yn[j][1]) +
                                  [1, 0][Xn[i][2] == Yn[j][2]] +
                                  abs(Xn[i][3] - Yn[j][3])) /
-                                 non_missing_cols[i])
+                                non_missing_cols[i])
 
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2)
     assert_array_almost_equal(D_expected, D)
@@ -1287,7 +1287,7 @@ def test_gower_distances():
                                  abs(Xn[i][1] - Yn[j][1]) +
                                  [1, 0][Xn[i][2] == Yn[j][2]] +
                                  [1, 0][Xn[i][3] == Yn[j][3]]) /
-                                 non_missing_cols[i])
+                                non_missing_cols[i])
 
     D = pairwise_distances(X, Y, metric='gower', n_jobs=2,
                            categorical_features=[False, False, True, True])

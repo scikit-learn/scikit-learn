@@ -950,7 +950,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         # Gets the final results
         sum = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
 
-        results = np.divide(sum, n_missing, 
+        results = np.divide(sum, n_missing,
                             out=np.full(sum.shape, np.nan, dtype=np.object),
                             where=n_missing != np.zeros(sum.shape))
 
