@@ -520,6 +520,21 @@ def set_checking_parameters(estimator):
 
 
 class NotAnArray:
+    #TODO: remove in 0.24
+
+    def __init__(self, data):
+        warnings.warn(
+            "The NotAnArray classe is deprecated in 0.22 and will be "
+            "removed in 0.24.",
+            DeprecationWarning
+        )
+        self.data = data
+
+    def __array__(self, dtype=None):
+        return self.data
+
+
+class _NotAnArray:
     """An object that is convertible to an array
 
     Parameters
@@ -1107,8 +1122,8 @@ def check_transformer_data_not_an_array(name, transformer):
     # like NMF
     X -= X.min() - .1
     X = pairwise_estimator_convert_X(X, transformer)
-    this_X = NotAnArray(X)
-    this_y = NotAnArray(np.asarray(y))
+    this_X = _NotAnArray(X)
+    this_y = _NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
     # try the same with some list
     _check_transformer(name, transformer, X.tolist(), y.tolist())
@@ -2303,8 +2318,8 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
-    y_ = NotAnArray(np.asarray(y))
-    X_ = NotAnArray(np.asarray(X))
+    y_ = _NotAnArray(np.asarray(y))
+    X_ = _NotAnArray(np.asarray(X))
 
     # fit
     estimator_1.fit(X_, y_)
