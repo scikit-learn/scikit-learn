@@ -525,21 +525,6 @@ def _set_checking_parameters(estimator):
         estimator.set_params(handle_unknown='ignore')
 
 
-class NotAnArray:
-    # TODO: remove in 0.24
-
-    def __init__(self, data):
-        warnings.warn(
-            "The NotAnArray classe is deprecated in 0.22 and will be "
-            "removed in 0.24.",
-            DeprecationWarning
-        )
-        self.data = data
-
-    def __array__(self, dtype=None):
-        return self.data
-
-
 class _NotAnArray:
     """An object that is convertible to an array
 
@@ -554,6 +539,13 @@ class _NotAnArray:
 
     def __array__(self, dtype=None):
         return self.data
+
+
+@deprecated("NotAnArray is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class NotAnArray(_NotAnArray):
+    # TODO: remove in 0.24
+    pass
 
 
 def _is_pairwise(estimator):

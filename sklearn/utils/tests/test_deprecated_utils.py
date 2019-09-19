@@ -24,7 +24,7 @@ def test_enforce_estimator_tags_y():
 
 
 def test_notanarray():
-    with pytest.warns(DeprecationWarning, match="will be removed in 0.24"):
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         NotAnArray([1, 2])
 
 
