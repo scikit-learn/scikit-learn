@@ -5,11 +5,6 @@
 Advanced installation instructions
 ===================================
 
-.. note::
-
-    If you wish to contribute to the project, you need to
-    :ref:`install the latest development version<install_bleeding_edge>`.
-
 .. _install_nightly_builds:
 
 Installing nightly builds
