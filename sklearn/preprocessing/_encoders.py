@@ -22,8 +22,8 @@ __all__ = [
 
 
 class _EncoderUnion(TransformerMixin, BaseEstimator):
-    """Base class for encoders that includes the code to categorize and
-    transform the input features.
+    """Base class for encoders that includes the code to encode and
+    transform the input features one by one.
 
     The encoders passed to `_fit_list` must define:
 
@@ -34,7 +34,7 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
 
     @property
     def categories_(self):
-        return [encoder.categories_ for encoder in self._encoders]
+        return [encoder.categories_ for encoder in self._single_encoders]
 
     def _check_X(self, X):
         """Perform custom check_array:
@@ -87,22 +87,23 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
 
         return categories
 
-    def _fit_list(self, X_list, encoders):
-        """Fit encoders on X_list"""
-        for X_col, encoder in zip(X_list, encoders):
+    def _fit_list(self, X_list, single_encoders):
+        """Fit single_encoders on X_list"""
+        for X_col, encoder in zip(X_list, single_encoders):
             encoder.fit(X_col)
 
-        # map from X_trans indices to indices from the original X
-        X_trans_to_orig_idx = []
+        # maps indices from original X to indices in the transformed X
+        # this is used in inverse_transform
+        orig_idx_to_X_trans_idx = []
         X_trans_idx = 0
-        for encoder in encoders:
-            n_feat_out = encoder.n_features_out_
-            begin, end = X_trans_idx, X_trans_idx + n_feat_out
-            X_trans_to_orig_idx.append((begin, end))
-            X_trans_idx += n_feat_out
+        for encoder in single_encoders:
+            n_features_out = encoder.n_features_out_
+            begin, end = X_trans_idx, X_trans_idx + n_features_out
+            orig_idx_to_X_trans_idx.append((begin, end))
+            X_trans_idx += n_features_out
 
-        self._X_trans_to_orig_idx = X_trans_to_orig_idx
-        self._encoders = encoders
+        self._orig_idx_to_X_trans_idx = orig_idx_to_X_trans_idx
+        self._single_encoders = single_encoders
 
     def _transform_list(self, X_list):
         """Transform X_list with encoders"""
@@ -115,18 +116,18 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
                 .format(len(self.categories_,), n_features)
             )
 
-        X_trs = []
-        for encoder, X_col in zip(self._encoders, X_list):
+        X_trans = []
+        for encoder, X_col in zip(self._single_encoders, X_list):
             if encoder.n_features_out_ != 0:
-                X_trs.append(encoder.transform(X_col))
-        return self._hstack(X_trs)
+                X_trans.append(encoder.transform(X_col))
+        return self._hstack(X_trans)
 
-    def _hstack(self, Xs):
-        if any(sparse.issparse(X_tran) for X_tran in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
+    def _hstack(self, X_trans):
+        if any(sparse.issparse(X_tran) for X_tran in X_trans):
+            X_trans_stacked = sparse.hstack(X_trans).tocsr()
         else:
-            Xs = np.hstack(Xs)
-        return Xs
+            X_trans_stacked = np.hstack(X_trans)
+        return X_trans_stacked
 
     def inverse_transform(self, X):
         """Convert the data back into the original representation.
@@ -145,7 +146,8 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
-        n_features = sum(encoder.n_features_out_ for encoder in self._encoders)
+        n_features = sum(encoder.n_features_out_ for encoder in
+                         self._single_encoders)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -154,8 +156,8 @@ class _EncoderUnion(TransformerMixin, BaseEstimator):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         X_trs = []
-        for encoder, (begin, end) in zip(self._encoders,
-                                         self._X_trans_to_orig_idx):
+        for encoder, (begin, end) in zip(self._single_encoders,
+                                         self._orig_idx_to_X_trans_idx):
             X_slice = safe_indexing(X, slice(begin, end), axis=1)
             X_trs.append(encoder.inverse_transform(X_slice))
         return self._hstack(X_trs)
@@ -291,8 +293,8 @@ class OneHotEncoder(_EncoderUnion):
 
     @property
     def drop_idx_(self):
-        return np.array([encoder.drop_idx_ for encoder in self._encoders],
-                        dtype=np.int_)
+        return np.array([encoder.drop_idx_ for encoder in
+                         self._single_encoders], dtype=np.int_)
 
     def _fit(self, X):
         """Validate keywords and fit `X` and return `X_list`."""
@@ -312,14 +314,14 @@ class OneHotEncoder(_EncoderUnion):
                                  **drop_kwarg)
             for idx, cat, drop_kwarg in zip(count(), categories, drop_kwargs)]
 
-        self._fit_list(X_list, encoders)
+        super()._fit_list(X_list, encoders)
 
         # validate encoders
         missing_drops = []
         for idx, encoder in enumerate(encoders):
             drop_idx = encoder.drop_idx_
             if isinstance(drop_idx, str) and drop_idx == 'missing':
-                missing_drops.append((idx, encoder.drop))
+                missing_drops.append((idx, encoder.drop_category))
 
         if any(missing_drops):
             msg = ("The following categories were supposed to be "
@@ -362,7 +364,7 @@ class OneHotEncoder(_EncoderUnion):
         """
         check_is_fitted(self)
         X_list = self._check_X(X)
-        return self._transform_list(X_list)
+        return super()._transform_list(X_list)
 
     def fit_transform(self, X, y=None):
         """Fit encoder to X and transform X.
@@ -379,7 +381,7 @@ class OneHotEncoder(_EncoderUnion):
             Transformed array. When `sparse=True`, `X_out` is a sparse array.
         """
         X_list = self._fit(X)
-        return self._transform_list(X_list)
+        return super()._transform_list(X_list)
 
     def get_feature_names(self, input_features=None):
         """Return feature names for output features.
@@ -407,7 +409,7 @@ class OneHotEncoder(_EncoderUnion):
 
         feature_names = []
         for input_feat, cat, encoder in zip(input_features, cats,
-                                            self._encoders):
+                                            self._single_encoders):
             names = [input_feat + '_' + str(t) for t in cat]
             if self.drop is not None:
                 names.pop(encoder.drop_idx_)
@@ -431,7 +433,7 @@ class OneHotEncoder(_EncoderUnion):
 
     def _check_drop(self, n_features):
         if self.drop is None:
-            return [{'drop': None}] * n_features
+            return [{'drop_category': None}] * n_features
         if isinstance(self.drop, str) and self.drop == 'first':
             return [{'drop_first': True}] * n_features
         if not isinstance(self.drop, str):
@@ -447,7 +449,7 @@ class OneHotEncoder(_EncoderUnion):
                        "of features ({}), got {}")
                 raise ValueError(msg.format(n_features,
                                             len(self.drop)))
-            return [{'drop': drop} for drop in drops]
+            return [{'drop_category': drop} for drop in drops]
         else:
             msg = ("Wrong input for parameter `drop`. Expected "
                    "'first', None or array of objects, got {}")
@@ -461,13 +463,13 @@ class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
     when the drop category is not found in the dataset or given by
     categories. `drop_idx_` should be checked be the caller to make sure
     the encoder is valid."""
-    def __init__(self, categories='auto', drop=None, drop_first=False,
+    def __init__(self, categories='auto', drop_category=None, drop_first=False,
                  dtype=np.float64, handle_unknown='error',
                  sparse=True, feature_idx=0):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-        self.drop = drop
+        self.drop_category = drop_category
         self.drop_first = drop_first
         self.sparse = sparse
         self.feature_idx = feature_idx
@@ -504,14 +506,15 @@ class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
         # compute drop idx
         if self.drop_first:
             self.drop_idx_ = 0
-        elif self.drop is None:
+        elif self.drop_category is None:
             self.drop_idx_ = None
-        elif self.drop not in self.categories_:
+        elif self.drop_category not in self.categories_:
             # This is an error state. Caller should check this value and
-            # handle according.
+            # handle accordingly.
             self.drop_idx_ = 'missing'
         else:
-            self.drop_idx_ = np.where(self.categories_ == self.drop)[0][0]
+            self.drop_idx_ = np.where(self.categories_ ==
+                                      self.drop_category)[0][0]
 
         if self.drop_idx_ is not None:
             self.n_features_out_ = len(self.categories_) - 1
@@ -563,7 +566,7 @@ class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
         n_samples = X.shape[0]
         X_mask_non_zero = np.flatnonzero(X_mask)
 
-        out = sparse.lil_matrix((n_samples, self.n_features_out_),
+        out = sparse.csr_matrix((n_samples, self.n_features_out_),
                                 dtype=self.dtype)
         out[X_mask_non_zero, X_encoded[X_mask]] = 1
 
@@ -691,7 +694,7 @@ class OrdinalEncoder(_EncoderUnion):
                                           feature_idx=idx)
                     for idx, cat in enumerate(categories)]
 
-        self._fit_list(X_list, encoders)
+        super()._fit_list(X_list, encoders)
         return X_list
 
     def fit(self, X, y=None):
@@ -724,7 +727,7 @@ class OrdinalEncoder(_EncoderUnion):
         """
         check_is_fitted(self)
         X_list = self._check_X(X)
-        return self._transform_list(X_list)
+        return super()._transform_list(X_list)
 
     def fit_transform(self, X, y=None):
         """Fit encoder to X and transform X.
@@ -740,7 +743,7 @@ class OrdinalEncoder(_EncoderUnion):
             Transformed array.
         """
         X_list = self._fit(X)
-        return self._transform_list(X_list)
+        return super()._transform_list(X_list)
 
 
 class _SingleOrdinalEncoder(TransformerMixin, BaseEstimator):
