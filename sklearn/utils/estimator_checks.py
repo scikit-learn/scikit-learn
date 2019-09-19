@@ -438,7 +438,13 @@ def _boston_subset(n_samples=200):
     return BOSTON
 
 
+@deprecated("set_checking_parameters is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def set_checking_parameters(estimator):
+    _set_checking_parameters(estimator)
+
+
+def _set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
