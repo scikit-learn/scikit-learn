@@ -41,18 +41,17 @@ cdef class WeightVector(object):
     sq_norm : double
         The squared norm of ``w``.
     """
-
     def __cinit__(self, double [::1] w, double [::1] aw):
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
                              % (INT_MAX, w.shape[0]))
-        self.w = w
         self.wscale = 1.0
         self.n_features = w.shape[0]
         self.sq_norm = _dot(<int>w.shape[0], &w[0], 1, &w[0], 1)
 
-        self.aw = aw
-        if self.aw is not None:
+        self.w_data_ptr = &w[0]
+        if aw is not None:
+            self.aw_data_ptr = &aw[0]
             self.average_a = 0.0
             self.average_b = 1.0
 
@@ -81,14 +80,14 @@ cdef class WeightVector(object):
 
         # the next two lines save a factor of 2!
         cdef double wscale = self.wscale
-        cdef double[::1] w = self.w
+        cdef double* w_data_ptr = self.w_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            innerprod += (w[idx] * val)
+            innerprod += (w_data_ptr[idx] * val)
             xsqnorm += (val * val)
-            w[idx] += val * (c / wscale)
+            w_data_ptr[idx] += val * (c / wscale)
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
@@ -118,12 +117,12 @@ cdef class WeightVector(object):
         cdef double mu = 1.0 / num_iter
         cdef double average_a = self.average_a
         cdef double wscale = self.wscale
-        cdef double [::1] aw = self.aw
+        cdef double* aw_data_ptr = self.aw_data_ptr
 
         for j in range(xnnz):
             idx = x_ind_ptr[j]
             val = x_data_ptr[j]
-            aw[idx] += (self.average_a * val * (-c / wscale))
+            aw_data_ptr[idx] += (self.average_a * val * (-c / wscale))
 
         # Once the sample has been processed
         # update the average_a and average_b
@@ -152,10 +151,10 @@ cdef class WeightVector(object):
         cdef int j
         cdef int idx
         cdef double innerprod = 0.0
-        cdef double [::1] w = self.w
+        cdef double* w_data_ptr = self.w_data_ptr
         for j in range(xnnz):
             idx = x_ind_ptr[j]
-            innerprod += w[idx] * x_data_ptr[j]
+            innerprod += w_data_ptr[idx] * x_data_ptr[j]
         innerprod *= self.wscale
         return innerprod
 
@@ -171,14 +170,14 @@ cdef class WeightVector(object):
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
-        if self.aw is not None:
-            _axpy(<int>self.aw.shape[0], self.average_a,
-                  &self.w[0], 1, &self.aw[0], 1)
-            _scal(<int>self.aw.shape[0], 1.0 / self.average_b, &self.aw[0], 1)
+        if self.aw_data_ptr != NULL:
+            _axpy(self.n_features, self.average_a,
+                  self.w_data_ptr, 1, self.aw_data_ptr, 1)
+            _scal(self.n_features, 1.0 / self.average_b, self.aw_data_ptr, 1)
             self.average_a = 0.0
             self.average_b = 1.0
 
-        _scal(<int>self.w.shape[0], self.wscale, &self.w[0], 1)
+        _scal(self.n_features, self.wscale, self.w_data_ptr, 1)
         self.wscale = 1.0
 
     cdef double norm(self) nogil:
