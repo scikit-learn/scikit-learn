@@ -106,12 +106,12 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 100, num=max_bins + 1)
+            percentiles = np.linspace(0, 1, num=max_bins + 1)
             percentiles = percentiles[1:-1]
-            midpoints = np.percentile(col_data, percentiles,
-                                      interpolation='midpoint').astype(X_DTYPE)
-            #midpoints = weighted_quantile(col_data, percentiles,
-            #                              sample_weight=sample_weight).astype(X_DTYPE)
+            #midpoints = np.percentile(col_data, percentiles,
+            #                          interpolation='midpoint').astype(X_DTYPE)
+            midpoints = weighted_quantile(col_data, percentiles,
+                                          sample_weight=sample_weight).astype(X_DTYPE)
             assert midpoints.shape[0] == max_bins - 1
 
         # We avoid having +inf thresholds: +inf thresholds are only allowed in
