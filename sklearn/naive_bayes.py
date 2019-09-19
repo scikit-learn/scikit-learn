@@ -1165,18 +1165,12 @@ class CategoricalNB(BaseDiscreteNB):
         # X, y = check_array(X, y, dtype='int', accept_sparse=False,
         #                    force_all_finite=True)
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
-        X = check_X_y(X, y, dtype='int')
-        return self._check_nonnegative(X)
+        X, y = check_X_y(X, y, dtype='int')
+        return self._check_nonnegative(X), y
 
     def _check_nonnegative(self, X):
-        def check(array):
-            if np.any(array < 0):
-                raise ValueError("X must not contain negative values.")
-        if isinstance(X, (list, tuple)):
-            for sample in X:
-                check(sample)
-        else:
-            check(X)
+        if np.any(X < 0):
+            raise ValueError("X must not contain negative values.")
         return X
 
     def _init_counters(self, n_effective_classes, n_features):
@@ -1185,7 +1179,8 @@ class CategoricalNB(BaseDiscreteNB):
                                 for _ in range(n_features)]
 
     def _count(self, X, Y):
-        def _update_cat_count_dims(cat_count, diff):
+        def _update_cat_count_dims(cat_count, highest_feature):
+            diff = highest_feature + 1 - cat_count.shape[1]
             if diff > 0:
                 # we append a column full of zeros for each new category
                 return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
@@ -1205,9 +1200,8 @@ class CategoricalNB(BaseDiscreteNB):
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
-            diff = X_feature.max() + 1 - self.category_count_[i].shape[1]
             self.category_count_[i] = _update_cat_count_dims(
-                self.category_count_[i], diff)
+                self.category_count_[i], X_feature.max())
             _update_cat_count(X_feature, Y,
                               self.category_count_[i],
                               self.class_count_.shape[0])
