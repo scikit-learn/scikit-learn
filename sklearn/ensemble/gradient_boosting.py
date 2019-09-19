@@ -1559,7 +1559,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns the number of stages fit; might differ from ``n_estimators``
         due to early stopping.
         """
-
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples, ), dtype=np.bool)
