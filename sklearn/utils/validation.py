@@ -14,7 +14,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature
+from inspect import signature, isclass
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -129,17 +129,18 @@ def _is_arraylike(x):
 
 def _num_samples(x):
     """Return number of samples in array-like x."""
+    message = 'Expected sequence or array-like, got %s' % type(x)
     if hasattr(x, 'fit') and callable(x.fit):
         # Don't get num_samples from an ensembles length!
-        raise TypeError('Expected sequence or array-like, got '
-                        'estimator %s' % x)
+        raise TypeError(message)
+
     if not hasattr(x, '__len__') and not hasattr(x, 'shape'):
         if hasattr(x, '__array__'):
             x = np.asarray(x)
         else:
-            raise TypeError("Expected sequence or array-like, got %s" %
-                            type(x))
-    if hasattr(x, 'shape'):
+            raise TypeError(message)
+
+    if hasattr(x, 'shape') and x.shape is not None:
         if len(x.shape) == 0:
             raise TypeError("Singleton array %r cannot be considered"
                             " a valid collection." % x)
@@ -147,10 +148,11 @@ def _num_samples(x):
         # Dask dataframes may not return numeric shape[0] value
         if isinstance(x.shape[0], numbers.Integral):
             return x.shape[0]
-        else:
-            return len(x)
-    else:
+
+    try:
         return len(x)
+    except TypeError:
+        raise TypeError(message)
 
 
 def check_memory(memory):
@@ -313,7 +315,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     if force_all_finite:
         if not hasattr(spmatrix, "data"):
             warnings.warn("Can't check %s sparse matrix for nan or inf."
-                          % spmatrix.format)
+                          % spmatrix.format, stacklevel=2)
         else:
             _assert_all_finite(spmatrix.data,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -428,7 +430,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            DeprecationWarning)
+            DeprecationWarning, stacklevel=2)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -528,7 +530,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 "a float dtype before using it in scikit-learn, "
                 "for example by using "
                 "your_array = your_array.astype(np.float64).",
-                FutureWarning)
+                FutureWarning, stacklevel=2)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
@@ -559,7 +561,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
-        warnings.warn(msg, DataConversionWarning)
+        warnings.warn(msg, DataConversionWarning, stacklevel=2)
 
     if copy and np.may_share_memory(array, array_orig):
         array = np.array(array, dtype=dtype, order=order)
@@ -852,7 +854,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
             raise ValueError("Array must be symmetric")
         if raise_warning:
             warnings.warn("Array is not symmetric, and will be converted "
-                          "to symmetric by average with its transpose.")
+                          "to symmetric by average with its transpose.",
+                          stacklevel=2)
         if sp.issparse(array):
             conversion = 'to' + array.format
             array = getattr(0.5 * (array + array.T), conversion)()
@@ -862,21 +865,23 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+def check_is_fitted(estimator, attributes='deprecated', msg=None,
+                    all_or_any='deprecated'):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
-    "all_or_any" of the passed attributes and raises a NotFittedError with the
-    given message.
+    fitted attributes (ending with a trailing underscore) and otherwise
+    raises a NotFittedError with the given message.
 
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
+    attributes : deprecated, ignored
+        .. deprecated:: 0.22
+           `attributes` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -887,8 +892,10 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : callable, {all, any}, default all
-        Specify whether all or any of the given attributes must exist.
+    all_or_any : deprecated, ignored
+        .. deprecated:: 0.21
+           `all_or_any` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     Returns
     -------
@@ -899,6 +906,16 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     NotFittedError
         If the attributes are not found.
     """
+    if attributes != 'deprecated':
+        warnings.warn("Passing attributes to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The attributes "
+                      "argument is ignored.", DeprecationWarning)
+    if all_or_any != 'deprecated':
+        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The any_or_all "
+                      "argument is ignored.", DeprecationWarning)
+    if isclass(estimator):
+        raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
                "appropriate arguments before using this method.")
@@ -906,10 +923,11 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    if not isinstance(attributes, (list, tuple)):
-        attributes = [attributes]
+    attrs = [v for v in vars(estimator)
+             if (v.endswith("_") or v.startswith("_"))
+             and not v.startswith("__")]
 
-    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+    if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
@@ -980,3 +998,94 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+def _check_sample_weight(sample_weight, X, dtype=None):
+    """Validate sample weights.
+
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
+
+    Parameters
+    ----------
+    sample_weight : {ndarray, Number or None}, shape (n_samples,)
+       Input sample weights.
+
+    X : nd-array, list or sparse matrix
+        Input data.
+
+    dtype: dtype
+       dtype of the validated `sample_weight`.
+       If None, and the input `sample_weight` is an array, the dtype of the
+       input is preserved; otherwise an array with the default numpy dtype
+       is be allocated.  If `dtype` is not one of `float32`, `float64`,
+       `None`, the output will be of dtype `float64`.
+
+    Returns
+    -------
+    sample_weight : ndarray, shape (n_samples,)
+       Validated sample weight. It is guaranteed to be "C" contiguous.
+    """
+    n_samples = _num_samples(X)
+
+    if dtype is not None and dtype not in [np.float32, np.float64]:
+        dtype = np.float64
+
+    if sample_weight is None or isinstance(sample_weight, numbers.Number):
+        if sample_weight is None:
+            sample_weight = np.ones(n_samples, dtype=dtype)
+        else:
+            sample_weight = np.full(n_samples, sample_weight,
+                                    dtype=dtype)
+    else:
+        if dtype is None:
+            dtype = [np.float64, np.float32]
+        sample_weight = check_array(
+                sample_weight, accept_sparse=False,
+                ensure_2d=False, dtype=dtype, order="C"
+        )
+        if sample_weight.ndim != 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        if sample_weight.shape != (n_samples,):
+            raise ValueError("sample_weight.shape == {}, expected {}!"
+                             .format(sample_weight.shape, (n_samples,)))
+    return sample_weight
+
+
+def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
+    """Check allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    rtol : float, optional
+        relative tolerance; see numpy.allclose
+
+    atol : float, optional
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
+    """
+    if sp.issparse(x) and sp.issparse(y):
+        x = x.tocsr()
+        y = y.tocsr()
+        x.sum_duplicates()
+        y.sum_duplicates()
+        return (np.array_equal(x.indices, y.indices) and
+                np.array_equal(x.indptr, y.indptr) and
+                np.allclose(x.data, y.data, rtol=rtol, atol=atol))
+    elif not sp.issparse(x) and not sp.issparse(y):
+        return np.allclose(x, y, rtol=rtol, atol=atol)
+    raise ValueError("Can only compare two sparse matrices, not a sparse "
+                     "matrix and an array")

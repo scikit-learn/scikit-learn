@@ -61,7 +61,7 @@ Scoring                           Function                                      
 'accuracy'                        :func:`metrics.accuracy_score`
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
+'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -88,9 +92,12 @@ Scoring                           Function                                      
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
 'r2'                              :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
 ==============================    =============================================     ==================================
 
 
@@ -98,8 +105,7 @@ Usage examples:
 
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import cross_val_score
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data, iris.target
+    >>> X, y = datasets.load_iris(return_X_y=True)
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
@@ -313,6 +319,7 @@ Others also work in the multiclass case:
    confusion_matrix
    hinge_loss
    matthews_corrcoef
+   roc_auc_score
 
 
 Some also work in the multilabel case:
@@ -331,6 +338,7 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   roc_auc_score
    zero_one_loss
 
 And some work with binary and multilabel (but not multiclass) problems:
@@ -339,7 +347,6 @@ And some work with binary and multilabel (but not multiclass) problems:
    :template: function.rst
 
    average_precision_score
-   roc_auc_score
 
 
 In the following sub-sections, we will describe each of those functions,
@@ -1313,9 +1320,52 @@ In multi-label classification, the :func:`roc_auc_score` function is
 extended by averaging over the labels as :ref:`above <average>`.
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label. The
-:func:`roc_auc_score` function can also be used in multi-class classification,
-if the predicted outputs have been binarized.
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function can also be used in multi-class
+classification. Two averaging strategies are currently supported: the
+one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
+the one-vs-rest algorithm computes the average of the ROC AUC scores for each
+class against all other classes. In both cases, the predicted labels are
+provided in an array with values from 0 to ``n_classes``, and the scores
+correspond to the probability estimates that a sample belongs to a particular
+class. The OvO and OvR algorithms supports weighting uniformly 
+(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+
+**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
+combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
+uniformly:
+
+.. math::
+
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \text{AUC}(k | j))
+
+where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
+AUC with class :math:`j` as the positive class and class :math:`k` as the
+negative class. In general,
+:math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+case. This algorithm is used by setting the keyword argument ``multiclass``
+to ``'ovo'`` and ``average`` to ``'macro'``.
+
+The [HT2001]_ multiclass AUC metric can be extended to be weighted by the
+prevalence:
+
+.. math::
+
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \text{AUC}(j | k) + \text{AUC}(k | j))
+
+where :math:`c` is the number of classes. This algorithm is used by setting
+the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+as described in [FC2009]_.
+
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
+The algorithm is functionally the same as the multilabel case. To enable this
+algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
+OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
@@ -1340,6 +1390,28 @@ to the given limit.
   * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     for an example of using ROC to
     model species distribution.
+
+.. topic:: References:
+
+    .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
+       of the area under the ROC curve for multiple class classification problems.
+       <http://link.springer.com/article/10.1023/A:1010920819831>`_
+       Machine learning, 45(2), pp.171-186.
+
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
+       `An Experimental Comparison of Performance Measures for Classification. 
+       <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+       Pattern Recognition Letters. 30. 27-38. 
+
+    .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
+       <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+       Pattern Recognition Letters, 27(8), pp. 861-874.
+
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       In Data Mining, 2001.
+       Proceedings IEEE International Conference, pp. 131-138.
+
 
 .. _zero_one_loss:
 
@@ -1594,6 +1666,67 @@ Here is a small example of usage of this function::
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
+.. _ndcg:
+
+Normalized Discounted Cumulative Gain
+-------------------------------------
+
+Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
+(NDCG) are ranking metrics; they compare a predicted order to ground-truth
+scores, such as the relevance of answers to a query.
+
+from the Wikipedia page for Discounted Cumulative Gain:
+
+"Discounted cumulative gain (DCG) is a measure of ranking quality. In
+information retrieval, it is often used to measure effectiveness of web search
+engine algorithms or related applications. Using a graded relevance scale of
+documents in a search-engine result set, DCG measures the usefulness, or gain,
+of a document based on its position in the result list. The gain is accumulated
+from the top of the result list to the bottom, with the gain of each result
+discounted at lower ranks"
+
+DCG orders the true targets (e.g. relevance of query answers) in the predicted
+order, then multiplies them by a logarithmic decay and sums the result. The sum
+can be truncated after the first :math:`K` results, in which case we call it
+DCG@K.
+NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
+that it is always between 0 and 1. Usually, NDCG is preferred to DCG.
+
+Compared with the ranking loss, NDCG can take into account relevance scores,
+rather than a ground-truth ranking. So if the ground-truth consists only of an
+ordering, the ranking loss should be preferred; if the ground-truth consists of
+actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
+relevant), NDCG can be used.
+
+For one sample, given the vector of continuous ground-truth values for each
+target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
+the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+DCG score is
+
+.. math::
+   \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
+
+and the NDCG score is the DCG score divided by the DCG score obtained for
+:math:`y`.
+
+.. topic:: References:
+
+  * Wikipedia entry for Discounted Cumulative Gain:
+    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+
+  * Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+  * Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+  * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
 
 .. _regression_metrics:
 
@@ -1891,6 +2024,78 @@ Here is a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
+
+.. _mean_tweedie_deviance:
+
+Mean Poisson, Gamma, and Tweedie deviances
+------------------------------------------
+The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
+deviance error
+<https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
+with a ``power`` parameter (:math:`p`). This is a metric that elicits
+predicted expectation values of regression targets.
+
+Following special cases exist,
+
+- when ``power=0`` it is equivalent to :func:`mean_squared_error`.
+- when ``power=1`` it is equivalent to :func:`mean_poisson_deviance`.
+- when ``power=2`` it is equivalent to :func:`mean_gamma_deviance`.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean Tweedie
+deviance error (D) for power :math:`p`, estimated over :math:`n_{\text{samples}}`
+is defined as
+
+.. math::
+
+  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples} - 1}
+  \begin{cases}
+  (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
+  2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
+  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  & \text{otherwise}
+  \end{cases}
+
+Tweedie deviance is a homogeneous function of degree ``2-power``.
+Thus, Gamma distribution with ``power=2`` means that simultaneously scaling
+``y_true`` and ``y_pred`` has no effect on the deviance. For Poisson
+distribution ``power=1`` the deviance scales linearly, and for Normal
+distribution (``power=0``), quadratically.  In general, the higher
+``power`` the less weight is given to extreme deviations between true
+and predicted targets.
+
+For instance, let's compare the two predictions 1.0 and 100 that are both
+50% of their corresponding true value.
+
+The mean squared error (``power=0``) is very sensitive to the
+prediction difference of the second point,::
+
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> mean_tweedie_deviance([1.0], [1.5], power=0)
+    0.25
+    >>> mean_tweedie_deviance([100.], [150.], power=0)
+    2500.0
+
+If we increase ``power`` to 1,::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], power=1)
+    0.18...
+    >>> mean_tweedie_deviance([100.], [150.], power=1)
+    18.9...
+
+the difference in errors decreases. Finally, by setting, ``power=2``::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], power=2)
+    0.14...
+    >>> mean_tweedie_deviance([100.], [150.], power=2)
+    0.14...
+
+we would get identical errors. The deviance when ``power=2`` is thus only
+sensitive to relative errors.
+
 .. _clustering_metrics:
 
 Clustering metrics
@@ -1934,8 +2139,7 @@ dataset::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 

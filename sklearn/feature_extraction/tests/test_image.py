@@ -6,11 +6,12 @@ import numpy as np
 import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
+import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import assert_raises, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 
 
 def test_img_to_graph():
@@ -172,10 +173,10 @@ def test_extract_patches_max_patches():
     patches = extract_patches_2d(face, (p_h, p_w), max_patches=0.5)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=2.0)
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=-1.0)
+    with pytest.raises(ValueError):
+        extract_patches_2d(face, (p_h, p_w), max_patches=2.0)
+    with pytest.raises(ValueError):
+        extract_patches_2d(face, (p_h, p_w), max_patches=-1.0)
 
 
 def test_extract_patch_same_size_image():
@@ -328,5 +329,7 @@ def test_extract_patches_square():
 def test_width_patch():
     # width and height of the patch should be less than the image
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    assert_raises(ValueError, extract_patches_2d, x, (4, 1))
-    assert_raises(ValueError, extract_patches_2d, x, (1, 4))
+    with pytest.raises(ValueError):
+        extract_patches_2d(x, (4, 1))
+    with pytest.raises(ValueError):
+        extract_patches_2d(x, (1, 4))

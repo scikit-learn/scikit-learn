@@ -43,7 +43,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Parameters
     ----------
-    X : None or array, shape (n_samples, n_features)
+    X : None or array-like of shape (n_samples, n_features)
         Input data. Note that if X is None then the Gram matrix must be
         specified, i.e., cannot be None or False.
 
@@ -53,14 +53,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            ``None`` will be removed in v0.23. Use :func:`lars_path_gram`
            instead.
 
-    y : None or array, shape (n_samples,)
+    y : None or array-like of shape (n_samples,)
         Input targets.
 
-    Xy : array-like, shape (n_samples,) or (n_samples, n_targets), optional
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+            default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array, shape (n_features, n_features), optional
+    Gram : None, 'auto', array-like of shape (n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
@@ -70,39 +72,39 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
            The use of ``X`` is ``None`` in combination with ``Gram`` is not
            None will be removed in v0.23. Use :func:`lars_path_gram` instead.
 
-    max_iter : integer, optional (default=500)
+    max_iter : int, default=500
         Maximum number of iterations to perform, set to infinity for no limit.
 
-    alpha_min : float, optional (default=0)
+    alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, optional (default='lar')
+    method : {'lar', 'lasso'}, default='lar'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    copy_X : bool, optional (default=True)
+    copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional (default=``np.finfo(np.float).eps``)
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_Gram : bool, optional (default=True)
+    copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
 
-    verbose : int (default=0)
+    verbose : int, default=0
         Controls output verbosity.
 
-    return_path : bool, optional (default=True)
+    return_path : bool, default=True
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
 
-    return_n_iter : bool, optional (default=False)
+    return_n_iter : bool, default=False
         Whether to return the number of iterations.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0.
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
@@ -113,16 +115,16 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
 
     Returns
     -------
-    alphas : array, shape (n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array, shape [n_alphas]
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array, shape (n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -180,48 +182,48 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     Parameters
     ----------
-    Xy : array-like, shape (n_samples,) or (n_samples, n_targets)
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets)
         Xy = np.dot(X.T, y).
 
-    Gram : array, shape (n_features, n_features)
+    Gram : array-like of shape (n_features, n_features)
         Gram = np.dot(X.T * X).
 
-    n_samples : integer or float
+    n_samples : int or float
         Equivalent size of sample.
 
-    max_iter : integer, optional (default=500)
+    max_iter : int, default=500
         Maximum number of iterations to perform, set to infinity for no limit.
 
-    alpha_min : float, optional (default=0)
+    alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, optional (default='lar')
+    method : {'lar', 'lasso'}, default='lar'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    copy_X : bool, optional (default=True)
+    copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional (default=``np.finfo(np.float).eps``)
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_Gram : bool, optional (default=True)
+    copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
 
-    verbose : int (default=0)
+    verbose : int, default=0
         Controls output verbosity.
 
-    return_path : bool, optional (default=True)
+    return_path : bool, default=True
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
 
-    return_n_iter : bool, optional (default=False)
+    return_n_iter : bool, default=False
         Whether to return the number of iterations.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0.
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
@@ -232,16 +234,16 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
     Returns
     -------
-    alphas : array, shape (n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array, shape [n_alphas]
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array, shape (n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -296,59 +298,60 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Parameters
     ----------
-    X : None or ndarray, shape (n_samples, n_features)
+    X : None or ndarray, of shape (n_samples, n_features)
         Input data. Note that if X is None then Gram must be specified,
         i.e., cannot be None or False.
 
-    y : None or ndarray, shape (n_samples)
+    y : None or ndarray, of shape (n_samples,)
         Input targets.
 
-    Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-            optional
+    Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+            default=None
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    Gram : None, 'auto', array, shape (n_features, n_features), optional
+    Gram : None, 'auto' or array-like of shape (n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
 
-    n_samples : integer or float, optional (default=None)
+    n_samples : int or float, default=None
         Equivalent size of sample.
 
-    max_iter : integer, optional (default=500)
+    max_iter : int, default=500
         Maximum number of iterations to perform, set to infinity for no limit.
 
-    alpha_min : float, optional (default=0)
+    alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, optional (default='lar')
+    method : {'lar', 'lasso'}, default='lar'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    copy_X : bool, optional (default=True)
+    copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional (default=``np.finfo(np.float).eps``)
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. By default, ``np.finfo(np.float).eps`` is used
 
-    copy_Gram : bool, optional (default=True)
+    copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
 
-    verbose : int (default=0)
+    verbose : int, default=0
         Controls output verbosity.
 
-    return_path : bool, optional (default=True)
+    return_path : bool, default=True
         If ``return_path==True`` returns the entire path, else returns only the
         last point of the path.
 
-    return_n_iter : bool, optional (default=False)
+    return_n_iter : bool, default=False
         Whether to return the number of iterations.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0.
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
@@ -359,16 +362,16 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     Returns
     -------
-    alphas : array, shape (n_alphas + 1,)
+    alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter``, ``n_features`` or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
-    active : array, shape [n_alphas]
+    active : array-like of shape (n_alphas,)
         Indices of active variables at the end of the path.
 
-    coefs : array, shape (n_features, n_alphas + 1)
+    coefs : array-like of shape (n_features, n_alphas + 1)
         Coefficients along the path
 
     n_iter : int
@@ -758,22 +761,22 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
+class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -781,12 +784,12 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    n_nonzero_coefs : int, optional
+    n_nonzero_coefs : int, default=500
         Target number of non-zero coefficients. Use ``np.inf`` for no limit.
 
     eps : float, optional
@@ -795,11 +798,12 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
+        By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    fit_path : boolean
+    fit_path : bool, default=True
         If True the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
@@ -807,7 +811,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     Attributes
     ----------
-    alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
+            arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
@@ -815,15 +820,15 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    coef_path_ : array, shape (n_features, n_alphas + 1) \
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) \
         | list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    coef_ : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    intercept_ : float | array, shape (n_targets,)
+    intercept_ : float or array-like of shape (n_targets,)
         Independent term in decision function.
 
     n_iter_ : array-like or int
@@ -933,14 +938,14 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
-                optional
+        Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
+                default=None
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
 
@@ -977,22 +982,22 @@ class LassoLars(Lars):
 
     Parameters
     ----------
-    alpha : float
+    alpha : float, default=1.0
         Constant that multiplies the penalty term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
         by :class:`LinearRegression`. For numerical reasons, using
         ``alpha = 0`` with the LassoLars object is not advised and you
         should prefer the LinearRegression object.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1000,12 +1005,12 @@ class LassoLars(Lars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
     eps : float, optional
@@ -1014,17 +1019,18 @@ class LassoLars(Lars):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
+        By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    fit_path : boolean
+    fit_path : bool, default=True
         If ``True`` the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients will not converge
@@ -1036,7 +1042,8 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
+    alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
+            arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
@@ -1045,15 +1052,15 @@ class LassoLars(Lars):
     active_ : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    coef_path_ : array, shape (n_features, n_alphas + 1) or list
+    coef_path_ : array-like of shape (n_features, n_alphas + 1) or list
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    coef_ : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : array-like of shape (n_features,) or (n_targets, n_features)
         Parameter vector (w in the formulation formula).
 
-    intercept_ : float | array, shape (n_targets,)
+    intercept_ : float or array-like of shape (n_targets,)
         Independent term in decision function.
 
     n_iter_ : array-like or int.
@@ -1114,48 +1121,49 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
-    ----------
-    X_train : array, shape (n_samples, n_features)
+    -----------
+    X_train : array-like of shape (n_samples, n_features)
         The data to fit the LARS on
 
-    y_train : array, shape (n_samples)
+    y_train : array-like of shape (n_samples,)
         The target variable to fit LARS on
 
-    X_test : array, shape (n_samples, n_features)
+    X_test : array-like of shape (n_samples, n_features)
         The data to compute the residues on
 
-    y_test : array, shape (n_samples)
+    y_test : array-like of shape (n_samples,)
         The target variable to compute the residues on
 
-    Gram : None, 'auto', array, shape (n_features, n_features), optional
+    Gram : None, 'auto' or array-like of shape (n_features, n_features), \
+            default=None
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
 
-    copy : boolean, optional
+    copy : bool, default=True
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
 
-    method : 'lar' | 'lasso'
+    method : {'lar' , 'lasso'}, default='lar'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    verbose : integer, optional
+    verbose : bool or int, default=False
         Sets the amount of verbosity
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         See reservations for using this option in combination with method
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1163,7 +1171,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
     eps : float, optional
@@ -1172,11 +1180,12 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
+        By default, ``np.finfo(np.float).eps`` is used
 
 
     Returns
-    -------
-    alphas : array, shape (n_alphas,)
+    --------
+    alphas : array-like of shape (n_alphas,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
         is smaller.
@@ -1184,10 +1193,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     active : list
         Indices of active variables at the end of the path.
 
-    coefs : array, shape (n_features, n_alphas)
+    coefs : array-like of shape (n_features, n_alphas)
         Coefficients along the path
 
-    residues : array, shape (n_alphas, n_samples)
+    residues : array-like of shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
     X_train = _check_copy_and_writeable(X_train, copy)
@@ -1229,18 +1238,18 @@ class LarsCV(Lars):
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1248,12 +1257,12 @@ class LarsCV(Lars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1270,11 +1279,11 @@ class LarsCV(Lars):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    max_n_alphas : integer, optional
+    max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1283,32 +1292,32 @@ class LarsCV(Lars):
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
         independent term in decision function
 
-    coef_path_ : array, shape (n_features, n_alphas)
+    coef_path_ : array-like of shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     alpha_ : float
         the estimated regularization parameter alpha
 
-    alphas_ : array, shape (n_alphas,)
+    alphas_ : array-like of shape (n_alphas,)
         the different values of alpha along the path
 
-    cv_alphas_ : array, shape (n_cv_alphas,)
+    cv_alphas_ : array-like of shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array-like of shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1354,10 +1363,10 @@ class LarsCV(Lars):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -1443,18 +1452,18 @@ class LassoLarsCV(LarsCV):
 
     Parameters
     ----------
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1462,12 +1471,12 @@ class LassoLarsCV(LarsCV):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto'
+    precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram matrix
         cannot be passed as argument since we will use only subsets of X.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -1484,11 +1493,11 @@ class LassoLarsCV(LarsCV):
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
-    max_n_alphas : integer, optional
+    max_n_alphas : int, default=1000
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1497,12 +1506,12 @@ class LassoLarsCV(LarsCV):
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems.
+        systems. By default, ``np.finfo(np.float).eps`` is used.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
@@ -1516,25 +1525,25 @@ class LassoLarsCV(LarsCV):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
         independent term in decision function.
 
-    coef_path_ : array, shape (n_features, n_alphas)
+    coef_path_ : array-like of shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     alpha_ : float
         the estimated regularization parameter alpha
 
-    alphas_ : array, shape (n_alphas,)
+    alphas_ : array-like of shape (n_alphas,)
         the different values of alpha along the path
 
-    cv_alphas_ : array, shape (n_cv_alphas,)
+    cv_alphas_ : array-like of shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    mse_path_ : array, shape (n_folds, n_cv_alphas)
+    mse_path_ : array-like of shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1609,18 +1618,18 @@ class LassoLarsIC(LassoLars):
 
     Parameters
     ----------
-    criterion : 'bic' | 'aic'
+    criterion : {'bic' , 'aic'}, default='aic'
         The type of criterion to use.
 
-    fit_intercept : boolean
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-    verbose : boolean or integer, optional
+    verbose : bool or int, default=False
         Sets the verbosity amount
 
-    normalize : boolean, optional, default True
+    normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1628,12 +1637,12 @@ class LassoLarsIC(LassoLars):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : True | False | 'auto' | array-like
+    precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter : integer, optional
+    max_iter : int, default=500
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
@@ -1643,11 +1652,12 @@ class LassoLarsIC(LassoLars):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
+        By default, ``np.finfo(np.float).eps`` is used
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
+    positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
         Under the positive restriction the model coefficients do not converge
@@ -1661,7 +1671,7 @@ class LassoLarsIC(LassoLars):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
     intercept_ : float
@@ -1674,7 +1684,7 @@ class LassoLarsIC(LassoLars):
         number of iterations run by lars_path to find the grid of
         alphas.
 
-    criterion_ : array, shape (n_alphas,)
+    criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
         chosen. This value is larger by a factor of ``n_samples`` compared to
@@ -1724,13 +1734,13 @@ class LassoLarsIC(LassoLars):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
-        copy_X : boolean, optional, default None
+        copy_X : bool, default=None
             If provided, this parameter will override the choice
             of copy_X made at instance creation.
             If ``True``, X will be copied; else, it may be overwritten.

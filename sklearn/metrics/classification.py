@@ -659,7 +659,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Read more in the :ref:`User Guide <jaccard_score>`.
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
@@ -1067,7 +1067,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
+    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
     only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1400,8 +1400,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     ``UndefinedMetricWarning`` will be raised.
     """
-    if beta <= 0:
-        raise ValueError("beta should be >0 in the F-beta score")
+    if beta < 0:
+        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
 
@@ -1428,11 +1428,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
-    # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-    # and true are nonzero, in which case, F is well-defined and zero
-    denom = beta2 * precision + recall
-    denom[denom == 0.] = 1  # avoid division by 0
-    f_score = (1 + beta2) * precision * recall / denom
+    if np.isposinf(beta):
+        f_score = recall
+    else:
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
+        denom = beta2 * precision + recall
+        denom[denom == 0.] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
 
     # Average the results
     if average == 'weighted':
@@ -1795,7 +1798,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         micro average (averaging the total true positives, false negatives and
         false positives) it is only shown for multi-label or multi-class
         with a subset of classes because it is accuracy otherwise.
-        See also:func:`precision_recall_fscore_support` for more details
+        See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
         Note that in binary classification, recall of the positive class
@@ -2366,7 +2369,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
     # otherwise pos_label is set to the greater label
     # (different from precision_recall_curve/roc_curve,
     # the purpose is to keep backward compatibility).

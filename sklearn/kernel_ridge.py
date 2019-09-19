@@ -13,7 +13,7 @@ from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 
 
-class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -188,6 +188,6 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
         C : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        check_is_fitted(self)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

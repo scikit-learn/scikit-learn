@@ -380,7 +380,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                 return None, W, S
 
 
-class FastICA(BaseEstimator, TransformerMixin):
+class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -436,10 +436,17 @@ class FastICA(BaseEstimator, TransformerMixin):
     mixing_ : array, shape (n_features, n_components)
         The mixing matrix.
 
+    mean_ : array, shape(n_features)
+        The mean over features. Only set if `self.whiten` is True.
+
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
+
+    whitening_ : array, shape (n_components, n_features)
+        Only set if whiten is 'True'. This is the pre-whitening matrix
+        that projects data onto the first `n_components` principal components.
 
     Examples
     --------
@@ -567,7 +574,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
@@ -590,7 +597,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)

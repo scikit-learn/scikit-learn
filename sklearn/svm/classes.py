@@ -44,7 +44,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -101,7 +102,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [1, n_features] if n_classes == 2 \
+else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -110,6 +112,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
+    n_iter_ : int
+        Maximum number of iterations run across all classes.
 
     Examples
     --------
@@ -206,7 +214,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -214,7 +222,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         if self.loss in ('l1', 'l2'):
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -243,7 +251,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         return self
 
 
-class LinearSVR(LinearModel, RegressorMixin):
+class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
 
     Similar to SVR with parameter kernel='linear', but implemented in terms of
@@ -266,8 +274,8 @@ class LinearSVR(LinearModel, RegressorMixin):
         Tolerance for stopping criteria.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term. The penalty is a squared
-        l2 penalty. The bigger this parameter, the less regularization is used.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
 
     loss : string, optional (default='epsilon_insensitive')
         Specifies the loss function. The epsilon-insensitive loss
@@ -320,6 +328,9 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    n_iter_ : int
+        Maximum number of iterations run across all classes.
 
     Examples
     --------
@@ -390,7 +401,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 1.0 -----------------------------------
+        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
                "loss='%s' as of 0.16. Backward compatibility"
                " for the loss='%s' will be removed in %s")
@@ -400,7 +411,7 @@ class LinearSVR(LinearModel, RegressorMixin):
             self.loss = {'l1': 'epsilon_insensitive',
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
+            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
@@ -444,7 +455,9 @@ class SVC(BaseSVC):
     Parameters
     ----------
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive. The penalty
+        is a squared l2 penalty.
 
     kernel : string, optional (default='rbf')
         Specifies the kernel type to be used in the algorithm.
@@ -477,7 +490,9 @@ class SVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -564,16 +579,26 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
-        If probability=True, the parameters learned in Platt scaling to
-        produce probability estimates from decision values. If
-        probability=False, an empty array. Platt scaling uses the logistic
-        function
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling to produce probability estimates from decision values.
+        If `probability=False`, it's an empty array. Platt scaling uses the
+        logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
 
     Examples
     --------
@@ -673,7 +698,9 @@ class NuSVC(BaseSVC):
 
     probability : boolean, optional (default=False)
         Whether to enable probability estimates. This must be enabled prior
-        to calling `fit`, and will slow down that method.
+        to calling `fit`, will slow down that method as it internally uses
+        5-fold cross-validation, and `predict_proba` may be inconsistent with
+        `predict`. Read more in the :ref:`User Guide <scores_probabilities>`.
 
     tol : float, optional (default=1e-3)
         Tolerance for stopping criterion.
@@ -755,6 +782,30 @@ class NuSVC(BaseSVC):
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 if the algorithm did not converge.
+
+    probA_ : ndarray, shape of (n_class * (n_class-1) / 2,)
+    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling to produce probability estimates from decision values.
+        If `probability=False`, it's an empty array. Platt scaling uses the
+        logistic function
+        ``1 / (1 + exp(decision_value * probA_ + probB_))``
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of [1]_.
+
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C of each class.
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
     Examples
     --------
     >>> import numpy as np
@@ -801,7 +852,7 @@ class NuSVC(BaseSVC):
             random_state=random_state)
 
 
-class SVR(BaseLibSVM, RegressorMixin):
+class SVR(RegressorMixin, BaseLibSVM):
     """Epsilon-Support Vector Regression.
 
     The free parameters in the model are C and epsilon.
@@ -846,7 +897,9 @@ class SVR(BaseLibSVM, RegressorMixin):
         Tolerance for stopping criterion.
 
     C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+        Regularization parameter. The strength of the regularization is
+        inversely proportional to C. Must be strictly positive.
+        The penalty is a squared l2 penalty.
 
     epsilon : float, optional (default=0.1)
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
@@ -885,6 +938,9 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -931,7 +987,7 @@ class SVR(BaseLibSVM, RegressorMixin):
             class_weight=None, max_iter=max_iter, random_state=None)
 
 
-class NuSVR(BaseLibSVM, RegressorMixin):
+class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
 
     Similar to NuSVC, for regression, uses a parameter nu to control
@@ -1056,7 +1112,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM, OutlierMixin):
+class OneClassSVM(OutlierMixin, BaseLibSVM):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.
@@ -1141,6 +1197,9 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         We have the relation: decision_function = score_samples - `offset_`.
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     Examples
     --------
