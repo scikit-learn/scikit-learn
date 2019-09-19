@@ -68,7 +68,8 @@ print(gbdt.predict(X))
 #
 # A new plotting API is available for creating visualizations. This new API
 # allows for quickly adjusting the visuals of a plot without involving any
-# recomputation. See more examples in the :ref:`User Guide <visualizations>`.
+# recomputation. It is also possible to add different plots to the same
+# figure. See more examples in the :ref:`User Guide <visualizations>`.
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
@@ -76,11 +77,16 @@ from sklearn.metrics import plot_roc_curve
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
 svc = SVC(random_state=42)
 svc.fit(X_train, y_train)
+rfc = RandomForestClassifier(random_state=42)
+rfc.fit(X_train, y_train)
 
-svc_disp = plot_roc_curve(svc, X_test, y_test)  # compute once
-svc_disp.figure_.suptitle("ROC Curve")  # adjust title after
+svc_disp = plot_roc_curve(svc, X_test, y_test)
+rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+rfc_disp.figure_.suptitle("ROC curve comparison")
+
 plt.show()
 
 #############################################################################
