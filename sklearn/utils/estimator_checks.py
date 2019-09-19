@@ -859,7 +859,13 @@ def check_dict_unchanged(name, estimator_orig):
                 'Estimator changes __dict__ during %s' % method)
 
 
+@deprecated("is_public_parameter is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def is_public_parameter(attr):
+    return _is_public_parameter(attr)
+
+
+def _is_public_parameter(attr):
     return not (attr.startswith('_') or attr.endswith('_'))
 
 
@@ -890,7 +896,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     dict_after_fit = estimator.__dict__
 
     public_keys_after_fit = [key for key in dict_after_fit.keys()
-                             if is_public_parameter(key)]
+                             if _is_public_parameter(key)]
 
     attrs_added_by_fit = [key for key in public_keys_after_fit
                           if key not in dict_before_fit.keys()]
