@@ -15,8 +15,7 @@ from scipy.optimize import check_grad
 from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_raises,
-                                   assert_raise_message, assert_warns_message)
+from sklearn.utils.testing import (assert_raise_message, assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -127,11 +126,16 @@ def test_params_validation():
     rng = np.random.RandomState(42)
 
     # TypeError
-    assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
-    assert_raises(TypeError, NCA(verbose='true').fit, X, y)
-    assert_raises(TypeError, NCA(tol='1').fit, X, y)
-    assert_raises(TypeError, NCA(n_components='invalid').fit, X, y)
-    assert_raises(TypeError, NCA(warm_start=1).fit, X, y)
+    with pytest.raises(TypeError):
+        NCA(max_iter='21').fit(X, y)
+    with pytest.raises(TypeError):
+        NCA(verbose='true').fit(X, y)
+    with pytest.raises(TypeError):
+        NCA(tol='1').fit(X, y)
+    with pytest.raises(TypeError):
+        NCA(n_components='invalid').fit(X, y)
+    with pytest.raises(TypeError):
+        NCA(warm_start=1).fit(X, y)
 
     # ValueError
     assert_raise_message(ValueError,
@@ -167,17 +171,15 @@ def test_transformation_dimensions():
 
     # Fail if transformation input dimension does not match inputs dimensions
     transformation = np.array([[1, 2], [3, 4]])
-    assert_raises(ValueError,
-                  NeighborhoodComponentsAnalysis(init=transformation).fit,
-                  X, y)
+    with pytest.raises(ValueError):
+        NeighborhoodComponentsAnalysis(init=transformation).fit(X, y)
 
     # Fail if transformation output dimension is larger than
     # transformation input dimension
     transformation = np.array([[1, 2], [3, 4], [5, 6]])
     # len(transformation) > len(transformation[0])
-    assert_raises(ValueError,
-                  NeighborhoodComponentsAnalysis(init=transformation).fit,
-                  X, y)
+    with pytest.raises(ValueError):
+        NeighborhoodComponentsAnalysis(init=transformation).fit(X, y)
 
     # Pass otherwise
     transformation = np.arange(9).reshape(3, 3)
@@ -466,7 +468,8 @@ def test_callback(capsys):
     y = iris_target
 
     nca = NeighborhoodComponentsAnalysis(callback='my_cb')
-    assert_raises(ValueError, nca.fit, X, y)
+    with pytest.raises(ValueError):
+        nca.fit(X, y)
 
     max_iter = 10
 
