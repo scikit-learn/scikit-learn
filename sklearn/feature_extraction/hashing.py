@@ -6,9 +6,9 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import IS_PYPY, check_random_state
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.exceptions import NotFittedError
+from ..utils import IS_PYPY, check_random_state
+from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import NotFittedError
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
