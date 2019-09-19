@@ -10,6 +10,7 @@ from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils import is_scalar_nan
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
@@ -22,8 +23,10 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
-from sklearn.preprocessing.label import _encode
+from sklearn.preprocessing.label import _encode, _encode_numpy, _encode_python
 from sklearn.preprocessing.label import _encode_check_unknown
+from sklearn.preprocessing.label import _nan_unique
+from sklearn.preprocessing.label import _TableWithNan
 
 from sklearn import datasets
 
@@ -738,11 +741,102 @@ def test_check_unknown_nan_raise(uniques, values, return_mask):
                               allow_nan=False)
 
 
-def test_nan_unique():
-    # TODO
-    pass
+@pytest.mark.parametrize(
+        ["values", "unique", "inverse"],
+        [(np.array([]), [], []),
+         (np.array(['a', 'a', 'a'], dtype=object), ['a'], [0, 0, 0]),
+         (np.array(['a', 'c', 'b'], dtype=object), ['a', 'b', 'c'], [0, 2, 1]),
+         (np.array(['a', 'b', 'c', 'a', 'b'], dtype=object), ['a', 'b', 'c'],
+          [0, 1, 2, 0, 1]),
+         (np.array([1, 2, 3]), [1, 2, 3], [0, 1, 2]),
+         (np.array([1, 1, 1]), [1], [0, 0, 0]),
+         (np.array([1, 2, 3, 3, 2, 1]), [1, 2, 3], [0, 1, 2, 2, 1, 0]),
+         ])
+def test_nan_unique_same_as_np(values, unique, inverse):
+    #  assert _nan_unique == np.unique
+
+    assert_array_equal(unique, _nan_unique(values))
+    assert_array_equal(unique, np.unique(values))
+
+    u, i = _nan_unique(values, return_inverse=True)
+    assert_array_equal(unique, u)
+    assert_array_equal(inverse, i)
+    u, i = np.unique(values, return_inverse=True)
+    assert_array_equal(unique, u)
+    assert_array_equal(inverse, i)
+
+
+@pytest.mark.parametrize(
+        ["values", "unique", "inverse"],
+        [(np.array([]), [], []),
+         (np.array([np.nan, np.nan, float('nan')]), [np.nan], [0, 0, 0]),
+         #  (np.array([np.nan, 'a', 'a'], dtype=object),
+         #   ['a', np.nan], [1, 0, 0]),
+         #  (np.array([np.nan, 'c', 'b'], dtype=object),
+         #   ['b', 'c', np.nan], [0, 2, 1]),
+         #  (np.array([np.nan, 'b', 'c', 'a', 'b'], dtype=object),
+         #   ['a', 'b', 'c', np.nan], [3, 1, 2, 0, 1]),
+         (np.array([np.nan, 2, 3]), [2, 3, np.nan], [2, 0, 1]),
+         (np.array([np.nan, 1, 1]), [1, np.nan], [1, 0, 0]),
+         (np.array([np.nan, 2, 3, 3, 2, 1]), [1, 2, 3, np.nan],
+          [3, 1, 2, 2, 1, 0]),
+         ])
+def test_nan_unique_nan(values, unique, inverse):
+    nan_unique, nan_inverse = _nan_unique(values, return_inverse=True,
+                                          allow_nan=True)
+    for nu, u in zip(nan_unique, unique):
+        if is_scalar_nan(nu):
+            assert is_scalar_nan(u)
+        else:
+            assert nu == u
+    for ni, i in zip(nan_inverse, inverse):
+        if is_scalar_nan(ni):
+            assert is_scalar_nan(i)
+        else:
+            assert ni == i
+
+
+@pytest.mark.parametrize('encode_type', [_encode_numpy, _encode_python])
+@pytest.mark.parametrize(
+        ["values", "unique", "inverse"],
+        [(np.array([]), [], []),
+         (np.array([np.nan, np.nan, float('nan')]), [np.nan], [0, 0, 0]),
+         (np.array([np.nan, 2, 3]), [2, 3, np.nan], [2, 0, 1]),
+         (np.array([np.nan, 1, 1]), [1, np.nan], [1, 0, 0]),
+         (np.array([np.nan, 2, 3, 3, 2, 1]), [1, 2, 3, np.nan],
+          [3, 1, 2, 2, 1, 0]),
+         ])
+def test_nan_encode_numpy_python(values, unique, inverse, encode_type):
+    nan_unique, nan_inverse = encode_type(values, encode=True, allow_nan=True)
+    for nu, u in zip(nan_unique, unique):
+        if is_scalar_nan(nu):
+            assert is_scalar_nan(u)
+        else:
+            assert nu == u
+    for ni, i in zip(nan_inverse, inverse):
+        if is_scalar_nan(ni):
+            assert is_scalar_nan(i)
+        else:
+            assert ni == i
 
 
 def test_table_with_nan():
-    # TODO
-    pass
+    table = _TableWithNan()
+    table.set('a', 0)
+    table.set(42, 42)
+
+    with pytest.raises(KeyError):
+        table.get(np.nan)
+    with pytest.raises(KeyError):
+        table.get(float('nan'))
+    with pytest.raises(KeyError):
+        table.get('b')
+
+    table.set(np.nan, 1)
+    assert table.get('a') == 0
+    assert table.get(42) == 42
+    assert table.get(np.nan) == 1
+    assert table.get(float('nan')) == 1
+
+    with pytest.raises(KeyError):
+        table.get(None)

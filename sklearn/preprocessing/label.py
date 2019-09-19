@@ -84,7 +84,7 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
         return uniques
 
 
-class TableWithNan(object):
+class _TableWithNan(object):
     #  hash table which allows nan as a key
 
     def __init__(self):
@@ -118,7 +118,7 @@ def _encode_python(values, uniques=None, encode=False, allow_nan=False):
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         # hash is not enough to identify nan
-        table = TableWithNan()
+        table = _TableWithNan()
         for i, val in enumerate(uniques):
             table.set(val, i)
         try:
