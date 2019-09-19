@@ -584,7 +584,13 @@ def _is_pairwise_metric(estimator):
     return bool(metric == 'precomputed')
 
 
+@deprecated("pairwise_estimator_convert_X is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
+    return _pairwise_estimator_convert_X(X, estimator, kernel)
+
+
+def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric='euclidean')
@@ -631,7 +637,7 @@ def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
     tags = _safe_tags(estimator_orig)
     if tags['binary_only']:
@@ -696,7 +702,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
             X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                           [2, 1], [2, 2], [2, 3], [2, 4],
                           [3, 1], [3, 2], [3, 3], [3, 4]])
-            X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
+            X = pd.DataFrame(_pairwise_estimator_convert_X(X, estimator_orig))
             y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
             weights = pd.Series([1] * 12)
             if _safe_tags(estimator, "multioutput_only"):
@@ -720,7 +726,7 @@ def check_sample_weights_list(name, estimator_orig):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
         n_samples = 30
-        X = pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)),
+        X = _pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)),
                                          estimator_orig)
         if _safe_tags(estimator, 'binary_only'):
             y = np.arange(n_samples) % 2
@@ -774,7 +780,7 @@ def check_sample_weights_invariance(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
     if tags['binary_only']:
@@ -833,7 +839,7 @@ def check_dict_unchanged(name, estimator_orig):
     else:
         X = 2 * rnd.uniform(size=(20, 3))
 
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
 
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
@@ -878,7 +884,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     estimator = clone(estimator_orig)
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     if _safe_tags(estimator, 'binary_only'):
         y[y == 2] = 1
@@ -929,7 +935,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     tags = _safe_tags(estimator_orig)
     if tags['binary_only']:
@@ -980,7 +986,7 @@ def check_methods_subset_invariance(name, estimator_orig):
     # on mini batches or the whole set
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     if _safe_tags(estimator_orig, 'binary_only'):
         y[y == 2] = 1
@@ -1022,7 +1028,7 @@ def check_fit2d_1sample(name, estimator_orig):
     # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
 
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
@@ -1055,7 +1061,7 @@ def check_fit2d_1feature(name, estimator_orig):
     # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
@@ -1111,7 +1117,7 @@ def check_transformer_general(name, transformer, readonly_memmap=False):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
-    X = pairwise_estimator_convert_X(X, transformer)
+    X = _pairwise_estimator_convert_X(X, transformer)
 
     if readonly_memmap:
         X, y = create_memmap_backed_data([X, y])
@@ -1127,7 +1133,7 @@ def check_transformer_data_not_an_array(name, transformer):
     # We need to make sure that we have non negative data, for things
     # like NMF
     X -= X.min() - .1
-    X = pairwise_estimator_convert_X(X, transformer)
+    X = _pairwise_estimator_convert_X(X, transformer)
     this_X = _NotAnArray(X)
     this_y = _NotAnArray(np.asarray(y))
     _check_transformer(name, transformer, this_X, this_y)
@@ -1233,7 +1239,7 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
-    X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+    X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator)
@@ -1259,7 +1265,7 @@ def check_fit_score_takes_y(name, estimator_orig):
     rnd = np.random.RandomState(0)
     n_samples = 30
     X = rnd.uniform(size=(n_samples, 3))
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     if _safe_tags(estimator_orig, 'binary_only'):
         y = np.arange(n_samples) % 2
     else:
@@ -1288,7 +1294,7 @@ def check_fit_score_takes_y(name, estimator_orig):
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
-    X_train_32 = pairwise_estimator_convert_X(X_train_32, estimator_orig)
+    X_train_32 = _pairwise_estimator_convert_X(X_train_32, estimator_orig)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
@@ -1336,7 +1342,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
 def check_estimators_nan_inf(name, estimator_orig):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
-    X_train_finite = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
+    X_train_finite = _pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
                                                   estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
@@ -1427,7 +1433,7 @@ def check_estimators_pickle(name, estimator_orig):
 
     # some estimators can't do features less than 0
     X -= X.min()
-    X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+    X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
     tags = _safe_tags(estimator_orig)
     # include NaN values when the estimator should deal with them
@@ -1625,7 +1631,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
         n_classes = len(classes)
         n_samples, n_features = X.shape
         classifier = clone(classifier_orig)
-        X = pairwise_estimator_convert_X(X, classifier)
+        X = _pairwise_estimator_convert_X(X, classifier)
         y = _enforce_estimator_tags_y(classifier, y)
 
         set_random_state(classifier)
@@ -1828,7 +1834,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
     X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
     # some want non-negative input
     X -= X.min()
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
@@ -1864,7 +1870,7 @@ def check_supervised_y_2d(name, estimator_orig):
         return
     rnd = np.random.RandomState(0)
     n_samples = 30
-    X = pairwise_estimator_convert_X(
+    X = _pairwise_estimator_convert_X(
         rnd.uniform(size=(n_samples, 3)), estimator_orig
     )
     if tags['binary_only']:
@@ -1964,8 +1970,8 @@ def check_classifiers_classes(name, classifier_orig):
     X_binary = X_multiclass[y_multiclass != 2]
     y_binary = y_multiclass[y_multiclass != 2]
 
-    X_multiclass = pairwise_estimator_convert_X(X_multiclass, classifier_orig)
-    X_binary = pairwise_estimator_convert_X(X_binary, classifier_orig)
+    X_multiclass = _pairwise_estimator_convert_X(X_multiclass, classifier_orig)
+    X_binary = _pairwise_estimator_convert_X(X_binary, classifier_orig)
 
     labels_multiclass = ["one", "two", "three"]
     labels_binary = ["one", "two"]
@@ -1991,7 +1997,7 @@ def check_classifiers_classes(name, classifier_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_int(name, regressor_orig):
     X, _ = _boston_subset()
-    X = pairwise_estimator_convert_X(X[:50], regressor_orig)
+    X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     y = _enforce_estimator_tags_y(regressor_orig, y)
@@ -2019,7 +2025,7 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_train(name, regressor_orig, readonly_memmap=False):
     X, y = _boston_subset()
-    X = pairwise_estimator_convert_X(X, regressor_orig)
+    X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
     regressor = clone(regressor_orig)
@@ -2068,7 +2074,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
     regressor = clone(regressor_orig)
 
     X = rng.normal(size=(10, 4))
-    X = pairwise_estimator_convert_X(X, regressor_orig)
+    X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = _enforce_estimator_tags_y(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
@@ -2207,7 +2213,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
     # some want non-negative input
     X -= X.min()
-    X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+    X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -2298,7 +2304,7 @@ def check_sparsify_coefficients(name, estimator_orig):
 def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1],
                   [0, 3], [1, 0], [2, 0], [4, 4], [2, 3], [3, 2]])
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
     y = _enforce_estimator_tags_y(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
@@ -2307,7 +2313,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 @ignore_warnings(category=DeprecationWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
-    X = pairwise_estimator_convert_X(X, estimator_orig)
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
@@ -2659,7 +2665,7 @@ def check_fit_idempotent(name, estimator_orig):
 
     n_samples = 100
     X = rng.normal(loc=100, size=(n_samples, 2))
-    X = pairwise_estimator_convert_X(X, estimator)
+    X = _pairwise_estimator_convert_X(X, estimator)
     if is_regressor(estimator_orig):
         y = rng.normal(size=n_samples)
     else:

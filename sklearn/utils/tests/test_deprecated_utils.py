@@ -6,6 +6,7 @@ from sklearn.utils.estimator_checks import choose_check_classifiers_labels
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.utils.estimator_checks import enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import is_public_parameter
+from sklearn.utils.estimator_checks import pairwise_estimator_convert_X
 
 
 # This file tests the utils that are deprecated
@@ -29,3 +30,8 @@ def test_notanarray():
 def test_is_public_parameter():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         is_public_parameter('hello')
+
+
+def test_pairwise_estimator_convert_X():
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
+        pairwise_estimator_convert_X([[1, 2]], DummyClassifier())
