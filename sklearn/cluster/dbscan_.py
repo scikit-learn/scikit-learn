@@ -51,8 +51,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors for DBSCAN.
+        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional
         Additional keyword arguments for the metric function.
@@ -172,8 +172,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors for DBSCAN.
+        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        case only "nonzero" elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
@@ -319,32 +319,20 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         # point in, which needs to be considered later (i.e. point i is in the
         # neighborhood of point i. While True, its useless information)
         if self.metric == 'precomputed' and sparse.issparse(X):
-            neighborhoods = np.empty(X.shape[0], dtype=object)
-            X.sum_duplicates()  # XXX: modifies X's internals in-place
-
             # set the diagonal to explicit values, as a point is its own
             # neighbor
             with warnings.catch_warnings():
                 warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
-            X_mask = X.data <= self.eps
-            masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
-            masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))
-            masked_indptr = masked_indptr[X.indptr[1:-1]]
-
-            # split into rows
-            neighborhoods[:] = np.split(masked_indices, masked_indptr)
-        else:
-            neighbors_model = NearestNeighbors(
-                radius=self.eps, algorithm=self.algorithm,
-                leaf_size=self.leaf_size, metric=self.metric,
-                metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs
-            )
-            neighbors_model.fit(X)
-            # This has worst case O(n^2) memory complexity
-            neighborhoods = neighbors_model.radius_neighbors(
-                X, self.eps, return_distance=False)
+        neighbors_model = NearestNeighbors(
+            radius=self.eps, algorithm=self.algorithm,
+            leaf_size=self.leaf_size, metric=self.metric,
+            metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
+        neighbors_model.fit(X)
+        # This has worst case O(n^2) memory complexity
+        neighborhoods = neighbors_model.radius_neighbors(X,
+                                                         return_distance=False)
 
         if sample_weight is None:
             n_neighbors = np.array([len(neighbors)
