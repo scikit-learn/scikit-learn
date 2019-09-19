@@ -275,7 +275,7 @@ Changelog
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
 
-- |Efficiency| :meth:`ensemble.MissingIndicator.fit_transform` avoid repeated
+- |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
   computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
 
 :mod:`sklearn.inspection`
