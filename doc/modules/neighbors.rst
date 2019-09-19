@@ -587,9 +587,15 @@ implementation with special data types. The precomputed neighbors
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_neighbors_neighbors_in_pipeline_api.py`: an
-    example of pipelining KNeighborsTransformer and TSNE, and of two custom
-    nearest neighbors estimators based on external packages.
+  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+    estimators based on external packages.
+
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
+    during a hyper-parameter grid-search.
 
 .. _nca:
 
