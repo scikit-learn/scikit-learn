@@ -31,17 +31,17 @@ def csr_row_norms(X):
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
 
-    norms = np.zeros(X.shape[0], dtype=X.data.dtype)
-    _csr_row_norms(X.data, X.shape, X.indices, X.indptr, norms)
-    
-    return norms
+    norms = np.empty(X.shape[0], dtype=X.data.dtype)
+    _csr_row_norms(X.data, X.shape, X.indices, X.indptr, out=norms)
 
+    return norms
+    
 
 def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    shape,
                    np.ndarray[integral, ndim=1, mode="c"] X_indices,
                    np.ndarray[integral, ndim=1, mode="c"] X_indptr,
-                   floating[::1] norms):
+                   floating[::1] out):
     cdef:
         unsigned long long n_samples = shape[0]
         
@@ -53,7 +53,7 @@ def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
         sum_ = 0.0
         for j in range(X_indptr[i], X_indptr[i + 1]):
             sum_ += X_data[j] * X_data[j]
-        norms[i] = sum_
+        out[i] = sum_
 
 
 def csr_mean_variance_axis0(X):

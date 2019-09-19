@@ -1,4 +1,4 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
+# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
 # Profiling is enabled by default as the overhead does not seem to be
 # measurable on this specific use case.
 
@@ -7,8 +7,6 @@
 #         Lars Buitinck
 #
 # License: BSD 3 clause
-#
-# cython: boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np
