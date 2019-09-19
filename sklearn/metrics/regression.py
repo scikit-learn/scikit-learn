@@ -247,10 +247,7 @@ def mean_absolute_percentage_error(y_true, y_pred,
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
     epsilon = np.finfo(float).eps
-    a_max = np.max(np.abs(y_true))
-    a_max = max(epsilon, a_max)
-    denom = np.clip(np.abs(y_true), epsilon, a_max)
-    mape = np.abs((y_pred - y_true) / denom)
+    mape = np.abs(y_pred - y_true) / np.maximum(np.abs(y_true), epsilon)
     output_errors = np.average(mape,
                                weights=sample_weight, axis=0) * 100.0
     if isinstance(multioutput, str):
