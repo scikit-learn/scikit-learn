@@ -18,6 +18,8 @@ from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
 from .voting import VotingClassifier
 from .voting import VotingRegressor
+from ._stacking import StackingClassifier
+from ._stacking import StackingRegressor
 
 from . import bagging
 from . import forest
@@ -32,5 +34,6 @@ __all__ = ["BaseEnsemble",
            "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
+           "StackingClassifier", "StackingRegressor",
            "bagging", "forest", "gradient_boosting",
            "partial_dependence", "weight_boosting"]
