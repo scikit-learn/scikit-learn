@@ -679,10 +679,11 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         try:
             import pandas as pd
             X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
-                          [2, 1], [2, 2], [2, 3], [2, 4]])
+                          [2, 1], [2, 2], [2, 3], [2, 4],
+                          [3, 1], [3, 2], [3, 3], [3, 4]])
             X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
-            weights = pd.Series([1] * 8)
+            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+            weights = pd.Series([1] * 12)
             if _safe_tags(estimator, "multioutput_only"):
                 y = pd.DataFrame(y)
             try:
@@ -703,14 +704,15 @@ def check_sample_weights_list(name, estimator_orig):
     if has_fit_parameter(estimator_orig, "sample_weight"):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
-        X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
+        n_samples = 30
+        X = pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)),
                                          estimator_orig)
         if _safe_tags(estimator, 'binary_only'):
-            y = np.arange(10) % 2
+            y = np.arange(n_samples) % 2
         else:
-            y = np.arange(10) % 3
+            y = np.arange(n_samples) % 3
         y = _enforce_estimator_tags_y(estimator, y)
-        sample_weight = [3] * 10
+        sample_weight = [3] * n_samples
         # Test that estimators don't raise any exception
         estimator.fit(X, y, sample_weight=sample_weight)
 
@@ -938,6 +940,7 @@ def _apply_on_subsets(func, X):
     n_features = X.shape[1]
     result_by_batch = [func(batch.reshape(1, n_features))
                        for batch in X]
+
     # func can output tuple (e.g. score_samples)
     if type(result_full) == tuple:
         result_full = result_full[0]
@@ -946,6 +949,7 @@ def _apply_on_subsets(func, X):
     if sparse.issparse(result_full):
         result_full = result_full.A
         result_by_batch = [x.A for x in result_by_batch]
+
     return np.ravel(result_full), np.ravel(result_by_batch)
 
 
@@ -1232,12 +1236,13 @@ def check_fit_score_takes_y(name, estimator_orig):
     # check that all estimators accept an optional y
     # in fit and score so they can be used in pipelines
     rnd = np.random.RandomState(0)
-    X = rnd.uniform(size=(10, 3))
+    n_samples = 30
+    X = rnd.uniform(size=(n_samples, 3))
     X = pairwise_estimator_convert_X(X, estimator_orig)
     if _safe_tags(estimator_orig, 'binary_only'):
-        y = np.arange(10) % 2
+        y = np.arange(n_samples) % 2
     else:
-        y = np.arange(10) % 3
+        y = np.arange(n_samples) % 3
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator)
@@ -1799,7 +1804,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
         n_centers = 2
     else:
         n_centers = 3
-    X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
+    X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
     # some want non-negative input
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig)
@@ -1837,11 +1842,14 @@ def check_supervised_y_2d(name, estimator_orig):
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
-    X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)), estimator_orig)
+    n_samples = 30
+    X = pairwise_estimator_convert_X(
+        rnd.uniform(size=(n_samples, 3)), estimator_orig
+    )
     if tags['binary_only']:
-        y = np.arange(10) % 2
+        y = np.arange(n_samples) % 2
     else:
-        y = np.arange(10) % 3
+        y = np.arange(n_samples) % 3
     y = _enforce_estimator_tags_y(estimator_orig, y)
     estimator = clone(estimator_orig)
     set_random_state(estimator)
@@ -2175,7 +2183,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
         n_centers = 2
     else:
         n_centers = 3
-    X, y = make_blobs(random_state=0, n_samples=9, centers=n_centers)
+    X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
     # some want non-negative input
     X -= X.min()
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
@@ -2267,9 +2275,10 @@ def check_sparsify_coefficients(name, estimator_orig):
 
 @ignore_warnings(category=DeprecationWarning)
 def check_classifier_data_not_an_array(name, estimator_orig):
-    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1],
+                  [0, 3], [1, 0], [2, 0], [4, 4], [2, 3], [3, 2]])
     X = pairwise_estimator_convert_X(X, estimator_orig)
-    y = [1, 1, 1, 2, 2, 2]
+    y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
     y = _enforce_estimator_tags_y(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
