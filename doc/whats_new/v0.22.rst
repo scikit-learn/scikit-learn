@@ -69,6 +69,13 @@ Changelog
   `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
   by :user:`William de Vazelhes <wdevazelhes>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Feature| :class:`cluster.SpectralClustering` now accepts precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -111,6 +118,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Enhancement| :func:`datasets.make_classification` now accepts array-like
+   `weights` parameter, i.e. list or numpy.array, instead of list only.
+  :pr:`14764` by :user:`Cat Chenal <CatChenal>`.
+
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
@@ -139,14 +150,24 @@ Changelog
   `Adrin Jalali`_.
 
 :mod:`sklearn.dummy`
-............................
+....................
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
   of the provided constant in multiouput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
 
+- |API| The ``outputs_2d_`` attribute is deprecated in
+  :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`. It is
+  equivalent to ``n_outputs > 1``. :pr:`14933` by `Nicolas Hug`_
+
 :mod:`sklearn.ensemble`
 .......................
+
+- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor.
+  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Caio Oliveira <caioaao>`.
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -310,6 +331,14 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
+- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
+  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- |API| Deprecate ``training_data_`` unused attribute in
+  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
+
 - |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
   :class:`manifold.SpectralEmbedding` and :class:`cluster.SpectralClustering`)
   computed wrong eigenvalues with ``eigen_solver='amg'`` when
@@ -399,7 +428,21 @@ Changelog
   :user:`Florian Wilhelm <FlorianWilhelm>`.
 
 :mod:`sklearn.neighbors`
-....................
+........................
+
+- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
+  into a sparse neighbors graph. They give finer control on nearest neighbors
+  computations and enable easy pipeline caching for multiple use.
+  :issue:`10482` by `Tom Dupre la Tour`_.
+
+- |Feature| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
@@ -492,6 +535,10 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
+
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
@@ -501,6 +548,13 @@ Changelog
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.metrics`
+..................................
+
+- |API| scoring="neg_brier_score" should be used instead of
+  scoring="brier_score_loss" which is now deprecated.
+  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 Miscellaneous
 .............

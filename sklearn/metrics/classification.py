@@ -659,7 +659,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Read more in the :ref:`User Guide <jaccard_score>`.
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
@@ -2369,7 +2369,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
     # otherwise pos_label is set to the greater label
     # (different from precision_recall_curve/roc_curve,
     # the purpose is to keep backward compatibility).
