@@ -62,6 +62,10 @@ def check_openmp_support():
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
 
+    if os.getenv('SKLEARN_SKIP_OPENMP_CHECK'):
+        # Skip check and try building with OpenMP support
+        return True
+
     if os.getenv('SKLEARN_NO_OPENMP'):
         # Build explicitly without OpenMP support
         return False
