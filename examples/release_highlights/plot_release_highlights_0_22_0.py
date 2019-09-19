@@ -50,7 +50,7 @@ plt.show()
 # The :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
 # and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now have native
 # support for missing values (NaNs). This means that there is no need for
-# imputing data during training or for predicting.
+# imputing data when training or predicting.
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
@@ -87,8 +87,8 @@ plt.show()
 # Tree pruning
 # ------------
 #
-# It is now possible to prune most tree-based estimators as a post-fit
-# procedure. The pruning is based on minimal cost-complexity. Read more in the
+# It is now possible to prune most tree-based estimators once the trees are
+# built. The pruning is based on minimal cost-complexity. Read more in the
 # :ref:`User Guide <minimal_cost_complexity_pruning>` for details.
 
 X, y = make_classification(random_state=0)
