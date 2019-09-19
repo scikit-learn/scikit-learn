@@ -1154,17 +1154,30 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _check_X(self, X):
         # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # return check_array(X, y, dtype='int', accept_sparse=False,
-        #                   force_all_finite=True)
+        # X = check_array(X, y, dtype='int', accept_sparse=False,
+        #                 force_all_finite=True)
         X = check_array(X, accept_sparse=False, force_all_finite=True)
-        return check_array(X, dtype='int')
+        X = check_array(X, dtype='int')
+        return self._check_nonnegative(X)
 
     def _check_X_y(self, X, y):
         # FIXME: we can avoid calling check_array twice after #14872 is merged.
-        # return check_array(X, y, dtype='int', accept_sparse=False,
-        #                   force_all_finite=True)
+        # X, y = check_array(X, y, dtype='int', accept_sparse=False,
+        #                    force_all_finite=True)
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
-        return check_X_y(X, y, dtype='int')
+        X = check_X_y(X, y, dtype='int')
+        return self._check_nonnegative(X)
+
+    def _check_nonnegative(self, X):
+        def check(array):
+            if np.any(array < 0):
+                raise ValueError("X must not contain negative values.")
+        if isinstance(X, (list, tuple)):
+            for sample in X:
+                check(sample)
+        else:
+            check(X)
+        return X
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)

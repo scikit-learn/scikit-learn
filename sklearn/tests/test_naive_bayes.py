@@ -658,6 +658,13 @@ def test_categoricalnb():
 
     clf.fit(X3, y3)
 
+    # Check error is raised for X with negative entries
+    X = np.array([[0, -1]])
+    y = np.array([1])
+    error_msg = "X must not contain negative values."
+    assert_raise_message(ValueError, error_msg, clf.predict, X)
+    assert_raise_message(ValueError, error_msg, clf.fit, X, y)
+
     # Test alpha
     X3_test = np.array([[2, 5]])
     # alpha=1 increases the count of all categories by one so the final
