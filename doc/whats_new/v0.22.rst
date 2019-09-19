@@ -195,11 +195,6 @@ Changelog
 
   Note that pickles from 0.21 will not work in 0.22.
 
-- |Efficiency| :meth:`ensemble.MissingIndicator.fit_transform` the
-  _get_missing_features_info function is now called once when calling
-  fit_transform for MissingIndicator class. :pr:`14356` by :user:
-  `Harsh Soni <harsh020>`.
-
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
@@ -268,8 +263,8 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
-  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
@@ -279,6 +274,9 @@ Changelog
 
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
+
+- |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
+  computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -324,7 +322,7 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
-- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`  
+- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
