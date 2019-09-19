@@ -73,6 +73,13 @@ Changelog
   `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
   by :user:`William de Vazelhes <wdevazelhes>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Feature| :class:`cluster.SpectralClustering` now accepts precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -115,6 +122,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Enhancement| :func:`datasets.make_classification` now accepts array-like
+   `weights` parameter, i.e. list or numpy.array, instead of list only.
+  :pr:`14764` by :user:`Cat Chenal <CatChenal>`.
+
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
@@ -155,6 +166,12 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor.
+  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Caio Oliveira <caioaao>`.
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -318,6 +335,14 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
+- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
+  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- |API| Deprecate ``training_data_`` unused attribute in
+  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
+
 - |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
   :class:`manifold.SpectralEmbedding` and :class:`cluster.SpectralClustering`)
   computed wrong eigenvalues with ``eigen_solver='amg'`` when
@@ -400,6 +425,20 @@ Changelog
 
 :mod:`sklearn.neighbors`
 ........................
+
+- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
+  into a sparse neighbors graph. They give finer control on nearest neighbors
+  computations and enable easy pipeline caching for multiple use.
+  :issue:`10482` by `Tom Dupre la Tour`_.
+
+- |Feature| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
@@ -505,6 +544,13 @@ Changelog
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.metrics`
+..................................
+
+- |API| scoring="neg_brier_score" should be used instead of
+  scoring="brier_score_loss" which is now deprecated.
+  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 Miscellaneous
 .............
