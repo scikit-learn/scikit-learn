@@ -36,7 +36,9 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
                 pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION \
+                intel-openmp=2019.4"  # FIXME: pin openmp since there is a bug
+                # https://github.com/scikit-learn/scikit-learn/pull/15020
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"

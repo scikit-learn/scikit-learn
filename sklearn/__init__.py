@@ -18,12 +18,6 @@ import warnings
 import logging
 import os
 
-# work around to link against OpenMP
-try:
-    import numpy
-except ImportError:
-    pass
-
 from ._config import get_config, set_config, config_context
 
 logger = logging.getLogger(__name__)
