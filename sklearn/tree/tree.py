@@ -162,7 +162,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             check_classification_targets(y)
             y = np.copy(y)
 
-            self._classes = []
+            self.classes_ = []
             self.n_classes_ = []
 
             if self.class_weight is not None:
@@ -172,7 +172,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             for k in range(self.n_outputs_):
                 classes_k, y_encoded[:, k] = np.unique(y[:, k],
                                                        return_inverse=True)
-                self._classes.append(classes_k)
+                self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
 
@@ -181,7 +181,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self.class_weight, y_original)
 
         else:
-            self._classes = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
         self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
@@ -364,7 +363,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
-            self._classes = self._classes[0]
+            if is_classifier(self):
+                self.classes_ = self.classes_[0]
 
         self._prune_tree()
 
@@ -944,10 +944,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
-    @property
-    def classes_(self):
-        return self._classes
-
 
 class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     """A decision tree regressor.
@@ -1224,7 +1220,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         msg = ("the classes_ attribute is to be deprecated from version "
                "0.22 and will be removed in 0.24.")
         warnings.warn(msg, DeprecationWarning)
-        return self._classes
+        return [None] * self.n_outputs_
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):

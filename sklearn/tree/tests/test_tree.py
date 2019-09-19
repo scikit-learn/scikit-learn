@@ -1969,14 +1969,14 @@ def test_prune_tree_raises_negative_ccp_alpha():
 
 
 def test_classes_deprecated():
+    # classes_ is deprecated for regressors
     X = [[0, 0], [2, 2], [4, 6], [10, 11]]
     y = [0.5, 2.5, 3.5, 5.5]
-    clf = DecisionTreeRegressor()
-    clf = clf.fit(X, y)
+    reg = DecisionTreeRegressor()
+    reg.fit(X, y)
 
     match = ("the classes_ attribute is to be deprecated from version "
              "0.22 and will be removed in 0.24.")
 
     with pytest.warns(DeprecationWarning, match=match):
-        n = clf.classes_
-        assert n == clf._classes
+        reg.classes_
