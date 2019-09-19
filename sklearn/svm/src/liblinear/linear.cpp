@@ -2287,9 +2287,9 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			for(int i = 0; i < prob->l; i++)
 			{
 				if(prob->y[i] > 0)
-					C[i] = Cp;
+					C[i] = sample_weight[i]*Cp;
 				else
-					C[i] = Cn;
+					C[i] = sample_weight[i]*Cn;
 			}
 			fun_obj=new l2r_l2_svc_fun(prob, C);
 			TRON tron_obj(fun_obj, primal_solver_tol, max_iter, blas_functions);
