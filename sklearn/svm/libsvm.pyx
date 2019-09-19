@@ -311,14 +311,18 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef svm_parameter param
     cdef svm_model *model
     cdef int rv
+    cdef int n_class
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-
+    if (svm_type == 0 or svm_type == 1):
+        n_class = nSV.shape[0]
+    else:
+        n_class = 2
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, n_class, SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
 
@@ -380,11 +384,15 @@ def predict_proba(
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
-
+    cdef int n_class
+    if (svm_type == 0 or svm_type == 1):
+        n_class = nSV.shape[0]
+    else:
+        n_class = 2
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 1, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, n_class, SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       probA.data, probB.data)
@@ -433,12 +441,17 @@ def decision_function(
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     cdef int rv
+    cdef int n_class
+    if (svm_type == 0 or svm_type == 1):
+        n_class = nSV.shape[0]
+    else:
+        n_class = 2
 
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
 
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
+    model = set_model(&param, n_class, SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       probA.data, probB.data)
