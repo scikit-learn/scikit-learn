@@ -629,6 +629,12 @@ Finally, follow the formatting rules below to make it consistently good:
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
 
+    list_param : list of int
+
+    typed_ndarray : ndarray of shape (n_samples,), dtype=np.int32
+
+    sample_weight : array-like of shape (n_samples,), default=None
+
 In general have the following in mind:
 
     1. Use Python basic types. (``bool`` instead of ``boolean``)
@@ -639,6 +645,14 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
+    5. When specifying the data type of a list, use ``of`` as a delimiter: 
+       ``list of int``.
+    6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+       after defining the shape:
+       ``ndarray of shape (n_samples,), dtype=np.int32``.
+    7. When the default is ``None``, ``None`` only needs to be specified at the
+       end with ``default=None``. Be sure to include in the docstring, what it
+       means for the parameter or attribute to be ``None``.
 
 * For unwritten formatting rules, try to follow existing good works:
 
