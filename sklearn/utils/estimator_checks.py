@@ -526,7 +526,7 @@ def _set_checking_parameters(estimator):
 
 
 class NotAnArray:
-    #TODO: remove in 0.24
+    # TODO: remove in 0.24
 
     def __init__(self, data):
         warnings.warn(
