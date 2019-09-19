@@ -137,7 +137,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import plot_precision_recall_curve
 import matplotlib.pyplot as plt
 
-disp = plot_precision_recall_curve(classifier, X_test, y_test, color='b')
+disp = plot_precision_recall_curve(classifier, X_test, y_test)
 disp.ax_.set_title('2-class Precision-Recall curve: '
                    'AP={0:0.2f}'.format(average_precision))
 
@@ -199,7 +199,7 @@ print('Average precision score, micro-averaged over all classes: {0:0.2f}'
 #
 
 plt.figure()
-plt.step(recall['micro'], precision['micro'], color='b', where='post')
+plt.step(recall['micro'], precision['micro'], where='post')
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')
