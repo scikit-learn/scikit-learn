@@ -27,6 +27,7 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.openmp_helpers import _openmp_effective_n_threads
 from ..externals._threadpoolctl import threadpool_limits
 from ..exceptions import ConvergenceWarning
 from ._k_means import _inertia_dense
@@ -974,7 +975,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # seeds for the initializations of the kmeans runs.
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
 
-        n_jobs = 1 if self.n_jobs is None else self.n_jobs
+        n_jobs = _openmp_effective_n_threads(self.n_jobs)
 
         # limit number of threads in second level of nested parallelism
         # (i.e. BLAS) to avoid oversubsciption.
