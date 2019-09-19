@@ -217,11 +217,14 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
         if is_nan_in_value:
             if not allow_nan:
                 raise ValueError('Values contains NaN')
-            elif any(_get_mask(uniques, np.nan)):
-                diff = np.array(values_set - uniques_set)
-                diff = list(diff[~_get_mask(diff, np.nan)])
+            if any(_get_mask(uniques, np.nan)):
+                diff = list(values_set - uniques_set)
+                if diff:
+                    diff = np.array(diff)
+                    diff = list(diff[~_get_mask(diff, np.nan)])
             else:
                 diff = list(values_set - uniques_set)
+                # diff = [] ###
         else:
             diff = list(values_set - uniques_set)
 
@@ -252,7 +255,7 @@ def _encode_check_unknown(values, uniques, return_mask=False, allow_nan=False):
             diff = np.setdiff1d(unique_values, uniques, assume_unique=True)
 
         if return_mask:
-            if diff:
+            if len(diff):
                 valid_mask = np.in1d(values, uniques)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
