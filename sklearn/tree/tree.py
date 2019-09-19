@@ -514,6 +514,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
         else:
             pruned_tree = Tree(self.n_features_,
+                               # TODO: the tree shouldn't need this param
                                np.array([1] * self.n_outputs_, dtype=np.intp),
                                self.n_outputs_)
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
@@ -1228,7 +1229,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         msg = ("the classes_ attribute is to be deprecated from version "
                "0.22 and will be removed in 0.24.")
         warnings.warn(msg, DeprecationWarning)
-        return [None] * self.n_outputs_
+        return np.array([None] * self.n_outputs_)
 
     @property
     def n_classes_(self):
