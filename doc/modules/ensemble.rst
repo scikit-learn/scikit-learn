@@ -1184,7 +1184,7 @@ Such a regressor can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 Usage
-.....
+-----
 
 The following example shows how to fit the VotingRegressor::
 
