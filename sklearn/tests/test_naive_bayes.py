@@ -646,7 +646,7 @@ def test_cnb():
     assert_array_almost_equal(clf.feature_log_prob_, normed_weights)
 
 
-def test_catnb():
+def test_categoricalnb():
     # Check the ability to predict the training set.
     clf = CategoricalNB()
     y_pred = clf.fit(X2, y2).predict(X2)
@@ -671,20 +671,19 @@ def test_catnb():
     assert len(clf.category_count_) == X3.shape[1]
 
     # Check sample_weight
-    X = np.array([[0, 0], [0, 0], [1, 1]])
-    y = np.array([1, 2, 2])
+    X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+    y = np.array([1, 1, 2, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
     clf.fit(X, y)
     assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([1]))
 
-    sample_weight = np.array([0.25, 1., 0.5])
-    clf = CategoricalNB(alpha=1, fit_prior=False)
-    clf.fit(X, y, sample_weight=sample_weight)
-    assert_array_equal(clf.category_count_[0],
-                       np.array([[0.25, 0], [1.0, 0.5]]))
-    assert_array_equal(clf.category_count_[1],
-                       np.array([[0.25, 0], [1.0, 0.5]]))
-    assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
+    for factor in [1., 0.3, 5, 0.0001]:
+        X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
+        y = np.array([1, 1, 2, 2])
+        sample_weight = np.array([1, 1, 10, 0.1]) * factor
+        clf = CategoricalNB(alpha=1, fit_prior=False)
+        clf.fit(X, y, sample_weight=sample_weight)
+        assert_array_equal(clf.predict(np.array([[0, 0]])), np.array([2]))
 
 
 def test_alpha():

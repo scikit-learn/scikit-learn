@@ -1022,7 +1022,7 @@ class CategoricalNB(BaseDiscreteNB):
     """Naive Bayes classifier for categorical features
 
     The categorical Naive Bayes classifier is suitable for classification with
-    discrete features, that are categorically distributed. The categories of
+    discrete features that are categorically distributed. The categories of
     each feature are drawn from a categorical distribution.
 
     Read more in the :ref:`User Guide <categorical_naive_bayes>`.
