@@ -199,8 +199,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
-        predicts the most probable label for the input data points.
+        `tol`, otherwise, a :class:`~sklearn.exceptions.ConvergenceWarning` is
+        raised. After fitting, it predicts the most probable label for the
+        input data points.
 
         .. versionadded:: 0.20
 

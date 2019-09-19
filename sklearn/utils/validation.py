@@ -1003,6 +1003,11 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
 
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
+
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)

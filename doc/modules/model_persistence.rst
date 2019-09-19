@@ -25,8 +25,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> from sklearn import svm
   >>> from sklearn import datasets
   >>> clf = svm.SVC()
-  >>> iris = datasets.load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y= datasets.load_iris(return_X_y=True)
   >>> clf.fit(X, y)
   SVC()
 

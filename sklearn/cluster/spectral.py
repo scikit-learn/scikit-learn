@@ -13,7 +13,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
 from ..metrics.pairwise import pairwise_kernels
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from .k_means_ import k_means
 
@@ -272,7 +272,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator, ClusterMixin):
+class SpectralClustering(ClusterMixin, BaseEstimator):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -326,10 +326,18 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
         Ignored for ``affinity='nearest_neighbors'``.
 
-    affinity : string, array-like or callable, default 'rbf'
-        If a string, this may be one of 'nearest_neighbors', 'precomputed',
-        'rbf' or one of the kernels supported by
-        `sklearn.metrics.pairwise_kernels`.
+    affinity : string or callable, default 'rbf'
+        How to construct the affinity matrix.
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix using a radial basis function
+           (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
+         - one of the kernels supported by
+           :func:`~sklearn.metrics.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
@@ -468,7 +476,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
-        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+        allow_squared = self.affinity in ["precomputed",
+                                          "precomputed_nearest_neighbors"]
+        if X.shape[0] == X.shape[1] and not allow_squared:
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
                           " a custom affinity matrix, "
@@ -478,6 +488,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
                                             include_self=True,
                                             n_jobs=self.n_jobs)
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        elif self.affinity == 'precomputed_nearest_neighbors':
+            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                         n_jobs=self.n_jobs,
+                                         metric="precomputed").fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X
@@ -530,4 +546,5 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity == "precomputed"
+        return self.affinity in ["precomputed",
+                                 "precomputed_nearest_neighbors"]

@@ -120,9 +120,9 @@ Using the Iris dataset, we can construct a tree as follows::
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
-    >>> iris = load_iris()
+    >>> X, y = load_iris(return_X_y=True)
     >>> clf = tree.DecisionTreeClassifier()
-    >>> clf = clf.fit(iris.data, iris.target)
+    >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the plot_tree function::
 
@@ -190,10 +190,8 @@ of external libraries and is more compact:
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> from sklearn.tree.export import export_text
     >>> iris = load_iris()
-    >>> X = iris['data']
-    >>> y = iris['target']
     >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-    >>> decision_tree = decision_tree.fit(X, y)
+    >>> decision_tree = decision_tree.fit(iris.data, iris.target)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |--- petal width (cm) <= 0.80
@@ -321,17 +319,6 @@ largest reduction in entropy.  This has a cost of
 :math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
 :math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
-
-Scikit-learn offers a more efficient implementation for the construction of
-decision trees.  A naive implementation (as above) would recompute the class
-label histograms (for classification) or the means (for regression) at for each
-new split point along a given feature. Presorting the feature over all
-relevant samples, and retaining a running label count, will reduce the complexity
-at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`. This is an option
-for all tree based algorithms. By default it is turned on for gradient boosting,
-where in general it makes training faster, but turned off for all other algorithms as
-it tends to slow down training when training deep trees.
 
 
 Tips on practical use

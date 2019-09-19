@@ -4,11 +4,10 @@ Partial Dependence Plots
 ========================
 
 Partial dependence plots show the dependence between the target function [2]_
-and a set of 'target' features, marginalizing over the
-values of all other features (the complement features). Due to the limits
-of human perception the size of the target feature set must be small (usually,
-one or two) thus the target features are usually chosen among the most
-important features.
+and a set of 'target' features, marginalizing over the values of all other
+features (the complement features). Due to the limits of human perception, the
+size of the target feature set must be small (usually, one or two) thus the
+target features are usually chosen among the most important features.
 
 This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.neural_network.MLPRegressor` and a
@@ -16,13 +15,13 @@ This example shows how to obtain partial dependence plots from a
 California housing dataset. The example is taken from [1]_.
 
 The plots show four 1-way and two 1-way partial dependence plots (ommitted for
-:class:`~sklearn.neural_network.MLPRegressor` due to computation time).
-The target variables for the one-way PDP are: median income (`MedInc`),
-average occupants per household (`AvgOccup`), median house age (`HouseAge`),
-and average rooms per household (`AveRooms`).
+:class:`~sklearn.neural_network.MLPRegressor` due to computation time). The
+target variables for the one-way PDP are: median income (`MedInc`), average
+occupants per household (`AvgOccup`), median house age (`HouseAge`), and
+average rooms per household (`AveRooms`).
 
-.. [1] T. Hastie, R. Tibshirani and J. Friedman,
-    "Elements of Statistical Learning Ed. 2", Springer, 2009.
+.. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+       Learning Ed. 2", Springer, 2009.
 
 .. [2] For classification you can think of it as the regression score before
        the link function.
@@ -53,7 +52,7 @@ from sklearn.datasets.california_housing import fetch_california_housing
 # Center target to avoid gradient boosting init bias: gradient boosting
 # with the 'recursion' method does not account for the initial estimator
 # (here the average target, by default)
-#
+
 cal_housing = fetch_california_housing()
 names = cal_housing.feature_names
 X, y = cal_housing.data, cal_housing.target
@@ -75,13 +74,31 @@ tic = time()
 est = make_pipeline(QuantileTransformer(),
                     MLPRegressor(hidden_layer_sizes=(50, 50),
                                  learning_rate_init=0.01,
-                                 max_iter=200,
-                                 early_stopping=True,
-                                 n_iter_no_change=10,
-                                 validation_fraction=0.1))
+                                 early_stopping=True))
 est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
+
+##############################################################################
+# We configured a pipeline to scale the numerical input features and tuned the
+# neural network size and learning rate to get a reasonable compromise between
+# training time and predictive performance on a test set.
+#
+# Importantly, this tabular dataset has very different dynamic ranges for its
+# features. Neural networks tend to be very sensitive to features with varying
+# scales and forgetting to preprocess the numeric feature would lead to a very
+# poor model.
+#
+# It would be possible to get even higher predictive performance with a larger
+# neural network but the training would also be significantly more expensive.
+#
+# Note that it is important to check that the model is accurate enough on a
+# test set before plotting the partial dependence since there would be little
+# use in explaining the impact of a given feature on the prediction function of
+# a poor model.
+#
+# Let's now compute the partial dependence plots for this neural network using
+# the model-agnostic (brute-force) method:
 
 print('Computing partial dependence plots...')
 tic = time()
@@ -105,11 +122,24 @@ fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 print("Training GradientBoostingRegressor...")
 tic = time()
-est = HistGradientBoostingRegressor(max_iter=100, max_leaf_nodes=64,
-                                    learning_rate=0.1, random_state=1)
+est = HistGradientBoostingRegressor()
 est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
+
+##############################################################################
+# Here, we used the default hyperparameters for the gradient boosting model
+# without any preprocessing as tree-based models are naturally robust to
+# monotonic transformations of numerical features.
+#
+# Note that on this tabular dataset, Gradient Boosting Machines are both
+# significantly faster to train and more accurate than neural networks. It is
+# also significantly cheaper to tune their hyperparameters (the default tend to
+# work well while this is not often the case for neural networks).
+#
+# Finally, as we will see next, computing partial dependence plots tree-based
+# models is also orders of magnitude faster making it cheap to compute partial
+# dependence plots for pairs of interacting features:
 
 print('Computing partial dependence plots...')
 tic = time()

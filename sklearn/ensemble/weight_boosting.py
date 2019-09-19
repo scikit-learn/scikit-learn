@@ -290,7 +290,7 @@ def _samme_proba(estimator, n_classes, X):
                               * log_proba.sum(axis=1)[:, np.newaxis])
 
 
-class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
+class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     """An AdaBoost classifier.
 
     An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
@@ -671,7 +671,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         score : array, shape = [n_samples, k]
             The decision function of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
@@ -714,7 +714,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         score : generator of array, shape = [n_samples, k]
             The decision function of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
@@ -787,7 +787,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
         check_is_fitted(self)
         X = self._validate_data(X)
@@ -822,7 +822,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : generator of array, shape = [n_samples]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
         X = self._validate_data(X)
 
@@ -848,13 +848,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
         X = self._validate_data(X)
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
+class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
     An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
