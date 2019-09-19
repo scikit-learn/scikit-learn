@@ -391,7 +391,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     ----------
     estimator : BaseEstimator
         A fitted estimator object implementing :term:`predict`,
-        :term:predict_proba`, or :term:`decision_function`.
+        :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
     X : array-like, shape (n_samples, n_features)
@@ -431,7 +431,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot. Only active when `ax`
-        is a single axes or `None`.
+        is a single axis or `None`.
 
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the axes of the plots, for each
@@ -479,6 +479,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         has been cleared. By default, a new one is created.
 
         .. deprecated:: 0.22
+           ``fig`` will be removed in 0.24.
 
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
@@ -489,11 +490,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         For two-way partial dependence plots.
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
-        - If a single axes is passed in, it is treated as a bounding axes
+        - If a single axis is passed in, it is treated as a bounding axes
             and a grid of partial depedendence plots will be drawn within
             these bounds. The `n_cols` parameter controls the number of
             columns in the grid.
-        - If a array-like of axes are passed in, the partial dependence
+        - If an array-like of axes are passed in, the partial dependence
             plots will be drawn directly into these axes.
         - If `None`, a figure and a bounding axes is created and treated
             as the single axes case.
@@ -640,10 +641,17 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if fx not in deciles:
             deciles[fx] = mquantiles(X[:, fx], prob=np.arange(0.1, 1.0, 0.1))
 
+    if fig is not None:
+        warnings.warn("The fig parameter is deprecated in version "
+                      "0.22 and will be removed in version 0.24",
+                      DeprecationWarning)
+        fig.clear()
+        ax = fig.gca()
+
     display = PartialDependenceDisplay(pd_results, features, feature_names,
                                        target_idx, pdp_lim, deciles)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
-                        contour_kw=contour_kw, fig=fig)
+                        contour_kw=contour_kw)
 
 
 class PartialDependenceDisplay:
@@ -731,20 +739,20 @@ class PartialDependenceDisplay:
         self.pdp_lim = pdp_lim
         self.deciles = deciles
 
-    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None, fig=None):
+    def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
 
         Parameters
         ----------
         ax : Matplotlib axes or array-like of Matplotlib axes, default=None
-            - If a single axes is passed in, it is treated as a bounding axes
-              and a grid of partial depedendence plots will be drawn within
-              these bounds. The `n_cols` parameter controls the number of
-              columns in the grid.
-            - If a array-like of axes are passed in, the partial dependence
-              plots will be drawn directly into these axes.
+            - If a single axis is passed in, it is treated as a bounding axes
+                and a grid of partial depedendence plots will be drawn within
+                these bounds. The `n_cols` parameter controls the number of
+                columns in the grid.
+            - If an array-like of axes are passed in, the partial dependence
+                plots will be drawn directly into these axes.
             - If `None`, a figure and a bounding axes is created and treated
-              as the single axes case.
+                as the single axes case.
 
         n_cols : int, default=3
             The maximum number of columns in the grid plot. Only active when
@@ -757,12 +765,6 @@ class PartialDependenceDisplay:
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
-
-        fig : Matplotlib figure object, optional (default=None)
-            A figure object onto which the plots will be drawn, after the
-            figure has been cleared. By default, a new one is created.
-
-            .. deprecated:: 0.22
 
         Returns
         -------
@@ -781,19 +783,11 @@ class PartialDependenceDisplay:
         if contour_kw is None:
             contour_kw = {}
 
-        contour_kw = {**{"alpha": 0.75}, **contour_kw}
-
-        if fig is not None:
-            warnings.warn("The fig parameter is deprecated in version "
-                          "0.22 and will be removed in version 0.24",
-                          DeprecationWarning)
-            fig.clear()
-
         if ax is None:
-            if fig is None:
-                _, ax = plt.subplots()
-            else:
-                ax = fig.gca()
+            _, ax = plt.subplots()
+
+        default_contour_kws = {"alpha": 0.75}
+        contour_kw = {**default_contour_kws, **contour_kw}
 
         n_features = len(self.features)
 

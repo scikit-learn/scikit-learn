@@ -284,8 +284,7 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2,
 def test_plot_partial_dependence_multioutput(pyplot, target):
     # Test partial dependence plot function on multi-output input.
     X, y = multioutput_regression_data
-    clf = LinearRegression()
-    clf.fit(X, y)
+    clf = LinearRegression().fit(X, y)
 
     grid_resolution = 25
     disp = plot_partial_dependence(clf, X, [0, 1], target=target,

@@ -6,7 +6,7 @@ The :func:`~sklearn.inspection.plot_partial_dependence` function returns a
 :class:`~sklearn.inspection.PartialDependenceDisplay` object that can be used
 for plotting without needing to recalculate the partial dependence. In this
 example, we show how to plot partial dependence plots and how to quickly
-customize the plot with the Visualization API.
+customize the plot with the visualization API.
 
 .. note::
 
@@ -96,10 +96,11 @@ ax2.set_title("Multi-layer Perceptron")
 ##############################################################################
 # Another way to compare the curves is to plot them on top of each other. Here,
 # we create a figure with one row and two columns. The axes are passed into the
-# :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as list,
+# :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as a list,
 # which will plot the partial dependence curves of each model on the same axes.
 # The length of the axes list must be equal to the number of plots drawn.
 
+# Sets this image as the thumbnail for sphinx gallery
 # sphinx_gallery_thumbnail_number = 4
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
 tree_disp.plot(ax=[ax1, ax2], line_kw={"label": "Decision Tree"})
@@ -109,7 +110,7 @@ ax1.legend()
 ax2.legend()
 
 ##############################################################################
-# `tree_disp.axes_` is a numpy array container the axes used to draw th
+# `tree_disp.axes_` is a numpy array container the axes used to draw the
 # partial dependence plots. This can be passed to `mlp_disp` to have the same
 # affect of drawing the plots on top of each other. Furthermore, the
 # `mlp_disp.figure_` stores the figure, which allows for resizing the figure
@@ -128,7 +129,7 @@ plt.show()
 # Plotting partial dependence for one feature
 # ===========================================
 #
-# Here we plot the partial dependence curves for a single feature, "LSTAT", on
+# Here, we plot the partial dependence curves for a single feature, "LSTAT", on
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
 tree_disp = plot_partial_dependence(tree, X, ["LSTAT"],
