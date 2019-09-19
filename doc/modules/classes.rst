@@ -422,6 +422,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
@@ -639,6 +641,7 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
+   impute.KNNImputer
 
 
 .. _inspection_ref:
@@ -879,6 +882,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -887,6 +891,7 @@ details.
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -1002,6 +1007,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
+   metrics.pairwise.nan_euclidean_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -1230,9 +1236,11 @@ Model validation
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.KNeighborsTransformer
    neighbors.LocalOutlierFactor
    neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
+   neighbors.RadiusNeighborsTransformer
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.NeighborhoodComponentsAnalysis
@@ -1507,6 +1515,7 @@ Plotting
    utils.class_weight.compute_sample_weight
    utils.deprecated
    utils.estimator_checks.check_estimator
+   utils.estimator_checks.parametrize_with_checks
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd

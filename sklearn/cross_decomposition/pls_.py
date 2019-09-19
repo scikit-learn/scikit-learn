@@ -31,7 +31,11 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y.
     """
-    y_score = Y[:, [0]]
+    for col in Y.T:
+        if np.any(np.abs(col) > np.finfo(np.double).eps):
+            y_score = col.reshape(len(col), 1)
+            break
+
     x_weights_old = 0
     ite = 1
     X_pinv = Y_pinv = None
@@ -117,7 +121,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
+class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
@@ -398,7 +402,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -433,7 +437,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -746,7 +750,7 @@ class PLSCanonical(_PLS):
             max_iter=max_iter, tol=tol, copy=copy)
 
 
-class PLSSVD(BaseEstimator, TransformerMixin):
+class PLSSVD(TransformerMixin, BaseEstimator):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y
@@ -872,7 +876,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
-        check_is_fitted(self, 'x_mean_')
+        check_is_fitted(self)
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)

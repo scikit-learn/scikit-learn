@@ -569,7 +569,7 @@ class PCA(_BasePCA):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        check_is_fitted(self, 'mean_')
+        check_is_fitted(self)
 
         X = check_array(X)
         Xr = X - self.mean_

@@ -20,7 +20,7 @@ from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
 
-class NearestCentroid(BaseEstimator, ClassifierMixin):
+class NearestCentroid(ClassifierMixin, BaseEstimator):
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
@@ -191,7 +191,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
-        check_is_fitted(self, 'centroids_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         return self.classes_[pairwise_distances(

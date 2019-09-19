@@ -216,7 +216,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples, n_classes)
             The predicted probas.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
@@ -244,7 +244,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
@@ -465,7 +465,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     return AB_[0], AB_[1]
 
 
-class _SigmoidCalibration(BaseEstimator, RegressorMixin):
+class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
     Attributes

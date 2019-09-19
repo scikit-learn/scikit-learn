@@ -23,6 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from .base import _parallel_fit_estimator
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
@@ -31,24 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
-    """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        try:
-            estimator.fit(X, y, sample_weight=sample_weight)
-        except TypeError as exc:
-            if "unexpected keyword argument 'sample_weight'" in str(exc):
-                raise ValueError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
-                ) from exc
-            raise
-    else:
-        estimator.fit(X, y)
-    return estimator
-
-
-class _BaseVoting(_BaseComposition, TransformerMixin):
+class _BaseVoting(TransformerMixin, _BaseComposition):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -145,7 +129,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         return self._get_params('estimators', deep=deep)
 
 
-class VotingClassifier(_BaseVoting, ClassifierMixin):
+class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -296,7 +280,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             Predicted class labels.
         """
 
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
 
@@ -317,7 +301,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
         return avg
@@ -363,7 +347,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
                 array-like of shape (n_samples, n_classifiers), being
                 class labels predicted by each classifier.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
@@ -375,7 +359,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             return self._predict(X)
 
 
-class VotingRegressor(_BaseVoting, RegressorMixin):
+class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21
@@ -477,7 +461,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         y : array of shape (n_samples,)
             The predicted values.
         """
-        check_is_fitted(self, "estimators_")
+        check_is_fitted(self)
         return np.average(self._predict(X), axis=1,
                           weights=self._weights_not_none)
 
@@ -495,5 +479,5 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
             array-like of shape (n_samples, n_classifiers), being
             values predicted by each regressor.
         """
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
         return self._predict(X)

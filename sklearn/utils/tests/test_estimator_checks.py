@@ -43,7 +43,7 @@ class CorrectNotFittedError(ValueError):
     """
 
 
-class BaseBadClassifier(BaseEstimator, ClassifierMixin):
+class BaseBadClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 
@@ -170,7 +170,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
         X = check_array(X)
         return np.ones(X.shape[0])
 
