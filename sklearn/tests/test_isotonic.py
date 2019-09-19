@@ -385,19 +385,19 @@ def test_isotonic_ymin_ymax():
                   -0.896, -0.377, -1.327, 0.180])
     y = isotonic_regression(x, y_min=0., y_max=0.1)
 
-    assert (np.all(y >= 0))
-    assert (np.all(y <= 0.1))
+    assert np.all(y >= 0)
+    assert np.all(y <= 0.1)
 
     # Also test decreasing case since the logic there is different
     y = isotonic_regression(x, y_min=0., y_max=0.1, increasing=False)
 
-    assert (np.all(y >= 0))
-    assert (np.all(y <= 0.1))
+    assert np.all(y >= 0)
+    assert np.all(y <= 0.1)
 
     # Finally, test with only one bound
     y = isotonic_regression(x, y_min=0., increasing=False)
 
-    assert (np.all(y >= 0))
+    assert np.all(y >= 0)
 
 
 def test_isotonic_zero_weight_loop():
@@ -490,7 +490,7 @@ def test_isotonic_mismatched_dtype():
     y = [2, 1, 4, 3, 5]
     for dtype in (np.int32, np.int64, np.float64):
         y_np = np.array(y, dtype=dtype)
-        X = np.arange(len(y), dtype=np.float32).reshape((-1, 1))
+        X = np.arange(len(y), dtype=np.float32)
         reg.fit(X, y_np)
         assert reg.predict(X).dtype == X.dtype
 
