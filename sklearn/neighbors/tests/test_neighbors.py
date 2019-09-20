@@ -18,7 +18,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -1025,10 +1024,9 @@ def test_neighbors_badargs():
 
         nbrs = cls(metric='haversine', algorithm='brute')
         nbrs.fit(X3, y)
-        assert_raise_message(ValueError,
-                             "Haversine distance only valid in 2 dimensions",
-                             nbrs.predict,
-                             X3)
+        err_msg = "Haversine distance only valid in 2 dimensions"
+        with pytest.raises(ValueError, match=err_msg):
+            nbrs.predict(X3)
 
         nbrs = cls()
         with pytest.raises(ValueError):
