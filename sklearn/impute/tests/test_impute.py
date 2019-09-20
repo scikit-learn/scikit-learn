@@ -252,7 +252,7 @@ def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
     if type == 'dataframe':
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
-    msg = "non-numeric data:\ncould not convert string to float: 'a'"
+    msg = "non-numeric data:\ncould not convert string to float: '"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
