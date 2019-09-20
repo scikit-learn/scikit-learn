@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
+from ..utils.validation import _deprecate_positional_args
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 
