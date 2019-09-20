@@ -341,6 +341,10 @@ Changelog
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |FIX| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+  ``scores_``, ``n_iter_`` and ``coefs_paths_`` attribute would have a wrong
+  ordering with ``penalty='elastic-net'``. :pr:`15044` by `Nicolas Hug`_
+
 :mod:`sklearn.manifold`
 .......................
 
