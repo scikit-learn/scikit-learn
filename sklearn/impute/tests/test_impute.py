@@ -237,7 +237,7 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
     X = np.array([["a", "b", 3],
                   [4, "e", 6],
                   ["g", "h", 9]], dtype=dtype)
-    msg = "non-numeric data:\ncould not convert string to float: 'a'"
+    msg = "non-numeric data:\ncould not convert string to float: '"
     with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
