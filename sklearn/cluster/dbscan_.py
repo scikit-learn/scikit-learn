@@ -271,7 +271,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
+    def __init__(self, *, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):
         self.eps = eps

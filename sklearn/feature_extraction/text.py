@@ -975,7 +975,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, input='content', encoding='utf-8',
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",

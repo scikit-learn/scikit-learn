@@ -469,8 +469,8 @@ def test_lasso_lars_ic():
     # - some good features are selected.
     # - alpha_bic > alpha_aic
     # - n_nonzero_bic < n_nonzero_aic
-    lars_bic = linear_model.LassoLarsIC('bic')
-    lars_aic = linear_model.LassoLarsIC('aic')
+    lars_bic = linear_model.LassoLarsIC(criterion='bic')
+    lars_aic = linear_model.LassoLarsIC(criterion='aic')
     rng = np.random.RandomState(42)
     X = diabetes.data
     X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
@@ -483,7 +483,7 @@ def test_lasso_lars_ic():
     assert np.max(nonzero_bic) < diabetes.data.shape[1]
 
     # test error on unknown IC
-    lars_broken = linear_model.LassoLarsIC('<unknown>')
+    lars_broken = linear_model.LassoLarsIC(criterion='<unknown>')
     assert_raises(ValueError, lars_broken.fit, X, y)
 
 

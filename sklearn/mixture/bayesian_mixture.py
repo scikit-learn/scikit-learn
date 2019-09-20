@@ -16,7 +16,7 @@ from .gaussian_mixture import _estimate_gaussian_parameters
 from .gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..utls.validation import _deprecate_positional_args
+from ..utils.validation import _deprecate_positional_args
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
