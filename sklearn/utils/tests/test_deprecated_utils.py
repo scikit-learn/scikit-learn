@@ -8,6 +8,7 @@ from sklearn.utils.estimator_checks import enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import is_public_parameter
 from sklearn.utils.estimator_checks import pairwise_estimator_convert_X
 from sklearn.utils.estimator_checks import set_checking_parameters
+from sklearn.utils.optimize import newton_cg
 
 
 # This file tests the utils that are deprecated
@@ -41,3 +42,25 @@ def test_pairwise_estimator_convert_X():
 def test_set_checking_parameters():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         set_checking_parameters(DummyClassifier())
+
+
+def test_newton_cg():
+    rng = np.random.RandomState(0)
+    A = rng.normal(size=(10, 10))
+    x0 = np.ones(10)
+
+    def func(x):
+        Ax = A.dot(x)
+        return .5 * (Ax).dot(Ax)
+
+    def grad(x):
+        return A.T.dot(A.dot(x))
+
+    def hess(x, p):
+        return p.dot(A.T.dot(A.dot(x.all())))
+
+    def grad_hess(x):
+        return grad(x), lambda x: A.T.dot(A.dot(x))
+
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
+        newton_cg(grad_hess, func, grad, x0)
