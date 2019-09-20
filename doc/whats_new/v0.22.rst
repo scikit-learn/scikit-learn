@@ -503,6 +503,13 @@ Changelog
   `kernel='precomputed'` and fit on non-square data.
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- |Fix| :class:`svm.SVC`, :class:`svm.SVR`, :class:`svm.NuSVR` and
+  :class:`svm.OneClassSVM` when received values negative or zero
+  for parameter ``sample_weight`` in method fit(), generated an
+  invalid model. This behavior occured only in some border scenarios.
+  Now in these cases, fit() will fail with an Exception.
+  :pr:`14286` by :user:`Alex Shacked <alexshacked>`.
+
 :mod:`sklearn.tree`
 ...................
 
