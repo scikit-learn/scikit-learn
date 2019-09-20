@@ -380,7 +380,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                 return None, W, S
 
 
-class FastICA(BaseEstimator, TransformerMixin):
+class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.

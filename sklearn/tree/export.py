@@ -67,7 +67,7 @@ def _color_brew(n):
     return color_list
 
 
-class Sentinel(object):
+class Sentinel:
     def __repr__(self):
         return '"tree.dot"'
 
@@ -96,7 +96,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
-        The decision tree to be exported to GraphViz.
+        The decision tree to be plotted.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -176,7 +176,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     return exporter.export(decision_tree, ax=ax)
 
 
-class _BaseTreeExporter(object):
+class _BaseTreeExporter:
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,

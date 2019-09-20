@@ -70,7 +70,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param

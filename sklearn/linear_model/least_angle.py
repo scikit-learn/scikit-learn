@@ -761,7 +761,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
+class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.

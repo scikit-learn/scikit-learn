@@ -23,6 +23,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from .base import _parallel_fit_estimator
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
@@ -31,24 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
-    """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        try:
-            estimator.fit(X, y, sample_weight=sample_weight)
-        except TypeError as exc:
-            if "unexpected keyword argument 'sample_weight'" in str(exc):
-                raise ValueError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
-                ) from exc
-            raise
-    else:
-        estimator.fit(X, y)
-    return estimator
-
-
-class _BaseVoting(_BaseComposition, TransformerMixin):
+class _BaseVoting(TransformerMixin, _BaseComposition):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -145,7 +129,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         return self._get_params('estimators', deep=deep)
 
 
-class VotingClassifier(_BaseVoting, ClassifierMixin):
+class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -375,7 +359,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             return self._predict(X)
 
 
-class VotingRegressor(_BaseVoting, RegressorMixin):
+class VotingRegressor(RegressorMixin, _BaseVoting):
     """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21

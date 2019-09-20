@@ -37,8 +37,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues',
-    'custom_references_resolver'
+    'sphinx_issues'
 ]
 
 # this is needed for some reason...
@@ -107,11 +106,7 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-# sklearn uses a custom extension: `custom_references_resolver` to modify
-# the order of link resolution for the 'any' role. It resolves python class
-# links first before resolving 'std' domain links. Unresolved roles are
-# considered to be <code> blocks.
-default_role = 'any'
+default_role = 'literal'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False

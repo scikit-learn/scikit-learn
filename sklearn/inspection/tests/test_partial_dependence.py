@@ -287,7 +287,7 @@ def test_multiclass_multioutput(Estimator):
         partial_dependence(est, X, [0])
 
 
-class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
+class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         # simulate that we have some classes
         self.classes_ = [0, 1]

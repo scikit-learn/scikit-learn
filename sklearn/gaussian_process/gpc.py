@@ -449,7 +449,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         return theta_opt, func_min
 
 
-class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
+class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """Gaussian process classification (GPC) based on Laplace approximation.
 
     The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
@@ -679,7 +679,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         C : array-like, shape = (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         if self.n_classes_ > 2 and self.multi_class == "one_vs_one":

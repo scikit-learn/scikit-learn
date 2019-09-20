@@ -3,7 +3,8 @@
 Plotting Cross-Validated Predictions
 ====================================
 
-This example shows how to use `cross_val_predict` to visualize prediction
+This example shows how to use
+:func:`~sklearn.model_selection.cross_val_predict` to visualize prediction
 errors.
 
 """

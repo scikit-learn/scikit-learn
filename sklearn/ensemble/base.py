@@ -19,6 +19,23 @@ from abc import ABCMeta, abstractmethod
 MAX_RAND_SEED = np.iinfo(np.int32).max
 
 
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise TypeError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
+    else:
+        estimator.fit(X, y)
+    return estimator
+
+
 def _set_random_states(estimator, random_state=None):
     """Sets fixed random_state parameters for an estimator
 
@@ -58,7 +75,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
+class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
