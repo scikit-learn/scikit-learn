@@ -537,17 +537,6 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
-- |API| `requires_positive_X` estimator tag (for models that require
-  X to be non-negative) is now used by `check_estimator` to make sure
-  a proper error message is raised if X contains some negative entries.
-  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
-
-- |Fix| :func:`utils.check_array` is now raising an error instead of casting
-  NaN to integer.
-  :pr:`14872` by `Roman Yurchak`_.
-
-:mod:`sklearn.neighbors`
-....................
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
@@ -561,6 +550,10 @@ Changelog
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :func:`utils.check_array` is now raising an error instead of casting
+  NaN to integer.
+  :pr:`14872` by `Roman Yurchak`_.
 
 :mod:`sklearn.metrics`
 ..................................
