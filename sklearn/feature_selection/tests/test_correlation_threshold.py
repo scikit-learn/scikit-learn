@@ -37,7 +37,6 @@ def test_keeps_feature_with_the_most_variance(toarray, flip_cols):
         X = np.c_[X[:, 1], X[:, 0]]
 
     higher_variance_idx = np.argmax(np.std(X, axis=0))
-    print(np.std(X, axis=0))
     X = toarray(X)
 
     cor_thres = CorrelationThreshold(threshold=0.5)
@@ -119,13 +118,15 @@ def test_threshold_zero_keeps_one_feature(toarray):
 
 @pytest.mark.parametrize("toarray", [np.asarray, csr_matrix, csc_matrix])
 def test_constant_features(toarray):
-    X = np.array([[0, 0, 0], [1, 1, 1], [1, 2, 3], [2, 3, 4]]).T
+    X = np.array([[0, 0, 0], [1, 1, 1], [1, 2, 3], [2, 3, 4.1]]).T
     X = toarray(X)
 
     cor_thres = CorrelationThreshold()
     X_trans = cor_thres.fit_transform(X)
-    print(X_trans)
     assert X_trans.shape == (3, 1)
+
+    # Feature with the most variance is kept
+    assert_allclose_dense_sparse(X_trans, X[:, [3]])
 
 
 @pytest.mark.parametrize("threshold", [-1, 2])
