@@ -669,6 +669,12 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   inspection.PartialDependenceDisplay
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
    inspection.plot_partial_dependence

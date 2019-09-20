@@ -16,3 +16,4 @@ Developer's Guide
    performance
    advanced_installation
    maintainer
+   plotting
