@@ -38,6 +38,17 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
 
 - template: build_tools/azure/posix-32.yml
   parameters:
