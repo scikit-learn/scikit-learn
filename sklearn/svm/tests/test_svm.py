@@ -200,11 +200,12 @@ def test_linearsvr_fit_sampleweight():
     diabetes = datasets.load_diabetes()
     n_samples = len(diabetes.target)
     unit_weight = np.ones(n_samples)
-    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
-                                    sample_weight=unit_weight)
+    lsvr = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+        diabetes.data, diabetes.target, sample_weight=unit_weight)
     score1 = lsvr.score(diabetes.data, diabetes.target)
 
-    lsvr_no_weight = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
+    lsvr_no_weight = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+        diabetes.data, diabetes.target)
     score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
 
     assert_allclose(np.linalg.norm(lsvr.coef_),
@@ -215,14 +216,15 @@ def test_linearsvr_fit_sampleweight():
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvr_unflat = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
-                                           sample_weight=random_weight)
+    lsvr_unflat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+        diabetes.data, diabetes.target, sample_weight=random_weight)
     score3 = lsvr_unflat.score(diabetes.data, diabetes.target,
                                sample_weight=random_weight)
 
     X_flat = np.repeat(diabetes.data, random_weight, axis=0)
     y_flat = np.repeat(diabetes.target, random_weight, axis=0)
-    lsvr_flat = svm.LinearSVR(C=1e3).fit(X_flat, y_flat)
+    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+        X_flat, y_flat)
     score4 = lsvr_flat.score(X_flat, y_flat)
 
     assert_almost_equal(score3, score4, 2)
@@ -694,7 +696,7 @@ def test_linearsvc_fit_sampleweight():
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
     clf_unitweight = svm.LinearSVC(random_state=0).\
-        fit(X, Y, sample_weight=unit_weight)
+        fit(X, Y, sample_weight=unit_weight, tol=1e-12, max_iter=1000)
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
@@ -706,12 +708,13 @@ def test_linearsvc_fit_sampleweight():
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
     lsvc_unflat = svm.LinearSVC(random_state=0).\
-        fit(X, Y, sample_weight=random_weight)
+        fit(X, Y, sample_weight=random_weight, tol=1e-12, max_iter=1000)
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)
     y_flat = np.repeat(Y, random_weight, axis=0)
-    lsvc_flat = svm.LinearSVC(random_state=0).fit(X_flat, y_flat)
+    lsvc_flat = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).fit(
+        X_flat, y_flat)
     pred2 = lsvc_flat.predict(T)
 
     assert_array_equal(pred1, pred2)
