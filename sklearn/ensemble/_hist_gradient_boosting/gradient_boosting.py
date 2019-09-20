@@ -1042,6 +1042,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         return encoded_y
 
     def _get_loss(self):
+        if (self.loss == 'categorical_crossentropy' and
+                self.n_trees_per_iteration_ == 1):
+            raise ValueError("'categorical_crossentropy' is not suitable for "
+                             "a binary classification problem. Please use "
+                             "'auto' or 'binary_crossentropy' instead.")
+
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES['binary_crossentropy']()

@@ -192,6 +192,9 @@ Changelog
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
   - |Fix| Fixed a bug where early stopping would break with string targets.
     :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
+  - |Fix| :class:`ensemble.HistGradientBoostingClassifier` now raises an error
+    if ``categorical_crossentropy`` loss is given for a binary classification
+    problem. :pr:`14869` by `Adrin Jalali`_.
 
   Note that pickles from 0.21 will not work in 0.22.
 
