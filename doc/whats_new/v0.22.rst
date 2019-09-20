@@ -554,6 +554,10 @@ Changelog
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :func:`utils.check_array` is now raising an error instead of casting
+  NaN to integer.
+  :pr:`14872` by `Roman Yurchak`_.
+
 :mod:`sklearn.metrics`
 ..................................
 
