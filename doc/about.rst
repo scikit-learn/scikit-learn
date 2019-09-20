@@ -111,6 +111,49 @@ The `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ fund Olivier
 Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
 
+**Platinum Members**
+
+
+.. figure:: images/microsoft.png
+   :width: 100pt
+   :align: center
+   :target: https://www.microsoft.com/
+
+.. figure:: images/bcg.png
+   :width: 100pt
+   :align: center
+   :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
+**Gold Members**
+
+.. figure:: images/axa.png
+   :width: 50pt
+   :align: center
+   :target: https://www.axa.fr/
+
+.. figure:: images/bnp.png
+   :width: 100pt
+   :align: center
+   :target: https://www.bnpparibascardif.com/
+
+.. figure:: images/intel.png
+   :width: 70pt
+   :align: center
+   :target: https://www.intel.com/
+
+.. figure:: images/nvidia.png
+   :width: 70pt
+   :align: center
+   :target: https://www.nvidia.com/
+
+**Silver Members**
+
+.. figure:: images/dataiku.png
+   :width: 70pt
+   :align: center
+   :target: https://www.dataiku.com/
+
+........  
 
 .. figure:: themes/scikit-learn/static/img/columbia.png 
    :width: 50pt
@@ -118,6 +161,8 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :target: https://www.columbia.edu/
 
    `Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
+
+..........
 
 .. figure:: images/sloan_banner.png
    :width: 100pt
@@ -128,6 +173,8 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    `Alfred P. Sloan Foundation <https://sloan.org>`_ .
    This grant supports the position of Nicolas Hug and Thomas J. Fan.
 
+...........
+
 .. figure:: themes/scikit-learn/static/img/sydney-primary.jpeg
    :width: 100pt
    :align: center
@@ -135,6 +182,8 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
 
    `The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
    July 2017.
+
+............
 
 .. figure:: images/anaconda.png
    :width: 100pt
@@ -158,6 +207,8 @@ Past Sponsors
    (2012-2013) and Olivier Grisel (2013-2017) to work on this project
    full-time. It also hosts coding sprints and other events.
 
+.....................
+
 .. figure:: images/cds-logo.png
    :width: 100pt
    :align: center
@@ -169,6 +220,8 @@ Past Sponsors
    (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and the
    position of Joris van den Bossche (????-????).
 
+..........................
+
 .. figure:: images/nyu_short_color.png
    :width: 100pt
    :align: center
@@ -179,6 +232,8 @@ Past Sponsors
    Data Science Environment also funds several students to work on the project
    part-time.
 
+........................
+
 .. figure:: themes/scikit-learn/static/img/telecom.png
    :width: 50pt
    :align: center
@@ -188,7 +243,9 @@ Past Sponsors
    (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
    (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
 
-.. image:: themes/scikit-learn/static/img/digicosme.png
+.....................
+
+.. figure:: themes/scikit-learn/static/img/digicosme.png
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
@@ -198,6 +255,7 @@ Past Sponsors
    (2018-2019) to work part time on scikit-learn during their PhDs. It also
    funded a scikit-learn coding sprint in 2015.
 
+......................
 
 The following students were sponsored by `Google
 <https://developers.google.com/open-source/>`_ to work on scikit-learn through
@@ -214,6 +272,8 @@ program.
 
 .. _Vlad Niculae: https://vene.ro/
 
+...................
+
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 <https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
@@ -222,19 +282,33 @@ College <https://pbs.dartmouth.edu/>`_).
 Sprints
 -------
 
-The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
-2011 Granada sprint. More information can be found `here
-<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`__
+The International 2019 Paris sprint was kindly hosted by `AXA <https://www.axa.fr/>`_.
+Also some participants could attend thanks to the support of the `Alfred P.
+Sloan Foundation <https://sloan.org>`_, the `Python Software
+Foundation <https://www.python.org/psf/>`_ (PSF) and the `DATAIA Institute
+<https://dataia.eu/en>`_.
 
-`tinyclues <https://www.tinyclues.com/>`_ funded the 2011 international Granada
-sprint.
+.....................
 
+The 2013 International Paris Sprint was made possible thanks to the support of
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
+<https://www.tinyclues.com/>`_, the `French Python Association
+<https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
+<https://www.frs-fnrs.be/-fnrs>`_.
+
+..............
+
+The 2011 International Granada sprint was made possible thanks to the support
+of the `PSF <https://www.python.org/psf/>`_ and `tinyclues
+<https://www.tinyclues.com/>`_.
 
 Donating to the project
-~~~~~~~~~~~~~~~~~~~~~~~
+.......................
 
-If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
+If you are interested in donating to the project or to one of our code-sprints,
+you can use the *Paypal* button below or the `NumFOCUS Donations Page
+<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
+please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -244,8 +318,9 @@ scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.
 
-The received donations for the scikit-learn project mostly will go towards covering travel-expenses
-for code sprints, as well as towards the organization budget of the project [#f1]_.
+The received donations for the scikit-learn project mostly will go towards
+covering travel-expenses for code sprints, as well as towards the organization
+budget of the project [#f1]_.
 
 .. raw :: html
 
@@ -267,26 +342,16 @@ for code sprints, as well as towards the organization budget of the project [#f1
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of the donated funds to pay for other project expenses such as DNS, hosting or continuous integration services.
-
-
-The 2013 Paris international sprint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-|center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
-
- |end-div|
-
-*For more information on this sprint, see* `here
-<https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`__
-
+.. [#f1] Regarding the organization budget in particular, we might use some of
+         the donated funds to pay for other project expenses such as DNS,
+         hosting or continuous integration services.
 
 Infrastructure support
 ----------------------
 
 - We would like to thank `Rackspace <https://www.rackspace.com>`_ for providing
-  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account to
-  automatically build the documentation and the example gallery from for the
+  us with a free `Rackspace Cloud <https://www.rackspace.com/cloud/>`_ account
+  to automatically build the documentation and the example gallery from for the
   development version of scikit-learn using `this tool
   <https://github.com/scikit-learn/sklearn-docbuilder>`_.
 
