@@ -2,6 +2,7 @@ from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...utils import check_matplotlib_support
+from ...utils.multiclass import type_of_target
 from ...utils.validation import check_is_fitted
 
 
@@ -15,7 +16,7 @@ class PrecisionRecallDisplay:
 
     Parameters
     -----------
-    precision : ndarray of shape (n_thresholds + 1, )
+    precision : ndarray of shape (n_thresholds + 1,)
         Precision values.
 
     recall : ndarray of shape (n_thresholds + 1,)
@@ -48,7 +49,7 @@ class PrecisionRecallDisplay:
     def plot(self, ax=None, label_name=None, **kwargs):
         """Plot visualization.
 
-        Extra keyword arguments will be passed to matplotlib's ``plot``.
+        Extra keyword arguments will be passed to matplotlib's `plot`.
 
         Parameters
         ----------
@@ -59,6 +60,9 @@ class PrecisionRecallDisplay:
         label_name : str, default=None
             Name of precision recall curve for labeling. If `None`, use the
             name of the estimator.
+
+        **kwargs : dict
+            Keyword arguments to be passed to matplotlib's `plot`.
 
         Returns
         -------
@@ -95,7 +99,7 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
                                 label_name=None, ax=None, **kwargs):
     """Plot Precision Recall Curve for binary classifers.
 
-    Extra keyword arguments will be passed to matplotlib's ``plot``.
+    Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Read more in the :ref:`User Guide <visualizations>`.
 
@@ -132,6 +136,9 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
     ax : matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
 
+    **kwargs : dict
+        Keyword arguments to be passed to matplotlib's `plot`.
+
     Returns
     -------
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
@@ -144,8 +151,11 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")
 
-    error_msg = "response method {} not defined for estimator {}"
+    type_y = type_of_target(y)
+    if type_y != 'binary':
+        raise ValueError("{} format is not supported".format(type_y))
 
+    error_msg = "response method {} not defined for estimator {}"
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:
