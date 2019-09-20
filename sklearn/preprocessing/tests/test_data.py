@@ -2408,7 +2408,7 @@ def test_power_transformer_fit_transform(method, standardize):
     if method == 'box-cox':
         X = np.abs(X)
 
-    pt = PowerTransformer(method, standardize)
+    pt = PowerTransformer(method=method, standardize=standardize)
     assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
 
 
@@ -2425,7 +2425,7 @@ def test_power_transformer_copy_True(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize, copy=True)
+    pt = PowerTransformer(method=method, standardize=standardize, copy=True)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)
@@ -2453,7 +2453,7 @@ def test_power_transformer_copy_False(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize, copy=False)
+    pt = PowerTransformer(method=method, standardize=standardize, copy=False)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)  # fit didn't change X

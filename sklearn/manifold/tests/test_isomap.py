@@ -84,14 +84,14 @@ def test_isomap_reconstruction_error():
 
 def test_transform():
     n_samples = 200
-    n_components = 10
+    n_neighbors = 10
     noise_scale = 0.01
 
     # Create S-curve dataset
     X, y = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(n_components, 2)
+    iso = manifold.Isomap(n_neighbors, n_components=2)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points

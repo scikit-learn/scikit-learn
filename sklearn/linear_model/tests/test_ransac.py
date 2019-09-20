@@ -287,7 +287,9 @@ def test_ransac_none_estimator():
 
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
                                        residual_threshold=5, random_state=0)
-    ransac_none_estimator = RANSACRegressor(None, 2, 5, random_state=0)
+    ransac_none_estimator = RANSACRegressor(None, min_samples=2,
+                                            residual_threshold=5,
+                                            random_state=0)
 
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)

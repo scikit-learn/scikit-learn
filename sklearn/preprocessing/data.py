@@ -1404,7 +1404,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
     @_deprecate_positional_args
-    def __init__(self, *, degree=2, interaction_only=False, include_bias=True,
+    def __init__(self, degree=2, *, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree
         self.interaction_only = interaction_only

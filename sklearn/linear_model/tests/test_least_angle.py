@@ -234,12 +234,12 @@ def test_rank_deficient_design():
              ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
-        lars = linear_model.LassoLars(.1, normalize=False)
+        lars = linear_model.LassoLars(alpha=.1, normalize=False)
         coef_lars_ = lars.fit(X, y).coef_
         obj_lars = (1. / (2. * 3.)
                     * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
                     + .1 * linalg.norm(coef_lars_, 1))
-        coord_descent = linear_model.Lasso(.1, tol=1e-6, normalize=False)
+        coord_descent = linear_model.Lasso(alpha=.1, tol=1e-6, normalize=False)
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
                   + .1 * linalg.norm(coef_cd_, 1))

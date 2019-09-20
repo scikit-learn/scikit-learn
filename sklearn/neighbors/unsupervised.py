@@ -77,7 +77,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
-      >>> neigh = NearestNeighbors(2, 0.4)
+      >>> neigh = NearestNeighbors(2, radius=0.4)
       >>> neigh.fit(samples)
       NearestNeighbors(...)
 
