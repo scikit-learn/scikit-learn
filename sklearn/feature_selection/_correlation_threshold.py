@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.sparse import issparse
+from scipy.stats import spearmanr
 
 from ..base import BaseEstimator
 from .base import SelectorMixin
@@ -25,9 +26,9 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         Features with a training-set correlation higher than this threshold
         will be removed.
 
-    algorithm : {'pearson', 'spearmanr'}, default='pearson'
-        Correlation type to use. Dense arrays can use any type. 'pearson' is
-        the only type that supports sparse matrices.
+    kind : {'pearson', 'spearmanr'}, default='pearson'
+        Kind or correlation to use. Dense arrays can use any kind. 'pearson' is
+        the only kind that supports sparse matrices.
 
     Attributes
     ----------
@@ -53,9 +54,9 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
     Max Kuhn and Kjell Johnson, "Applied Predictive Modeling", Springer, 2013
     (Section 3.5)
     """
-    def __init__(self, threshold=0.9, algorithm='pearson'):
+    def __init__(self, threshold=0.9, kind='pearson'):
         self.threshold = threshold
-        self.algorithm = algorithm
+        self.kind = kind
 
     def fit(self, X, y=None):
         """Learn empirical variances from X.
@@ -75,7 +76,10 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         if not (0.0 <= self.threshold <= 1.0):
             raise ValueError("threshold must be in [0.0, 1.0], got {}".format(
                              self.threshold))
-        if issparse(X) and self.algorithm != 'pearson':
+        if self.kind not in ('pearson', 'spearmanr'):
+            raise ValueError("kind must be 'pearson' or 'spearmanr'")
+
+        if issparse(X) and self.kind != 'pearson':
             raise ValueError("only pearson correlation is supported with "
                              "sparse matrices")
 
@@ -99,7 +103,14 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         else:
             peak_to_peaks = np.ptp(X, axis=0)
             constant_mask = np.isclose(peak_to_peaks, 0.0)
-            X_corr = np.corrcoef(X, rowvar=False)
+
+            if self.kind == 'pearson':
+                X_corr = np.corrcoef(X, rowvar=False)
+            else:  # spearmanr
+                X_corr, _ = spearmanr(X)
+                # spearmanr returns scaler when comparing two columns
+                if isinstance(X_corr, float):
+                    X_corr = np.array([[1, X_corr], [X_corr, 1]])
 
         np.fabs(X_corr, out=X_corr)
 
@@ -133,14 +144,16 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             # the most variance
             if np.all(~support_mask):
                 if issparse(X):
+                    # sparse precalculates variance for all features
                     var = sparse_var[[feat1, feat2]]
                 else:
                     var = np.var(X[:, [feat1, feat2]], axis=0)
 
-                if var[0] > var[1]:
-                    support_mask[feat1] = True
-                else:
+                print(feat1, feat2)
+                if var[0] < var[1]:
                     support_mask[feat2] = True
+                else:
+                    support_mask[feat1] = True
                 break
 
             # means with other features
@@ -148,12 +161,12 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
             feat2_mean = np.mean(X_corr[feat2, support_mask])
 
             # feature with lower mean is kept
-            if feat1_mean > feat2_mean:
-                support_mask[feat2] = True
-                feat_to_remove = feat1
-            else:
+            if feat1_mean < feat2_mean:
                 support_mask[feat1] = True
                 feat_to_remove = feat2
+            else:
+                support_mask[feat2] = True
+                feat_to_remove = feat1
 
             # Removes the removed feature from consideration
             upper_idx_to_keep = np.logical_and(upper_idx[0] != feat_to_remove,
