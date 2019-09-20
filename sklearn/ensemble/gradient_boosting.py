@@ -1366,6 +1366,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             del self.oob_improvement_
         if hasattr(self, 'init_'):
             del self.init_
+        if hasattr(self, '_rng'):
+	            del self._rng
 
     def _resize_state(self):
         """Add additional ``n_estimators`` entries to all attributes. """
