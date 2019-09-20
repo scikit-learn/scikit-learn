@@ -2140,7 +2140,6 @@ def check_class_weight_classifiers(name, classifier_orig):
         y_pred = classifier.predict(X_test)
         # XXX: Generally can use 0.89 here. On Windows, LinearSVC gets
         #      0.88 (Issue #9111)
-        print(np.mean(y_pred == 0))
         assert np.mean(y_pred == 0) > 0.87
 
 

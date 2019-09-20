@@ -2444,12 +2444,10 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 	if(check_regression_model(model_))
 	{
 		model_->w = Malloc(double, w_size);
-		for(i=0;i<w_size;i++)
-			model_->w[i] = 0;
 		model_->n_iter = Malloc(int, 1);
 		model_->nr_class = 2;
 		model_->label = NULL;
-		model_->n_iter[0] =train_one(prob, param, model_->w, 0, 0, blas_functions);
+		model_->n_iter[0] =train_one(prob, param, &model_->w[0], 0, 0, blas_functions);
 	}
 	else
 	{

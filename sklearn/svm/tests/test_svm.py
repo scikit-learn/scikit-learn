@@ -17,6 +17,7 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
+from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings
@@ -1058,3 +1059,37 @@ def test_gamma_scale():
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
+
+@pytest.mark.parametrize(
+    "params",
+    [{'penalty': 'l1', 'loss': 'squared_hinge', 'dual': False},
+     {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': True},
+     {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': False},
+     {'penalty': 'l2', 'loss': 'hinge', 'dual': True}]
+)
+def test_linearSVC_liblinear_sample_weight(params):
+    # check that we support sample_weight with liblinear in all possible cases:
+    # l1-primal, l2-primal, l2-dual
+    X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                  [2, 1], [2, 1], [2, 1], [2, 1],
+                  [3, 3], [3, 3], [3, 3], [3, 3],
+                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+    X2 = np.vstack([X, X])
+    y2 = np.hstack([y, 3 - y])
+    sample_weight = np.ones(shape=len(y) * 2)
+    sample_weight[len(y):] = 0
+    X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=0)
+
+    base_clf = svm.LinearSVC(random_state=42)
+    base_clf.set_params(**params)
+    base_clf.set_params(tol=1e-12, max_iter=1000)
+    clf_no_weight = base.clone(base_clf).fit(X, y)
+    clf_with_weight = base.clone(base_clf).fit(X2, y2, sample_weight=sample_weight)
+
+    for method in ("predict", "decision_function"):
+        X_clf_no_weight = getattr(clf_no_weight, method)(X)
+        X_clf_with_weight = getattr(clf_with_weight, method)(X)
+        assert_allclose(X_clf_no_weight, X_clf_with_weight)
