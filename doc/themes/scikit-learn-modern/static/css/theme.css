@@ -799,6 +799,11 @@ div.body img.align-center {
   max-width: 800px;
 }
 
+div.body img {
+    max-width: 100%;
+    height: unset!important; /* Needed because sphinx sets the height */
+}
+
 img.align-center, .figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
