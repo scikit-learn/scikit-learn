@@ -22,7 +22,7 @@ from sklearn.feature_selection import SelectFromModel
 def test_base():
     # Check BaseEnsemble methods.
     ensemble = BaggingClassifier(
-        base_estimator=Perceptron(tol=1e-3, random_state=None), n_estimators=3)
+        base_estimator=Perceptron(random_state=None), n_estimators=3)
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)
@@ -43,7 +43,7 @@ def test_base():
     assert isinstance(ensemble[2].random_state, int)
     assert ensemble[1].random_state != ensemble[2].random_state
 
-    np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
+    np_int_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators=np.int32(3))
     np_int_ensemble.fit(iris.data, iris.target)
 
@@ -51,7 +51,7 @@ def test_base():
 def test_base_zero_n_estimators():
     # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
     # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
+    ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                  n_estimators=0)
     iris = load_iris()
     assert_raise_message(ValueError,
@@ -62,13 +62,13 @@ def test_base_zero_n_estimators():
 def test_base_not_int_n_estimators():
     # Check that instantiating a BaseEnsemble with a string as n_estimators
     # raises a ValueError demanding n_estimators to be supplied as an integer.
-    string_ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
+    string_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators='3')
     iris = load_iris()
     assert_raise_message(ValueError,
                          "n_estimators must be an integer",
                          string_ensemble.fit, iris.data, iris.target)
-    float_ensemble = BaggingClassifier(base_estimator=Perceptron(tol=1e-3),
+    float_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                        n_estimators=3.0)
     assert_raise_message(ValueError,
                          "n_estimators must be an integer",
@@ -79,7 +79,7 @@ def test_set_random_states():
     # Linear Discriminant Analysis doesn't have random state: smoke test
     _set_random_states(LinearDiscriminantAnalysis(), random_state=17)
 
-    clf1 = Perceptron(tol=1e-3, random_state=None)
+    clf1 = Perceptron(random_state=None)
     assert clf1.random_state is None
     # check random_state is None still sets
     _set_random_states(clf1, None)
@@ -88,16 +88,15 @@ def test_set_random_states():
     # check random_state fixes results in consistent initialisation
     _set_random_states(clf1, 3)
     assert isinstance(clf1.random_state, int)
-    clf2 = Perceptron(tol=1e-3, random_state=None)
+    clf2 = Perceptron(random_state=None)
     _set_random_states(clf2, 3)
     assert clf1.random_state == clf2.random_state
 
     # nested random_state
 
     def make_steps():
-        return [('sel', SelectFromModel(Perceptron(tol=1e-3,
-                                                   random_state=None))),
-                ('clf', Perceptron(tol=1e-3, random_state=None))]
+        return [('sel', SelectFromModel(Perceptron(random_state=None))),
+                ('clf', Perceptron(random_state=None))]
 
     est1 = Pipeline(make_steps())
     _set_random_states(est1, 3)

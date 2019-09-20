@@ -6,6 +6,8 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +15,8 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -28,8 +32,7 @@ from sklearn.dummy import DummyRegressor
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
 
-boston = datasets.load_boston()
-X_r, y_r = boston.data, boston.target
+X_r, y_r = datasets.load_boston(return_X_y=True)
 
 
 def test_estimator_init():
@@ -68,7 +71,12 @@ def test_predictproba_hardvoting():
                                         ('lr2', LogisticRegression())],
                             voting='hard')
     msg = "predict_proba is not available when voting='hard'"
-    assert_raise_message(AttributeError, msg, eclf.predict_proba, X)
+    with pytest.raises(AttributeError, match=msg):
+        eclf.predict_proba
+
+    assert not hasattr(eclf, "predict_proba")
+    eclf.fit(X, y)
+    assert not hasattr(eclf, "predict_proba")
 
 
 def test_notfitted():
@@ -320,12 +328,12 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
     # check that _parallel_fit_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
-    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
+    class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
             raise TypeError('Error unrelated to sample_weight.')
     clf = ClassifierErrorFit()
@@ -335,7 +343,7 @@ def test_sample_weight():
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
-    class MockClassifier(BaseEstimator, ClassifierMixin):
+    class MockClassifier(ClassifierMixin, BaseEstimator):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert 'sample_weight' in sample_weight
@@ -503,3 +511,20 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [VotingRegressor(
+        estimators=[('lr', LinearRegression()),
+                    ('tree', DecisionTreeRegressor(random_state=0))]),
+     VotingClassifier(
+         estimators=[('lr', LogisticRegression(random_state=0)),
+                     ('tree', DecisionTreeClassifier(random_state=0))])],
+    ids=['VotingRegressor', 'VotingClassifier']
+)
+def test_check_estimators_voting_estimator(estimator):
+    # FIXME: to be removed when meta-estimators can specified themselves
+    # their testing parameters (for required parameters).
+    check_estimator(estimator)
+    check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)

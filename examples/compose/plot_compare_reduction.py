@@ -63,9 +63,9 @@ param_grid = [
 ]
 reducer_labels = ['PCA', 'NMF', 'KBest(chi2)']
 
-grid = GridSearchCV(pipe, cv=5, n_jobs=1, param_grid=param_grid)
-digits = load_digits()
-grid.fit(digits.data, digits.target)
+grid = GridSearchCV(pipe, n_jobs=1, param_grid=param_grid)
+X, y = load_digits(return_X_y=True)
+grid.fit(X, y)
 
 mean_scores = np.array(grid.cv_results_['mean_test_score'])
 # scores are in the order of param_grid iteration, which is alphabetical
@@ -113,9 +113,7 @@ cached_pipe = Pipeline([('reduce_dim', PCA()),
                        memory=memory)
 
 # This time, a cached pipeline will be used within the grid search
-grid = GridSearchCV(cached_pipe, cv=5, n_jobs=1, param_grid=param_grid)
-digits = load_digits()
-grid.fit(digits.data, digits.target)
+
 
 # Delete the temporary cache before exiting
 memory.clear(warn=False)

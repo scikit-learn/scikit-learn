@@ -228,16 +228,13 @@ def test_discretenb_pickle(cls):
 
     assert_array_equal(y_pred, clf.predict(X2))
 
-    if cls is not GaussianNB:
-        # TODO re-enable me when partial_fit is implemented for GaussianNB
-
-        # Test pickling of estimator trained with partial_fit
-        clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
-        clf2.partial_fit(X2[3:], y2[3:])
-        store = BytesIO()
-        pickle.dump(clf2, store)
-        clf2 = pickle.load(BytesIO(store.getvalue()))
-        assert_array_equal(y_pred, clf2.predict(X2))
+    # Test pickling of estimator trained with partial_fit
+    clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
+    clf2.partial_fit(X2[3:], y2[3:])
+    store = BytesIO()
+    pickle.dump(clf2, store)
+    clf2 = pickle.load(BytesIO(store.getvalue()))
+    assert_array_equal(y_pred, clf2.predict(X2))
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, GaussianNB])
@@ -707,9 +704,8 @@ def test_check_accuracy_on_digits():
     # Non regression test to make sure that any further refactoring / optim
     # of the NB models do not harm the performance on a slightly non-linearly
     # separable dataset
-    digits = load_digits()
-    X, y = digits.data, digits.target
-    binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
+    X, y = load_digits(return_X_y=True)
+    binary_3v8 = np.logical_or(y == 3, y == 8)
     X_3v8, y_3v8 = X[binary_3v8], y[binary_3v8]
 
     # Multinomial NB

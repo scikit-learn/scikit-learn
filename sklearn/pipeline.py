@@ -127,9 +127,9 @@ class Pipeline(_BaseComposition):
 
     def __init__(self, steps, memory=None, verbose=False):
         self.steps = steps
-        self._validate_steps()
         self.memory = memory
         self.verbose = verbose
+        self._validate_steps()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -744,7 +744,7 @@ def _fit_one(transformer,
         return transformer.fit(X, y, **fit_params)
 
 
-class FeatureUnion(_BaseComposition, TransformerMixin):
+class FeatureUnion(TransformerMixin, _BaseComposition):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the

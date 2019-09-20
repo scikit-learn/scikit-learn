@@ -3,11 +3,11 @@ Test the ColumnTransformer.
 """
 import re
 
+import warnings
 import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
 
@@ -492,6 +493,20 @@ def test_column_transformer_invalid_columns(remainder):
         assert_raise_message(ValueError, "Specifying the columns",
                              ct.fit, X_array)
 
+    # transformed n_features does not match fitted n_features
+    col = [0, 1]
+    ct = ColumnTransformer([('trans', Trans(), col)], remainder=remainder)
+    ct.fit(X_array)
+    X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        ct.transform(X_array_more)  # Should accept added columns, for now
+    X_array_fewer = np.array([[0, 1, 2], ]).T
+    err_msg = 'Number of features'
+    with pytest.raises(ValueError, match=err_msg):
+        ct.transform(X_array_fewer)
+
 
 def test_column_transformer_invalid_transformer():
 
@@ -632,7 +647,8 @@ def test_column_transformer_get_feature_names():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
-    assert_raises(NotFittedError, ct.get_feature_names)
+    with pytest.raises(NotFittedError):
+        ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
     assert_raise_message(AttributeError,
@@ -1060,3 +1076,107 @@ def test_column_transformer_negative_column_indexes():
     tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
     tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')
     assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))
+
+
+@pytest.mark.parametrize("explicit_colname", ['first', 'second'])
+def test_column_transformer_reordered_column_names_remainder(explicit_colname):
+    """Regression test for issue #14223: 'Named col indexing fails with
+       ColumnTransformer remainder on changing DataFrame column ordering'
+
+       Should raise error on changed order combined with remainder.
+       Should allow for added columns in `transform` input DataFrame
+       as long as all preceding columns match.
+    """
+    pd = pytest.importorskip('pandas')
+
+    X_fit_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_fit_df = pd.DataFrame(X_fit_array, columns=['first', 'second'])
+
+    X_trans_array = np.array([[2, 4, 6], [0, 1, 2]]).T
+    X_trans_df = pd.DataFrame(X_trans_array, columns=['second', 'first'])
+
+    tf = ColumnTransformer([('bycol', Trans(), explicit_colname)],
+                           remainder=Trans())
+
+    tf.fit(X_fit_df)
+    err_msg = 'Column ordering must be equal'
+    warn_msg = ("Given feature/column names or counts do not match the ones "
+                "for the data given during fit.")
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_trans_df)
+
+    # No error for added columns if ordering is identical
+    X_extended_df = X_fit_df.copy()
+    X_extended_df['third'] = [3, 6, 9]
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        tf.transform(X_extended_df)  # No error should be raised, for now
+
+    # No 'columns' AttributeError when transform input is a numpy array
+    X_array = X_fit_array.copy()
+    err_msg = 'Specifying the columns'
+    with pytest.raises(ValueError, match=err_msg):
+        tf.transform(X_array)
+
+
+def test_feature_name_validation():
+    """Tests if the proper warning/error is raised if the columns do not match
+    during fit and transform."""
+    pd = pytest.importorskip("pandas")
+
+    X = np.ones(shape=(3, 2))
+    X_extra = np.ones(shape=(3, 3))
+    df = pd.DataFrame(X, columns=['a', 'b'])
+    df_extra = pd.DataFrame(X_extra, columns=['a', 'b', 'c'])
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a', 'b'])])
+    tf.fit(df)
+
+    msg = ("Given feature/column names or counts do not match the ones for "
+           "the data given during fit.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), [0])])
+    tf.fit(df)
+
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(X_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
+        tf.transform(X)
+    assert not warns
+
+    tf = ColumnTransformer([('bycol', Trans(), ['a'])],
+                           remainder=Trans())
+    tf.fit(df)
+    with pytest.warns(DeprecationWarning, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), [0, -1])])
+    tf.fit(df)
+    msg = "At least one negative column was used to"
+    with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df_extra)
+
+    tf = ColumnTransformer([('bycol', Trans(), slice(-1, -3, -1))])
+    tf.fit(df)
+    with pytest.raises(RuntimeError, match=msg):
+        tf.transform(df_extra)
+
+    with warnings.catch_warnings(record=True) as warns:
+        tf.transform(df)
+    assert not warns
+
+
+@pytest.mark.parametrize("array_type", [np.asarray, sparse.csr_matrix])
+def test_column_transformer_mask_indexing(array_type):
+    # Regression test for #14510
+    # Boolean array-like does not behave as boolean array with NumPy < 1.12
+    # and sparse matrices as well
+    X = np.transpose([[1, 2, 3], [4, 5, 6], [5, 6, 7], [8, 9, 10]])
+    X = array_type(X)
+    column_transformer = ColumnTransformer(
+        [('identity', FunctionTransformer(), [False, True, False, True])]
+    )
+    X_trans = column_transformer.fit_transform(X)
+    assert X_trans.shape == (3, 2)

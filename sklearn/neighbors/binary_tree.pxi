@@ -144,10 +144,9 @@
 
 cimport cython
 cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow, log
+from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
 from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
-from ..utils.lgamma cimport lgamma
 
 import numpy as np
 import warnings

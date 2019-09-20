@@ -16,7 +16,7 @@ from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin):
+class KernelPCA(TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -319,7 +319,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'X_fit_')
+        check_is_fitted(self)
 
         # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))

@@ -293,7 +293,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     return bin_seeds
 
 
-class MeanShift(BaseEstimator, ClusterMixin):
+class MeanShift(ClusterMixin, BaseEstimator):
     """Mean shift clustering using a flat kernel.
 
     Mean shift clustering aims to discover "blobs" in a smooth density of
@@ -435,6 +435,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self, "cluster_centers_")
+        check_is_fitted(self)
 
         return pairwise_distances_argmin(X, self.cluster_centers_)

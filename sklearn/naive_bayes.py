@@ -30,12 +30,12 @@ from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, check_non_negative
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
 
 
-class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
+class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
@@ -78,7 +78,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         C : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
@@ -98,7 +98,7 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         C : array-like, shape = [n_samples, n_classes]
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            order, as they appear in the attribute :term:`classes_`.
         """
         return np.exp(self.predict_log_proba(X))
 
@@ -107,7 +107,7 @@ class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
-    Can perform online updates to model parameters via `partial_fit` method.
+    Can perform online updates to model parameters via :meth:`partial_fit`.
     For details on algorithm used to update feature means and variance online,
     see Stanford CS tech report STAN-CS-79-773 by Chan, Golub, and LeVeque:
 
@@ -133,6 +133,9 @@ class GaussianNB(BaseNB):
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
 
+    classes_ : array, shape (n_classes,)
+        class labels known to the classifier
+
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
@@ -141,6 +144,9 @@ class GaussianNB(BaseNB):
 
     epsilon_ : float
         absolute additive value to variances
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -425,7 +431,7 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X)
         joint_log_likelihood = []
@@ -679,10 +685,16 @@ class MultinomialNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
 
     Examples
     --------
@@ -714,10 +726,12 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
+        check_non_negative(X, "MultinomialNB (input X)")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -731,7 +745,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
@@ -777,6 +791,9 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
@@ -784,6 +801,9 @@ class ComplementNB(BaseDiscreteNB):
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     Examples
     --------
@@ -812,10 +832,12 @@ class ComplementNB(BaseDiscreteNB):
         self.class_prior = class_prior
         self.norm = norm
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _count(self, X, Y):
         """Count feature occurrences."""
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
+        check_non_negative(X, "ComplementNB (input X)")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
         self.feature_all_ = self.feature_count_.sum(axis=0)
@@ -834,7 +856,7 @@ class ComplementNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
@@ -882,10 +904,17 @@ class BernoulliNB(BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+
+    classes_ : array of shape = [n_classes]
+        The classes labels.
+
 
     Examples
     --------
@@ -938,7 +967,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 

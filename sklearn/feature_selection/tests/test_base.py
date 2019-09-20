@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from scipy import sparse as sp
 
 from numpy.testing import assert_array_equal
@@ -6,7 +7,6 @@ from numpy.testing import assert_array_equal
 from sklearn.base import BaseEstimator
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.utils import check_array
-from sklearn.utils.testing import assert_raises
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
@@ -54,7 +54,8 @@ def test_transform_dense():
     assert_array_equal(feature_names_t, names_t_actual.ravel())
 
     # Check wrong shape raises error
-    assert_raises(ValueError, sel.transform, np.array([[1], [2]]))
+    with pytest.raises(ValueError):
+        sel.transform(np.array([[1], [2]]))
 
 
 def test_transform_sparse():
@@ -70,7 +71,8 @@ def test_transform_sparse():
     assert np.float32 == sel.transform(sparse(X).astype(np.float32)).dtype
 
     # Check wrong shape raises error
-    assert_raises(ValueError, sel.transform, np.array([[1], [2]]))
+    with pytest.raises(ValueError):
+        sel.transform(np.array([[1], [2]]))
 
 
 def test_inverse_transform_dense():
@@ -89,7 +91,8 @@ def test_inverse_transform_dense():
     assert_array_equal(feature_names_inv, names_inv_actual.ravel())
 
     # Check wrong shape raises error
-    assert_raises(ValueError, sel.inverse_transform, np.array([[1], [2]]))
+    with pytest.raises(ValueError):
+        sel.inverse_transform(np.array([[1], [2]]))
 
 
 def test_inverse_transform_sparse():
@@ -105,7 +108,8 @@ def test_inverse_transform_sparse():
                  sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype)
 
     # Check wrong shape raises error
-    assert_raises(ValueError, sel.inverse_transform, np.array([[1], [2]]))
+    with pytest.raises(ValueError):
+        sel.inverse_transform(np.array([[1], [2]]))
 
 
 def test_get_support():

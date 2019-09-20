@@ -26,7 +26,7 @@ class Perceptron(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -36,10 +36,10 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    shuffle : bool, optional, default True
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level
 
     eta0 : double
@@ -90,7 +90,7 @@ class Perceptron(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution. See
         :term:`the Glossary <warm_start>`.
@@ -107,6 +107,13 @@ class Perceptron(BaseSGDClassifier):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
 
     Notes
     -----

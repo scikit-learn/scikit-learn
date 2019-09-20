@@ -91,6 +91,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
                           seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
+        X = np.ascontiguousarray(X)
         dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
@@ -198,7 +199,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
         """Fit model."""
 
     def _decision_function(self, X):
-        check_is_fitted(self, "coef_")
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
         return safe_sparse_dot(X, self.coef_.T,
@@ -257,7 +258,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 
@@ -326,7 +327,7 @@ class SparseCoefMixin:
         self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
-        check_is_fitted(self, "coef_", msg=msg)
+        check_is_fitted(self, msg=msg)
         if sp.issparse(self.coef_):
             self.coef_ = self.coef_.toarray()
         return self
@@ -356,12 +357,12 @@ class SparseCoefMixin:
         self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
-        check_is_fitted(self, "coef_", msg=msg)
+        check_is_fitted(self, msg=msg)
         self.coef_ = sp.csr_matrix(self.coef_)
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
+class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     Ordinary least squares Linear Regression.
 
@@ -370,7 +371,7 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     fit_intercept : boolean, optional, default True
         whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -398,8 +399,15 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
 
-    intercept_ : array
-        Independent term in the linear model.
+    rank_ : int
+        Rank of matrix `X`. Only available when `X` is dense.
+
+    singular_ : array, shape (min(X, y),)
+        Singular values of `X`. Only available when `X` is dense.
+
+    intercept_ : float | array, shape = (n_targets,)
+        Independent term in the linear model. Set to 0.0 if
+        `fit_intercept = False`.
 
     Examples
     --------

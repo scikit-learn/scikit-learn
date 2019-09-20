@@ -213,13 +213,13 @@ class _PGNMF(NMF):
         return self
 
     def transform(self, X):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         H = self.components_
         W, _, self.n_iter_ = self._fit_transform(X, H=H, update_H=False)
         return W
 
     def inverse_transform(self, W):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)
 
     def fit_transform(self, X, y=None, W=None, H=None):

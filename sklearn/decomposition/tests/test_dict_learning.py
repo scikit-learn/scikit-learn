@@ -9,7 +9,6 @@ from sklearn.utils import check_array
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import TempMemmap
 
@@ -53,6 +52,54 @@ def test_dict_learning_overcomplete():
     n_components = 12
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert dico.components_.shape == (n_components, n_features)
+
+
+def test_max_iter():
+    def ricker_function(resolution, center, width):
+        """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
+        x = np.linspace(0, resolution - 1, resolution)
+        x = ((2 / (np.sqrt(3 * width) * np.pi ** .25))
+             * (1 - (x - center) ** 2 / width ** 2)
+             * np.exp(-(x - center) ** 2 / (2 * width ** 2)))
+        return x
+
+    def ricker_matrix(width, resolution, n_components):
+        """Dictionary of Ricker (Mexican hat) wavelets"""
+        centers = np.linspace(0, resolution - 1, n_components)
+        D = np.empty((n_components, resolution))
+        for i, center in enumerate(centers):
+            D[i] = ricker_function(resolution, center, width)
+        D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
+        return D
+
+    transform_algorithm = 'lasso_cd'
+    resolution = 1024
+    subsampling = 3  # subsampling factor
+    n_components = resolution // subsampling
+
+    # Compute a wavelet dictionary
+    D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
+                          n_components=n_components // 5)
+                          for w in (10, 50, 100, 500, 1000))]
+
+    X = np.linspace(0, resolution - 1, resolution)
+    first_quarter = X < resolution / 4
+    X[first_quarter] = 3.
+    X[np.logical_not(first_quarter)] = -1.
+    X = X.reshape(1, -1)
+
+    # check that the underlying model fails to converge
+    with pytest.warns(ConvergenceWarning):
+        model = SparseCoder(D_multi, transform_algorithm=transform_algorithm,
+                            transform_max_iter=1)
+        model.fit_transform(X)
+
+    # check that the underlying model converges w/o warnings
+    with pytest.warns(None) as record:
+        model = SparseCoder(D_multi, transform_algorithm=transform_algorithm,
+                            transform_max_iter=2000)
+        model.fit_transform(X)
+    assert not record.list
 
 
 def test_dict_learning_lars_positive_parameter():
@@ -170,7 +217,8 @@ def test_dict_learning_nonzero_coefs():
 def test_dict_learning_unknown_fit_algorithm():
     n_components = 5
     dico = DictionaryLearning(n_components, fit_algorithm='<unknown>')
-    assert_raises(ValueError, dico.fit, X)
+    with pytest.raises(ValueError):
+        dico.fit(X)
 
 
 def test_dict_learning_split():
@@ -418,7 +466,8 @@ def test_unknown_method():
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
-    assert_raises(ValueError, sparse_encode, X, V, algorithm="<unknown>")
+    with pytest.raises(ValueError):
+        sparse_encode(X, V, algorithm="<unknown>")
 
 
 def test_sparse_coder_estimator():

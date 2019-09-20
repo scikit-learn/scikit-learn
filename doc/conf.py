@@ -15,6 +15,7 @@
 import sys
 import os
 import warnings
+import re
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -36,8 +37,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues',
-    'custom_references_resolver'
+    'sphinx_issues'
 ]
 
 # this is needed for some reason...
@@ -56,7 +56,10 @@ else:
                     'MathJax.js?config=TeX-AMS_SVG')
 
 
-autodoc_default_flags = ['members', 'inherited-members']
+autodoc_default_options = {
+    'members': True,
+    'inherited-members': True
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -103,11 +106,7 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-# sklearn uses a custom extension: `custom_references_resolver` to modify
-# the order of link resolution for the 'any' role. It resolves python class
-# links first before resolving 'std' domain links. Unresolved roles are
-# considered to be <code> blocks.
-default_role = 'any'
+default_role = 'literal'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -138,7 +137,7 @@ html_theme = 'scikit-learn'
 # documentation.
 html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
                       'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner': True}
+                      'sprintbanner': True, 'body_max_width': None}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -244,11 +243,35 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
+if 'dev' in version:
+    binder_branch = 'master'
+else:
+    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
+    if match is None:
+        raise ValueError(
+            'Ill-formed version: {!r}. Expected either '
+            "a version containing 'dev' "
+            'or a version like X.Y or X.Y.Z.'.format(version))
+
+    major, minor = match.groups()
+    binder_branch = '{}.{}.X'.format(major, minor)
+
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
+    'show_memory': True,
     'reference_url': {
-        'sklearn': None}
+        'sklearn': None},
+    'examples_dirs': ['../examples'],
+    'gallery_dirs': ['auto_examples'],
+    'binder': {
+        'org': 'scikit-learn',
+        'repo': 'scikit-learn',
+        'binderhub_url': 'https://mybinder.org',
+        'branch': binder_branch,
+        'dependencies': './binder/requirements.txt',
+        'use_jupyter_lab': True
+    }
 }
 
 
