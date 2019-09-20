@@ -397,6 +397,10 @@ Changelog
   a proper error message is raised if X contains some negative entries.
   :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
 
+- |Fix| :func:`utils.check_array` is now raising an error instead of casting
+  NaN to integer.
+  :pr:`14872` by `Roman Yurchak`_.
+
 :mod:`sklearn.neighbors`
 ....................
 
