@@ -695,8 +695,8 @@ def test_linearsvc_fit_sampleweight():
     n_samples = len(X)
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf_unitweight = svm.LinearSVC(random_state=0).\
-        fit(X, Y, sample_weight=unit_weight, tol=1e-12, max_iter=1000)
+    clf_unitweight = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).\
+        fit(X, Y, sample_weight=unit_weight)
 
     # check if same as sample_weight=None
     assert_array_equal(clf_unitweight.predict(T), clf.predict(T))
@@ -707,8 +707,8 @@ def test_linearsvc_fit_sampleweight():
 
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvc_unflat = svm.LinearSVC(random_state=0).\
-        fit(X, Y, sample_weight=random_weight, tol=1e-12, max_iter=1000)
+    lsvc_unflat = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).\
+        fit(X, Y, sample_weight=random_weight)
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)
