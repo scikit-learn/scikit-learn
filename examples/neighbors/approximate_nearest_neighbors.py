@@ -4,22 +4,23 @@ Approximate nearest neighbors in TSNE
 =====================================
 
 This example presents how to chain KNeighborsTransformer and TSNE in a
-pipeline, and how to wrap the packages `annoy` and `nmslib` to replace
-KNeighborsTransformer and perform approximate nearest neighbors.
-These package can be installed with `pip install annoy nmslib`.
+pipeline. It also shows how to wrap the packages `annoy` and `nmslib` to
+replace KNeighborsTransformer and perform approximate nearest neighbors.
+These packages can be installed with `pip install annoy nmslib`.
 
-Note: Currently TSNE(metric='precomputed') does not modify the precomputed
+Note: Currently `TSNE(metric='precomputed')` does not modify the precomputed
 distances, and thus assumes that precomputed euclidean distances are squared.
 In future versions, a parameter in TSNE will control the optional squaring of
 precomputed distances (see #12401).
 
-Note: In :class:`KNeighborsTransformer` we use the definition which includes
-each training point as its own neighbor in the count of `n_neighbors`, and for
+Note: In KNeighborsTransformer we use the definition which includes each
+training point as its own neighbor in the count of `n_neighbors`, and for
 compatibility reasons, one extra neighbor is computed when
 `mode == 'distance'`. Please note that we do the same in the proposed wrappers.
 
 Sample output:
 
+```
 Benchmarking on MNIST_2000:
 ---------------------------
 AnnoyTransformer:                    0.583 sec
@@ -39,6 +40,7 @@ TSNE with AnnoyTransformer:          30.225 sec
 TSNE with NMSlibTransformer:         43.295 sec
 TSNE with KNeighborsTransformer:     64.845 sec
 TSNE with internal NearestNeighbors: 64.984 sec
+```
 """
 # Author: Tom Dupre la Tour
 #
