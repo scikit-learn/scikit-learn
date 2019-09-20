@@ -697,6 +697,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides

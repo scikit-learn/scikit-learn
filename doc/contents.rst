@@ -15,6 +15,7 @@ Table Of Contents
 
     preface
     tutorial/index
+    getting_started
     user_guide
     glossary
     auto_examples/index
