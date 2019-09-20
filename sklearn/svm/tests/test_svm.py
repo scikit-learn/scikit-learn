@@ -12,6 +12,8 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
+from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -1060,16 +1062,18 @@ def test_gamma_scale():
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
 
+
 @pytest.mark.parametrize(
-    "params",
-    [{'penalty': 'l1', 'loss': 'squared_hinge', 'dual': False},
-     {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': True},
-     {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': False},
-     {'penalty': 'l2', 'loss': 'hinge', 'dual': True}]
+    "SVM, params",
+    [(LinearSVC, {'penalty': 'l1', 'loss': 'squared_hinge', 'dual': False}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': True}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': False}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'hinge', 'dual': True}),
+     (LinearSVR, {'loss': 'epsilon_insensitive', 'dual': True}),
+     (LinearSVR, {'loss': 'squared_epsilon_insensitive', 'dual': True}),
+     (LinearSVR, {'loss': 'squared_epsilon_insensitive', 'dual': True})]
 )
-def test_linearSVC_liblinear_sample_weight(params):
-    # check that we support sample_weight with liblinear in all possible cases:
-    # l1-primal, l2-primal, l2-dual
+def test_linearsvm_liblinear_sample_weight(SVM, params):
     X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                   [2, 1], [2, 1], [2, 1], [2, 1],
                   [3, 3], [3, 3], [3, 3], [3, 3],
@@ -1083,13 +1087,16 @@ def test_linearSVC_liblinear_sample_weight(params):
     sample_weight[len(y):] = 0
     X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=0)
 
-    base_clf = svm.LinearSVC(random_state=42)
-    base_clf.set_params(**params)
-    base_clf.set_params(tol=1e-12, max_iter=1000)
-    clf_no_weight = base.clone(base_clf).fit(X, y)
-    clf_with_weight = base.clone(base_clf).fit(X2, y2, sample_weight=sample_weight)
+    base_estimator = SVM(random_state=42)
+    base_estimator.set_params(**params)
+    base_estimator.set_params(tol=1e-12, max_iter=1000)
+    est_no_weight = base.clone(base_estimator).fit(X, y)
+    est_with_weight = base.clone(base_estimator).fit(
+        X2, y2, sample_weight=sample_weight
+    )
 
     for method in ("predict", "decision_function"):
-        X_clf_no_weight = getattr(clf_no_weight, method)(X)
-        X_clf_with_weight = getattr(clf_with_weight, method)(X)
-        assert_allclose(X_clf_no_weight, X_clf_with_weight)
+        if hasattr(base_estimator, method):
+            X_est_no_weight = getattr(est_no_weight, method)(X)
+            X_est_with_weight = getattr(est_with_weight, method)(X)
+            assert_allclose(X_est_no_weight, X_est_with_weight)
