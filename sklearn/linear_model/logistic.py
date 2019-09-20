@@ -2222,7 +2222,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 self.scores_[cls] = np.transpose(self.scores_[cls], (0, 2, 1))
 
             self.n_iter_ = self.n_iter_.reshape(
-                (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
+                (-1, len(folds), self.l1_ratios_.size, self.Cs_.size))
             self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
 
         return self
