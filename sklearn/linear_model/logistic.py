@@ -2201,14 +2201,29 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # if elasticnet was used, add the l1_ratios dimension to some
         # attributes
         if self.l1_ratios is not None:
+            # with n_cs=2 and n_l1_ratios=3
+            # the layout of scores is
+            # [c1, c2, c1, c2, c1, c2]
+            #   l1_1 ,  l1_2 ,  l1_3
+            # To get a 2d array with the following layout
+            #      l1_1, l1_2, l1_3
+            # c1 [[ .  ,  .  ,  .  ],
+            # c2  [ .  ,  .  ,  .  ]]
+            # We need to first reshape and then transpose.
+            # The same goes for the other arrays
             for cls, coefs_path in self.coefs_paths_.items():
                 self.coefs_paths_[cls] = coefs_path.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size, -1))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size, -1))
+                self.coefs_paths_[cls] = np.transpose(self.coefs_paths_[cls],
+                                                      (0, 2, 1, 3))
             for cls, score in self.scores_.items():
                 self.scores_[cls] = score.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size))
+                self.scores_[cls] = np.transpose(self.scores_[cls], (0, 2, 1))
+
             self.n_iter_ = self.n_iter_.reshape(
                 (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
+            self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
 
         return self
 
