@@ -10,8 +10,10 @@ Developer's Guide
 .. toctree::
 
    contributing
+   develop
    tips
    utilities
    performance
    advanced_installation
    maintainer
+   plotting

@@ -17,7 +17,7 @@ from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
     ShrunkCovariance, shrunk_covariance, \
     LedoitWolf, ledoit_wolf, ledoit_wolf_shrinkage, OAS, oas
 
-X = datasets.load_diabetes().data
+X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
 
