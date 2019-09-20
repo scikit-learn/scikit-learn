@@ -2443,10 +2443,12 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 	if(check_regression_model(model_))
 	{
 		model_->w = Malloc(double, w_size);
+		for(i=0;i<w_size;i++)
+			model_->w[i] = 0;
 		model_->n_iter = Malloc(int, 1);
 		model_->nr_class = 2;
 		model_->label = NULL;
-		model_->n_iter[0] =train_one(prob, param, &model_->w[0], 0, 0, blas_functions);
+		model_->n_iter[0] =train_one(prob, param, model_->w, 0, 0, blas_functions);
 	}
 	else
 	{
@@ -2516,11 +2518,14 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 				int e0 = start[0]+count[0];
 				k=0;
 				for(; k<e0; k++)
-					sub_prob.y[k] = -1;
-				for(; k<sub_prob.l; k++)
 					sub_prob.y[k] = +1;
+				for(; k<sub_prob.l; k++)
+					sub_prob.y[k] = -1;
 
-				model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0], blas_functions);
+				for(i=0;i<w_size;i++)
+					model_->w[i] = 0;
+
+				model_->n_iter[0]=train_one(&sub_prob, param, model_->w, weighted_C[0], weighted_C[1], blas_functions);
 			}
 			else
 			{
@@ -2539,6 +2544,9 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 						sub_prob.y[k] = +1;
 					for(; k<sub_prob.l; k++)
 						sub_prob.y[k] = -1;
+
+					for(j=0;j<w_size;j++)
+						w[j] = 0;
 
 					model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C, blas_functions);
 
