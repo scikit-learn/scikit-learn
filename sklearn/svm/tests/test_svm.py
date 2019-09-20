@@ -200,11 +200,11 @@ def test_linearsvr_fit_sampleweight():
     diabetes = datasets.load_diabetes()
     n_samples = len(diabetes.target)
     unit_weight = np.ones(n_samples)
-    lsvr = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+    lsvr = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
         diabetes.data, diabetes.target, sample_weight=unit_weight)
     score1 = lsvr.score(diabetes.data, diabetes.target)
 
-    lsvr_no_weight = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+    lsvr_no_weight = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
         diabetes.data, diabetes.target)
     score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
 
@@ -216,14 +216,14 @@ def test_linearsvr_fit_sampleweight():
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvr_unflat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+    lsvr_unflat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
         diabetes.data, diabetes.target, sample_weight=random_weight)
     score3 = lsvr_unflat.score(diabetes.data, diabetes.target,
                                sample_weight=random_weight)
 
     X_flat = np.repeat(diabetes.data, random_weight, axis=0)
     y_flat = np.repeat(diabetes.target, random_weight, axis=0)
-    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=1000).fit(
+    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
         X_flat, y_flat)
     score4 = lsvr_flat.score(X_flat, y_flat)
 
