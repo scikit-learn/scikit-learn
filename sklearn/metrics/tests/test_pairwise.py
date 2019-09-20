@@ -934,21 +934,17 @@ def test_gower_distances():
 
     # Simplified calculation of Gower distance for expected values
     # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = [4, 4, 4, 0]
+    non_missing_cols = np.asarray([4, 4, 4, 0])
     D_expected = np.zeros((4, 4))
     for i in range(0, 4):
         for j in range(0, 4):
             # The calculations below shows how it compares observation
             # by observation, attribute by attribute.
-            sum = ([1, 0][X[i][0] == X[j][0]] +
-                   [1, 0][X[i][1] == X[j][1]] +
-                   abs(X[i][2] - X[j][2]) +
-                   abs(X[i][3] - X[j][3]))
-
-            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
-                                         out=np.array([np.nan]),
-                                         where=(non_missing_cols[j] != 0)
-                                         & (non_missing_cols[i] != 0))
+            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
+                                 [1, 0][X[i][1] == X[j][1]] +
+                                 abs(X[i][2] - X[j][2]) +
+                                 abs(X[i][3] - X[j][3])) /
+                                non_missing_cols[j])
 
     assert_array_almost_equal(D_expected, D)
 
@@ -973,19 +969,15 @@ def test_gower_distances():
 
     # Simplified calculation of Gower distance for expected values
     # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = [4, 4, 4, 0]
+    non_missing_cols = np.asarray([4, 4, 4, 0])
     D_expected = np.zeros((4, 4))
     for i in range(0, 4):
         for j in range(0, 4):
-            sum = ([1, 0][X[i][0] == X[j][0]] +
-                   [1, 0][X[i][1] == X[j][1]] +
-                   abs(X[i][2] - X[j][2]) +
-                   [1, 0][X[i][3] == X[j][3]])
-
-            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
-                                         out=np.array([np.nan]),
-                                         where=(non_missing_cols[j] != 0)
-                                         & (non_missing_cols[i] != 0))
+            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
+                                 [1, 0][X[i][1] == X[j][1]] +
+                                 abs(X[i][2] - X[j][2]) +
+                                 [1, 0][X[i][3] == X[j][3]]) /
+                                non_missing_cols[j])
 
     D = gower_distances(X, categorical_features=[True, True, False, True],
                         scale=False)
@@ -1042,25 +1034,24 @@ def test_gower_distances():
 
     # Categorical values, with boolean represented as 1 and 0,
     # and missing values
-    X = [['M', 0],
+    X = np.asarray([['M', 0],
          ['F', 1],
          ['M', 1],
-         [np.nan, np.nan]]
-
+         [np.nan, np.nan]], dtype=np.object)
+ 
     D = gower_distances(X, categorical_features=[True, True])
 
     D_expected = np.zeros((4, 4))
     # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = [2, 2, 2, 0]
+    non_missing_cols = np.asarray([2, 2, 2, 0])
     for i in range(0, 4):
         for j in range(0, 4):
-            sum = ([1, 0][X[i][0] == X[j][0]] +
-                   [1, 0][X[i][1] == X[j][1]])
-
-            D_expected[i][j] = np.divide(sum, non_missing_cols[j],
-                                         out=np.array([np.nan]),
-                                         where=(non_missing_cols[j] != 0)
-                                         & (non_missing_cols[i] != 0))
+            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:          
+                D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
+                                    [1, 0][X[i][1] == X[j][1]]) /
+                                    non_missing_cols[j])
+            else:
+                D_expected[i][j] = np.nan
 
     assert_array_almost_equal(D_expected, D)
 
@@ -1075,13 +1066,11 @@ def test_gower_distances():
     # Simplified calculation of Gower distance for expected values
     D_expected = np.zeros((4, 4))
     # This represents the number of non missing cols for each X, Y line
-    non_missing_cols = [2, 2, 2, 0]
+    non_missing_cols = np.asarray([2, 2, 2, 0])
     for i in range(0, 4):
         for j in range(0, 4):
-            sum = abs(X[i][0] - X[j][0]) + abs(X[i][1] - X[j][1])
-            D_expected[i][j] = np.divide(sum, non_missing_cols[i],
-                                         out=np.array([np.nan]),
-                                         where=non_missing_cols[i] != 0)
+            D_expected[i][j] = (abs(X[i][0] - X[j][0]) +
+                                abs(X[i][1] - X[j][1])) / non_missing_cols[i]
 
     assert_array_almost_equal(D_expected, D)
 
