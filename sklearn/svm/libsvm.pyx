@@ -320,6 +320,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         fake_n_class = 2
     else:
         n_class = nSV.shape[0]
+        n_class = n_class * (n_class - 1) // 2
         fake_n_class = n_class
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
@@ -393,6 +394,7 @@ def predict_proba(
         fake_n_class = 2
     else:
         n_class = nSV.shape[0]
+        n_class = n_class * (n_class - 1) // 2
         fake_n_class = n_class
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
                        cache_size, 1, <int>class_weight.shape[0],
@@ -451,6 +453,7 @@ def decision_function(
         fake_n_class = 2
     else:
         n_class = nSV.shape[0]
+        n_class = n_class * (n_class - 1) // 2
         fake_n_class = n_class
 
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
