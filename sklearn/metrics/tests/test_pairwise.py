@@ -1046,7 +1046,7 @@ def test_gower_distances():
     non_missing_cols = np.asarray([2, 2, 2, 0])
     for i in range(0, 4):
         for j in range(0, 4):
-            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:         
+            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:
                 D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
                                     [1, 0][X[i][1] == X[j][1]]) /
                                     non_missing_cols[j])
