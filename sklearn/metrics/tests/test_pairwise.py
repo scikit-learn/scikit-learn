@@ -1035,10 +1035,10 @@ def test_gower_distances():
     # Categorical values, with boolean represented as 1 and 0,
     # and missing values
     X = np.asarray([['M', 0],
-         ['F', 1],
-         ['M', 1],
-         [np.nan, np.nan]], dtype=np.object)
- 
+                    ['F', 1],
+                    ['M', 1],
+                    [np.nan, np.nan]], dtype=np.object)
+
     D = gower_distances(X, categorical_features=[True, True])
 
     D_expected = np.zeros((4, 4))
@@ -1046,7 +1046,7 @@ def test_gower_distances():
     non_missing_cols = np.asarray([2, 2, 2, 0])
     for i in range(0, 4):
         for j in range(0, 4):
-            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:          
+            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:         
                 D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
                                     [1, 0][X[i][1] == X[j][1]]) /
                                     non_missing_cols[j])
