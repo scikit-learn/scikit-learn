@@ -688,7 +688,7 @@ def test_oob_improvement():
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(clf.oob_improvement_[:5],
-                              np.array([0.19, 0.15, 0.12, -0.12, -0.11]),
+                              np.array([0.19, 0.16, 0.13, -0.12, -0.12]),
                               decimal=2)
 
 
@@ -1224,9 +1224,9 @@ def test_gradient_boosting_early_stopping():
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=42)
     # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 13),
-                                              (gbc, 1e-3, 70),
-                                              (gbr, 1e-3, 28)):
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 14),
+                                              (gbc, 1e-3, 65),
+                                              (gbr, 1e-3, 49)):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)
         assert est.n_estimators_ == early_stop_n_estimators

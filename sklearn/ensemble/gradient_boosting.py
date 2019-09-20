@@ -1515,6 +1515,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             begin_at_stage = 0
 
+            # The rng state must be preserved if warm_start is True
+            self._rng = check_random_state(self.random_state)
+
         else:
             # add more estimators to fitted model
             # invariant: warm_start = True
@@ -1536,8 +1539,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         # fit the boosting stages
         n_stages = self._fit_stages(
-            X, y, raw_predictions, sample_weight, self._random_seed, X_val,
-            y_val, sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+            X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
+            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -1584,8 +1587,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             # subsampling
             if do_oob:
-                rng = check_random_state(self._random_seed)
-                sample_mask = _random_sample_mask(n_samples, n_inbag, rng)
+                sample_mask = _random_sample_mask(n_samples, n_inbag,
+                                                  random_state)
                 # OOB score before adding this stage
                 old_oob_score = loss_(y[~sample_mask],
                                       raw_predictions[~sample_mask],
