@@ -13,6 +13,7 @@ from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state, safe_indexing
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils import is_scalar_nan
 from ..utils.mask import _get_mask
 
@@ -190,8 +191,9 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         <https://www.jstor.org/stable/2984099>`_
     """
 
+    @_deprecate_positional_args
     def __init__(self,
-                 estimator=None,
+                 estimator=None, *,
                  missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,

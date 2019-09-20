@@ -35,6 +35,7 @@ from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..preprocessing.data import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -433,7 +434,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     """
 
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
                  n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize

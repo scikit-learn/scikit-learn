@@ -19,6 +19,7 @@ from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -917,9 +918,10 @@ class SGDClassifier(BaseSGDClassifier):
 
     """
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
+    @_deprecate_positional_args
+    def __init__(self, *, loss="hinge", penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
+                 shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,
@@ -1509,7 +1511,8 @@ class SGDRegressor(BaseSGDRegressor):
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, *, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,

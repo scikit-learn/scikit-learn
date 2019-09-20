@@ -10,6 +10,7 @@ from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
 from ...utils import check_X_y, check_random_state, check_array, resample
 from ...utils.validation import check_is_fitted
+from ...utils.validation import _deprecate_positional_args
 from ...utils.multiclass import check_classification_targets
 from ...metrics import check_scoring
 from ...model_selection import train_test_split
@@ -775,7 +776,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
 
-    def __init__(self, loss='least_squares', learning_rate=0.1,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, scoring=None, validation_fraction=0.1,
@@ -957,7 +959,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=255, warm_start=False,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,

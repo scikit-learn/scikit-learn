@@ -445,7 +445,8 @@ class SpectralEmbedding(BaseEstimator):
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
 
-    def __init__(self, n_components=2, affinity="nearest_neighbors",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):
         self.n_components = n_components

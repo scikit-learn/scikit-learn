@@ -29,7 +29,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  mean_variance_axis, incr_mean_variance_axis,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
-                                FLOAT_DTYPES)
+                                FLOAT_DTYPES, _deprecate_positional_args)
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -296,7 +296,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    def __init__(self, feature_range=(0, 1), copy=True):
+    @_deprecate_positional_args
+    def __init__(self, *, feature_range=(0, 1), copy=True):
         self.feature_range = feature_range
         self.copy = copy
 
@@ -608,7 +609,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """  # noqa
 
-    def __init__(self, copy=True, with_mean=True, with_std=True):
+    @_deprecate_positional_args
+    def __init__(self, *, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
@@ -882,7 +884,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    def __init__(self, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, *, copy=True):
         self.copy = copy
 
     def _reset(self):
@@ -1140,7 +1143,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
-    def __init__(self, with_centering=True, with_scaling=True,
+    @_deprecate_positional_args
+    def __init__(self, *, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
@@ -1399,7 +1403,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
-    def __init__(self, degree=2, interaction_only=False, include_bias=True,
+    @_deprecate_positional_args
+    def __init__(self, *, degree=2, interaction_only=False, include_bias=True,
                  order='C'):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1759,7 +1764,8 @@ class Normalizer(TransformerMixin, BaseEstimator):
     normalize: Equivalent function without the estimator API.
     """
 
-    def __init__(self, norm='l2', copy=True):
+    @_deprecate_positional_args
+    def __init__(self, *, norm='l2', copy=True):
         self.norm = norm
         self.copy = copy
 
@@ -1893,7 +1899,8 @@ class Binarizer(TransformerMixin, BaseEstimator):
     binarize: Equivalent function without the estimator API.
     """
 
-    def __init__(self, threshold=0.0, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, *, threshold=0.0, copy=True):
         self.threshold = threshold
         self.copy = copy
 
@@ -2188,7 +2195,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
 
-    def __init__(self, n_quantiles=1000, output_distribution='uniform',
+    @_deprecate_positional_args
+    def __init__(self, *, n_quantiles=1000, output_distribution='uniform',
                  ignore_implicit_zeros=False, subsample=int(1e5),
                  random_state=None, copy=True):
         self.n_quantiles = n_quantiles
@@ -2716,7 +2724,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    def __init__(self, method='yeo-johnson', standardize=True, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, *, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
         self.standardize = standardize
         self.copy = copy

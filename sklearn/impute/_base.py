@@ -16,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..utils.mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
@@ -151,7 +152,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
     upon :meth:`transform` if strategy is not "constant".
 
     """
-    def __init__(self, missing_values=np.nan, strategy="mean",
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
         self.missing_values = missing_values
         self.strategy = strategy
@@ -481,7 +483,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, missing_values=np.nan, features="missing-only",
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features

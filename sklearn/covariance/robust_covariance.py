@@ -17,6 +17,7 @@ from scipy.stats import chi2
 from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 # Minimum Covariance Determinant
@@ -612,7 +613,8 @@ class MinCovDet(EmpiricalCovariance):
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, random_state=None):
         self.store_precision = store_precision
         self.assume_centered = assume_centered

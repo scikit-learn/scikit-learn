@@ -4,6 +4,7 @@
 from .stochastic_gradient import BaseSGDClassifier
 from .stochastic_gradient import BaseSGDRegressor
 from .stochastic_gradient import DEFAULT_EPSILON
+from ..utils.validation import _deprecate_positional_args
 
 
 class PassiveAggressiveClassifier(BaseSGDClassifier):
@@ -161,7 +162,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=None, random_state=None, warm_start=False,
@@ -389,7 +391,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0,
                  loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,

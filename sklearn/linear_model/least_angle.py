@@ -20,6 +20,7 @@ from joblib import Parallel, delayed
 from .base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
@@ -853,7 +854,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     method = 'lar'
     positive = False
 
-    def __init__(self, fit_intercept=True, verbose=False, normalize=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
@@ -1089,7 +1091,8 @@ class LassoLars(Lars):
     """
     method = 'lasso'
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
                  positive=False):
@@ -1344,7 +1347,8 @@ class LarsCV(Lars):
 
     method = 'lar'
 
-    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True):
@@ -1582,7 +1586,8 @@ class LassoLarsCV(LarsCV):
 
     method = 'lasso'
 
-    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
@@ -1715,7 +1720,8 @@ class LassoLarsIC(LassoLars):
     --------
     lars_path, LassoLars, LassoLarsCV
     """
-    def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
+    @_deprecate_positional_args
+    def __init__(self, *, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, positive=False):
         self.criterion = criterion

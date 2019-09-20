@@ -10,6 +10,7 @@ from .base import UnsupervisedMixin
 from .unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 def _check_params(X, metric, p, metric_params):
@@ -279,7 +280,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    def __init__(self, mode='distance', n_neighbors=5, algorithm='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, mode='distance', n_neighbors=5, algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
@@ -418,7 +420,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='distance', radius=1., algorithm='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, mode='distance', radius=1., algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(

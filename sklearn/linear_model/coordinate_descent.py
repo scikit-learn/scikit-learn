@@ -18,6 +18,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
+from ..utils.validation import _deprecate_positional_args
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
@@ -638,7 +639,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -915,7 +917,8 @@ class Lasso(ElasticNet):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -1377,10 +1380,12 @@ class LassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=None,
-                 positive=False, random_state=None, selection='cyclic'):
+    @_deprecate_positional_args
+    def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True, normalize=False, precompute='auto',
+                 max_iter=1000, tol=1e-4, copy_X=True, cv=None, verbose=False,
+                 n_jobs=None, positive=False, random_state=None,
+                 selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
@@ -1571,7 +1576,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+    @_deprecate_positional_args
+    def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
@@ -1710,7 +1716,8 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
@@ -1894,7 +1901,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -2073,7 +2081,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(enet_path)
 
-    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+    @_deprecate_positional_args
+    def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
@@ -2244,10 +2253,11 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     """
     path = staticmethod(lasso_path)
 
-    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=None, random_state=None,
-                 selection='cyclic'):
+    @_deprecate_positional_args
+    def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True, normalize=False, max_iter=1000,
+                 tol=1e-4, copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 random_state=None, selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,

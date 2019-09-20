@@ -10,6 +10,7 @@ from .base import LinearModel
 from ..utils import check_X_y
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import _check_optimize_result
 
@@ -224,7 +225,8 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
 
-    def __init__(self, epsilon=1.35, max_iter=100, alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.epsilon = epsilon
         self.max_iter = max_iter

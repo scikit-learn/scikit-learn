@@ -20,6 +20,7 @@ from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -391,7 +392,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         using a one-hot aka one-of-K scheme.
     """
 
-    def __init__(self, neg_label=0, pos_label=1, sparse_output=False):
+    @_deprecate_positional_args
+    def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
         if neg_label >= pos_label:
             raise ValueError("neg_label={0} must be strictly less than "
                              "pos_label={1}.".format(neg_label, pos_label))
@@ -843,7 +845,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         using a one-hot aka one-of-K scheme.
     """
 
-    def __init__(self, classes=None, sparse_output=False):
+    @_deprecate_positional_args
+    def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
 

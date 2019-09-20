@@ -17,6 +17,7 @@ from ..utils import (as_float_array, check_array, check_X_y, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from .base import SelectorMixin
 
 
@@ -419,7 +420,8 @@ class SelectPercentile(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, percentile=10):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, percentile=10):
         super().__init__(score_func)
         self.percentile = percentile
 
@@ -503,7 +505,8 @@ class SelectKBest(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, k=10):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, k=10):
         super().__init__(score_func)
         self.k = k
 
@@ -582,7 +585,8 @@ class SelectFpr(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -648,7 +652,8 @@ class SelectFdr(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -711,7 +716,8 @@ class SelectFwe(_BaseFilter):
     GenericUnivariateSelect: Univariate feature selector with configurable mode.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -785,7 +791,8 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fdr': SelectFdr,
                         'fwe': SelectFwe}
 
-    def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
+    @_deprecate_positional_args
+    def __init__(self, *, score_func=f_classif, mode='percentile', param=1e-5):
         super().__init__(score_func)
         self.mode = mode
         self.param = param

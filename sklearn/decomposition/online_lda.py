@@ -285,7 +285,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_components=10, doc_topic_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,

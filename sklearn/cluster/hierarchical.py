@@ -18,6 +18,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
+from ..utils.validation import _deprecate_positional_args
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -755,7 +756,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', distance_threshold=None):
@@ -1009,7 +1011,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     (1797, 32)
     """
 
-    def __init__(self, n_clusters=2, affinity="euclidean",
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,

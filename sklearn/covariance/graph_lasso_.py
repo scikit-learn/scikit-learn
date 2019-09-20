@@ -23,6 +23,7 @@ from ..utils.validation import check_random_state, check_array
 from ..linear_model import cd_fast
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
+from ..utils.validation import _deprecate_positional_args
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -358,7 +359,8 @@ class GraphicalLasso(EmpiricalCovariance):
     graphical_lasso, GraphicalLassoCV
     """
 
-    def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
         super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
@@ -624,7 +626,8 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
 
-    def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
+    @_deprecate_positional_args
+    def __init__(self, *, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
         super().__init__(

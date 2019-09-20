@@ -18,6 +18,7 @@ from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
@@ -137,7 +138,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=5, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -298,7 +300,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, *, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):

@@ -8,6 +8,7 @@ import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import check_array, check_random_state, check_consistent_length
+from ..utils.validation import _deprecate_positional_args
 
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
@@ -70,7 +71,8 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
     """
-    def __init__(self, bandwidth=1.0, algorithm='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None):
         self.algorithm = algorithm

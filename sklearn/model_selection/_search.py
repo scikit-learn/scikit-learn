@@ -34,6 +34,7 @@ from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
@@ -1132,7 +1133,8 @@ class GridSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    def __init__(self, estimator, param_grid, scoring=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                  error_score=np.nan, return_train_score=False):
@@ -1465,8 +1467,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True,
+    @_deprecate_positional_args
+    def __init__(self, estimator, param_distributions, *, n_iter=10,
+                 scoring=None, n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=False):

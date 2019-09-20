@@ -16,6 +16,7 @@ from .gaussian_mixture import _estimate_gaussian_parameters
 from .gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from ..utls.validation import _deprecate_positional_args
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -306,7 +307,8 @@ class BayesianGaussianMixture(BaseMixture):
        <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
 
-    def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, n_components=1, *, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weight_concentration_prior_type='dirichlet_process',
                  weight_concentration_prior=None,

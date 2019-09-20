@@ -17,6 +17,7 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from .bagging import BaseBagging
@@ -161,8 +162,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     """
 
+    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100,
+                 n_estimators=100, *,
                  max_samples="auto",
                  contamination="auto",
                  max_features=1.,

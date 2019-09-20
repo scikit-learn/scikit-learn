@@ -18,6 +18,7 @@ from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
+from .utils.validation import _deprecate_positional_args
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
@@ -69,7 +70,8 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
 
-    def __init__(self, gamma=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
@@ -175,7 +177,8 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
 
-    def __init__(self, skewedness=1., n_components=100, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, skewedness=1., n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
         self.random_state = random_state
@@ -306,7 +309,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     2011
     """
 
-    def __init__(self, sample_steps=2, sample_interval=None):
+    @_deprecate_positional_args
+    def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
 
@@ -519,7 +523,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
 
-    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
+    @_deprecate_positional_args
+    def __init__(self, *, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma

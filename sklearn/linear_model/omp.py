@@ -16,6 +16,7 @@ from joblib import Parallel, delayed
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -616,7 +617,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
-    def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
@@ -853,7 +855,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy=True, fit_intercept=True, normalize=True,
+    @_deprecate_positional_args
+    def __init__(self, *, copy=True, fit_intercept=True, normalize=True,
                  max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept

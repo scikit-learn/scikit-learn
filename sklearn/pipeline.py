@@ -20,6 +20,7 @@ from .base import clone, TransformerMixin
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
+from .utils.validation import _deprecate_positional_args
 
 from .utils.metaestimators import _BaseComposition
 
@@ -125,7 +126,8 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    def __init__(self, steps, memory=None, verbose=False):
+    @_deprecate_positional_args
+    def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
@@ -796,7 +798,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ["transformer_list"]
 
-    def __init__(self, transformer_list, n_jobs=None,
+    @_deprecate_positional_args
+    def __init__(self, transformer_list, *, n_jobs=None,
                  transformer_weights=None, verbose=False):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs

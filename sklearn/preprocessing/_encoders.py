@@ -9,6 +9,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from .label import _encode, _encode_check_unknown
 
@@ -265,7 +266,8 @@ class OneHotEncoder(_BaseEncoder):
       matrix indicating the presence of a class label.
     """
 
-    def __init__(self, categories='auto', drop=None, sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -587,7 +589,8 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
 

@@ -14,6 +14,7 @@ from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
+from .utils.validation import _deprecate_positional_args
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
@@ -78,7 +79,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         Is automatically set to True if the input y is passed in sparse format.
     """
 
-    def __init__(self, strategy="stratified", random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="stratified", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -405,7 +407,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Number of outputs.
     """
 
-    def __init__(self, strategy="mean", constant=None, quantile=None):
+    @_deprecate_positional_args
+    def __init__(self, *, strategy="mean", constant=None, quantile=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile

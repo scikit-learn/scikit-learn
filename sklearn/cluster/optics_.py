@@ -16,6 +16,7 @@ import numpy as np
 
 from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
@@ -194,9 +195,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
-                 metric_params=None, cluster_method='xi', eps=None, xi=0.05,
-                 predecessor_correction=True, min_cluster_size=None,
+    @_deprecate_positional_args
+    def __init__(self, *, min_samples=5, max_eps=np.inf, metric='minkowski',
+                 p=2, metric_params=None, cluster_method='xi', eps=None,
+                 xi=0.05, predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
         self.max_eps = max_eps
         self.min_samples = min_samples

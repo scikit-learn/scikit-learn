@@ -17,6 +17,7 @@ from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
@@ -597,7 +598,8 @@ class PLSRegression(_PLS):
     Editions Technic.
     """
 
-    def __init__(self, n_components=2, scale=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -741,7 +743,8 @@ class PLSCanonical(_PLS):
     PLSSVD
     """
 
-    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -808,7 +811,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     CCA
     """
 
-    def __init__(self, n_components=2, scale=True, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy

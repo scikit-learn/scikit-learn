@@ -27,6 +27,7 @@ from .base import _parallel_fit_estimator
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import _BaseComposition
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
@@ -222,7 +223,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     VotingRegressor: Prediction voting regressor.
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, *, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
         self.estimators = estimators
         self.voting = voting
@@ -416,7 +418,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimators, *, weights=None, n_jobs=None):
         self.estimators = estimators
         self.weights = weights
         self.n_jobs = n_jobs

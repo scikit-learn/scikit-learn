@@ -7,6 +7,7 @@ from .base import SelectorMixin
 from ..utils import check_array
 from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
+from ..utils.validaiton import _deprecate_positional_args
 
 
 class VarianceThreshold(SelectorMixin, BaseEstimator):
@@ -42,7 +43,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
                [1, 1]])
     """
 
-    def __init__(self, threshold=0.):
+    @_deprecate_positional_args
+    def __init__(self, *, threshold=0.):
         self.threshold = threshold
 
     def fit(self, X, y=None):

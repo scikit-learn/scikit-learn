@@ -26,6 +26,7 @@ from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import check_classification_targets
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
@@ -230,7 +231,8 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
         Estimators used for predictions.
     """
 
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
@@ -323,7 +325,8 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
         Estimators used for predictions.
     """
 
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         super().__init__(estimator, n_jobs)
 
     def fit(self, X, Y, sample_weight=None):
@@ -411,7 +414,10 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, order=None, cv=None,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
