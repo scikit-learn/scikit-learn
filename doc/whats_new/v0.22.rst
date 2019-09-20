@@ -192,6 +192,9 @@ Changelog
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
   - |Fix| Fixed a bug where early stopping would break with string targets.
     :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
+  - |Fix| :class:`ensemble.HistGradientBoostingClassifier` now raises an error
+    if ``categorical_crossentropy`` loss is given for a binary classification
+    problem. :pr:`14869` by `Adrin Jalali`_.
 
   Note that pickles from 0.21 will not work in 0.22.
 
@@ -218,6 +221,18 @@ Changelog
   Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
   and :class:`ensemble.HistGradientBoostingRegressor` instead.
   :pr:`14907` by `Adrin Jalali`_.
+
+- |Enhancement| Addition of ``max_samples`` argument allows limiting
+  size of bootstrap samples to be less than size of dataset. Added to
+  :class:`ensemble.forest.ForestClassifier`,
+  :class:`ensemble.forest.ForestRegressor`,
+  :class:`ensemble.forest.RandomForestClassifier`,
+  :class:`ensemble.forest.RandomForestRegressor`,
+  :class:`ensemble.forest.ExtraTreesClassifier`,
+  :class:`ensemble.forest.ExtraTreesRegressor`,
+  :class:`ensemble.forest.RandomTreesEmbedding`. :pr:`14682` by
+  :user:`Matt Hancock <notmatthancock>` and
+  :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -511,6 +526,10 @@ Changelog
   :class:`tree.DecisionTreeRegressor`, and the parameter has no effect.
   :pr:`14907` by `Adrin Jalali`_.
 
+- |API| The ``classes_`` and ``n_classes_`` attributes of
+  :class:`tree.DecisionTreeRegressor` are now deprecated. :pr:`15028` by
+  :user:`Mei Guan <meiguan>`, `Nicolas Hug`_, and `Adrin Jalali`_.
+
 :mod:`sklearn.utils`
 ....................
 
@@ -538,6 +557,10 @@ Changelog
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :func:`utils.check_array` is now raising an error instead of casting
+  NaN to integer.
+  :pr:`14872` by `Roman Yurchak`_.
 
 :mod:`sklearn.metrics`
 ..................................
