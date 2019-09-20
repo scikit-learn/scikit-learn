@@ -12,6 +12,16 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.utils.testing import assert_allclose_dense_sparse
 
 
+@pytest.mark.parametrize("toarray", [csr_matrix, csc_matrix])
+def test_sparse_matrix_non_pearson(toarray):
+    X = np.array([[0, 0.2], [1, 1.8], [2, 2.2], [3, 2.8]])
+    X = toarray(X)
+
+    msg = "only pearson correlation is supported with sparse matrices"
+    with pytest.raises(ValueError, match=msg):
+        CorrelationThreshold(algorithm='spearmanr').fit(X)
+
+
 @pytest.mark.parametrize("toarray", [np.asarray, csr_matrix, csc_matrix])
 def test_correlated_features_are_removed(toarray):
     rng = np.random.RandomState(0)

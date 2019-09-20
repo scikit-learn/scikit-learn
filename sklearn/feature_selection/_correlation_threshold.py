@@ -25,10 +25,14 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         Features with a training-set correlation higher than this threshold
         will be removed.
 
+    algorithm : {'pearson', 'spearmanr'}, default='pearson'
+        Correlation type to use. Dense arrays can use any type. 'pearson' is
+        the only type that supports sparse matrices.
+
     Attributes
     ----------
     support_mask_ : bool ndarray of shape (n_features,)
-        Boolean mask for features to keep
+        Boolean mask for features to keep.
 
     Examples
     --------
@@ -49,8 +53,9 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
     Max Kuhn and Kjell Johnson, "Applied Predictive Modeling", Springer, 2013
     (Section 3.5)
     """
-    def __init__(self, threshold=0.9):
+    def __init__(self, threshold=0.9, algorithm='pearson'):
         self.threshold = threshold
+        self.algorithm = algorithm
 
     def fit(self, X, y=None):
         """Learn empirical variances from X.
@@ -70,6 +75,9 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
         if not (0.0 <= self.threshold <= 1.0):
             raise ValueError("threshold must be in [0.0, 1.0], got {}".format(
                              self.threshold))
+        if issparse(X) and self.algorithm != 'pearson':
+            raise ValueError("only pearson correlation is supported with "
+                             "sparse matrices")
 
         X = check_array(X, accept_sparse=['csc', 'csr'], dtype=[np.float64,
                                                                 np.float32])
