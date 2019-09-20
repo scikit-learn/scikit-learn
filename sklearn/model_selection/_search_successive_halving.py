@@ -733,6 +733,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the last iteration uses as much resousrces as possible. Namely, the
         last iteration uses the highest value smaller than ``max_resources``
         that is a multiple of both ``min_resources`` and ``ratio``.
+
     Attributes
     ----------
     n_candidates_ : list of int
