@@ -1982,4 +1982,4 @@ def test_classes_deprecated():
         assert n == clf.n_outputs_
 
     with pytest.warns(DeprecationWarning, match=match):
-        clf.n_classes_
+        assert len(clf.n_classes_) == clf.n_outputs_
