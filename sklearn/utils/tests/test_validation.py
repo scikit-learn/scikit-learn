@@ -25,7 +25,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.estimator_checks import NotAnArray
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -202,6 +202,26 @@ def test_check_array_force_all_finite_object():
         check_array(X, dtype=None, force_all_finite=True)
 
 
+@pytest.mark.parametrize(
+    "X, err_msg",
+    [(np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.inf]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]], dtype=np.object),
+      "cannot convert float NaN to integer")]
+)
+@pytest.mark.parametrize("force_all_finite", [True, False])
+def test_check_array_force_all_finite_object_unsafe_casting(
+        X, err_msg, force_all_finite):
+    # casting a float array containing NaN or inf to int dtype should
+    # raise an error irrespective of the force_all_finite parameter.
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(X, dtype=np.int, force_all_finite=force_all_finite)
+
+
 @ignore_warnings
 def test_check_array():
     # accept_sparse == False
@@ -301,7 +321,7 @@ def test_check_array():
     assert_raises(ValueError, check_array, X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
     # convert weird stuff to arrays
-    X_no_array = NotAnArray(X_dense)
+    X_no_array = _NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 

@@ -226,6 +226,8 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. _rolling_your_own_estimator:
+
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,
@@ -251,6 +253,7 @@ the checks that are failing. scikit-learn provides a pytest specific decorator,
 :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
 multiple estimators::
 
+  from sklearn.utils.estimator_checks import parametrize_with_checks
   from sklearn.linear_model import LogisticRegression
   from sklearn.tree import DecisionTreeRegressor
 

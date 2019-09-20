@@ -13,7 +13,7 @@ Documentation of scikit-learn |version|
           <!-- row -->
             <div class="row-fluid">
                 <div class="span4 box">
-                    <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
+                    <h2><a href="getting_started.html">Getting Started</a></h2>
                     <blockquote>A very short introduction into machine learning
                     problems and how to solve them using scikit-learn.
                     Presents basic concepts and conventions.
