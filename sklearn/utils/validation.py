@@ -15,7 +15,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, isclass, getfullargspec
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -1103,26 +1103,28 @@ def _deprecate_positional_args(f):
     f : function
         function to check arguments on
     """
-    argspec = getfullargspec(f)
-    kwonlyargs = argspec.kwonlyargs
-    orig_spec = argspec.args
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
 
-    # Assumes instance method has 'self' as first argument
-    is_method = orig_spec and 'self' == orig_spec[0]
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
 
     @wraps(f)
     def inner_f(*args, **kwargs):
-        extra_args = len(args) - len(orig_spec)
+        extra_args = len(args) - len(all_args)
         if extra_args > 0:
             # ignore first 'self' argument for instance methods
-            err_args = args[1:] if is_method else args
             args_msg = ['{}={}'.format(name, arg)
-                        for name, arg in zip(kwonlyargs[:extra_args],
-                                             err_args[-extra_args:])]
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
             warnings.warn("Pass {} as keyword args. From version 0.24 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
                           DeprecationWarning)
-        kwargs.update({k: arg for k, arg in zip(orig_spec, args)})
+        kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
