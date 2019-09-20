@@ -840,7 +840,8 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', break_ties=False,
@@ -1220,7 +1221,8 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    @_deprecate_positional_args
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 

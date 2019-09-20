@@ -148,7 +148,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
                  normalize=False, copy_X=True, verbose=False):

@@ -101,7 +101,7 @@ class CCA(_UnstableArchMixin, _PLS):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, n_components=2, scale=True,
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
                          deflation_mode="canonical", mode="B",

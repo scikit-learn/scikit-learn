@@ -12,6 +12,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
+from ..utils.validation import _deprecate_positional_args
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
@@ -434,7 +435,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
-    def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
                  degree=3, coef0=1, kernel_params=None, n_jobs=None):
