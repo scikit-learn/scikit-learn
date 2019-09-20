@@ -202,6 +202,26 @@ def test_check_array_force_all_finite_object():
         check_array(X, dtype=None, force_all_finite=True)
 
 
+@pytest.mark.parametrize(
+    "X, err_msg",
+    [(np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.inf]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]], dtype=np.object),
+      "cannot convert float NaN to integer")]
+)
+@pytest.mark.parametrize("force_all_finite", [True, False])
+def test_check_array_force_all_finite_object_unsafe_casting(
+        X, err_msg, force_all_finite):
+    # casting a float array containing NaN or inf to int dtype should
+    # raise an error irrespective of the force_all_finite parameter.
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(X, dtype=np.int, force_all_finite=force_all_finite)
+
+
 @ignore_warnings
 def test_check_array():
     # accept_sparse == False

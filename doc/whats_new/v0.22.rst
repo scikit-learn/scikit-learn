@@ -69,6 +69,13 @@ Changelog
   `sample_weights` are not supported by the wrapped estimator). :pr:`13575`
   by :user:`William de Vazelhes <wdevazelhes>`.
 
+:mod:`sklearn.cluster`
+......................
+
+- |Feature| :class:`cluster.SpectralClustering` now accepts precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -111,6 +118,10 @@ Changelog
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
 
+- |Enhancement| :func:`datasets.make_classification` now accepts array-like
+   `weights` parameter, i.e. list or numpy.array, instead of list only.
+  :pr:`14764` by :user:`Cat Chenal <CatChenal>`.
+
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
@@ -152,6 +163,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor.
+  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Caio Oliveira <caioaao>`.
+
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`:
@@ -175,13 +192,11 @@ Changelog
     avoid any data leak. :pr:`13933` by `Nicolas Hug`_.
   - |Fix| Fixed a bug where early stopping would break with string targets.
     :pr:`14710` by :user:`Guillaume Lemaitre <glemaitre>`.
+  - |Fix| :class:`ensemble.HistGradientBoostingClassifier` now raises an error
+    if ``categorical_crossentropy`` loss is given for a binary classification
+    problem. :pr:`14869` by `Adrin Jalali`_.
 
   Note that pickles from 0.21 will not work in 0.22.
-
-- |Efficiency| :meth:`ensemble.MissingIndicator.fit_transform` the
-  _get_missing_features_info function is now called once when calling
-  fit_transform for MissingIndicator class. :pr:`14356` by :user:
-  `Harsh Soni <harsh020>`.
 
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
@@ -206,6 +221,18 @@ Changelog
   Users are recommended to use :class:`ensemble.HistGradientBoostingClassifier`
   and :class:`ensemble.HistGradientBoostingRegressor` instead.
   :pr:`14907` by `Adrin Jalali`_.
+
+- |Enhancement| Addition of ``max_samples`` argument allows limiting
+  size of bootstrap samples to be less than size of dataset. Added to
+  :class:`ensemble.forest.ForestClassifier`,
+  :class:`ensemble.forest.ForestRegressor`,
+  :class:`ensemble.forest.RandomForestClassifier`,
+  :class:`ensemble.forest.RandomForestRegressor`,
+  :class:`ensemble.forest.ExtraTreesClassifier`,
+  :class:`ensemble.forest.ExtraTreesRegressor`,
+  :class:`ensemble.forest.RandomTreesEmbedding`. :pr:`14682` by
+  :user:`Matt Hancock <notmatthancock>` and
+  :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -251,8 +278,8 @@ Changelog
 :mod:`sklearn.impute`
 .....................
 
-- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using 
-  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and 
+- |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
+  k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
@@ -262,6 +289,9 @@ Changelog
 
 - |Fix| :class:`impute.IterativeImputer` now works when there is only one feature.
   By :user:`Sergey Feldman <sergeyf>`.
+
+- |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
+  computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -311,12 +341,20 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
-- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`  
+- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.manifold`
 .......................
+
+- |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
+  :class:`manifold.SpectralEmbedding` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- |API| Deprecate ``training_data_`` unused attribute in
+  :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
 - |Fix| Fixed a bug where :func:`manifold.spectral_embedding` (and therefore
   :class:`manifold.SpectralEmbedding` and :class:`cluster.SpectralClustering`)
@@ -400,6 +438,20 @@ Changelog
 
 :mod:`sklearn.neighbors`
 ........................
+
+- |MajorFeature| Added :class:`neighbors.KNeighborsTransformer` and
+  :class:`neighbors.RadiusNeighborsTransformer`, which transform input dataset
+  into a sparse neighbors graph. They give finer control on nearest neighbors
+  computations and enable easy pipeline caching for multiple use.
+  :issue:`10482` by `Tom Dupre la Tour`_.
+
+- |Feature| :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`, and
+  :class:`neighbors.LocalOutlierFactor` now accept precomputed sparse
+  neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
+  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 - |Feature| :class:`neighbors.RadiusNeighborsClassifier` now supports
   predicting probabilities by using `predict_proba` and supports more
@@ -505,6 +557,17 @@ Changelog
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
   :pr:`14538` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :func:`utils.check_array` is now raising an error instead of casting
+  NaN to integer.
+  :pr:`14872` by `Roman Yurchak`_.
+
+:mod:`sklearn.metrics`
+..................................
+
+- |API| scoring="neg_brier_score" should be used instead of
+  scoring="brier_score_loss" which is now deprecated.
+  :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
 Miscellaneous
 .............
