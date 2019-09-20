@@ -1,9 +1,10 @@
 
 import numpy as np
 from numpy.testing import assert_array_equal
+import pytest
 
 from sklearn.feature_extraction import FeatureHasher
-from sklearn.utils.testing import (assert_raises, ignore_warnings,
+from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
 
 pytestmark = fails_if_pypy
@@ -86,22 +87,30 @@ def test_hash_empty_input():
 
 
 def test_hasher_invalid_input():
-    assert_raises(ValueError, FeatureHasher, input_type="gobbledygook")
-    assert_raises(ValueError, FeatureHasher, n_features=-1)
-    assert_raises(ValueError, FeatureHasher, n_features=0)
-    assert_raises(TypeError, FeatureHasher, n_features='ham')
+    with pytest.raises(ValueError):
+        FeatureHasher(input_type="gobbledygook")
+    with pytest.raises(ValueError):
+        FeatureHasher(n_features=-1)
+    with pytest.raises(ValueError):
+        FeatureHasher(n_features=0)
+    with pytest.raises(TypeError):
+        FeatureHasher(n_features='ham')
 
     h = FeatureHasher(n_features=np.uint16(2 ** 6))
-    assert_raises(ValueError, h.transform, [])
-    assert_raises(Exception, h.transform, [[5.5]])
-    assert_raises(Exception, h.transform, [[None]])
+    with pytest.raises(ValueError):
+        h.transform([])
+    with pytest.raises(Exception):
+        h.transform([[5.5]])
+    with pytest.raises(Exception):
+        h.transform([[None]])
 
 
 def test_hasher_set_params():
     # Test delayed input validation in fit (useful for grid search).
     hasher = FeatureHasher()
     hasher.set_params(n_features=np.inf)
-    assert_raises(TypeError, hasher.fit)
+    with pytest.raises(TypeError):
+        hasher.fit()
 
 
 def test_hasher_zeros():

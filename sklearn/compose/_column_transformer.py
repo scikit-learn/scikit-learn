@@ -6,9 +6,10 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-
+import warnings
 from itertools import chain
 
+import numbers
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
@@ -19,7 +20,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import safe_indexing
 from ..utils import _get_column_indices
-from ..utils import _check_key_type
+from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
@@ -32,7 +33,7 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "item instead of a scalar.")
 
 
-class ColumnTransformer(_BaseComposition, TransformerMixin):
+class ColumnTransformer(TransformerMixin, _BaseComposition):
     """Applies transformers to columns of an array or pandas DataFrame.
 
     This estimator allows different columns or column subsets of the input
@@ -56,10 +57,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -308,7 +309,8 @@ boolean mask array or callable
 
         # Make it possible to check for reordered named columns on transform
         if (hasattr(X, 'columns') and
-                any(_check_key_type(cols, str) for cols in self._columns)):
+                any(_determine_key_type(cols) == 'str'
+                    for cols in self._columns)):
             self._df_columns = X.columns
 
         self._n_features = X.shape[1]
@@ -341,7 +343,7 @@ boolean mask array or callable
         feature_names : list of strings
             Names of the features produced by transform.
         """
-        check_is_fitted(self, 'transformers_')
+        check_is_fitted(self)
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
             if trans == 'drop':
@@ -393,6 +395,34 @@ boolean mask array or callable
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
+
+    def _validate_features(self, n_features, feature_names):
+        """Ensures feature counts and names are the same during fit and
+        transform.
+
+        TODO: It should raise an error from v0.24
+        """
+
+        if ((self._feature_names_in is None or feature_names is None)
+                and self._n_features == n_features):
+            return
+
+        neg_col_present = np.any([_is_negative_indexing(col)
+                                  for col in self._columns])
+        if neg_col_present and self._n_features != n_features:
+            raise RuntimeError("At least one negative column was used to "
+                               "indicate columns, and the new data's number "
+                               "of columns does not match the data given "
+                               "during fit. "
+                               "Please make sure the data during fit and "
+                               "transform have the same number of columns.")
+
+        if (self._n_features != n_features or
+                np.any(self._feature_names_in != np.asarray(feature_names))):
+            warnings.warn("Given feature/column names or counts do not match "
+                          "the ones for the data given during fit. This will "
+                          "fail from v0.24.",
+                          DeprecationWarning)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -470,6 +500,11 @@ boolean mask array or callable
             sparse matrices.
 
         """
+        # TODO: this should be `feature_names_in_` when we start having it
+        if hasattr(X, "columns"):
+            self._feature_names_in = np.asarray(X.columns)
+        else:
+            self._feature_names_in = None
         X = _check_X(X)
         self._validate_transformers()
         self._validate_column_callables(X)
@@ -516,8 +551,12 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        check_is_fitted(self, 'transformers_')
+        check_is_fitted(self)
         X = _check_X(X)
+        if hasattr(X, "columns"):
+            X_feature_names = np.asarray(X.columns)
+        else:
+            X_feature_names = None
 
         if self._n_features > X.shape[1]:
             raise ValueError('Number of features of the input must be equal '
@@ -527,6 +566,8 @@ boolean mask array or callable
                              .format(self._n_features, X.shape[1]))
 
         # No column reordering allowed for named cols combined with remainder
+        # TODO: remove this mechanism in 0.24, once we enforce strict column
+        # name order and count. See #14237 for details.
         if (self._remainder[2] is not None and
                 hasattr(self, '_df_columns') and
                 hasattr(X, 'columns')):
@@ -538,6 +579,7 @@ boolean mask array or callable
                                  'and for transform when using the '
                                  'remainder keyword')
 
+        self._validate_features(X.shape[1], X_feature_names)
         Xs = self._fit_transform(X, None, _transform_one, fitted=True)
         self._validate_output(Xs)
 
@@ -626,10 +668,10 @@ def make_column_transformer(*transformers, **kwargs):
         transformer objects to be applied to subsets of the data.
 
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support `fit` and `transform`. Special-cased
-            strings 'drop' and 'passthrough' are accepted as well, to
-            indicate to drop the columns or to pass them through untransformed,
-            respectively.
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -707,3 +749,13 @@ boolean mask array or callable
                              remainder=remainder,
                              sparse_threshold=sparse_threshold,
                              verbose=verbose)
+
+
+def _is_negative_indexing(key):
+    # TODO: remove in v0.24
+    def is_neg(x): return isinstance(x, numbers.Integral) and x < 0
+    if isinstance(key, slice):
+        return is_neg(key.start) or is_neg(key.stop)
+    elif _determine_key_type(key) == 'int':
+        return np.any(np.asarray(key) < 0)
+    return False

@@ -11,8 +11,6 @@ from scipy import stats
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
@@ -85,15 +83,15 @@ def test_fastica_simple(add_noise, seed):
         if whiten:
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo,
                                       random_state=rng)
-            assert_raises(ValueError, fastica, m.T, fun=np.tanh,
-                          algorithm=algo)
+            with pytest.raises(ValueError):
+                fastica(m.T, fun=np.tanh, algorithm=algo)
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
             k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False,
                                       random_state=rng)
-            assert_raises(ValueError, fastica, X, fun=np.tanh,
-                          algorithm=algo)
+            with pytest.raises(ValueError):
+                fastica(X, fun=np.tanh, algorithm=algo)
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
         if whiten:
@@ -131,9 +129,11 @@ def test_fastica_simple(add_noise, seed):
 
     for fn in [np.tanh, "exp(-.5(x^2))"]:
         ica = FastICA(fun=fn, algorithm=algo)
-        assert_raises(ValueError, ica.fit, m.T)
+        with pytest.raises(ValueError):
+            ica.fit(m.T)
 
-    assert_raises(TypeError, FastICA(fun=range(10)).fit, m.T)
+    with pytest.raises(TypeError):
+        FastICA(fun=range(10)).fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -270,13 +270,13 @@ def test_fastica_errors():
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
-    assert_raises_regex(ValueError, 'max_iter should be greater than 1',
-                        FastICA, max_iter=0)
-    assert_raises_regex(ValueError, r'alpha must be in \[1,2\]',
-                        fastica, X, fun_args={'alpha': 0})
-    assert_raises_regex(ValueError, 'w_init has invalid shape.+'
-                        r'should be \(3L?, 3L?\)',
-                        fastica, X, w_init=w_init)
-    assert_raises_regex(ValueError,
-                        'Invalid algorithm.+must be.+parallel.+or.+deflation',
-                        fastica, X, algorithm='pizza')
+    with pytest.raises(ValueError, match='max_iter should be greater than 1'):
+        FastICA(max_iter=0)
+    with pytest.raises(ValueError, match=r'alpha must be in \[1,2\]'):
+        fastica(X, fun_args={'alpha': 0})
+    with pytest.raises(ValueError, match='w_init has invalid shape.+'
+                       r'should be \(3L?, 3L?\)'):
+        fastica(X, w_init=w_init)
+    with pytest.raises(ValueError, match='Invalid algorithm.+must '
+                       'be.+parallel.+or.+deflation'):
+        fastica(X, algorithm='pizza')

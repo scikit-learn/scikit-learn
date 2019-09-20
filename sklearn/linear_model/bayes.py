@@ -19,7 +19,7 @@ from ..utils.fixes import pinvh
 ###############################################################################
 # BayesianRidge regression
 
-class BayesianRidge(LinearModel, RegressorMixin):
+class BayesianRidge(RegressorMixin, LinearModel):
     """Bayesian ridge regression.
 
     Fit a Bayesian ridge model. See the Notes section for details on this
@@ -30,56 +30,52 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    n_iter : int, optional
-        Maximum number of iterations.  Default is 300. Should be greater than
-        or equal to 1.
+    n_iter : int, default=300
+        Maximum number of iterations. Should be greater than or equal to 1.
 
-    tol : float, optional
-        Stop the algorithm if w has converged. Default is 1.e-3.
+    tol : float, default=1e-3
+        Stop the algorithm if w has converged.
 
-    alpha_1 : float, optional
+    alpha_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
-        over the alpha parameter. Default is 1.e-6
+        over the alpha parameter.
 
-    alpha_2 : float, optional
+    alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the alpha parameter.
-        Default is 1.e-6.
 
-    lambda_1 : float, optional
+    lambda_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
-        over the lambda parameter. Default is 1.e-6.
+        over the lambda parameter.
 
-    lambda_2 : float, optional
+    lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
         Gamma distribution prior over the lambda parameter.
-        Default is 1.e-6
 
-    alpha_init : float
+    alpha_init : float, default=None
         Initial value for alpha (precision of the noise).
         If not set, alpha_init is 1/Var(y).
 
             .. versionadded:: 0.22
 
-    lambda_init : float
+    lambda_init : float, default=None
         Initial value for lambda (precision of the weights).
         If not set, lambda_init is 1.
 
             .. versionadded:: 0.22
 
-    compute_score : boolean, optional
+    compute_score : bool, default=False
         If True, compute the log marginal likelihood at each iteration of the
-        optimization. Default is False.
+        optimization.
 
-    fit_intercept : boolean, optional, default True
+    fit_intercept : bool, default=True
         Whether to calculate the intercept for this model.
         The intercept is not treated as a probabilistic parameter
         and thus has no associated variance. If set
         to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
-
-    normalize : boolean, optional, default False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -87,17 +83,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    verbose : boolean, optional, default False
+    verbose : bool, default=False
         Verbose mode when fitting the model.
 
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features,)
-        Coefficients of the regression model (mean of distribution).
+    coef_ : array-like of shape (n_features,)
+        Coefficients of the regression model (mean of distribution)
 
     intercept_ : float
         Independent term in decision function. Set to 0.0 if
@@ -109,10 +105,10 @@ class BayesianRidge(LinearModel, RegressorMixin):
     lambda_ : float
        Estimated precision of the weights.
 
-    sigma_ : array, shape = (n_features, n_features)
-        Estimated variance-covariance matrix of the weights.
+    sigma_ : array-like of shape (n_features, n_features)
+        Estimated variance-covariance matrix of the weights
 
-    scores_ : array, shape = (n_iter_ + 1,)
+    scores_ : array-like of shape (n_iter_ + 1,)
         If computed_score is True, value of the log marginal likelihood (to be
         maximized) at each iteration of the optimization. The array starts
         with the value of the log marginal likelihood obtained for the initial
@@ -173,12 +169,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples,n_features]
+        X : ndarray of shape (n_samples,n_features)
             Training data
-        y : numpy array of shape [n_samples]
+        y : ndarray of shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : ndarray of shape (n_samples,), default=None
             Individual weights for each sample
 
             .. versionadded:: 0.20
@@ -297,18 +293,18 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
 
         Returns
         -------
-        y_mean : array, shape = (n_samples,)
+        y_mean : array-like of shape (n_samples,)
             Mean of predictive distribution of query points.
 
-        y_std : array, shape = (n_samples,)
+        y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
@@ -379,7 +375,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 # ARD (Automatic Relevance Determination) regression
 
 
-class ARDRegression(LinearModel, RegressorMixin):
+class ARDRegression(RegressorMixin, LinearModel):
     """Bayesian ARD regression.
 
     Fit the weights of a regression model, using an ARD prior. The weights of
@@ -392,43 +388,41 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    n_iter : int, optional
-        Maximum number of iterations. Default is 300
+    n_iter : int, default=300
+        Maximum number of iterations.
 
-    tol : float, optional
-        Stop the algorithm if w has converged. Default is 1.e-3.
+    tol : float, default=1e-3
+        Stop the algorithm if w has converged.
 
-    alpha_1 : float, optional
+    alpha_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
-        over the alpha parameter. Default is 1.e-6.
+        over the alpha parameter.
 
-    alpha_2 : float, optional
+    alpha_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
-        Gamma distribution prior over the alpha parameter. Default is 1.e-6.
+        Gamma distribution prior over the alpha parameter.
 
-    lambda_1 : float, optional
+    lambda_1 : float, default=1e-6
         Hyper-parameter : shape parameter for the Gamma distribution prior
-        over the lambda parameter. Default is 1.e-6.
+        over the lambda parameter.
 
-    lambda_2 : float, optional
+    lambda_2 : float, default=1e-6
         Hyper-parameter : inverse scale parameter (rate parameter) for the
-        Gamma distribution prior over the lambda parameter. Default is 1.e-6.
+        Gamma distribution prior over the lambda parameter.
 
-    compute_score : boolean, optional
+    compute_score : bool, default=False
         If True, compute the objective function at each step of the model.
-        Default is False.
 
-    threshold_lambda : float, optional
+    threshold_lambda : float, default=10 000
         threshold for removing (pruning) weights with high precision from
-        the computation. Default is 1.e+4.
+        the computation.
 
-    fit_intercept : boolean, optional
+    fit_intercept : bool, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
-        Default is True.
+        (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -436,28 +430,32 @@ class ARDRegression(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True.
+    copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    verbose : boolean, optional, default False
+    verbose : bool, default=False
         Verbose mode when fitting the model.
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features)
+    coef_ : array-like of shape (n_features,)
         Coefficients of the regression model (mean of distribution)
 
     alpha_ : float
        estimated precision of the noise.
 
-    lambda_ : array, shape = (n_features)
+    lambda_ : array-like of shape (n_features,)
        estimated precisions of the weights.
 
-    sigma_ : array, shape = (n_features, n_features)
+    sigma_ : array-like of shape (n_features, n_features)
         estimated variance-covariance matrix of the weights
 
     scores_ : float
         if computed, value of the objective function (to be maximized)
+
+    intercept_ : float
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     Examples
     --------
@@ -512,10 +510,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
-        y : array, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
@@ -621,18 +619,18 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
-        return_std : boolean, optional
+        return_std : bool, default=False
             Whether to return the standard deviation of posterior prediction.
 
         Returns
         -------
-        y_mean : array, shape = (n_samples,)
+        y_mean : array-like of shape (n_samples,)
             Mean of predictive distribution of query points.
 
-        y_std : array, shape = (n_samples,)
+        y_std : array-like of shape (n_samples,)
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)

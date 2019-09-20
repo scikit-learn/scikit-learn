@@ -686,9 +686,6 @@ class GaussianMixture(BaseMixture):
     def _compute_lower_bound(self, _, log_prob_norm):
         return log_prob_norm
 
-    def _check_is_fitted(self):
-        check_is_fitted(self, ['weights_', 'means_', 'precisions_cholesky_'])
-
     def _get_parameters(self):
         return (self.weights_, self.means_, self.covariances_,
                 self.precisions_cholesky_)

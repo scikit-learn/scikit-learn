@@ -10,6 +10,7 @@ Developer's Guide
 .. toctree::
 
    contributing
+   develop
    tips
    utilities
    performance

@@ -1125,7 +1125,6 @@ cdef class Tree:
         arr.base = <PyObject*> self
         return arr
 
-
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
                                    int[::1] target_features,
                                    double[::1] out):
@@ -1231,3 +1230,421 @@ cdef class Tree:
             if not (0.999 < total_weight < 1.001):
                 raise ValueError("Total weight should be 1.0 but was %.9f" %
                                  total_weight)
+
+
+# =============================================================================
+# Build Pruned Tree
+# =============================================================================
+
+
+cdef class _CCPPruneController:
+    """Base class used by build_pruned_tree_ccp and ccp_pruning_path
+    to control pruning.
+    """
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        """Return 1 to stop pruning and 0 to continue pruning"""
+        return 0
+
+    cdef void save_metrics(self, DOUBLE_t effective_alpha,
+                           DOUBLE_t subtree_impurities) nogil:
+        """Save metrics when pruning"""
+        pass
+
+    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+        """Called after pruning"""
+        pass
+
+
+cdef class _AlphaPruner(_CCPPruneController):
+    """Use alpha to control when to stop pruning."""
+    cdef DOUBLE_t ccp_alpha
+    cdef SIZE_t capacity
+
+    def __cinit__(self, DOUBLE_t ccp_alpha):
+        self.ccp_alpha = ccp_alpha
+        self.capacity = 0
+
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        # The subtree on the previous iteration has the greatest ccp_alpha
+        # less than or equal to self.ccp_alpha
+        return self.ccp_alpha < effective_alpha
+
+    cdef void after_pruning(self, unsigned char[:] in_subtree) nogil:
+        """Updates the number of leaves in subtree"""
+        for i in range(in_subtree.shape[0]):
+            if in_subtree[i]:
+                self.capacity += 1
+
+
+cdef class _PathFinder(_CCPPruneController):
+    """Record metrics used to return the cost complexity path."""
+    cdef DOUBLE_t[:] ccp_alphas
+    cdef DOUBLE_t[:] impurities
+    cdef UINT32_t count
+
+    def __cinit__(self,  int node_count):
+        self.ccp_alphas = np.zeros(shape=(node_count), dtype=np.float64)
+        self.impurities = np.zeros(shape=(node_count), dtype=np.float64)
+        self.count = 0
+
+    cdef void save_metrics(self,
+                           DOUBLE_t effective_alpha,
+                           DOUBLE_t subtree_impurities) nogil:
+        self.ccp_alphas[self.count] = effective_alpha
+        self.impurities[self.count] = subtree_impurities
+        self.count += 1
+
+
+cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
+                            Tree orig_tree,
+                            _CCPPruneController controller):
+    """Perform cost complexity pruning.
+
+    This function takes an already grown tree, `orig_tree` and outputs a
+    boolean mask `leaves_in_subtree` to are the leaves in the pruned tree. The
+    controller signals when the pruning should stop and is passed the
+    metrics of the subtrees during the pruning process.
+
+    Parameters
+    ----------
+    leaves_in_subtree : unsigned char[:]
+        Output for leaves of subtree
+    orig_tree : Tree
+        Original tree
+    ccp_controller : _CCPPruneController
+        Cost complexity controller
+    """
+
+    cdef:
+        SIZE_t i
+        SIZE_t n_nodes = orig_tree.node_count
+        # prior probability using weighted samples
+        DOUBLE_t[:] weighted_n_node_samples = orig_tree.weighted_n_node_samples
+        DOUBLE_t total_sum_weights = weighted_n_node_samples[0]
+        DOUBLE_t[:] impurity = orig_tree.impurity
+        # weighted impurity of each node
+        DOUBLE_t[:] r_node = np.empty(shape=n_nodes, dtype=np.float64)
+
+        SIZE_t[:] child_l = orig_tree.children_left
+        SIZE_t[:] child_r = orig_tree.children_right
+        SIZE_t[:] parent = np.zeros(shape=n_nodes, dtype=np.intp)
+
+        # Only uses the start and parent variables
+        Stack stack = Stack(INITIAL_STACK_SIZE)
+        StackRecord stack_record
+        int rc = 0
+        SIZE_t node_idx
+
+        SIZE_t[:] n_leaves = np.zeros(shape=n_nodes, dtype=np.intp)
+        DOUBLE_t[:] r_branch = np.zeros(shape=n_nodes, dtype=np.float64)
+        DOUBLE_t current_r
+        SIZE_t leaf_idx
+        SIZE_t parent_idx
+
+        # candidate nodes that can be pruned
+        unsigned char[:] candidate_nodes = np.zeros(shape=n_nodes,
+                                                    dtype=np.uint8)
+        # nodes in subtree
+        unsigned char[:] in_subtree = np.ones(shape=n_nodes, dtype=np.uint8)
+        DOUBLE_t[:] g_node = np.zeros(shape=n_nodes, dtype=np.float64)
+        SIZE_t pruned_branch_node_idx
+        DOUBLE_t subtree_alpha
+        DOUBLE_t effective_alpha
+        SIZE_t child_l_idx
+        SIZE_t child_r_idx
+        SIZE_t n_pruned_leaves
+        DOUBLE_t r_diff
+        DOUBLE_t max_float64 = np.finfo(np.float64).max
+
+    # find parent node ids and leaves
+    with nogil:
+
+        for i in range(r_node.shape[0]):
+            r_node[i] = (
+                weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
+
+        # Push root node, using StackRecord.start as node id
+        rc = stack.push(0, 0, 0, -1, 0, 0, 0)
+        if rc == -1:
+            with gil:
+                raise MemoryError("pruning tree")
+
+        while not stack.is_empty():
+            stack.pop(&stack_record)
+            node_idx = stack_record.start
+            parent[node_idx] = stack_record.parent
+            if child_l[node_idx] == _TREE_LEAF:
+                # ... and child_r[node_idx] == _TREE_LEAF:
+                leaves_in_subtree[node_idx] = 1
+            else:
+                rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0)
+                if rc == -1:
+                    with gil:
+                        raise MemoryError("pruning tree")
+
+                rc = stack.push(child_r[node_idx], 0, 0, node_idx, 0, 0, 0)
+                if rc == -1:
+                    with gil:
+                        raise MemoryError("pruning tree")
+
+        # computes number of leaves in all branches and the overall impurity of
+        # the branch. The overall impurity is the sum of r_node in its leaves.
+        for leaf_idx in range(leaves_in_subtree.shape[0]):
+            if not leaves_in_subtree[leaf_idx]:
+                continue
+            r_branch[leaf_idx] = r_node[leaf_idx]
+
+            # bubble up values to ancestor nodes
+            current_r = r_node[leaf_idx]
+            while leaf_idx != 0:
+                parent_idx = parent[leaf_idx]
+                r_branch[parent_idx] += current_r
+                n_leaves[parent_idx] += 1
+                leaf_idx = parent_idx
+
+        for i in range(leaves_in_subtree.shape[0]):
+            candidate_nodes[i] = not leaves_in_subtree[i]
+
+        # save metrics before pruning
+        controller.save_metrics(0.0, r_branch[0])
+
+        # while root node is not a leaf
+        while candidate_nodes[0]:
+
+            # computes ccp_alpha for subtrees and finds the minimal alpha
+            effective_alpha = max_float64
+            for i in range(n_nodes):
+                if not candidate_nodes[i]:
+                    continue
+                subtree_alpha = (r_node[i] - r_branch[i]) / (n_leaves[i] - 1)
+                if subtree_alpha < effective_alpha:
+                    effective_alpha = subtree_alpha
+                    pruned_branch_node_idx = i
+
+            if controller.stop_pruning(effective_alpha):
+                break
+
+            # stack uses only the start variable
+            rc = stack.push(pruned_branch_node_idx, 0, 0, 0, 0, 0, 0)
+            if rc == -1:
+                with gil:
+                    raise MemoryError("pruning tree")
+
+            # descendants of branch are not in subtree
+            while not stack.is_empty():
+                stack.pop(&stack_record)
+                node_idx = stack_record.start
+
+                if not in_subtree[node_idx]:
+                    continue # branch has already been marked for pruning
+                candidate_nodes[node_idx] = 0
+                leaves_in_subtree[node_idx] = 0
+                in_subtree[node_idx] = 0
+
+                if child_l[node_idx] != _TREE_LEAF:
+                    # ... and child_r[node_idx] != _TREE_LEAF:
+                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0)
+                    if rc == -1:
+                        with gil:
+                            raise MemoryError("pruning tree")
+                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0)
+                    if rc == -1:
+                        with gil:
+                            raise MemoryError("pruning tree")
+            leaves_in_subtree[pruned_branch_node_idx] = 1
+            in_subtree[pruned_branch_node_idx] = 1
+
+            # updates number of leaves
+            n_pruned_leaves = n_leaves[pruned_branch_node_idx] - 1
+            n_leaves[pruned_branch_node_idx] = 0
+
+            # computes the increase in r_branch to bubble up
+            r_diff = r_node[pruned_branch_node_idx] - r_branch[pruned_branch_node_idx]
+            r_branch[pruned_branch_node_idx] = r_node[pruned_branch_node_idx]
+
+            # bubble up values to ancestors
+            node_idx = parent[pruned_branch_node_idx]
+            while node_idx != -1:
+                n_leaves[node_idx] -= n_pruned_leaves
+                r_branch[node_idx] += r_diff
+                node_idx = parent[node_idx]
+
+            controller.save_metrics(effective_alpha, r_branch[0])
+
+        controller.after_pruning(in_subtree)
+
+
+def _build_pruned_tree_ccp(
+    Tree tree, # OUT
+    Tree orig_tree,
+    DOUBLE_t ccp_alpha):
+    """Build a pruned tree from the original tree using cost complexity
+    pruning.
+
+    The values and nodes from the original tree are copied into the pruned
+    tree.
+
+    Parameters
+    ----------
+    tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    ccp_alpha : positive double
+        Complexity parameter. The subtree with the largest cost complexity
+        that is smaller than ``ccp_alpha`` will be chosen. By default,
+        no pruning is performed.
+    """
+
+    cdef:
+        SIZE_t n_nodes = orig_tree.node_count
+        unsigned char[:] leaves_in_subtree = np.zeros(
+            shape=n_nodes, dtype=np.uint8)
+
+    pruning_controller = _AlphaPruner(ccp_alpha=ccp_alpha)
+
+    _cost_complexity_prune(leaves_in_subtree, orig_tree, pruning_controller)
+
+    _build_pruned_tree(tree, orig_tree, leaves_in_subtree,
+                       pruning_controller.capacity)
+
+
+def ccp_pruning_path(Tree orig_tree):
+    """Computes the cost complexity pruning path.
+
+    Parameters
+    ----------
+    tree : Tree
+        Original tree.
+
+    Returns
+    -------
+    path_info : dict
+        Information about pruning path with attributes:
+
+        ccp_alphas : ndarray
+            Effective alphas of subtree during pruning.
+
+        impurities : ndarray
+            Sum of the impurities of the subtree leaves for the
+            corresponding alpha value in ``ccp_alphas``.
+    """
+    cdef:
+        unsigned char[:] leaves_in_subtree = np.zeros(
+            shape=orig_tree.node_count, dtype=np.uint8)
+
+    path_finder = _PathFinder(orig_tree.node_count)
+
+    _cost_complexity_prune(leaves_in_subtree, orig_tree, path_finder)
+
+    cdef:
+        UINT32_t total_items = path_finder.count
+        np.ndarray ccp_alphas = np.empty(shape=total_items,
+                                         dtype=np.float64)
+        np.ndarray impurities = np.empty(shape=total_items,
+                                         dtype=np.float64)
+        UINT32_t count = 0
+
+    while count < total_items:
+        ccp_alphas[count] = path_finder.ccp_alphas[count]
+        impurities[count] = path_finder.impurities[count]
+        count += 1
+
+    return {'ccp_alphas': ccp_alphas, 'impurities': impurities}
+
+
+cdef _build_pruned_tree(
+    Tree tree, # OUT
+    Tree orig_tree,
+    const unsigned char[:] leaves_in_subtree,
+    SIZE_t capacity):
+    """Build a pruned tree.
+
+    Build a pruned tree from the original tree by transforming the nodes in
+    ``leaves_in_subtree`` into leaves.
+
+    Parameters
+    ----------
+    tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    leaves_in_subtree : unsigned char memoryview, shape=(node_count, )
+        Boolean mask for leaves to include in subtree
+    capacity : SIZE_t
+        Number of nodes to initially allocate in pruned tree
+    """
+    tree._resize(capacity)
+
+    cdef:
+        SIZE_t orig_node_id
+        SIZE_t new_node_id
+        SIZE_t depth
+        SIZE_t parent
+        bint is_left
+        bint is_leaf
+
+        # value_stride for original tree and new tree are the same
+        SIZE_t value_stride = orig_tree.value_stride
+        SIZE_t max_depth_seen = -1
+        int rc = 0
+        Node* node
+        double* orig_value_ptr
+        double* new_value_ptr
+
+        # Only uses the start, depth, parent, and is_left variables
+        Stack stack = Stack(INITIAL_STACK_SIZE)
+        StackRecord stack_record
+
+    with nogil:
+        # push root node onto stack
+        rc = stack.push(0, 0, 0, _TREE_UNDEFINED, 0, 0.0, 0)
+        if rc == -1:
+            with gil:
+                raise MemoryError("pruning tree")
+
+        while not stack.is_empty():
+            stack.pop(&stack_record)
+
+            orig_node_id = stack_record.start
+            depth = stack_record.depth
+            parent = stack_record.parent
+            is_left = stack_record.is_left
+
+            is_leaf = leaves_in_subtree[orig_node_id]
+            node = &orig_tree.nodes[orig_node_id]
+
+            new_node_id = tree._add_node(
+                parent, is_left, is_leaf, node.feature, node.threshold,
+                node.impurity, node.n_node_samples,
+                node.weighted_n_node_samples)
+
+            if new_node_id == <SIZE_t>(-1):
+                rc = -1
+                break
+
+            # copy value from original tree to new tree
+            orig_value_ptr = orig_tree.value + value_stride * orig_node_id
+            new_value_ptr = tree.value + value_stride * new_node_id
+            memcpy(new_value_ptr, orig_value_ptr, sizeof(double) * value_stride)
+
+            if not is_leaf:
+                # Push right child on stack
+                rc = stack.push(
+                    node.right_child, 0, depth + 1, new_node_id, 0, 0.0, 0)
+                if rc == -1:
+                    break
+
+                # push left child on stack
+                rc = stack.push(
+                    node.left_child, 0, depth + 1, new_node_id, 1, 0.0, 0)
+                if rc == -1:
+                    break
+
+            if depth > max_depth_seen:
+                max_depth_seen = depth
+
+        if rc >= 0:
+            tree.max_depth = max_depth_seen
+    if rc == -1:
+        raise MemoryError("pruning tree")

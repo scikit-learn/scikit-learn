@@ -290,7 +290,7 @@ def _samme_proba(estimator, n_classes, X):
                               * log_proba.sum(axis=1)[:, np.newaxis])
 
 
-class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
+class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     """An AdaBoost classifier.
 
     An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
@@ -335,6 +335,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
@@ -668,13 +671,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         score : array, shape = [n_samples, k]
             The decision function of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -711,13 +714,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         score : generator of array, shape = [n_samples, k]
             The decision function of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
             Binary classification is a special cases with ``k == 1``,
             otherwise ``k==n_classes``. For binary classification,
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -784,9 +787,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
-        check_is_fitted(self, "n_classes_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -819,7 +822,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : generator of array, shape = [n_samples]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
         X = self._validate_data(X)
 
@@ -845,13 +848,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of
-            outputs is the same of that of the `classes_` attribute.
+            outputs is the same of that of the :term:`classes_` attribute.
         """
         X = self._validate_data(X)
         return np.log(self.predict_proba(X))
 
 
-class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
+class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     """An AdaBoost regressor.
 
     An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
@@ -892,6 +895,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     estimators_ : list of classifiers
         The collection of fitted sub-estimators.
 
@@ -1109,7 +1115,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        check_is_fitted(self, "estimator_weights_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         return self._get_median_predict(X, len(self.estimators_))
@@ -1134,7 +1140,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        check_is_fitted(self, "estimator_weights_")
+        check_is_fitted(self)
         X = self._validate_data(X)
 
         for i, _ in enumerate(self.estimators_, 1):

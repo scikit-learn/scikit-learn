@@ -380,7 +380,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                 return None, W, S
 
 
-class FastICA(BaseEstimator, TransformerMixin):
+class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -574,7 +574,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
@@ -597,7 +597,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)

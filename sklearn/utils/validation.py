@@ -15,7 +15,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, getfullargspec
+from inspect import signature, isclass, getfullargspec
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -154,7 +154,6 @@ def _num_samples(x):
         return len(x)
     except TypeError:
         raise TypeError(message)
-
 
 
 def check_memory(memory):
@@ -867,21 +866,23 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+def check_is_fitted(estimator, attributes='deprecated', msg=None,
+                    all_or_any='deprecated'):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
-    "all_or_any" of the passed attributes and raises a NotFittedError with the
-    given message.
+    fitted attributes (ending with a trailing underscore) and otherwise
+    raises a NotFittedError with the given message.
 
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
+    attributes : deprecated, ignored
+        .. deprecated:: 0.22
+           `attributes` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -892,8 +893,10 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : callable, {all, any}, default all
-        Specify whether all or any of the given attributes must exist.
+    all_or_any : deprecated, ignored
+        .. deprecated:: 0.21
+           `all_or_any` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     Returns
     -------
@@ -904,6 +907,16 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     NotFittedError
         If the attributes are not found.
     """
+    if attributes != 'deprecated':
+        warnings.warn("Passing attributes to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The attributes "
+                      "argument is ignored.", DeprecationWarning)
+    if all_or_any != 'deprecated':
+        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The any_or_all "
+                      "argument is ignored.", DeprecationWarning)
+    if isclass(estimator):
+        raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
                "appropriate arguments before using this method.")
@@ -911,10 +924,11 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    if not isinstance(attributes, (list, tuple)):
-        attributes = [attributes]
+    attrs = [v for v in vars(estimator)
+             if (v.endswith("_") or v.startswith("_"))
+             and not v.startswith("__")]
 
-    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+    if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
@@ -990,6 +1004,11 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
 
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
+
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
@@ -1035,6 +1054,42 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
     return sample_weight
+
+
+def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
+    """Check allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    rtol : float, optional
+        relative tolerance; see numpy.allclose
+
+    atol : float, optional
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
+    """
+    if sp.issparse(x) and sp.issparse(y):
+        x = x.tocsr()
+        y = y.tocsr()
+        x.sum_duplicates()
+        y.sum_duplicates()
+        return (np.array_equal(x.indices, y.indices) and
+                np.array_equal(x.indptr, y.indptr) and
+                np.allclose(x.data, y.data, rtol=rtol, atol=atol))
+    elif not sp.issparse(x) and not sp.issparse(y):
+        return np.allclose(x, y, rtol=rtol, atol=atol)
+    raise ValueError("Can only compare two sparse matrices, not a sparse "
+                     "matrix and an array")
 
 
 def _deprecate_positional_args(f):
