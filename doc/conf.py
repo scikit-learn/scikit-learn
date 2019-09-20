@@ -309,8 +309,6 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 def setup(app):
     # to hide/show the prompt in code examples:
-    # app.add_javascript('js/copybutton.js')
-    # app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 

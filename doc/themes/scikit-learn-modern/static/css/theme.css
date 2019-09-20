@@ -73,6 +73,10 @@ a code {
   padding: 0;
 }
 
+img {
+   max-width: 100%;
+}
+
 div.highlight {
   padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
