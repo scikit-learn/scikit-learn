@@ -63,7 +63,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             if hasattr(Xi, 'cat'):
                 # store pandas categories
-                pd_categories[i] = np.asarray(Xi.cat.categories)
+                pd_categories[i] = Xi.cat.categories
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
             X_columns.append(Xi)
