@@ -1140,7 +1140,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
       r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
@@ -1150,7 +1150,6 @@ parameter_grid_test_verbose = ((est, pattern, method) for
 
 
 @pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)
-@ignore_warnings(category=DeprecationWarning)
 def test_verbose(est, method, pattern, capsys):
     func = getattr(est, method)
 
@@ -1170,5 +1169,9 @@ def test_feature_union_warns_with_drop():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
     with pytest.warns(DeprecationWarning, match=msg):
-        FeatureUnion([('multi1', None), ('multi2', Mult())])
+        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
 
+    X = [[1, 2, 3], [4, 5, 6]]
+
+    with pytest.warns(DeprecationWarning, match=msg):
+        union.fit_transform(X)
