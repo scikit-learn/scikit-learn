@@ -150,8 +150,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
-        using ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``'drop'`` using
+        ``set_params``.
+
+        .. versionchanged:: 0.22
+           Deprecated `None` as a estimators in favor of `'drop'`.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -384,8 +387,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
-        using ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``'drop'`` using
+        ``set_params``.
+
+        .. versionchanged:: 0.22
+           Deprecated `None` as a estimators in favor of `'drop'`.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
