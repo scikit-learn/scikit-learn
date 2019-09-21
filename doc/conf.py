@@ -257,7 +257,11 @@ else:
 
 
 class SubSectionTitleOrder:
-    """Sort by title of subsection"""
+    """Sort by title of subsection.
+
+    Assumes README.txt exists for all subsections and uses the subsection with
+    dashes, '---', as the adornment.
+    """
     def __init__(self, src_dir):
         self.src_dir = src_dir
         self.regex = re.compile(r"^([\w ]+)\n-", re.MULTILINE)
