@@ -60,15 +60,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-
-            if hasattr(Xi, 'cat'):
-                # store pandas categories
-                pd_categories[i] = Xi.cat.categories
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
             X_columns.append(Xi)
 
-        return X_columns, n_samples, n_features, pd_categories
+        return X_columns, n_samples, n_features
 
     def _get_feature(self, X, feature_idx):
         if hasattr(X, 'iloc'):
@@ -87,7 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             warnings.warn(msg, UserWarning)
 
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features, pd_categories = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -95,13 +91,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
+        X_dtypes = getattr(X, 'dtypes', None)
 
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
                 cats = _encode(Xi)
-                with suppress(KeyError):
-                    pd_category = pd_categories[i]
+                if X_dtypes is not None and hasattr(X_dtypes.iloc[i],
+                                                    'categories'):
+                    pd_category = X_dtypes.iloc[i].categories
                     self._check_pandas_categories(cats, pd_category)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
@@ -118,7 +116,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features, _ = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X)
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
