@@ -255,6 +255,27 @@ else:
     major, minor = match.groups()
     binder_branch = '{}.{}.X'.format(major, minor)
 
+
+class SubSectionTitleOrder:
+    """Sort by title of subsection"""
+    def __init__(self, src_dir):
+        self.src_dir = src_dir
+        self.regex = re.compile(r"^([\w ]+)\n-", re.MULTILINE)
+
+    def __repr__(self):
+        return '<%s>' % (self.__class__.__name__,)
+
+    def __call__(self, directory):
+        src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+        readme = os.path.join(src_path, "README.txt")
+        with open(readme, 'r') as f:
+            content = f.read()
+        title_match = self.regex.search(content)
+        if title_match is not None:
+            return title_match.group(1)
+        return directory
+
+
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
@@ -263,6 +284,7 @@ sphinx_gallery_conf = {
         'sklearn': None},
     'examples_dirs': ['../examples'],
     'gallery_dirs': ['auto_examples'],
+    'subsection_order': SubSectionTitleOrder('../examples'),
     'binder': {
         'org': 'scikit-learn',
         'repo': 'scikit-learn',
