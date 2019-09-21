@@ -14,6 +14,7 @@ This module contains:
 # License: BSD 3 clause
 
 from abc import abstractmethod
+import warnings
 
 import numpy as np
 
@@ -74,6 +75,14 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
 
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
+
+        # TODO: Remove in 0.24 when 'drop' is removed in Voting*
+        for _, clf in self.estimators:
+            if clf is None:
+                warnings.warn("Using None as a estimator is deprecated "
+                              "in version 0.22 and will be removed in "
+                              "version 0.24. Please use 'drop' instead.",
+                              DeprecationWarning)
 
         n_isnone = np.sum(
             [clf in (None, 'drop') for _, clf in self.estimators]

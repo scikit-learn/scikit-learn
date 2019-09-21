@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
@@ -389,7 +390,9 @@ def test_set_params():
                  eclf1.get_params()["lr"].get_params()['C'])
 
 
+# TODO: Remove in 0.24 when 'drop' is removed in Voting*
 @pytest.mark.parametrize("drop", [None, 'drop'])
+@ignore_warnings(category=DeprecationWarning)
 def test_set_estimator_none(drop):
     """VotingClassifier set_params should be able to set estimators as None or
     drop"""
@@ -492,6 +495,7 @@ def test_transform():
     )
 
 
+# TODO: Remove in 0.24 when 'drop' is removed in Voting*
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(
@@ -502,6 +506,7 @@ def test_transform():
           ('rf', RandomForestRegressor(n_estimators=5))]))]
 )
 @pytest.mark.parametrize("drop", [None, 'drop'])
+@ignore_warnings(category=DeprecationWarning)
 def test_none_estimator_with_weights(X, y, voter, drop):
     # check that an estimator can be set to None and passing some weight
     # regression test for
@@ -528,3 +533,19 @@ def test_check_estimators_voting_estimator(estimator):
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
+
+
+def test_deprecate_none_transformer():
+    ests = [
+        VotingRegressor(
+            estimators=[('lr', None),
+                        ('tree', DecisionTreeRegressor(random_state=0))]),
+        VotingClassifier(
+            estimators=[('lr', None),
+                        ('tree', DecisionTreeClassifier(random_state=0))])]
+
+    msg = ("Using None as a estimator is deprecated in version 0.22 and will "
+           "be removed in version 0.24. Please use 'drop' instead.")
+    for est in ests:
+        with pytest.warns(DeprecationWarning, match=msg):
+            est.fit(X, y)
