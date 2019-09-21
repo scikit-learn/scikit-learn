@@ -4,6 +4,7 @@
 
 import numpy as np
 from scipy import sparse
+from contextlib import suppress
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
@@ -76,14 +77,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _check_pandas_categories(self, cats, i):
+    def _check_pandas_categories(self, cats, pd_category):
         """Checks cats is lexicographic consistent with categories in fitted X.
         """
-        try:
-            pd_category = self._pd_categories[i]
-        except KeyError:
-            return
-
         msg = ("'auto' categories is used, but the Categorical dtype provided "
                "is not consistent with the automatic lexicographic ordering")
 
@@ -92,7 +88,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _fit(self, X, handle_unknown='error'):
         X_list, n_samples, n_features, pd_categories = self._check_X(X)
-        self._pd_categories = pd_categories
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -105,7 +100,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             if self.categories == 'auto':
                 cats = _encode(Xi)
-                self._check_pandas_categories(cats, i)
+                with suppress(KeyError):
+                    pd_category = pd_categories[i]
+                    self._check_pandas_categories(cats, pd_category)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
