@@ -76,7 +76,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         msg = ("'auto' categories is used, but the Categorical dtype provided "
                "is not consistent with the automatic lexicographic ordering")
-
         if not np.array_equal(cats, pd_category):
             warnings.warn(msg, UserWarning)
 

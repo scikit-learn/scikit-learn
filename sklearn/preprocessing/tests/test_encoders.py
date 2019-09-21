@@ -702,3 +702,15 @@ def test_pandas_category_not_ordered(Encoder):
             col, dtype = case
             df_copy = df.assign(**{col: df[col].astype(dtype)})
             Encoder().fit(df_copy)
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_pandas_category_same_lexicon_order(Encoder):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1]})
+    # correct order does not warn
+    ordered_dtype = pd.api.types.CategoricalDtype(categories=[1, 2, 3])
+    df_copy = df.assign(int_col=df['int_col'].astype(ordered_dtype))
+
+    # does not warn
+    Encoder().fit(df_copy)
