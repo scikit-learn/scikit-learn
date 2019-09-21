@@ -16,6 +16,7 @@ sections on :ref:`cross_validation` and :ref:`grid_search`.
 
 """
 from sklearn import datasets
+from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
@@ -41,25 +42,28 @@ tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                      'C': [1, 10, 100, 1000]},
                     {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
-scores = ['precision', 'recall']
+scores = ['precision_macro', 'recall_macro']
+
+print("# Tuning hyper-parameters")
+print()
+
+clf = GridSearchCV(
+    SVC(), tuned_parameters, scoring=scores, refit=False
+)
+clf.fit(X_train, y_train)
+best_estimator = clone(clf.estimator)
 
 for score in scores:
-    print("# Tuning hyper-parameters for %s" % score)
+    print("Best parameters set found on development set %s:" % score)
     print()
-
-    clf = GridSearchCV(
-        SVC(), tuned_parameters, scoring='%s_macro' % score
-    )
-    clf.fit(X_train, y_train)
-
-    print("Best parameters set found on development set:")
-    print()
-    print(clf.best_params_)
+    best_index = clf.cv_results_["rank_test_%s" % score].argmin()
+    best_params = clf.cv_results_["params"][best_index]
+    print(best_params)
     print()
     print("Grid scores on development set:")
     print()
-    means = clf.cv_results_['mean_test_score']
-    stds = clf.cv_results_['std_test_score']
+    means = clf.cv_results_['mean_test_%s' % score]
+    stds = clf.cv_results_['std_test_%s' % score]
     for mean, std, params in zip(means, stds, clf.cv_results_['params']):
         print("%0.3f (+/-%0.03f) for %r"
               % (mean, std * 2, params))
@@ -70,7 +74,10 @@ for score in scores:
     print("The model is trained on the full development set.")
     print("The scores are computed on the full evaluation set.")
     print()
-    y_true, y_pred = y_test, clf.predict(X_test)
+    best_estimator.set_params(**best_params)
+    best_estimator.fit(X_train, y_train)
+
+    y_true, y_pred = y_test, best_estimator.predict(X_test)
     print(classification_report(y_true, y_pred))
     print()
 
