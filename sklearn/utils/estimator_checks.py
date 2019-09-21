@@ -2280,7 +2280,7 @@ def enforce_estimator_tags_X(estimator, X):
     if _safe_tags(estimator, "requires_positive_X"):
         # Create strictly positive X. The minimal increment above 0 is 1, as
         # X could be of integer dtype.
-        X -= X.min() - 1e-5
+        X -= X.min() - 1
     return X
 
 
