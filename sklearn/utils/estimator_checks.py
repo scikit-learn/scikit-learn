@@ -1500,7 +1500,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifier_multioutput(name, estimator):
-    n_samples = 42
+    n_samples, n_labels = 42, 5
     n_labels = 5
     tags = _safe_tags(estimator)
     estimator = clone(estimator)
@@ -1510,7 +1510,10 @@ def check_classifier_multioutput(name, estimator):
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
 
-    assert y_pred.shape == (n_samples, n_labels), y_pred.shape
+    assert (y_pred.shape == (n_samples, n_labels),
+            "The shape of the prediction for multioutput data is "
+            " incorrect. Expected {}, got {}."
+            .format((n_samples, n_labels), y_pred.shape))
     assert y_pred.dtype.kind == 'i'
 
     if hasattr(estimator, "decision_function"):
