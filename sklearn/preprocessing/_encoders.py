@@ -4,6 +4,7 @@
 
 import numpy as np
 from scipy import sparse
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -54,14 +55,19 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         X_columns = []
+        pd_categories = {}
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
+
+            if hasattr(Xi, 'cat'):
+                # store pandas categories
+                pd_categories[i] = np.asarray(Xi.cat.categories)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
             X_columns.append(Xi)
 
-        return X_columns, n_samples, n_features
+        return X_columns, n_samples, n_features, pd_categories
 
     def _get_feature(self, X, feature_idx):
         if hasattr(X, 'iloc'):
@@ -70,8 +76,23 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
+    def _check_pandas_categories(self, cats, i):
+        """Checks cats is lexicographic consistent with categories in fitted X.
+        """
+        try:
+            pd_category = self._pd_categories[i]
+        except KeyError:
+            return
+
+        msg = ("'auto' categories is used, but the Categorical dtype provided "
+               "is not consistent with the automatic lexicographic ordering")
+
+        if not np.array_equal(cats, pd_category):
+            warnings.warn(msg, UserWarning)
+
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features, pd_categories = self._check_X(X)
+        self._pd_categories = pd_categories
 
         if self.categories != 'auto':
             if len(self.categories) != n_features:
@@ -84,6 +105,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             if self.categories == 'auto':
                 cats = _encode(Xi)
+                self._check_pandas_categories(cats, i)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -99,7 +121,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features, _ = self._check_X(X)
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)

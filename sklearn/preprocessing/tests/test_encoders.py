@@ -677,3 +677,28 @@ def test_categories(density, drop):
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_pandas_category_not_ordered(Encoder):
+    pd = pytest.importorskip('pandas')
+
+    msg = ("'auto' categories is used, but the Categorical dtype provided "
+           "is not consistent with the automatic lexicographic ordering")
+
+    df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1],
+                       'str_col': ['z', 'd', 'z', 'd', 'u'],
+                       'float_col':  [1, 2.3, 3.1, 1, 1]})
+    # numerical category
+    num_case = ('int_col',
+                pd.api.types.CategoricalDtype(categories=[3, 1, 2]))
+    str_case = ('str_col',
+                pd.api.types.CategoricalDtype(categories=['d', 'z', 'u']))
+    float_case = ('float_col',
+                  pd.api.types.CategoricalDtype(categories=[1.0, 3.1, 2.3]))
+
+    for case in [num_case, str_case, float_case]:
+        with pytest.warns(UserWarning, match=msg):
+            col, dtype = case
+            df_copy = df.assign(**{col: df[col].astype(dtype)})
+            Encoder().fit(df_copy)
