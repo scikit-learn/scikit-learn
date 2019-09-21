@@ -908,6 +908,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
+# TODO: Remove in 0.24 when 'drop' is removed for FeatureUnion
 @pytest.mark.parametrize('drop', ['drop', None])
 @ignore_warnings(category=DeprecationWarning)
 def test_set_feature_union_step_drop(drop):
