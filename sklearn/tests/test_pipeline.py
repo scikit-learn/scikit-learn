@@ -1165,6 +1165,7 @@ def test_verbose(est, method, pattern, capsys):
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
 
+
 # TODO: Remove in 0.24 when 'drop' is removed
 def test_feature_union_warns_with_drop():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
