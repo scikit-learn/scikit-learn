@@ -535,6 +535,7 @@ def test_check_estimators_voting_estimator(estimator):
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
 
 
+# TODO: Remove in 0.24 when 'drop' is removed in Voting*
 def test_deprecate_none_transformer():
     ests = [
         VotingRegressor(
