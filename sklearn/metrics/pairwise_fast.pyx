@@ -101,13 +101,33 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
             D[px, py] = d
 
 
-def _dense_manhattan(floating[:, ::1] x,floating[:, ::1] y, double[:, ::1] out):
-    cdef double s = 0.0
-    cdef np.npy_intp i, j, k
+def _dense_manhattan(floating[:, :] X, floating[:, :] Y, floating[:, :] out):
+    cdef:
+        floating s = 0.0
+        int n_samples_x = X.shape[0]
+        int n_samples_y = Y.shape[0]
+        int n_features = X.shape[1]
+        np.npy_intp i, j
 
-    for i in prange(x.shape[0],nogil=True):
-        for j in range(y.shape[0]):
-            s = 0.0
-            for k in range(x.shape[1]):
-                s = s + fabs(x[i, k] - y[j, k])
-            out[i, j] = s
+    for i in prange(n_samples_x, nogil=True):
+        for j in range(n_samples_y):
+            out[i, j] = _manhattan_1d(&X[i, 0], &Y[j, 0], n_features)
+
+cdef floating _manhattan_1d(floating *x, floating *y, int n_features) nogil:
+    cdef:
+        int i
+        int n = n_features // 4
+        int rem = n_features % 4
+        floating result = 0
+
+    for i in range(n):
+        result += (fabs(x[0] - y[0])
+                  +fabs(x[1] - y[1])
+                  +fabs(x[2] - y[2])
+                  +fabs(x[3] - y[3]))
+        x += 4; y += 4
+
+    for i in range(rem):
+        result += fabs(x[i] - y[i])
+
+    return result
