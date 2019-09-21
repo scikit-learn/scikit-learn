@@ -178,7 +178,6 @@ can set the environment variables to these locations::
     export CFLAGS="$CFLAGS -I/usr/local/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/lib
 
 Finally you can build the package using the standard command.
 
