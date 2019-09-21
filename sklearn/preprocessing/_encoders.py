@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy import sparse
-from contextlib import suppress
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
@@ -56,7 +55,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         n_samples, n_features = X.shape
         X_columns = []
-        pd_categories = {}
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
