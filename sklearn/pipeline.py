@@ -11,6 +11,7 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from itertools import islice
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -754,7 +755,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     Parameters of the transformers may be set using its name and the parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
-    or removed by setting to 'drop' or ``None``.
+    or removed by setting to 'drop'.
 
     Read more in the :ref:`User Guide <feature_union>`.
 
@@ -763,6 +764,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
+
+        .. versionchanged:: 0.22
+           Deprecated `None` as a transformer in favor of 'drop'.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -840,7 +844,13 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            if t is None or t == 'drop':
+            if t is None:
+                warnings.warn("Using None as a transformer is deprecated "
+                              "in version 0.22 and will be removed in "
+                              "version 0.24. Please use 'drop' instead.",
+                              DeprecationWarning)
+                continue
+            if t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                     hasattr(t, "transform")):

@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -908,6 +909,7 @@ def test_set_feature_union_steps():
 
 
 @pytest.mark.parametrize('drop', ['drop', None])
+@ignore_warnings(category=DeprecationWarning)
 def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
@@ -1148,6 +1150,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
 
 
 @pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)
+@ignore_warnings(category=DeprecationWarning)
 def test_verbose(est, method, pattern, capsys):
     func = getattr(est, method)
 
@@ -1161,3 +1164,11 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_feature_union_warns_with_drop():
+    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
+           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        FeatureUnion([('multi1', None), ('multi2', Mult())])
+
