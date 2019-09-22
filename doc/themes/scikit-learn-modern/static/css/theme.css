@@ -23,6 +23,11 @@ a.headerlink:hover {
   color: white;
 }
 
+p {
+  word-break: break-word;
+  hyphens: auto;
+}
+
 input:focus {
   outline: none;
 }
@@ -659,7 +664,7 @@ dl.field-list > dd {
 
 dt.field-odd, dt.field-even {
   background-color: #F0F7FA;
-  padding: 4px 0 0 4px;
+  padding-left: 0.25rem;
 }
 
 .field-odd, .field-even {
@@ -890,9 +895,10 @@ table.docutils p {
   margin-bottom: 0;
 }
 
-table.docutils td:last-child p {
+table.docutils p {
   white-space: pre-wrap;
   word-wrap: break-word;
+  word-break: initial;
 }
 
 /* gallery */
