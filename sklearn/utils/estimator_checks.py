@@ -1428,11 +1428,11 @@ def check_estimators_pickle(name, estimator_orig):
 
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
-    
+
     # some estimators can't do features less than 0
     X = enforce_estimator_tags_X(estimator_orig, X)
     X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
-    
+
     tags = _safe_tags(estimator_orig)
     # include NaN values when the estimator should deal with them
     if tags['allow_nan']:
