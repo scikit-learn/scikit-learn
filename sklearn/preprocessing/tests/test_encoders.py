@@ -682,5 +682,5 @@ def test_encoders_has_categorical_tags(Encoder):
 def test_categorical_lexicographic():
     enc = OrdinalEncoder()
     X = [['Male', 1], ['Female', 3], ['Female', 2]]
-    with pytest.warns(DeprecationWarning, match="From version 0.24, OrdinalEncoder's"):
+    with pytest.warns(DeprecationWarning, match="From version 0.24"):
         enc.fit(X)
