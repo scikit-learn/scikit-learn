@@ -422,6 +422,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
@@ -664,6 +666,12 @@ Plotting
 --------
 
 .. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   inspection.PartialDependenceDisplay
 
 .. autosummary::
    :toctree: generated/
@@ -1234,9 +1242,11 @@ Model validation
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.KNeighborsTransformer
    neighbors.LocalOutlierFactor
    neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
+   neighbors.RadiusNeighborsTransformer
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.NeighborhoodComponentsAnalysis

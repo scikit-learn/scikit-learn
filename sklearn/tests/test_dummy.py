@@ -755,3 +755,12 @@ def test_dtype_of_classifier_probas(strategy):
     probas = model.fit(X, y).predict_proba(X)
 
     assert probas.dtype == np.float64
+
+
+@pytest.mark.parametrize("Dummy", (DummyRegressor, DummyClassifier))
+def test_outputs_2d_deprecation(Dummy):
+    X = [[1, 2]]
+    y = [0]
+    with pytest.warns(DeprecationWarning,
+                      match="will be removed in version 0.24"):
+        Dummy().fit(X, y).outputs_2d_

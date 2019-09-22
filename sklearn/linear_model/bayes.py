@@ -453,6 +453,10 @@ class ARDRegression(RegressorMixin, LinearModel):
     scores_ : float
         if computed, value of the objective function (to be maximized)
 
+    intercept_ : float
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     Examples
     --------
     >>> from sklearn import linear_model
