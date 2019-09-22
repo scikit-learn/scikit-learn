@@ -776,7 +776,8 @@ def test_gridsearch_no_predict():
     assert search.best_score_ == 42
 
 
-@pytest.mark.parametrize("C", [uniform(1e-1, 0.9), loguniform(10 ** -1, 10 ** 0)])
+@pytest.mark.parametrize("C", [uniform(1e-1, 0.9),
+                               loguniform(10 ** -1, 10 ** 0)])
 def test_param_sampler(C):
     # test basic properties of param sampler
     param_distributions = {"kernel": ["rbf", "linear"], "C": C}
