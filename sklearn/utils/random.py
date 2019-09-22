@@ -128,4 +128,18 @@ class loguniform(scipy.stats.reciprocal):
     reciprocal distribution:
     https://en.wikipedia.org/wiki/Reciprocal_distribution
 
+    Example
+    -------
+
+    >>> from sklearn.utils.random import loguniform
+    >>> rv = loguniform(10 ** -3, 10 ** 1)
+    >>> rvs = rv.rvs(random_state=42, size=1000)
+    >>> rvs.min()  # doctest: +SKIP
+    0.0010435856341129003
+    >>> rvs.max()  # doctest: +SKIP
+    9.97403052786026
+
+
+
+
     """

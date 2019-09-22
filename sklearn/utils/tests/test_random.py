@@ -206,13 +206,6 @@ def test_loguniform(low, high, base):
     )
 
 
-def test_loguniform_default_base(low=-1, high=1):
-    rv = loguniform(10 ** low, 10 ** high)
-    rvs = rv.rvs(size=100)
-    assert isinstance(rvs, np.ndarray)
-    assert (10 ** low <= rvs).all() and (rvs <= 10 ** high).all()
-
-
 def test_our_rand_r():
     assert 131541053 == _our_rand_r_py(1273642419)
     assert 270369 == _our_rand_r_py(0)
