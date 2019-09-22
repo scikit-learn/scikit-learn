@@ -961,7 +961,7 @@ def test_cross_val_predict_unbalanced():
     # Change the first sample to a new class
     y[0] = 2
     clf = LogisticRegression(random_state=1, solver="liblinear")
-    cv = StratifiedKFold(n_splits=2, random_state=1)
+    cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
     assert y[test[0]][0] == 2  # sanity check for further assertions

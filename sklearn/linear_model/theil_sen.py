@@ -193,7 +193,7 @@ def _lstsq(X, y, indices, fit_intercept):
     return weights
 
 
-class TheilSenRegressor(LinearModel, RegressorMixin):
+class TheilSenRegressor(RegressorMixin, LinearModel):
     """Theil-Sen Estimator: robust multivariate regression model.
 
     The algorithm calculates least square solutions on subsets with size

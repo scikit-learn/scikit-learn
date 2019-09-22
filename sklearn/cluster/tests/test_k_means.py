@@ -10,8 +10,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
@@ -243,7 +241,8 @@ def test_k_means_precompute_distances_flag():
     # check that a warning is raised if the precompute_distances flag is not
     # supported
     km = KMeans(precompute_distances="wrong")
-    assert_raises(ValueError, km.fit, X)
+    with pytest.raises(ValueError):
+        km.fit(X)
 
 
 def test_k_means_plus_plus_init_not_precomputed():
@@ -272,8 +271,10 @@ def test_k_means_n_init():
 
     # two regression tests on bad n_init argument
     # previous bug: n_init <= 0 threw non-informative TypeError (#3858)
-    assert_raises_regex(ValueError, "n_init", KMeans(n_init=0).fit, X)
-    assert_raises_regex(ValueError, "n_init", KMeans(n_init=-1).fit, X)
+    with pytest.raises(ValueError, match="n_init"):
+        KMeans(n_init=0).fit(X)
+    with pytest.raises(ValueError, match="n_init"):
+        KMeans(n_init=-1).fit(X)
 
 
 @pytest.mark.parametrize('Class', [KMeans, MiniBatchKMeans])
@@ -286,21 +287,25 @@ def test_k_means_explicit_init_shape(Class):
     # mismatch of number of features
     km = Class(n_init=1, init=X[:, :2], n_clusters=len(X))
     msg = "does not match the number of features of the data"
-    assert_raises_regex(ValueError, msg, km.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        km.fit(X)
     # for callable init
     km = Class(n_init=1,
                init=lambda X_, k, random_state: X_[:, :2],
                n_clusters=len(X))
-    assert_raises_regex(ValueError, msg, km.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        km.fit(X)
     # mismatch of number of clusters
     msg = "does not match the number of clusters"
     km = Class(n_init=1, init=X[:2, :], n_clusters=3)
-    assert_raises_regex(ValueError, msg, km.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        km.fit(X)
     # for callable init
     km = Class(n_init=1,
                init=lambda X_, k, random_state: X_[:2, :],
                n_clusters=3)
-    assert_raises_regex(ValueError, msg, km.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        km.fit(X)
 
 
 def test_k_means_fortran_aligned_data():
@@ -488,9 +493,8 @@ def test_sparse_mb_k_means_callable_init():
     # Small test to check that giving the wrong number of centers
     # raises a meaningful error
     msg = "does not match the number of clusters"
-    assert_raises_regex(ValueError, msg, MiniBatchKMeans(init=test_init,
-                                                         random_state=42).fit,
-                        X_csr)
+    with pytest.raises(ValueError, match=msg):
+        MiniBatchKMeans(init=test_init, random_state=42).fit(X_csr)
 
     # Now check that the fit actually works
     mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
@@ -536,7 +540,8 @@ def test_minibatch_set_init_size():
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_k_means_invalid_init(Estimator):
     km = Estimator(init="invalid", n_init=1, n_clusters=n_clusters)
-    assert_raises(ValueError, km.fit, X)
+    with pytest.raises(ValueError):
+        km.fit(X)
 
 
 def test_k_means_copyx():
@@ -718,8 +723,8 @@ def test_k_means_function():
                  sample_weight=None, init=centers)
 
     # to many clusters desired
-    assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1,
-                  sample_weight=None)
+    with pytest.raises(ValueError):
+        k_means(X, n_clusters=X.shape[0] + 1, sample_weight=None)
 
     # kmeans for algorithm='elkan' raises TypeError on sparse matrix
     assert_raise_message(TypeError, "algorithm='elkan' not supported for "
@@ -827,7 +832,8 @@ def test_sparse_validate_centers():
 
     msg = r"The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
-    assert_raises_regex(ValueError, msg, classifier.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        classifier.fit(X)
 
 
 def test_less_centers_than_unique_points():

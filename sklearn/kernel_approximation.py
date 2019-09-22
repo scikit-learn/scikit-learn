@@ -21,7 +21,7 @@ from .utils.validation import check_is_fitted, check_non_negative
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class RBFSampler(BaseEstimator, TransformerMixin):
+class RBFSampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -125,7 +125,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -240,7 +240,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return {'stateless': True, 'requires_positive_X': True}
 
 
-class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
+class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
@@ -263,6 +263,12 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         Gives the number of (complex) sampling points.
     sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
+
+    Attributes
+    ----------
+    sample_interval_ : float
+        Stored sampling interval. Specified as a parameter if sample_steps not
+        in {1,2,3}.
 
     Examples
     --------
@@ -424,7 +430,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return {'stateless': True, 'requires_positive_X': True}
 
 
-class Nystroem(BaseEstimator, TransformerMixin):
+class Nystroem(TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
@@ -513,6 +519,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
     def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
@@ -595,7 +602,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not callable(self.kernel):
+        if not callable(self.kernel) and self.kernel != 'precomputed':
             for param in (KERNEL_PARAMS[self.kernel]):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
@@ -604,6 +611,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
                     self.coef0 is not None or
                     self.degree is not None):
                 raise ValueError("Don't pass gamma, coef0 or degree to "
-                                 "Nystroem if using a callable kernel.")
+                                 "Nystroem if using a callable "
+                                 "or precomputed kernel")
 
         return params

@@ -9,7 +9,7 @@ from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
 
-class EllipticEnvelope(MinCovDet, OutlierMixin):
+class EllipticEnvelope(OutlierMixin, MinCovDet):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.

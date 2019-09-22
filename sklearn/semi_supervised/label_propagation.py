@@ -71,7 +71,7 @@ from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
-class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
+class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for label propagation module.
 
     Parameters

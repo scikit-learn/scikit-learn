@@ -3,15 +3,15 @@ import tempfile
 import shutil
 import os
 import numbers
+from unittest.mock import Mock
 
 import numpy as np
 import pytest
 import joblib
 
+from numpy.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
@@ -20,10 +20,11 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer)
+                                    _passthrough_scorer, _MultimetricScorer)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
@@ -53,9 +54,10 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'brier_score_loss',
+               'neg_log_loss', 'log_loss', 'neg_brier_score',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
-               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo']
+               'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
+               'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -170,7 +172,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator = EstimatorWithoutFit()
     pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
-    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
+    with pytest.raises(TypeError, match=pattern):
+        scoring_validator(estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
@@ -182,7 +185,8 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     estimator.fit([[1]], [1])
     pattern = (r"If no scoring is specified, the estimator passed should have"
                r" a 'score' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
+    with pytest.raises(TypeError, match=pattern):
+        scoring_validator(estimator)
 
     scorer = scoring_validator(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
@@ -259,9 +263,8 @@ def test_check_scoring_and_check_multimetric_scoring():
     for scoring in ((make_scorer(precision_score),  # Tuple of callables
                      make_scorer(accuracy_score)), [5],
                     (make_scorer(precision_score),), (), ('f1', 'f1')):
-        assert_raises_regexp(ValueError, error_message_regexp,
-                             _check_multimetric_scoring, estimator,
-                             scoring=scoring)
+        with pytest.raises(ValueError, match=error_message_regexp):
+            _check_multimetric_scoring(estimator, scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():
@@ -287,8 +290,8 @@ def test_check_scoring_gridsearchcv():
 def test_make_scorer():
     # Sanity check on the make_scorer factory function.
     f = lambda *args: 0
-    assert_raises(ValueError, make_scorer, f, needs_threshold=True,
-                  needs_proba=True)
+    with pytest.raises(ValueError):
+        make_scorer(f, needs_threshold=True, needs_proba=True)
 
 
 def test_classification_scores():
@@ -460,11 +463,12 @@ def test_raises_on_score_list():
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
-    assert_raises(ValueError, cross_val_score, clf, X, y,
-                  scoring=f1_scorer_no_average)
+    with pytest.raises(ValueError):
+        cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    assert_raises(ValueError, grid_search.fit, X, y)
+    with pytest.raises(ValueError):
+        grid_search.fit(X, y)
 
 
 @ignore_warnings
@@ -537,11 +541,131 @@ def test_scorer_memmap_input(name):
 
 
 def test_scoring_is_not_metric():
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), f1_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         LogisticRegression(), roc_auc_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         Ridge(), r2_score)
-    assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
-                         KMeans(), cluster_module.adjusted_rand_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(LogisticRegression(), f1_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(LogisticRegression(), roc_auc_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(Ridge(), r2_score)
+    with pytest.raises(ValueError, match='make_scorer'):
+        check_scoring(KMeans(), cluster_module.adjusted_rand_score)
+
+
+def test_deprecated_scorer():
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+
+    deprecated_scorer = get_scorer('brier_score_loss')
+    with pytest.warns(DeprecationWarning):
+        deprecated_scorer(clf, X_test, y_test)
+
+
+@pytest.mark.parametrize(
+    ("scorers,expected_predict_count,"
+     "expected_predict_proba_count,expected_decision_func_count"),
+    [({'a1': 'accuracy', 'a2': 'accuracy',
+       'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+        'ra1': 'roc_auc', 'ra2': 'roc_auc'}, 1, 1, 1),
+     (['roc_auc', 'accuracy'], 1, 0, 1),
+     (['neg_log_loss', 'accuracy'], 1, 1, 0)])
+def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
+                                              expected_predict_proba_count,
+                                              expected_decision_func_count):
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    mock_est = Mock()
+    fit_func = Mock(return_value=mock_est)
+    predict_func = Mock(return_value=y)
+
+    pos_proba = np.random.rand(X.shape[0])
+    proba = np.c_[1 - pos_proba, pos_proba]
+    predict_proba_func = Mock(return_value=proba)
+    decision_function_func = Mock(return_value=pos_proba)
+
+    mock_est.fit = fit_func
+    mock_est.predict = predict_func
+    mock_est.predict_proba = predict_proba_func
+    mock_est.decision_function = decision_function_func
+
+    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+    results = multi_scorer(mock_est, X, y)
+
+    assert set(scorers) == set(results)  # compare dict keys
+
+    assert predict_func.call_count == expected_predict_count
+    assert predict_proba_func.call_count == expected_predict_proba_count
+    assert decision_function_func.call_count == expected_decision_func_count
+
+
+def test_multimetric_scorer_calls_method_once_classifier_no_decision():
+    predict_proba_call_cnt = 0
+
+    class MockKNeighborsClassifier(KNeighborsClassifier):
+        def predict_proba(self, X):
+            nonlocal predict_proba_call_cnt
+            predict_proba_call_cnt += 1
+            return super().predict_proba(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockKNeighborsClassifier(n_neighbors=1)
+    clf.fit(X, y)
+
+    scorers = ['roc_auc', 'neg_log_loss']
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_proba_call_cnt == 1
+
+
+def test_multimetric_scorer_calls_method_once_regressor_threshold():
+    predict_called_cnt = 0
+
+    class MockDecisionTreeRegressor(DecisionTreeRegressor):
+        def predict(self, X):
+            nonlocal predict_called_cnt
+            predict_called_cnt += 1
+            return super().predict(X)
+
+    X, y = np.array([[1], [1], [0], [0], [0]]), np.array([0, 1, 1, 1, 0])
+
+    # no decision function
+    clf = MockDecisionTreeRegressor()
+    clf.fit(X, y)
+
+    scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer = _MultimetricScorer(**scorer_dict)
+    scorer(clf, X, y)
+
+    assert predict_called_cnt == 1
+
+
+def test_multimetric_scorer_sanity_check():
+    # scoring dictionary returned is the same as calling each scorer seperately
+    scorers = {'a1': 'accuracy', 'a2': 'accuracy',
+               'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
+               'ra1': 'roc_auc', 'ra2': 'roc_auc'}
+
+    X, y = make_classification(random_state=0)
+
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    multi_scorer = _MultimetricScorer(**scorer_dict)
+
+    result = multi_scorer(clf, X, y)
+
+    seperate_scores = {
+        name: get_scorer(name)(clf, X, y)
+        for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
+
+    for key, value in result.items():
+        score_name = scorers[key]
+        assert_allclose(value, seperate_scores[score_name])
