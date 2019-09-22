@@ -17,7 +17,7 @@ from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import set_checking_parameters
+from sklearn.utils.estimator_checks import _set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
@@ -43,7 +43,7 @@ class CorrectNotFittedError(ValueError):
     """
 
 
-class BaseBadClassifier(BaseEstimator, ClassifierMixin):
+class BaseBadClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 
@@ -452,7 +452,7 @@ def test_check_estimator_clones():
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-            set_checking_parameters(est)
+            _set_checking_parameters(est)
             set_random_state(est)
             # without fitting
             old_hash = joblib.hash(est)
@@ -462,7 +462,7 @@ def test_check_estimator_clones():
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-            set_checking_parameters(est)
+            _set_checking_parameters(est)
             set_random_state(est)
             # with fitting
             est.fit(iris.data + 10, iris.target)

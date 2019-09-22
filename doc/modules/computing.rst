@@ -565,7 +565,7 @@ These environment variables should be set before importing scikit-learn.
 
 :SKLEARN_WORKING_MEMORY:
 
-    Sets the default value for the `working_memory` argument of
+    Sets the default value for the :term:`working_memory` argument of
     :func:`sklearn.set_config`.
 
 :SKLEARN_SEED:

@@ -1,9 +1,9 @@
 """ test the label propagation module """
 
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
@@ -119,10 +119,8 @@ def test_valid_alpha():
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
     for alpha in [-0.1, 0, 1, 1.1, None]:
-        assert_raises(ValueError,
-                      lambda **kwargs:
-                      label_propagation.LabelSpreading(**kwargs).fit(X, y),
-                      alpha=alpha)
+        with pytest.raises(ValueError):
+            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 def test_convergence_speed():

@@ -7,20 +7,20 @@ Permutation feature importance
 .. currentmodule:: sklearn.inspection
 
 Permutation feature importance is a model inspection technique that can be used
-for any `fitted` `estimator` when the data is rectangular. This is especially 
-useful for non-linear or opaque `estimators`. The permutation feature 
-importance is defined to be the decrease in a model score when a single feature 
-value is randomly shuffled [1]_. This procedure breaks the relationship between 
-the feature and the target, thus the drop in the model score is indicative of
-how much the model depends on the feature. This technique benefits from being 
-model agnostic and can be calculated many times with different permutations of 
-the feature.
+for any :term:`fitted` :term:`estimator` when the data is rectangular. This is
+especially useful for non-linear or opaque :term:`estimators`. The permutation
+feature importance is defined to be the decrease in a model score when a single
+feature value is randomly shuffled [1]_. This procedure breaks the relationship
+between the feature and the target, thus the drop in the model score is
+indicative of how much the model depends on the feature. This technique
+benefits from being model agnostic and can be calculated many times with
+different permutations of the feature.
 
 The :func:`permutation_importance` function calculates the feature importance
-of `estimators` for a given dataset. The ``n_repeats`` parameter sets the number
-of times a feature is randomly shuffled and returns a sample of feature
+of :term:`estimators` for a given dataset. The ``n_repeats`` parameter sets the
+number of times a feature is randomly shuffled and returns a sample of feature
 importances. Permutation importances can either be computed on the training set
-or an held-out testing or validation set. Using a held-out set makes it 
+or an held-out testing or validation set. Using a held-out set makes it
 possible to highlight which features contribute the most to the generalization
 power of the inspected model. Features that are important on the training set
 but not on the held-out set might cause the model to overfit.

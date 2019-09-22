@@ -319,7 +319,7 @@ class _CFSubcluster:
             self.sq_norm_)
 
 
-class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -352,9 +352,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         - `None` : the final clustering step is not performed and the
           subclusters are returned as they are.
 
-        - `sklearn.cluster` Estimator : If a model is provided, the model is
-          fit treating the subclusters as new samples and the initial data is
-          mapped to the label of the closest subcluster.
+        - :mod:`sklearn.cluster` Estimator : If a model is provided, the model
+          is fit treating the subclusters as new samples and the initial data
+          is mapped to the label of the closest subcluster.
 
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
