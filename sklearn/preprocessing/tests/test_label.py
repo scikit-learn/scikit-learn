@@ -26,7 +26,7 @@ from sklearn.preprocessing.label import _inverse_binarize_multiclass
 from sklearn.preprocessing.label import _encode, _encode_numpy, _encode_python
 from sklearn.preprocessing.label import _encode_check_unknown
 from sklearn.preprocessing.label import _nan_unique
-from sklearn.preprocessing.label import _TableWithNan
+from sklearn.preprocessing.label import _DictWithNan
 
 from sklearn import datasets
 
@@ -636,24 +636,6 @@ def test_encode_util(values, expected, allow_nan):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
 
-@pytest.mark.parametrize("dtype", [float, object])
-def test_label_encode_with_nan(dtype):
-
-    # encode all nan within one category
-    assert len(_encode(np.asarray([np.nan, np.nan, float('nan')], dtype=dtype),
-               allow_nan=True)) == 1
-    assert len(_encode(np.asarray([4, np.nan, float('nan')], dtype=dtype),
-               allow_nan=True)) == 2
-
-    # the encoded size corresponds to the values size
-    assert len(_encode(np.asarray([np.nan, np.nan], dtype=dtype),
-               encode=True, allow_nan=True)[1]) == 2
-
-    encoded = _encode(np.asarray([4, 5, np.nan, np.nan, np.nan], dtype=dtype),
-                      encode=True, allow_nan=True)[1]
-    assert_array_equal(encoded, [0, 1, 2, 2, 2])
-
-
 @pytest.mark.parametrize("values",
                          [np.asarray([np.nan, np.nan], dtype=float),
                           np.asarray([np.nan, np.nan], dtype=object)])
@@ -765,7 +747,8 @@ def test_encode_check_unknown_diff(values, uniques, diff, mask, allow_nan):
 @pytest.mark.parametrize(
         "values, uniques, diff, mask",
         [(np.array([1, 2, np.nan]), np.array([1, 2, np.nan]), [], [1, 1, 1]),
-         (np.array([1, 1, float('nan')]), np.array([1, np.nan]), [], [1, 1, 1]),
+         (np.array([1, 1, float('nan')]), np.array([1, np.nan]),
+          [], [1, 1, 1]),
          (np.array([1, np.nan, 3, 3, 2, 1]), np.array([1, 2, 3, np.nan]),
           [], [1] * 6),
          ])
@@ -783,6 +766,25 @@ def assert_array_equal_with_nan(x, y):
             assert is_scalar_nan(b)
         else:
             assert a == b
+
+
+@pytest.mark.parametrize(
+                         "values, uniques, encoded",
+                         [(np.array([4, np.nan, float('nan')]), [4, np.nan],
+                          [0, 1, 1]),
+                          (np.array([np.nan, float('nan')]), [np.nan],
+                          [0, 0]),
+                          (np.array([np.nan, 4, np.nan, 4]), [4, np.nan],
+                          [1, 0, 1, 0]),
+                          (np.array([np.nan]), [np.nan], [0]),
+                          ])
+def test_label_encode_with_nan(values, uniques, encoded):
+
+    assert_array_equal_with_nan(_encode(values, allow_nan=True), uniques)
+
+    uniques_, encoded_ = _encode(values, encode=True, allow_nan=True)
+    assert_array_equal_with_nan(uniques, uniques_)
+    assert_array_equal_with_nan(encoded, encoded_)
 
 
 @pytest.mark.parametrize(
@@ -870,23 +872,23 @@ def test_nan_encode_numpy_python(values, unique, inverse, encode_type):
     assert_array_equal_with_nan(nan_inverse, inverse)
 
 
-def test_table_with_nan():
-    table = _TableWithNan()
-    table.set('a', 0)
-    table.set(42, 42)
+def test_dict_with_nan():
+    table = _DictWithNan()
+    table['a'] = 0
+    table[42] = 42
 
     with pytest.raises(KeyError):
-        table.get(np.nan)
+        table[np.nan]
     with pytest.raises(KeyError):
-        table.get(float('nan'))
+        table[float('nan')]
     with pytest.raises(KeyError):
-        table.get('b')
+        table['b']
 
-    table.set(np.nan, 1)
-    assert table.get('a') == 0
-    assert table.get(42) == 42
-    assert table.get(np.nan) == 1
-    assert table.get(float('nan')) == 1
+    table[np.nan] = 1
+    assert table['a'] == 0
+    assert table[42] == 42
+    assert table[np.nan] == 1
+    assert table[float('nan')] == 1
 
     with pytest.raises(KeyError):
-        table.get(None)
+        table[None]

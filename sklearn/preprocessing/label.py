@@ -35,7 +35,13 @@ __all__ = [
 
 
 def _nan_unique(ar, return_inverse=False, allow_nan=False):
-    # mimic np.unique with allow_nan option
+    """ mimic np.unique where all nan are treated as the same one
+
+    If allow_nan is False, ValueError is raise if ar contains nan.
+    Otherwise, if `ar` contains (possibly some) nan,
+    `uniques` will contains only one nan (contrary to np.unique), and
+    `inverse` will map all the nan from `ar` to this single nan in `uniques`.
+    """
 
     if return_inverse:
         uniques, inverse = np.unique(ar, return_inverse=True)
@@ -84,23 +90,23 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
         return uniques
 
 
-class _TableWithNan(object):
-    #  hash table which allows nan as a key
+class _DictWithNan(dict):
+    # dict which allows nan as a key
 
     def __init__(self):
-        self.dict = dict()
         self.nan_value = None
 
-    def get(self, key):
+    def __getitem__(self, key):
         if is_scalar_nan(key) and self.nan_value is not None:
             return self.nan_value
-        return self.dict[key]
-
-    def set(self, key, value):
-        if is_scalar_nan(key):
-            self.nan_value = value
         else:
-            self.dict[key] = value
+            return self.__dict__[key]
+
+    def __setitem__(self, key, item):
+        if is_scalar_nan(key):
+            self.nan_value = item
+        else:
+            self.__dict__[key] = item
 
 
 def _encode_python(values, uniques=None, encode=False, allow_nan=False):
@@ -118,11 +124,11 @@ def _encode_python(values, uniques=None, encode=False, allow_nan=False):
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         # hash is not enough to identify nan
-        table = _TableWithNan()
+        table = _DictWithNan()
         for i, val in enumerate(uniques):
-            table.set(val, i)
+            table[val] = i
         try:
-            encoded = np.array([table.get(val) for val in values])
+            encoded = np.array([table[val] for val in values])
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
