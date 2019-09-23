@@ -27,7 +27,7 @@ of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves multiple purposes here:
 
 Convenience and encapsulation
-    You only have to call ``fit`` and ``predict`` once on your
+    You only have to call :term:`fit` and :term:`predict` once on your
     data to fit a whole sequence of estimators.
 Joint parameter selection
     You can :ref:`grid search <grid_search>`
@@ -38,7 +38,7 @@ Safety
     used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
-(i.e. must have a ``transform`` method).
+(i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
 
@@ -244,11 +244,11 @@ object::
 Transforming target in regression
 =================================
 
-:class:`TransformedTargetRegressor` transforms the targets ``y`` before fitting
-a regression model. The predictions are mapped back to the original space via
-an inverse transform. It takes as an argument the regressor that will be used
-for prediction, and the transformer that will be applied to the target
-variable::
+:ref:`TransformedTargetRegressor <transformed_target_regressor>` transforms the
+targets ``y`` before fitting a regression model. The predictions are mapped
+back to the original space via an inverse transform. It takes as an argument
+the regressor that will be used for prediction, and the transformer that will
+be applied to the target variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
