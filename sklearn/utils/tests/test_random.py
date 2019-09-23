@@ -8,7 +8,6 @@ import pytest
 
 from sklearn.utils.fixes import comb
 from sklearn.utils.random import random_choice_csc, sample_without_replacement
-from sklearn.utils.random import loguniform
 from sklearn.utils._random import _our_rand_r_py
 from sklearn.utils.testing import assert_raises
 
@@ -180,30 +179,6 @@ def test_random_choice_csc_errors():
     class_probabilities = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
                   class_probabilities, 1)
-
-
-@pytest.mark.parametrize("low,high,base",
-                         [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
-def test_loguniform(low, high, base):
-    rv = loguniform(base ** low, base ** high)
-    assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
-    rvs = rv.rvs(size=2000, random_state=0)
-
-    # Test the basics; right bounds, right size
-    assert (base ** low <= rvs).all() and (rvs <= base ** high).all()
-    assert len(rvs) == 2000
-
-    # Test that it's actually (fairly) uniform
-    log_rvs = np.array([math.log(x, base) for x in rvs])
-    counts, _ = np.histogram(log_rvs)
-    assert counts.mean() == 200
-    assert np.abs(counts - counts.mean()).max() <= 40
-
-    # Test that random_state works
-    assert (
-        loguniform(base ** low, base ** high).rvs(random_state=0)
-        == loguniform(base ** low, base ** high).rvs(random_state=0)
-    )
 
 
 def test_our_rand_r():

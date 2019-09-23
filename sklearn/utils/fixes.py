@@ -15,6 +15,7 @@ from distutils.version import LooseVersion
 import numpy as np
 import scipy.sparse as sp
 import scipy
+import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 
@@ -256,3 +257,45 @@ def _joblib_parallel_args(**kwargs):
         if require == 'sharedmem':
             args['backend'] = 'threading'
     return args
+
+
+class loguniform(scipy.stats.reciprocal):
+    """A class supporting log-uniform random variables.
+
+    Parameters
+    ----------
+    low : float
+        The minimum value
+    high : float
+        The maximum value
+
+    Methods
+    -------
+    rvs(self, size=None, random_state=None)
+        Generate log-uniform random variables
+
+    Notes
+    -----
+    This class generates values between ``base**low`` and ``base**high`` or
+
+        base**low <= loguniform(low, high, base=base).rvs() <= base**high
+
+    The logarithmic probability density function (PDF) is uniform. When
+    ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
+    are random variales that are equally likely to be returned.
+
+    This class is an alias to ``scipy.stats.reciprocal``, which uses the
+    reciprocal distribution:
+    https://en.wikipedia.org/wiki/Reciprocal_distribution
+
+    Example
+    -------
+
+    >>> from sklearn.utils.random import loguniform
+    >>> rv = loguniform(10 ** -3, 10 ** 1)
+    >>> rvs = rv.rvs(random_state=42, size=1000)
+    >>> rvs.min()  # doctest: +SKIP
+    0.0010435856341129003
+    >>> rvs.max()  # doctest: +SKIP
+    9.97403052786026
+    """

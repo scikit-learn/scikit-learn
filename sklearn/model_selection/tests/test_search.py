@@ -66,7 +66,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
-from sklearn.utils.random import loguniform
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -776,15 +775,14 @@ def test_gridsearch_no_predict():
     assert search.best_score_ == 42
 
 
-@pytest.mark.parametrize("C", [uniform(1e-1, 0.9),
-                               loguniform(10 ** -1, 10 ** 0)])
-def test_param_sampler(C):
+def test_param_sampler():
     # test basic properties of param sampler
-    param_distributions = {"kernel": ["rbf", "linear"], "C": C}
+    param_distributions = {"kernel": ["rbf", "linear"],
+                           "C": uniform(1e-1, 0.9)}
     sampler = ParameterSampler(param_distributions=param_distributions,
-                               n_iter=30, random_state=0)
+                               n_iter=10, random_state=0)
     samples = [x for x in sampler]
-    assert len(samples) == 30
+    assert len(samples) == 10
 
     for sample in samples:
         assert sample["kernel"] in ["rbf", "linear"]
@@ -797,7 +795,7 @@ def test_param_sampler(C):
     assert [x for x in sampler] == [x for x in sampler]
 
     if sp_version >= (0, 16):
-        param_distributions = {"C": C}
+        param_distributions = {"C": uniform(1e-1, 0.9)}
         sampler = ParameterSampler(param_distributions=param_distributions,
                                    n_iter=10, random_state=0)
         assert [x for x in sampler] == [x for x in sampler]
