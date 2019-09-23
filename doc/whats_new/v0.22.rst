@@ -434,6 +434,14 @@ Changelog
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
+:mod:`sklearn.naive_bayes`
+...............................
+
+- |MajorFeature| Added :class:`naive_bayes.CategoricalNB` that implements the
+  Categorical Naive Bayes classifier.
+  :pr:`12569` by :user:`Tim Bicker <timbicker>` and
+  :user:`Florian Wilhelm <FlorianWilhelm>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
