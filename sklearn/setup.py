@@ -1,6 +1,34 @@
+from pathlib import Path
 import os
 
 from sklearn._build_utils import maybe_cythonize_extensions
+
+
+_DEPRECATED_MODULES = {
+    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
+}
+
+_DEPRECATE_TEMPLATE = """from .{module} import *  # noqa
+from ..utils.deprecated import _raise_dep_warning_if_not_pytest
+
+deprecated_path = '{deprecated_path}'
+correct_path = '{correct_path}'
+
+_raise_dep_warning_if_not_pytest(deprecated_path, correct_path)
+"""
+
+
+# Adds files that will be deprecated
+def _adds_deprecated_submodules():
+    for module, deprecated_path, correct_path in _DEPRECATED_MODULES:
+        deprecated_content = _DEPRECATE_TEMPLATE.format(
+            module=module, deprecated_path=deprecated_path,
+            correct_path=correct_path)
+        deprecated_parts = deprecated_path.split(".")
+        deprecated_parts[-1] = deprecated_parts[-1] + ".py"
+
+        with Path(*deprecated_parts).open('w') as f:
+            f.write(deprecated_content)
 
 
 def configuration(parent_package='', top_path=None):
@@ -69,6 +97,8 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          )
+
+    _adds_deprecated_submodules()
 
     # add the test directory
     config.add_subpackage('tests')
