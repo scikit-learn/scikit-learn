@@ -844,7 +844,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            # TODO: Remove in 0.24 when 'drop' is removed
+            # TODO: Remove in 0.24 when None is removed
             if t is None:
                 warnings.warn("Using None as a transformer is deprecated "
                               "in version 0.22 and will be removed in "

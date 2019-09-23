@@ -908,9 +908,8 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-# TODO: Remove in 0.24 when 'drop' is removed for FeatureUnion
+# TODO: Remove in 0.24 when None is removed for FeatureUnion
 @pytest.mark.parametrize('drop', ['drop', None])
-@ignore_warnings(category=DeprecationWarning)
 def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
@@ -918,30 +917,40 @@ def test_set_feature_union_step_drop(drop):
     mult3.get_feature_names = lambda: ['x3']
     X = np.asarray([[1]])
 
-    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
-    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
-    assert_array_equal([[2, 3]], ft.fit_transform(X))
+    with pytest.warns(DeprecationWarning) as record:
+        ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+        assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+        assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
+    assert record if drop is None else record
 
-    ft.set_params(m2=drop)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(DeprecationWarning) as record:
+        ft.set_params(m2=drop)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else record
 
-    ft.set_params(m3=drop)
-    assert_array_equal([[]], ft.fit(X).transform(X))
-    assert_array_equal([[]], ft.fit_transform(X))
+    with pytest.warns(DeprecationWarning) as record:
+        ft.set_params(m3=drop)
+        assert_array_equal([[]], ft.fit(X).transform(X))
+        assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert record if drop is None else record
 
-    # check we can change back
-    ft.set_params(m3=mult3)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
+    with pytest.warns(DeprecationWarning) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert record if drop is None else record
 
-    # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(DeprecationWarning) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else record
 
 
 def test_step_name_validation():
@@ -1166,7 +1175,7 @@ def test_verbose(est, method, pattern, capsys):
     assert re.match(pattern, capsys.readouterr().out)
 
 
-# TODO: Remove in 0.24 when 'drop' is removed
+# TODO: Remove in 0.24 when None is removed
 def test_feature_union_warns_with_drop():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
