@@ -640,6 +640,7 @@ def test_stratified_shuffle_split_init():
     assert_raises(ValueError, next, StratifiedShuffleSplit(3, 2).split(X, y))
 
     # Check that error is raised if the train set size is smaller than
+    # n_classes
     assert_raises(ValueError, next,
                   StratifiedShuffleSplit(3, 3, 2).split(X, y))
 
