@@ -3107,7 +3107,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	   svm_type == ONE_CLASS)
 	{
 		PREFIX(problem) newprob;
-		// filter samples with negative weights 
+		// filter samples with negative and null weights 
 		remove_zero_weight(&newprob, prob);
 
 		char* msg = NULL;

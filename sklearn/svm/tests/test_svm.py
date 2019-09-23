@@ -514,7 +514,7 @@ def test_negative_sample_weights_mask_all_samples(Estimator,
 
 
 @pytest.mark.parametrize(
-    "CLF, err_msg",
+    "Classifier, err_msg",
     [(svm.SVC,
      'Invalid input - all samples with positive weights have the same label'),
      (svm.NuSVC, 'specified nu is infeasible')],
@@ -526,10 +526,10 @@ def test_negative_sample_weights_mask_all_samples(Estimator,
      [1, 1, 1, 0, -0.1, -0.3]],
     ids=['mask-label-1', 'mask-label-2']
 )
-def test_negative_weights_svc_leave_just_one_label(CLF,
+def test_negative_weights_svc_leave_just_one_label(Classifier,
                                                    err_msg,
                                                    sample_weight):
-    clf = CLF(kernel='linear')
+    clf = Classifier(kernel='linear')
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, Y, sample_weight=sample_weight)
 
