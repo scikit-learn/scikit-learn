@@ -9,8 +9,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (
     assert_array_almost_equal,
     assert_array_equal,
-    assert_raises,
-    assert_raise_message,
     assert_warns_message
 )
 
@@ -39,48 +37,50 @@ def test_valid_n_bins():
 
 def test_invalid_n_bins():
     est = KBinsDiscretizer(n_bins=1)
-    assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
-                         "number of bins. Received 1, expected at least 2.",
-                         est.fit_transform, X)
+    err_msg = ("KBinsDiscretizer received an invalid "
+               "number of bins. Received 1, expected at least 2.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
     est = KBinsDiscretizer(n_bins=1.1)
-    assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
-                         "n_bins type. Received float, expected int.",
-                         est.fit_transform, X)
+    err_msg = ("KBinsDiscretizer received an invalid "
+               "n_bins type. Received float, expected int.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
 
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.)
     est = KBinsDiscretizer(n_bins=n_bins)
-    assert_raise_message(ValueError,
-                         "n_bins must be a scalar or array of shape "
-                         "(n_features,).", est.fit_transform, X)
+    err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
     # Incorrect number of features
     n_bins = [1, 2, 2]
     est = KBinsDiscretizer(n_bins=n_bins)
-    assert_raise_message(ValueError,
-                         "n_bins must be a scalar or array of shape "
-                         "(n_features,).", est.fit_transform, X)
+    err_msg = r"n_bins must be a scalar or array of shape \(n_features,\)."
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
     # Bad bin values
     n_bins = [1, 2, 2, 1]
     est = KBinsDiscretizer(n_bins=n_bins)
-    assert_raise_message(ValueError,
-                         "KBinsDiscretizer received an invalid number of bins "
-                         "at indices 0, 3. Number of bins must be at least 2, "
-                         "and must be an int.",
-                         est.fit_transform, X)
+    err_msg = ("KBinsDiscretizer received an invalid number of bins "
+               "at indices 0, 3. Number of bins must be at least 2, "
+               "and must be an int.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
     # Float bin values
     n_bins = [2.1, 2, 2.1, 2]
     est = KBinsDiscretizer(n_bins=n_bins)
-    assert_raise_message(ValueError,
-                         "KBinsDiscretizer received an invalid number of bins "
-                         "at indices 0, 2. Number of bins must be at least 2, "
-                         "and must be an int.",
-                         est.fit_transform, X)
+    err_msg = ("KBinsDiscretizer received an invalid number of bins "
+               "at indices 0, 2. Number of bins must be at least 2, "
+               "and must be an int.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit_transform(X)
 
 
 @pytest.mark.parametrize(
@@ -103,9 +103,9 @@ def test_fit_transform_n_bins_array(strategy, expected):
 def test_invalid_n_features():
     est = KBinsDiscretizer(n_bins=3).fit(X)
     bad_X = np.arange(25).reshape(5, -1)
-    assert_raise_message(ValueError,
-                         "Incorrect number of features. Expecting 4, "
-                         "received 5", est.transform, bad_X)
+    err_msg = "Incorrect number of features. Expecting 4, received 5"
+    with pytest.raises(ValueError, match=err_msg):
+        est.transform(bad_X)
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
@@ -128,11 +128,13 @@ def test_same_min_max(strategy):
 def test_transform_1d_behavior():
     X = np.arange(4)
     est = KBinsDiscretizer(n_bins=2)
-    assert_raises(ValueError, est.fit, X)
+    with pytest.raises(ValueError):
+        est.fit(X)
 
     est = KBinsDiscretizer(n_bins=2)
     est.fit(X.reshape(-1, 1))
-    assert_raises(ValueError, est.transform, X)
+    with pytest.raises(ValueError):
+        est.transform(X)
 
 
 @pytest.mark.parametrize('i', range(1, 9))
@@ -148,10 +150,11 @@ def test_numeric_stability(i):
 
 def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
-    assert_raise_message(ValueError, "Valid options for 'encode' are "
-                         "('onehot', 'onehot-dense', 'ordinal'). "
-                         "Got encode='invalid-encode' instead.",
-                         est.fit, X)
+    err_msg = (r"Valid options for 'encode' are "
+               r"\('onehot', 'onehot-dense', 'ordinal'\). "
+               r"Got encode='invalid-encode' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X)
 
 
 def test_encode_options():
@@ -179,10 +182,11 @@ def test_encode_options():
 
 def test_invalid_strategy_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy='invalid-strategy')
-    assert_raise_message(ValueError, "Valid options for 'strategy' are "
-                         "('uniform', 'quantile', 'kmeans'). "
-                         "Got strategy='invalid-strategy' instead.",
-                         est.fit, X)
+    err_msg = (r"Valid options for 'strategy' are "
+               r"\('uniform', 'quantile', 'kmeans'\). "
+               r"Got strategy='invalid-strategy' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X)
 
 
 @pytest.mark.parametrize(

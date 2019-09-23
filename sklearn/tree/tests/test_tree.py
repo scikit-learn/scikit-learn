@@ -22,11 +22,9 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
@@ -393,7 +391,8 @@ def test_importances():
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
-    assert_raises(ValueError, getattr, clf, 'feature_importances_')
+    with pytest.raises(ValueError):
+        getattr(clf, 'feature_importances_')
 
 
 def test_importances_gini_equal_mse():
@@ -472,19 +471,24 @@ def test_max_features():
 
         # use values of max_features that are invalid
         est = TreeEstimator(max_features=10)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=-1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=0.0)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features=1.5)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
         est = TreeEstimator(max_features="foobar")
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
 
 def test_error():
@@ -492,44 +496,51 @@ def test_error():
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.predict_proba, X)
+        with pytest.raises(NotFittedError):
+            est.predict_proba(X)
 
         est.fit(X, y)
         X2 = [[-2, -1, 1]]  # wrong feature shape for sample
-        assert_raises(ValueError, est.predict_proba, X2)
+        with pytest.raises(ValueError):
+            est.predict_proba(X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_leaf=3.).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=-1).fit,
-                      X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_weight_fraction_leaf=0.51).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=-1).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=0.0).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=1.1).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(min_samples_split=2.5).fit,
-                      X, y)
-        assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
-        assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=.6).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=0.).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_leaf=3.).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_weight_fraction_leaf=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_weight_fraction_leaf=0.51).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=0.0).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=1.1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_samples_split=2.5).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(max_depth=-1).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(max_features=42).fit(X, y)
         # min_impurity_split warning
         with ignore_warnings(category=DeprecationWarning):
-            assert_raises(ValueError,
-                          TreeEstimator(min_impurity_split=-1.0).fit, X, y)
-        assert_raises(ValueError,
-                      TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
+            with pytest.raises(ValueError):
+                TreeEstimator(min_impurity_split=-1.0).fit(X, y)
+        with pytest.raises(ValueError):
+            TreeEstimator(min_impurity_decrease=-1.0).fit(X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
         y2 = y[:-1]
-        assert_raises(ValueError, est.fit, X, y2)
+        with pytest.raises(ValueError):
+            est.fit(X, y2)
 
         # Test with arrays that are non-contiguous.
         Xf = np.asfortranarray(X)
@@ -539,29 +550,36 @@ def test_error():
 
         # predict before fitting
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.predict, T)
+        with pytest.raises(NotFittedError):
+            est.predict(T)
 
         # predict on vector with different dims
         est.fit(X, y)
         t = np.asarray(T)
-        assert_raises(ValueError, est.predict, t[:, 1:])
+        with pytest.raises(ValueError):
+            est.predict(t[:, 1:])
 
         # wrong sample shape
         Xt = np.array(X).T
 
         est = TreeEstimator()
         est.fit(np.dot(X, Xt), y)
-        assert_raises(ValueError, est.predict, X)
-        assert_raises(ValueError, est.apply, X)
+        with pytest.raises(ValueError):
+            est.predict(X)
+        with pytest.raises(ValueError):
+            est.apply(X)
 
         clf = TreeEstimator()
         clf.fit(X, y)
-        assert_raises(ValueError, clf.predict, Xt)
-        assert_raises(ValueError, clf.apply, Xt)
+        with pytest.raises(ValueError):
+            clf.predict(Xt)
+        with pytest.raises(ValueError):
+            clf.apply(Xt)
 
         # apply before fitting
         est = TreeEstimator()
-        assert_raises(NotFittedError, est.apply, T)
+        with pytest.raises(NotFittedError):
+            est.apply(T)
 
 
 def test_min_samples_split():
@@ -1104,16 +1122,20 @@ def test_sample_weight_invalid():
     clf = DecisionTreeClassifier(random_state=0)
 
     sample_weight = np.random.rand(100, 1)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.ones(101)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.ones(99)
-    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+    with pytest.raises(ValueError):
+        clf.fit(X, y, sample_weight=sample_weight)
 
 
 def check_class_weights(name):
@@ -1171,16 +1193,20 @@ def check_class_weight_errors(name):
 
     # Invalid preset string
     clf = TreeClassifier(class_weight='the larch', random_state=0)
-    assert_raises(ValueError, clf.fit, X, y)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Not a list or preset for multi-output
     clf = TreeClassifier(class_weight=1, random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.}], random_state=0)
-    assert_raises(ValueError, clf.fit, X, _y)
+    with pytest.raises(ValueError):
+        clf.fit(X, _y)
 
 
 @pytest.mark.parametrize("name", CLF_TREES)
@@ -1198,11 +1224,14 @@ def test_max_leaf_nodes():
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-        assert_raises(ValueError, est.fit, X, y)
+        with pytest.raises(ValueError):
+            est.fit(X, y)
 
 
 def test_max_leaf_nodes_max_depth():
@@ -1279,7 +1308,8 @@ def test_big_input():
 
 def test_realloc():
     from sklearn.tree._utils import _realloc_test
-    assert_raises(MemoryError, _realloc_test)
+    with pytest.raises(MemoryError):
+        _realloc_test()
 
 
 def test_huge_allocations():
@@ -1292,13 +1322,15 @@ def test_huge_allocations():
     # space. Currently raises OverflowError.
     huge = 2 ** (n_bits + 1)
     clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
-    assert_raises(Exception, clf.fit, X, y)
+    with pytest.raises(Exception):
+        clf.fit(X, y)
 
     # Non-regression test: MemoryError used to be dropped by Cython
     # because of missing "except *".
     huge = 2 ** (n_bits - 1) - 1
     clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
-    assert_raises(MemoryError, clf.fit, X, y)
+    with pytest.raises(MemoryError):
+        clf.fit(X, y)
 
 
 def check_sparse_input(tree, dataset, max_depth=None):
@@ -1518,11 +1550,13 @@ def check_raise_error_on_1d_input(name):
     X_2d = iris.data[:, 0].reshape((-1, 1))
     y = iris.target
 
-    assert_raises(ValueError, TreeEstimator(random_state=0).fit, X, y)
+    with pytest.raises(ValueError):
+        TreeEstimator(random_state=0).fit(X, y)
 
     est = TreeEstimator(random_state=0)
     est.fit(X_2d, y)
-    assert_raises(ValueError, est.predict, [X])
+    with pytest.raises(ValueError):
+        est.predict([X])
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1588,7 +1622,8 @@ def test_public_apply_sparse_trees(name):
 
 
 def check_presort_sparse(est, X, y):
-    assert_raises(ValueError, est.fit, X, y)
+    with pytest.raises(ValueError):
+        est.fit(X, y)
 
 
 def test_presort_sparse():
@@ -1614,7 +1649,9 @@ def test_invalid_presort(cls):
     msg = ("'presort' should be in {}. "
            "Got {!r} instead.".format(allowed_presort, invalid_presort))
     est = cls(presort=invalid_presort)
-    assert_raise_message(ValueError, msg, est.fit, X, y)
+    with pytest.raises(ValueError,
+                       match=msg.replace('(', r'\(').replace(')', r'\)')):
+        est.fit(X, y)
 
 
 def test_decision_path_hardcoded():
@@ -1661,7 +1698,8 @@ def test_decision_path(name):
 def check_no_sparse_y_support(name):
     X, y = X_multilabel, csr_matrix(y_multilabel)
     TreeEstimator = ALL_TREES[name]
-    assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
+    with pytest.raises(TypeError):
+        TreeEstimator(random_state=0).fit(X, y)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)

@@ -9,86 +9,8 @@ dataset can be randomly projected into a lower dimensional Euclidean
 space while controlling the distortion in the pairwise distances.
 
 .. _`Johnson-Lindenstrauss lemma`: https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
-
-
-Theoretical bounds
-==================
-
-The distortion introduced by a random projection `p` is asserted by
-the fact that `p` is defining an eps-embedding with good probability
-as defined by:
-
-.. math::
-   (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
-
-Where u and v are any rows taken from a dataset of shape [n_samples,
-n_features] and p is a projection by a random Gaussian N(0, 1) matrix
-with shape [n_components, n_features] (or a sparse Achlioptas matrix).
-
-The minimum number of components to guarantees the eps-embedding is
-given by:
-
-.. math::
-   n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
-
-
-The first plot shows that with an increasing number of samples ``n_samples``,
-the minimal number of dimensions ``n_components`` increased logarithmically
-in order to guarantee an ``eps``-embedding.
-
-The second plot shows that an increase of the admissible
-distortion ``eps`` allows to reduce drastically the minimal number of
-dimensions ``n_components`` for a given number of samples ``n_samples``
-
-
-Empirical validation
-====================
-
-We validate the above bounds on the digits dataset or on the 20 newsgroups
-text document (TF-IDF word frequencies) dataset:
-
-- for the digits dataset, some 8x8 gray level pixels data for 500
-  handwritten digits pictures are randomly projected to spaces for various
-  larger number of dimensions ``n_components``.
-
-- for the 20 newsgroups dataset some 500 documents with 100k
-  features in total are projected using a sparse random matrix to smaller
-  euclidean spaces with various values for the target number of dimensions
-  ``n_components``.
-
-The default dataset is the digits dataset. To run the example on the twenty
-newsgroups dataset, pass the --twenty-newsgroups command line argument to this
-script.
-
-For each value of ``n_components``, we plot:
-
-- 2D distribution of sample pairs with pairwise distances in original
-  and projected spaces as x and y axis respectively.
-
-- 1D histogram of the ratio of those distances (projected / original).
-
-We can see that for low values of ``n_components`` the distribution is wide
-with many distorted pairs and a skewed distribution (due to the hard
-limit of zero ratio on the left as distances are always positives)
-while for larger values of n_components the distortion is controlled
-and the distances are well preserved by the random projection.
-
-
-Remarks
-=======
-
-According to the JL lemma, projecting 500 samples without too much distortion
-will require at least several thousands dimensions, irrespective of the
-number of features of the original dataset.
-
-Hence using random projections on the digits dataset which only has 64 features
-in the input space does not make sense: it does not allow for dimensionality
-reduction in this case.
-
-On the twenty newsgroups on the other hand the dimensionality can be decreased
-from 56436 down to 10000 while reasonably preserving pairwise distances.
-
 """
+
 print(__doc__)
 
 import sys
@@ -109,8 +31,30 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
 else:
     density_param = {'normed': True}
 
-# Part 1: plot the theoretical dependency between n_components_min and
-# n_samples
+##########################################################
+# Theoretical bounds
+# ==================
+# The distortion introduced by a random projection `p` is asserted by
+# the fact that `p` is defining an eps-embedding with good probability
+# as defined by:
+#
+# .. math::
+#    (1 - eps) \|u - v\|^2 < \|p(u) - p(v)\|^2 < (1 + eps) \|u - v\|^2
+#
+# Where u and v are any rows taken from a dataset of shape [n_samples,
+# n_features] and p is a projection by a random Gaussian N(0, 1) matrix
+# with shape [n_components, n_features] (or a sparse Achlioptas matrix).
+#
+# The minimum number of components to guarantees the eps-embedding is
+# given by:
+#
+# .. math::
+#    n\_components >= 4 log(n\_samples) / (eps^2 / 2 - eps^3 / 3)
+#
+#
+# The first plot shows that with an increasing number of samples ``n_samples``,
+# the minimal number of dimensions ``n_components`` increased logarithmically
+# in order to guarantee an ``eps``-embedding.
 
 # range of admissible distortions
 eps_range = np.linspace(0.1, 0.99, 5)
@@ -128,6 +72,13 @@ plt.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
 plt.xlabel("Number of observations to eps-embed")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
+plt.show()
+
+
+##########################################################
+# The second plot shows that an increase of the admissible
+# distortion ``eps`` allows to reduce drastically the minimal number of
+# dimensions ``n_components`` for a given number of samples ``n_samples``
 
 # range of admissible distortions
 eps_range = np.linspace(0.01, 0.99, 100)
@@ -145,16 +96,41 @@ plt.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
 plt.xlabel("Distortion eps")
 plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
+plt.show()
 
-# Part 2: perform sparse random projection of some digits images which are
-# quite low dimensional and dense or documents of the 20 newsgroups dataset
-# which is both high dimensional and sparse
+##########################################################
+# Empirical validation
+# ====================
+#
+# We validate the above bounds on the digits dataset or on the 20 newsgroups
+# text document (TF-IDF word frequencies) dataset:
+#
+# - for the digits dataset, some 8x8 gray level pixels data for 500
+#   handwritten digits pictures are randomly projected to spaces for various
+#   larger number of dimensions ``n_components``.
+#
+# - for the 20 newsgroups dataset some 500 documents with 100k
+#   features in total are projected using a sparse random matrix to smaller
+#   euclidean spaces with various values for the target number of dimensions
+#   ``n_components``.
+#
+# The default dataset is the digits dataset. To run the example on the twenty
+# newsgroups dataset, pass the --twenty-newsgroups command line argument to
+# this script.
 
 if '--twenty-newsgroups' in sys.argv:
     # Need an internet connection hence not enabled by default
     data = fetch_20newsgroups_vectorized().data[:500]
 else:
     data = load_digits().data[:500]
+
+##########################################################
+# For each value of ``n_components``, we plot:
+#
+# - 2D distribution of sample pairs with pairwise distances in original
+#   and projected spaces as x and y axis respectively.
+#
+# - 1D histogram of the ratio of those distances (projected / original).
 
 n_samples, n_features = data.shape
 print("Embedding %d samples with dim %d using various random projections"
@@ -205,3 +181,28 @@ for n_components in n_components_range:
     # as vertical lines / region
 
 plt.show()
+
+
+##########################################################
+# We can see that for low values of ``n_components`` the distribution is wide
+# with many distorted pairs and a skewed distribution (due to the hard
+# limit of zero ratio on the left as distances are always positives)
+# while for larger values of n_components the distortion is controlled
+# and the distances are well preserved by the random projection.
+
+
+##########################################################
+# Remarks
+# =======
+#
+# According to the JL lemma, projecting 500 samples without too much distortion
+# will require at least several thousands dimensions, irrespective of the
+# number of features of the original dataset.
+#
+# Hence using random projections on the digits dataset which only has 64
+# features in the input space does not make sense: it does not allow
+# for dimensionality reduction in this case.
+#
+# On the twenty newsgroups on the other hand the dimensionality can be
+# decreased from 56436 down to 10000 while reasonably preserving
+# pairwise distances.

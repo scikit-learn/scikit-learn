@@ -670,6 +670,12 @@ def _test_ridge_classifiers(filter_):
     y_pred = reg.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
+    # if cv is not set, _RidgeGCV is used for cv (looe)
+    cv_looe = RidgeClassifierCV(scoring='accuracy')
+    cv_looe.fit(filter_(X_iris), y_iris)
+    y_pred = reg.predict(filter_(X_iris))
+    assert np.mean(y_iris == y_pred) >= 0.8
+
 
 def _test_tolerance(filter_):
     ridge = Ridge(tol=1e-5, fit_intercept=False)
@@ -1043,6 +1049,7 @@ def test_ridge_fit_intercept_sparse_error(solver):
     err_msg = "solver='{}' does not support".format(solver)
     with pytest.raises(ValueError, match=err_msg):
         sparse_ridge.fit(X_csr, y)
+
 
 def test_ridge_fit_intercept_sparse_sag():
     X, y = _make_sparse_offset_regression(

@@ -20,7 +20,6 @@ from sklearn.utils.fixes import logsumexp
 
 print(__doc__)
 
-n_neighbors = 1
 random_state = 0
 
 # Create a tiny data set of 9 samples from 3 classes

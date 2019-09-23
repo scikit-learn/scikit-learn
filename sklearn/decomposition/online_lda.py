@@ -245,6 +245,17 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of passes over the dataset.
 
+    bound_ : float
+        Final perplexity score on training set.
+
+    doc_topic_prior_ : float
+        Prior of document topic distribution `theta`. If the value is None,
+        it is `1 / n_components`.
+
+    topic_word_prior_ : float
+        Prior of topic word distribution `beta`. If the value is None, it is
+        `1 / n_components`.
+
     Examples
     --------
     >>> from sklearn.decomposition import LatentDirichletAllocation
@@ -379,7 +390,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
-                                self.verbose - 1))
+                                                           self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -503,8 +514,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 (n_features, self.components_.shape[1]))
 
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs,
+                      verbose=max(0, self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -544,8 +555,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # change to perplexity later
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs,
+                      verbose=max(0, self.verbose - 1)) as parallel:
             for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):

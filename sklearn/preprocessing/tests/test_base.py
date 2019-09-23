@@ -3,7 +3,6 @@ import pytest
 from scipy import sparse
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.preprocessing.base import _transform_selected
 from sklearn.preprocessing.data import Binarizer
 
@@ -61,22 +60,21 @@ def test_transform_selected_copy_arg(output_dtype, input_dtype):
 def test_transform_selected_retain_order():
     X = [[-1, 1], [2, -2]]
 
-    assert_raise_message(ValueError,
-                         "The retain_order option can only be set to True "
-                         "for dense matrices.",
-                         _transform_selected, sparse.csr_matrix(X),
-                         Binarizer().transform, dtype=np.int, selected=[0],
-                         retain_order=True)
+    err_msg = ("The retain_order option can only be set to True "
+               "for dense matrices.")
+    with pytest.raises(ValueError, match=err_msg):
+        _transform_selected(sparse.csr_matrix(X), Binarizer().transform,
+                            dtype=np.int, selected=[0], retain_order=True)
 
     def transform(X):
         return np.hstack((X, [[0], [0]]))
 
-    assert_raise_message(ValueError,
-                         "The retain_order option can only be set to True "
-                         "if the dimensions of the input array match the "
-                         "dimensions of the transformed array.",
-                         _transform_selected, X, transform, dtype=np.int,
-                         selected=[0], retain_order=True)
+    err_msg = ("The retain_order option can only be set to True "
+               "if the dimensions of the input array match the "
+               "dimensions of the transformed array.")
+    with pytest.raises(ValueError, match=err_msg):
+        _transform_selected(X, transform, dtype=np.int,
+                            selected=[0], retain_order=True)
 
     X_expected = [[-1, 1], [2, 0]]
     Xtr = _transform_selected(X, Binarizer().transform, dtype=np.int,
