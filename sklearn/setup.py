@@ -9,7 +9,7 @@ _DEPRECATED_MODULES = {
 }
 
 _DEPRECATE_TEMPLATE = """from .{module} import *  # noqa
-from ..utils.deprecated import _raise_dep_warning_if_not_pytest
+from ..utils.deprecation import _raise_dep_warning_if_not_pytest
 
 deprecated_path = '{deprecated_path}'
 correct_path = '{correct_path}'
