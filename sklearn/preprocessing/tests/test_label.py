@@ -667,8 +667,8 @@ def test_encode_check_unknown(values, uniques, allow_nan):
     # dont raise error if False
     # check_unknown is always True for dtype object
     if values.dtype != object:
-            _encode(values, uniques, encode=True, check_unknown=False,
-                    allow_nan=allow_nan)
+        _encode(values, uniques, encode=True, check_unknown=False,
+                allow_nan=allow_nan)
 
 
 @pytest.mark.parametrize(
