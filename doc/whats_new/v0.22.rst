@@ -526,6 +526,10 @@ Changelog
   :class:`tree.DecisionTreeRegressor`, and the parameter has no effect.
   :pr:`14907` by `Adrin Jalali`_.
 
+- |API| The ``classes_`` and ``n_classes_`` attributes of
+  :class:`tree.DecisionTreeRegressor` are now deprecated. :pr:`15028` by
+  :user:`Mei Guan <meiguan>`, `Nicolas Hug`_, and `Adrin Jalali`_.
+
 :mod:`sklearn.utils`
 ....................
 
