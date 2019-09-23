@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -917,40 +916,42 @@ def test_set_feature_union_step_drop(drop):
     mult3.get_feature_names = lambda: ['x3']
     X = np.asarray([[1]])
 
-    with pytest.warns(DeprecationWarning) as record:
-        ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
-        assert_array_equal([[2, 3]], ft.fit(X).transform(X))
-        assert_array_equal([[2, 3]], ft.fit_transform(X))
+    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
-    assert record if drop is None else record
 
-    with pytest.warns(DeprecationWarning) as record:
+    with pytest.warns(None) as record:
         ft.set_params(m2=drop)
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else record
+    n_records = len(record)
+    assert n_records > 0 if drop is None else n_records == 0
 
-    with pytest.warns(DeprecationWarning) as record:
+    with pytest.warns(None) as record:
         ft.set_params(m3=drop)
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
-    assert record if drop is None else record
+    n_records = len(record)
+    assert n_records > 0 if drop is None else n_records == 0
 
-    with pytest.warns(DeprecationWarning) as record:
+    with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert record if drop is None else record
+    n_records = len(record)
+    assert n_records > 0 if drop is None else n_records == 0
 
-    with pytest.warns(DeprecationWarning) as record:
+    with pytest.warns(None) as record:
         # Check 'drop' step at construction time
         ft = FeatureUnion([('m2', drop), ('m3', mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else record
+    n_records = len(record)
+    assert n_records > 0 if drop is None else n_records == 0
 
 
 def test_step_name_validation():
