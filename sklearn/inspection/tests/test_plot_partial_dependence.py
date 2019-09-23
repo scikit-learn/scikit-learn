@@ -306,7 +306,6 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
 def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame(boston.data, columns=boston.feature_names)
-    y = boston.target
 
     grid_resolution = 25
 
