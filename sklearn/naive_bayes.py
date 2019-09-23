@@ -1158,7 +1158,9 @@ class CategoricalNB(BaseDiscreteNB):
         #                 force_all_finite=True)
         X = check_array(X, accept_sparse=False, force_all_finite=True)
         X = check_array(X, dtype='int')
-        return self._check_nonnegative(X)
+        if np.any(X < 0):
+            raise ValueError("X must not contain negative values.")
+        return X
 
     def _check_X_y(self, X, y):
         # FIXME: we can avoid calling check_array twice after #14872 is merged.
@@ -1166,12 +1168,9 @@ class CategoricalNB(BaseDiscreteNB):
         #                    force_all_finite=True)
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
         X, y = check_X_y(X, y, dtype='int')
-        return self._check_nonnegative(X), y
-
-    def _check_nonnegative(self, X):
         if np.any(X < 0):
             raise ValueError("X must not contain negative values.")
-        return X
+        return X, y
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
