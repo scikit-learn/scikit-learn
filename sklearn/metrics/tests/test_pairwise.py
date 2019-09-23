@@ -1046,12 +1046,12 @@ def test_gower_distances():
     non_missing_cols = np.asarray([2, 2, 2, 0])
     for i in range(0, 4):
         for j in range(0, 4):
-            if non_missing_cols[i] != 0 and non_missing_cols[j] != 0:
-                D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
-                                    [1, 0][X[i][1] == X[j][1]]) /
-                                    non_missing_cols[j])
-            else:
-                D_expected[i][j] = np.nan
+            D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
+                                 [1, 0][X[i][1] == X[j][1]]) /
+                                 min(non_missing_cols[i], non_missing_cols[j]))
+
+    # Necessary to replace the Inf (resulted from 0 division) by NaN
+    D_expected[D_expected == np.inf] = np.nan
 
     assert_array_almost_equal(D_expected, D)
 

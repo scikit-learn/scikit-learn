@@ -946,13 +946,16 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
         # Calculates the number of non missing columns
         non_missing = X.shape[1] - (cat_nan_cols.sum(axis=1) +
-                                    _object_dtype_isnan(num_dists).sum(axis=1))
+                                    _object_dtype_isnan(num_dists).sum(axis=1)
+                                    .astype(np.float))
+
+        # This is to avoid ZeroDivisionError
+        non_missing[non_missing == 0] = np.nan
+
         # Gets the final results
         total = np.sum(cat_dists, axis=1) + np.sum(num_dists, axis=1)
 
-        results = np.divide(total, non_missing,
-                            out=np.full(total.shape, np.nan, dtype=np.object),
-                            where=non_missing != 0)
+        results = total / non_missing
 
         D[i, j_start:] = results
         if X is Y:
