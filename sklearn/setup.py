@@ -5,6 +5,7 @@ from sklearn._build_utils import maybe_cythonize_extensions
 
 
 _DEPRECATED_MODULES = {
+    # TODO: Remove in 0.24
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
 }
 
