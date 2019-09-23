@@ -39,6 +39,8 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
+    _adds_deprecated_submodules()
+
     config = Configuration('sklearn', parent_package, top_path)
 
     # submodules with build utilities
@@ -97,8 +99,6 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          )
-
-    _adds_deprecated_submodules()
 
     # add the test directory
     config.add_subpackage('tests')
