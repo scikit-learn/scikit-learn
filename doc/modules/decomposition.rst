@@ -43,7 +43,7 @@ features, projected on the 2 dimensions that explain most variance:
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation:
+:term:`score` method that can be used in cross-validation:
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
