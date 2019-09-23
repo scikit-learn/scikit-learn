@@ -120,37 +120,41 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
 **Platinum Members**
 
 
-.. figure:: images/microsoft.png
+.. |msn| image:: images/microsoft.png
    :width: 100pt
-   :align: center
    :target: https://www.microsoft.com/
 
-.. figure:: images/bcg.png
+.. |bcg| image:: images/bcg.png
    :width: 100pt
-   :align: center
    :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
+
++-------+-------+
+| |msn| | |bcg| |
++-------+-------+
 
 **Gold Members**
 
-.. figure:: images/axa.png
+.. |axa| image:: images/axa.png
    :width: 50pt
-   :align: center
    :target: https://www.axa.fr/
 
-.. figure:: images/bnp.png
+.. |bnp| image:: images/bnp.png
    :width: 100pt
-   :align: center
    :target: https://www.bnpparibascardif.com/
 
-.. figure:: images/intel.png
+.. |intel| image:: images/intel.png
    :width: 70pt
-   :align: center
    :target: https://www.intel.com/
 
-.. figure:: images/nvidia.png
+.. |nvidia| image:: images/nvidia.png
    :width: 70pt
-   :align: center
    :target: https://www.nvidia.com/
+
++---------+----------+
+|  |axa|  |   |bnp|  |
++---------+----------+
+| |intel| | |nvidia| |
++---------+----------+
 
 **Silver Members**
 
@@ -196,7 +200,7 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :align: center
    :target: https://sydney.edu.au/
 
-   `Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since .
+   `Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
 
 
 
