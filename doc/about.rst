@@ -105,6 +105,12 @@ source directory.
 
 Funding
 -------
+Scikit-Learn is a community driven project, however institutional and private
+grants help to assure its sustainability.
+
+The project would like to thank the following funders. 
+
+...................................
 
 The `Scikit-Learn Consortium at Inria Foundation
 <https://scikit-learn.fondation-inria.fr/en/home/>`_ `Members 
