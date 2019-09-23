@@ -18,6 +18,7 @@ from numbers import Integral
 import numpy as np
 
 from ..utils.validation import check_is_fitted
+from ..base import is_classifier
 
 from . import _criterion
 from . import _tree
@@ -96,7 +97,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     Parameters
     ----------
     decision_tree : decision tree regressor or classifier
-        The decision tree to be exported to GraphViz.
+        The decision tree to be plotted.
 
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
@@ -850,7 +851,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     """
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
-    class_names = decision_tree.classes_
+    if is_classifier(decision_tree):
+        class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"

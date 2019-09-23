@@ -99,21 +99,26 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     ----------
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
+
     target_variables : array-like, dtype=int
         The target features for which the partial dependency should be
         computed (size should be smaller than 3 for visual renderings).
+
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
         partial dependency should be evaluated (either ``grid`` or ``X``
         must be specified).
+
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
         a ``grid`` for the ``target_variables``. The ``grid`` comprises
         ``grid_resolution`` equally spaced points between the two
         ``percentiles``.
+
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used create the extreme values
         for the ``grid``. Only if ``X`` is not None.
+
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
 
@@ -122,6 +127,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     pdp : array, shape=(n_classes, n_points)
         The partial dependence function evaluated on the ``grid``.
         For regression and binary classification ``n_classes==1``.
+
     axes : seq of ndarray or None
         The axes with which the grid has been created or None if
         the grid has been given.
@@ -205,8 +211,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ----------
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
+
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained.
+
     features : seq of ints, strings, or tuples of ints or strings
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
@@ -215,34 +223,45 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         must be < len(feature_names).
         If seq[i] is a string, feature_names must be specified, and
         seq[i] must be in feature_names.
+
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
+
     label : object
         The class label for which the PDPs should be computed.
         Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
+
     n_cols : int
         The number of columns in the grid plot (default: 3).
+
     grid_resolution : int, default=100
         The number of equally spaced points on the axes.
+
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
+
     n_jobs : int or None, optional (default=None)
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
     verbose : int
         Verbose output during PD computations. Defaults to 0.
+
     ax : Matplotlib axis object, default None
         An axis object onto which the plots will be drawn.
+
     line_kw : dict
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
+
     contour_kw : dict
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    **fig_kw : dict
+
+    ``**fig_kw`` : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.
@@ -251,6 +270,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     -------
     fig : figure
         The Matplotlib Figure object.
+
     axs : seq of Axis objects
         A seq of Axis objects, one for each subplot.
 
