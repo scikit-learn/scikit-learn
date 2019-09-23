@@ -778,12 +778,11 @@ def test_gridsearch_no_predict():
 def test_param_sampler():
     # test basic properties of param sampler
     param_distributions = {"kernel": ["rbf", "linear"],
-                           "C": uniform(1e-1, 0.9)}
+                           "C": uniform(0, 1)}
     sampler = ParameterSampler(param_distributions=param_distributions,
                                n_iter=10, random_state=0)
     samples = [x for x in sampler]
     assert len(samples) == 10
-
     for sample in samples:
         assert sample["kernel"] in ["rbf", "linear"]
         assert 0 <= sample["C"] <= 1
@@ -795,7 +794,7 @@ def test_param_sampler():
     assert [x for x in sampler] == [x for x in sampler]
 
     if sp_version >= (0, 16):
-        param_distributions = {"C": uniform(1e-1, 0.9)}
+        param_distributions = {"C": uniform(0, 1)}
         sampler = ParameterSampler(param_distributions=param_distributions,
                                    n_iter=10, random_state=0)
         assert [x for x in sampler] == [x for x in sampler]

@@ -1,10 +1,6 @@
-import math
-
 import numpy as np
 import scipy.sparse as sp
-import scipy.stats
 from numpy.testing import assert_array_almost_equal
-import pytest
 
 from sklearn.utils.fixes import comb
 from sklearn.utils.random import random_choice_csc, sample_without_replacement
