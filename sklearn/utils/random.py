@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 import numpy as np
 import scipy.sparse as sp
-import scipy.stats
 
 import array
 
