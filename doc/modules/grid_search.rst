@@ -143,15 +143,16 @@ increasing ``n_iter`` will always lead to a finer search.
 We implement a log-uniform random variable with
 :class:`utils.random.lograndom`, which is continuous version of ``[1, 10, 100,
 1000]`` and are all equally likely with a log-uniform random variable.
-Formally, this means that ``loguniform(10 ** 0, 10 ** 1) == 10**x`` for some ``x`` that
-is uniformly distributed between 0 and 1.
+Formally, this means that ``loguniform(10 ** 0, 10 ** 1) == 10**x`` for some
+``x`` that is uniformly distributed between 0 and 1.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``10**0`` and ``10**-3``:
 
-  from sklearn.utils.random import loguniform
-  {'C': loguniform(0, 3), 'gamma': loguniform(10 ** -4, 10 ** -3),
-    'kernel': ['rbf'], 'class_weight':['balanced', None]}
+  from sklearn.utils.fixes import loguniform
+  {'C': loguniform(10 ** 0, 10 ** 3),
+   'gamma': loguniform(10 ** -4, 10 ** -3),
+   'kernel': ['rbf'], 'class_weight':['balanced', None]}
 
 .. topic:: Examples:
 

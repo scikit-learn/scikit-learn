@@ -1508,8 +1508,6 @@ Plotting
    :toctree: generated/
    :template: class.rst
 
-   utils.testing.mock_mldata_urlopen
-
 .. autosummary::
    :toctree: generated/
    :template: function.rst

@@ -24,7 +24,7 @@ import numpy as np
 
 from time import time
 import scipy.stats as stats
-from sklearn.utils.random import loguniform
+from sklearn.utils.fixes import loguniform
 
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.datasets import load_digits

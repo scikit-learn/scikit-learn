@@ -291,7 +291,7 @@ class loguniform(scipy.stats.reciprocal):
     Example
     -------
 
-    >>> from sklearn.utils.random import loguniform
+    >>> from sklearn.utils.fixes import loguniform
     >>> rv = loguniform(10 ** -3, 10 ** 1)
     >>> rvs = rv.rvs(random_state=42, size=1000)
     >>> rvs.min()  # doctest: +SKIP
