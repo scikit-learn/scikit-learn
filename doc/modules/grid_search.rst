@@ -140,11 +140,13 @@ For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
 
-We implement a log-uniform random variable with
+There is also a log-uniform random variable with
 :class:`utils.fixes.lograndom`, which is continuous version of ``[1, 10, 100,
 1000]`` and are all equally likely with a log-uniform random variable.
 Formally, this means that ``loguniform(10 ** 0, 10 ** 1) == 10**x`` for some
-``x`` that is uniformly distributed between 0 and 1.
+``x`` that is uniformly distributed between 0 and 1. This is an alias to
+SciPy's
+`stats.reciprocal <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``10**0`` and ``10**-3``:
