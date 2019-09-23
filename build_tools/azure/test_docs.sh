@@ -7,7 +7,7 @@ if [[ "$DISTRIB" =~ ^conda.* ]]; then
     conda install scikit-image -y
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source $VIRTUALENV/bin/activate
-    pip install scikit-image
+    python -m pip install scikit-image
 fi
 
 make test-doc
