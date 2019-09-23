@@ -636,6 +636,13 @@ def test_stratified_shuffle_split_init():
     X = np.arange(9)
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
 
+    # Check that error is raised if the test set size is smaller than n_classes
+    assert_raises(ValueError, next, StratifiedShuffleSplit(3, 2).split(X, y))
+
+    # Check that error is raised if the train set size is smaller than
+    assert_raises(ValueError, next,
+                  StratifiedShuffleSplit(3, 3, 2).split(X, y))
+
     # Train size or test size too small
     assert_raises(ValueError, next,
                   StratifiedShuffleSplit(train_size=2).split(X, y))
