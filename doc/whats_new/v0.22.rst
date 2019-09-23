@@ -480,6 +480,10 @@ Changelog
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
+- |API| `None` as a transformer is now deprecated in
+  :class:`pipeline.FeatureUnion`. Please use `'drop'` instead. :pr:`15053` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
