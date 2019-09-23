@@ -544,11 +544,6 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
-- |API| `requires_positive_X` estimator tag (for models that require
-  X to be non-negative) is now used by `check_estimator` to make sure
-  a proper error message is raised if X contains some negative entries.
-  :pr:`14680` by :user:`Alex Gramfort <agramfort>`.
-
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
