@@ -268,7 +268,7 @@ Changelog
   the kernel attribute is modified, but may result in a performance improvement.
   :pr:`14378` by :user:`Masashi Shibata <c-bata>`.
 
-- |API| From version 0.24 :meth:`gaussian_process.Kernel.get_params` will raise an
+- |API| From version 0.24 :meth:`gaussian_process.kernels.Kernel.get_params` will raise an
   ``AttributeError`` rather than return ``None`` for parameters that are in the
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
@@ -554,7 +554,7 @@ Changelog
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
   refactoring was done.
-  :pr:`14035` and :pr:`14475` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`14035` and :pr:`14475` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
