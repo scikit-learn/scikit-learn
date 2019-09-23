@@ -1048,7 +1048,7 @@ def test_gower_distances():
         for j in range(0, 4):
             D_expected[i][j] = (([1, 0][X[i][0] == X[j][0]] +
                                  [1, 0][X[i][1] == X[j][1]]) /
-                                 min(non_missing_cols[i], non_missing_cols[j]))
+                                min(non_missing_cols[i], non_missing_cols[j]))
 
     # Necessary to replace the Inf (resulted from 0 division) by NaN
     D_expected[D_expected == np.inf] = np.nan
