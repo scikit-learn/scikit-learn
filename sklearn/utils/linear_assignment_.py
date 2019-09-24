@@ -13,6 +13,8 @@ Hungarian algorithm (also known as Munkres algorithm).
 import numpy as np
 import warnings
 
+from ..exceptions import VisibleDeprecationWarning
+
 # Deprecation warning for module
 warnings.warn(
     "The linear_assignment_ module is deprecated in 0.21 "

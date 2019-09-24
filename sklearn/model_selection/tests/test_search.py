@@ -30,6 +30,7 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import VisibleDeprecationWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification

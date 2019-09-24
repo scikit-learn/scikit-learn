@@ -33,6 +33,7 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -468,6 +469,7 @@ def test_check_estimator_clones():
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
+from sklearn.exceptions import VisibleDeprecationWarning
         assert old_hash == joblib.hash(est)
 
 
@@ -478,6 +480,7 @@ def test_check_estimators_unfitted():
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
                         "estimator", NoSparseClassifier())
 
+from sklearn.exceptions import VisibleDeprecationWarning
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())

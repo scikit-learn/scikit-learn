@@ -8,6 +8,7 @@ from sklearn.utils.estimator_checks import enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import is_public_parameter
 from sklearn.utils.estimator_checks import pairwise_estimator_convert_X
 from sklearn.utils.estimator_checks import set_checking_parameters
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 # This file tests the utils that are deprecated

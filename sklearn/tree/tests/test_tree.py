@@ -30,6 +30,7 @@ from sklearn.utils.testing import TempMemmap
 from sklearn.utils.validation import check_random_state
 
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor

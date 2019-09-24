@@ -26,6 +26,7 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 from sklearn.datasets.base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn.externals._pilutil import pillow_installed
 

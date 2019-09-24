@@ -35,6 +35,7 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..exceptions import VisibleDeprecationWarning
 
 from ._criterion import Criterion
 from ._splitter import Splitter

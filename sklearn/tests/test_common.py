@@ -20,6 +20,7 @@ import pytest
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import VisibleDeprecationWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn

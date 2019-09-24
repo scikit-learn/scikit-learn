@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import VisibleDeprecationWarning
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer

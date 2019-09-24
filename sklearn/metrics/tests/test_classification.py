@@ -47,6 +47,7 @@ from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
 

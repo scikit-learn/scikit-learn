@@ -16,6 +16,7 @@ from sklearn.utils.testing import check_docstring_parameters
 from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.exceptions import VisibleDeprecationWarning
 
 import pytest
 

@@ -40,6 +40,7 @@ from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
+from sklearn.exceptions import VisibleDeprecationWarning
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target

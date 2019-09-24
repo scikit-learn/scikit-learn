@@ -13,6 +13,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 # toy sample
