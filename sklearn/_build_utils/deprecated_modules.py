@@ -9,7 +9,7 @@ _DEPRECATED_MODULES = {
 }
 
 _DEPRECATE_TEMPLATE = """from .{module} import *  # noqa
-from ..utils.deprecation import _raise_dep_warning_if_not_pytest
+from {relative_dots}utils.deprecation import _raise_dep_warning_if_not_pytest
 
 deprecated_path = '{deprecated_path}'
 correct_path = '{correct_path}'
@@ -24,8 +24,11 @@ def _add_deprecated_submodules():
     deprecation warning will be raised.
     """
     for module, deprecated_path, correct_path in _DEPRECATED_MODULES:
+        relative_dots = deprecated_path.count(".") * "."
         deprecated_content = _DEPRECATE_TEMPLATE.format(
-            module=module, deprecated_path=deprecated_path,
+            module=module,
+            relative_dots=relative_dots,
+            deprecated_path=deprecated_path,
             correct_path=correct_path)
         deprecated_parts = deprecated_path.split(".")
         deprecated_parts[-1] = deprecated_parts[-1] + ".py"
