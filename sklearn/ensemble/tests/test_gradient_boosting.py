@@ -3,7 +3,6 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import warnings
 import numpy as np
-import re
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
@@ -145,12 +144,6 @@ def test_classifier_parameter_checks():
         (lambda X, y: GradientBoostingClassifier(loss='deviance').
          fit(X, y))(X, [0, 0, 0, 0])
 
-    allowed_presort = ('auto', True, False)
-    err_msg = ("'presort' should be in {}. "
-               "Got 'invalid' instead.".format(allowed_presort))
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
-        GradientBoostingClassifier(presort='invalid').fit(X, y)
-
 
 def test_regressor_parameter_checks():
     # Check input parameter validation for GradientBoostingRegressor
@@ -169,11 +162,6 @@ def test_regressor_parameter_checks():
                " or an integer. 'invalid' was passed")
     with pytest.raises(ValueError, match=err_msg):
         GradientBoostingRegressor(n_iter_no_change='invalid').fit(X, y)
-    allowed_presort = ('auto', True, False)
-    err_msg = ("'presort' should be in {}. "
-               "Got 'invalid' instead.".format(allowed_presort))
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
-        GradientBoostingRegressor(presort='invalid').fit(X, y)
 
 
 def test_loss_function():
