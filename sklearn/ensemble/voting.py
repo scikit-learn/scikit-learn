@@ -23,29 +23,13 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
+from .base import _parallel_fit_estimator
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
-
-
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
-    """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        try:
-            estimator.fit(X, y, sample_weight=sample_weight)
-        except TypeError as exc:
-            if "unexpected keyword argument 'sample_weight'" in str(exc):
-                raise ValueError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
-                ) from exc
-            raise
-    else:
-        estimator.fit(X, y)
-    return estimator
 
 
 class _BaseVoting(TransformerMixin, _BaseComposition):
@@ -125,11 +109,17 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
 
         Examples
         --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf=None)
+        In this example, the RandomForestClassifier is removed.
+
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> from sklearn.ensemble import VotingClassifier
+        >>> clf1 = LogisticRegression()
+        >>> clf2 = RandomForestClassifier()
+        >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
+        >>> eclf.set_params(rf=None)
+        VotingClassifier(estimators=[('lr', LogisticRegression()),
+                                     ('rf', None)])
         """
         return self._set_params('estimators', **params)
 

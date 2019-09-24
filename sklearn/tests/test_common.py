@@ -19,23 +19,20 @@ import pytest
 
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _safe_tags,
     _construct_instance,
-    set_checking_parameters,
+    _set_checking_parameters,
     _set_check_estimator_ids,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
@@ -96,7 +93,7 @@ def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        set_checking_parameters(estimator)
+        _set_checking_parameters(estimator)
         check(estimator)
 
 
