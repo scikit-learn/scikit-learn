@@ -47,6 +47,7 @@ import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import TempMemmap

@@ -28,6 +28,7 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
 from sklearn import config_context
+from sklearn.exceptions import VisibleDeprecationWarning
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))

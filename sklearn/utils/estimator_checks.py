@@ -45,6 +45,7 @@ from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
+from ..exceptions import VisibleDeprecationWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split

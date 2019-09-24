@@ -37,6 +37,7 @@ from sklearn.utils.testing import (
 from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 @pytest.mark.filterwarnings("ignore", category=VisibleDeprecationWarning)  # 0.24
@@ -132,26 +133,26 @@ def test_ignore_warning():
     # This check that ignore_warning decorateur and context manager are working
     # as expected
     def _warning_function():
-        warnings.warn("deprecation warning", VisibleDeprecationWarning)
+        warnings.warn("deprecation warning", DeprecationWarning)
 
     def _multiple_warning_function():
-        warnings.warn("deprecation warning", VisibleDeprecationWarning)
+        warnings.warn("deprecation warning", DeprecationWarning)
         warnings.warn("deprecation warning")
 
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function,
-                                       category=VisibleDeprecationWarning))
-    assert_warns(VisibleDeprecationWarning, ignore_warnings(_warning_function,
+                                       category=DeprecationWarning))
+    assert_warns(DeprecationWarning, ignore_warnings(_warning_function,
                                                      category=UserWarning))
     assert_warns(UserWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=VisibleDeprecationWarning))
-    assert_warns(VisibleDeprecationWarning,
+    assert_warns(DeprecationWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=UserWarning))
     assert_no_warnings(ignore_warnings(_warning_function,
-                                       category=(VisibleDeprecationWarning,
+                                       category=(DeprecationWarning,
                                                  UserWarning)))
 
     # Check the decorator
