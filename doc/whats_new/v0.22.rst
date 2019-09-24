@@ -572,6 +572,14 @@ Changelog
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
 
+:mod:`sklearn.isotonic`
+..................................
+
+- |Fix| Fixed a bug where :class:`isotonic.IsotonicRegression.fit` raised error
+  when `X.dtype == 'float32'` and `X.dtype != y.dtype`.
+  :pr:`14902` by :user:`Lucas <lostcoaster>`.
+
+
 Miscellaneous
 .............
 
