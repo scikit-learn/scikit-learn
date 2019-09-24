@@ -339,6 +339,11 @@ Changelog
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |FIX| :class:`linear_model.MultiTaskLassoCV` and
+  :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
+  and `fit_intercept=True`.
+  :pr:`14864` by :user:`Alex Gramfort <agramfort>`.
+
 :mod:`sklearn.manifold`
 .......................
 
