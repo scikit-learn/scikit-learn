@@ -6,9 +6,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import IS_PYPY, check_random_state
+from sklearn.utils import IS_PYPY
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.exceptions import NotFittedError
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
@@ -67,9 +66,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
-    random_state : {int, RandomState instance, None}, default=0
-       Pseudo-random number generator that defines the seed of the hashing
-       function. See :term:`random_state`.
 
     Examples
     --------
@@ -88,14 +84,13 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
-                 dtype=np.float64, alternate_sign=True, random_state=0):
+                 dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
         self.input_type = input_type
         self.n_features = n_features
         self.alternate_sign = alternate_sign
-        self.random_state = random_state
 
     @staticmethod
     def _validate_params(n_features, input_type):
@@ -128,11 +123,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         """
         # repeat input validation for grid search (which calls set_params)
         self._validate_params(self.n_features, self.input_type)
-
-        # optional if random_state is left to an integer seed
-        self.seed_ = check_random_state(self.random_state)
-        self.seed_ = int(self.seed_.get_state()[1][0])
-
         return self
 
     def transform(self, raw_X):
@@ -158,19 +148,9 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
-        # expose the seed for HashingVectorizer
-        if isinstance(self.random_state, int):
-            seed = self.random_state   # stateless estimator
-        elif hasattr(self, "seed_"):
-            seed = self.seed_
-        else:
-            raise NotFittedError("FeaturHasher needs to be fitted"
-                                 "when random_state is not a fixed integer"
-                                 "got random_state=%s" % self.random_state)
-
         indices, indptr, values = \
             _hashing_transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign, seed=seed)
+                               self.alternate_sign, seed=0)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:

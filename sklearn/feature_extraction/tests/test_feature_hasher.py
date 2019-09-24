@@ -4,9 +4,9 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
+from sklearn.feature_extraction._hashing import transform as _hashing_transform
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
-from sklearn.exceptions import NotFittedError
 
 pytestmark = fails_if_pypy
 
@@ -46,44 +46,30 @@ def test_feature_hasher_strings():
         assert X.nnz == 6
 
 
-def test_feature_hasher_seed():
+def test_hashing_transform_seed():
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
     n_features = 2 ** 7
 
     #  assert we maintain the precedent behaviour
-    #  where random_state=0
-    h = FeatureHasher(n_features, input_type="string",
-                      alternate_sign=False)
-    X = h.transform(raw_X)
-    assert_array_equal(X.indices, [13, 22, 96, 13, 22, 116])
+    #  where seed=0
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                            False)
+    assert_array_equal(indices, [96,  13,  22,  96,  13,  22, 116])
+    assert_array_equal(indptr, [0, 4, 7])
 
-    # assert a different random_state gives a different output
-    h = FeatureHasher(n_features, input_type="string",
-                      alternate_sign=False, random_state=1)
-    X = h.transform(raw_X)
-    assert_array_equal(X.indices, [44, 114, 125, 39, 44, 125])
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                            False, seed=0)
+    assert_array_equal(indices, [96,  13,  22,  96,  13,  22, 116])
+    assert_array_equal(indptr, [0, 4, 7])
 
-
-@pytest.mark.parametrize("random_state", [None, np.random.RandomState(0)])
-def test_feature_hasher_random_state_not_int(random_state):
-    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
-             ["bar".encode("ascii"), "baz", "quux"]]
-    n_features = 2 ** 7
-
-    # assert random_state=None should be fitted
-    h = FeatureHasher(n_features, input_type="string",
-                      alternate_sign=False, random_state=random_state)
-    with pytest.raises(NotFittedError,
-                       match="FeaturHasher needs to be fitted"):
-        h.transform(raw_X)
-
-    h.fit(raw_X)
-    h.transform(raw_X)
-
-    h = FeatureHasher(n_features, input_type="string",
-                      alternate_sign=False, random_state=random_state)
-    h.fit_transform(raw_X)
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                            False, seed=1)
+    assert_array_equal(indices, [114, 125,  44, 114, 125,  44,  39])
+    assert_array_equal(indptr, [0, 4, 7])
 
 
 def test_feature_hasher_pairs():

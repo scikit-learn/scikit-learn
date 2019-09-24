@@ -29,7 +29,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.exceptions import ChangedBehaviorWarning, NotFittedError
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
@@ -1047,37 +1047,6 @@ def test_hashingvectorizer_nan_in_docs():
         hv.fit_transform(['hello world', np.nan, 'hello hello'])
 
     assert_raise_message(exception, message, func)
-
-
-@pytest.mark.parametrize("method", ['fit_transform', 'transform'])
-def test_hashingvectorizer_seed(method):
-    text = ['hello world', 'hello hello', 'hello goodbye']
-    # assert same behaviour without seed
-    hv = HashingVectorizer()
-    X = getattr(hv, method)(text)
-    assert_array_equal(X.indices, [639749, 784967, 784967, 784967, 945982])
-
-    # assert seed influence
-    hv = HashingVectorizer(random_state=1)
-    X = getattr(hv, method)(text)
-    assert_array_equal(X.indices, [344915, 536287, 344915, 344915, 714648])
-
-
-@pytest.mark.parametrize("random_state", [None, np.random.RandomState(0)])
-def test_hashingvectorizer_random_state_not_int(random_state):
-    text = ['hello world', 'hello hello', 'hello goodbye']
-    # assert random_seed=None should be fitted
-    hv = HashingVectorizer(random_state=random_state)
-    with pytest.raises(NotFittedError,
-                       match="HashingVectorizer needs to be fitted"):
-        hv.transform(text)
-
-    # assert ok if fitted
-    hv.fit(text)
-    hv.transform(text)
-
-    hv = HashingVectorizer(random_state=random_state)
-    hv.fit_transform(text)
 
 
 def test_tfidfvectorizer_binary():

@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT, check_random_state
+from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
@@ -642,10 +642,6 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    random_state : {int, RandomState instance, None}, default=0
-       Pseudo-random number generator that defines the seed of the hashing
-       function. See :term:`random_state`.
-
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
@@ -671,7 +667,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', alternate_sign=True,
-                 dtype=np.float64, random_state=0):
+                 dtype=np.float64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -688,7 +684,6 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
         self.norm = norm
         self.alternate_sign = alternate_sign
         self.dtype = dtype
-        self.random_state = random_state
 
     def partial_fit(self, X, y=None):
         """Does nothing: this transformer is stateless.
@@ -720,10 +715,6 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
         self._warn_for_unused_params()
         self._validate_params()
 
-        # optional if random_state is left to an integer seed
-        self.seed_ = check_random_state(self.random_state)
-        self.seed_ = int(self.seed_.get_state()[1][0])
-
         self._get_hasher().fit(X, y=y)
         return self
 
@@ -750,14 +741,6 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
         self._validate_params()
 
         analyzer = self.build_analyzer()
-
-        if isinstance(self.random_state, int):
-            self.seed_ = self.random_state   # stateless estimator
-        elif not hasattr(self, "seed_"):
-            raise NotFittedError("HashingVectorizer needs to be fitted "
-                                 "when random_state is not a fixed integer "
-                                 "got random_state=%s" % self.random_state)
-
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
             X.data.fill(1)
@@ -788,8 +771,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
-                             alternate_sign=self.alternate_sign,
-                             random_state=self.seed_)
+                             alternate_sign=self.alternate_sign)
 
     def _more_tags(self):
         return {'X_types': ['string']}
