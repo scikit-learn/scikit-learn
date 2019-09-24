@@ -32,7 +32,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-def _assert_all_finite(X, allow_nan=False):
+def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
@@ -52,7 +52,11 @@ def _assert_all_finite(X, allow_nan=False):
         if (allow_nan and np.isinf(X).any() or
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
-            raise ValueError(msg_err.format(type_err, X.dtype))
+            raise ValueError(
+                    msg_err.format
+                    (type_err,
+                     msg_dtype if msg_dtype is not None else X.dtype)
+            )
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
@@ -494,7 +498,17 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.asarray(array, dtype=dtype, order=order)
+                if dtype is not None and np.dtype(dtype).kind in 'iu':
+                    # Conversion float -> int should not contain NaN or
+                    # inf (numpy#14412). We cannot use casting='safe' because
+                    # then conversion float -> int would be disallowed.
+                    array = np.asarray(array, order=order)
+                    if array.dtype.kind == 'f':
+                        _assert_all_finite(array, allow_nan=False,
+                                           msg_dtype=dtype)
+                    array = array.astype(dtype, casting="unsafe", copy=False)
+                else:
+                    array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
@@ -538,6 +552,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
         if force_all_finite:
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
