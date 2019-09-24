@@ -1,0 +1,111 @@
+{% extends "layout.html" %}
+{% set title = 'Documentation of scikit-learn: machine learning in Python' %}
+{%- block extrahead %}
+<script>
+    VERSION_SUBDIR = (function(groups) {
+        return groups ? groups[1] : null;
+    })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
+</script>
+{% endblock %}
+{% block content %}
+<div class="container sk-landing-container body" role="main">
+  <h1 class="sk-documentation-index-header">Documentation of scikit-learn {{ version }}</h1>
+  <div class="row no-gutters">
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('getting_started') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Getting Started</h4>
+        <div class="card-body p-3">
+          <p class="card-text">A very short introduction to machine learning problems and how to solve them using scikit-learn. Presents basic concepts and conventions.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('user_guide') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">User Guide</h4>
+        <div class="card-body p-3">
+          <p class="card-text">The main documentation. This contains an in-depth description of all algorithms and how to apply them.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <h4 class="card-header">Other Versions</h4>
+        <div class="card-body p-3">
+          <ul>
+              <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
+              <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
+              <li><a href="https://scikit-learn.org/dev/versions.html">All available versions</a>
+              </li>
+              <li><a href="_downloads/scikit-learn-docs.pdf">PDF documentation</a>
+              </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('tutorial/index') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Tutorials</h4>
+        <div class="card-body p-3">
+          <p class="card-text">Useful tutorials for developing a feel for some of scikit-learn's applications in the machine learning field.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('glossary') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Glossary</h4>
+        <div class="card-body p-3">
+          <p class="card-text">The main documentation. This contains an in-depth description of all algorithms and how to apply them.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('modules/classes') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">API</h4>
+        <div class="card-body p-3">
+          <p class="card-text">The exact API of all functions and classes, as given by the docstrings. The API describes expected types and allowed features for all functions, and all parameters available for the algorithms.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('developers/index') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Development</h4>
+        <div class="card-body p-3">
+          <p class="card-text">Information on how to contribute. This also contains useful information for advanced users, for example how to build their own estimators.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('faq') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">FAQ</h4>
+        <div class="card-body p-3">
+          <p class="card-text">Frequently asked questions about the project and contributing.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('related_projects') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Related packages</h4>
+        <div class="card-body p-3">
+          <p class="card-text">Other machine learning packages for Python and related projects. Also algorithms that are slightly out of scope or not well established enough for scikit-learn.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('roadmap') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">Roadmap</h4>
+        <div class="card-body p-3">
+          <p class="card-text">Roadmap of the project.</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card h-100 sk-documentation-index-card mx-md-2">
+        <a href="{{ pathto('about') }}" class="stretched-link sk-documentation-index-anchor"></a><h4 class="card-header">About us</h4>
+        <div class="card-body p-3">
+          <p class="card-text">About the scikit-learn project.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
