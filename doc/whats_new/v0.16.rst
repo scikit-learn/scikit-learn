@@ -119,7 +119,7 @@ New features
   By `Gael Varoquaux`_ and :user:`Florian Wilhelm <FlorianWilhelm>`.
 
 - Added :func:`metrics.mean_absolute_percentage_error`, a robust metric.
-  By :user:`Ashutosh Hathidara <ashutosh1919>` and `Alexandre Gramfort`_.
+  By :user:`Ashutosh Hathidara <ashutosh1919>`.
   
 - Add :class:`cluster.Birch`, an online clustering algorithm. By
   `Manoj Kumar`_, `Alexandre Gramfort`_ and `Joel Nothman`_.

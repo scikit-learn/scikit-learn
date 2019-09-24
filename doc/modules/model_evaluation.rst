@@ -95,7 +95,6 @@ Scoring                           Function                                      
 'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
-'neg_mean_absolute_percentage_error' :func:`metrics.mean_absolute_percentage_error`
 'r2'                              :func:`metrics.r2_score`
 'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
 'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
@@ -1941,11 +1940,11 @@ function::
 
 Mean absolute percentage error
 ------------------------------
-The :func:`mean_absolute_percentage_error` is particularly interesting because
-it is directly understood by the users who don't have technical background.
-It is modification of `mean_absolute_error`. The loss is calculated by taking
-average of all differences between the target and the prediction divided by
-the target and multiplying resulting term by 100.0 to convert it into percentage.
+The :func: The `mean_absolute_percentage_error` (MAPE), also known as mean absolute
+percentage deviation (MAPD), is a measure of prediction accuracy of a forecasting
+method in statistics, for example in trend estimation, also used as a loss function
+for regression problems in machine learning. It is therefore blind to global scaling
+of the target as long as the prediction is scaled like the true y.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the mean absolute percentage
