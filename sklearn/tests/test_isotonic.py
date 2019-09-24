@@ -3,6 +3,8 @@ import numpy as np
 import pickle
 import copy
 
+import pytest
+
 from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression, _make_unique)
 
@@ -485,14 +487,17 @@ def test_isotonic_dtype():
             assert res.dtype == expected_dtype
 
 
-def test_isotonic_mismatched_dtype():
+@pytest.mark.parametrize(
+    "y_dtype", [np.int32, np.int64, np.float32, np.float64]
+)
+def test_isotonic_mismatched_dtype(y_dtype):
+    # regression test for #15004
+    # check that data are converted when X and y dtype differ
     reg = IsotonicRegression()
-    y = [2, 1, 4, 3, 5]
-    for dtype in (np.int32, np.int64, np.float64):
-        y_np = np.array(y, dtype=dtype)
-        X = np.arange(len(y), dtype=np.float32)
-        reg.fit(X, y_np)
-        assert reg.predict(X).dtype == X.dtype
+    y = np.array([2, 1, 4, 3, 5], dtype=y_dtype)
+    X = np.arange(len(y), dtype=np.float32)
+    reg.fit(X, y)
+    assert reg.predict(X).dtype == X.dtype
 
 
 def test_make_unique_dtype():
