@@ -6,8 +6,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils import IS_PYPY
-from sklearn.base import BaseEstimator, TransformerMixin
+from ..utils import IS_PYPY
+from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
