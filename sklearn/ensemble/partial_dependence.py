@@ -261,7 +261,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
 
-    **fig_kw : dict
+    ``**fig_kw`` : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.
