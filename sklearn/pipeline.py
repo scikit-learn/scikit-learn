@@ -389,7 +389,7 @@ class Pipeline(_BaseComposition):
         # transform or fit_transform
         if self._final_estimator != 'passthrough':
             if (not hasattr(self._final_estimator, 'transform')
-                    and not hasattr(self.final_estimator, 'fit_transform')):
+                    and not hasattr(self._final_estimator, 'fit_transform')):
                 raise AttributeError
         return self._fit_transform
 
