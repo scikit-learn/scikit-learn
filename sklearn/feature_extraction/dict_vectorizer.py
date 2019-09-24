@@ -128,6 +128,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             vocab = {f: i for i, f in enumerate(feature_names)}
 
         self.feature_names_ = feature_names
+        self.n_features_out_ = len(self.feature_names_)
         self.vocabulary_ = vocab
 
         return self
@@ -205,6 +206,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         if fitting:
             self.feature_names_ = feature_names
             self.vocabulary_ = vocab
+            self.n_features_out_ = len(self.feature_names_)
 
         return result_matrix
 

@@ -360,6 +360,18 @@ boolean mask array or callable
                                   trans.get_feature_names()])
         return feature_names
 
+    @property
+    def n_features_out_(self):
+        n_features_out = 0
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop':
+                continue
+            elif trans == 'passthrough':
+                n_features_out += len(column)
+            else:
+                n_features_out += trans.n_features_out_
+        return n_features_out
+
     def _update_fitted_transformers(self, transformers):
         # transformers are fitted; excludes 'drop' cases
         fitted_transformers = iter(transformers)
