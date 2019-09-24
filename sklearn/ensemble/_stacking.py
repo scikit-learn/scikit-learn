@@ -89,7 +89,8 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         >>> clf2 = RandomForestClassifier()
         >>> eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
         >>> eclf.set_params(rf='drop')
-        StackingClassifier(estimators=[('lr', LogisticRegression()), ('rf', 'drop')])
+        StackingClassifier(estimators=[('lr', LogisticRegression()),
+                                        ('rf', 'drop')])
         """
         super()._set_params('estimators', **params)
         return self

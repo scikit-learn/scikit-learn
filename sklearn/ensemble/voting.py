@@ -118,7 +118,8 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
         >>> clf2 = RandomForestClassifier()
         >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
         >>> eclf.set_params(rf=None)
-        VotingClassifier(estimators=[('lr', LogisticRegression()), ('rf', None)])
+        VotingClassifier(estimators=[('lr', LogisticRegression()),
+                                     ('rf', None)])
         """
         return self._set_params('estimators', **params)
 
