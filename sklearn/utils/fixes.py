@@ -295,8 +295,8 @@ class loguniform(scipy.stats.reciprocal):
     reciprocal distribution:
     https://en.wikipedia.org/wiki/Reciprocal_distribution
 
-    Example
-    -------
+    Examples
+    --------
 
     >>> from sklearn.utils.fixes import loguniform
     >>> rv = loguniform(1e-3, 1e1)

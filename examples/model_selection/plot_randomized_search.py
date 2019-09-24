@@ -44,9 +44,9 @@ def report(results, n_top=3):
         candidates = np.flatnonzero(results['rank_test_score'] == i)
         for candidate in candidates:
             print("Model with rank: {0}".format(i))
-            print("Mean validation score: {0:.3f} (std: {1:.3f})".format(
-                  results['mean_test_score'][candidate],
-                  results['std_test_score'][candidate]))
+            print("Mean validation score: {0:.3f} (std: {1:.3f})"
+                  .format(results['mean_test_score'][candidate],
+                          results['std_test_score'][candidate]))
             print("Parameters: {0}".format(results['params'][candidate]))
             print("")
 
@@ -70,7 +70,7 @@ report(random_search.cv_results_)
 # use a full grid over all parameters
 param_grid = {'average': [True, False],
               'l1_ratio': np.linspace(0, 1, num=10),
-              'alpha': np.power(10, [-4, -3, -2, -1, 0])}
+              'alpha': np.power(10, np.arange(-4, 1, dtype=float))}
 
 # run grid search
 grid_search = GridSearchCV(clf, param_grid=param_grid)
