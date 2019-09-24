@@ -18,6 +18,7 @@ from ..utils import (
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
+from ..exceptions import VisibleDeprecationWarning
 
 from .bagging import BaseBagging
 

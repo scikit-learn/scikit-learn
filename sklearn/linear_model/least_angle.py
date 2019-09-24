@@ -22,6 +22,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
+from ..exceptions import VisibleDeprecationWarning
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 

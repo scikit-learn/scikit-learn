@@ -22,6 +22,7 @@ from ..utils import check_matplotlib_support  # noqa
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
+from ..exceptions import VisibleDeprecationWarning
 from ..ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)

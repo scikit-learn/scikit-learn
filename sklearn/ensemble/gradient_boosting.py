@@ -59,6 +59,7 @@ from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+from ..exceptions import VisibleDeprecationWarning
 
 
 # FIXME: 0.23

@@ -22,6 +22,7 @@ from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 def test_calibration():

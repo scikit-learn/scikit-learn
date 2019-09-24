@@ -35,6 +35,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD

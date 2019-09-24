@@ -33,6 +33,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
+from ..exceptions import VisibleDeprecationWarning
 
 
 __all__ = ['HashingVectorizer',

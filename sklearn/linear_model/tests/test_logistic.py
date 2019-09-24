@@ -28,6 +28,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils.testing import skip_if_no_parallel
 
+from sklearn.exceptions import VisibleDeprecationWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model.logistic import (

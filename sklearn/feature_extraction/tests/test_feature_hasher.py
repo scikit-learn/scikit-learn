@@ -6,6 +6,7 @@ import pytest
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
+from sklearn.exceptions import VisibleDeprecationWarning
 
 pytestmark = fails_if_pypy
 

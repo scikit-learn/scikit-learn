@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils.mocking import MockDataFrame
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold

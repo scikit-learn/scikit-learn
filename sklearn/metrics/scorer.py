@@ -44,6 +44,7 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
+from ..exceptions import VisibleDeprecationWarning
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):

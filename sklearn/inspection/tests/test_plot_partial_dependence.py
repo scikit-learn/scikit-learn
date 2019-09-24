@@ -11,6 +11,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.inspection import plot_partial_dependence
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 @pytest.fixture(scope="module")

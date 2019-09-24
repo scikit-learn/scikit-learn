@@ -12,6 +12,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import calinski_harabaz_score
 from sklearn.metrics.cluster import davies_bouldin_score
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 def test_silhouette():

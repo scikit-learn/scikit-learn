@@ -15,6 +15,7 @@ from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 @ignore_warnings

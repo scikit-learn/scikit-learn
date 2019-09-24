@@ -26,6 +26,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import comb
 from ..base import _pprint
+from ..exceptions import VisibleDeprecationWarning
 
 __all__ = ['BaseCrossValidator',
            'KFold',

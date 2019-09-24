@@ -8,6 +8,7 @@ from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..exceptions import VisibleDeprecationWarning
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,

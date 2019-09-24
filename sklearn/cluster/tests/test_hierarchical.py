@@ -34,6 +34,7 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
+from sklearn.exceptions import VisibleDeprecationWarning
 
 
 def test_linkage_misc():

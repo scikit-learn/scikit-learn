@@ -23,6 +23,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
+from sklearn.exceptions import VisibleDeprecationWarning
 from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample

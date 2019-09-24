@@ -23,6 +23,7 @@ from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
+from ..exceptions import VisibleDeprecationWarning
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
