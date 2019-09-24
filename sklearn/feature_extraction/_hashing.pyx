@@ -18,7 +18,7 @@ np.import_array()
 
 
 def transform(raw_X, Py_ssize_t n_features, dtype,
-             bint alternate_sign=1, unsigned int seed=0):
+              bint alternate_sign=1, unsigned int seed=0):
     """Guts of FeatureHasher.transform.
 
     Returns
