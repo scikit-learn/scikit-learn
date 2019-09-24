@@ -58,48 +58,49 @@ of the metric.
 Scoring                           Function                                          Comment
 ==============================    =============================================     ==================================
 **Classification**
-'accuracy'                           :func:`metrics.accuracy_score`
-'balanced_accuracy'                  :func:`metrics.balanced_accuracy_score`
-'average_precision'                  :func:`metrics.average_precision_score`
-'brier_score_loss'                   :func:`metrics.brier_score_loss`
-'f1'                                 :func:`metrics.f1_score`                       for binary targets
-'f1_micro'                           :func:`metrics.f1_score`                       micro-averaged
-'f1_macro'                           :func:`metrics.f1_score`                       macro-averaged
-'f1_weighted'                        :func:`metrics.f1_score`                       weighted average
-'f1_samples'                         :func:`metrics.f1_score`                       by multilabel sample
-'neg_log_loss'                       :func:`metrics.log_loss`                       requires ``predict_proba`` support
-'precision' etc.                     :func:`metrics.precision_score`                suffixes apply as with 'f1'
-'recall' etc.                        :func:`metrics.recall_score`                   suffixes apply as with 'f1'
-'jaccard' etc.                       :func:`metrics.jaccard_score`                  suffixes apply as with 'f1'
-'roc_auc'                            :func:`metrics.roc_auc_score`
-'roc_auc_ovr'                        :func:`metrics.roc_auc_score`
-'roc_auc_ovo'                        :func:`metrics.roc_auc_score`
-'roc_auc_ovr_weighted'               :func:`metrics.roc_auc_score`
-'roc_auc_ovo_weighted'               :func:`metrics.roc_auc_score`
+'accuracy'                        :func:`metrics.accuracy_score`
+'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
+'average_precision'               :func:`metrics.average_precision_score`
+'brier_score_loss'                :func:`metrics.brier_score_loss`
+'f1'                              :func:`metrics.f1_score`                          for binary targets
+'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
+'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
+'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
+'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
+'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
+'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
+'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_mutual_info_score'         :func:`metrics.adjusted_mutual_info_score`
-'adjusted_rand_score'                :func:`metrics.adjusted_rand_score`
-'completeness_score'                 :func:`metrics.completeness_score`
-'fowlkes_mallows_score'              :func:`metrics.fowlkes_mallows_score`
-'homogeneity_score'                  :func:`metrics.homogeneity_score`
-'mutual_info_score'                  :func:`metrics.mutual_info_score`
-'normalized_mutual_info_score'       :func:`metrics.normalized_mutual_info_score`
-'v_measure_score'                    :func:`metrics.v_measure_score`
+'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
+'completeness_score'              :func:`metrics.completeness_score`
+'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'               :func:`metrics.homogeneity_score`
+'mutual_info_score'               :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
-'explained_variance'                 :func:`metrics.explained_variance_score`
-'max_error'                          :func:`metrics.max_error`
-'neg_mean_absolute_error'            :func:`metrics.mean_absolute_error`
-'neg_mean_absolute_percentage_error' :func:`metrics.mean_absolute_percentage_error`
-'neg_mean_squared_error'             :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'        :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'         :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'          :func:`metrics.median_absolute_error`
-'r2'                                 :func:`metrics.r2_score`
-'neg_mean_poisson_deviance'          :func:`metrics.mean_poisson_deviance`
-'neg_mean_gamma_deviance'            :func:`metrics.mean_gamma_deviance`
-==================================    ==========================================     ==================================
+'explained_variance'              :func:`metrics.explained_variance_score`
+'max_error'                       :func:`metrics.max_error`
+'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
+'neg_mean_absolute_percentage_error'
+                                  :func:`metrics.mean_absolute_percentage_error`
+'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
+'r2'                              :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
+==============================    =============================================     ==================================
 
 
 Usage examples:
