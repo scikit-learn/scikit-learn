@@ -49,15 +49,11 @@ REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
-    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              presort=True),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
-    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             presort=True),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -437,12 +433,12 @@ def test_max_features():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.sqrt(iris.data.shape[1])))
+                int(np.sqrt(iris.data.shape[1])))
 
         est = TreeEstimator(max_features="log2")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.log2(iris.data.shape[1])))
+                int(np.log2(iris.data.shape[1])))
 
         est = TreeEstimator(max_features=1)
         est.fit(iris.data, iris.target)
@@ -459,7 +455,7 @@ def test_max_features():
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(0.5 * iris.data.shape[1]))
+                int(0.5 * iris.data.shape[1]))
 
         est = TreeEstimator(max_features=1.0)
         est.fit(iris.data, iris.target)
@@ -1045,16 +1041,15 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
-        if not est.presort:
-            # csr matrix
-            X = csr_matrix(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
+        # csr matrix
+        X = csr_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
 
-            # csc_matrix
-            X = csc_matrix(iris.data, dtype=dtype)
-            y = iris.target
-            assert_array_equal(est.fit(X, y).predict(X), y)
+        # csc_matrix
+        X = csc_matrix(iris.data, dtype=dtype)
+        y = iris.target
+        assert_array_equal(est.fit(X, y).predict(X), y)
 
         # Strided
         X = np.asarray(iris.data[::3], dtype=dtype)
@@ -1583,9 +1578,8 @@ def check_min_weight_leaf_split_level(name):
     sample_weight = [0.2, 0.2, 0.2, 0.2, 0.2]
     _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight)
 
-    if not TreeEstimator().presort:
-        _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
-                                           sample_weight)
+    _check_min_weight_leaf_split_level(TreeEstimator, csc_matrix(X), y,
+                                       sample_weight)
 
 
 @pytest.mark.parametrize("name", ALL_TREES)
@@ -1621,37 +1615,17 @@ def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
 
 
-def check_presort_sparse(est, X, y):
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-
-def test_presort_sparse():
-    ests = (DecisionTreeClassifier(presort=True),
-            DecisionTreeRegressor(presort=True))
-    sparse_matrices = (csr_matrix, csc_matrix, coo_matrix)
-
-    y, X = datasets.make_multilabel_classification(random_state=0,
-                                                   n_samples=50,
-                                                   n_features=1,
-                                                   n_classes=20)
-    y = y[:, 0]
-
-    for est, sparse_matrix in product(ests, sparse_matrices):
-        check_presort_sparse(est, sparse_matrix(X), y)
-
-
-@pytest.mark.parametrize('cls',
+@pytest.mark.parametrize('Cls',
                          (DecisionTreeRegressor, DecisionTreeClassifier))
-def test_invalid_presort(cls):
-    allowed_presort = ('auto', True, False)
-    invalid_presort = 'invalid'
-    msg = ("'presort' should be in {}. "
-           "Got {!r} instead.".format(allowed_presort, invalid_presort))
-    est = cls(presort=invalid_presort)
-    with pytest.raises(ValueError,
-                       match=msg.replace('(', r'\(').replace(')', r'\)')):
-        est.fit(X, y)
+@pytest.mark.parametrize('presort', ['auto', True, False])
+def test_presort_deprecated(Cls, presort):
+    # TODO: remove in v0.24
+    X = np.zeros((10, 10))
+    y = np.r_[[0] * 5, [1] * 5]
+    tree = Cls(presort=presort)
+    with pytest.warns(DeprecationWarning,
+                      match="The parameter 'presort' is deprecated "):
+        tree.fit(X, y)
 
 
 def test_decision_path_hardcoded():
@@ -1992,3 +1966,20 @@ def test_prune_tree_raises_negative_ccp_alpha():
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
         clf._prune_tree()
+
+
+def test_classes_deprecated():
+    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
+    y = [0.5, 2.5, 3.5, 5.5]
+    clf = DecisionTreeRegressor()
+    clf = clf.fit(X, y)
+
+    match = ("attribute is to be deprecated from version "
+             "0.22 and will be removed in 0.24.")
+
+    with pytest.warns(DeprecationWarning, match=match):
+        n = len(clf.classes_)
+        assert n == clf.n_outputs_
+
+    with pytest.warns(DeprecationWarning, match=match):
+        assert len(clf.n_classes_) == clf.n_outputs_

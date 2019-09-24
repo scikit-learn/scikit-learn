@@ -170,11 +170,17 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     classes_ : array, shape = [`n_classes`]
         Class labels.
+
+    n_classes_ : int
+        Number of classes.
+
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
         vice-versa.
+
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
+
     """
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
