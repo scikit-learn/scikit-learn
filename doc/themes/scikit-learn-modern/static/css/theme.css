@@ -315,10 +315,15 @@ img.sk-who-uses-carousel-img {
   max-width: 50%;
 }
 
+div#carouselExampleSlidesOnly {
+  min-height: 200px;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
   margin: 0 8px;
+  margin-bottom: 8px;
 }
 
 ul.sk-landing-call-list li {

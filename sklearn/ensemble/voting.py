@@ -98,11 +98,17 @@ class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
 
         Examples
         --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf=None)
+        In this example, the RandomForestClassifier is removed.
+
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> from sklearn.ensemble import VotingClassifier
+        >>> clf1 = LogisticRegression()
+        >>> clf2 = RandomForestClassifier()
+        >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
+        >>> eclf.set_params(rf=None)
+        VotingClassifier(estimators=[('lr', LogisticRegression()),
+                                     ('rf', None)])
         """
         return self._set_params('estimators', **params)
 
