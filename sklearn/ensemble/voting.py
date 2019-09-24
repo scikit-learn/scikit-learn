@@ -64,14 +64,6 @@ class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
-        # n_isnone = np.sum(
-        #     [clf in (None, 'drop') for _, clf in self.estimators]
-        # )
-        # if n_isnone == len(self.estimators):
-        #     raise ValueError(
-        #         'All estimators are None or "drop". At least one is required!'
-        #     )
-
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
@@ -82,46 +74,6 @@ class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
         for k, e in zip(self.estimators, self.estimators_):
             self.named_estimators_[k[0]] = e
         return self
-
-    def set_params(self, **params):
-        """ Setting the parameters for the ensemble estimator
-
-        Valid parameter keys can be listed with get_params().
-
-        Parameters
-        ----------
-        **params : keyword arguments
-            Specific parameters using e.g. set_params(parameter_name=new_value)
-            In addition, to setting the parameters of the ensemble estimator,
-            the individual estimators of the ensemble estimator can also be
-            set or replaced by setting them to None.
-
-        Examples
-        --------
-        In this example, the RandomForestClassifier is removed.
-
-        >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.ensemble import RandomForestClassifier
-        >>> from sklearn.ensemble import VotingClassifier
-        >>> clf1 = LogisticRegression()
-        >>> clf2 = RandomForestClassifier()
-        >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
-        >>> eclf.set_params(rf=None)
-        VotingClassifier(estimators=[('lr', LogisticRegression()),
-                                     ('rf', None)])
-        """
-        return self._set_params('estimators', **params)
-
-    def get_params(self, deep=True):
-        """ Get the parameters of the ensemble estimator
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various estimators and the parameters
-            of the estimators as well
-        """
-        return self._get_params('estimators', deep=deep)
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
@@ -219,7 +171,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
-        self.estimators = estimators
+        super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
@@ -412,7 +364,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     """
 
     def __init__(self, estimators, weights=None, n_jobs=None):
-        self.estimators = estimators
+        super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
 
