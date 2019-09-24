@@ -309,7 +309,7 @@ class RequiresPositiveYRegressor(LinearRegression):
 def test_not_an_array_array_function():
     np_version = _parse_version(np.__version__)
     if np_version < (1, 17):
-        raise SkipTest("array_function protocol not suppored in numpy <1.17")
+        raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
     assert_raises_regex(TypeError, msg, np.sum, not_array)
