@@ -56,7 +56,7 @@ class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
         """
         common fit operations.
         """
-        names, clfs = self.validate_estimators()
+        names, clfs = self._validate_estimators()
 
         if (self.weights is not None and
                 len(self.weights) != len(self.estimators)):
