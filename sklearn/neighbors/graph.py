@@ -330,6 +330,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         """
         return self.fit(X).transform(X)
 
+    @property
+    def n_features_out_(self):
+        return self.n_samples_fit_
+
 
 class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
                                  UnsupervisedMixin, TransformerMixin):
@@ -467,3 +471,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
             The diagonal is always explicit.
         """
         return self.fit(X).transform(X)
+
+    @property
+    def n_features_out_(self):
+        return self.n_samples_fit_
