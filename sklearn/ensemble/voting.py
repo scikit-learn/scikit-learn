@@ -24,25 +24,20 @@ from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from .base import _parallel_fit_estimator
+from .base import _BaseEnsembleHeterogeneousEstimator
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
-from ..utils.metaestimators import _BaseComposition
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 
 
-class _BaseVoting(TransformerMixin, _BaseComposition):
+class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    _required_parameters = ['estimators']
-
-    @property
-    def named_estimators(self):
-        return Bunch(**dict(self.estimators))
 
     @property
     def _weights_not_none(self):
@@ -61,10 +56,7 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
         """
         common fit operations.
         """
-        if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError('Invalid `estimators` attribute, `estimators`'
-                                 ' should be a list of (string, estimator)'
-                                 ' tuples')
+        names, clfs = self.validate_estimators()
 
         if (self.weights is not None and
                 len(self.weights) != len(self.estimators)):
@@ -72,16 +64,13 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
-        names, clfs = zip(*self.estimators)
-        self._validate_names(names)
-
-        n_isnone = np.sum(
-            [clf in (None, 'drop') for _, clf in self.estimators]
-        )
-        if n_isnone == len(self.estimators):
-            raise ValueError(
-                'All estimators are None or "drop". At least one is required!'
-            )
+        # n_isnone = np.sum(
+        #     [clf in (None, 'drop') for _, clf in self.estimators]
+        # )
+        # if n_isnone == len(self.estimators):
+        #     raise ValueError(
+        #         'All estimators are None or "drop". At least one is required!'
+        #     )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,

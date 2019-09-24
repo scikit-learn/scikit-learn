@@ -15,6 +15,7 @@ from ..base import is_classifier, is_regressor
 from ..base import MetaEstimatorMixin
 
 from .base import _parallel_fit_estimator
+from .base import _BaseEnsembleHeterogeneousEstimator
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
@@ -32,73 +33,25 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
 
-class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
+class _BaseStacking(TransformerMixin, _BaseEnsembleHeterogeneousEstimator,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
-    _required_parameters = ['estimators']
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0):
-        self.estimators = estimators
+        super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    @abstractmethod
-    def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
-            )
-        names, estimators = zip(*self.estimators)
-        self._validate_names(names)
-        return names, estimators
-
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
             self.final_estimator_ = clone(self.final_estimator)
         else:
             self.final_estimator_ = clone(default)
-
-    def set_params(self, **params):
-        """Set the parameters for the stacking estimator.
-
-        Valid parameter keys can be listed with `get_params()`.
-
-        Parameters
-        ----------
-        params : keyword arguments
-            Specific parameters using e.g.
-            `set_params(parameter_name=new_value)`. In addition, to setting the
-            parameters of the stacking estimator, the individual estimator of
-            the stacking estimators can also be set, or can be removed by
-            setting them to 'drop'.
-
-        Examples
-        --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf='drop')
-        """
-        super()._set_params('estimators', **params)
-        return self
-
-    def get_params(self, deep=True):
-        """Get the parameters of the stacking estimator.
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well.
-        """
-        return super()._get_params('estimators', deep=deep)
 
     def _concatenate_predictions(self, predictions):
         """Concatenate the predictions of each first layer learner.
@@ -165,13 +118,6 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
-
-        has_estimator = any(est != 'drop' for est in all_estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
 
         stack_method = [self.stack_method] * len(all_estimators)
 
@@ -410,16 +356,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             verbose=verbose
         )
 
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_classifier(est):
-                raise ValueError(
-                    "The estimator {} should be a classifier."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
-
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
@@ -644,16 +580,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             n_jobs=n_jobs,
             verbose=verbose
         )
-
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_regressor(est):
-                raise ValueError(
-                    "The estimator {} should be a regressor."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=RidgeCV())

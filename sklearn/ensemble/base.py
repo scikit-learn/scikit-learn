@@ -5,16 +5,20 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
-import numpy as np
+from abc import ABCMeta, abstractmethod
 import numbers
+
+import numpy as np
 
 from joblib import effective_n_jobs
 
 from ..base import clone
+from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..utils import Bunch
 from ..utils import check_random_state
-from abc import ABCMeta, abstractmethod
+from ..utils.metaestimators import _BaseComposition
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
 
@@ -178,3 +182,93 @@ def _partition_estimators(n_estimators, n_jobs):
     starts = np.cumsum(n_estimators_per_job)
 
     return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()
+
+
+class _BaseEnsembleHeterogeneousEstimator(MetaEstimatorMixin,
+                                          _BaseComposition,
+                                          BaseEstimator,
+                                          metaclass=ABCMeta):
+    """Base class for ensemble learners based on heterogeneous estimators.
+
+    Parameters
+    ----------
+    estimators : list of (str, estimator) tuples
+        The ensemble of estimators to use in the ensemble. Each element of the
+        list is defined as a tuple of string (i.e. name of the estimator) and
+        an estimator instance. An estimator can be set to `'drop'` using
+        `set_params`.
+
+    Attributes
+    ----------
+    estimators_ : list of estimators
+        The elements of the estimators parameter, having been fitted on the
+        training data. If an estimator has been set to `'drop'`, it will not
+        appear in `estimators_`.
+    """
+    _required_parameters = ['estimators']
+
+    @property
+    def named_estimators(self):
+        return Bunch(**dict(self.estimators))
+
+    def __init__(self, estimators):
+        self.estimators = estimators
+
+    def _validate_estimators(self):
+        if self.estimators is None or len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        # defined by MetaEstimatorMixin
+        self._validate_names(names)
+
+        has_estimator = any(est != 'drop' for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        is_estimator_type = (is_classifier if is_classifier(self)
+                             else is_regressor)
+
+        for est in estimators:
+            if est != 'drop' and not is_estimator_type(est):
+                raise ValueError(
+                    "The estimator {} should be a {}."
+                    .format(
+                        est.__class__.__name__, is_estimator_type.__name__[3:]
+                    )
+                )
+
+        return names, estimators
+
+    def set_params(self, **params):
+        """Set the parameters of an estimator from the ensemble.
+
+        Valid parameter keys can be listed with `get_params()`.
+
+        Parameters
+        ----------
+        params : keyword arguments
+            Specific parameters using e.g.
+            `set_params(parameter_name=new_value)`. In addition, to setting the
+            parameters of the stacking estimator, the individual estimator of
+            the stacking estimators can also be set, or can be removed by
+            setting them to 'drop'.
+        """
+        super()._set_params('estimators', **params)
+        return self
+
+    def get_params(self, deep=True):
+        """Get the parameters of an estimator from the ensemble.
+
+        Parameters
+        ----------
+        deep : bool
+            Setting it to True gets the various classifiers and the parameters
+            of the classifiers as well.
+        """
+        return super()._get_params('estimators', deep=deep)
