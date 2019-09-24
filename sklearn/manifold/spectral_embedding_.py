@@ -19,7 +19,7 @@ from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, NearestNeighbors
 
 
 def _graph_connected_component(graph, node_id):
@@ -157,7 +157,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Parameters
     ----------
-    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+    adjacency : array-like or sparse graph, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
     n_components : integer, optional, default 8
@@ -369,9 +369,14 @@ class SpectralEmbedding(BaseEstimator):
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
-         - 'nearest_neighbors' : construct affinity matrix by knn graph
-         - 'rbf' : construct affinity matrix by rbf kernel
-         - 'precomputed' : interpret X as precomputed affinity matrix
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix by computing a radial basis
+           function (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
          - callable : use passed in function as affinity
            the function takes in data matrix (n_samples, n_features)
            and return affinity matrix (n_samples, n_samples).
@@ -453,7 +458,8 @@ class SpectralEmbedding(BaseEstimator):
 
     @property
     def _pairwise(self):
-        return self.affinity == "precomputed"
+        return self.affinity in ["precomputed",
+                                 "precomputed_nearest_neighbors"]
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
@@ -476,6 +482,13 @@ class SpectralEmbedding(BaseEstimator):
         """
         if self.affinity == 'precomputed':
             self.affinity_matrix_ = X
+            return self.affinity_matrix_
+        if self.affinity == 'precomputed_nearest_neighbors':
+            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                         n_jobs=self.n_jobs,
+                                         metric="precomputed").fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
             return self.affinity_matrix_
         if self.affinity == 'nearest_neighbors':
             if sparse.issparse(X):
@@ -507,12 +520,12 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : array-like, shape (n_samples, n_samples),
+            X : {array-like, sparse matrix}, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 
@@ -522,12 +535,13 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = check_array(X, ensure_min_samples=2, estimator=self)
+        X = check_array(X, accept_sparse='csr', ensure_min_samples=2,
+                        estimator=self)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):
-            if self.affinity not in {"nearest_neighbors", "rbf",
-                                     "precomputed"}:
+            if self.affinity not in {"nearest_neighbors", "rbf", "precomputed",
+                                     "precomputed_nearest_neighbors"}:
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
@@ -547,12 +561,12 @@ class SpectralEmbedding(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples
             and n_features is the number of features.
 
             If affinity is "precomputed"
-            X : array-like, shape (n_samples, n_samples),
+            X : {array-like, sparse matrix}, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
 

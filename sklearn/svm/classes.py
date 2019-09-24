@@ -584,14 +584,21 @@ class SVC(BaseSVC):
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
-        If probability=True, the parameters learned in Platt scaling to
-        produce probability estimates from decision values. If
-        probability=False, an empty array. Platt scaling uses the logistic
-        function
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling to produce probability estimates from decision values.
+        If `probability=False`, it's an empty array. Platt scaling uses the
+        logistic function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
+
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
 
     Examples
     --------
@@ -778,6 +785,27 @@ class NuSVC(BaseSVC):
     classes_ : array of shape = (n_classes,)
         The unique classes labels.
 
+    fit_status_ : int
+        0 if correctly fitted, 1 if the algorithm did not converge.
+
+    probA_ : ndarray, shape of (n_class * (n_class-1) / 2,)
+    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+        If `probability=True`, it corresponds to the parameters learned in
+        Platt scaling to produce probability estimates from decision values.
+        If `probability=False`, it's an empty array. Platt scaling uses the
+        logistic function
+        ``1 / (1 + exp(decision_value * probA_ + probB_))``
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of [1]_.
+
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C of each class.
+        Computed based on the ``class_weight`` parameter.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
     Examples
     --------
     >>> import numpy as np
@@ -799,11 +827,14 @@ class NuSVC(BaseSVC):
         Scalable linear Support Vector Machine for classification using
         liblinear.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'nu_svc'
@@ -910,6 +941,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : array, shape = [1]
         Constants in decision function.

@@ -31,13 +31,24 @@ jobs:
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
       pylatest_pip_openblas_pandas:
-        DISTRIB: 'conda-latest'
+        DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '*'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
 
 - template: build_tools/azure/posix-32.yml
   parameters:

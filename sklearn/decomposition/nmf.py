@@ -913,9 +913,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+
+        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
             Alternating Least Squares (Fast HALS).
-        'mu' is a Multiplicative Update solver.
+
+        - 'mu' is a Multiplicative Update solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.

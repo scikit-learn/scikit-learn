@@ -186,7 +186,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_features,)
+    intercept_ : array, shape (n_classes,)
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)

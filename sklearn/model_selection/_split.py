@@ -1163,6 +1163,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
                      **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
 
+    def __repr__(self):
+        return _build_repr(self)
+
 
 class RepeatedKFold(_RepeatedSplits):
     """Repeated K-Fold cross validator.
@@ -1481,6 +1484,22 @@ class GroupShuffleSplit(ShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupShuffleSplit
+    >>> X = np.ones(shape=(8, 2))
+    >>> y = np.ones(shape=(8, 1))
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 3, 3])
+    >>> print(groups.shape)
+    (8,)
+    >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
+    >>> gss.get_n_splits()
+    2
+    >>> for train_idx, test_idx in gss.split(X, y, groups):
+    ...    print("TRAIN:", train_idx, "TEST:", test_idx)
+    TRAIN: [2 3 4 5 6 7] TEST: [0 1]
+    TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
@@ -2142,6 +2161,8 @@ def _build_repr(self):
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
+                if value is None and hasattr(self, 'cvargs'):
+                    value = self.cvargs.get(key, None)
             if len(w) and w[0].category == DeprecationWarning:
                 # if the parameter is deprecated, don't show it
                 continue

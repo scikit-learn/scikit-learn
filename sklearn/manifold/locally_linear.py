@@ -100,7 +100,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """
     knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
-    n_samples = X.shape[0]
+    n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X[ind], reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)

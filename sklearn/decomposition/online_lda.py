@@ -275,8 +275,8 @@ class LatentDirichletAllocation(ComponentsMixin, TransformerMixin,
 
     References
     ----------
-    [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
-        David M. Blei, Francis Bach, 2010
+    .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
+        Hoffman, David M. Blei, Francis Bach, 2010
 
     [2] "Stochastic Variational Inference", Matthew D. Hoffman, David M. Blei,
         Chong Wang, John Paisley, 2013
