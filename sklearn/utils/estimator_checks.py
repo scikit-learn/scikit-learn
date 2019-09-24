@@ -1501,7 +1501,6 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifier_multioutput(name, estimator):
     n_samples, n_labels = 42, 5
-    n_labels = 5
     tags = _safe_tags(estimator)
     estimator = clone(estimator)
     X, y = make_multilabel_classification(random_state=42,
