@@ -122,7 +122,7 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    response_method : {'predict_proba', 'decision_function', 'auto'} \
+    response_method : {'predict_proba', 'decision_function', 'auto'}, \
                       default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. If set to 'auto',
