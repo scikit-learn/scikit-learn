@@ -141,7 +141,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
-                    "kd_tree algorithm does not support callable metric. Function call overhead will result in very poor performance.'%s'"
+                    "kd_tree does not support callable metrics. Results in poor performance.'%s'"
                     % self.metric)
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid. Use "
