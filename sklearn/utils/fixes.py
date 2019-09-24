@@ -276,7 +276,8 @@ class loguniform(scipy.stats.reciprocal):
 
     The most useful method for Scikit-learn usage is highlighted here.
     For a full list, see
-    `scipy.stats.reciprocal <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+    `scipy.stats.reciprocal
+    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
     This list includes all functions of ``scipy.stats`` continuous
     distributions such as ``pdf``.
 
