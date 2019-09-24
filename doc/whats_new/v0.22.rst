@@ -32,6 +32,8 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`preprocessing.KBinsDiscretizer` changed handling of bin edges
+  slightly, which might result in a different encoding. |Fix|
 
 Details are listed in the changelog below.
 
@@ -502,6 +504,9 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+- |Fix| :class:`preprocessing.KBinDiscretizer` handles bin edges more consistently now.
+  :pr:`14975` by `Andreas Müller`_.
 
 :mod:`sklearn.svm`
 ..................
