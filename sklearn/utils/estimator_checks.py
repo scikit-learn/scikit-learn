@@ -730,14 +730,14 @@ def check_sample_weights_not_an_array(name, estimator_orig):
     estimator = clone(estimator_orig)
     if has_fit_parameter(estimator, "sample_weight"):
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
-                      [2, 1], [2, 2], [2, 3], [2, 4]])
+                      [2, 1], [2, 2], [2, 3], [2, 4],
+                      [3, 1], [3, 2], [3, 3], [3, 4]])
         X = NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
-        y = NotAnArray(np.array([1, 1, 1, 1, 2, 2, 2, 2]))
-        weights = NotAnArray([1] * 8)
+        y = NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+        weights = NotAnArray([1] * 12)
         if _safe_tags(estimator, "multioutput_only"):
             y = NotAnArray(y.data.reshape(-1, 1))
         estimator.fit(X, y, sample_weight=weights)
-
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
