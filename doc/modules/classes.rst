@@ -1506,10 +1506,6 @@ Plotting
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
-
-.. autosummary::
-   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.cholesky_delete

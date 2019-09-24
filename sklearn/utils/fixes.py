@@ -274,11 +274,17 @@ class loguniform(scipy.stats.reciprocal):
     rvs(self, size=None, random_state=None)
         Generate log-uniform random variables
 
+    The most useful method for Scikit-learn usage is highlighted here.
+    For a full list, see
+    `scipy.stats.reciprocal <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+    This list includes all functions of ``scipy.stats`` continuous
+    distributions such as ``pdf``.
+
     Notes
     -----
-    This class generates values between ``base**low`` and ``base**high`` or
+    This class generates values between ``low`` and ``high`` or
 
-        base**low <= loguniform(low, high, base=base).rvs() <= base**high
+        low <= loguniform(low, high).rvs() <= high
 
     The logarithmic probability density function (PDF) is uniform. When
     ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
@@ -292,7 +298,7 @@ class loguniform(scipy.stats.reciprocal):
     -------
 
     >>> from sklearn.utils.fixes import loguniform
-    >>> rv = loguniform(10 ** -3, 10 ** 1)
+    >>> rv = loguniform(1e-3, 1e1)
     >>> rvs = rv.rvs(random_state=42, size=1000)
     >>> rvs.min()  # doctest: +SKIP
     0.0010435856341129003

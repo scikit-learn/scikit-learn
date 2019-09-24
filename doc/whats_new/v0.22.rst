@@ -547,12 +547,10 @@ Changelog
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
-  for ``loguniform(10 ** 0, 10 ** 2)``. See :issue:`11232` by
+  for ``loguniform(1, 100)``. See :issue:`11232` by
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
   and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
 
-:mod:`sklearn.neighbors`
-....................
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``

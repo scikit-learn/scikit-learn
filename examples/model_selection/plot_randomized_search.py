@@ -54,7 +54,7 @@ def report(results, n_top=3):
 # specify parameters and distributions to sample from
 param_dist = {'average': [True, False],
               'l1_ratio': stats.uniform(0, 1),
-              'alpha': loguniform(10 ** -4, 10 ** 0)}
+              'alpha': loguniform(1e-4, 1e0)}
 
 # run randomized search
 n_iter_search = 20
@@ -70,7 +70,7 @@ report(random_search.cv_results_)
 # use a full grid over all parameters
 param_grid = {'average': [True, False],
               'l1_ratio': np.linspace(0, 1, num=10),
-              'alpha': [10**-i for i in [-4, -3, -2, -1, 0]]}
+              'alpha': np.power(10, [-4, -3, -2, -1, 0])}
 
 # run grid search
 grid_search = GridSearchCV(clf, param_grid=param_grid)
