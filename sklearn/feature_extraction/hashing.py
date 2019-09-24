@@ -6,8 +6,14 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+<<<<<<< HEAD
 from sklearn.utils import IS_PYPY
 from sklearn.base import BaseEstimator, TransformerMixin
+=======
+from ..utils import IS_PYPY, check_random_state
+from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import NotFittedError
+>>>>>>> 5acf2d7cdc39ca1c529b72796724971984191ea8
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
