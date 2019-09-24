@@ -9,7 +9,7 @@ from sklearn.datasets import make_classification
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import parametrize_with_checks
-from sklearn.pipeline import Pipeline, make_pipeline, make_union
+from sklearn.pipeline import Pipeline, make_pipeline, make_union, FeatureUnion
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV, SelectFromModel
 from sklearn.ensemble import BaggingClassifier
@@ -50,10 +50,8 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 TESTED_META = [
-    # pipeline
-    # this fails because tuple is converted to list in fit:
+    # pipelines
     Pipeline((('ss', StandardScaler()),)),
-    # all pipelines fail because they don't clone:
     Pipeline([('ss', StandardScaler())]),
     make_pipeline(StandardScaler(), LogisticRegression()),
     # union
@@ -75,8 +73,10 @@ TESTED_META = [
 
 @parametrize_with_checks(TESTED_META)
 def test_metaestimators_check_estimator(estimator, check):
-    if check.func.__name__ in ["check_estimators_overwrite_params",
-                               "check_dont_overwrite_parameters"]:
+    if (check.func.__name__ in ["check_estimators_overwrite_params",
+                                "check_dont_overwrite_parameters"]
+            and (isinstance(estimator, Pipeline)
+                 or isinstance(estimator, FeatureUnion))):
         # we don't clone in pipeline or feature union
         return
     check(estimator)

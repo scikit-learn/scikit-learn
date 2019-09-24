@@ -82,6 +82,7 @@ class Transf(NoInvTransf):
 
 
 class FitTransf(NoTrans):
+    # has fit_transform but not transform
     def fit_transform(self, X, y=None):
         return X
 
@@ -964,7 +965,7 @@ def test_step_name_validation():
         bad_steps3 = [('a', Mult(2)), (param, Mult(3))]
         for bad_steps, message in [
             (bad_steps1, r"Estimator names must not contain __:"
-             r" got \['a__q'\]"),
+                         r" got \['a__q'\]"),
             (bad_steps2, r"Names provided are not unique: \['a', 'a'\]"),
             (bad_steps3, r"Estimator names conflict with constructor "
                          r"arguments: \['%s'\]" % param),
