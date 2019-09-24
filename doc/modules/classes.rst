@@ -422,6 +422,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
@@ -639,6 +641,7 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
+   impute.KNNImputer
 
 
 .. _inspection_ref:
@@ -663,6 +666,12 @@ Plotting
 --------
 
 .. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   inspection.PartialDependenceDisplay
 
 .. autosummary::
    :toctree: generated/
@@ -1004,6 +1013,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
+   metrics.pairwise.nan_euclidean_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -1204,9 +1214,10 @@ Model validation
    :template: class.rst
 
    naive_bayes.BernoulliNB
+   naive_bayes.CategoricalNB
+   naive_bayes.ComplementNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
-   naive_bayes.ComplementNB
 
 
 .. _neighbors_ref:
@@ -1232,9 +1243,11 @@ Model validation
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.KNeighborsTransformer
    neighbors.LocalOutlierFactor
    neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
+   neighbors.RadiusNeighborsTransformer
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.NeighborhoodComponentsAnalysis

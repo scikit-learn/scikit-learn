@@ -465,7 +465,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     return AB_[0], AB_[1]
 
 
-class _SigmoidCalibration(BaseEstimator, RegressorMixin):
+class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
     Attributes

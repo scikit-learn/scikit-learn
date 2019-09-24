@@ -32,9 +32,12 @@ def get_derivatives_helper(loss):
 
         if loss.__class__.__name__ == 'LeastSquares':
             # hessians aren't updated because they're constant:
-            # the value is 1 because the loss is actually an half
+            # the value is 1 (and not 2) because the loss is actually an half
             # least squares loss.
             hessians = np.full_like(raw_predictions, fill_value=1)
+        elif loss.__class__.__name__ == 'LeastAbsoluteDeviation':
+            # hessians aren't updated because they're constant
+            hessians = np.full_like(raw_predictions, fill_value=0)
 
         return hessians
 
@@ -81,6 +84,7 @@ def test_derivatives(loss, x0, y_true):
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
     ('least_squares', 0, 1),
+    ('least_absolute_deviation', 0, 1),
     ('binary_crossentropy', 2, 1),
     ('categorical_crossentropy', 3, 3),
 ])
@@ -94,7 +98,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 
     rng = np.random.RandomState(seed)
     n_samples = 100
-    if loss == 'least_squares':
+    if loss in ('least_squares', 'least_absolute_deviation'):
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
@@ -128,11 +132,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     f = loss(y_true, raw_predictions, average=False)
     numerical_hessians = (f_plus_eps + f_minus_eps - 2 * f) / eps**2
 
-    def relative_error(a, b):
-        return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
-
-    assert_allclose(numerical_gradients, gradients, rtol=1e-4)
-    assert_allclose(numerical_hessians, hessians, rtol=1e-4)
+    assert_allclose(numerical_gradients, gradients, rtol=1e-4, atol=1e-7)
+    assert_allclose(numerical_hessians, hessians, rtol=1e-4, atol=1e-7)
 
 
 def test_baseline_least_squares():
@@ -145,6 +146,22 @@ def test_baseline_least_squares():
     assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the mean of all targets
     assert_almost_equal(baseline_prediction, y_train.mean())
+    assert np.allclose(loss.inverse_link_function(baseline_prediction),
+                       baseline_prediction)
+
+
+def test_baseline_least_absolute_deviation():
+    rng = np.random.RandomState(0)
+
+    loss = _LOSSES['least_absolute_deviation']()
+    y_train = rng.normal(size=100)
+    baseline_prediction = loss.get_baseline_prediction(y_train, 1)
+    assert baseline_prediction.shape == tuple()  # scalar
+    assert baseline_prediction.dtype == y_train.dtype
+    # Make sure baseline prediction is the median of all targets
+    assert np.allclose(loss.inverse_link_function(baseline_prediction),
+                       baseline_prediction)
+    assert baseline_prediction == pytest.approx(np.median(y_train))
 
 
 def test_baseline_binary_crossentropy():

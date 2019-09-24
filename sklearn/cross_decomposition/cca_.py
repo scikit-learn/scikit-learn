@@ -4,7 +4,7 @@ from ..base import _UnstableArchMixin
 __all__ = ['CCA']
 
 
-class CCA(_PLS, _UnstableArchMixin):
+class CCA(_UnstableArchMixin, _PLS):
     """CCA Canonical Correlation Analysis.
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".

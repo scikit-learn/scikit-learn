@@ -18,7 +18,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
 
-class KBinsDiscretizer(BaseEstimator, TransformerMixin):
+class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
