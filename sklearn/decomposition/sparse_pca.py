@@ -20,7 +20,7 @@ def _check_normalize_components(normalize_components, estimator_name):
             warnings.warn(
                 "'normalize_components' has been deprecated in 0.22 and "
                 "will be removed in 0.24. Remove the parameter from the "
-                " constructor.", DeprecationWarning
+                " constructor.", VisibleDeprecationWarning
             )
         else:
             raise NotImplementedError(

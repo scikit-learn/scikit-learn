@@ -223,7 +223,7 @@ else [n_classes, n_features]
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          DeprecationWarning)
+                          VisibleDeprecationWarning)
         # ---------------------------------------------------------------------
 
         if self.C < 0:
@@ -412,7 +412,7 @@ class LinearSVR(RegressorMixin, LinearModel):
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          DeprecationWarning)
+                          VisibleDeprecationWarning)
         # ---------------------------------------------------------------------
 
         if self.C < 0:

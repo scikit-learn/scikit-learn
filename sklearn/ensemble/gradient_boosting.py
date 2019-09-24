@@ -1339,7 +1339,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                           "suppress this warning by not passing any value "
                           "to the 'presort' parameter. We also recommend "
                           "using HistGradientBoosting models instead.",
-                          DeprecationWarning)
+                          VisibleDeprecationWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """

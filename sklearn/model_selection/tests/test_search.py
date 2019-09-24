@@ -1693,7 +1693,7 @@ def test_custom_run_search():
     results = mycv.cv_results_
     check_results(results, gscv)
     # TODO: remove in v0.24, the deprecation goes away then.
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(VisibleDeprecationWarning,
                       match="attribute is to be deprecated from version 0.22"):
         for attr in dir(gscv):
             if (attr[0].islower() and attr[-1:] == '_' and
@@ -1733,7 +1733,7 @@ def test_deprecated_grid_search_iid(iid):
     grid = GridSearchCV(
         SVC(random_state=0), param_grid={'C': [10]}, cv=3, iid=iid
     )
-    with pytest.warns(DeprecationWarning, match=depr_msg):
+    with pytest.warns(VisibleDeprecationWarning, match=depr_msg):
         grid.fit(X, y)
 
 

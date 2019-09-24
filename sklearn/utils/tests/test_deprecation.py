@@ -36,11 +36,11 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(DeprecationWarning, 'qwerty', MockClass1)
-    assert_warns_message(DeprecationWarning, 'mockclass2_method',
+    assert_warns_message(VisibleDeprecationWarning, 'qwerty', MockClass1)
+    assert_warns_message(VisibleDeprecationWarning, 'mockclass2_method',
                          MockClass2().method)
-    assert_warns_message(DeprecationWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(DeprecationWarning, 'deprecated', mock_function)
+    assert_warns_message(VisibleDeprecationWarning, 'deprecated', MockClass3)
+    val = assert_warns_message(VisibleDeprecationWarning, 'deprecated', mock_function)
     assert val == 10
 
 

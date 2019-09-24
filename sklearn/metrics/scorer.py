@@ -163,7 +163,7 @@ class _BaseScorer:
         """
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
-                          category=DeprecationWarning,
+                          category=VisibleDeprecationWarning,
                           stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)

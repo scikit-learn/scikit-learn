@@ -39,26 +39,26 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore", category=VisibleDeprecationWarning)  # 0.24
 def test_assert_less():
     assert 0 < 1
     assert_raises(AssertionError, assert_less, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore", category=VisibleDeprecationWarning)  # 0.24
 def test_assert_greater():
     assert 1 > 0
     assert_raises(AssertionError, assert_greater, 0, 1)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore", category=VisibleDeprecationWarning)  # 0.24
 def test_assert_less_equal():
     assert 0 <= 1
     assert 1 <= 1
     assert_raises(AssertionError, assert_less_equal, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore", category=VisibleDeprecationWarning)  # 0.24
 def test_assert_greater_equal():
     assert 1 >= 0
     assert 1 >= 1
@@ -132,26 +132,26 @@ def test_ignore_warning():
     # This check that ignore_warning decorateur and context manager are working
     # as expected
     def _warning_function():
-        warnings.warn("deprecation warning", DeprecationWarning)
+        warnings.warn("deprecation warning", VisibleDeprecationWarning)
 
     def _multiple_warning_function():
-        warnings.warn("deprecation warning", DeprecationWarning)
+        warnings.warn("deprecation warning", VisibleDeprecationWarning)
         warnings.warn("deprecation warning")
 
     # Check the function directly
     assert_no_warnings(ignore_warnings(_warning_function))
     assert_no_warnings(ignore_warnings(_warning_function,
-                                       category=DeprecationWarning))
-    assert_warns(DeprecationWarning, ignore_warnings(_warning_function,
+                                       category=VisibleDeprecationWarning))
+    assert_warns(VisibleDeprecationWarning, ignore_warnings(_warning_function,
                                                      category=UserWarning))
     assert_warns(UserWarning,
                  ignore_warnings(_multiple_warning_function,
-                                 category=DeprecationWarning))
-    assert_warns(DeprecationWarning,
+                                 category=VisibleDeprecationWarning))
+    assert_warns(VisibleDeprecationWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=UserWarning))
     assert_no_warnings(ignore_warnings(_warning_function,
-                                       category=(DeprecationWarning,
+                                       category=(VisibleDeprecationWarning,
                                                  UserWarning)))
 
     # Check the decorator
@@ -160,11 +160,11 @@ def test_ignore_warning():
         _warning_function()
         _multiple_warning_function()
 
-    @ignore_warnings(category=(DeprecationWarning, UserWarning))
+    @ignore_warnings(category=(VisibleDeprecationWarning, UserWarning))
     def decorator_no_warning_multiple():
         _multiple_warning_function()
 
-    @ignore_warnings(category=DeprecationWarning)
+    @ignore_warnings(category=VisibleDeprecationWarning)
     def decorator_no_deprecation_warning():
         _warning_function()
 
@@ -172,7 +172,7 @@ def test_ignore_warning():
     def decorator_no_user_warning():
         _warning_function()
 
-    @ignore_warnings(category=DeprecationWarning)
+    @ignore_warnings(category=VisibleDeprecationWarning)
     def decorator_no_deprecation_multiple_warning():
         _multiple_warning_function()
 
@@ -183,9 +183,9 @@ def test_ignore_warning():
     assert_no_warnings(decorator_no_warning)
     assert_no_warnings(decorator_no_warning_multiple)
     assert_no_warnings(decorator_no_deprecation_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_warning)
+    assert_warns(VisibleDeprecationWarning, decorator_no_user_warning)
     assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
+    assert_warns(VisibleDeprecationWarning, decorator_no_user_multiple_warning)
 
     # Check the context manager
     def context_manager_no_warning():
@@ -193,11 +193,11 @@ def test_ignore_warning():
             _warning_function()
 
     def context_manager_no_warning_multiple():
-        with ignore_warnings(category=(DeprecationWarning, UserWarning)):
+        with ignore_warnings(category=(VisibleDeprecationWarning, UserWarning)):
             _multiple_warning_function()
 
     def context_manager_no_deprecation_warning():
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=VisibleDeprecationWarning):
             _warning_function()
 
     def context_manager_no_user_warning():
@@ -205,7 +205,7 @@ def test_ignore_warning():
             _warning_function()
 
     def context_manager_no_deprecation_multiple_warning():
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=VisibleDeprecationWarning):
             _multiple_warning_function()
 
     def context_manager_no_user_multiple_warning():
@@ -215,9 +215,9 @@ def test_ignore_warning():
     assert_no_warnings(context_manager_no_warning)
     assert_no_warnings(context_manager_no_warning_multiple)
     assert_no_warnings(context_manager_no_deprecation_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_warning)
+    assert_warns(VisibleDeprecationWarning, context_manager_no_user_warning)
     assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
-    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
+    assert_warns(VisibleDeprecationWarning, context_manager_no_user_multiple_warning)
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
@@ -253,7 +253,7 @@ class TestWarns(unittest.TestCase):
 
     def test_warn_wrong_warning(self):
         def f():
-            warnings.warn("yo", DeprecationWarning)
+            warnings.warn("yo", VisibleDeprecationWarning)
 
         failed = False
         filters = sys.modules['warnings'].filters[:]
@@ -668,5 +668,5 @@ def test_create_memmap_backed_data(monkeypatch):
 def test_deprecated_helpers(callable, args):
     msg = ('is deprecated in version 0.22 and will be removed in version '
            '0.24. Please use "assert" instead')
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(VisibleDeprecationWarning, match=msg):
         callable(*args)

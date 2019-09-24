@@ -2157,13 +2157,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", VisibleDeprecationWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, 'cvargs'):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            if len(w) and w[0].category == VisibleDeprecationWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

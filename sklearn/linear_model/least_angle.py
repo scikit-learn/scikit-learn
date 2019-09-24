@@ -157,7 +157,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     if X is None and Gram is not None:
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
                       'The current option will be removed in v0.23.',
-                      DeprecationWarning)
+                      VisibleDeprecationWarning)
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,

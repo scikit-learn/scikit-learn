@@ -196,7 +196,7 @@ def test_spca_deprecation_warning(spca):
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
 
     warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
+    with pytest.warns(VisibleDeprecationWarning, match=warn_msg):
         spca(normalize_components=True).fit(Y)
 
 

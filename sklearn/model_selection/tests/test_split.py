@@ -1421,7 +1421,7 @@ def test_group_kfold():
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", VisibleDeprecationWarning)
         for group in np.unique(groups):
             assert len(np.unique(folds[groups == group])) == 1
 

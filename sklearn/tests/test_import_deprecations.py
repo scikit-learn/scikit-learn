@@ -32,7 +32,7 @@ def test_import_is_deprecated(deprecated_path, importee):
     script = """
     import pytest
 
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(VisibleDeprecationWarning,
                       match="{expected_message}"):
         from {deprecated_path} import {importee}
     """.format(
