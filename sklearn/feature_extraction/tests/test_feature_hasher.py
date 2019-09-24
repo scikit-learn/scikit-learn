@@ -49,7 +49,6 @@ def test_feature_hasher_strings():
 def test_hashing_transform_seed():
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
-    n_features = 2 ** 7
 
     #  assert we maintain the precedent behaviour
     #  where seed=0
