@@ -931,6 +931,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             Xs = np.hstack(Xs)
         return Xs
 
+    @property
+    def n_features_out_(self):
+        return sum(trans.n_features_out_ for _, trans, _ in self._iter())
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None

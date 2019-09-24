@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.validation import check_array
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -93,6 +94,7 @@ class Mult(BaseEstimator):
         self.mult = mult
 
     def fit(self, X, y):
+        self.n_features_out_ = check_array(X).shape[1]
         return self
 
     def transform(self, X):
@@ -466,6 +468,7 @@ def test_feature_union():
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     assert X_transformed.shape == (X.shape[0], 3)
+    assert fs.n_features_out_ == X_transformed.shape[1]
 
     # check if it does the expected thing
     assert_array_almost_equal(X_transformed[:, :-1], svd.fit_transform(X))
@@ -919,6 +922,7 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
+    assert ft.n_features_out_ == len(ft.get_feature_names())
 
     ft.set_params(m2=drop)
     assert_array_equal([[3]], ft.fit(X).transform(X))
@@ -929,6 +933,7 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert ft.n_features_out_ == len(ft.get_feature_names())
 
     # check we can change back
     ft.set_params(m3=mult3)
@@ -939,6 +944,7 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert ft.n_features_out_ == len(ft.get_feature_names())
 
 
 def test_step_name_validation():
