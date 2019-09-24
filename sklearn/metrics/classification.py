@@ -48,8 +48,8 @@ def _check_zero_division(zero_division):
     elif isinstance(zero_division, (int, float)):
         if zero_division in [0, 1]:
             return
-    raise ValueError(f'Got zero_division={zero_division}.'
-                     f' Must be one of ["warn", 0, 1]')
+    raise ValueError('Got zero_division={0}.'
+                     ' Must be one of ["warn", 0, 1]'.format(zero_division))
 
 
 def _check_targets(y_true, y_pred):
