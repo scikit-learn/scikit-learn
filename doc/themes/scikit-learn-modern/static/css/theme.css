@@ -319,6 +319,7 @@ img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
   margin: 0 8px;
+  margin-bottom: 8px;
 }
 
 ul.sk-landing-call-list li {
@@ -899,6 +900,12 @@ table.docutils p {
   white-space: pre-wrap;
   word-wrap: break-word;
   word-break: initial;
+}
+
+table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
+  border-style: none;
+  background-color: white;
+  vertical-align: middle;
 }
 
 /* gallery */

@@ -1214,9 +1214,10 @@ Model validation
    :template: class.rst
 
    naive_bayes.BernoulliNB
+   naive_bayes.CategoricalNB
+   naive_bayes.ComplementNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
-   naive_bayes.ComplementNB
 
 
 .. _neighbors_ref:

@@ -128,9 +128,12 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :width: 100pt
    :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
 
-+-------+-------+
-| |msn| | |bcg| |
-+-------+-------+
+.. table::
+   :class: sk-sponsor-table align-default
+
+   +-------+-------+
+   | |msn| | |bcg| |
+   +-------+-------+
 
 **Gold Members**
 
@@ -139,7 +142,7 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 100pt
+   :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
 .. |intel| image:: images/intel.png
@@ -150,11 +153,14 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :width: 70pt
    :target: https://www.nvidia.com/
 
-+---------+----------+
-|  |axa|  |   |bnp|  |
-+---------+----------+
-| |intel| | |nvidia| |
-+---------+----------+
+.. table::
+   :class: sk-sponsor-table align-default
+
+   +---------+----------+
+   |  |axa|  |   |bnp|  |
+   +---------+----------+
+   | |intel| | |nvidia| |
+   +---------+----------+
 
 **Silver Members**
 
@@ -227,8 +233,8 @@ Past Sponsors
    `Paris-Saclay Center for Data Science
    <https://www.datascience-paris-saclay.fr/>`_
    funded one year for a developer to work on the project full-time
-   (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and the
-   position of Joris van den Bossche (????-????).
+   (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
+   time of Joris van den Bossche (2017-2018).
 
 ..........................
 
