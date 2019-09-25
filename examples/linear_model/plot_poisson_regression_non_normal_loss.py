@@ -39,7 +39,7 @@ from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.utils import gen_batches
+from sklearn.utils import gen_even_slices
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
@@ -149,8 +149,8 @@ dummy = make_pipeline(
     column_trans,
     DummyRegressor(strategy='mean')
 )
-dummy.fit(df_train, df_train.Frequency,
-          dummyregressor__sample_weight=df_train.Exposure)
+dummy.fit(df_train, df_train["Frequency"],
+          dummyregressor__sample_weight=df_train["Exposure"])
 
 
 def score_estimator(estimator, df_test):
@@ -159,11 +159,11 @@ def score_estimator(estimator, df_test):
     y_pred = estimator.predict(df_test)
 
     print("MSE: %.3f" % mean_squared_error(
-              df_test.Frequency.values, y_pred,
-              df_test.Exposure.values))
+              df_test["Frequency"], y_pred,
+              df_test["Exposure"]))
     print("MAE: %.3f" % mean_absolute_error(
-              df_test.Frequency.values, y_pred,
-              df_test.Exposure.values))
+              df_test["Frequency"], y_pred,
+              df_test["Exposure"]))
 
     # ignore negative predictions, as they are invalid for
     # the Poisson deviance
@@ -174,12 +174,12 @@ def score_estimator(estimator, df_test):
                       "poisson deviance".format((~mask).sum(), mask.shape[0]))
 
     print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-            df_test.Frequency.values[mask],
+            df_test["Frequency"][mask],
             y_pred[mask],
-            df_test.Exposure.values[mask]))
+            df_test["Exposure"][mask]))
 
 
-print("DummyRegressor")
+print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
 ##############################################################################
@@ -187,12 +187,12 @@ score_estimator(dummy, df_test)
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-linregr = make_pipeline(
+ridge = make_pipeline(
     column_trans,
     Ridge(alpha=1.0)
 )
-linregr.fit(df_train, df_train.Frequency,
-            ridge__sample_weight=df_train.Exposure)
+ridge.fit(df_train, df_train["Frequency"],
+          ridge__sample_weight=df_train["Exposure"])
 
 ##############################################################################
 #
@@ -203,32 +203,33 @@ linregr.fit(df_train, df_train.Frequency,
 # apporach could be to use class:`compose.TransformedTargetRegressor`
 # meta-estimator to map ``y_pred`` to strictly positive domain.
 
-print("Ridge")
-score_estimator(linregr, df_test)
+print("Ridge evaluation:")
+score_estimator(ridge, df_test)
 
 ##############################################################################
 #
 # Next we fit the Poisson regressor on the target variable,
 
-glm_freq = make_pipeline(
+poisson = make_pipeline(
     column_trans,
     PoissonRegressor(alpha=1/df_train.shape[0], max_iter=1000)
 )
-glm_freq.fit(df_train, df_train.Frequency,
-             poissonregressor__sample_weight=df_train.Exposure)
+poisson.fit(df_train, df_train["Frequency"],
+            poissonregressor__sample_weight=df_train["Exposure"])
 
-print("PoissonRegressor")
-score_estimator(glm_freq, df_test)
+print("PoissonRegressor evaluation:")
+score_estimator(poisson, df_test)
 
 ##############################################################################
 #
-# Finally, we will consider a non linear model with a random forest that
-# still minimizes the least square error.  Random forest does
-# not require for categorical data to be one hot encoded, therefore here we use
-# a simpler pre-processing pipeline with :class:`preprocessing.OrdinalEncoder`,
+# Finally, we will consider a non-linear model, namely a random forest. Random
+# forests do not require the categorical data to be one-hot encoded, instead
+# we encode each category label with an arbirtrary integer using
+# :class:`preprocessing.OrdinalEncoder` to make the model faster to train (the
+# same information is encoded with a small number of features than with
+# one-hot encoding).
 
-
-gbr = make_pipeline(
+rf = make_pipeline(
     ColumnTransformer(
         [
             (
@@ -242,53 +243,55 @@ gbr = make_pipeline(
         ],
         remainder="drop",
     ),
-    RandomForestRegressor(min_weight_fraction_leaf=1e-2)
+    RandomForestRegressor(min_weight_fraction_leaf=0.01, n_jobs=2)
 )
-gbr.fit(df_train, df_train.Frequency.values,
-        randomforestregressor__sample_weight=df_train.Exposure.values)
+rf.fit(df_train, df_train["Frequency"].values,
+       randomforestregressor__sample_weight=df_train["Exposure"].values)
 
 
-print("RandomForestRegressor")
-score_estimator(gbr, df_test)
+print("RandomForestRegressor evaluation:")
+score_estimator(rf, df_test)
+
 
 ##############################################################################
 #
-# In this example, although random forest minimizes the least square error,
-# because of a higher predictive power it also results in a smaller Poisson
-# deviance than the Poisson regression model.
+# The random forest model also minimizes the conditional least square error.
+# However because of a higher predictive power it also results in a smaller
+# Poisson deviance than the Poisson regression model.
 #
-# Evaluating models with a single train / test split is prone to numerical
-# errors, we can verify that we would also get equivalent resuts with the
-# cross-validation score.
+# Not that Evaluating models with a single train / test split is prone to
+# random fluctuations. We can verify that we would also get equivalent
+# conclusions with cross-validated performance metrics.
 #
-# The difference between these models can also be visualized by comparing the
+# The qualitative difference between these models can also be visualized by comparing the
 # histogram of observed target values with that of predicted values,
 
 
 fig, axes = plt.subplots(1, 4, figsize=(16, 3))
 fig.subplots_adjust(bottom=0.2)
+n_bins = 20
+df_train["Frequency"].hist(bins=np.linspace(-1, 10, n_bins), ax=axes[0])
 
-df_train.Frequency.hist(bins=np.linspace(-1, 10, 50), ax=axes[0])
+axes[0].set_title("Data")
+axes[0].set_xlabel("y (observed Frequency)")
 
-axes[0].set_title('Experimental data')
-
-for idx, model in enumerate([linregr, glm_freq, gbr]):
+for idx, model in enumerate([ridge, poisson, rf]):
     y_pred = model.predict(df_train)
 
-    pd.Series(y_pred).hist(bins=np.linspace(-1, 8, 50), ax=axes[idx+1])
+    pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins), ax=axes[idx+1])
     axes[idx + 1].set_title(model[-1].__class__.__name__)
 
 for axi in axes:
     axi.set(
         yscale='log',
-        xlabel="y (Frequency)"
+        xlabel="y_pred (predicted expected Frequency)"
     )
 
 ##############################################################################
 #
 # The experimental data presents a long tail distribution for ``y``. In all
-# models we predict the mean expected value, so we will have necessairily fewer
-# extreme values. Additionally normal distribution used in ``Ridge`` and
+# models we predict the mean expected value, so we will have necessairily
+# fewer extreme values. Additionally normal distribution used in ``Ridge`` and
 # ``RandomForestRegressor`` has a constant variance, while for the Poisson
 # distribution used in ``PoissonRegressor``, the variance is proportional to
 # the mean predicted value.
@@ -298,14 +301,13 @@ for axi in axes:
 # ``Ridge`` and ``RandomForestRegressor`` estimators.
 #
 # To ensure that estimators yield reasonable predictions for different
-# policyholder types, we can bin test samples according to `y_pred` returned by
-# each model. Then for each bin, compare the mean predicted `y_pred`, with
-# the mean observed target.
+# policyholder types, we can bin test samples according to `y_pred` returned
+# by each model. Then for each bin, compare the mean predicted `y_pred`, with
+# the mean observed target:
 
 
-def _lift_curve(y_true, y_pred, sample_weights=None, n_bins=100):
-    """Compare predictions and observations for bins
-    ordered by y_pred
+def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None, n_bins=100):
+    """Compare predictions and observations for bins ordered by y_pred
 
     We order the samples by ``y_pred`` and split it in bins.
     In each bin the observed mean is compared with the predicted
@@ -332,14 +334,12 @@ def _lift_curve(y_true, y_pred, sample_weights=None, n_bins=100):
         average y_pred for each bin
     """
     idx_sort = np.argsort(y_pred)
-
     bin_centers = np.arange(0, 1, 1/n_bins) + 0.5/n_bins
-
     y_pred_bin = np.zeros(n_bins)
     y_true_bin = np.zeros(n_bins)
-    bin_size = len(y_true) // n_bins
-    for n, sl in enumerate(gen_batches(len(y_true), bin_size)):
-        weights = sample_weights[idx_sort][sl]
+
+    for n, sl in enumerate(gen_even_slices(len(y_true), n_bins)):
+        weights = sample_weight[idx_sort][sl]
         y_pred_bin[n] = np.average(
                y_pred[idx_sort][sl], weights=weights
         )
@@ -350,39 +350,44 @@ def _lift_curve(y_true, y_pred, sample_weights=None, n_bins=100):
     return bin_centers, y_true_bin, y_pred_bin
 
 
-fig, ax = plt.subplots(1, 3, figsize=(12, 3.2))
+fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3.2))
 plt.subplots_adjust(wspace=0.3)
 
-
-for axi, (label, model, color) in zip(ax, [
-        ('Ridge', linregr, 'b'),
-        ('PoissonRegressor', glm_freq, 'k'),
-        ('Random Forest', gbr, 'r')
+for axi, (label, model) in zip(ax, [
+        ('Ridge', ridge),
+        ('PoissonRegressor', poisson),
+        ('Random Forest', rf)
 ]):
     y_pred = model.predict(df_test)
 
-    q, y_true_seg, y_pred_seg = _lift_curve(
-        df_test.Frequency.values,
+    q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
+        df_test["Frequency"].values,
         y_pred,
-        sample_weights=df_test.Exposure.values,
-        n_bins=10)
+        sample_weights=df_test["Exposure"].values,
+        n_bins=5)
 
-    axi.plot(q, y_pred_seg, 'o'+color, label="predictions", ms=5)
-    axi.step(q, y_true_seg, '--'+color, label="observations",
-             where='mid')
+    axi.plot(q, y_pred_seg, marker='o', linestyle="-", label="predictions")
+    axi.plot(q, y_true_seg, marker='x', linestyle="--", label="observations")
     axi.set_xlim(0, 1.0)
+    axi.set_ylim(0, 0.3)
     axi.set(
         title=label,
         xlabel='Fraction of samples sorted by y_pred',
         ylabel='Mean Frequency (y_pred)'
 
     )
-
     axi.legend()
 
 
 ##############################################################################
 #
 # On the above figure, ``PoissonRegressor`` is the model which presents the
-# best consistency between predicted and observed targets, both for low
-# and high target values.
+# best consistency between predicted and observed targets, both for low and
+# high target values.
+#
+# The ridge regression model tends to predict very low expected frequencies
+# that do not match the data.
+#
+# The random forest regression model also tends to exaggerate low predicted
+# frequencies although to a lower extent than ridge. It also tends to
+# exaggerate high frequencies on the other hand.
