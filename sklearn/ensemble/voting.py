@@ -76,14 +76,6 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
-        # TODO: Remove in 0.24 when 'drop' is removed in Voting*
-        for _, clf in self.estimators:
-            if clf is None:
-                warnings.warn("Using None as a estimator is deprecated "
-                              "in version 0.22 and will be removed in "
-                              "version 0.24. Please use 'drop' instead.",
-                              DeprecationWarning)
-
         n_isnone = np.sum(
             [clf in (None, 'drop') for _, clf in self.estimators]
         )
@@ -91,6 +83,14 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
             raise ValueError(
                 'All estimators are None or "drop". At least one is required!'
             )
+
+        # TODO: Remove in 0.24 when None is removed in Voting*
+        for _, clf in self.estimators:
+            if clf is None:
+                warnings.warn("Using None as a estimator is deprecated "
+                              "in version 0.22 and will be removed in "
+                              "version 0.24. Please use 'drop' instead.",
+                              DeprecationWarning)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
