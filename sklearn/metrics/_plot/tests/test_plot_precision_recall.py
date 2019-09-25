@@ -8,6 +8,7 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
@@ -23,21 +24,25 @@ def test_error_non_binary(pyplot):
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "multiclass format is not supported"
+    msg = "Estimator should solve a binary classification problem"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(clf, X, y)
 
-    msg = "Estimator should solve a binary classification problem"
-    y_binary = y >= 1
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(clf, X, y_binary)
 
-
-def test_unfitted_classifier(pyplot, data_binary):
+def test_error_binary(pyplot, data_binary):
     X, y = data_binary
     clf = DecisionTreeClassifier()
     with pytest.raises(NotFittedError):
         plot_precision_recall_curve(clf, X, y)
+
+    n_samples = X.shape[0]
+    _, y_multiclass = make_classification(n_samples=n_samples,
+                                          n_informative=3,
+                                          n_classes=3)
+    clf.fit(X, y)
+    msg = "only binary format is not supported, got multiclass"
+    with pytest.raises(ValueError, match=msg):
+        plot_precision_recall_curve(clf, X, y_multiclass)
 
 
 @pytest.mark.parametrize(

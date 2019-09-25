@@ -153,7 +153,8 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
 
     type_y = type_of_target(y)
     if type_y != 'binary':
-        raise ValueError("{} format is not supported".format(type_y))
+        raise ValueError(
+            "only binary format is not supported, got {}".format(type_y))
 
     error_msg = "response method {} not defined for estimator {}"
     if response_method != "auto":
