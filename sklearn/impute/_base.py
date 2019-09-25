@@ -247,12 +247,12 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
                 sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
                                       else sparse.csc_matrix)
-                missing_mask = sparse_constructor(
+                self.missing_mask = sparse_constructor(
                     (missing_mask, X.indices.copy(), X.indptr.copy()),
                     shape=X.shape, dtype=bool)
 
         else:
-            self.statistics_, missing_mask = self._dense_fit(X,
+            self.statistics_, self.missing_mask = self._dense_fit(X,
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
@@ -262,7 +262,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                     missing_values=self.missing_values,
                                     error_on_new=False,
                                     precomputed=True)
-            self.indicator_.fit(missing_mask)
+            self.indicator_.fit(self.missing_mask)
         else:
             self.indicator_ = None
 
@@ -375,7 +375,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                              % (X.shape[1], self.statistics_.shape[0]))
 
         if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(X)
+            X_trans_indicator = self.indicator_.transform(self.missing_mask)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -660,7 +660,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         check_is_fitted(self)
-        X = self._validate_input(X)
+        if not self.precomputed:
+            X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
