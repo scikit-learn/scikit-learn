@@ -161,11 +161,11 @@ def test_ignore_warning():
         _warning_function()
         _multiple_warning_function()
 
-    @ignore_warnings(category=(VisibleDeprecationWarning, UserWarning))
+    @ignore_warnings(category=(DeprecationWarning, UserWarning))
     def decorator_no_warning_multiple():
         _multiple_warning_function()
 
-    @ignore_warnings(category=VisibleDeprecationWarning)
+    @ignore_warnings(category=DeprecationWarning)
     def decorator_no_deprecation_warning():
         _warning_function()
 
@@ -173,7 +173,7 @@ def test_ignore_warning():
     def decorator_no_user_warning():
         _warning_function()
 
-    @ignore_warnings(category=VisibleDeprecationWarning)
+    @ignore_warnings(category=DeprecationWarning)
     def decorator_no_deprecation_multiple_warning():
         _multiple_warning_function()
 
@@ -184,9 +184,9 @@ def test_ignore_warning():
     assert_no_warnings(decorator_no_warning)
     assert_no_warnings(decorator_no_warning_multiple)
     assert_no_warnings(decorator_no_deprecation_warning)
-    assert_warns(VisibleDeprecationWarning, decorator_no_user_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_warning)
     assert_warns(UserWarning, decorator_no_deprecation_multiple_warning)
-    assert_warns(VisibleDeprecationWarning, decorator_no_user_multiple_warning)
+    assert_warns(DeprecationWarning, decorator_no_user_multiple_warning)
 
     # Check the context manager
     def context_manager_no_warning():
@@ -194,11 +194,11 @@ def test_ignore_warning():
             _warning_function()
 
     def context_manager_no_warning_multiple():
-        with ignore_warnings(category=(VisibleDeprecationWarning, UserWarning)):
+        with ignore_warnings(category=(DeprecationWarning, UserWarning)):
             _multiple_warning_function()
 
     def context_manager_no_deprecation_warning():
-        with ignore_warnings(category=VisibleDeprecationWarning):
+        with ignore_warnings(category=DeprecationWarning):
             _warning_function()
 
     def context_manager_no_user_warning():
@@ -206,7 +206,7 @@ def test_ignore_warning():
             _warning_function()
 
     def context_manager_no_deprecation_multiple_warning():
-        with ignore_warnings(category=VisibleDeprecationWarning):
+        with ignore_warnings(category=DeprecationWarning):
             _multiple_warning_function()
 
     def context_manager_no_user_multiple_warning():
@@ -216,9 +216,9 @@ def test_ignore_warning():
     assert_no_warnings(context_manager_no_warning)
     assert_no_warnings(context_manager_no_warning_multiple)
     assert_no_warnings(context_manager_no_deprecation_warning)
-    assert_warns(VisibleDeprecationWarning, context_manager_no_user_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_warning)
     assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
-    assert_warns(VisibleDeprecationWarning, context_manager_no_user_multiple_warning)
+    assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
     # Check that passing warning class as first positional argument
     warning_class = UserWarning
