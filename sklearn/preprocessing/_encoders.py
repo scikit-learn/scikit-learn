@@ -564,10 +564,10 @@ class _SingleOneHotEncoder(TransformerMixin, BaseEstimator):
             X_encoded[X_encoded > self.drop_idx_] -= 1
 
         n_samples = X.shape[0]
-        row = np.arange(0, n_samples)[X_mask]
+        row = np.flatnonzero(X_mask)
         col = X_encoded[X_mask]
         data = np.ones(np.sum(X_mask), dtype=self.dtype)
-        out = sparse.csr_matrix((data, (row, col)),
+        out = sparse.csc_matrix((data, (row, col)),
                                 shape=(n_samples, self.n_features_out_))
         if self.sparse:
             return out
