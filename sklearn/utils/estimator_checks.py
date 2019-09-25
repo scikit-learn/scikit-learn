@@ -726,17 +726,17 @@ def check_sample_weights_pandas_series(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_not_an_array(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
-    # type NotAnArray in the 'fit' function.
+    # type _NotAnArray in the 'fit' function.
     estimator = clone(estimator_orig)
     if has_fit_parameter(estimator, "sample_weight"):
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                       [2, 1], [2, 2], [2, 3], [2, 4],
                       [3, 1], [3, 2], [3, 3], [3, 4]])
-        X = NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
-        y = NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
-        weights = NotAnArray([1] * 12)
+        X = _NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
+        y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+        weights = _NotAnArray([1] * 12)
         if _safe_tags(estimator, "multioutput_only"):
-            y = NotAnArray(y.data.reshape(-1, 1))
+            y = _NotAnArray(y.data.reshape(-1, 1))
         estimator.fit(X, y, sample_weight=weights)
 
 
@@ -1185,8 +1185,8 @@ def _check_transformer(name, transformer_orig, X, y):
     if name in CROSS_DECOMPOSITION:
         y_ = np.c_[np.asarray(y), np.asarray(y)]
         y_[::2, 1] *= 2
-        if isinstance(X, NotAnArray):
-            y_ = NotAnArray(y_)
+        if isinstance(X, _NotAnArray):
+            y_ = _NotAnArray(y_)
     else:
         y_ = y
 
