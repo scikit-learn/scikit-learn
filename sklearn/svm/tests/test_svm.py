@@ -422,24 +422,154 @@ def test_weight():
         assert f1_score(y_[100:], y_pred) > .3
 
 
-def test_sample_weights():
-    # Test weights on individual samples
-    # TODO: check on NuSVR, OneClass, etc.
-    clf = svm.SVC()
-    clf.fit(X, Y)
-    assert_array_equal(clf.predict([X[2]]), [1.])
+@pytest.mark.parametrize("estimator", [svm.SVC(C=1e-2), svm.NuSVC()])
+def test_svm_classifier_sided_sample_weight(estimator):
+    # fit a linear SVM and check that giving more weight to opposed samples
+    # in the space will flip the decision toward these samples.
+    X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
+    estimator.set_params(kernel='linear')
 
-    sample_weight = [.1] * 3 + [10] * 3
-    clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.predict([X[2]]), [2.])
+    # check that with unit weights, a sample is supposed to be predicted on
+    # the boundary
+    sample_weight = [1] * 6
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.decision_function([[-1., 1.]])
+    assert y_pred == pytest.approx(0)
 
+    # give more weights to opposed samples
+    sample_weight = [10., .1, .1, .1, .1, 10]
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.decision_function([[-1., 1.]])
+    assert y_pred < 0
+
+    sample_weight = [1., .1, 10., 10., .1, .1]
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.decision_function([[-1., 1.]])
+    assert y_pred > 0
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [svm.SVR(C=1e-2), svm.NuSVR(C=1e-2)]
+)
+def test_svm_regressor_sided_sample_weight(estimator):
+    # similar test to test_svm_classifier_sided_sample_weight but for
+    # SVM regressors
+    X = [[-2, 0], [-1, -1], [0, -2], [0, 2], [1, 1], [2, 0]]
+    estimator.set_params(kernel='linear')
+
+    # check that with unit weights, a sample is supposed to be predicted on
+    # the boundary
+    sample_weight = [1] * 6
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.predict([[-1., 1.]])
+    assert y_pred == pytest.approx(1.5)
+
+    # give more weights to opposed samples
+    sample_weight = [10., .1, .1, .1, .1, 10]
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.predict([[-1., 1.]])
+    assert y_pred < 1.5
+
+    sample_weight = [1., .1, 10., 10., .1, .1]
+    estimator.fit(X, Y, sample_weight=sample_weight)
+    y_pred = estimator.predict([[-1., 1.]])
+    assert y_pred > 1.5
+
+
+def test_svm_equivalence_sample_weight_C():
     # test that rescaling all samples is the same as changing C
     clf = svm.SVC()
     clf.fit(X, Y)
     dual_coef_no_weight = clf.dual_coef_
     clf.set_params(C=100)
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
-    assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
+    assert_allclose(dual_coef_no_weight, clf.dual_coef_)
+
+
+@pytest.mark.parametrize(
+    "Estimator, err_msg",
+    [(svm.SVC,
+      'Invalid input - all samples have zero or negative weights.'),
+     (svm.NuSVC, '(negative dimensions are not allowed|nu is infeasible)'),
+     (svm.SVR,
+      'Invalid input - all samples have zero or negative weights.'),
+     (svm.NuSVR,
+      'Invalid input - all samples have zero or negative weights.'),
+     (svm.OneClassSVM,
+      'Invalid input - all samples have zero or negative weights.')
+     ],
+    ids=['SVC', 'NuSVC', 'SVR', 'NuSVR', 'OneClassSVM']
+)
+@pytest.mark.parametrize(
+    "sample_weight",
+    [[0] * len(Y), [-0.3] * len(Y)],
+    ids=['weights-are-zero', 'weights-are-negative']
+)
+def test_negative_sample_weights_mask_all_samples(Estimator,
+                                                  err_msg, sample_weight):
+    est = Estimator(kernel='linear')
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, Y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "Classifier, err_msg",
+    [(svm.SVC,
+     'Invalid input - all samples with positive weights have the same label'),
+     (svm.NuSVC, 'specified nu is infeasible')],
+    ids=['SVC', 'NuSVC']
+)
+@pytest.mark.parametrize(
+    "sample_weight",
+    [[0, -0.5, 0, 1, 1, 1],
+     [1, 1, 1, 0, -0.1, -0.3]],
+    ids=['mask-label-1', 'mask-label-2']
+)
+def test_negative_weights_svc_leave_just_one_label(Classifier,
+                                                   err_msg,
+                                                   sample_weight):
+    clf = Classifier(kernel='linear')
+    with pytest.raises(ValueError, match=err_msg):
+        clf.fit(X, Y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize(
+    "Classifier, model",
+    [(svm.SVC, {'when-left': [0.3998,  0.4], 'when-right': [0.4,  0.3999]}),
+     (svm.NuSVC, {'when-left': [0.3333,  0.3333],
+      'when-right': [0.3333, 0.3333]})],
+    ids=['SVC', 'NuSVC']
+)
+@pytest.mark.parametrize(
+    "sample_weight, mask_side",
+    [([1, -0.5, 1, 1, 1, 1], 'when-left'),
+     ([1, 1, 1, 0, 1, 1], 'when-right')],
+    ids=['partial-mask-label-1', 'partial-mask-label-2']
+)
+def test_negative_weights_svc_leave_two_labels(Classifier, model,
+                                               sample_weight, mask_side):
+    clf = Classifier(kernel='linear')
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_allclose(clf.coef_, [model[mask_side]], rtol=1e-3)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [svm.SVC, svm.NuSVC, svm.NuSVR],
+    ids=['SVC', 'NuSVC', 'NuSVR']
+)
+@pytest.mark.parametrize(
+    "sample_weight",
+    [[1, -0.5, 1, 1, 1, 1], [1, 1, 1, 0, 1, 1]],
+    ids=['partial-mask-label-1', 'partial-mask-label-2']
+)
+def test_negative_weight_equal_coeffs(Estimator, sample_weight):
+    # model generates equal coefficients
+    est = Estimator(kernel='linear')
+    est.fit(X, Y, sample_weight=sample_weight)
+    coef = np.abs(est.coef_).ravel()
+    assert coef[0] == pytest.approx(coef[1], rel=1e-3)
 
 
 @ignore_warnings(category=UndefinedMetricWarning)

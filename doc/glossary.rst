@@ -697,6 +697,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
@@ -1546,6 +1547,12 @@ functions or non-estimator constructors.
         When ``n_jobs`` is not 1, the estimator being parallelized must be
         picklable.  This means, for instance, that lambdas cannot be used
         as estimator parameters.
+
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
 
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a
