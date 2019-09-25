@@ -458,7 +458,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         check_classification_targets(y)
         self._le = LabelEncoder().fit(y)
         self.classes_ = self._le.classes_
-        return super().fit(X, self._le.transform(y), sample_weight)
+        super().fit(X, self._le.transform(y), sample_weight)
+        if len(self.classes_) == 2:
+            self.n_features_out_ = len(self.estimators_)
+        else:
+            self.n_features_out_ = len(self.estimators_) * len(self.classes_)
+        return self
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict(self, X, **predict_params):
@@ -691,7 +696,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         self : object
         """
         y = column_or_1d(y, warn=True)
-        return super().fit(X, y, sample_weight)
+        super().fit(X, y, sample_weight)
+        self.n_features_out_ = len(self.estimators_)
+        return self
 
     def transform(self, X):
         """Return the predictions for X for each estimator.
