@@ -354,7 +354,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         elif strategy == "constant":
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
-            return np.full(X.shape[1], fill_value, dtype=X.dtype)
+            return np.full(X.shape[1], fill_value, dtype=X.dtype), mask
 
     def transform(self, X):
         """Impute all missing values in X.
