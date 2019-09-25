@@ -632,6 +632,14 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    @property
+    def n_features_out_(self):
+        final_est = self._final_non_passthrough_estimator
+        if final_est is not None:
+            return final_est.n_features_out_
+        else:
+            return None
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""

@@ -530,13 +530,19 @@ def test_make_union_kwargs():
     )
 
 
-def test_pipeline_transform():
+@pytest.mark.parametrize('add_passthrough', [True, False])
+def test_pipeline_transform(add_passthrough):
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
     pca = PCA(n_components=2, svd_solver='full')
-    pipeline = Pipeline([('pca', pca)])
+    if add_passthrough:
+        pipeline = Pipeline([('first', 'passthrough'),
+                             ('pca', pca),
+                             ('last', 'passthrough')])
+    else:
+        pipeline = Pipeline([('pca', pca)])
 
     # test transform and fit_transform:
     X_trans = pipeline.fit(X).transform(X)
@@ -548,6 +554,7 @@ def test_pipeline_transform():
     X_back = pipeline.inverse_transform(X_trans)
     X_back2 = pca.inverse_transform(X_trans)
     assert_array_almost_equal(X_back, X_back2)
+    assert pipeline.n_features_out_ == X_trans.shape[1]
 
 
 def test_pipeline_fit_transform():
