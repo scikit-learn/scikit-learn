@@ -28,7 +28,7 @@ def test_error_non_binary(pyplot):
         plot_precision_recall_curve(clf, X, y)
 
     msg = "Estimator should solve a binary classification problem"
-    y_binary = y == 1
+    y_binary = y >= 1
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(clf, X, y_binary)
 

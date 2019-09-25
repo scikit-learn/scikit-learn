@@ -174,7 +174,7 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
 
     y_pred = prediction_method(X)
 
-    if is_predict_proba and y_pred.ndim != 1:
+    if is_predict_proba:
         if y_pred.shape[1] > 2:
             raise ValueError("Estimator should solve a "
                              "binary classification problem")
