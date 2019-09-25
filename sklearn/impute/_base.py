@@ -16,7 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
 
