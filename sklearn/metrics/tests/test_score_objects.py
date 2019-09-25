@@ -55,7 +55,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'brier_score_loss',
+               'neg_log_loss', 'log_loss', 'neg_brier_score',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
                'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
                'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
@@ -550,6 +550,17 @@ def test_scoring_is_not_metric():
         check_scoring(Ridge(), r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
         check_scoring(KMeans(), cluster_module.adjusted_rand_score)
+
+
+def test_deprecated_scorer():
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+
+    deprecated_scorer = get_scorer('brier_score_loss')
+    with pytest.warns(DeprecationWarning):
+        deprecated_scorer(clf, X_test, y_test)
 
 
 @pytest.mark.parametrize(
