@@ -80,11 +80,17 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
 
         Examples
         --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf='drop')
+        In this example, the RandomForestClassifier is removed.
+
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.ensemble import RandomForestClassifier
+        >>> from sklearn.ensemble import VotingClassifier
+        >>> clf1 = LogisticRegression()
+        >>> clf2 = RandomForestClassifier()
+        >>> eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
+        >>> eclf.set_params(rf='drop')
+        StackingClassifier(estimators=[('lr', LogisticRegression()),
+                                        ('rf', 'drop')])
         """
         super()._set_params('estimators', **params)
         return self
