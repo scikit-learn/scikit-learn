@@ -2,13 +2,14 @@
 blame."""
 from pathlib import Path
 
-
+# This is a set of 3-tuples consisting of
+# (new_module_path, deprecated_path, correct_path)
 _DEPRECATED_MODULES = {
     # TODO: Remove in 0.24
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
 }
 
-_DEPRECATE_TEMPLATE = """from .{module} import *  # noqa
+_FILE_CONTENT_TEMPLATE = """from .{new_module_path} import *  # noqa
 from {relative_dots}utils.deprecation import _raise_dep_warning_if_not_pytest
 
 deprecated_path = '{deprecated_path}'
@@ -18,15 +19,15 @@ _raise_dep_warning_if_not_pytest(deprecated_path, correct_path)
 """
 
 
-def _add_deprecated_submodules():
+def _create_deprecated_modules_files():
     """Add submodules that will be deprecated. A file is created based
     on the deprecated submodule's name. When this submodule is imported a
     deprecation warning will be raised.
     """
-    for module, deprecated_path, correct_path in _DEPRECATED_MODULES:
+    for new_module_path, deprecated_path, correct_path in _DEPRECATED_MODULES:
         relative_dots = deprecated_path.count(".") * "."
-        deprecated_content = _DEPRECATE_TEMPLATE.format(
-            module=module,
+        deprecated_content = _FILE_CONTENT_TEMPLATE.format(
+            new_module_path=new_module_path,
             relative_dots=relative_dots,
             deprecated_path=deprecated_path,
             correct_path=correct_path)
