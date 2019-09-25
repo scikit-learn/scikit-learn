@@ -519,11 +519,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         if sparse.issparse(X):
-            if self.precomputed == False:
+            if not self.precomputed:
                 mask = _get_mask(X.data, self.missing_values)
 
-                # The imputer mask will be constructed with the same sparse format
-                # as X.
+                # The imputer mask will be constructed with the same
+                # sparse format as X.
                 sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
                                       else sparse.csc_matrix)
                 imputer_mask = sparse_constructor(
@@ -542,7 +542,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             elif imputer_mask.format == 'csr':
                 imputer_mask = imputer_mask.tocsc()
         else:
-            if self.precomputed == False:
+            if not self.precomputed:
                 imputer_mask = _get_mask(X, self.missing_values)
             else:
                 imputer_mask = X
@@ -603,7 +603,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
-        if self.precomputed == False:
+        if not self.precomputed:
             X = self._validate_input(X)
         self._n_features = X.shape[1]
 
@@ -616,7 +616,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        if self.precomputed == True and isinstance(X, type(None)):
+        if self.precomputed and isinstance(X, type(None)):
             raise ValueError("Mask cannot be none when "
                              "precomputed is True")
 
