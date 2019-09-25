@@ -352,11 +352,17 @@ def test_check_array_pandas_dtype_object_conversion():
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
 
 
-def test_check_array_pandas_homogeneous_dtype():
+def test_check_array_pandas_dtype_casting():
     # test that data-frames with homogeneous dtype are not upcast
     pd = pytest.importorskip('pandas')
     X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
     X_df = pd.DataFrame(X)
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df.iloc[:, 0] = X_df.iloc[:, 0].astype(np.float16)
+    assert_array_equal(X_df.dtypes,
+                       (np.float16, np.float32, np.float32))
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
