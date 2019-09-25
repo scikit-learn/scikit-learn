@@ -13,6 +13,7 @@ from numpy.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import VisibleDeprecationWarning
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -558,7 +559,7 @@ def test_deprecated_scorer():
     clf.fit(X_train, y_train)
 
     deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(VisibleDeprecationWarning):
         deprecated_scorer(clf, X_test, y_test)
 
 
