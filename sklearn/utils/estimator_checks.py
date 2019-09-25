@@ -777,7 +777,8 @@ def check_sample_weights_invariance(name, estimator_orig):
                                         % name)
 
 
-@ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning, UserWarning))
+@ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning,
+                           UserWarning))
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
