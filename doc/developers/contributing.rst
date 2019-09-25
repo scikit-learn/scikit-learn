@@ -826,20 +826,24 @@ E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
     def labels_(self):
         return self.classes_
 
-If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
+If a parameter has to be deprecated, a ``SklearnDeprecationWarning`` warning
+must be raised too.
 In the following example, k is deprecated and renamed to n_clusters::
 
     import warnings
+    from ..exceptions import SklearnDeprecationWarning  # adjust import
 
     def example_function(n_clusters=8, k='deprecated'):
         if k != 'deprecated':
             warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                          "will be removed in 0.15.", DeprecationWarning)
+                          "will be removed in 0.15.",
+                          SklearnDeprecationWarning)
             n_clusters = k
 
 When the change is in a class, we validate and raise warning in ``fit``::
 
   import warnings
+  from ..exceptions import SklearnDeprecationWarning  # adjust import
 
   class ExampleEstimator(BaseEstimator):
       def __init__(self, n_clusters=8, k='deprecated'):
@@ -849,7 +853,8 @@ When the change is in a class, we validate and raise warning in ``fit``::
       def fit(self, X, y):
           if self.k != 'deprecated':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
-                            "will be removed in 0.15.", DeprecationWarning)
+                            "will be removed in 0.15.",
+                            SklearnDeprecationWarning)
               self._n_clusters = self.k
           else:
               self._n_clusters = self.n_clusters
