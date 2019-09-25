@@ -894,6 +894,7 @@ def test_multi_task_lasso_cv_dtype():
     n_samples, n_features = 10, 3
     rng = np.random.RandomState(42)
     X = rng.binomial(1, .5, size=(n_samples, n_features))
+    X = X.astype(int)  # make it explicit that X is int
     y = X[:, [0, 0]].copy()
     est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
