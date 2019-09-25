@@ -52,12 +52,10 @@ np.set_printoptions(precision=2)
 titles_options = [("Confusion matrix, without normalization", False),
                   ("Normalized confusion matrix", True)]
 for title, normalize in titles_options:
-    fig, ax = plt.subplots()
-    viz = plot_confusion_matrix(classifier, X_test, y_test, ax=ax,
+    viz = plot_confusion_matrix(classifier, X_test, y_test,
                                 target_names=class_names,
                                 normalize=normalize, xticks_rotation=45)
-    ax.set_title(title)
-    fig.tight_layout()
+    viz.ax_.set_title(title)
 
     print(title)
     print(viz.confusion_matrix)
