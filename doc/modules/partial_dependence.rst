@@ -125,5 +125,5 @@ which the trees were trained.
     Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 
- .. [Mol2019] C. Molnar, `Interpretable Machine Learning
+    C. Molnar, `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.

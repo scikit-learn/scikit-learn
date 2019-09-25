@@ -1548,6 +1548,12 @@ functions or non-estimator constructors.
         picklable.  This means, for instance, that lambdas cannot be used
         as estimator parameters.
 
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
+
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a
         ``random_state`` parameter may be provided to control the random number
