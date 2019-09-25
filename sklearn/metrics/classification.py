@@ -42,12 +42,10 @@ from ..exceptions import UndefinedMetricWarning
 
 
 def _check_zero_division(zero_division):
-    if isinstance(zero_division, str):
-        if zero_division == "warn":
-            return
-    elif isinstance(zero_division, (int, float)):
-        if zero_division in [0, 1]:
-            return
+    if isinstance(zero_division, str) and zero_division == "warn":
+        return
+    elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
+        return
     raise ValueError('Got zero_division={0}.'
                      ' Must be one of ["warn", 0, 1]'.format(zero_division))
 
@@ -1251,25 +1249,23 @@ def _prf_divide(numerator, denominator, metric,
     else:
         return result
 
-    msg = _build_prf_warning_message(average, modifier, msg_start, len(result))
+    _warn_prf(average, modifier, msg_start, len(result))
 
-    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
     return result
 
 
-def _build_prf_warning_message(average, modifier, msg_start, result_size):
-    axis0 = 'sample'
-    axis1 = 'label'
+def _warn_prf(average, modifier, msg_start, result_size):
+    axis0, axis1 = 'sample', 'label'
     if average == 'samples':
         axis0, axis1 = axis1, axis0
     msg = ('{0} ill-defined and being set to 0.0 {{0}} '
-           'no {1} {2}s. Use ``zero_division`` parameter to control'
+           'no {1} {2}s. Use `zero_division` parameter to control'
            ' this behavior.'.format(msg_start, modifier, axis0))
     if result_size == 1:
         msg = msg.format('due to')
     else:
         msg = msg.format('in {0}s with'.format(axis1))
-    return msg
+    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
 
 def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
@@ -1494,10 +1490,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     # and BOTH prec and rec are ill-defined
     if zero_division == "warn" and ("f-score",) == warn_for:
         if (pred_sum[true_sum == 0] == 0).any():
-            msg = _build_prf_warning_message(
+            _warn_prf(
                 average, "true nor predicted", 'F-score is', len(true_sum)
             )
-            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
 
     # if tp == 0 F will be 1 only if all predictions are zero, all labels are
     # zero, and zero_division=1. In all other case, 0

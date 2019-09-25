@@ -1634,27 +1634,27 @@ def test_prf_warnings():
 
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 in labels with no predicted samples.'
-               ' Use ``zero_division`` parameter to control'
+               ' Use `zero_division` parameter to control'
                ' this behavior.')
         assert_warns_message(w, msg, f, [0, 1, 2], [1, 1, 2], average=average)
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 in labels with no true samples.'
-               ' Use ``zero_division`` parameter to control'
+               ' Use `zero_division` parameter to control'
                ' this behavior.')
         assert_warns_message(w, msg, f, [1, 1, 2], [0, 1, 2], average=average)
 
     # average of per-sample scores
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 in samples with no predicted labels.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, np.array([[1, 0], [1, 0]]),
                          np.array([[1, 0], [0, 0]]), average='samples')
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 in samples with no true labels.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, np.array([[1, 0], [0, 0]]),
                          np.array([[1, 0], [1, 0]]), average='samples')
@@ -1662,14 +1662,14 @@ def test_prf_warnings():
     # single score: micro-average
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, np.array([[1, 1], [1, 1]]),
                          np.array([[0, 0], [0, 0]]), average='micro')
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 due to no true samples.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, np.array([[0, 0], [0, 0]]),
                          np.array([[1, 1], [1, 1]]), average='micro')
@@ -1677,13 +1677,13 @@ def test_prf_warnings():
     # single positive label
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, [1, 1], [-1, -1], average='binary')
 
     msg = ('Recall and F-score are ill-defined and '
            'being set to 0.0 due to no true samples.'
-           ' Use ``zero_division`` parameter to control'
+           ' Use `zero_division` parameter to control'
            ' this behavior.')
     assert_warns_message(w, msg, f, [-1, -1], [1, 1], average='binary')
 
@@ -1692,12 +1692,12 @@ def test_prf_warnings():
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.'
-               ' Use ``zero_division`` parameter to control'
+               ' Use `zero_division` parameter to control'
                ' this behavior.')
         assert str(record.pop().message) == msg
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 due to no predicted samples.'
-               ' Use ``zero_division`` parameter to control'
+               ' Use `zero_division` parameter to control'
                ' this behavior.')
         assert str(record.pop().message) == msg
 
@@ -1761,7 +1761,7 @@ def test_recall_warnings(zero_division):
             assert (str(record.pop().message) ==
                     'Recall is ill-defined and '
                     'being set to 0.0 due to no true samples.'
-                    ' Use ``zero_division`` parameter to control'
+                    ' Use `zero_division` parameter to control'
                     ' this behavior.')
         else:
             assert len(record) == 0
@@ -1771,7 +1771,7 @@ def test_recall_warnings(zero_division):
             assert (str(record.pop().message) ==
                     'Recall is ill-defined and '
                     'being set to 0.0 due to no true samples.'
-                    ' Use ``zero_division`` parameter to control'
+                    ' Use `zero_division` parameter to control'
                     ' this behavior.')
 
 
@@ -1786,7 +1786,7 @@ def test_precision_warnings(zero_division):
             assert (str(record.pop().message) ==
                     'Precision is ill-defined and '
                     'being set to 0.0 due to no predicted samples.'
-                    ' Use ``zero_division`` parameter to control'
+                    ' Use `zero_division` parameter to control'
                     ' this behavior.')
         else:
             assert len(record) == 0
@@ -1796,7 +1796,7 @@ def test_precision_warnings(zero_division):
             assert (str(record.pop().message) ==
                     'Precision is ill-defined and '
                     'being set to 0.0 due to no predicted samples.'
-                    ' Use ``zero_division`` parameter to control'
+                    ' Use `zero_division` parameter to control'
                     ' this behavior.')
 
     assert_no_warnings(precision_score,
@@ -1828,7 +1828,7 @@ def test_fscore_warnings(zero_division):
                 assert (str(record.pop().message) ==
                         'F-score is ill-defined and '
                         'being set to 0.0 due to no true nor predicted '
-                        'samples. Use ``zero_division`` parameter to '
+                        'samples. Use `zero_division` parameter to '
                         'control this behavior.')
             else:
                 assert len(record) == 0
