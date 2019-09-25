@@ -926,23 +926,20 @@ def test_set_feature_union_step_drop(drop):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    n_records = len(record)
-    assert n_records > 0 if drop is None else n_records == 0
+    assert record if drop is None else not record
 
     with pytest.warns(None) as record:
         ft.set_params(m3=drop)
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
-    n_records = len(record)
-    assert n_records > 0 if drop is None else n_records == 0
+    assert record if drop is None else not record
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    n_records = len(record)
-    assert n_records > 0 if drop is None else n_records == 0
+    assert record if drop is None else not record
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
@@ -950,8 +947,7 @@ def test_set_feature_union_step_drop(drop):
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    n_records = len(record)
-    assert n_records > 0 if drop is None else n_records == 0
+    assert record if drop is None else not record
 
 
 def test_step_name_validation():
