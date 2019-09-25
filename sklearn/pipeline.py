@@ -244,6 +244,15 @@ class Pipeline(_BaseComposition):
         estimator = self.steps[-1][1]
         return 'passthrough' if estimator is None else estimator
 
+    @property
+    def _final_non_passthrough_estimator(self):
+        final_estimator = None
+        for name, est in reversed(self.steps):
+            if est not in [None, 'passthrough']:
+                final_estimator = est
+                break
+        return final_estimator
+
     def _log_message(self, step_idx):
         if not self.verbose:
             return None

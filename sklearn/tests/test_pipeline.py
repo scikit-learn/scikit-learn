@@ -702,6 +702,7 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    assert pipeline._final_non_passthrough_estimator is mult5
 
     pipeline = make()
     pipeline.set_params(last=passthrough)
@@ -710,6 +711,7 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit(X, y).transform(X))
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+    assert pipeline._final_non_passthrough_estimator is mult3
     assert_raise_message(AttributeError,
                          "'str' object has no attribute 'predict'",
                          getattr, pipeline, 'predict')
