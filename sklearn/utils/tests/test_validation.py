@@ -47,7 +47,7 @@ import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import TempMemmap
@@ -410,7 +410,7 @@ def test_check_array_dtype_warning():
 
     for X in float64_data:
         with pytest.warns(None) as record:
-            warnings.simplefilter("ignore", VisibleDeprecationWarning)  # 0.23
+            warnings.simplefilter("ignore", SklearnDeprecationWarning)  # 0.23
             X_checked = check_array(X, dtype=np.float64,
                                     accept_sparse=True, warn_on_dtype=True)
             assert X_checked.dtype == np.float64
@@ -445,10 +445,10 @@ def test_check_array_dtype_warning():
 def test_check_array_warn_on_dtype_deprecation():
     X = np.asarray([[0.0], [1.0]])
     Y = np.asarray([[2.0], [3.0]])
-    with pytest.warns(VisibleDeprecationWarning,
+    with pytest.warns(SklearnDeprecationWarning,
                       match="'warn_on_dtype' is deprecated"):
         check_array(X, warn_on_dtype=True)
-    with pytest.warns(VisibleDeprecationWarning,
+    with pytest.warns(SklearnDeprecationWarning,
                       match="'warn_on_dtype' is deprecated"):
         check_X_y(X, Y, warn_on_dtype=True)
 
@@ -685,11 +685,11 @@ def test_check_is_fitted():
 
     # to be removed in 0.23
     assert_warns_message(
-        VisibleDeprecationWarning,
+        SklearnDeprecationWarning,
         "Passing attributes to check_is_fitted is deprecated",
         check_is_fitted, ard, ['coef_'])
     assert_warns_message(
-        VisibleDeprecationWarning,
+        SklearnDeprecationWarning,
         "Passing all_or_any to check_is_fitted is deprecated",
         check_is_fitted, ard, all_or_any=any)
 
@@ -759,7 +759,7 @@ def test_check_dataframe_warns_on_dtype():
     assert_warns(DataConversionWarning, check_array, df,
                  dtype='numeric', warn_on_dtype=True)
     with pytest.warns(None) as record:
-        warnings.simplefilter("ignore", VisibleDeprecationWarning)  # 0.23
+        warnings.simplefilter("ignore", SklearnDeprecationWarning)  # 0.23
         check_array(df, dtype='object', warn_on_dtype=True)
     assert len(record) == 0
 
@@ -778,7 +778,7 @@ def test_check_dataframe_warns_on_dtype():
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
     with pytest.warns(None) as record:
-        warnings.simplefilter("ignore", VisibleDeprecationWarning)  # 0.23
+        warnings.simplefilter("ignore", SklearnDeprecationWarning)  # 0.23
         check_array(df_mixed_numeric.astype(int),
                     dtype='numeric', warn_on_dtype=True)
     assert len(record) == 0

@@ -2,7 +2,7 @@ import warnings
 import functools
 import sys
 
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 __all__ = ["deprecated"]
 
@@ -66,7 +66,7 @@ class deprecated:
         init = cls.__init__
 
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=VisibleDeprecationWarning)
+            warnings.warn(msg, category=SklearnDeprecationWarning)
             return init(*args, **kwargs)
         cls.__init__ = wrapped
 
@@ -85,7 +85,7 @@ class deprecated:
 
         @functools.wraps(fun)
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=VisibleDeprecationWarning)
+            warnings.warn(msg, category=SklearnDeprecationWarning)
             return fun(*args, **kwargs)
 
         wrapped.__doc__ = self._update_doc(wrapped.__doc__)
@@ -100,7 +100,7 @@ class deprecated:
 
         @property
         def wrapped(*args, **kwargs):
-            warnings.warn(msg, category=VisibleDeprecationWarning)
+            warnings.warn(msg, category=SklearnDeprecationWarning)
             return prop.fget(*args, **kwargs)
 
         return wrapped
@@ -131,7 +131,7 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
     # Useful because we are now deprecating # anything that isn't explicitly
     # in an __init__ file.
     # We don't want to raise a dep warning if we are in a pytest session else
-    # the CIs with -Werror::sklearn.exceptions.VisibleDeprecationWarning would
+    # the CIs with -Werror::sklearn.exceptions.SklearnDeprecationWarning would
     # fail. The deprecations are still properly tested in
     # sklearn/tests/test_import_deprecations.py
 
@@ -147,4 +147,4 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
     ).format(deprecated_path=deprecated_path, correct_path=correct_path)
 
     if not getattr(sys, '_is_pytest_session', False):
-        warnings.warn(message, VisibleDeprecationWarning)
+        warnings.warn(message, SklearnDeprecationWarning)

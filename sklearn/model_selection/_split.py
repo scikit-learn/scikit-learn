@@ -26,7 +26,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import comb
 from ..base import _pprint
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -2158,13 +2158,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", VisibleDeprecationWarning)
+        warnings.simplefilter("always", SklearnDeprecationWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, 'cvargs'):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == VisibleDeprecationWarning:
+            if len(w) and w[0].category == SklearnDeprecationWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

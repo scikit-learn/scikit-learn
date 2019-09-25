@@ -26,7 +26,7 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 from sklearn.datasets.base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 from sklearn.externals._pilutil import pillow_installed
 
@@ -293,11 +293,11 @@ def test_refresh_cache(monkeypatch):
                "If this warning is raised when loading pickled models, you "
                "may need to re-serialize those models with scikit-learn "
                "0.21+.")
-        warnings.warn(msg, VisibleDeprecationWarning)
+        warnings.warn(msg, SklearnDeprecationWarning)
         return 0
 
     def _load_warn_unrelated(*args, **kwargs):
-        warnings.warn("unrelated warning", VisibleDeprecationWarning)
+        warnings.warn("unrelated warning", SklearnDeprecationWarning)
         return 0
 
     def _dump_safe(*args, **kwargs):
@@ -313,7 +313,7 @@ def test_refresh_cache(monkeypatch):
     monkeypatch.setattr(joblib, "load", _load_warn)
     monkeypatch.setattr(joblib, "dump", _dump_raise)
     msg = "This dataset will stop being loadable in scikit-learn"
-    with pytest.warns(VisibleDeprecationWarning, match=msg):
+    with pytest.warns(SklearnDeprecationWarning, match=msg):
         _refresh_cache('test', 0)
 
     # make sure no warning is raised if load raises the warning, but dump
@@ -328,5 +328,5 @@ def test_refresh_cache(monkeypatch):
     # by _refresh_cache
     monkeypatch.setattr(joblib, "load", _load_warn_unrelated)
     monkeypatch.setattr(joblib, "dump", _dump_safe)
-    with pytest.warns(VisibleDeprecationWarning, match="unrelated warning"):
+    with pytest.warns(SklearnDeprecationWarning, match="unrelated warning"):
         _refresh_cache('test', 0)

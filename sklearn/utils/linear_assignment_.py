@@ -13,14 +13,14 @@ Hungarian algorithm (also known as Munkres algorithm).
 import numpy as np
 import warnings
 
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 # Deprecation warning for module
 warnings.warn(
     "The linear_assignment_ module is deprecated in 0.21 "
     "and will be removed from 0.23. Use "
     "scipy.optimize.linear_sum_assignment instead.",
-    VisibleDeprecationWarning)
+    SklearnDeprecationWarning)
 
 
 def linear_assignment(X):
@@ -126,7 +126,7 @@ def _hungarian(cost_matrix):
         "The linear_assignment function is deprecated in 0.21 "
         "and will be removed from 0.23. Use "
         "scipy.optimize.linear_sum_assignment instead.",
-        VisibleDeprecationWarning)
+        SklearnDeprecationWarning)
 
     state = _HungarianState(cost_matrix)
 

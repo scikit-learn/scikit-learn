@@ -23,7 +23,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.multiclass import OneVsRestClassifier
 
 # toy sample
@@ -728,24 +728,24 @@ def test_linearsvx_loss_penalty_deprecations():
 
     # LinearSVC
     # loss l1 --> hinge
-    assert_warns_message(VisibleDeprecationWarning,
+    assert_warns_message(SklearnDeprecationWarning,
                          msg % ("l1", "hinge", "loss='l1'", "0.23"),
                          svm.LinearSVC(loss="l1").fit, X, y)
 
     # loss l2 --> squared_hinge
-    assert_warns_message(VisibleDeprecationWarning,
+    assert_warns_message(SklearnDeprecationWarning,
                          msg % ("l2", "squared_hinge", "loss='l2'", "0.23"),
                          svm.LinearSVC(loss="l2").fit, X, y)
 
     # LinearSVR
     # loss l1 --> epsilon_insensitive
-    assert_warns_message(VisibleDeprecationWarning,
+    assert_warns_message(SklearnDeprecationWarning,
                          msg % ("l1", "epsilon_insensitive", "loss='l1'",
                                 "0.23"),
                          svm.LinearSVR(loss="l1").fit, X, y)
 
     # loss l2 --> squared_epsilon_insensitive
-    assert_warns_message(VisibleDeprecationWarning,
+    assert_warns_message(SklearnDeprecationWarning,
                          msg % ("l2", "squared_epsilon_insensitive",
                                 "loss='l2'", "0.23"),
                          svm.LinearSVR(loss="l2").fit, X, y)

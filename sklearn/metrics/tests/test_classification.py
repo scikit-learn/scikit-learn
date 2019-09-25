@@ -47,7 +47,7 @@ from sklearn.metrics import multilabel_confusion_matrix
 
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
 
@@ -1142,7 +1142,7 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
-    assert_warns_message(VisibleDeprecationWarning,
+    assert_warns_message(SklearnDeprecationWarning,
                          "The labels parameter is unused. It was"
                          " deprecated in version 0.21 and"
                          " will be removed in version 0.23",
@@ -2057,7 +2057,7 @@ def test_multilabel_jaccard_similarity_score_deprecation():
     # size(y1 \inter y2) = [1, 2]
     # size(y1 \union y2) = [2, 2]
 
-    jss = partial(assert_warns, VisibleDeprecationWarning, jaccard_similarity_score)
+    jss = partial(assert_warns, SklearnDeprecationWarning, jaccard_similarity_score)
     assert jss(y1, y2) == 0.75
     assert jss(y1, y1) == 1
     assert jss(y2, y2) == 1

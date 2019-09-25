@@ -20,7 +20,7 @@ import pytest
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
@@ -92,7 +92,7 @@ def _tested_estimators():
 @parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
-    with ignore_warnings(category=(VisibleDeprecationWarning, ConvergenceWarning,
+    with ignore_warnings(category=(SklearnDeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
@@ -120,7 +120,7 @@ def test_check_estimator_generate_only():
             check(estimator)
 
 
-@ignore_warnings(category=VisibleDeprecationWarning)
+@ignore_warnings(category=SklearnDeprecationWarning)
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the

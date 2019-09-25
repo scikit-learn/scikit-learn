@@ -18,7 +18,7 @@ import hashlib
 
 from ..utils import Bunch
 from ..utils import check_random_state
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 import numpy as np
 
@@ -946,6 +946,6 @@ def _refresh_cache(files, compress):
                        "import path. Consider removing the following files "
                        "and allowing it to be cached anew:\n%s"
                        % ("\n".join(files)))
-            warnings.warn(message=message, category=VisibleDeprecationWarning)
+            warnings.warn(message=message, category=SklearnDeprecationWarning)
 
     return data[0] if len(data) == 1 else data

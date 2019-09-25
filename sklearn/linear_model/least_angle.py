@@ -22,7 +22,7 @@ from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
@@ -158,7 +158,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     if X is None and Gram is not None:
         warnings.warn('Use lars_path_gram to avoid passing X and y. '
                       'The current option will be removed in v0.23.',
-                      VisibleDeprecationWarning)
+                      SklearnDeprecationWarning)
     return _lars_path_solver(
         X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
         alpha_min=alpha_min, method=method, copy_X=copy_X,

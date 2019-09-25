@@ -22,7 +22,7 @@ from ..utils import check_matplotlib_support  # noqa
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 from ..ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
@@ -645,7 +645,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     if fig is not None:
         warnings.warn("The fig parameter is deprecated in version "
                       "0.22 and will be removed in version 0.24",
-                      VisibleDeprecationWarning)
+                      SklearnDeprecationWarning)
         fig.clear()
         ax = fig.gca()
 

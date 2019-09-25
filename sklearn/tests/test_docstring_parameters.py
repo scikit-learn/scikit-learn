@@ -16,7 +16,7 @@ from sklearn.utils.testing import check_docstring_parameters
 from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 import pytest
 
@@ -46,7 +46,7 @@ _METHODS_IGNORE_NONE_Y = [
 
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
-@pytest.mark.filterwarnings('ignore::sklearn.exceptions.VisibleDeprecationWarning')
+@pytest.mark.filterwarnings('ignore::sklearn.exceptions.SklearnDeprecationWarning')
 @pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
     # Test module docstring formatting
@@ -126,7 +126,7 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=VisibleDeprecationWarning)
+@ignore_warnings(category=SklearnDeprecationWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,

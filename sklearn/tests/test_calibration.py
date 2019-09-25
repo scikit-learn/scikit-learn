@@ -22,7 +22,7 @@ from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 
 def test_calibration():
@@ -321,7 +321,7 @@ def test_calibration_less_classes():
                                  proba[:, i + 1:]]))
 
 
-@ignore_warnings(category=(VisibleDeprecationWarning, FutureWarning))
+@ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning))
 @pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):

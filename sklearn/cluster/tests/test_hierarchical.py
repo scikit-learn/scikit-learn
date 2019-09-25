@@ -34,7 +34,7 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 
 def test_linkage_misc():
@@ -735,6 +735,6 @@ def test_n_components_deprecation():
 
     match = ("``n_components_`` attribute was deprecated "
              "in favor of ``n_connected_components_``")
-    with pytest.warns(VisibleDeprecationWarning, match=match):
+    with pytest.warns(SklearnDeprecationWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_

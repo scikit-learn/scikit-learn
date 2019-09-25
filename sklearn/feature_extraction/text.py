@@ -33,7 +33,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
-from ..exceptions import VisibleDeprecationWarning
+from ..exceptions import SklearnDeprecationWarning
 
 
 __all__ = ['HashingVectorizer',
@@ -1804,7 +1804,7 @@ class TfidfVectorizer(CountVectorizer):
             msg = ("'copy' param is unused and has been deprecated since "
                    "version 0.22. Backward compatibility for 'copy' will "
                    "be removed in 0.24.")
-            warnings.warn(msg, VisibleDeprecationWarning)
+            warnings.warn(msg, SklearnDeprecationWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 

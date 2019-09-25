@@ -6,7 +6,7 @@ import pytest
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 pytestmark = fails_if_pypy
 
@@ -120,7 +120,7 @@ def test_hasher_zeros():
     assert X.data.shape == (0,)
 
 
-@ignore_warnings(category=VisibleDeprecationWarning)
+@ignore_warnings(category=SklearnDeprecationWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 

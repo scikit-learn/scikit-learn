@@ -50,7 +50,7 @@ from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._unittest_backport import TestCase
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
@@ -123,7 +123,7 @@ def assert_warns(warning_class, func, *args, **kw):
         warnings.simplefilter("always")
         # Trigger a warning.
         result = func(*args, **kw)
-        if hasattr(np, 'VisibleDeprecationWarning'):
+        if hasattr(np, 'SklearnDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
                  if e.category is not np.VisibleDeprecationWarning]
@@ -169,7 +169,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        if hasattr(np, 'VisibleDeprecationWarning'):
+        if hasattr(np, 'SklearnDeprecationWarning'):
             # Let's not catch the numpy internal DeprecationWarnings
             warnings.simplefilter('ignore', np.VisibleDeprecationWarning)
         # Trigger a warning.
@@ -245,7 +245,7 @@ def assert_no_warnings(func, *args, **kw):
         warnings.simplefilter('always')
 
         result = func(*args, **kw)
-        if hasattr(np, 'VisibleDeprecationWarning'):
+        if hasattr(np, 'SklearnDeprecationWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
                  if e.category is not np.VisibleDeprecationWarning]
@@ -494,17 +494,17 @@ def all_estimators(include_meta_estimators=None,
     if include_other is not None:
         warnings.warn("include_other was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      VisibleDeprecationWarning)
+                      SklearnDeprecationWarning)
 
     if include_dont_test is not None:
         warnings.warn("include_dont_test was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      VisibleDeprecationWarning)
+                      SklearnDeprecationWarning)
 
     if include_meta_estimators is not None:
         warnings.warn("include_meta_estimators was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      VisibleDeprecationWarning)
+                      SklearnDeprecationWarning)
 
     all_classes = []
     # get parent folder
@@ -517,7 +517,7 @@ def all_estimators(include_meta_estimators=None,
                         'feature_extraction._hashing' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=VisibleDeprecationWarning):
+        with ignore_warnings(category=SklearnDeprecationWarning):
             module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)

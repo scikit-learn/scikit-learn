@@ -7,7 +7,7 @@ import pickle
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.testing import assert_warns_message
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 
 @deprecated('qwerty')
@@ -37,11 +37,11 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(VisibleDeprecationWarning, 'qwerty', MockClass1)
-    assert_warns_message(VisibleDeprecationWarning, 'mockclass2_method',
+    assert_warns_message(SklearnDeprecationWarning, 'qwerty', MockClass1)
+    assert_warns_message(SklearnDeprecationWarning, 'mockclass2_method',
                          MockClass2().method)
-    assert_warns_message(VisibleDeprecationWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(VisibleDeprecationWarning, 'deprecated', mock_function)
+    assert_warns_message(SklearnDeprecationWarning, 'deprecated', MockClass3)
+    val = assert_warns_message(SklearnDeprecationWarning, 'deprecated', mock_function)
     assert val == 10
 
 

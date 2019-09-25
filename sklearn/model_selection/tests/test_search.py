@@ -30,7 +30,7 @@ from scipy.stats import bernoulli, expon, uniform
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -1694,7 +1694,7 @@ def test_custom_run_search():
     results = mycv.cv_results_
     check_results(results, gscv)
     # TODO: remove in v0.24, the deprecation goes away then.
-    with pytest.warns(VisibleDeprecationWarning,
+    with pytest.warns(SklearnDeprecationWarning,
                       match="attribute is to be deprecated from version 0.22"):
         for attr in dir(gscv):
             if (attr[0].islower() and attr[-1:] == '_' and
@@ -1734,7 +1734,7 @@ def test_deprecated_grid_search_iid(iid):
     grid = GridSearchCV(
         SVC(random_state=0), param_grid={'C': [10]}, cv=3, iid=iid
     )
-    with pytest.warns(VisibleDeprecationWarning, match=depr_msg):
+    with pytest.warns(SklearnDeprecationWarning, match=depr_msg):
         grid.fit(X, y)
 
 

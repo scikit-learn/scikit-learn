@@ -12,7 +12,7 @@ from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
-from sklearn.exceptions import VisibleDeprecationWarning
+from sklearn.exceptions import SklearnDeprecationWarning
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
@@ -196,7 +196,7 @@ def test_spca_deprecation_warning(spca):
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
 
     warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(VisibleDeprecationWarning, match=warn_msg):
+    with pytest.warns(SklearnDeprecationWarning, match=warn_msg):
         spca(normalize_components=True).fit(Y)
 
 
