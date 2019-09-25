@@ -50,6 +50,8 @@ from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._unittest_backport import TestCase
+from sklearn.exceptions import VisibleDeprecationWarning
+
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
@@ -492,17 +494,17 @@ def all_estimators(include_meta_estimators=None,
     if include_other is not None:
         warnings.warn("include_other was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
+                      VisibleDeprecationWarning)
 
     if include_dont_test is not None:
         warnings.warn("include_dont_test was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
+                      VisibleDeprecationWarning)
 
     if include_meta_estimators is not None:
         warnings.warn("include_meta_estimators was deprecated in version 0.21,"
                       " has no effect and will be removed in 0.23",
-                      DeprecationWarning)
+                      VisibleDeprecationWarning)
 
     all_classes = []
     # get parent folder
@@ -515,7 +517,7 @@ def all_estimators(include_meta_estimators=None,
                         'feature_extraction._hashing' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=VisibleDeprecationWarning):
             module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
