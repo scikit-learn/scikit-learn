@@ -391,3 +391,48 @@ for axi, (label, model) in zip(ax, [
 # The random forest regression model also tends to exaggerate low predicted
 # frequencies although to a lower extent than ridge. It also tends to
 # exaggerate high frequencies on the other hand.
+
+
+
+def _cumulated_claims(y_true, y_pred, exposure):
+    idx_sort = np.argsort(y_pred)[::-1]
+    sorted_exposure = exposure[idx_sort]
+    sorted_frequencies = y_true[idx_sort]
+    cumulated_exposure = np.cumsum(sorted_exposure)
+    cumulated_exposure /= cumulated_exposure[-1]
+    cumulated_claims = np.cumsum(sorted_exposure * sorted_frequencies)
+    cumulated_claims /= cumulated_claims[-1]
+    return cumulated_exposure, cumulated_claims
+
+
+fig, ax = plt.subplots(figsize=(8, 8))
+plt.subplots_adjust(wspace=0.3)
+
+for (label, model) in [
+        ('Ridge', ridge),
+        ('PoissonRegressor', poisson),
+        ('Random Forest', rf)
+]:
+    y_pred = model.predict(df_test)
+    cum_exposure, cum_claims = _cumulated_claims(
+        df_test["Frequency"].values,
+        y_pred,
+        df_test["Exposure"].values)
+    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+
+# Oracle model
+cum_exposure, cum_claims = _cumulated_claims(
+    df_test["Frequency"].values,
+    df_test["Frequency"].values,
+    df_test["Exposure"].values)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label="Oracle")
+
+# Random Baseline
+ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
+ax.set(
+    title="Cumulated claims by model",
+    xlabel='Fraction of cumulated exposure (from riskiest to safest)',
+    ylabel='Fraction of cumulated number of claims'
+
+)
+ax.legend()
