@@ -89,8 +89,8 @@ def test_skewed_chi2_sampler():
                                   random_state=42)
 
     # SkewedChi2Sampler is valid only on positive inputs
-    X_p = enforce_estimator_tags_X(transform, X)
-    Y_p = enforce_estimator_tags_X(transform, Y)
+    X_p = enforce_estimator_tags_X(transform, X.copy())
+    Y_p = enforce_estimator_tags_X(transform, Y.copy())
 
     # abbreviations for easier formula
     X_c = (X_p + c)[:, np.newaxis, :]
