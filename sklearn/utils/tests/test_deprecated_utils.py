@@ -15,30 +15,36 @@ from sklearn.exceptions import SklearnDeprecationWarning
 
 
 def test_choose_check_classifiers_labels_deprecated():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         choose_check_classifiers_labels(None, None, None)
 
 
 def test_enforce_estimator_tags_y():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         enforce_estimator_tags_y(DummyClassifier(), np.array([0, 1]))
 
 
 def test_notanarray():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         NotAnArray([1, 2])
 
 
 def test_is_public_parameter():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         is_public_parameter('hello')
 
 
 def test_pairwise_estimator_convert_X():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         pairwise_estimator_convert_X([[1, 2]], DummyClassifier())
 
 
 def test_set_checking_parameters():
-    with pytest.warns(SklearnDeprecationWarning, match="removed in version 0.24"):
+    with pytest.warns(SklearnDeprecationWarning,
+                      match="removed in version 0.24"):
         set_checking_parameters(DummyClassifier())

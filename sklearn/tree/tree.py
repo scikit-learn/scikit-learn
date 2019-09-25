@@ -316,7 +316,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn("The parameter 'presort' is deprecated and has no "
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
-                          "to the 'presort' parameter.", SklearnDeprecationWarning)
+                          "to the 'presort' parameter.",
+                          SklearnDeprecationWarning)
 
         # Build tree
         criterion = self.criterion

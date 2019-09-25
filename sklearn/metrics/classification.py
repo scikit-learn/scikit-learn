@@ -633,7 +633,8 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     warnings.warn('jaccard_similarity_score has been deprecated and replaced '
                   'with jaccard_score. It will be removed in version 0.23. '
                   'This implementation has surprising behavior for binary '
-                  'and multiclass classification tasks.', SklearnDeprecationWarning)
+                  'and multiclass classification tasks.',
+                  SklearnDeprecationWarning)
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)

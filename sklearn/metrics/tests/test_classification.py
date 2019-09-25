@@ -2057,7 +2057,8 @@ def test_multilabel_jaccard_similarity_score_deprecation():
     # size(y1 \inter y2) = [1, 2]
     # size(y1 \union y2) = [2, 2]
 
-    jss = partial(assert_warns, SklearnDeprecationWarning, jaccard_similarity_score)
+    jss = partial(assert_warns, SklearnDeprecationWarning,
+                  jaccard_similarity_score)
     assert jss(y1, y2) == 0.75
     assert jss(y1, y1) == 1
     assert jss(y2, y2) == 1

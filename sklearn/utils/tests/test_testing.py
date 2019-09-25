@@ -40,26 +40,30 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.exceptions import SklearnDeprecationWarning
 
 
-@pytest.mark.filterwarnings("ignore", category=SklearnDeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=SklearnDeprecationWarning)  # 0.24
 def test_assert_less():
     assert 0 < 1
     assert_raises(AssertionError, assert_less, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=SklearnDeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=SklearnDeprecationWarning)  # 0.24
 def test_assert_greater():
     assert 1 > 0
     assert_raises(AssertionError, assert_greater, 0, 1)
 
 
-@pytest.mark.filterwarnings("ignore", category=SklearnDeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=SklearnDeprecationWarning)  # 0.24
 def test_assert_less_equal():
     assert 0 <= 1
     assert 1 <= 1
     assert_raises(AssertionError, assert_less_equal, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=SklearnDeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=SklearnDeprecationWarning)  # 0.24
 def test_assert_greater_equal():
     assert 1 >= 0
     assert 1 >= 1

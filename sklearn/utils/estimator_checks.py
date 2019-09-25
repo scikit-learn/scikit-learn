@@ -649,13 +649,15 @@ def check_estimator_sparse_data(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     for matrix_format, X in _generate_sparse_matrix(X_csr):
         # catch deprecation warnings
-        with ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning)):
+        with ignore_warnings(category=(SklearnDeprecationWarning,
+                                       FutureWarning)):
             estimator = clone(estimator_orig)
             if name in ['Scaler', 'StandardScaler']:
                 estimator.set_params(with_mean=False)
         # fit and predict
         try:
-            with ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning)):
+            with ignore_warnings(category=(SklearnDeprecationWarning,
+                                           FutureWarning)):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
@@ -1357,7 +1359,8 @@ def check_estimators_nan_inf(name, estimator_orig):
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
-        with ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning)):
+        with ignore_warnings(category=(SklearnDeprecationWarning,
+                                       FutureWarning)):
             estimator = clone(estimator_orig)
             set_random_state(estimator, 1)
             # try to fit
@@ -2162,7 +2165,7 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
     classifier.fit(X_train, y_train)
     y_pred_balanced = classifier.predict(X_test)
     assert (f1_score(y_test, y_pred_balanced, average='weighted') >
-                   f1_score(y_test, y_pred, average='weighted'))
+            f1_score(y_test, y_pred, average='weighted'))
 
 
 @ignore_warnings(category=(SklearnDeprecationWarning, FutureWarning))

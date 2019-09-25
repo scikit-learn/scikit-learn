@@ -41,7 +41,8 @@ def test_deprecated():
     assert_warns_message(SklearnDeprecationWarning, 'mockclass2_method',
                          MockClass2().method)
     assert_warns_message(SklearnDeprecationWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(SklearnDeprecationWarning, 'deprecated', mock_function)
+    val = assert_warns_message(SklearnDeprecationWarning, 'deprecated',
+                               mock_function)
     assert val == 10
 
 

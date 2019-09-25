@@ -640,7 +640,8 @@ def dummy_func():
 def test_deprecation_joblib_api(tmpdir):
     def check_warning(*args, **kw):
         return assert_warns_message(
-            SklearnDeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
+            SklearnDeprecationWarning, "deprecated in version 0.20.1",
+            *args, **kw)
 
     # Ensure that the joblib API is deprecated in sklearn.util
     from sklearn.utils import Parallel, Memory, delayed
