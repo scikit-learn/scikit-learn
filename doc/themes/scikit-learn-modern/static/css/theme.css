@@ -906,12 +906,6 @@ table.docutils p {
   word-break: initial;
 }
 
-table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
-  border-style: none;
-  background-color: white;
-  vertical-align: middle;
-}
-
 /* gallery */
 
 div.sphx-glr-thumbcontainer {
@@ -1038,6 +1032,32 @@ div.sk-page-content img.map {
   -webkit-transform: scale(0.5);
       -ms-transform: scale(0.5);
           transform: scale(0.5);
+}
+
+/* sponsor */
+
+div.sk-sponsor-div {
+  display: flex;
+  flex-wrap: nowrap;
+  -webkit-flex-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+div.sk-sponsor-div-box {
+  width: 50%;
+}
+
+div.sk-sponsor-div-box {
+  width: 50%;
+}
+
+table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
+  border-style: none;
+  background-color: white;
+  vertical-align: middle;
+  text-align: center;
 }
 
 /* pygments - highlightning */
