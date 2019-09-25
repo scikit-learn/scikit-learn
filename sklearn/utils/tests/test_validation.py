@@ -42,7 +42,8 @@ from sklearn.utils.validation import (
     _num_samples,
     check_scalar,
     _check_sample_weight,
-    _allclose_dense_sparse)
+    _allclose_dense_sparse,
+    FLOAT_DTYPES)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -349,6 +350,15 @@ def test_check_array_pandas_dtype_object_conversion():
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+
+
+def test_check_array_pandas_homogeneous_dtype():
+    # test that data-frames with homogeneous dtype are not upcast
+    pd = pytest.importorskip('pandas')
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
+    X_df = pd.DataFrame(X)
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
 
 def test_check_array_on_mock_dataframe():
