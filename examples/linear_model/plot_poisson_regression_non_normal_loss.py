@@ -40,6 +40,7 @@ from sklearn.preprocessing import OrdinalEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils import gen_even_slices
+from sklearn.metrics import auc
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
@@ -95,26 +96,33 @@ df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
 df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 
-column_trans = ColumnTransformer(
+##############################################################################
+#
+# The remaining columns can be used to predict the frequency of claim events.
+# Those columns are very heterogeneous with a mix of categorical and numeric
+# variables with different scales, possibly with heavy tails.
+#
+# In order to fit linear models with those predictors it is therefore
+# necessary to perform standard feature transformation as follows:
+
+log_scale_transformer = make_pipeline(
+    FunctionTransformer(np.log, validate=False),
+    StandardScaler()
+)
+
+linear_model_preprocessor = ColumnTransformer(
     [
-        ("Veh_Driv_Age", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
-        (
-            "Veh_Brand_Gas_Region",
-            OneHotEncoder(),
-            ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
-        ),
-        ("BonusMalus", "passthrough", ["BonusMalus"]),
-        (
-            "Density_log",
-            make_pipeline(
-                FunctionTransformer(np.log, validate=False), StandardScaler()
-            ),
-            ["Density"],
-        ),
+        ("passthrough_numeric", "passthrough",
+            ["BonusMalus"]),
+        ("binned_numeric", KBinsDiscretizer(n_bins=10),
+            ["VehAge", "DrivAge"]),
+        ("log_scaled_numeric", log_scale_transformer,
+            ["Density"]),
+        ("onehot_categorical", OneHotEncoder(),
+            ["VehBrand", "VehPower", "VehGas", "Region", "Area"]),
     ],
     remainder="drop",
 )
-X = column_trans.fit_transform(df)
 
 ##############################################################################
 #
@@ -141,12 +149,13 @@ print("Average Frequency = {}"
 # significantly imbalanced.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
-# baseline an estimator that returns the mean of the training sample.
+# baseline an estimator that constantly predicts the mean frequency of the
+# training sample.
 
 df_train, df_test = train_test_split(df, random_state=0)
 
 dummy = make_pipeline(
-    column_trans,
+    linear_model_preprocessor,
     DummyRegressor(strategy='mean')
 )
 dummy.fit(df_train, df_train["Frequency"],
@@ -187,10 +196,7 @@ score_estimator(dummy, df_test)
 # We start by modeling the target variable with the least squares linear
 # regression model,
 
-ridge = make_pipeline(
-    column_trans,
-    Ridge(alpha=1.0)
-)
+ridge = make_pipeline(linear_model_preprocessor, Ridge(alpha=1.0))
 ridge.fit(df_train, df_train["Frequency"],
           ridge__sample_weight=df_train["Exposure"])
 
@@ -211,7 +217,7 @@ score_estimator(ridge, df_test)
 # Next we fit the Poisson regressor on the target variable,
 
 poisson = make_pipeline(
-    column_trans,
+    linear_model_preprocessor,
     PoissonRegressor(alpha=1/df_train.shape[0], max_iter=1000)
 )
 poisson.fit(df_train, df_train["Frequency"],
@@ -229,20 +235,17 @@ score_estimator(poisson, df_test)
 # same information is encoded with a small number of features than with
 # one-hot encoding).
 
+rf_preprocessor = ColumnTransformer(
+    [
+        ("categorical", OrdinalEncoder(),
+            ["VehBrand", "VehPower", "VehGas", "Region", "Area"]),
+        ("numeric", "passthrough",
+            ["VehAge", "DrivAge", "BonusMalus", "Density"]),
+    ],
+    remainder="drop",
+)
 rf = make_pipeline(
-    ColumnTransformer(
-        [
-            (
-                "Veh_Brand_Gas_Region", OrdinalEncoder(),
-                ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
-            ),
-            (
-                "Continious", "passthrough",
-                ["VehAge", "DrivAge", "BonusMalus", "Density"]
-            ),
-        ],
-        remainder="drop",
-    ),
+    rf_preprocessor,
     RandomForestRegressor(min_weight_fraction_leaf=0.01, n_jobs=2)
 )
 rf.fit(df_train, df_train["Frequency"].values,
@@ -351,14 +354,10 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
     return bin_centers, y_true_bin, y_pred_bin
 
 
-fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3.2))
+fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3.5))
 plt.subplots_adjust(wspace=0.3)
 
-for axi, (label, model) in zip(ax, [
-        ('Ridge', ridge),
-        ('PoissonRegressor', poisson),
-        ('Random Forest', rf)
-]):
+for axi, model in zip(ax, [ridge,  poisson, rf]):
     y_pred = model.predict(df_test)
 
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
@@ -372,19 +371,19 @@ for axi, (label, model) in zip(ax, [
     axi.set_xlim(0, 1.0)
     axi.set_ylim(0, 0.3)
     axi.set(
-        title=label,
+        title=model[-1].__class__.__name__,
         xlabel='Fraction of samples sorted by y_pred',
         ylabel='Mean Frequency (y_pred)'
 
     )
     axi.legend()
-
+plt.tight_layout()
 
 ##############################################################################
 #
 # On the above figure, ``PoissonRegressor`` is the model which presents the
 # best consistency between predicted and observed targets, both for low and
-# high target values.
+# high predicted target values.
 #
 # The ridge regression model tends to predict very low expected frequencies
 # that do not match the data.
@@ -393,16 +392,16 @@ for axi, (label, model) in zip(ax, [
 # frequencies although to a lower extent than ridge. It also tends to
 # exaggerate high frequencies on the other hand.
 #
-# However for some business applications we are not necessarily interested in
-# the the ability of the model in predicting the expected frequency value but
-# instead in predicting which customer profiles are the riskiest and which are
-# the safest. In this case the model evaluation would cast the problem as a
-# ranking problem rather than a regression problem.
+# However, for some business applications, we are not necessarily interested
+# in the the ability of the model in predicting the expected frequency value
+# but instead in predicting which policyholder groups are the riskiest and
+# which are the safest. In this case the model evaluation would cast the
+# problem as a ranking problem rather than a regression problem.
 #
-# To compare the 3 models under this light on, one can plot the fraction
-# of cumulated number of claims vs the fraction of cumulated of exposure
-# for test samples ordered by the model predictions, from riskiest to safest
-# according to each model:
+# To compare the 3 models under this light on, one can plot the fraction of
+# cumulated number of claims vs the fraction of cumulated of exposure for test
+# samples ordered by the model predictions, from riskiest to safest according
+# to each model:
 
 
 def _cumulated_claims(y_true, y_pred, exposure):
@@ -417,18 +416,16 @@ def _cumulated_claims(y_true, y_pred, exposure):
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
-plt.subplots_adjust(wspace=0.3)
 
-for (label, model) in [
-        ('Ridge', ridge),
-        ('PoissonRegressor', poisson),
-        ('Random Forest', rf)
-]:
+for model in [ridge, poisson, rf]:
     y_pred = model.predict(df_test)
     cum_exposure, cum_claims = _cumulated_claims(
         df_test["Frequency"].values,
         y_pred,
         df_test["Exposure"].values)
+    area = auc(cum_exposure, cum_claims)
+    label = "{} (area under curve: {:.3f})".format(
+        model[-1].__class__.__name__, area)
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
@@ -449,17 +446,16 @@ ax.legend()
 
 ##############################################################################
 #
-# This plot reveals that the random forest model is almost uniformly the best
-# at sorting customers by risk profiles even if the absolute value of the
-# predicted expected frequencies are less well calibrated than for the linear
-# Poisson model.
-#
+# This plot reveals that the random forest model is slightly better at ranking
+# policyholders by risk profiles even if the absolute value of the predicted
+# expected frequencies are less well calibrated than for the linear Poisson
+# model.
 #
 # All three models are significantly better than chance but also very far from
 # making perfect predictions.
 #
-# This last point is expected due to the nature of the problem: the occurence
-# of accidents is mostly dominated by environmental causes that are not
+# This last point is expected due to the nature of the problem: the occurrence
+# of accidents is mostly dominated by circumstantial causes that are not
 # captured in the columns of the dataset.
 
 plt.show()
