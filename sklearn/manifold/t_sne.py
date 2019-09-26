@@ -578,7 +578,9 @@ class TSNE(BaseEstimator):
         computation time and angle greater 0.8 has quickly increasing error.
 
     n_jobs : int or None, optional (default=None)
-        The number of parallel jobs to run for neighbors search.
+        The number of parallel jobs to run for neighbors search. This parameter
+        has no impact when ``metric="precomputed"`` or
+        (``metric="euclidean"`` and ``method="exact"``).
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
