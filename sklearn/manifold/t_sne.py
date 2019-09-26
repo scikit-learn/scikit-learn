@@ -585,6 +585,8 @@ class TSNE(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
