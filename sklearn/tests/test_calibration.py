@@ -7,7 +7,7 @@ from scipy import sparse
 
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
-from sklearn.utils.estimator_checks import enforce_estimator_tags_X
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 
 from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_almost_equal,
@@ -33,7 +33,7 @@ def test_calibration():
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
     clf = MultinomialNB()
-    X = enforce_estimator_tags_X(clf, X)
+    X = _enforce_estimator_tags_X(clf, X)
 
     # split train and test
     X_train, y_train, sw_train = \
@@ -197,7 +197,7 @@ def test_calibration_prefit():
     X_test, y_test = X[2 * n_samples:], y[2 * n_samples:]
 
     clf = MultinomialNB()
-    X = enforce_estimator_tags_X(clf, X)
+    X = _enforce_estimator_tags_X(clf, X)
 
     # Naive-Bayes
     clf = MultinomialNB()

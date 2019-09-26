@@ -14,7 +14,7 @@ from sklearn.utils.testing import (assert_raises_regex,
                                    assert_warns, assert_raises,
                                    SkipTest)
 from sklearn.utils.estimator_checks import check_estimator, \
-    enforce_estimator_tags_X
+    _enforce_estimator_tags_X
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -559,7 +559,7 @@ def test_check_class_weight_balanced_linear_classifier():
                         BadBalancedWeightsClassifier)
 
 
-def test_enforce_estimator_tags_X():
+def test__enforce_estimator_tags_X():
     class EstimatorWithPositiveX(BaseEstimator):
 
         def _more_tags(self):
@@ -575,11 +575,11 @@ def test_enforce_estimator_tags_X():
 
     random_state = np.random.RandomState(42)
     X = random_state.randn(30, 5)
-    X_enforced = enforce_estimator_tags_X(EstimatorWithPositiveX(), X)
+    X_enforced = _enforce_estimator_tags_X(EstimatorWithPositiveX(), X)
     assert np.all(X_enforced > 0)
 
     for estimator in [EstimatorWithoutPositiveX(), EstimatorDefault()]:
-        X_enforced = enforce_estimator_tags_X(estimator, X)
+        X_enforced = _enforce_estimator_tags_X(estimator, X)
         assert len(np.where(X_enforced < 0)) > 0
         assert len(np.where(X_enforced > 0)) > 0
 

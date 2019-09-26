@@ -2,7 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from sklearn.utils.estimator_checks import enforce_estimator_tags_X
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
@@ -89,8 +89,8 @@ def test_skewed_chi2_sampler():
                                   random_state=42)
 
     # SkewedChi2Sampler is valid only on positive inputs
-    X_p = enforce_estimator_tags_X(transform, X.copy())
-    Y_p = enforce_estimator_tags_X(transform, Y.copy())
+    X_p = _enforce_estimator_tags_X(transform, X.copy())
+    Y_p = _enforce_estimator_tags_X(transform, Y.copy())
 
     # abbreviations for easier formula
     X_c = (X_p + c)[:, np.newaxis, :]
