@@ -222,6 +222,7 @@ def fit(
         n_class_SV = np.empty(n_class, dtype=np.int32)
         copy_nSV(n_class_SV.data, model)
     else:
+        # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
 
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
