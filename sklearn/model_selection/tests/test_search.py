@@ -199,6 +199,7 @@ def test_grid_search():
 
 
 def test_grid_search_pipeline_steps():
+    # check that parameters that are estimators are cloned before fitting
     pipe = Pipeline([('regressor', LinearRegression())])
     param_grid = {'regressor': [LinearRegression(), Ridge()]}
     grid_search = GridSearchCV(pipe, param_grid, cv=2)

@@ -488,6 +488,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     train_scores = {}
     if parameters is not None:
+        # clone after setting parameters in case any parameters
+        # are estimators (like pipeline steps)
+        # because pipeline doesn't clone steps in fit
         estimator = clone(estimator.set_params(**parameters))
 
     start_time = time.time()
