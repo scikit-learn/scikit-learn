@@ -1297,7 +1297,7 @@ def test_predict_sparse_ball_kd_tree():
     nbrs2 = neighbors.KNeighborsRegressor(1, algorithm='ball_tree')
     for model in [nbrs1, nbrs2]:
         model.fit(X, y)
-        assert_raises(ValueError, model.predict, csr_matrix(X))
+        assert_raises(TypeError, model.predict, csr_matrix(X))
 
 
 def test_non_euclidean_kneighbors():
