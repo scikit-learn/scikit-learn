@@ -4,6 +4,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
+from scipy.optimize import check_grad
 
 from sklearn.linear_model._glm.link import (
     IdentityLink,
@@ -15,12 +16,12 @@ from sklearn.linear_model._glm.link import (
 LINK_FUNCTIONS = [IdentityLink, LogLink, LogitLink]
 
 
-@pytest.mark.parametrize('link', LINK_FUNCTIONS)
-def test_link_properties(link):
+@pytest.mark.parametrize('Link', LINK_FUNCTIONS)
+def test_link_properties(Link):
     """Test link inverse and derivative."""
     rng = np.random.RandomState(42)
     x = rng.rand(100) * 100
-    link = link()  # instantiate object
+    link = Link()
     if isinstance(link, LogitLink):
         # careful for large x, note expit(36) = 1
         # limit max eta to 15
@@ -30,3 +31,15 @@ def test_link_properties(link):
     # g = link, h = link.inverse
     assert_allclose(link.derivative(link.inverse(x)),
                     1 / link.inverse_derivative(x))
+
+
+@pytest.mark.parametrize('Link', LINK_FUNCTIONS)
+def test_link_derivative(Link):
+    link = Link()
+    x = np.random.RandomState(0).rand(1)
+    err = check_grad(link, link.derivative, x) / link.derivative(x)
+    assert abs(err) < 1e-6
+
+    err = (check_grad(link.inverse, link.inverse_derivative, x)
+           / link.derivative(x))
+    assert abs(err) < 1e-6
