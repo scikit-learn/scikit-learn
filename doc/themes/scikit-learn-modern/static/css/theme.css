@@ -588,6 +588,13 @@ div.sk-page-content h4 {
   word-wrap: break-word;
 }
 
+div.sk-page-content h1 code,
+div.sk-page-content h2 code,
+div.sk-page-content h3 code,
+div.sk-page-content h4 code {
+  white-space: normal;
+}
+
 /* longtables */
 
 table.longtable p {
