@@ -63,7 +63,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier
+from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -196,6 +196,18 @@ def test_grid_search():
     # Test exception handling on scoring
     grid_search.scoring = 'sklearn'
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_grid_search_pipeline_steps():
+    pipe = Pipeline([('regressor', LinearRegression())])
+    param_grid = {'regressor': [LinearRegression(), Ridge()]}
+    grid_search = GridSearchCV(pipe, param_grid, cv=2)
+    grid_search.fit(X, y)
+    regressor_results = grid_search.cv_results_['param_regressor']
+    assert isinstance(regressor_results[0], LinearRegression)
+    assert isinstance(regressor_results[1], Ridge)
+    assert not hasattr(regressor_results[0], 'coef_')
+    assert not hasattr(regressor_results[1], 'coef_')
 
 
 def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):

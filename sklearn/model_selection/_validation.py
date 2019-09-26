@@ -488,7 +488,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     train_scores = {}
     if parameters is not None:
-        estimator.set_params(**parameters)
+        estimator = clone(estimator.set_params(**parameters))
 
     start_time = time.time()
 
