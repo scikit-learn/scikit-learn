@@ -274,16 +274,15 @@ n_bins = 20
 df_train["Frequency"].hist(bins=np.linspace(-1, 10, n_bins), ax=axes[0])
 
 axes[0].set_title("Data")
+axes[0].set_yscale('log')
 axes[0].set_xlabel("y (observed Frequency)")
 
 for idx, model in enumerate([ridge, poisson, rf]):
     y_pred = model.predict(df_train)
 
     pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins), ax=axes[idx+1])
-    axes[idx + 1].set_title(model[-1].__class__.__name__)
-
-for axi in axes:
-    axi.set(
+    axes[idx + 1].set(
+        title=model[-1].__class__.__name__,
         yscale='log',
         xlabel="y_pred (predicted expected Frequency)"
     )
