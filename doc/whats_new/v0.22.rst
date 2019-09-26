@@ -234,6 +234,10 @@ Changelog
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
+- |API| `None` as a estimators is now deprecated in
+  :class:`ensemble.VotingClassifier` and  :class:`ensemble.VotingRegressor`.
+  Please use `'drop'` instead. :pr:`15090` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
