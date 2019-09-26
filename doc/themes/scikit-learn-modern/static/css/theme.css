@@ -1062,6 +1062,10 @@ table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
   text-align: center;
 }
 
+table.sk-sponsor-table td {
+  padding: 0.30rem;
+}
+
 /* pygments - highlightning */
 
 .highlight .hll { background-color: #ffffcc }
