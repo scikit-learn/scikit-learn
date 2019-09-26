@@ -112,13 +112,23 @@ The project would like to thank the following funders.
 
 ...................................
 
-The `Scikit-Learn Consortium at Inria Foundation
-<https://scikit-learn.fondation-inria.fr/en/home/>`_ `Members 
-<https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ fund Olivier
-Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
+.. raw:: html
 
-**Platinum Members**
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
 
+.. figure:: images/png-logo-inria-la-fondation.png
+   :width: 100pt
+   :target: https://scikit-learn.fondation-inria.fr/en/home/
+
+   The `Scikit-Learn Consortium at Inria Foundation
+   <https://scikit-learn.fondation-inria.fr/en/home/>`_ `Members 
+   <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ fund Olivier
+   Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
+
+.. raw:: html
+
+   </div>
 
 .. |msn| image:: images/microsoft.png
    :width: 100pt
@@ -127,15 +137,6 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
 .. |bcg| image:: images/bcg.png
    :width: 100pt
    :target: https://www.bcg.com/beyond-consulting/bcg-gamma/default.aspx
-
-.. table::
-   :class: sk-sponsor-table align-default
-
-   +-------+-------+
-   | |msn| | |bcg| |
-   +-------+-------+
-
-**Gold Members**
 
 .. |axa| image:: images/axa.png
    :width: 50pt
@@ -153,123 +154,275 @@ Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
    :width: 70pt
    :target: https://www.nvidia.com/
 
+.. |dataiku| image:: images/dataiku.png
+   :width: 70pt
+   :target: https://www.dataiku.com/
+
+.. raw:: html
+
+   <div class="sk-sponsor-div-box">
+
 .. table::
    :class: sk-sponsor-table align-default
 
    +---------+----------+
+   | |msn|   |  |bcg|   |
+   +---------+----------+
+   |      .......       |
+   +---------+----------+ 
    |  |axa|  |   |bnp|  |
    +---------+----------+
    | |intel| | |nvidia| |
    +---------+----------+
+   |      ........      |
+   +--------------------+
+   |    |dataiku|       |
+   +--------------------+
 
-**Silver Members**
+.. raw:: html
 
-.. figure:: images/dataiku.png
-   :width: 70pt
-   :align: center
-   :target: https://www.dataiku.com/
+   </div>
+   </div>
 
 ........  
 
-.. figure:: themes/scikit-learn/static/img/columbia.png 
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/columbia.png 
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
 
-   `Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016
+.. raw:: html
+
+   </div>
+   </div>
 
 ..........
 
-.. figure:: images/sloan_banner.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div-box">
+
+Andreas Müller received a grant to improve scikit-learn from the
+`Alfred P. Sloan Foundation <https://sloan.org>`_ .
+This grant supports the position of Nicolas Hug and Thomas J. Fan.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/sloan_banner.png
    :width: 100pt
    :align: center
    :target: https://sloan.org/
 
-   Andreas Müller received a grant to improve scikit-learn from the
-   `Alfred P. Sloan Foundation <https://sloan.org>`_ .
-   This grant supports the position of Nicolas Hug and Thomas J. Fan.
+.. raw:: html
+
+   </div>
+   </div>
 
 ...........
 
-.. figure:: themes/scikit-learn/static/img/sydney-primary.jpeg
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
+July 2017.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
    :width: 100pt
    :align: center
    :target: https://sydney.edu.au/
 
-   `The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since
-   July 2017.
+.. raw:: html
+
+   </div>
+   </div>
 
 ............
 
-.. figure:: images/anaconda.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
    :width: 100pt
    :align: center
    :target: https://sydney.edu.au/
 
-   `Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
+.. raw:: html
 
-
+   </div>
+   </div>
 
 Past Sponsors
 .............
 
-.. figure:: images/inria-logo.jpg
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`INRIA <https://www.inria.fr>`_ actively supports this project. It has
+provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
+(2012-2013) and Olivier Grisel (2013-2017) to work on this project
+full-time. It also hosts coding sprints and other events.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/inria-logo.jpg
    :width: 100pt
    :align: center
    :target: https://www.inria.fr
 
-   `INRIA <https://www.inria.fr>`_ actively supports this project. It has
-   provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
-   (2012-2013) and Olivier Grisel (2013-2017) to work on this project
-   full-time. It also hosts coding sprints and other events.
+.. raw:: html
+
+   </div>
+   </div>
 
 .....................
 
-.. figure:: images/cds-logo.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Paris-Saclay Center for Data Science
+<https://www.datascience-paris-saclay.fr/>`_
+funded one year for a developer to work on the project full-time
+(2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
+time of Joris van den Bossche (2017-2018).
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/cds-logo.png
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
 
-   `Paris-Saclay Center for Data Science
-   <https://www.datascience-paris-saclay.fr/>`_
-   funded one year for a developer to work on the project full-time
-   (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
-   time of Joris van den Bossche (2017-2018).
+.. raw:: html
+
+   </div>
+   </div>
 
 ..........................
 
-.. figure:: images/nyu_short_color.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
+funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
+Data Science Environment also funds several students to work on the project
+part-time.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/nyu_short_color.png
    :width: 100pt
    :align: center
    :target: https://cds.nyu.edu/mooresloan/
 
-   `NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
-   funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan
-   Data Science Environment also funds several students to work on the project
-   part-time.
+.. raw:: html
+
+   </div>
+   </div>
 
 ........................
 
-.. figure:: themes/scikit-learn/static/img/telecom.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
+(2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
+(2016-2017) and Albert Thomas (2017) to work on scikit-learn.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/telecom.png
    :width: 50pt
    :align: center
    :target: https://www.telecom-paristech.fr/
 
-   `Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar
-   (2014), Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot
-   (2016-2017) and Albert Thomas (2017) to work on scikit-learn.
+.. raw:: html
+
+   </div>
+   </div>
 
 .....................
 
-.. figure:: themes/scikit-learn/static/img/digicosme.png
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
+(2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
+(2018-2019) to work part time on scikit-learn during their PhDs. It also
+funded a scikit-learn coding sprint in 2015.
+
+.. raw:: html
+
+   </div>
+   <div class="sk-sponsor-div-box">
+
+.. image:: themes/scikit-learn/static/img/digicosme.png
    :width: 100pt
    :align: center
    :target: https://digicosme.lri.fr
 
-   `The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix
-   (2015-2016), Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias
-   (2018-2019) to work part time on scikit-learn during their PhDs. It also
-   funded a scikit-learn coding sprint in 2015.
+.. raw:: html
+
+   </div>
+   </div>
 
 ......................
 
