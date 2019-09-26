@@ -217,7 +217,6 @@ def fit(
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
         copy_SV(support_vectors.data, model, support_vectors.shape)
 
-    # TODO: do only in classification
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV
     if (svm_type == 0 or svm_type == 1):
         n_class_SV = np.empty(n_class, dtype=np.int32)
