@@ -113,12 +113,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
-        # The rng state must be preserved if warm_start is True
-        if (self.warm_start and hasattr(self, '_rng')):
-            rng = self._rng
-        else:
-            rng = check_random_state(self.random_state)
-            self._rng = rng
+        rng = check_random_state(self.random_state)
+
+        # When warm starting, we want to re-use the same seed that was used
+        # the first time fit was called (e.g. for subsampling or for the
+        # train/val split).
+        if not (self.warm_start and self._is_fitted()):
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max,
+                                            dtype='u8')
 
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
@@ -147,14 +149,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
             # warm starting.
-            if not (self._is_fitted() and self.warm_start):
-                self._train_val_split_seed = rng.randint(1024)
 
             if sample_weight is None:
                 X_train, X_val, y_train, y_val = train_test_split(
                     X, y, test_size=self.validation_fraction,
                     stratify=stratify,
-                    random_state=self._train_val_split_seed)
+                    random_state=self._random_seed)
                 sample_weight_train = sample_weight_val = None
             else:
                 # TODO: incorporate sample_weight in sampling here, as well as
@@ -163,7 +163,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                  sample_weight_val) = train_test_split(
                     X, y, sample_weight, test_size=self.validation_fraction,
                     stratify=stratify,
-                    random_state=self._train_val_split_seed)
+                    random_state=self._random_seed)
         else:
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
@@ -179,11 +179,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # actual total number of bins. Everywhere in the code, the
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
-        self.bin_mapper_ = _BinMapper(n_bins=n_bins, random_state=rng)
-        X_binned_train = self._bin_data(X_train, sample_weight_train, rng,
+        self.bin_mapper_ = _BinMapper(n_bins=n_bins,
+                                      random_state=self._random_seed)
+        X_binned_train = self._bin_data(X_train, sample_weight_train,
                                         is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, sample_weight_val, rng,
+            X_binned_val = self._bin_data(X_val, sample_weight_val,
                                           is_training_data=False)
         else:
             X_binned_val = None
@@ -266,15 +267,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
 
-                    # Save the seed for the small trainset generator
-                    self._small_trainset_seed = rng.randint(1024)
-
                     # Compute the subsample set
                     (X_binned_small_train,
                      y_small_train,
                      sample_weight_small_train) = self._get_small_trainset(
                         X_binned_train, y_train, sample_weight_train,
-                        self._small_trainset_seed)
+                        self._random_seed)
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
@@ -307,7 +305,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                  y_small_train,
                  sample_weight_small_train) = self._get_small_trainset(
                     X_binned_train, y_train, sample_weight_train,
-                    self._small_trainset_seed)
+                    self._random_seed)
 
             # Initialize the gradients and hessians
             gradients, hessians = self.loss_.init_gradients_and_hessians(
@@ -434,7 +432,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        for var in ('train_score_', 'validation_score_', '_rng'):
+        for var in ('train_score_', 'validation_score_'):
             if hasattr(self, var):
                 delattr(self, var)
 
@@ -546,7 +544,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, sample_weight, rng, is_training_data):
+    def _bin_data(self, X, sample_weight, is_training_data):
         """Bin data X.
 
         If is_training_data, then set the bin_mapper_ attribute.
@@ -810,13 +808,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -991,13 +989,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
         classification.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -1103,6 +1101,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         return encoded_y
 
     def _get_loss(self):
+        if (self.loss == 'categorical_crossentropy' and
+                self.n_trees_per_iteration_ == 1):
+            raise ValueError("'categorical_crossentropy' is not suitable for "
+                             "a binary classification problem. Please use "
+                             "'auto' or 'binary_crossentropy' instead.")
+
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES['binary_crossentropy']()

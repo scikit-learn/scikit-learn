@@ -52,9 +52,8 @@ if os.environ.get('NO_MATHJAX'):
     imgmath_image_format = 'svg'
 else:
     extensions.append('sphinx.ext.mathjax')
-    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
-                    'MathJax.js?config=TeX-AMS_SVG')
-
+    mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
+                    'tex-chtml.js')
 
 autodoc_default_options = {
     'members': True,
@@ -74,7 +73,7 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
@@ -130,14 +129,13 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'scikit-learn'
+html_theme = 'scikit-learn-modern'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
-                      'google_analytics': True, 'surveybanner': False,
-                      'sprintbanner': True, 'body_max_width': None}
+html_theme_options = {'google_analytics': True,
+                      'mathjax_path': mathjax_path}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
@@ -173,7 +171,8 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+html_additional_pages = {'index': 'index.html',
+                         'documentation': 'documentation.html'}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -217,7 +216,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('index', 'user_guide.tex', 'scikit-learn user guide',
+latex_documents = [('contents', 'user_guide.tex', 'scikit-learn user guide',
                     'scikit-learn developers', 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -279,11 +278,7 @@ sphinx_gallery_conf = {
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
-carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
-                   'sphx_glr_plot_gpr_co2_001.png': 350,
-                   'sphx_glr_plot_adaboost_twoclass_001.png': 372,
-                   'sphx_glr_plot_compare_methods_001.png': 349}
+carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
 
 
 # enable experimental module so that experimental estimators can be
@@ -314,8 +309,6 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 def setup(app):
     # to hide/show the prompt in code examples:
-    app.add_javascript('js/copybutton.js')
-    app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
 
 
