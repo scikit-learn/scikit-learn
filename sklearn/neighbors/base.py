@@ -289,13 +289,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.metric == 'precomputed'
 
 
-def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance, **kwargs):
+def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
     """Helper for the Parallel calls in KNeighborsMixin.kneighbors
 
     The Cython method tree.query is not directly picklable by cloudpickle
     under PyPy.
     """
-    return tree.query(data, n_neighbors, return_distance, **kwargs)
+    return tree.query(data, n_neighbors, return_distance)
 
 
 class KNeighborsMixin:
@@ -336,7 +336,7 @@ class KNeighborsMixin:
             result = neigh_ind
         return result
 
-    def kneighbors(self, X=None, n_neighbors=None, return_distance=True, **kwargs):
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
         Returns indices of and distances to the neighbors of each point.
 
@@ -458,7 +458,7 @@ class KNeighborsMixin:
                 parallel_kwargs = {"prefer": "threads"}
             result = Parallel(n_jobs, **parallel_kwargs)(
                 delayed_query(
-                    self._tree, X[s], n_neighbors, return_distance, **kwargs)
+                    self._tree, X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
