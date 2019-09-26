@@ -15,36 +15,43 @@ from sklearn.utils.random import random_choice_csc
 # This file tests the utils that are deprecated
 
 
+# TODO: remove in 0.24
 def test_choose_check_classifiers_labels_deprecated():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         choose_check_classifiers_labels(None, None, None)
 
 
+# TODO: remove in 0.24
 def test_enforce_estimator_tags_y():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         enforce_estimator_tags_y(DummyClassifier(), np.array([0, 1]))
 
 
+# TODO: remove in 0.24
 def test_notanarray():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         NotAnArray([1, 2])
 
 
+# TODO: remove in 0.24
 def test_is_public_parameter():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         is_public_parameter('hello')
 
 
+# TODO: remove in 0.24
 def test_pairwise_estimator_convert_X():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         pairwise_estimator_convert_X([[1, 2]], DummyClassifier())
 
 
+# TODO: remove in 0.24
 def test_set_checking_parameters():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         set_checking_parameters(DummyClassifier())
 
 
+# TODO: remove in 0.24
 def test_newton_cg():
     rng = np.random.RandomState(0)
     A = rng.normal(size=(10, 10))
@@ -67,6 +74,7 @@ def test_newton_cg():
         newton_cg(grad_hess, func, grad, x0)
 
 
+# TODO: remove in 0.24
 def test_random_choice_csc():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         random_choice_csc(10, [[2]])
