@@ -1188,3 +1188,17 @@ def test_gamma_scale():
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
+
+
+def test_n_support_oneclass_svr():
+    # Make sure n_support is not zero for oneclass and SVR
+    # non regression test for issue #14774
+    X = np.array([[0], [0.44], [0.45], [0.46], [1]])
+    clf = svm.OneClassSVM().fit(X)
+    assert np.all(clf.n_support_ == clf.support_vectors_.shape[0])
+    assert np.all(clf.n_support_ == 3)
+
+    y = np.arange(X.shape[0])
+    reg = svm.SVR().fit(X, y)
+    assert np.all(reg.n_support_ == reg.support_vectors_.shape[0])
+    assert np.all(reg.n_support_ == 4)
