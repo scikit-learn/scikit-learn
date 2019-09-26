@@ -209,6 +209,8 @@ def test_grid_search_pipeline_steps():
     assert isinstance(regressor_results[1], Ridge)
     assert not hasattr(regressor_results[0], 'coef_')
     assert not hasattr(regressor_results[1], 'coef_')
+    assert regressor_results[0] is not grid_search.best_estimator_
+    assert regressor_results[1] is not grid_search.best_estimator_
     # check that we didn't modify the parameter grid that was passed
     assert not hasattr(param_grid['regressor'][0], 'coef_')
     assert not hasattr(param_grid['regressor'][1], 'coef_')
