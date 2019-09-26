@@ -32,7 +32,7 @@ from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 
 
-class FactorAnalysis(BaseEstimator, TransformerMixin):
+class FactorAnalysis(TransformerMixin, BaseEstimator):
     """Factor Analysis (FA)
 
     A simple linear generative model with Gaussian latent variables.

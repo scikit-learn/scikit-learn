@@ -321,10 +321,11 @@ Illustration of GPC on the XOR dataset
 .. currentmodule:: sklearn.gaussian_process.kernels
 
 This example illustrates GPC on XOR data. Compared are a stationary, isotropic
-kernel (:class:`RBF`) and a non-stationary kernel (:class:`DotProduct`). On this particular
-dataset, the `DotProduct` kernel obtains considerably better results because the
-class-boundaries are linear and coincide with the coordinate axes. In practice,
-however, stationary kernels such as :class:`RBF` often obtain better results.
+kernel (:class:`RBF`) and a non-stationary kernel (:class:`DotProduct`). On
+this particular dataset, the :class:`DotProduct` kernel obtains considerably
+better results because the class-boundaries are linear and coincide with the
+coordinate axes. In practice, however, stationary kernels such as :class:`RBF`
+often obtain better results.
 
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpc_xor_001.png
    :target: ../auto_examples/gaussian_process/plot_gpc_xor.html

@@ -12,7 +12,7 @@ population's covariance matrix, which can be seen as an estimation of
 data set scatter plot shape. Most of the time, such an estimation has
 to be done on a sample whose properties (size, structure, homogeneity)
 have a large influence on the estimation's quality. The
-`sklearn.covariance` package provides tools for accurately estimating
+:mod:`sklearn.covariance` package provides tools for accurately estimating
 a population's covariance matrix under various settings.
 
 We assume that the observations are independent and identically
@@ -101,7 +101,7 @@ covariance matrix.
 
 The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
-`sklearn.covariance` package, or it can be otherwise obtained by
+:mod:`sklearn.covariance` package, or it can be otherwise obtained by
 fitting a :class:`LedoitWolf` object to the same sample.
 
 .. note:: **Case when population covariance matrix is isotropic**
@@ -146,7 +146,7 @@ Wolf's formula. The resulting estimator is known as the Oracle
 Shrinkage Approximating estimator of the covariance.
 
 The OAS estimator of the covariance matrix can be computed on a sample
-with the :meth:`oas` function of the `sklearn.covariance`
+with the :meth:`oas` function of the :mod:`sklearn.covariance`
 package, or it can be otherwise obtained by fitting an :class:`OAS`
 object to the same sample.
 

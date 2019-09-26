@@ -34,15 +34,7 @@ version_ge() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    # TODO
-    # Remove when wheel issue is fixed with conda installations of python 3.7.4
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        PINNED_PYTHON_VERSION="3.7.3"
-    else
-        PINNED_PYTHON_VERSION=$PYTHON_VERSION
-    fi
-
-    TO_INSTALL="python=$PINNED_PYTHON_VERSION pip pytest=$PYTEST_VERSION \
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
                 pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
@@ -94,6 +86,14 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
+elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Since conda main channel usually lacks behind on the latest releases,
+    # we use pypi to test against the latest releases of the dependencies.
+    # conda is still used as a convenient way to install Python and pip.
+    make_conda "python=$PYTHON_VERSION"
+    python -m pip install numpy scipy joblib cython
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
+    python -m pip install pandas matplotlib pyamg pillow
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

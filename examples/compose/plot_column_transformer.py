@@ -42,7 +42,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.svm import LinearSVC
 
 
-class TextStats(BaseEstimator, TransformerMixin):
+class TextStats(TransformerMixin, BaseEstimator):
     """Extract features from each document for DictVectorizer"""
 
     def fit(self, x, y=None):
@@ -54,7 +54,7 @@ class TextStats(BaseEstimator, TransformerMixin):
                 for text in posts]
 
 
-class SubjectBodyExtractor(BaseEstimator, TransformerMixin):
+class SubjectBodyExtractor(TransformerMixin, BaseEstimator):
     """Extract the subject & body from a usenet post in a single pass.
 
     Takes a sequence of strings and produces a dict of sequences.  Keys are
