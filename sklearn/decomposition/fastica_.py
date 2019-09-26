@@ -226,11 +226,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         K is 'None'.
 
     W : array, shape (n_components, n_components)
-        Estimated un-mixing matrix.
-        The mixing matrix can be obtained by::
-
-            w = np.dot(W, K.T)
-            A = w.T * (w * w.T).I
+        The square matrix that unmixes the data after whitening.
+        The mixing matrix is the pseudo-inverse of matrix ``W K``
+        if K is not None, else it is the inverse of W.
 
     S : array, shape (n_samples, n_components) | None
         Estimated source matrix
@@ -252,6 +250,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
     un-mixing matrix W where ``S = W K X.``
+    While FastICA was proposed to estimate as many sources
+    as features, it is possible to estimate less by setting
+    n_components < n_features. It this case K is not a square matrix
+    and the estimated A is the pseudo-inverse of ``W K``.
 
     This implementation was originally made for data of shape
     [n_features, n_samples]. Now the input is transposed
@@ -354,7 +356,8 @@ class FastICA(TransformerMixin, BaseEstimator):
         ``whiten`` is True.
 
     mixing_ : array, shape (n_features, n_components)
-        The mixing matrix.
+        The pseudo-inverse of ``components_``. It is the linear operator
+        that maps independent sources to the data.
 
     mean_ : array, shape(n_features)
         The mean over features. Only set if `self.whiten` is True.
