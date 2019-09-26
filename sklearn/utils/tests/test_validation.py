@@ -366,6 +366,22 @@ def test_check_array_pandas_dtype_casting():
     assert check_array(X_df).dtype == np.float32
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
 
+    X_df.iloc[:, 1] = X_df.iloc[:, 1].astype(np.int16)
+    # float16, int16, float32 casts to float32
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df.iloc[:, 2] = X_df.iloc[:, 2].astype(np.float16)
+    # float16, int16, float16 casts to float32
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df = X_df.astype(np.int16)
+    assert check_array(X_df).dtype == np.int16
+    # we're not using upcasting rules for determining
+    # the target type yet, so we cast to the default of float64
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float64
+
 
 def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
