@@ -208,6 +208,9 @@ def test_grid_search_pipeline_steps():
     assert isinstance(regressor_results[1], Ridge)
     assert not hasattr(regressor_results[0], 'coef_')
     assert not hasattr(regressor_results[1], 'coef_')
+    # check that we didn't modify the parameter grid that was passed
+    assert not hasattr(param_grid['regressor'][0], 'coef_')
+    assert not hasattr(param_grid['regressor'][1], 'coef_')
 
 
 def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
