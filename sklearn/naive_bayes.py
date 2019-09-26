@@ -1168,8 +1168,7 @@ class CategoricalNB(BaseDiscreteNB):
         #                    force_all_finite=True)
         X, y = check_X_y(X, y, accept_sparse=False, force_all_finite=True)
         X, y = check_X_y(X, y, dtype='int')
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):
@@ -1225,3 +1224,6 @@ class CategoricalNB(BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
