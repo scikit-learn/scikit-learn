@@ -907,7 +907,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-# TODO: Remove in 0.24 when None is removed for FeatureUnion
+# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
 @pytest.mark.parametrize('drop', ['drop', None])
 def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
@@ -1173,7 +1173,7 @@ def test_verbose(est, method, pattern, capsys):
 
 
 # TODO: Remove in 0.24 when None is removed
-def test_feature_union_warns_with_drop():
+def test_feature_union_warns_with_none():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
     with pytest.warns(DeprecationWarning, match=msg):
