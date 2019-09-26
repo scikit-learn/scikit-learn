@@ -244,7 +244,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
-        self.support_, self.support_vectors_, self.n_support_, \
+        self.support_, self.support_vectors_, self._n_support, \
             self.dual_coef_, self.intercept_, self.probA_, \
             self.probB_, self.fit_status_ = libsvm.fit(
                 X, y,
@@ -268,7 +268,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_, self.support_vectors_, dual_coef_data, \
-            self.intercept_, self.n_support_, \
+            self.intercept_, self._n_support, \
             self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
@@ -328,7 +328,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
-            X, self.support_, self.support_vectors_, self.n_support_,
+            X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
@@ -354,7 +354,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_,
+            self.probability, self._n_support,
             self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
@@ -407,7 +407,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             kernel = 'precomputed'
 
         return libsvm.decision_function(
-            X, self.support_, self.support_vectors_, self.n_support_,
+            X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
@@ -433,7 +433,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_,
+            self.probability, self._n_support,
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
@@ -483,6 +483,17 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     def _get_coef(self):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
+
+    @property
+    def n_support_(self):
+        check_is_fitted(self)
+        svm_type = LIBSVM_IMPL.index(self._impl)
+        if svm_type in (0, 1):
+            return self._n_support
+        else:
+            # SVR and OneClass
+            # _n_support has size 2, we make it size 1
+            return np.array([self._n_support[0]])
 
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
@@ -668,7 +679,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
 
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
-            X, self.support_, self.support_vectors_, self.n_support_,
+            X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
@@ -695,7 +706,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_,
+            self.probability, self._n_support,
             self.probA_, self.probB_)
 
     def _get_coef(self):
@@ -704,7 +715,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             coef = safe_sparse_dot(self.dual_coef_, self.support_vectors_)
         else:
             # 1vs1 classifier
-            coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
+            coef = _one_vs_one_coef(self.dual_coef_, self._n_support,
                                     self.support_vectors_)
             if sp.issparse(coef[0]):
                 coef = sp.vstack(coef).tocsr()

@@ -532,6 +532,10 @@ Changelog
   Now in these cases, fit() will fail with an Exception.
   :pr:`14286` by :user:`Alex Shacked <alexshacked>`.
 
+- |Fix| The `n_support_` attribute of :class:`svm.SVR` and
+  :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
+  has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
+
 :mod:`sklearn.tree`
 ...................
 
