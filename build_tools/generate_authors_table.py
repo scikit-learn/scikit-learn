@@ -130,12 +130,12 @@ def generate_table(contributors):
         ("    </style>"),
     ]
     for contributor in group_iterable(contributors):
-            lines.append("    <div>")
-            lines.append(
-                "    <a href='%s'><img src='%s' class='avatar' /></a> <br />" %
-                (contributor["html_url"], contributor["avatar_url"]))
-            lines.append("    <p>%s</p>" % (contributor["name"], ))
-            lines.append("    </div>")
+        lines.append("    <div>")
+        lines.append(
+            "    <a href='%s'><img src='%s' class='avatar' /></a> <br />" %
+            (contributor["html_url"], contributor["avatar_url"]))
+        lines.append("    <p>%s</p>" % (contributor["name"], ))
+        lines.append("    </div>")
     lines.append("    </div>")
     return '\n'.join(lines)
 
