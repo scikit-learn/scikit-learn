@@ -390,7 +390,7 @@ def test_set_params():
                  eclf1.get_params()["lr"].get_params()['C'])
 
 
-# TODO: Remove in 0.24 when None is removed in Voting*
+# TODO: Remove parametrization in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize("drop", [None, 'drop'])
 def test_set_estimator_none(drop):
     """VotingClassifier set_params should be able to set estimators as None or
@@ -505,7 +505,7 @@ def test_transform():
     )
 
 
-# TODO: Remove in 0.24 when None is removed in Voting*
+# TODO: Remove drop=None in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(
@@ -558,7 +558,7 @@ def test_deprecate_none_transformer():
             estimators=[('lr', None),
                         ('tree', DecisionTreeClassifier(random_state=0))])]
 
-    msg = ("Using None as a estimator is deprecated in version 0.22 and will "
+    msg = ("Using None as an estimator is deprecated in version 0.22 and will "
            "be removed in version 0.24. Please use 'drop' instead.")
     for est in ests:
         with pytest.warns(DeprecationWarning, match=msg):

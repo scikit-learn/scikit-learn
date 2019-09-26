@@ -87,7 +87,7 @@ class _BaseVoting(TransformerMixin, _BaseComposition):
         # TODO: Remove in 0.24 when None is removed in Voting*
         for _, clf in self.estimators:
             if clf is None:
-                warnings.warn("Using None as a estimator is deprecated "
+                warnings.warn("Using None as an estimator is deprecated "
                               "in version 0.22 and will be removed in "
                               "version 0.24. Please use 'drop' instead.",
                               DeprecationWarning)
@@ -154,7 +154,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``set_params``.
 
         .. versionchanged:: 0.22
-           Deprecated `None` as a estimators in favor of `'drop'`.
+           Deprecated `None` as an estimators in favor of `'drop'`.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -391,7 +391,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``set_params``.
 
         .. versionchanged:: 0.22
-           Deprecated `None` as a estimators in favor of `'drop'`.
+           Deprecated `None` as an estimators in favor of `'drop'`.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
