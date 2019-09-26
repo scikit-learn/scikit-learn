@@ -9,10 +9,6 @@ it with models learned with least squared error. The goal is to predict the
 number of insurance claims (or frequency) following car accidents for a
 policyholder given historical data over a population of policyholders.
 
-We start by defining a few helper functions for loading the data and
-visualizing results.
-
-
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018).
     `doi:10.2139/ssrn.3164764 <http://dx.doi.org/10.2139/ssrn.3164764>`_
@@ -46,7 +42,7 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
 
 
-def load_mtpl2(n_samples=100000):
+def load_mtpl2(n_samples=None):
     """Fetcher for French Motor Third-Party Liability Claims dataset
 
     Parameters
@@ -57,43 +53,27 @@ def load_mtpl2(n_samples=100000):
     """
 
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
-    df_freq['IDpol'] = df_freq['IDpol'].astype(np.int)
-    df_freq.set_index('IDpol', inplace=True)
-
-    # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True)['data']
-
-    # sum ClaimAmount over identical IDs
-    df_sev = df_sev.groupby('IDpol').sum()
-
-    df = df_freq.join(df_sev, how="left")
-    df["ClaimAmount"].fillna(0, inplace=True)
+    df = fetch_openml(data_id=41214, as_frame=True)['data']
 
     # unquote string fields
     for column_name in df.columns[df.dtypes.values == np.object]:
         df[column_name] = df[column_name].str.strip("'")
-    return df.iloc[:n_samples]
+    if n_samples is not None:
+        return df.iloc[:n_samples]
+    return df
 
 
 ##############################################################################
 #
-# 1. Loading datasets and pre-processing
-# --------------------------------------
+# Let's load the motor claim dataset. We ignore the severity data for this
+# study for the sake of simplicitly.
 #
-# We construct the freMTPL2 dataset by joining the freMTPL2freq table,
-# containing the number of claims (``ClaimNb``) with the freMTPL2sev table
-# containing the claim amount (``ClaimAmount``) for the same policy ids
-# (``IDpol``).
+# We also subsample the data for the sake of computational cost and running
+# time. Using the full dataset would lead to similar conclusions.
 
-df = load_mtpl2(n_samples=50000)
+df = load_mtpl2(n_samples=300000)
 
-# Note: filter out claims with zero amount, as the severity model
-# requires strictly positive target values.
-df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
-
-# correct for unreasonable observations (that might be data error)
-df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
+# Correct for unreasonable observations (that might be data error)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 
 ##############################################################################
@@ -133,14 +113,14 @@ linear_model_preprocessor = ColumnTransformer(
 # ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
 # and use ``Exposure`` as `sample_weight`.
 
-df["Frequency"] = df.ClaimNb / df.Exposure
+df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 
 print(
-   pd.cut(df.Frequency, [-1e-6, 1e-6, 1, 2, 3, 4, 5]).value_counts()
+   pd.cut(df["Frequency"], [-1e-6, 1e-6, 1, 2, 3, 4, 5]).value_counts()
 )
 
 print("Average Frequency = {}"
-      .format(np.average(df.Frequency, weights=df.Exposure)))
+      .format(np.average(df["Frequency"], weights=df["Exposure"])))
 
 ##############################################################################
 #
@@ -262,13 +242,13 @@ score_estimator(rf, df_test)
 # However because of a higher predictive power it also results in a smaller
 # Poisson deviance than the Poisson regression model.
 #
-# Not that Evaluating models with a single train / test split is prone to
-# random fluctuations. We can verify that we would also get equivalent
-# conclusions with cross-validated performance metrics.
+# Evaluating models with a single train / test split is prone to random
+# fluctuations. If computation resources allow, it should be verified that
+# cross-validated performance metrics would lead to similar conclusions.
 #
 # The qualitative difference between these models can also be visualized by
 # comparing the histogram of observed target values with that of predicted
-# values,
+# values:
 
 
 fig, axes = plt.subplots(1, 4, figsize=(16, 3))
@@ -293,8 +273,8 @@ for idx, model in enumerate([ridge, poisson, rf]):
 ##############################################################################
 #
 # The experimental data presents a long tail distribution for ``y``. In all
-# models we predict the mean expected value, so we will have necessairily
-# fewer extreme values. Additionally normal distribution used in ``Ridge`` and
+# models we predict the mean expected value, so we will have necessarily fewer
+# extreme values. Additionally normal distribution used in ``Ridge`` and
 # ``RandomForestRegressor`` has a constant variance, while for the Poisson
 # distribution used in ``PoissonRegressor``, the variance is proportional to
 # the mean predicted value.
@@ -364,12 +344,12 @@ for axi, model in zip(ax, [ridge,  poisson, rf]):
         df_test["Frequency"].values,
         y_pred,
         sample_weight=df_test["Exposure"].values,
-        n_bins=5)
+        n_bins=10)
 
     axi.plot(q, y_pred_seg, marker='o', linestyle="-", label="predictions")
     axi.plot(q, y_true_seg, marker='x', linestyle="--", label="observations")
     axi.set_xlim(0, 1.0)
-    axi.set_ylim(0, 0.3)
+    axi.set_ylim(0, 0.6)
     axi.set(
         title=model[-1].__class__.__name__,
         xlabel='Fraction of samples sorted by y_pred',
@@ -381,16 +361,13 @@ plt.tight_layout()
 
 ##############################################################################
 #
-# On the above figure, ``PoissonRegressor`` is the model which presents the
-# best consistency between predicted and observed targets, both for low and
-# high predicted target values.
+# The ``Ridge`` regression model can predict very low expected frequencies
+# that do not match the data. It can therefore severly under-estimate the risk
+# for some policyholders.
 #
-# The ridge regression model tends to predict very low expected frequencies
-# that do not match the data.
-#
-# The random forest regression model also tends to exaggerate low predicted
-# frequencies although to a lower extent than ridge. It also tends to
-# exaggerate high frequencies on the other hand.
+# ``PoissonRegressor`` and ``RandomForestRegressor`` show better consistency
+# between predicted and observed targets, especially for low predicted target
+# values.
 #
 # However, for some business applications, we are not necessarily interested
 # in the the ability of the model in predicting the expected frequency value
@@ -399,9 +376,8 @@ plt.tight_layout()
 # problem as a ranking problem rather than a regression problem.
 #
 # To compare the 3 models under this light on, one can plot the fraction of
-# cumulated number of claims vs the fraction of cumulated of exposure for test
-# samples ordered by the model predictions, from riskiest to safest according
-# to each model:
+# the number of claims vs the fraction of exposure for test samples ordered by
+# the model predictions, from riskiest to safest according to each model:
 
 
 def _cumulated_claims(y_true, y_pred, exposure):
@@ -433,16 +409,19 @@ cum_exposure, cum_claims = _cumulated_claims(
     df_test["Frequency"].values,
     df_test["Frequency"].values,
     df_test["Exposure"].values)
-ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label="Oracle")
+area = auc(cum_exposure, cum_claims)
+label = "Oracle (area under curve: {:.3f})".format(area)
+ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random Baseline
-ax.plot([0, 1], [0, 1], linestyle="--", color="black", label="Random baseline")
+ax.plot([0, 1], [0, 1], linestyle="--", color="black",
+        label="Random baseline")
 ax.set(
-    title="Cumulated claims by model",
-    xlabel='Fraction of cumulated exposure (from riskiest to safest)',
-    ylabel='Fraction of cumulated number of claims'
+    title="Cumulated number of claims by model",
+    xlabel='Fraction of exposure (from riskiest to safest)',
+    ylabel='Fraction of number of claims'
 )
-ax.legend()
+ax.legend(loc="lower right")
 
 ##############################################################################
 #
