@@ -552,6 +552,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
         if force_all_finite:
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
