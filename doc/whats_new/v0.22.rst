@@ -87,7 +87,7 @@ Changelog
 
 - |Fix| Fixed a bug where `elkan` algorithm in :class:`cluster.KMeans` was
   producing Segmentation Fault on large arrays due to integer index overflow.
-  :pr:`15057` by :user:`Vladimir Korolev <balodja@gmail.com>`.
+  :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
 
 :mod:`sklearn.compose`
 ......................
