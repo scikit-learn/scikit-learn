@@ -80,7 +80,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Calls scipy's L-BFGS-B optimizer.
 
     max_iter : int, optional (default=100)
-        The maximal number of iterations for solver algorithms.
+        The maximal number of iterations for the solver.
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the lbfgs solver,
@@ -113,7 +113,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Intercept (a.k.a. bias) added to linear predictor.
 
     n_iter_ : int
-        Actual number of iterations used in solver.
+        Actual number of iterations used in the solver.
     """
     def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
@@ -423,14 +423,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    solver : {'lbfgs'}, optional (default='lbfgs')
-        Algorithm to use in the optimization problem:
-
-        'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
-
     max_iter : int, optional (default=100)
-        The maximal number of iterations for solver algorithms.
+        The maximal number of iterations for the solver.
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the lbfgs solver,
@@ -458,16 +452,16 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         Intercept (a.k.a. bias) added to linear predictor.
 
     n_iter_ : int
-        Actual number of iterations used in solver.
+        Actual number of iterations used in the solver.
     """
     def __init__(self, alpha=1.0, fit_intercept=True,
-                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+                 max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="poisson", link='log',
-                         solver=solver, max_iter=max_iter, tol=tol,
-                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
+                         family="poisson", link='log', max_iter=max_iter,
+                         tol=tol, warm_start=warm_start, copy_X=copy_X,
+                         verbose=verbose)
 
     @property
     def family(self):
@@ -511,14 +505,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    solver : {'lbfgs'}, optional (default='lbfgs')
-        Algorithm to use in the optimization problem:
-
-        'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
-
     max_iter : int, optional (default=100)
-        The maximal number of iterations for solver algorithms.
+        The maximal number of iterations for the solver.
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the lbfgs solver,
@@ -546,16 +534,16 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Intercept (a.k.a. bias) added to linear predictor.
 
     n_iter_ : int
-        Actual number of iterations used in solver.
+        Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, solver='lbfgs',
+    def __init__(self, alpha=1.0, fit_intercept=True,
                  max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="gamma", link='log',
-                         solver=solver, max_iter=max_iter, tol=tol,
-                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
+                         family="gamma", link='log', max_iter=max_iter,
+                         tol=tol, warm_start=warm_start, copy_X=copy_X,
+                         verbose=verbose)
 
     @property
     def family(self):
@@ -632,14 +620,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    solver : {'lbfgs'}, optional (default='lbfgs')
-        Algorithm to use in the optimization problem:
-
-        'lbfgs'
-            Calls scipy's L-BFGS-B optimizer.
-
     max_iter : int, optional (default=100)
-        The maximal number of iterations for solver algorithms.
+        The maximal number of iterations for the solver.
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the lbfgs solver,
@@ -666,15 +648,15 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         Intercept (a.k.a. bias) added to linear predictor.
 
     n_iter_ : int
-        Actual number of iterations used in solver.
+        Actual number of iterations used in the solver.
     """
     def __init__(self, power=0.0, alpha=1.0, fit_intercept=True,
-                 link='auto', solver='lbfgs', max_iter=100, tol=1e-4,
+                 link='auto', max_iter=100, tol=1e-4,
                  warm_start=False, copy_X=True, check_input=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family=TweedieDistribution(power=power), link=link,
-                         solver=solver, max_iter=max_iter, tol=tol,
+                         max_iter=max_iter, tol=tol,
                          warm_start=warm_start, copy_X=copy_X, verbose=verbose)
 
     @property
