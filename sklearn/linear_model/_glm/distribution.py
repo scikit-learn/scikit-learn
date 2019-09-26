@@ -245,6 +245,9 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     @power.setter
     def power(self, power):
+        # We use a property with a setter, to update lower and
+        # upper bound when the power parameter is updated e.g. in grid
+        # search.
         if not isinstance(power, numbers.Real):
             raise TypeError('power must be a real number, input was {0}'
                             .format(power))
