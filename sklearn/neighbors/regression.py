@@ -13,7 +13,6 @@
 import warnings
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin

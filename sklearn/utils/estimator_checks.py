@@ -35,8 +35,7 @@ from ..linear_model import Ridge
 from ..linear_model.stochastic_gradient import BaseSGD
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
-                    BaseEstimator)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
