@@ -85,6 +85,10 @@ Changelog
   between `n_jobs=1` and `n_jobs>1` due to the handling of the random state.
   :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
 
+- |Fix| Fixed a bug where `elkan` algorithm in :class:`cluster.KMeans` was
+  producing Segmentation Fault on large arrays due to integer index overflow.
+  :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
+
 :mod:`sklearn.compose`
 ......................
 
