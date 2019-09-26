@@ -702,8 +702,7 @@ class TSNE(BaseEstimator):
 
                 if self.metric == "euclidean":
                     distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True,
-                                                   n_jobs=self.n_jobs)
+                                                   squared=True)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
