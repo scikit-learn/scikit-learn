@@ -306,7 +306,7 @@ cdef class DistanceMetric:
         """
         return self.dist(x1, x2, size)
 
-    cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
+    cdef int pdist(self, const DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         """compute the pairwise distances between points in X"""
         cdef ITYPE_t i1, i2
         for i1 in range(X.shape[0]):
@@ -315,7 +315,7 @@ cdef class DistanceMetric:
                 D[i2, i1] = D[i1, i2]
         return 0
 
-    cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+    cdef int cdist(self, const DTYPE_t[:, ::1] X, const DTYPE_t[:, ::1] Y,
                    DTYPE_t[:, ::1] D) except -1:
         """compute the cross-pairwise distances between arrays X and Y"""
         cdef ITYPE_t i1, i2
