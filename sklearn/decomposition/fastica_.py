@@ -289,9 +289,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     else:
         if return_X_mean:
             if return_n_iter:
-                return None, sources, None, est.n_iter_
+                return None, est._unmixing, sources, None, est.n_iter_
             else:
-                return None, sources, None
+                return None, est._unmixing, sources, None
         else:
             if return_n_iter:
                 return None, est._unmixing, sources, est.n_iter_
