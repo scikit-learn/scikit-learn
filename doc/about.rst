@@ -117,14 +117,10 @@ The project would like to thank the following funders.
    <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
-.. figure:: images/png-logo-inria-la-fondation.png
-   :width: 100pt
-   :target: https://scikit-learn.fondation-inria.fr/en/home/
-
-   The `Scikit-Learn Consortium at Inria Foundation
-   <https://scikit-learn.fondation-inria.fr/en/home/>`_ `Members 
-   <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ fund Olivier
-   Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
+The `Members <https://scikit-learn.fondation-inria.fr/en/home/#sponsors>`_ of
+the `Scikit-Learn Consortium at Inria Foundation
+<https://scikit-learn.fondation-inria.fr/en/home/>`_  fund Olivier
+Grisel, Guillaume Lemaitre, Jérémie Du Boisberranger and Chiara Marmo.
 
 .. raw:: html
 
@@ -158,6 +154,11 @@ The project would like to thank the following funders.
    :width: 70pt
    :target: https://www.dataiku.com/
 
+.. |inria| image:: images/inria-logo.jpg
+   :width: 100pt
+   :target: https://www.inria.fr
+
+
 .. raw:: html
 
    <div class="sk-sponsor-div-box">
@@ -175,9 +176,9 @@ The project would like to thank the following funders.
    | |intel| | |nvidia| |
    +---------+----------+
    |      ........      |
-   +--------------------+
-   |    |dataiku|       |
-   +--------------------+
+   +---------+----------+
+   ||dataiku|| |inria|  |
+   +---------+----------+
 
 .. raw:: html
 

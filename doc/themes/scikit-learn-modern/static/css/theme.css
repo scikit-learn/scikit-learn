@@ -1038,7 +1038,7 @@ div.sk-page-content img.map {
 
 div.sk-sponsor-div {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   -webkit-flex-align: center;
   -ms-flex-align: center;
   -webkit-align-items: center;
@@ -1046,11 +1046,13 @@ div.sk-sponsor-div {
 }
 
 div.sk-sponsor-div-box {
-  width: 50%;
+  width: 100%;
 }
 
-div.sk-sponsor-div-box {
-  width: 50%;
+@media screen and (min-width: 500px) {
+  div.sk-sponsor-div-box {
+    width: 50%;
+  }
 }
 
 table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
