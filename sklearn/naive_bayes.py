@@ -1158,8 +1158,7 @@ class CategoricalNB(BaseDiscreteNB):
         #                 force_all_finite=True)
         X = check_array(X, accept_sparse=False, force_all_finite=True)
         X = check_array(X, dtype='int')
-        if np.any(X < 0):
-            raise ValueError("X must not contain negative values.")
+        check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
