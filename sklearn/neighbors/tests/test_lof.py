@@ -17,8 +17,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.estimator_checks import parametrize_with_checks
 
 from sklearn.datasets import load_iris
 
@@ -207,11 +207,11 @@ def test_hasattr_prediction():
     assert not hasattr(clf, 'score_samples')
 
 
-def test_novelty_true_common_tests():
-
+@parametrize_with_checks([neighbors.LocalOutlierFactor(novelty=True)])
+def test_novelty_true_common_tests(estimator, check):
     # the common tests are run for the default LOF (novelty=False).
     # here we run these common tests for LOF when novelty=True
-    check_estimator(neighbors.LocalOutlierFactor(novelty=True))
+    check(estimator)
 
 
 def test_predicted_outlier_number():

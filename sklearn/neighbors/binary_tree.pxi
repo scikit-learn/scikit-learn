@@ -972,8 +972,8 @@ cdef class BinaryTree:
     cdef np.ndarray node_data_arr
     cdef np.ndarray node_bounds_arr
 
-    cdef readonly DTYPE_t[:, ::1] data
-    cdef readonly DTYPE_t[::1] sample_weight
+    cdef readonly const DTYPE_t[:, ::1] data
+    cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
@@ -1280,7 +1280,7 @@ cdef class BinaryTree:
 
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
-        cdef DTYPE_t[:, ::1] Xarr = np_Xarr
+        cdef const DTYPE_t[:, ::1] Xarr = np_Xarr
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
         cdef DTYPE_t* pt
@@ -1410,7 +1410,7 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef const DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
