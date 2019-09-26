@@ -27,7 +27,7 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
@@ -1819,9 +1819,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     If Y is given (default is None), then the returned matrix is the pairwise
     kernel between the arrays from both X and Y.
 
-    Valid values for metric are::
+    Valid values for metric are:
         ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
-         'laplacian', 'sigmoid', 'cosine']
+        'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 
