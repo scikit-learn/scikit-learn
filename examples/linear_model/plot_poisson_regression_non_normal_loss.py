@@ -263,8 +263,9 @@ score_estimator(rf, df_test)
 # random fluctuations. We can verify that we would also get equivalent
 # conclusions with cross-validated performance metrics.
 #
-# The qualitative difference between these models can also be visualized by comparing the
-# histogram of observed target values with that of predicted values,
+# The qualitative difference between these models can also be visualized by
+# comparing the histogram of observed target values with that of predicted
+# values,
 
 
 fig, axes = plt.subplots(1, 4, figsize=(16, 3))
@@ -306,7 +307,8 @@ for axi in axes:
 # the mean observed target:
 
 
-def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None, n_bins=100):
+def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
+                                  n_bins=100):
     """Compare predictions and observations for bins ordered by y_pred
 
     We order the samples by ``y_pred`` and split it in bins.
@@ -363,7 +365,7 @@ for axi, (label, model) in zip(ax, [
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(
         df_test["Frequency"].values,
         y_pred,
-        sample_weights=df_test["Exposure"].values,
+        sample_weight=df_test["Exposure"].values,
         n_bins=5)
 
     axi.plot(q, y_pred_seg, marker='o', linestyle="-", label="predictions")
@@ -391,11 +393,21 @@ for axi, (label, model) in zip(ax, [
 # The random forest regression model also tends to exaggerate low predicted
 # frequencies although to a lower extent than ridge. It also tends to
 # exaggerate high frequencies on the other hand.
-
+#
+# However for some business applications we are not necessarily interested in
+# the the ability of the model in predicting the expected frequency value but
+# instead in predicting which customer profiles are the riskiest and which are
+# the safest. In this case the model evaluation would cast the problem as a
+# ranking problem rather than a regression problem.
+#
+# To compare the 3 models under this light on, one can plot the fraction
+# of cumulated number of claims vs the fraction of cumulated of exposure
+# for test samples ordered by the model predictions, from riskiest to safest
+# according to each model:
 
 
 def _cumulated_claims(y_true, y_pred, exposure):
-    idx_sort = np.argsort(y_pred)[::-1]
+    idx_sort = np.argsort(y_pred)[::-1]  # from riskiest to safest
     sorted_exposure = exposure[idx_sort]
     sorted_frequencies = y_true[idx_sort]
     cumulated_exposure = np.cumsum(sorted_exposure)
@@ -420,7 +432,7 @@ for (label, model) in [
         df_test["Exposure"].values)
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
-# Oracle model
+# Oracle model: y_pred == y_test
 cum_exposure, cum_claims = _cumulated_claims(
     df_test["Frequency"].values,
     df_test["Frequency"].values,
@@ -433,6 +445,22 @@ ax.set(
     title="Cumulated claims by model",
     xlabel='Fraction of cumulated exposure (from riskiest to safest)',
     ylabel='Fraction of cumulated number of claims'
-
 )
 ax.legend()
+
+##############################################################################
+#
+# This plot reveals that the random forest model is almost uniformly the best
+# at sorting customers by risk profiles even if the absolute value of the
+# predicted expected frequencies are less well calibrated than for the linear
+# Poisson model.
+#
+#
+# All three models are significantly better than chance but also very far from
+# making perfect predictions.
+#
+# This last point is expected due to the nature of the problem: the occurence
+# of accidents is mostly dominated by environmental causes that are not
+# captured in the columns of the dataset.
+
+plt.show()
