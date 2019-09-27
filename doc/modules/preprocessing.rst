@@ -68,7 +68,7 @@ operation on a single array-like dataset::
         >>> print_options = np.get_printoptions()
         >>> np.set_printoptions(suppress=True)
 
-Scaled data has zero mean and unit/factor 2 standard deviation in
+Scaled data has zero mean and unit or factor 2 standard deviation [Gelman2008]_.
 refernce to **Gelman, A. (2008). Scaling regression inputs by** 
 **dividing by two standard deviations. Statistics in medicine, 27(15)
 , 2865-2873**.::
