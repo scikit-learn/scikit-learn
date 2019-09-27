@@ -575,12 +575,13 @@ Changelog
   - ``enforce_estimator_tags_y``
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
+  - ``safe_indexing``
 
-- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
-  index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
-  refactoring was done.
-  :pr:`14035` and :pr:`14475` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Enhancement| :func:`utils.safe_indexing` (now deprecated) accepts an
+  ``axis`` parameter to index array-like across rows and columns. The column
+  indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
+  DataFrame. An additional refactoring was done. :pr:`14035` and :pr:`14475`
+  by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.

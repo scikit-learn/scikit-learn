@@ -270,7 +270,14 @@ def _determine_key_type(key):
     raise ValueError(err_msg)
 
 
+# TODO: remove in 0.24
+@deprecated("safe_indexing is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def safe_indexing(X, indices, axis=0):
+    return _safe_indexing(X, indices, axis)
+
+
+def _safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
 
     Parameters
