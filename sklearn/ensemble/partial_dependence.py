@@ -211,12 +211,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ----------
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
-<<<<<<< HEAD
     X : array-like of shape (n_samples, n_features)
-=======
-
-    X : array-like, shape=(n_samples, n_features)
->>>>>>> upstream/master
         The data on which ``gbrt`` was trained.
 
     features : seq of ints, strings, or tuples of ints or strings
