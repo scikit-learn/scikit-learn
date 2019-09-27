@@ -549,7 +549,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         memory.
 
     with_std : boolean, 1 or 2, True by default
-        If 1 or True, scale the data to unit variance (or equivalently,
+        - If `1` or `True`, scale the data to unit variance (or equivalently,
         unit standard deviation);
         - otherwise `2`, scale the data to using scaling factor 2
         standard deviation. See [1] for `with_std=2`
