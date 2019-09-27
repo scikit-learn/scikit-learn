@@ -31,7 +31,7 @@ normally distributed data: Gaussian with **zero mean and unit/factor two standar
 Reference
 ---------
 
-Gelman, A. (2008). Scaling regression inputs by 
+    .. [Gelman2008] Gelman, A. (2008). Scaling regression inputs by 
 dividing by two standard deviations. Statistics in medicine, 27(15), 2865-2873
 
 In practice we often ignore the shape of the distribution and just
