@@ -21,9 +21,8 @@ Note that the use of ``memory`` to enable caching becomes interesting when the
 fitting of a transformer is costly.
 
 ###############################################################################
-# Illustration of ``Pipeline`` and ``GridSearchCV``
+Illustration of ``Pipeline`` and ``GridSearchCV``
 ###############################################################################
-
 This section illustrates the use of a ``Pipeline`` with
  ``GridSearchCV``
 """
