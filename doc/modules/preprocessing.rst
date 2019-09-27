@@ -26,7 +26,7 @@ Standardization, or mean removal and variance scaling
 machine learning estimators** implemented in scikit-learn; they might behave
 badly if the individual features do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit/factor two standard**
-**deviation** in reference to **Gelman, A. (2008). Scaling regression inputs by** 
+**deviation** [Gelman2008]_. 
 **dividing by two standard deviations. Statistics in medicine, 27(15), 2865-2873**.
 
 Reference
