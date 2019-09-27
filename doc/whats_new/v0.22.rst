@@ -573,6 +573,8 @@ Changelog
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
