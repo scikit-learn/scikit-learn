@@ -18,6 +18,8 @@ from . import empirical_covariance, EmpiricalCovariance
 from ..utils.extmath import fast_logdet
 from ..utils import check_random_state, check_array
 
+from joblib import Parallel, delayed
+
 
 # Minimum Covariance Determinant
 #   Implementing of an algorithm by Rousseeuw & Van Driessen described in
@@ -93,12 +95,11 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
                    random_state=random_state)
 
 
-def _c_step(X, n_support, random_state, remaining_iterations=30,
+def _c_step( X, n_support, random_state, remaining_iterations=30,
             initial_estimates=None, verbose=False,
             cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
     dist = np.inf
-
     # Initialisation
     support = np.zeros(n_samples, dtype=bool)
     if initial_estimates is None:
@@ -183,7 +184,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
                       verbose=False,
                       cov_computation_method=empirical_covariance,
-                      random_state=None):
+                      random_state=None, n_jobs=-1):
     """Finds the best pure subset of observations to compute MCD from it.
 
     The purpose of this function is to find the best sets of n_support
@@ -272,27 +273,24 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
                         " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
-    # compute `n_trials` location and shape estimates candidates in the subset
-    all_estimates = []
     if not run_from_estimates:
-        # perform `n_trials` computations from random initial supports
-        for j in range(n_trials):
-            all_estimates.append(
-                _c_step(
-                    X, n_support, remaining_iterations=n_iter, verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state))
+        # No need for parallelization here because where are using parallel in upper routine
+        all_estimates = Parallel(n_jobs=1)(delayed(_c_step)(
+            X=X, n_support=n_support, remaining_iterations=n_iter, verbose=verbose,
+            cov_computation_method=cov_computation_method,
+            random_state=random_state,
+        ) for j in range(n_trials))
     else:
-        # perform computations from every given initial estimates
-        for j in range(n_trials):
-            initial_estimates = (estimates_list[0][j], estimates_list[1][j])
-            all_estimates.append(_c_step(
-                X, n_support, remaining_iterations=n_iter,
-                initial_estimates=initial_estimates, verbose=verbose,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state))
+        all_estimates = Parallel(n_jobs=n_jobs)(delayed(_c_step)(
+            X, n_support, remaining_iterations=n_iter,
+            initial_estimates=(estimates_list[0][j], estimates_list[1][j]), verbose=verbose,
+            cov_computation_method=cov_computation_method,
+            random_state=random_state
+        ) for j in range(n_trials))
+    ############
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
         zip(*all_estimates)
+
     # find the `n_best` best results among the `n_trials` ones
     index_best = np.argsort(all_dets_sub)[:select]
     best_locations = np.asarray(all_locs_sub)[index_best]
@@ -305,7 +303,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
 def fast_mcd(X, support_fraction=None,
              cov_computation_method=empirical_covariance,
-             random_state=None):
+             random_state=None, n_jobs=-1):
     """Estimates the Minimum Covariance Determinant matrix.
 
     Read more in the :ref:`User Guide <robust_covariance>`.
@@ -435,18 +433,34 @@ def fast_mcd(X, support_fraction=None,
             all_best_covariances = np.zeros((n_best_tot, n_features,
                                              n_features))
             n_best_sub = 2
-        for i in range(n_subsets):
-            low_bound = i * n_samples_subsets
-            high_bound = low_bound + n_samples_subsets
-            current_subset = X[samples_shuffle[low_bound:high_bound]]
-            best_locations_sub, best_covariances_sub, _, _ = select_candidates(
-                current_subset, h_subset, n_trials,
+
+        # start parallel loop
+        def _select_candidates(x, n_support, n_trials, select=1, n_iter=30,
+                      verbose=False,
+                      cov_computation_method=empirical_covariance,
+                      random_state=None, n_jobs=-1, iter=None):
+
+            return select_candidates(x, n_support, n_trials, select=select, n_iter=n_iter,
+                      verbose=verbose,
+                      cov_computation_method=cov_computation_method,
+                      random_state=random_state, n_jobs=n_jobs), iter
+
+        results = Parallel(n_jobs=n_jobs)(delayed(_select_candidates)(
+                x=X[samples_shuffle[(i * n_samples_subsets):(i * n_samples_subsets + n_samples_subsets)]],
+                n_support=h_subset, n_trials=n_trials,
                 select=n_best_sub, n_iter=2,
                 cov_computation_method=cov_computation_method,
-                random_state=random_state)
+                random_state=random_state.randint(100000),
+                n_jobs=1,
+                iter=i
+            ) for i in range(n_subsets))
+
+        for result, i in results:
+            best_locations_sub, best_covariances_sub, _, _ = result
             subset_slice = np.arange(i * n_best_sub, (i + 1) * n_best_sub)
             all_best_locations[subset_slice] = best_locations_sub
             all_best_covariances[subset_slice] = best_covariances_sub
+
         # 2. Pool the candidate supports into a merged set
         # (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
@@ -457,6 +471,7 @@ def fast_mcd(X, support_fraction=None,
         else:
             n_best_merged = 1
         # find the best couples (location, covariance) on the merged set
+
         selection = random_state.permutation(n_samples)[:n_samples_merged]
         locations_merged, covariances_merged, supports_merged, d = \
             select_candidates(
@@ -464,7 +479,9 @@ def fast_mcd(X, support_fraction=None,
                 n_trials=(all_best_locations, all_best_covariances),
                 select=n_best_merged,
                 cov_computation_method=cov_computation_method,
-                random_state=random_state)
+                random_state=random_state,
+                n_jobs=n_jobs)
+
         # 3. Finally get the overall best (locations, covariance) couple
         if n_samples < 1500:
             # directly get the best couple (location, covariance)
@@ -482,7 +499,9 @@ def fast_mcd(X, support_fraction=None,
                     n_trials=(locations_merged, covariances_merged),
                     select=1,
                     cov_computation_method=cov_computation_method,
-                    random_state=random_state)
+                    random_state=random_state,
+                    n_jobs=n_jobs)
+
             location = locations_full[0]
             covariance = covariances_full[0]
             support = supports_full[0]
@@ -495,12 +514,14 @@ def fast_mcd(X, support_fraction=None,
         locations_best, covariances_best, _, _ = select_candidates(
             X, n_support, n_trials=n_trials, select=n_best, n_iter=2,
             cov_computation_method=cov_computation_method,
-            random_state=random_state)
+            random_state=random_state,
+            n_jobs=n_jobs)
         # 2. Select the best couple on the full dataset amongst the 10
         locations_full, covariances_full, supports_full, d = select_candidates(
             X, n_support, n_trials=(locations_best, covariances_best),
             select=1, cov_computation_method=cov_computation_method,
-            random_state=random_state)
+            random_state=random_state,
+            n_jobs=n_jobs)
         location = locations_full[0]
         covariance = covariances_full[0]
         support = supports_full[0]
@@ -547,6 +568,12 @@ class MinCovDet(EmpiricalCovariance):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -613,11 +640,12 @@ class MinCovDet(EmpiricalCovariance):
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(self, store_precision=True, assume_centered=False,
-                 support_fraction=None, random_state=None):
+                 support_fraction=None, random_state=None, n_jobs=-1):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
         self.support_fraction = support_fraction
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
         """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
@@ -647,7 +675,8 @@ class MinCovDet(EmpiricalCovariance):
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
             X, support_fraction=self.support_fraction,
             cov_computation_method=self._nonrobust_covariance,
-            random_state=random_state)
+            random_state=random_state,
+            n_jobs=self.n_jobs)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(X[raw_support],
