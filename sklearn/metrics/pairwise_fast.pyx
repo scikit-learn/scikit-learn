@@ -4,6 +4,7 @@
 #
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
+#         Paolo Toccaceli
 #
 # License: BSD 3 clause
 
@@ -55,18 +56,20 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     cdef int n = D.shape[1]
 
     # We scan the matrices row by row.
-    # Given row px in X and row py in Y, we find the positions (i and j respectively), in .indices where the indices
-    # for the two rows start.
-    # If the indices (ix and iy) are the same, the corresponding data values are processed and the cursors i and j are
-    # advanced.
-    # If not, the lowest index is considered. Its associated data value is processed and its cursor is advanced.
+    # Given row px in X and row py in Y, we find the positions (i and j
+    # respectively), in .indices where the indices for the two rows start.
+    # If the indices (ix and iy) are the same, the corresponding data values
+    # are processed and the cursors i and j are advanced.
+    # If not, the lowest index is considered. Its associated data value is
+    # processed and its cursor is advanced.
     # We proceed like this until one of the cursors hits the end for its row.
     # Then we process all remaining data values in the other row.
 
     # Below the avoidance of inplace operators is intentional.
-    # When prange is used, the inplace operator has a special meaning, i.e. it signals a "reduction"
+    # When prange is used, the inplace operator has a special meaning, i.e. it
+    # signals a "reduction"
 
-    for px in prange(m,nogil=True):
+    for px in prange(m, nogil=True):
         for py in range(n):
             i = X_indptr[px]
             j = Y_indptr[py]

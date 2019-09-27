@@ -406,6 +406,10 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
+- |Efficiency| Improved performance of
+  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
+  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
