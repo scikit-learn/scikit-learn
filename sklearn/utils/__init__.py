@@ -403,7 +403,7 @@ def _get_column_indices(X, key):
     elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
-            idx = safe_indexing(np.arange(n_columns), key)
+            idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'
