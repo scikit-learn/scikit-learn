@@ -180,11 +180,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 expanded_class_weight = compute_sample_weight(
                     self.class_weight, y_original)
 
-        else:
-            self.classes_ = [None] * self.n_outputs_
-            self.n_classes_ = [1] * self.n_outputs_
-
-        self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+            self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -341,7 +337,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_weight_leaf,
                                                 random_state)
 
-        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        if is_classifier(self):
+            self.tree_ = Tree(self.n_features_,
+                              self.n_classes_, self.n_outputs_)
+        else:
+            self.tree_ = Tree(self.n_features_,
+                              # TODO: tree should't need this in this case
+                              np.array([1] * self.n_outputs_, dtype=np.intp),
+                              self.n_outputs_)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -362,7 +365,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
@@ -505,9 +508,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.ccp_alpha == 0.0:
             return
 
-        # build pruned treee
-        n_classes = np.atleast_1d(self.n_classes_)
-        pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        # build pruned tree
+        if is_classifier(self):
+            n_classes = np.atleast_1d(self.n_classes_)
+            pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        else:
+            pruned_tree = Tree(self.n_features_,
+                               # TODO: the tree shouldn't need this param
+                               np.array([1] * self.n_outputs_, dtype=np.intp),
+                               self.n_outputs_)
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
         self.tree_ = pruned_tree
@@ -1213,6 +1222,22 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
+
+    @property
+    def classes_(self):
+        # TODO: Remove method in 0.24
+        msg = ("the classes_ attribute is to be deprecated from version "
+               "0.22 and will be removed in 0.24.")
+        warnings.warn(msg, DeprecationWarning)
+        return np.array([None] * self.n_outputs_)
+
+    @property
+    def n_classes_(self):
+        # TODO: Remove method in 0.24
+        msg = ("the n_classes_ attribute is to be deprecated from version "
+               "0.22 and will be removed in 0.24.")
+        warnings.warn(msg, DeprecationWarning)
+        return np.array([1] * self.n_outputs_, dtype=np.intp)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):

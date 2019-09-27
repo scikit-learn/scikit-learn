@@ -28,7 +28,7 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg, _check_optimize_result
+from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
@@ -933,8 +933,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
-            w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
-                                     maxiter=max_iter, tol=tol)
+            w0, n_iter_i = _newton_cg(hess, func, grad, w0, args=args,
+                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, None,
