@@ -382,6 +382,12 @@ def test_check_array_pandas_dtype_casting():
     # the target type yet, so we cast to the default of float64
     assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float64
 
+    # check that we handle pandas dtypes in a semi-reasonable way
+    # this is actually tricky because we can't really know that this
+    # should be integer ahead of converting it.
+    assert (check_array(pd.DataFrame(pd.Categorical([1, 2, 3]))).dtype
+            == np.int64)
+
 
 def test_check_array_on_mock_dataframe():
     arr = np.array([[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]])
