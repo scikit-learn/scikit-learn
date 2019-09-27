@@ -1081,7 +1081,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         Estimated targets as returned by a classifier.
 
     beta : float
-        Weight of recall in harmonic mean.
+        Determines the weight of recall in the combined score.
 
     labels : list, optional
         The set of labels to include when ``average != 'binary'``, and their
