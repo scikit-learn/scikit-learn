@@ -244,7 +244,7 @@ object::
 Transforming target in regression
 =================================
 
-:class:`~sklearn.compose.TransformedTargetRegressor`  transforms the
+:class:`~sklearn.compose.TransformedTargetRegressor` transforms the
 targets ``y`` before fitting a regression model. The predictions are mapped
 back to the original space via an inverse transform. It takes as an argument
 the regressor that will be used for prediction, and the transformer that will
