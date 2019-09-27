@@ -453,7 +453,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
-        dtype_orig = np.result_type(*array.dtypes)
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+            dtype_orig = np.result_type(*array.dtypes)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
