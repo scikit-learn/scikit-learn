@@ -95,7 +95,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
                    random_state=random_state)
 
 
-def _c_step( X, n_support, random_state, remaining_iterations=30,
+def _c_step(X, n_support, random_state, remaining_iterations=30,
             initial_estimates=None, verbose=False,
             cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
@@ -274,16 +274,19 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
                         " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
     if not run_from_estimates:
-        # No need for parallelization here because where are using parallel in upper routine
+        # no need for parallelization here
+        # because where are using parallel in upper routine
         all_estimates = Parallel(n_jobs=1)(delayed(_c_step)(
-            X=X, n_support=n_support, remaining_iterations=n_iter, verbose=verbose,
+            X=X, n_support=n_support, remaining_iterations=n_iter,
+            verbose=verbose,
             cov_computation_method=cov_computation_method,
             random_state=random_state,
         ) for j in range(n_trials))
     else:
         all_estimates = Parallel(n_jobs=n_jobs)(delayed(_c_step)(
             X, n_support, remaining_iterations=n_iter,
-            initial_estimates=(estimates_list[0][j], estimates_list[1][j]), verbose=verbose,
+            initial_estimates=(estimates_list[0][j], estimates_list[1][j]),
+            verbose=verbose,
             cov_computation_method=cov_computation_method,
             random_state=random_state
         ) for j in range(n_trials))
@@ -436,17 +439,21 @@ def fast_mcd(X, support_fraction=None,
 
         # start parallel loop
         def _select_candidates(x, n_support, n_trials, select=1, n_iter=30,
-                      verbose=False,
-                      cov_computation_method=empirical_covariance,
-                      random_state=None, n_jobs=-1, iter=None):
+                               verbose=False,
+                               cov_computation_method=empirical_covariance,
+                               random_state=None, n_jobs=-1, iter=None):
 
-            return select_candidates(x, n_support, n_trials, select=select, n_iter=n_iter,
-                      verbose=verbose,
-                      cov_computation_method=cov_computation_method,
-                      random_state=random_state, n_jobs=n_jobs), iter
+            return select_candidates(
+                x, n_support, n_trials, select=select,
+                n_iter=n_iter,
+                verbose=verbose,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state, n_jobs=n_jobs), iter
 
         results = Parallel(n_jobs=n_jobs)(delayed(_select_candidates)(
-                x=X[samples_shuffle[(i * n_samples_subsets):(i * n_samples_subsets + n_samples_subsets)]],
+                x=X[samples_shuffle[(i * n_samples_subsets):
+                                    (i * n_samples_subsets +
+                                     n_samples_subsets)]],
                 n_support=h_subset, n_trials=n_trials,
                 select=n_best_sub, n_iter=2,
                 cov_computation_method=cov_computation_method,
