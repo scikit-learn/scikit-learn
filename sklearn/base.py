@@ -323,6 +323,57 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
+    def _check_warm_start_with(self, warm_start_with):
+        # Return True if should warm start
+
+        if not hasattr(self, '_warmstartable_parameters'):
+            raise ValueError(
+                "None of the {} parameters can be warm-started."
+                .format(self.__class__.__name__)
+            )
+
+        if not warm_start_with:  # None or empty dict
+            return False
+
+        def find_param(param_name):
+            # util to make sure the param is warm-startable, and to know
+            # whether the param must be increase or decrease while
+            # warm-started.
+            for warmstartable_param in self._warmstartable_parameters:
+                if param_name == warmstartable_param[1:]:
+                    must_increase = (warmstartable_param[0] == '+')
+                    return must_increase
+
+            # No match found, raise error
+            raise ValueError(
+                "The {} parameter cannot be warm-started."
+                .format(param_name)
+            )
+
+        for param_name, new_value in warm_start_with.items():
+            must_increase = find_param(param_name)
+            current_value = self.get_params()[param_name]
+            if (must_increase and new_value < current_value):
+                raise ValueError(
+                    "The {} class can only be warm-started with increasing "
+                    "values of {}. Current value is {}, requesting new value "
+                    "of {}."
+                    .format(self.__class__.__name__, param_name,
+                            current_value, new_value)
+                )
+            elif (not must_increase and new_value > current_value):
+                raise ValueError(
+                    "The {} class can only be warm-started with decreasing "
+                    "values of {}. Current value is {}, requesting new value "
+                    "of {}."
+                    .format(self.__class__.__name__, param_name,
+                            current_value, new_value)
+                )
+
+            # All went well, setting new parameter value
+            self.set_params(**{param_name: new_value})
+        return True  # must warm_start
+
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""

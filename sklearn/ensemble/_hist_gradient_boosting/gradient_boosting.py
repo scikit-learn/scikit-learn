@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import warnings
 
 import numpy as np
 from timeit import default_timer as time
@@ -24,6 +25,8 @@ from .loss import _LOSSES
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
+
+    _warmstartable_parameters = ['+max_iter']
 
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
@@ -80,7 +83,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
 
-    def fit(self, X, y):
+    def fit(self, X, y, warm_start_with=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -106,10 +109,16 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         rng = check_random_state(self.random_state)
 
+        # For backward compat (for now)
+        if self.warm_start:
+            warnings.warn("warm_start parameter is deprecated", DeprecationWarning)
+            warm_start_with = {'max_iter': self.max_iter}
+
         # When warm starting, we want to re-use the same seed that was used
         # the first time fit was called (e.g. for subsampling or for the
         # train/val split).
-        if not (self.warm_start and self._is_fitted()):
+        warm_start = self._check_warm_start_with(warm_start_with)
+        if not (warm_start and self._is_fitted()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max,
                                             dtype='u8')
 
@@ -173,7 +182,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples = X_binned_train.shape[0]
 
         # First time calling fit, or no warm start
-        if not (self._is_fitted() and self.warm_start):
+        if not (self._is_fitted() and warm_start):
             # Clear random state and score attributes
             self._clear_state()
 
