@@ -147,7 +147,9 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
     if with_std not in (1, 2, True, False):
-        raise ValueError("Invalid value for `with_std`: {}".format(
+        raise ValueError(
+            "Invalid value for `with_std`: {!r}".format(with_std)
+        )
                         str(with_std)))
     if sparse.issparse(X):
         if with_mean:
