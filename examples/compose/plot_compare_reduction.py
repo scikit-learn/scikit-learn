@@ -23,8 +23,8 @@ fitting of a transformer is costly.
 ###############################################################################
 Illustration of ``Pipeline`` and ``GridSearchCV``
 ###############################################################################
-This section illustrates the use of a ``Pipeline`` with
- ``GridSearchCV``
+
+This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 """
 
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
