@@ -1612,7 +1612,8 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
     y_b = y_m[y_m != 2]
     X_b = X_m[y_m != 2]
 
-    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
+    if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB',
+                'CategoricalNB']:
         X_m -= X_m.min()
         X_b -= X_b.min()
 
