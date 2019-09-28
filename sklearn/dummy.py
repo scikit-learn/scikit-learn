@@ -421,15 +421,14 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.datasets import make_regression
     >>> from sklearn.dummy import DummyRegressor
-    >>> X, y = make_regression(n_features=10)
+    >>> X = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> y = np.array([2.0, 3.0, 5.0, 10.0])
     >>> dummy_regr = DummyRegressor(strategy="mean")
     >>> dummy_regr.fit(X, y)
     DummyRegressor()
-    >>> predictions = dummy_regr.predict(X)
-    >>> np.all(predictions == y.mean())
-    True
+    >>> dummy_regr.predict(X)
+    array([5., 5., 5., 5.])
     >>> dummy_regr.score(X, y)
     0.0
     """
