@@ -14,7 +14,7 @@ from ..preprocessing import normalize
 from ..utils import check_array, check_random_state, safe_indexing
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils import is_scalar_nan
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 
 from ._base import (MissingIndicator, SimpleImputer,
                     _check_inputs_dtype)
