@@ -30,9 +30,6 @@ cdef extern from "numpy/arrayobject.h":
                                 void* data, int flags, object obj)
 
 
-cdef SIZE_t DEFAULT = SIZE_MAX
-
-
 # Repeat struct definition for numpy
 CELL_DTYPE = np.dtype({
     'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
@@ -214,14 +211,14 @@ cdef class _QuadTree:
             Cell* child
             int i
 
-        # If the maximal capacity of the Tree have been reach, double the capacity
+        # If the maximal capacity of the Tree have been reached, double the capacity
         # We need to save the current cell id and the current point to retrieve them
         # in case the reallocation
         if self.cell_count + 1 > self.capacity:
             parent_id = cell.cell_id
             for i in range(self.n_dimensions):
                 save_point[i] = point[i]
-            self._resize(DEFAULT)
+            self._resize(SIZE_MAX)
             cell = &self.cells[parent_id]
             point = save_point
 
@@ -304,7 +301,7 @@ cdef class _QuadTree:
         cell.squared_max_width = 0
         cell.cumulative_size = 0
         for i in range(self.n_cells_per_cell):
-            cell.children[i] = DEFAULT
+            cell.children[i] = SIZE_MAX
 
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
                          ) nogil:
@@ -591,7 +588,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=DEFAULT) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -600,7 +597,7 @@ cdef class _QuadTree:
         if capacity == self.capacity and self.cells != NULL:
             return 0
 
-        if capacity == DEFAULT:
+        if capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 9  # default initial value to min
             else:
