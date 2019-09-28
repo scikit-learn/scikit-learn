@@ -14,8 +14,30 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 #### What does this implement/fix? Explain your changes.
 
+This change adds the functionality of handling new values in the OrdinalEncoder class.
+It implements the handle_unknown variable on construction as the OneHotEncoder does.
+Returns -1 when a new class is seen by the encoder.
 
 #### Any other comments?
+
+Example:
+
+```python
+import pandas as pd
+
+df = pd.DataFrame(['ola', 'k', 'ase'])
+df_test = pd.DataFrame(['ase', 'k', 'ase'])
+df_test_unknown = pd.DataFrame(['tu', 'k', 'ases'])
+
+from sklearn.preprocessing import OrdinalEncoder
+
+encoder = OrdinalEncoder(handle_unknown='ignore')
+encoder.fit(df)
+
+print(f'Good shape: {encoder.transform(df_test)}')
+print(f'Bad shape: {encoder.transform(df_test_unknown)}')
+
+```
 
 
 <!--

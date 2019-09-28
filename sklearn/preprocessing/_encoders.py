@@ -135,7 +135,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     else:
                         Xi = Xi.copy()
 
-                    Xi[~valid_mask] = self.categories_[i][0]
+                    if isinstance(self, OneHotEncoder):
+                        Xi[~valid_mask] = self.categories_[i][0]
+                    else:
+                        Xi[~valid_mask] = -1
+
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
@@ -552,6 +556,14 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
+    handle_unknown : 'error' or 'ignore', default='error'.
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform (default is to raise). When this parameter
+        is set to 'ignore' and an unknown category is encountered during
+        transform, the resulting one-hot encoded columns for this feature
+        will be all zeros. In the inverse transform, an unknown category
+        will be denoted as None.
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -587,9 +599,10 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64, handle_unknown='ignore'):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -622,7 +635,7 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        X_int, _ = self._transform(X, self.handle_unknown)
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
