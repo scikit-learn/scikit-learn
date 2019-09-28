@@ -14,7 +14,7 @@ import traceback
 try:
     import builtins
 except ImportError:
-    # Python 2 compat: just to be able to declare that Python >=3.5 is needed.
+    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
     import __builtin__ as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
@@ -51,8 +51,8 @@ if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.14.0'
 else:
-    SCIPY_MIN_VERSION = '0.17.0'
-    NUMPY_MIN_VERSION = '1.11.0'
+    SCIPY_MIN_VERSION = '0.19.0'
+    NUMPY_MIN_VERSION = '1.13.0'
 
 JOBLIB_MIN_VERSION = '0.11'
 
@@ -138,7 +138,7 @@ try:
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
-    # that python 3.5 is required.
+    # that python 3.6 is required.
     pass
 
 
@@ -219,7 +219,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  ('Programming Language :: Python :: '
@@ -228,7 +227,7 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
-                    python_requires=">=3.5",
+                    python_requires=">=3.6",
                     install_requires=[
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
@@ -254,9 +253,9 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
-        if sys.version_info < (3, 5):
+        if sys.version_info < (3, 6):
             raise RuntimeError(
-                "Scikit-learn requires Python 3.5 or later. The current"
+                "Scikit-learn requires Python 3.6 or later. The current"
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
