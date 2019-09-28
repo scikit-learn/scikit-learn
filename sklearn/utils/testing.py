@@ -611,21 +611,6 @@ except ImportError:
     pass
 
 
-def clean_warning_registry():
-    """Clean Python warning registry for easier testing of warning messages.
-
-    When changing warning filters this function is not necessary with
-    Python3.5+, as __warningregistry__ will be re-set internally.
-    See https://bugs.python.org/issue4180 and
-    https://bugs.python.org/issue21724 for more details.
-
-    """
-    for mod in sys.modules.values():
-        registry = getattr(mod, "__warningregistry__", None)
-        if registry is not None:
-            registry.clear()
-
-
 def check_skip_network():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
         raise SkipTest("Text tutorial requires large dataset download")

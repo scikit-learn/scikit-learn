@@ -32,7 +32,6 @@ from sklearn.utils import IS_PYPY
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry,
                                    SkipTest, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
@@ -373,7 +372,6 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
