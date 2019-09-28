@@ -558,6 +558,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         else:
             features_indices = np.flatnonzero(n_missing)
 
+
         return imputer_mask, features_indices
 
     def _validate_input(self, X):

@@ -534,13 +534,6 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
                 .format(self.tol)
             )
 
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False)
-            X_trans_indicator = self.indicator_.fit_transform(X)
-        else:
-            self.indicator_ = None
-
         if self.estimator is None:
             from ..linear_model import BayesianRidge
             self._estimator = BayesianRidge()
@@ -557,6 +550,19 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
 
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
+
+        self._missing_mask = mask_missing_values
+
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                                missing_values=self.missing_values,
+                                error_on_new=False,
+                                precomputed=True)
+            X_trans_indicator = self.indicator_.fit_transform(
+                                                self._missing_mask)
+        else:
+            self.indicator_ = None
+
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
             return Xt
@@ -646,7 +652,8 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(X)
+            X_trans_indicator = self.indicator_.transform(
+                                            self._missing_mask)
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
