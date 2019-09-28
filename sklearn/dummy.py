@@ -80,16 +80,14 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.datasets import make_classification
     >>> from sklearn.dummy import DummyClassifier
     >>> X = np.array([-1, 1, 1, 1])
     >>> y = np.array([0, 1, 1, 1])
     >>> dummy_clf = DummyClassifier(strategy="most_frequent")
     >>> dummy_clf.fit(X, y)
     DummyClassifier(strategy='most_frequent')
-    >>> predictions = dummy_clf.predict(X)
-    >>> np.all(predictions == 1)
-    True
+    >>> dummy_clf.predict(X)
+    array([1, 1, 1, 1])
     >>> dummy_clf.score(X, y)
     0.75
     """
