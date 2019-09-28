@@ -14,8 +14,8 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
-.. _Python35: https://badge.fury.io/py/scikit-learn
+.. |Python36| image:: https://img.shields.io/badge/python-3.6-blue.svg
+.. _Python36: https://badge.fury.io/py/scikit-learn
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
@@ -47,17 +47,17 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 3.5)
-- NumPy (>= 1.11.0)
-- SciPy (>= 0.17.0)
+- Python (>= 3.6)
+- NumPy (>= 1.13.0)
+- SciPy (>= 0.19.0)
 - joblib (>= 0.11)
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 0.21 and later require Python 3.5 or newer.
+scikit-learn 0.22 and later require Python 3.6 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with "plot_"
-and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
-examples Matplotlib >= 1.5.1 is required. A few examples require
+and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
+examples Matplotlib >= 2.1.1 is required. A few examples require
 scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
 
 User installation
