@@ -62,7 +62,8 @@ def _encode_python(values, uniques=None, encode=False):
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
         try:
-            encoded = np.array([table[v] if v in table else -1 for v in values])
+            encoded = np.array([table[v] if v in table else -1
+                                for v in values])
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))

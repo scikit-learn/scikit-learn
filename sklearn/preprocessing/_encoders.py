@@ -599,7 +599,8 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64, handle_unknown='ignore'):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 handle_unknown='ignore'):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
