@@ -60,9 +60,9 @@ Dependencies
 
 Scikit-learn requires:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11),
-- SciPy (>= 0.17),
+- Python (>= 3.6),
+- NumPy (>= 1.13),
+- SciPy (>= 0.19),
 - Joblib (>= 0.11).
 
 .. note::
