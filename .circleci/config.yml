@@ -10,8 +10,8 @@ jobs:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3.6
-      - NUMPY_VERSION: 1.13.0
-      - SCIPY_VERSION: 0.19.0
+      - NUMPY_VERSION: 1.13.1
+      - SCIPY_VERSION: 0.19.1
       - MATPLOTLIB_VERSION: 2.1.1
       - CYTHON_VERSION: 0.28.5
       - SCIKIT_IMAGE_VERSION: 0.12.3
