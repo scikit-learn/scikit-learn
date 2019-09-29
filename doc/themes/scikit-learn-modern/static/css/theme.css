@@ -999,13 +999,13 @@ div.sphx-glr-thumbcontainer {
 }
 
 /* authors */
-.authors-container {
+.sk-authors-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.authors-container > div {
+.sk-authors-container > div {
   width: 100px;
   margin: 5px;
   font-size: 0.9rem;
