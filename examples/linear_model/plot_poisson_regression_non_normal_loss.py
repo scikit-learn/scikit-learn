@@ -129,8 +129,8 @@ print("Average Frequency = {}"
 # significantly imbalanced.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a
-# baseline an estimator that constantly predicts the mean frequency of the
-# training sample.
+# baseline a "dummy" estimator that constantly predicts the mean frequency of
+# the training sample.
 
 df_train, df_test = train_test_split(df, random_state=0)
 
@@ -143,16 +143,16 @@ dummy.fit(df_train, df_train["Frequency"],
 
 
 def score_estimator(estimator, df_test):
-    """Score an estimatr on the test set"""
+    """Score an estimator on the test set"""
 
     y_pred = estimator.predict(df_test)
 
-    print("MSE: %.3f" % mean_squared_error(
-              df_test["Frequency"], y_pred,
-              df_test["Exposure"]))
-    print("MAE: %.3f" % mean_absolute_error(
-              df_test["Frequency"], y_pred,
-              df_test["Exposure"]))
+    print("MSE: %.3f" %
+          mean_squared_error(df_test["Frequency"], y_pred,
+                             df_test["Exposure"]))
+    print("MAE: %.3f" %
+          mean_absolute_error(df_test["Frequency"], y_pred,
+                              df_test["Exposure"]))
 
     # ignore negative predictions, as they are invalid for
     # the Poisson deviance
@@ -160,12 +160,12 @@ def score_estimator(estimator, df_test):
     if (~mask).any():
         warnings.warn("estimator yields negative predictions for {} samples "
                       "out of {}. These will be ignored while computing the "
-                      "poisson deviance".format((~mask).sum(), mask.shape[0]))
+                      "Poisson deviance".format((~mask).sum(), mask.shape[0]))
 
-    print("mean Poisson deviance: %.3f" % mean_poisson_deviance(
-            df_test["Frequency"][mask],
-            y_pred[mask],
-            df_test["Exposure"][mask]))
+    print("mean Poisson deviance: %.3f" %
+          mean_poisson_deviance(df_test["Frequency"][mask],
+                                y_pred[mask],
+                                df_test["Exposure"][mask]))
 
 
 print("Constant mean frequency evaluation:")
@@ -285,8 +285,8 @@ for idx, model in enumerate([ridge, poisson, rf]):
 #
 # To ensure that estimators yield reasonable predictions for different
 # policyholder types, we can bin test samples according to `y_pred` returned
-# by each model. Then for each bin, compare the mean predicted `y_pred`, with
-# the mean observed target:
+# by each model. Then for each bin, we compare the mean predicted `y_pred`,
+# with the mean observed target:
 
 
 def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
@@ -325,7 +325,7 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
     for n, sl in enumerate(gen_even_slices(len(y_true), n_bins)):
         weights = sample_weight[idx_sort][sl]
         y_pred_bin[n] = np.average(
-               y_pred[idx_sort][sl], weights=weights
+            y_pred[idx_sort][sl], weights=weights
         )
         y_true_bin[n] = np.average(
             y_true[idx_sort][sl],
@@ -337,7 +337,7 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
 fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(12, 3.5))
 plt.subplots_adjust(wspace=0.3)
 
-for axi, model in zip(ax, [ridge,  poisson, rf]):
+for axi, model in zip(ax, [ridge, poisson, rf]):
     y_pred = model.predict(df_test)
 
     q, y_true_seg, y_pred_seg = _mean_frequency_by_risk_group(

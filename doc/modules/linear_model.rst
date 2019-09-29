@@ -996,8 +996,8 @@ of the unit variance function:
      weights s=exposure (time, money, persons years, ...). Then you fit
      y = z/s, i.e. ``PoissonRegressor.fit(X, y, sample_weight=s)``.
      The weights are necessary for the right (finite sample) mean.
-     Consider :math:`\bar{y} = \frac{\\sum_i s_i y_i}{\sum_i s_i}`,
-     in this case one might say that y has a 'scaled' Poisson distributions.
+     Considering :math:`\bar{y} = \frac{\\sum_i s_i y_i}{\sum_i s_i}`,
+     in this case one might say that y has a 'scaled' Poisson distribution.
      The same holds for other distributions.
 
 The estimator can be used as follows::

@@ -98,7 +98,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
     predicted : frame
         a dataframe, with the same index as df, with the predicted target
     fill_legend : bool, default=False
-        wgether to show fill_between legend
+        whether to show fill_between legend
     """
     # aggregate observed and predicted variables by feature level
     df_ = df.loc[:, [feature, weight]].copy()
@@ -219,8 +219,8 @@ def score_estimator(
                 # Score the model consisting of the product of frequency and
                 # severity models, denormalized by the exposure values.
                 est_freq, est_sev = estimator
-                y_pred = (df.Exposure.values * est_freq.predict(X)
-                          * est_sev.predict(X))
+                y_pred = (df.Exposure.values * est_freq.predict(X) *
+                          est_sev.predict(X))
                 power = 1.5
             else:
                 y_pred = estimator.predict(X)
