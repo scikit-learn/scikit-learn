@@ -912,7 +912,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : array of shape = [n_samples]
+    oob_prediction_ : ndarray of shape (n_samples,)
         Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
