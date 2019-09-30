@@ -411,7 +411,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes, or the predict values.
         """
         check_is_fitted(self)
