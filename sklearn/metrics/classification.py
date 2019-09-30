@@ -325,7 +325,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
         of shape (n_samples, n_outputs) or (n_samples,)
         Estimated targets as returned by a classifier
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights
 
     labels : array-like
@@ -815,7 +815,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    sample_weight : array-like of shape = [n_samples], default None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
