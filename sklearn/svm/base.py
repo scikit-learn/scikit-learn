@@ -486,7 +486,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
     @property
     def n_support_(self):
-        check_is_fitted(self)
         svm_type = LIBSVM_IMPL.index(self._impl)
         if svm_type in (0, 1):
             return self._n_support
