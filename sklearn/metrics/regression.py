@@ -127,13 +127,13 @@ def mean_absolute_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average']
@@ -198,13 +198,13 @@ def mean_squared_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average']
@@ -273,13 +273,13 @@ def mean_squared_log_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average'] \
@@ -337,10 +337,10 @@ def median_absolute_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples)
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples)
+    y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
     Returns
@@ -374,13 +374,13 @@ def explained_variance_score(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average', \
@@ -468,13 +468,13 @@ def r2_score(y_true, y_pred, sample_weight=None,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average', \
@@ -601,10 +601,10 @@ def max_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples)
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples)
+    y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
     Returns
