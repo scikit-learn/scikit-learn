@@ -55,7 +55,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    constant : int or str or array of shape = [n_outputs]
+    constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -386,7 +386,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array of shape = [n_outputs]
+    constant : int or float or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
