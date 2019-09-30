@@ -99,7 +99,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -188,10 +188,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels).
 
-        sample_weight : array-like of shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
@@ -411,7 +411,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels).
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -462,10 +462,10 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels).
 
-        sample_weight : array-like of shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
@@ -964,7 +964,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (real numbers).
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -1002,11 +1002,11 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like of shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : array-like of shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,)
             The current sample weights.
 
         random_state : RandomState
