@@ -1005,7 +1005,7 @@ class RandomForestClassifier(ForestClassifier):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
@@ -1592,7 +1592,7 @@ class ExtraTreesClassifier(ForestClassifier):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 

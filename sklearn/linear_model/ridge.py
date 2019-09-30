@@ -865,7 +865,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples
@@ -1777,7 +1777,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     alpha_ : float
         Estimated regularization parameter
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples

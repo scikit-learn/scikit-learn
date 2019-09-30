@@ -524,7 +524,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int or list

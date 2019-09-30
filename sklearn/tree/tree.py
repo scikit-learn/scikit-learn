@@ -724,7 +724,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Attributes
     ----------
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 
@@ -1387,7 +1387,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Attributes
     ----------
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 

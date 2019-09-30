@@ -827,7 +827,7 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples
@@ -938,7 +938,7 @@ class BernoulliNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples

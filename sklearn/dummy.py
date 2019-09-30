@@ -61,13 +61,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : array or list of array of shape = [n_classes]
+    classes_ : array or list of array of shape (n_classes,)
         Class labels for each output.
 
-    n_classes_ : array or list of array of shape = [n_classes]
+    n_classes_ : array or list of array of shape (n_classes,)
         Number of label for each output.
 
-    class_prior_ : array or list of array of shape = [n_classes]
+    class_prior_ : array or list of array of shape (n_classes,)
         Probability of each class for each output.
 
     n_outputs_ : int,
