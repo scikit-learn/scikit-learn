@@ -184,7 +184,7 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
 def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
                       verbose=False,
                       cov_computation_method=empirical_covariance,
-                      random_state=None, n_jobs=-1):
+                      random_state=None, n_jobs=None):
     """Finds the best pure subset of observations to compute MCD from it.
 
     The purpose of this function is to find the best sets of n_support
@@ -236,6 +236,12 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     See Also
     ---------
@@ -306,7 +312,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
 def fast_mcd(X, support_fraction=None,
              cov_computation_method=empirical_covariance,
-             random_state=None, n_jobs=-1):
+             random_state=None, n_jobs=None):
     """Estimates the Minimum Covariance Determinant matrix.
 
     Read more in the :ref:`User Guide <robust_covariance>`.
@@ -331,6 +337,12 @@ def fast_mcd(X, support_fraction=None,
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Notes
     -----
@@ -441,7 +453,7 @@ def fast_mcd(X, support_fraction=None,
         def _select_candidates(x, n_support, n_trials, select=1, n_iter=30,
                                verbose=False,
                                cov_computation_method=empirical_covariance,
-                               random_state=None, n_jobs=-1, iter=None):
+                               random_state=None, n_jobs=None, iter=None):
 
             return select_candidates(
                 x, n_support, n_trials, select=select,
@@ -647,7 +659,7 @@ class MinCovDet(EmpiricalCovariance):
     _nonrobust_covariance = staticmethod(empirical_covariance)
 
     def __init__(self, store_precision=True, assume_centered=False,
-                 support_fraction=None, random_state=None, n_jobs=-1):
+                 support_fraction=None, random_state=None, n_jobs=None):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
         self.support_fraction = support_fraction
