@@ -300,7 +300,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -318,7 +318,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """

@@ -785,7 +785,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
@@ -846,7 +846,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
