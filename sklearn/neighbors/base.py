@@ -641,7 +641,7 @@ class KNeighborsMixin:
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
-                raise TypeError(
+                raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = (
@@ -952,7 +952,7 @@ class RadiusNeighborsMixin:
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
-                raise TypeError(
+                raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
 

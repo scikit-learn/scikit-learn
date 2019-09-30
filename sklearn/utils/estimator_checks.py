@@ -684,8 +684,8 @@ def check_estimator_sparse_data(name, estimator_orig):
                     raise
         except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: it should raise a TypeError if sparse input "
-                  "is explicitly not supported." % name)
+                  "sparse data: it should raise a TypeError or a ValueError "
+                  "if sparse input is explicitly not supported." % name)
             raise
 
 
@@ -2574,6 +2574,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
     centers = 2 if tags["binary_only"] else None
     X, y = make_blobs(random_state=rng, cluster_std=0.5, centers=centers)
     # for put some points to zero to have a little bit of sparsity
+    # TODO: update this with enforce_estimator_tags_X when #14705 is merged
     if tags["requires_positive_X"]:
         X -= np.min(X) - 1.
     X_csr = sparse.csr_matrix(X)
@@ -2582,23 +2583,20 @@ def check_estimator_sparse_dense(name, estimator_orig):
 
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
-        # catch deprecation warnings
-        with ignore_warnings(category=DeprecationWarning):
-            if name in ['Scaler', 'StandardScaler']:
-                estimator.set_params(with_mean=False)
-                estimator_sp.set_params(with_mean=False)
-            if name in ['RobustScaler']:
-                estimator.set_params(with_centering=False)
-                estimator_sp.set_params(with_centering=False)
+        if name in ['Scaler', 'StandardScaler']:
+            estimator.set_params(with_mean=False)
+            estimator_sp.set_params(with_mean=False)
+        if name in ['RobustScaler']:
+            estimator.set_params(with_centering=False)
+            estimator_sp.set_params(with_centering=False)
 
         set_random_state(estimator)
         set_random_state(estimator_sp)
         X_converted = pairwise_estimator_convert_X(X, estimator)
         X_sp_converted = pairwise_estimator_convert_X(X_sp, estimator)
         try:
-            with ignore_warnings(category=DeprecationWarning):
-                estimator_sp.fit(X_sp_converted, y)
-                estimator.fit(X_converted, y)
+            estimator_sp.fit(X_sp_converted, y)
+            estimator.fit(X_converted, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X_converted)
                 pred_sp = estimator_sp.predict(X_sp_converted)
@@ -2613,18 +2611,10 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 probs_sp = estimator.predict_proba(X_sp_converted)
                 assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
                 assert_allclose(probs, probs_sp)
-        except TypeError as e:
-            if 'sparse' not in str.lower(repr(e)):
-                print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data: error message should state explicitly "
-                      "that sparse input is not supported if this is not the "
-                      "case." % name)
-                raise
-        except Exception:
-            print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data: it should raise a TypeError if sparse input "
-                  "is explicitly not supported." % name)
-            raise
+        except:
+            # whether the estimator throws the right exception is already tested
+            # by check_estimator_sparse_data
+            pass
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

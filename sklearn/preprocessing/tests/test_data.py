@@ -1223,11 +1223,11 @@ def test_quantile_transform_check_error():
 
     transformer = QuantileTransformer(n_quantiles=10)
     err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
-    with pytest.raises(TypeError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         transformer.fit(X_neg)
     transformer.fit(X)
     err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
-    with pytest.raises(TypeError, match=err_msg):
+    with pytest.raises(ValueError, match=err_msg):
         transformer.transform(X_neg)
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],

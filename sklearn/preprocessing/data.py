@@ -2398,7 +2398,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
             if (not accept_sparse_negative and not self.ignore_implicit_zeros
                     and (sparse.issparse(X) and np.any(X.data < 0))):
-                raise TypeError('QuantileTransformer only accepts'
+                raise ValueError('QuantileTransformer only accepts'
                                 ' non-negative sparse matrices.')
 
         # check the output distribution
