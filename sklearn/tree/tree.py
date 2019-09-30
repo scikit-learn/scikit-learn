@@ -400,7 +400,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -886,7 +886,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -930,7 +930,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
