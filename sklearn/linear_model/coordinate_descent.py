@@ -1112,7 +1112,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = check_array(X, 'csc', copy=False)
+            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+                            copy=False)
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
                    not np.may_share_memory(reference_to_old_X.data, X.data)):
