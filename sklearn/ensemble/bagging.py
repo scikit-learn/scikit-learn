@@ -648,7 +648,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted classes.
         """
         predicted_probabilitiy = self.predict_proba(X)
@@ -975,7 +975,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self)

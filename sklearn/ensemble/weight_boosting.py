@@ -611,7 +611,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted classes.
         """
         X = self._validate_data(X)
@@ -1112,7 +1112,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted regression values.
         """
         check_is_fitted(self)
