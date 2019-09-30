@@ -338,9 +338,6 @@ def test_tweedie_regression_family(regression_data):
     with pytest.raises(TypeError, match=msg):
         est.family = None
 
-    # XXX: following is currently allowed, but maybe it shouldn't be
-    # est.family.power = 2
-
 
 @pytest.mark.parametrize(
         'estimator, value',

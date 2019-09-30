@@ -225,7 +225,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
                          dtype=[np.float64, np.float32],
                          y_numeric=True, multi_output=False, copy=self.copy_X)
-        y = np.asarray(y, dtype=X.dtype)
 
         weights = _check_sample_weight(sample_weight, X)
 
