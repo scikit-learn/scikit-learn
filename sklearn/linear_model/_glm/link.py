@@ -11,7 +11,7 @@ import numpy as np
 from scipy.special import expit, logit
 
 
-class Link(metaclass=ABCMeta):
+class BaseLink(metaclass=ABCMeta):
     """Abstract base class for Link functions."""
 
     @abstractmethod
@@ -65,7 +65,7 @@ class Link(metaclass=ABCMeta):
         pass  # pragma: no cover
 
 
-class IdentityLink(Link):
+class IdentityLink(BaseLink):
     """The identity link function g(x)=x."""
 
     def __call__(self, y_pred):
@@ -81,7 +81,7 @@ class IdentityLink(Link):
         return np.ones_like(lin_pred)
 
 
-class LogLink(Link):
+class LogLink(BaseLink):
     """The log link function g(x)=log(x)."""
 
     def __call__(self, y_pred):
@@ -97,7 +97,7 @@ class LogLink(Link):
         return np.exp(lin_pred)
 
 
-class LogitLink(Link):
+class LogitLink(BaseLink):
     """The logit link function g(x)=logit(x)."""
 
     def __call__(self, y_pred):

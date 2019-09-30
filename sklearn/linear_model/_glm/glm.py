@@ -21,7 +21,7 @@ from .distribution import (
         EDM_DISTRIBUTIONS
 )
 from .link import (
-        Link,
+        BaseLink,
         IdentityLink,
         LogLink,
 )
@@ -47,10 +47,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     ----------
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
-        regularization strength.
-        See the notes for the exact mathematical meaning of this
-        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
-        case, the design matrix X must have full column rank
+        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
     fit_intercept : boolean, optional (default=True)
@@ -63,7 +61,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         The distributional assumption of the GLM, i.e. which distribution from
         the EDM, specifies the loss function to be minimized.
 
-    link : {'auto', 'identity', 'log'} or an instance of class Link, \
+    link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
             optional (default='auto')
         The link function of the GLM, i.e. mapping from linear predictor
         (X*coef) to expectation (y_pred). Option 'auto' sets the link
@@ -167,8 +165,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 "; got (family={0})".format(self.family))
 
         # Guarantee that self._link_instance is set to an instance of
-        # class Link
-        if isinstance(self.link, Link):
+        # class BaseLink
+        if isinstance(self.link, BaseLink):
             self._link_instance = self.link
         else:
             if self.link == 'auto':
@@ -227,7 +225,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
                          dtype=[np.float64, np.float32],
                          y_numeric=True, multi_output=False, copy=self.copy_X)
-        y = np.asarray(y, dtype=np.float64)
+        y = np.asarray(y, dtype=X.dtype)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -247,8 +245,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # deviance = sum(sample_weight * unit_deviance),
         # we rescale weights such that sum(weights) = 1 and this becomes
         # 1/2*deviance + L2 with deviance=sum(weights * unit_deviance)
-        weights_sum = np.sum(weights)
-        weights = weights / weights_sum
+        weights = weights / weights.sum()
 
         if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
@@ -318,7 +315,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype='numeric', ensure_2d=True,
+                        dtype=[np.float64, np.float32], ensure_2d=True,
                         allow_nd=False)
         return X @ self.coef_ + self.intercept_
 
@@ -413,10 +410,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     ----------
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
-        regularization strength.
-        See the notes for the exact mathematical meaning of this
-        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
-        case, the design matrix X must have full column rank
+        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
     fit_intercept : boolean, optional (default=True)
@@ -454,9 +449,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True,
-                 max_iter=100, tol=1e-4, warm_start=False,
-                 copy_X=True, check_input=True, verbose=0):
+    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=100, tol=1e-4,
+                 warm_start=False, copy_X=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link='log', max_iter=max_iter,
@@ -495,10 +489,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     ----------
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
-        regularization strength.
-        See the notes for the exact mathematical meaning of this
-        parameter. ``alpha = 0`` is equivalent to unpenalized GLMs. In this
-        case, the design matrix X must have full column rank
+        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
     fit_intercept : boolean, optional (default=True)
@@ -536,9 +528,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True,
-                 max_iter=100, tol=1e-4, warm_start=False,
-                 copy_X=True, check_input=True, verbose=0):
+    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=100, tol=1e-4,
+                 warm_start=False, copy_X=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="gamma", link='log', max_iter=max_iter,
@@ -601,10 +592,8 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
-        regularization strength.
-        See the notes for the exact mathematical meaning of this
-        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
-        case, the design matrix X must have full column rank
+        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
     link : {'auto', 'identity', 'log'}, default='auto'
@@ -652,7 +641,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     """
     def __init__(self, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, check_input=True, verbose=0):
+                 warm_start=False, copy_X=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family=TweedieDistribution(power=power), link=link,
