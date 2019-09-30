@@ -51,7 +51,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
         Will be ignored when ``y_true`` is binary.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     binary_metric : callable, returns shape [n_classes]

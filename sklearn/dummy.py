@@ -95,7 +95,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -421,7 +421,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns

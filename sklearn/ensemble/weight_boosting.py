@@ -103,7 +103,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
@@ -414,7 +414,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         y : array-like of shape = [n_samples]
             The target values (class labels).
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             ``1 / n_samples``.
 
@@ -967,7 +967,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         y : array-like of shape = [n_samples]
             The target values (real numbers).
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
 
