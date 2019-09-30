@@ -199,7 +199,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        sample_weight : array-like of shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
@@ -473,7 +473,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
         Returns
         -------
-        sample_weight : array-like of shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
@@ -1014,7 +1014,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         Returns
         -------
-        sample_weight : array-like of shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,) or None
             The reweighted sample weights.
             If None then boosting has terminated early.
 
