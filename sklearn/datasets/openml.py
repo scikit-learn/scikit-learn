@@ -86,38 +86,58 @@ def _openml_url_bytes(openml_path, data_home, expected_md5_checksum=None):
     req = Request(_OPENML_PREFIX + openml_path)
     req.add_header('Accept-encoding', 'gzip')
 
-    def _md5_validated_bytes(bytes_content, md5_checksum):
+    def _md5_validated_bytestream(fsrc, expected_md5=None, chunk_size=512):
         """
-        Consume binary stream to validate checksum,
-        return a new stream with same content
+        Takes in a byte-stream, reads in chunks and returns bytes.
+        If expected_md5 is not none, keeps md5 checksum state while streaming
+        and validates post stream consumption.
 
         Parameters
         ----------
-        bytes_content : bytes
+        fsrc : io.BufferedIOBase
+            input stream to read bytes from
 
-        md5_checksum: str
-            Expected md5 checksum of bytes
+        expected_md5 : str
+            expected md5-checksum value
+
+        chunk_size : int
+            size of chunks to read at a time from stream
 
         Returns
         -------
-        bytes
+        fsrc_bytes : bytes
+            equivalent to fsrc_bytes.read() but with md5 validation if
+            expected_md5 is provided
+
+        Raises
+        ------
+        ValueError :
+            if expected_md5 does not match actual md5-checksum of stream
         """
-        actual_md5_checksum = hashlib.md5(bytes_content).hexdigest()
-        if md5_checksum != actual_md5_checksum:
+        fsrc_bytes = bytes()
+        file_md5 = hashlib.md5() if expected_md5_checksum else None
+        while True:
+            data = fsrc.read(chunk_size)
+            if not data:
+                break
+            if expected_md5:
+                file_md5.update(data)
+            fsrc_bytes += data
+
+        if expected_md5 and file_md5.hexdigest() != expected_md5:
             raise ValueError("md5checksum: {} does not match expected: "
-                             "{}".format(actual_md5_checksum,
-                                         md5_checksum))
-        return bytes_content
+                             "{}".format(file_md5.hexdigest(),
+                                         expected_md5))
+        return fsrc_bytes
 
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
             fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
-        bytes_content = fsrc.read()
-        if expected_md5_checksum:
-            # validating checksum reads and consumes the stream
-            return _md5_validated_bytes(bytes_content, expected_md5_checksum)
-        return bytes_content
+        return _md5_validated_bytestream(
+            fsrc,
+            expected_md5=expected_md5_checksum
+        )
 
     local_path = _get_local_path(openml_path, data_home)
     if not os.path.exists(local_path):
@@ -131,10 +151,10 @@ def _openml_url_bytes(openml_path, data_home, expected_md5_checksum=None):
             with closing(urlopen(req)) as fsrc:
                 if is_gzip(fsrc):   # unzip it for checksum validation
                     fsrc = gzip.GzipFile(fileobj=fsrc, mode='rb')
-                bytes_content = fsrc.read()
-                if expected_md5_checksum:
-                    bytes_content = _md5_validated_bytes(bytes_content,
-                                                         expected_md5_checksum)
+                bytes_content = _md5_validated_bytestream(
+                    fsrc,
+                    expected_md5=expected_md5_checksum
+                )
                 with gzip.GzipFile(local_path, 'wb') as fdst:
                     fdst.write(bytes_content)
         except Exception:
