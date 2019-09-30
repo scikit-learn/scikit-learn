@@ -49,7 +49,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     centroids_ : array-like of shape (n_classes, n_features)
         Centroid of each class.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     Examples

@@ -66,13 +66,13 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         The type of the true target data, as output by
         'utils.multiclass.type_of_target'
 
-    y_true : array-like of shape = (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples, n_outputs)
         Estimated target values.
 
-    multioutput : array-like of shape = (n_outputs) or string in ['raw_values',
+    multioutput : array-like of shape (n_outputs) or string in ['raw_values',
         uniform_average', 'variance_weighted'] or None
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
@@ -283,7 +283,7 @@ def mean_squared_log_error(y_true, y_pred,
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average'] \
-            or array-like of shape = (n_outputs)
+            or array-like of shape (n_outputs)
 
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.

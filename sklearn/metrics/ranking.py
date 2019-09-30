@@ -381,7 +381,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True multiclass labels.
 
     y_score : array-like of shape (n_samples, n_classes)

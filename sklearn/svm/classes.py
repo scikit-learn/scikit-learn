@@ -113,7 +113,7 @@ else [n_classes, n_features]
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     n_iter_ : int
@@ -782,7 +782,7 @@ class NuSVC(BaseSVC):
     intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     fit_status_ : int

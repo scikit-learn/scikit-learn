@@ -149,7 +149,7 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
                 Scores corresponding to the probability estimates
                 of a sample belonging to the designated positive class label
 
-    y_true : array-like of shape = (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True multiclass labels.
 
     y_score : array-like of shape (n_samples, n_classes)
