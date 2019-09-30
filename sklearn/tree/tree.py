@@ -728,7 +728,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
@@ -1084,7 +1084,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
@@ -1399,7 +1399,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         Return the feature importances (the higher, the more important the
         feature).
 

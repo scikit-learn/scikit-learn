@@ -1019,7 +1019,7 @@ class RandomForestClassifier(ForestClassifier):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
     oob_score_ : float
@@ -1293,7 +1293,7 @@ class RandomForestRegressor(ForestRegressor):
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
     n_features_ : int
@@ -1600,7 +1600,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
     n_features_ : int
@@ -1857,7 +1857,7 @@ class ExtraTreesRegressor(ForestRegressor):
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
 
     n_features_ : int

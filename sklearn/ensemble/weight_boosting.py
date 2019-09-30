@@ -354,7 +354,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Classification error for each estimator in the boosted
         ensemble.
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances if supported by the ``base_estimator``.
 
     Examples
@@ -907,7 +907,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     estimator_errors_ : array of floats
         Regression error for each estimator in the boosted ensemble.
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances if supported by the ``base_estimator``.
 
     Examples
