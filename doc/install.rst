@@ -9,6 +9,8 @@ There are different ways to get scikit-learn installed:
   * :ref:`Install the latest official release <install_official_release>`. This
     is the best approach for most users. It will provide a stable version
     and pre-build packages are available for most platforms.
+    Note that :ref:`nightly builds <install_nightly_builds>` are also
+    distributed.
 
   * Install the version of scikit-learn provided by your
     :ref:`operating system or Python distribution <install_by_distribution>`.
@@ -49,7 +51,9 @@ scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
     Scikit-learn now requires Python 3.5 or newer.
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``conda``::
+the easiest way to install scikit-learn is using ``conda`` (see the
+`instructions for downloading conda
+<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)::
 
     conda install scikit-learn
 
@@ -59,22 +63,18 @@ recommended to use python3 ``virtualenv``
 (see `python3 virtualenv documentation
 <https://docs.python.org/3/tutorial/venv.html>`_).
 
-That gives, on Linux::
-
-    python3 -m venv .myenv
-    source .myenv/bin/activate
-    pip install -U scikit-learn
-
-or on Windows::
+That gives, on Windows::
 
     python -m venv .myenv
     .myenv\Scripts\activate
     pip install -U scikit-learn
 
-.. note::
+or on Linux::
 
-   Some OSes still link Python v3 executable as ``python3``. Previous commands
-   need to be changed accordingly.
+    python3 -m venv .myenv
+    source .myenv/bin/activate
+    pip install -U scikit-learn
+
 
 If you have not installed NumPy or SciPy yet, you can also install these using
 conda or pip. When using pip, please ensure that *binary wheels* are used,
@@ -89,6 +89,22 @@ it as ``scikit-learn[alldeps]``.
 
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
+
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+Again, in order to avoid any OS dependent issue it is strongly
+recommended to use python3 ``virtualenv``
+(see `python3 virtualenv documentation
+<https://docs.python.org/3/tutorial/venv.html>`_).
 
 .. _install_by_distribution:
 
