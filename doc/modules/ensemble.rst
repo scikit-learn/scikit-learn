@@ -946,10 +946,8 @@ Low-level parallelism
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` have implementations that use OpenMP
-for parallelization through Cython. The number of threads that is used can
-be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
-all available cores are used. Please refer to the OpenMP documentation for
-details.
+for parallelization through Cython. For more details on how to control the
+number of threads, please to our :ref:`parallelism` notes.
 
 The following parts are parallelized:
 

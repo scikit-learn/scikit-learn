@@ -504,20 +504,47 @@ Links
   - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 
 Parallelism, resource management, and configuration
-=====================================================
+===================================================
 
 .. _parallelism:
 
-Parallel and distributed computing
------------------------------------
+Parallelism
+-----------
 
-Scikit-learn uses the `joblib <https://joblib.readthedocs.io/en/latest/>`__
-library to enable parallel computing inside its estimators. See the
-joblib documentation for the switches to control parallel computing.
+Scikit-learn supports parallel implementations in two ways: via the `joblib
+<https://joblib.readthedocs.io/en/latest/>`_ library, or via OpenMP (through
+Cython, which allows to release the GIL).
 
-Note that, by default, scikit-learn uses its embedded (vendored) version
-of joblib. A configuration switch (documented below) controls this
-behavior.
+When the underlying implementation uses joblib, the number of jobs that are
+spawned in parallel can be controled via the ``n_jobs`` parameter. In most
+cases, scikit-learn uses joblib to rely on multi-processing rather than on
+multi-threading.
+
+OpenMP is used to parallelize low-level code written in Cython, relying on
+multi-threading exclusively. By default, the implementation will use as many
+threads as possible, while still avoiding over-subscription.
+
+Over-subsription happens when you're trying to spawn too many threads at the
+same time. Consider a case where you're running a grid search (parallelized
+with joblib) with ``n_jobs=4`` over a
+:class:`~HistGradientBoostingClassifier` (parallelized with OpenMP). If each
+instance of :class:`~HistGradientBoostingClassifier` spawns 4 threads,
+that's a total of ``4 * 4 = 16`` threads, which might be too much if you
+only have 4 cores. When spawning its 4 child processes, joblib will make
+sure to avoid over-subscription by limiting the number of threads that each
+:class:`~HistGradientBoostingClassifier` can use.
+
+You can still control the exact number of threads that are used via the
+``OMP_NUM_THREADS`` environment variable, or using a ``parallel_backend``
+context manager (please refer to `joblib's documentation
+<https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-ressources>`_
+for details).
+
+.. Note::
+
+    The protection from over-subscription is available starting from
+    ``joblib >= 0.14``.
+
 
 Configuration switches
 -----------------------
