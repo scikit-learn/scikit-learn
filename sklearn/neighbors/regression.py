@@ -148,6 +148,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
+    @property
+    def _pairwise(self):
+        # For cross-validation routines to split data correctly
+        return self.metric == 'precomputed'
+
     def predict(self, X):
         """Predict the target for the provided data
 
