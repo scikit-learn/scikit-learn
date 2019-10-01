@@ -672,7 +672,7 @@ def test_n_iter_without_progress():
         tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
                     random_state=0, method=method, n_iter=351, init="random")
         tsne._N_ITER_CHECK = 1
-        tsne._EXPLORATION_N_ITER = 0
+        tsne.n_iter_early_exag = 0
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -820,7 +820,7 @@ def test_bh_match_exact():
                     init="random", random_state=0, n_iter=251,
                     perplexity=30.0, angle=0)
         # Kill the early_exaggeration
-        tsne._EXPLORATION_N_ITER = 0
+        tsne.n_iter_early_exag = 0
         X_embeddeds[method] = tsne.fit_transform(X)
         n_iter[method] = tsne.n_iter_
 
