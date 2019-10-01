@@ -31,32 +31,9 @@ There are different ways to get scikit-learn installed:
 Installing the latest release
 =============================
 
-Scikit-learn requires:
-
-- Python (>= 3.5)
-- NumPy (>= 1.11.0)
-- SciPy (>= 0.17.0)
-- joblib (>= 0.11)
-
-Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
-and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
-examples Matplotlib >= 1.5.1 is required. A few examples require
-scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
-
-.. warning::
-
-    Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
-    Scikit-learn now requires Python 3.5 or newer.
-
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``conda`` (see the
-`instructions for downloading conda
-<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)::
-
-    conda install scikit-learn
-
-or ``pip``.
-In that case, in order to avoid any OS dependent issue it is strongly
+the easiest way to install scikit-learn is using ``pip``.
+In that case, in order to avoid modifying system state it is strongly
 recommended to use python3 ``virtualenv``
 (see `python3 virtualenv documentation
 <https://docs.python.org/3/tutorial/venv.html>`_).
@@ -73,6 +50,11 @@ or on Linux::
     source .myenv/bin/activate
     pip install -U scikit-learn
 
+or ``conda`` (see the
+`instructions for downloading conda
+<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)::
+
+    conda install scikit-learn
 
 If you have not installed NumPy or SciPy yet, you can also install these using
 conda or pip. When using pip, please ensure that *binary wheels* are used,
@@ -82,6 +64,17 @@ a Raspberry Pi).
 
 If you must install scikit-learn and its dependencies with pip, you can install
 it as ``scikit-learn[alldeps]``.
+
+Scikit-learn plotting capabilities (i.e., functions start with "plot\_"
+and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
+examples Matplotlib >= 1.5.1 is required. A few examples require
+scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
+
+.. warning::
+
+    Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.
+    Scikit-learn now requires Python 3.5 or newer.
+
 
 .. note::
 
