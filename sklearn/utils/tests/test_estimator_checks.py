@@ -151,13 +151,15 @@ class NoCheckinPredict(BaseBadClassifier):
         return self
 
 
-class NoSparseClassifier(LogisticRegression):
+class NoSparseClassifierException(LogisticRegression):
+    """An estimator that does not accept sparse inputs but
+    returns a plain Exception instead of TypeError or ValueError"""
 
     def fit(self, X, y, *args, **kwargs):
         X = check_array(X, accept_sparse=True)
         if sp.issparse(X):
             raise Exception("Nonsensical Error")
-        return super(NoSparseClassifier, self).fit(X, y)
+        return super(NoSparseClassifierException, self).fit(X, y)
 
 
 class NoSparseClassifierTypeError(LogisticRegression):
@@ -428,7 +430,7 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg,
                         check_estimator, NotInvariantPredict)
     # check for sparse matrix input handling, if an Exception is thrown
-    name = NoSparseClassifier.__name__
+    name = NoSparseClassifierException.__name__
     msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
            "it should raise a TypeError or a ValueError if sparse input "
            "is explicitly not supported." % name)
@@ -439,7 +441,7 @@ def test_check_estimator():
     string_buffer = StringIO()
     sys.stdout = string_buffer
     try:
-        check_estimator(NoSparseClassifier)
+        check_estimator(NoSparseClassifierException)
     except Exception:
         pass
     finally:
