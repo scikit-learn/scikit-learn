@@ -184,10 +184,8 @@ def _partition_estimators(n_estimators, n_jobs):
     return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()
 
 
-class _BaseEnsembleHeterogeneousEstimator(MetaEstimatorMixin,
-                                          _BaseComposition,
-                                          BaseEstimator,
-                                          metaclass=ABCMeta):
+class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
+                                 metaclass=ABCMeta):
     """Base class for ensemble learners based on heterogeneous estimators.
 
     Parameters
@@ -211,12 +209,13 @@ class _BaseEnsembleHeterogeneousEstimator(MetaEstimatorMixin,
     def named_estimators(self):
         return Bunch(**dict(self.estimators))
 
+    @abstractmethod
     def __init__(self, estimators):
         self.estimators = estimators
 
     def _validate_estimators(self):
         if self.estimators is None or len(self.estimators) == 0:
-            raise ValueError(
+            raise AttributeError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
             )
@@ -224,7 +223,7 @@ class _BaseEnsembleHeterogeneousEstimator(MetaEstimatorMixin,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
-        has_estimator = any(est != 'drop' for est in estimators)
+        has_estimator = any(est not in (None, 'drop') for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
@@ -235,7 +234,7 @@ class _BaseEnsembleHeterogeneousEstimator(MetaEstimatorMixin,
                              else is_regressor)
 
         for est in estimators:
-            if est != 'drop' and not is_estimator_type(est):
+            if est not in (None, 'drop') and not is_estimator_type(est):
                 raise ValueError(
                     "The estimator {} should be a {}."
                     .format(

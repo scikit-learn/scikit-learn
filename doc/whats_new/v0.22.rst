@@ -232,6 +232,11 @@ Changelog
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
+- |Fix| Enforce underlying estimator to be the same type than voting estimator.
+  We introduced a new base class to raise consistent error message in
+  Stacking and Voting estimator.
+  By :pr:`15084` :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 

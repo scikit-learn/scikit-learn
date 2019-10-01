@@ -24,7 +24,7 @@ from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
 from .base import _parallel_fit_estimator
-from .base import _BaseEnsembleHeterogeneousEstimator
+from .base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
@@ -32,7 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 
 
-class _BaseVoting(TransformerMixin, _BaseEnsembleHeterogeneousEstimator):
+class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes

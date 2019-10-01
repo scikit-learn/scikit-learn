@@ -15,7 +15,7 @@ from ..base import is_classifier, is_regressor
 from ..base import MetaEstimatorMixin
 
 from .base import _parallel_fit_estimator
-from .base import _BaseEnsembleHeterogeneousEstimator
+from .base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
@@ -33,7 +33,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
 
-class _BaseStacking(TransformerMixin, _BaseEnsembleHeterogeneousEstimator,
+class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
 

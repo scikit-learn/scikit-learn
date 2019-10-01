@@ -37,8 +37,8 @@ X_r, y_r = datasets.load_boston(return_X_y=True)
 
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
-    msg = ('Invalid `estimators` attribute, `estimators` should be'
-           ' a list of (string, estimator) tuples')
+    msg = ("Invalid 'estimators' attribute, 'estimators' should be"
+           " a list of (string, estimator) tuples.")
     assert_raise_message(AttributeError, msg, eclf.fit, X, y)
 
     clf = LogisticRegression(random_state=1)
@@ -417,7 +417,7 @@ def test_set_estimator_none(drop):
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    msg = 'All estimators are None or "drop". At least one is required!'
+    msg = 'All estimators are dropped. At least one is required'
     assert_raise_message(
         ValueError, msg, eclf2.set_params(lr=drop, rf=drop, nb=drop).fit, X, y)
 
