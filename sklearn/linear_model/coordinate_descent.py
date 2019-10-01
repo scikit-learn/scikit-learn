@@ -1112,7 +1112,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
-            X = check_array(X, 'csc', copy=False)
+            X = check_array(X, 'csc', dtype=[np.float64, np.float32],
+                            copy=False)
             if sparse.isspmatrix(X):
                 if (hasattr(reference_to_old_X, "data") and
                    not np.may_share_memory(reference_to_old_X.data, X.data)):
@@ -1388,6 +1389,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
 
+    def _more_tags(self):
+        return {'multioutput': False}
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
@@ -1593,6 +1596,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.random_state = random_state
         self.selection = selection
 
+    def _more_tags(self):
+        return {'multioutput': False}
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
