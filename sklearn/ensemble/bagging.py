@@ -550,27 +550,25 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(n_estimators=100, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    BaggingClassifier(base_estimator=None, bootstrap=True,
-                      bootstrap_features=False, max_features=1.0,
-                      max_samples=1.0, n_estimators=100,
-                      n_jobs=None, oob_score=False,
-                      random_state=0, verbose=0,
-                      warm_start=False)
+    >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
+    >>> # BaggingClassifier(base_estimator=None, bootstrap=True,
+    >>> #                   bootstrap_features=False, max_features=1.0,
+    >>> #                   max_samples=1.0, n_estimators=100,
+    >>> #                   n_jobs=None, oob_score=False,
+    >>> #                   random_state=0, verbose=0,
+    >>> #                   warm_start=False)
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     >>> clf = BaggingClassifier(base_estimator=DummyClassifier(),
-    ...                         n_estimators=100, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    BaggingClassifier(base_estimator=DummyClassifier(constant=None,
-                                                     random_state=None,
-                                                     strategy='stratified'),
-                      bootstrap=True, bootstrap_features=False,
-                      max_features=1.0, max_samples=1.0,
-                      n_estimators=100, n_jobs=None,
-                      oob_score=False, random_state=0,
-                      verbose=0, warm_start=False)
+    ...                         n_estimators=100, random_state=0).fit(X, y)
+    >>> # BaggingClassifier(base_estimator=DummyClassifier(constant=None,
+    >>> #                                          random_state=None,
+    >>> #                                          strategy='stratified'),
+    >>> #                   bootstrap=True, bootstrap_features=False,
+    >>> #                   max_features=1.0, max_samples=1.0,
+    >>> #                   n_estimators=100, n_jobs=None,
+    >>> #                   oob_score=False, random_state=0,
+    >>> #                   verbose=0, warm_start=False)
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [0]
 
