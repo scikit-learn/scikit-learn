@@ -91,6 +91,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
         using ``set_params``.
 
+        .. deprecated:: 0.22
+           Using ``None`` to drop an estimator is deprecated in 0.22 and
+           support will be dropped in 0.24. Use the string ``'drop'`` instead.
+
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
@@ -119,7 +123,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None`.
+        that are not `None` or 'drop'.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
@@ -325,6 +329,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
         using ``set_params``.
 
+        .. deprecated:: 0.22
+           Using ``None`` to drop an estimator is deprecated in 0.22 and
+           support will be dropped in 0.24. Use the string ``'drop'`` instead.
+
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
@@ -339,10 +347,12 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     ----------
     estimators_ : list of regressors
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None`.
+        that are not `None` or 'drop'.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
+
+        .. versionadded:: 0.20
 
     Examples
     --------

@@ -223,6 +223,15 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
+        # FIXME: deprecate the usage of None to drop an estimator from the
+        # ensemble
+        if any(est is None for est in estimators):
+            raise DeprecationWarning(
+                "Using 'None' to drop an estimator from the ensemble is "
+                "deprecated in 0.22 and support will be dropped in 0.24. "
+                "Use the string 'drop' instead."
+            )
+
         has_estimator = any(est not in (None, 'drop') for est in estimators)
         if not has_estimator:
             raise ValueError(
