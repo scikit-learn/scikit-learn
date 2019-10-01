@@ -9,8 +9,6 @@ There are different ways to get scikit-learn installed:
   * :ref:`Install the latest official release <install_official_release>`. This
     is the best approach for most users. It will provide a stable version
     and pre-build packages are available for most platforms.
-    Note that :ref:`nightly builds <install_nightly_builds>` are also
-    distributed.
 
   * Install the version of scikit-learn provided by your
     :ref:`operating system or Python distribution <install_by_distribution>`.
@@ -89,22 +87,6 @@ it as ``scikit-learn[alldeps]``.
 
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
-
-.. _install_nightly_builds:
-
-Installing nightly builds
-=========================
-
-The continuous integration servers of the scikit-learn project build, test
-and upload wheel packages for the most recent Python version on a nightly
-basis to help users test bleeding edge features or bug fixes::
-
-  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
-
-Again, in order to avoid any OS dependent issue it is strongly
-recommended to use python3 ``virtualenv``
-(see `python3 virtualenv documentation
-<https://docs.python.org/3/tutorial/venv.html>`_).
 
 .. _install_by_distribution:
 
