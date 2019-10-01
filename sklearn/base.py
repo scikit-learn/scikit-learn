@@ -350,24 +350,20 @@ class BaseEstimator:
                 .format(param_name)
             )
 
+        err_msg = (
+            "The {} class can only be warm-started with {} "
+            "values of {}. Current value is {}, requesting new value "
+            "of {}."
+        )
         for param_name, new_value in warm_start_with.items():
-            must_increase = find_param(param_name)
             current_value = self.get_params()[param_name]
-            if (must_increase and new_value < current_value):
+            must_increase = find_param(param_name)
+            direction = 'increasing' if must_increase else 'decreasing'
+            if ((must_increase and new_value < current_value) or
+                    (not must_increase and new_value > current_value)):
                 raise ValueError(
-                    "The {} class can only be warm-started with increasing "
-                    "values of {}. Current value is {}, requesting new value "
-                    "of {}."
-                    .format(self.__class__.__name__, param_name,
-                            current_value, new_value)
-                )
-            elif (not must_increase and new_value > current_value):
-                raise ValueError(
-                    "The {} class can only be warm-started with decreasing "
-                    "values of {}. Current value is {}, requesting new value "
-                    "of {}."
-                    .format(self.__class__.__name__, param_name,
-                            current_value, new_value)
+                    err_msg.format(self.__class__.__name__, direction,
+                                   param_name, current_value, new_value)
                 )
 
             # All went well, setting new parameter value
