@@ -1194,7 +1194,9 @@ def test_n_support_oneclass_svr():
     # Make sure n_support is not zero for oneclass and SVR
     # non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
-    clf = svm.OneClassSVM().fit(X)
+    clf = svm.OneClassSVM()
+    assert not hasattr(clf, 'n_support_')
+    clf.fit(X)
     assert clf.n_support_ == clf.support_vectors_.shape[0]
     assert clf.n_support_.size == 1
     assert clf.n_support_ == 3
