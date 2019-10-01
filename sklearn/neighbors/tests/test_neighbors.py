@@ -932,6 +932,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
