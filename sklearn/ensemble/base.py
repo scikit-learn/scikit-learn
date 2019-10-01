@@ -7,6 +7,7 @@ Base class for ensemble-based estimators.
 
 from abc import ABCMeta, abstractmethod
 import numbers
+import warnings
 
 import numpy as np
 
@@ -210,10 +211,10 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # FIXME: deprecate the usage of None to drop an estimator from the
         # ensemble
         if any(est is None for est in estimators):
-            raise DeprecationWarning(
+            warnings.warn(
                 "Using 'None' to drop an estimator from the ensemble is "
                 "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead."
+                "Use the string 'drop' instead.", DeprecationWarning
             )
 
         has_estimator = any(est not in (None, 'drop') for est in estimators)

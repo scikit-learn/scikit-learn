@@ -243,7 +243,7 @@ Changelog
 
 - |API| Deprecate ``None`` to drop estimator from ensemble in
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`15513` by :user:`Guillaume Lemaitre <glemaitre>` and `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
