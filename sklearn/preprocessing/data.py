@@ -2399,7 +2399,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
             if (not accept_sparse_negative and not self.ignore_implicit_zeros
                     and (sparse.issparse(X) and np.any(X.data < 0))):
                 raise ValueError('QuantileTransformer only accepts'
-                                ' non-negative sparse matrices.')
+                                 ' non-negative sparse matrices.')
 
         # check the output distribution
         if self.output_distribution not in ('normal', 'uniform'):

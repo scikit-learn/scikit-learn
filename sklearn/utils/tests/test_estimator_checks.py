@@ -181,6 +181,7 @@ class NoSparseClassifierValueError(LogisticRegression):
             raise ValueError("Nonsensical Error")
         return super(NoSparseClassifierValueError, self).fit(X, y)
 
+
 class SparseDenseDifferentPredict(LogisticRegression):
     """An estimator that returns a different result for sparse inputs and
     dense inputs when using predict"""
@@ -200,9 +201,11 @@ class SparseDenseDifferentPredictProba(LogisticRegression):
     def predict_proba(self, X):
         X = check_array(X, accept_sparse=True)
         if sp.issparse(X):
-            return super(SparseDenseDifferentPredictProba, self).predict_proba(X)
+            return super(SparseDenseDifferentPredictProba,
+                         self).predict_proba(X)
         else:
-            return - super(SparseDenseDifferentPredictProba, self).predict_proba(X)
+            return - super(SparseDenseDifferentPredictProba,
+                           self).predict_proba(X)
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -446,11 +449,11 @@ def test_check_estimator():
     for clf in [NoSparseClassifierTypeError, NoSparseClassifierValueError]:
         name = clf.__name__
         msg = ("Estimator %s doesn't seem to fail gracefully on sparse data: "
-               "error message should state explicitly that sparse input is not "
-               "supported if this is not the case." % name)
+               "error message should state explicitly that sparse input is"
+               " not supported if this is not the case." % name)
         # the check for sparse input handling prints to the stdout,
-        # instead of raising an error, so as not to remove the original traceback.
-        # that means we need to jump through some hoops to catch it.
+        # instead of raising an error, so as not to remove the original
+        # traceback. that means we need to jump through some hoops to catch it.
         old_stdout = sys.stdout
         string_buffer = StringIO()
         sys.stdout = string_buffer
