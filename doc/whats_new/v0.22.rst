@@ -631,4 +631,10 @@ These changes mostly affect library developers.
 - Added check that pairwise estimators raise error on non-square data
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- Added two common multioutput estimator tests
+  :func:`~utils.estimator_checks.check_classifier_multioutput` and
+  :func:`~utils.estimator_checks.check_regressor_multioutput`.
+  :pr:`13392` by :user:`Rok Mihevc <rok>`.
+
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
+
