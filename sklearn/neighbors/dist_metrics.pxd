@@ -7,8 +7,8 @@ cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from .typedefs import DTYPE, ITYPE
 
 ######################################################################
 # Inline distance functions

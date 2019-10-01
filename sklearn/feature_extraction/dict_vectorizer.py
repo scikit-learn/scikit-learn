@@ -21,7 +21,7 @@ def _tosequence(X):
         return tosequence(X)
 
 
-class DictVectorizer(BaseEstimator, TransformerMixin):
+class DictVectorizer(TransformerMixin, BaseEstimator):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
@@ -57,8 +57,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be
+        sorted when fitting. True by default.
 
     Attributes
     ----------
@@ -125,7 +125,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if self.sort:
             feature_names.sort()
-            vocab = dict((f, i) for i, f in enumerate(feature_names))
+            vocab = {f: i for i, f in enumerate(feature_names)}
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
@@ -342,10 +342,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
         >>> v.get_feature_names()
         ['bar', 'baz', 'foo']
-        >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
-        ...                                   # doctest: +NORMALIZE_WHITESPACE
-        DictVectorizer(dtype=..., separator='=', sort=True,
-                sparse=True)
+        >>> v.restrict(support.get_support())
+        DictVectorizer()
         >>> v.get_feature_names()
         ['bar', 'foo']
         """
@@ -362,3 +360,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                                                     key=itemgetter(1))]
 
         return self
+
+    def _more_tags(self):
+        return {'X_types': ["dict"]}

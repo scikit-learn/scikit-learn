@@ -576,8 +576,8 @@ class MinCovDet(EmpiricalCovariance):
         the robust estimates of location and shape.
 
     dist_ : array-like, shape (n_samples,)
-        Mahalanobis distances of the training set (on which `fit` is called)
-        observations.
+        Mahalanobis distances of the training set (on which :meth:`fit` is
+        called) observations.
 
     Examples
     --------
@@ -586,12 +586,12 @@ class MinCovDet(EmpiricalCovariance):
     >>> from sklearn.datasets import make_gaussian_quantiles
     >>> real_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
-    >>> np.random.seed(0)
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = MinCovDet(random_state=0).fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7411..., 0.2535...],
            [0.2535..., 0.3053...]])
     >>> cov.location_

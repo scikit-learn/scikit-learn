@@ -1,5 +1,4 @@
 """Common tests for metaestimators"""
-import pytest
 import functools
 
 import numpy as np
@@ -16,7 +15,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
@@ -46,7 +45,6 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
@@ -67,7 +65,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            check_is_fitted(self, 'coef_')
+            check_is_fitted(self)
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):

@@ -15,12 +15,11 @@ import logging
 from distutils.version import LooseVersion
 
 import numpy as np
+import joblib
+from joblib import Memory
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
-from ..utils import deprecated
 from ..utils import Bunch
-from ..utils._joblib import Memory
-from ..utils import _joblib
 
 logger = logging.getLogger(__name__)
 
@@ -64,29 +63,6 @@ TARGETS = (
                   '1365e89b3e649747777b70e692dc1592')),
 )
 
-
-@deprecated('This function was deprecated in version 0.20 and will be removed '
-            'in 0.22.')
-def scale_face(face):
-    """Scale back to 0-1 range in case of normalization for plotting.
-
-    .. deprecated:: 0.20
-    This function was deprecated in version 0.20 and will be removed in 0.22.
-
-
-    Parameters
-    ----------
-    face : array_like
-        The array to scale
-
-    Returns
-    -------
-    array_like
-        The scaled array
-    """
-    scaled = face - face.min()
-    scaled /= scaled.max()
-    return scaled
 
 #
 # Common private utilities for data fetching from the original LFW website
@@ -327,7 +303,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
@@ -498,7 +474,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:

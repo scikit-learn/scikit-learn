@@ -1,5 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -9,14 +11,12 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
-from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
-from sklearn.utils.fixes import sp_version
+from ..utils.murmurhash cimport murmurhash3_bytes_s32
+from ..utils.fixes import sp_version
 
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.cdivision(True)
 def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     """Guts of FeatureHasher.transform.
 
@@ -95,8 +95,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
                               'Please upgrade to scipy >=0.14')
                              .format(indptr[-1], '.'.join(sp_version)))
         # both indices and indptr have the same dtype in CSR arrays
-        indices_a = indices_a.astype(np.int64)
+        indices_a = indices_a.astype(np.int64, copy=False)
     else:
-        indptr_a = indptr_a.astype(np.int32)
+        indptr_a = indptr_a.astype(np.int32, copy=False)
 
     return (indices_a, indptr_a, values[:size])

@@ -6,25 +6,30 @@
 import copy
 import warnings
 from collections import defaultdict
-from inspect import signature
+import platform
+import inspect
+import re
 
 import numpy as np
-from scipy import sparse
 
 from . import __version__
+from .utils import _IS_32BIT
 
-
-##############################################################################
-def _first_and_last_element(arr):
-    """Returns first and last element of numpy array or sparse matrix."""
-    if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
-        # numpy array or sparse matrix with .data attribute
-        data = arr.data if sparse.issparse(arr) else arr
-        return data.flat[0], data.flat[-1]
-    else:
-        # Sparse matrices without .data attribute. Only dok_matrix at
-        # the time of writing, in this case indexing is fast
-        return arr[0, 0], arr[-1, -1]
+_DEFAULT_TAGS = {
+    'non_deterministic': False,
+    'requires_positive_X': False,
+    'requires_positive_y': False,
+    'X_types': ['2darray'],
+    'poor_score': False,
+    'no_validation': False,
+    'multioutput': False,
+    "allow_nan": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False,
+    'binary_only': False,
+    'requires_fit': True}
 
 
 def clone(estimator, safe=True):
@@ -74,7 +79,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -125,8 +129,7 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
-class BaseEstimator(object):
+class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -148,7 +151,7 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        init_signature = signature(init)
+        init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
         parameters = [p for p in init_signature.parameters.values()
                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]
@@ -179,7 +182,15 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            try:
+                value = getattr(self, key)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -223,10 +234,13 @@ class BaseEstimator(object):
 
         return self
 
-    def __repr__(self):
+    def __repr__(self, N_CHAR_MAX=700):
+        # N_CHAR_MAX is the (approximate) maximum number of non-blank
+        # characters to render. We pass it as an optional parameter to ease
+        # the tests.
+
         from .utils._pprint import _EstimatorPrettyPrinter
 
-        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
         # use ellipsis for sequences with a lot of elements
@@ -236,10 +250,37 @@ class BaseEstimator(object):
 
         repr_ = pp.pformat(self)
 
-        # Use bruteforce ellipsis if string is very long
-        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
-            lim = N_CHAR_MAX // 2
-            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        # Use bruteforce ellipsis when there are a lot of non-blank characters
+        n_nonblank = len(''.join(repr_.split()))
+        if n_nonblank > N_CHAR_MAX:
+            lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
+            regex = r'^(\s*\S){%d}' % lim
+            # The regex '^(\s*\S){%d}' % n
+            # matches from the start of the string until the nth non-blank
+            # character:
+            # - ^ matches the start of string
+            # - (pattern){n} matches n repetitions of pattern
+            # - \s*\S matches a non-blank char following zero or more blanks
+            left_lim = re.match(regex, repr_).end()
+            right_lim = re.match(regex, repr_[::-1]).end()
+
+            if '\n' in repr_[left_lim:-right_lim]:
+                # The left side and right side aren't on the same line.
+                # To avoid weird cuts, e.g.:
+                # categoric...ore',
+                # we need to start the right side with an appropriate newline
+                # character so that it renders properly as:
+                # categoric...
+                # handle_unknown='ignore',
+                # so we add [^\n]*\n which matches until the next \n
+                regex += r'[^\n]*\n'
+                right_lim = re.match(regex, repr_[::-1]).end()
+
+            ellipsis = '...'
+            if left_lim + len(ellipsis) < len(repr_) - right_lim:
+                # Only add ellipsis if it results in a shorter repr
+                repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+
         return repr_
 
     def __getstate__(self):
@@ -268,9 +309,22 @@ class BaseEstimator(object):
         except AttributeError:
             self.__dict__.update(state)
 
+    def _more_tags(self):
+        return _DEFAULT_TAGS
 
-###############################################################################
-class ClassifierMixin(object):
+    def _get_tags(self):
+        collected_tags = {}
+        for base_class in reversed(inspect.getmro(self.__class__)):
+            if hasattr(base_class, '_more_tags'):
+                # need the if because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
+                more_tags = base_class._more_tags(self)
+                collected_tags.update(more_tags)
+        return collected_tags
+
+
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
 
@@ -302,8 +356,7 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-###############################################################################
-class RegressorMixin(object):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -336,15 +389,40 @@ class RegressorMixin(object):
         -------
         score : float
             R^2 of self.predict(X) wrt. y.
+
+        Notes
+        -----
+        The R2 score used when calling ``score`` on a regressor will use
+        ``multioutput='uniform_average'`` from version 0.23 to keep consistent
+        with :func:`~sklearn.metrics.r2_score`. This will influence the
+        ``score`` method of all the multioutput regressors (except for
+        :class:`~sklearn.multioutput.MultiOutputRegressor`). To specify the
+        default value manually and avoid the warning, please either call
+        :func:`~sklearn.metrics.r2_score` directly or make a custom scorer with
+        :func:`~sklearn.metrics.make_scorer` (the built-in scorer ``'r2'`` uses
+        ``multioutput='uniform_average'``).
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+        from .metrics.regression import _check_reg_targets
+        y_pred = self.predict(X)
+        # XXX: Remove the check in 0.23
+        y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
+        if y_type == 'continuous-multioutput':
+            warnings.warn("The default value of multioutput (not exposed in "
+                          "score method) will change from 'variance_weighted' "
+                          "to 'uniform_average' in 0.23 to keep consistent "
+                          "with 'metrics.r2_score'. To specify the default "
+                          "value manually and avoid the warning, please "
+                          "either call 'metrics.r2_score' directly or make a "
+                          "custom scorer with 'metrics.make_scorer' (the "
+                          "built-in scorer 'r2' uses "
+                          "multioutput='uniform_average').", FutureWarning)
+        return r2_score(y, y_pred, sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
 
-###############################################################################
-class ClusterMixin(object):
+class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
 
@@ -370,7 +448,7 @@ class ClusterMixin(object):
         return self.labels_
 
 
-class BiclusterMixin(object):
+class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     @property
@@ -445,8 +523,7 @@ class BiclusterMixin(object):
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
-class TransformerMixin(object):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -479,7 +556,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class DensityMixin(object):
+class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"
 
@@ -497,7 +574,7 @@ class DensityMixin(object):
         pass
 
 
-class OutlierMixin(object):
+class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
@@ -523,13 +600,23 @@ class OutlierMixin(object):
         return self.fit(X).predict(X)
 
 
-###############################################################################
-class MetaEstimatorMixin(object):
+class MetaEstimatorMixin:
+    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
 
 
-###############################################################################
+class MultiOutputMixin:
+    """Mixin to mark estimators that support multioutput."""
+    def _more_tags(self):
+        return {'multioutput': True}
+
+
+class _UnstableArchMixin:
+    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    def _more_tags(self):
+        return {'non_deterministic': (
+            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
+
 
 def is_classifier(estimator):
     """Returns True if the given estimator is (probably) a classifier.

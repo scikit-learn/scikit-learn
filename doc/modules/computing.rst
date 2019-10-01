@@ -500,7 +500,7 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - `scikit-learn developer performance documentation <../developers/performance.html>`_
+  - :ref:`scikit-learn developer performance documentation <performance-howto>`
   - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 
 Parallelism, resource management, and configuration
@@ -552,6 +552,11 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
     is supported. In addition, dumps from joblib.Memory might be incompatible,
     and you might loose some caches and have to redownload some datasets.
+
+    .. deprecated:: 0.21
+
+       As of version 0.21 this parameter has no effect, vendored joblib was
+       removed and site joblib is always used.
 
 :SKLEARN_ASSUME_FINITE:
 

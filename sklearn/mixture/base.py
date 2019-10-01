@@ -15,6 +15,7 @@ from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
+from ..utils.validation import check_is_fitted
 from ..utils.fixes import logsumexp
 
 
@@ -198,8 +199,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         which the model has the largest likelihood or lower bound. Within each
         trial, the method iterates between E-step and M-step for `max_iter`
         times until the change of likelihood or lower bound is less than
-        `tol`, otherwise, a `ConvergenceWarning` is raised. After fitting, it
-        predicts the most probable label for the input data points.
+        `tol`, otherwise, a :class:`~sklearn.exceptions.ConvergenceWarning` is
+        raised. After fitting, it predicts the most probable label for the
+        input data points.
 
         .. versionadded:: 0.20
 
@@ -257,11 +259,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 best_params = self._get_parameters()
                 best_n_iter = n_iter
 
-        # Always do a final e-step to guarantee that the labels returned by
-        # fit_predict(X) are always consistent with fit(X).predict(X)
-        # for any value of max_iter and tol (and any random_state).
-        _, log_resp = self._e_step(X)
-
         if not self.converged_:
             warnings.warn('Initialization %d did not converge. '
                           'Try different init parameters, '
@@ -272,6 +269,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
         self.lower_bound_ = max_lower_bound
+
+        # Always do a final e-step to guarantee that the labels returned by
+        # fit_predict(X) are always consistent with fit(X).predict(X)
+        # for any value of max_iter and tol (and any random_state).
+        _, log_resp = self._e_step(X)
 
         return log_resp.argmax(axis=1)
 
@@ -309,10 +311,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _check_is_fitted(self):
-        pass
-
-    @abstractmethod
     def _get_parameters(self):
         pass
 
@@ -334,7 +332,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_prob : array, shape (n_samples,)
             Log probabilities of each data point in X.
         """
-        self._check_is_fitted()
+        check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
@@ -369,7 +367,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        self._check_is_fitted()
+        check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
@@ -388,7 +386,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Returns the probability each Gaussian (state) in
             the model given each sample.
         """
-        self._check_is_fitted()
+        check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
@@ -410,7 +408,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels
 
         """
-        self._check_is_fitted()
+        check_is_fitted(self)
 
         if n_samples < 1:
             raise ValueError(

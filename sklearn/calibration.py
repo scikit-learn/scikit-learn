@@ -16,19 +16,20 @@ import numpy as np
 from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
-from sklearn.preprocessing import LabelEncoder
+from .preprocessing import LabelEncoder
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
+                   MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
-from .metrics.classification import _check_binary_probabilistic_predictions
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
+class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
+                             MetaEstimatorMixin):
     """Probability calibration with isotonic regression or sigmoid.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -62,7 +63,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -78,9 +79,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     Attributes
     ----------
@@ -106,7 +106,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv='warn'):
+    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -131,7 +131,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             Returns an instance of self.
         """
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                         force_all_finite=False)
+                         force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
@@ -172,6 +172,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
+                sample_weight = check_array(sample_weight, ensure_2d=False)
                 base_estimator_sample_weight = None
             else:
                 if sample_weight is not None:
@@ -215,7 +216,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         C : array, shape (n_samples, n_classes)
             The predicted probas.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
@@ -243,11 +244,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         C : array, shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
-class _CalibratedClassifier(object):
+class _CalibratedClassifier:
     """Probability calibration with isotonic regression or sigmoid.
 
     It assumes that base_estimator has already been fit, and trains the
@@ -451,9 +452,8 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def grad(AB):
         # gradient of the objective function
-        E = np.exp(AB[0] * F + AB[1])
-        P = 1. / (1. + E)
-        TEP_minus_T1P = P * (T * E - T1)
+        P = expit(-(AB[0] * F + AB[1]))
+        TEP_minus_T1P = T - P
         if sample_weight is not None:
             TEP_minus_T1P *= sample_weight
         dA = np.dot(TEP_minus_T1P, F)
@@ -465,7 +465,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     return AB_[0], AB_[1]
 
 
-class _SigmoidCalibration(BaseEstimator, RegressorMixin):
+class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
     Attributes
@@ -519,12 +519,13 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+                      strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
-     The method assumes the inputs come from a binary classifier.
+    The method assumes the inputs come from a binary classifier.
 
-     Calibration curves may also be referred to as reliability diagrams.
+    Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -546,6 +547,14 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         points (i.e. without corresponding values in y_prob) will not be
         returned, thus there may be fewer than n_bins in the return value.
 
+    strategy : {'uniform', 'quantile'}, (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
+
     Returns
     -------
     prob_true : array, shape (n_bins,) or smaller
@@ -563,6 +572,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
+    check_consistent_length(y_true, y_prob)
 
     if normalize:  # Normalize predicted values into interval [0, 1]
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
@@ -570,9 +580,22 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         raise ValueError("y_prob has values outside [0, 1] and normalize is "
                          "set to False.")
 
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Provided labels %s." % labels)
+    y_true = label_binarize(y_true, labels)[:, 0]
 
-    bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    if strategy == 'quantile':  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+        bins[-1] = bins[-1] + 1e-8
+    elif strategy == 'uniform':
+        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    else:
+        raise ValueError("Invalid entry to 'strategy' input. Strategy "
+                         "must be either 'quantile' or 'uniform'.")
+
     binids = np.digitize(y_prob, bins) - 1
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))

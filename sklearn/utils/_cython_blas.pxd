@@ -1,5 +1,3 @@
-# cython: language_level=3
-
 from cython cimport floating
 
 
@@ -25,6 +23,10 @@ cdef floating _nrm2(int, floating*, int) nogil
 cdef void _copy(int, floating*, int, floating*, int) nogil
 
 cdef void _scal(int, floating, floating*, int) nogil
+
+cdef void _rotg(floating*, floating*, floating*, floating*) nogil
+
+cdef void _rot(int, floating*, int, floating*, int, floating, floating) nogil
 
 # BLAS Level 2 ################################################################
 cdef void _gemv(BLAS_Order, BLAS_Trans, int, int, floating, floating*, int,

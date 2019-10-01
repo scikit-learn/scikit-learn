@@ -73,7 +73,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
                              '{0!r}'.format(invalid_names))
 
 
-class _IffHasAttrDescriptor(object):
+class _IffHasAttrDescriptor:
     """Implements a conditional property using the descriptor protocol.
 
     Using this class to create a decorator will raise an ``AttributeError``

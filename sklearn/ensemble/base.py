@@ -8,14 +8,32 @@ Base class for ensemble-based estimators.
 import numpy as np
 import numbers
 
+from joblib import effective_n_jobs
+
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import check_random_state
-from ..utils._joblib import effective_n_jobs
 from abc import ABCMeta, abstractmethod
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
+
+
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise TypeError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
+    else:
+        estimator.fit(X, y)
+    return estimator
 
 
 def _set_random_states(estimator, random_state=None):
@@ -57,7 +75,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
+class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -83,6 +101,8 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+    # overwrite _required_parameters from MetaEstimatorMixin
+    _required_parameters = []
 
     @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
@@ -99,7 +119,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
-        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+        if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
 
@@ -122,8 +142,8 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**dict((p, getattr(self, p))
-                                    for p in self.estimator_params))
+        estimator.set_params(**{p: getattr(self, p)
+                                for p in self.estimator_params})
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
