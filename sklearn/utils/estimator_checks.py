@@ -1964,6 +1964,8 @@ def check_classifiers_classes(name, classifier_orig):
     X_multiclass = StandardScaler().fit_transform(X_multiclass)
     # We need to make sure that we have non negative data, for things
     # like NMF
+    # TODO: will be able to use _ensure_estimator_tags_X when
+    # 14705 is merged
     X_multiclass -= X_multiclass.min() - .1
 
     X_binary = X_multiclass[y_multiclass != 2]
@@ -2611,9 +2613,11 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 probs_sp = estimator.predict_proba(X_sp_converted)
                 assert probs_sp.shape == (X.shape[0], len(np.unique(y)))
                 assert_allclose(probs, probs_sp)
-        except:
-            # whether the estimator throws the right exception is already tested
-            # by check_estimator_sparse_data
+        except (ValueError, TypeError):
+            # this is the case where estimators don't support sparse inputs.
+            # We don't want to have this case interfere
+            # with our test of equality: it is already tested by
+            # check_estimator_sparse_data
             pass
 
 

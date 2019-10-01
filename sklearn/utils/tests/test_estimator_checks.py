@@ -151,41 +151,58 @@ class NoCheckinPredict(BaseBadClassifier):
         return self
 
 
-class NoSparseClassifier(BaseBadClassifier):
-    def fit(self, X, y):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'dok', 'lil',
-                                              'coo', 'dia', 'bsr'])
+class NoSparseClassifier(LogisticRegression):
+
+    def fit(self, X, y, *args, **kwargs):
+        X = check_array(X, accept_sparse=True)
         if sp.issparse(X):
             raise Exception("Nonsensical Error")
-        return self
-
-    def predict(self, X):
-        X = check_array(X)
-        return np.ones(X.shape[0])
+        return super(NoSparseClassifier, self).fit(X, y)
 
 
-class NoSparseClassifierTypeError(NoSparseClassifier):
+class NoSparseClassifierTypeError(LogisticRegression):
     """An estimator that refuses sparse inputs that returns a TypeError
     (as allowed), but with the wrong message"""
 
-    def fit(self, X, y):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'dok', 'lil',
-                                              'coo', 'dia', 'bsr'])
+    def fit(self, X, y, *args, **kwargs):
+        X = check_array(X, accept_sparse=True)
         if sp.issparse(X):
             raise TypeError("Nonsensical Error")
-        return self
+        return super(NoSparseClassifierTypeError, self).fit(X, y)
 
 
-class NoSparseClassifierValueError(NoSparseClassifier):
+class NoSparseClassifierValueError(LogisticRegression):
     """An estimator that refuses sparse inputs that returns a ValueError
     (as allowed), but with the wrong message"""
 
-    def fit(self, X, y):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'dok', 'lil',
-                                              'coo', 'dia', 'bsr'])
+    def fit(self, X, y, *args, **kwargs):
+        X = check_array(X, accept_sparse=True)
         if sp.issparse(X):
             raise ValueError("Nonsensical Error")
-        return self
+        return super(NoSparseClassifierValueError, self).fit(X, y)
+
+class SparseDenseDifferentPredict(LogisticRegression):
+    """An estimator that returns a different result for sparse inputs and
+    dense inputs when using predict"""
+
+    def predict(self, X):
+        X = check_array(X, accept_sparse=True)
+        if sp.issparse(X):
+            return super(SparseDenseDifferentPredict, self).predict(X)
+        else:
+            return - super(SparseDenseDifferentPredict, self).predict(X)
+
+
+class SparseDenseDifferentPredictProba(LogisticRegression):
+    """An estimator that returns a different result for sparse inputs and
+    dense inputs when using predict_proba"""
+
+    def predict_proba(self, X):
+        X = check_array(X, accept_sparse=True)
+        if sp.issparse(X):
+            return super(SparseDenseDifferentPredictProba, self).predict_proba(X)
+        else:
+            return - super(SparseDenseDifferentPredictProba, self).predict_proba(X)
 
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
@@ -444,6 +461,14 @@ def test_check_estimator():
         finally:
             sys.stdout = old_stdout
         assert msg in string_buffer.getvalue()
+    # check that the equality of the result for sparse/dense input is checked
+    assert_raises_regex(AssertionError,
+                        "Not equal to tolerance",
+                        check_estimator, SparseDenseDifferentPredict)
+    assert_raises_regex(AssertionError,
+                        "Not equal to tolerance",
+                        check_estimator,
+                        SparseDenseDifferentPredictProba)
 
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
