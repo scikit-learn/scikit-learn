@@ -53,8 +53,9 @@ def _update_gradients_hessians_least_squares(
         hessians[i] = sample_weight[i]
 
 
-def _update_gradients_least_absolute_deviation(
+def _update_gradients_hessians_least_absolute_deviation(
         G_H_DTYPE_C [::1] gradients,  # OUT
+        G_H_DTYPE_C [::1] hessians,  # OUT
         const Y_DTYPE_C [::1] y_true,  # IN
         const Y_DTYPE_C [::1] raw_predictions,  # IN
         const Y_DTYPE_C [::1] sample_weight):  # IN
@@ -64,15 +65,26 @@ def _update_gradients_least_absolute_deviation(
         int i
 
     n_samples = raw_predictions.shape[0]
-    if sample_weight is None:
-        for i in prange(n_samples, schedule='static', nogil=True):
-            # gradient = sign(raw_predicition - y_pred)
-            gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
-    else:
-        for i in prange(n_samples, schedule='static', nogil=True):
-            # gradient = sign(raw_predicition - y_pred) * sample_weight
-            gradients[i] = (sample_weight[i] * 2 *
-                            (y_true[i] - raw_predictions[i] < 0) - 1)
+    for i in prange(n_samples, schedule='static', nogil=True):
+        # gradient = sign(raw_predicition - y_pred) * sample_weight
+        gradients[i] = sample_weight[i] * (2 *
+                        (y_true[i] - raw_predictions[i] < 0) - 1)
+        hessians[i] = sample_weight[i]
+
+
+def _update_gradients_least_absolute_deviation(
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions):  # IN
+
+    cdef:
+        int n_samples
+        int i
+
+    n_samples = raw_predictions.shape[0]
+    for i in prange(n_samples, schedule='static', nogil=True):
+        # gradient = sign(raw_predicition - y_pred)
+        gradients[i] = 2 * (y_true[i] - raw_predictions[i] < 0) - 1
 
 
 def _update_gradients_hessians_binary_crossentropy(
@@ -137,8 +149,8 @@ def _update_gradients_hessians_categorical_crossentropy(
             for k in range(prediction_dim):
                 p_i_k = p[i, k]
                 sw = sample_weight[i]
-                gradients[k, i] = p_i_k - (y_true[i] == k) * sw
-                hessians[k, i] = p_i_k * (1. - p_i_k) * sw
+                gradients[k, i] = (p_i_k - (y_true[i] == k)) * sw
+                hessians[k, i] = (p_i_k * (1. - p_i_k)) * sw
 
 
 cdef inline void _compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:

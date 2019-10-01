@@ -209,3 +209,51 @@ def test_baseline_categorical_crossentropy():
     for k in range(prediction_dim):
         p = (y_train == k).mean()
         assert np.allclose(baseline_prediction[k, :], np.log(p))
+
+
+@pytest.mark.parametrize('loss, problem', [
+    ('least_squares', 'regression'),
+    ('least_absolute_deviation', 'regression'),
+    ('binary_crossentropy', 'classification'),
+    ('categorical_crossentropy', 'classification')
+    ])
+def test_sample_weight(loss, problem):
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    n_classes = 3
+    prediction_dim = n_classes if loss == "categorical_crossentropy" else 1
+    if problem == 'regression':
+        y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
+    else:
+        y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
+    raw_predictions = rng.normal(
+        size=(prediction_dim, n_samples)
+    ).astype(Y_DTYPE)
+
+    sample_weight = rng.random(size=(n_samples,))
+    ones = np.ones(shape=(n_samples,))
+
+    loss_ = _LOSSES[loss]()
+    gradients0, hessians0 = loss_.init_gradients_and_hessians(
+        n_samples, prediction_dim, None)
+    loss_.update_gradients_and_hessians(gradients0, hessians0, y_true,
+                                        raw_predictions, None)
+
+    loss_ = _LOSSES[loss]()
+    gradients1, hessians1 = loss_.init_gradients_and_hessians(
+        n_samples, prediction_dim, ones)
+    loss_.update_gradients_and_hessians(gradients1, hessians1, y_true,
+                                        raw_predictions, ones)
+
+    # passing ones as sample weights shouldn't change the values
+    assert np.allclose(gradients0, gradients1)
+    assert np.allclose(hessians0, hessians1)
+
+    loss_ = _LOSSES[loss]()
+    gradients2, hessians2 = loss_.init_gradients_and_hessians(
+        n_samples, prediction_dim, ones)
+    loss_.update_gradients_and_hessians(gradients2, hessians2, y_true,
+                                        raw_predictions, sample_weight)
+
+    assert np.allclose(gradients1 * sample_weight, gradients2)
+    assert np.allclose(hessians1 * sample_weight, hessians2)
