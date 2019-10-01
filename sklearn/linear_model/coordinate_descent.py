@@ -1389,6 +1389,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
 
+    def _more_tags(self):
+        return {'multioutput': False}
 
 class ElasticNetCV(RegressorMixin, LinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
@@ -1594,6 +1596,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         self.random_state = random_state
         self.selection = selection
 
+    def _more_tags(self):
+        return {'multioutput': False}
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
