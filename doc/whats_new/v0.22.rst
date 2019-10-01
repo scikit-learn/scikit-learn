@@ -241,6 +241,10 @@ Changelog
   Stacking and Voting estimator.
   By :pr:`15084` :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| Deprecate ``None`` to drop estimator from ensemble in
+  :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
