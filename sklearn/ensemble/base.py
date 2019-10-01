@@ -187,7 +187,23 @@ def _partition_estimators(n_estimators, n_jobs):
 
 class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
                                  metaclass=ABCMeta):
-    """Base class for ensemble learners based on heterogeneous estimators."""
+    """Base class for ensemble learners based on heterogeneous estimators.
+
+    Parameters
+    ----------
+    estimators : list of (str, estimator) tuples
+        The ensemble of estimators to use in the ensemble. Each element of the
+        list is defined as a tuple of string (i.e. name of the estimator) and
+        an estimator instance. An estimator can be set to `'drop'` using
+        `set_params`.
+
+    Attributes
+    ----------
+    estimators_ : list of estimators
+        The elements of the estimators parameter, having been fitted on the
+        training data. If an estimator has been set to `'drop'`, it will not
+        appear in `estimators_`.
+    """
     _required_parameters = ['estimators']
 
     @property
@@ -245,7 +261,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
         Parameters
         ----------
-        params : keyword arguments
+        **params : keyword arguments
             Specific parameters using e.g.
             `set_params(parameter_name=new_value)`. In addition, to setting the
             parameters of the stacking estimator, the individual estimator of
