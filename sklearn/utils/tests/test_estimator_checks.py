@@ -550,7 +550,7 @@ def test_check_estimators_unfitted():
     # on an unfitted estimator
     msg = "NotFittedError not raised by predict"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
-                        "estimator", NoSparseClassifier())
+                        "estimator", BaseBadClassifier())
 
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
