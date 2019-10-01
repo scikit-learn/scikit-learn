@@ -61,7 +61,7 @@ recommended to use python3 ``virtualenv``
 
 That gives, on Linux::
 
-    python -m venv .myenv
+    python3 -m venv .myenv
     source .myenv/bin/activate
     pip install -U scikit-learn
 
