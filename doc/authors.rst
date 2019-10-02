@@ -74,12 +74,12 @@
     <p>Tom Dupré la Tour</p>
     </div>
     <div>
-    <a href='https://github.com/NelleV'><img src='https://avatars0.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
-    <p>Nelle Varoquaux</p>
-    </div>
-    <div>
     <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
     <p>Gael Varoquaux</p>
+    </div>
+    <div>
+    <a href='https://github.com/NelleV'><img src='https://avatars0.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
+    <p>Nelle Varoquaux</p>
     </div>
     <div>
     <a href='https://github.com/rth'><img src='https://avatars0.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />
