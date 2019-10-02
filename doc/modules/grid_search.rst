@@ -148,12 +148,13 @@ num=1000)``. This is an alias to SciPy's `stats.reciprocal
 <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
 
 Mirroring the example above in grid search, we can specify a continuous random
-variable that is log-uniformly distributed between ``1e0`` and ``1e3``:
+variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
 
   from sklearn.utils.fixes import loguniform
   {'C': loguniform(1e0, 1e3),
    'gamma': loguniform(1e-4, 1e-3),
-   'kernel': ['rbf'], 'class_weight':['balanced', None]}
+   'kernel': ['rbf'],
+   'class_weight':['balanced', None]}
 
 .. topic:: Examples:
 
