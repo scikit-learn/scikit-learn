@@ -1539,6 +1539,7 @@ Plotting
    utils.multiclass.unique_labels
    utils.murmurhash3_32
    utils.resample
+   utils._safe_indexing
    utils.safe_mask
    utils.safe_sqr
    utils.shuffle

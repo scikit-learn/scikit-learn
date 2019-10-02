@@ -356,6 +356,11 @@ Changelog
   neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
   :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- |Feature| Exposed the ``n_jobs`` parameter in :class:`manifold.TSNE` for
+  multi-core calculation of the neighbors graph. This parameter has no
+  impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
+  ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
@@ -577,6 +582,13 @@ Changelog
   - ``random.random_choice_csc``
   - ``safe_indexing``
 
+- A new random variable, :class:`utils.fixes.loguniform` implements a
+  log-uniform random variable (e.g., for use in RandomizedSearchCV).
+  For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
+  for ``loguniform(1, 100)``. See :issue:`11232` by
+  :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
+  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
+
 - |Enhancement| :func:`utils.safe_indexing` (now deprecated) accepts an
   ``axis`` parameter to index array-like across rows and columns. The column
   indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
@@ -590,6 +602,14 @@ Changelog
 - |Fix| :func:`utils.check_array` is now raising an error instead of casting
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
+
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
+  - ``mocking.MockDataFrame``
+  - ``mocking.CheckingClassifier``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
 
 :mod:`sklearn.isotonic`
 ..................................
@@ -632,4 +652,10 @@ These changes mostly affect library developers.
 - Added check that pairwise estimators raise error on non-square data
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- Added two common multioutput estimator tests
+  :func:`~utils.estimator_checks.check_classifier_multioutput` and
+  :func:`~utils.estimator_checks.check_regressor_multioutput`.
+  :pr:`13392` by :user:`Rok Mihevc <rok>`.
+
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
+

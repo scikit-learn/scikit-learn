@@ -151,8 +151,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
             ``test_score``
                 The score array for test scores on each cv split.
+                Suffix ``_score`` in ``test_score`` changes to a specific
+                metric like ``test_r2`` or ``test_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
             ``train_score``
                 The score array for train scores on each cv split.
+                Suffix ``_score`` in ``train_score`` changes to a specific
+                metric like ``train_r2`` or ``train_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
                 This is available only if ``return_train_score`` parameter
                 is ``True``.
             ``fit_time``

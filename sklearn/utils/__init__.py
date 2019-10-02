@@ -318,6 +318,12 @@ def safe_indexing(X, indices, axis=0):
 def _safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
 
+    .. warning::
+
+        This utility is documented, but **private**. This means that
+        backward compatibility might be broken without any deprecation
+        cycle.
+
     Parameters
     ----------
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
