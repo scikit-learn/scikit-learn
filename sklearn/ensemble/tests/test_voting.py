@@ -39,7 +39,7 @@ def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
     msg = ("Invalid 'estimators' attribute, 'estimators' should be"
            " a list of (string, estimator) tuples.")
-    assert_raise_message(AttributeError, msg, eclf.fit, X, y)
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
     clf = LogisticRegression(random_state=1)
 
