@@ -108,8 +108,9 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
             # work on a fixed-size subsample of the full data.
             percentiles = np.linspace(0, 1, num=max_bins + 1)
             percentiles = percentiles[1:-1]
-            #midpoints = np.percentile(col_data, percentiles,
+            # midpoints = np.percentile(col_data, percentiles,
             #                          interpolation='midpoint').astype(X_DTYPE)
+            # the utils.stat._weighted_percentile is not suitable here
             midpoints = weighted_quantile(col_data, percentiles,
                                           sample_weight=sample_weight).astype(X_DTYPE)
             assert midpoints.shape[0] == max_bins - 1
