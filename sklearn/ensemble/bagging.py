@@ -429,7 +429,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 for _, sample_indices in self._get_estimators_indices()]
 
 
-class BaggingClassifier(BaseBagging, ClassifierMixin):
+class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
 
     A Bagging classifier is an ensemble meta-estimator that fits base
@@ -492,10 +492,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
            *warm_start* constructor parameter.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel for both :meth:`fit` and
+        :meth:`predict`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -510,6 +510,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     ----------
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+    n_features_ : int
+        The number of features when :meth:`fit` is performed.
 
     estimators_ : list of estimators
         The collection of fitted base estimators.
@@ -529,12 +532,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
+        This attribute exists only when ``oob_score`` is True.
 
     oob_decision_function_ : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_decision_function_` might contain NaN.
+        `oob_decision_function_` might contain NaN. This attribute exists
+        only when ``oob_score`` is True.
 
     References
     ----------
@@ -670,9 +675,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,
@@ -720,9 +725,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes]
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X = check_array(
@@ -780,7 +785,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             cases with ``k == 1``, otherwise ``k==n_classes``.
 
         """
-        check_is_fitted(self, "classes_")
+        check_is_fitted(self)
 
         # Check data
         X = check_array(
@@ -811,7 +816,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         return decisions
 
 
-class BaggingRegressor(BaseBagging, RegressorMixin):
+class BaggingRegressor(RegressorMixin, BaseBagging):
     """A Bagging regressor.
 
     A Bagging regressor is an ensemble meta-estimator that fits base
@@ -871,10 +876,10 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         a whole new ensemble. See :term:`the Glossary <warm_start>`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        The number of jobs to run in parallel for both :meth:`fit` and
+        :meth:`predict`. ``None`` means 1 unless in a
+        :obj:`joblib.parallel_backend` context. ``-1`` means using all
+        processors. See :term:`Glossary <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -887,6 +892,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Attributes
     ----------
+    base_estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
+    n_features_ : int
+        The number of features when :meth:`fit` is performed.
+
     estimators_ : list of estimators
         The collection of fitted sub-estimators.
 
@@ -899,12 +910,14 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
+        This attribute exists only when ``oob_score`` is True.
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_prediction_` might contain NaN.
+        `oob_prediction_` might contain NaN. This attribute exists only
+        when ``oob_score`` is True.
 
     References
     ----------
@@ -965,7 +978,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        check_is_fitted(self, "estimators_features_")
+        check_is_fitted(self)
         # Check data
         X = check_array(
             X, accept_sparse=['csr', 'csc'], dtype=None,

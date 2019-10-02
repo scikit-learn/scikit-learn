@@ -16,13 +16,10 @@ import pytest
 
 from sklearn.utils import gen_batches
 
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
@@ -693,7 +690,8 @@ def test_min_max_scaler_iris():
 
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))
-    assert_raises(ValueError, scaler.fit, X)
+    with pytest.raises(ValueError):
+        scaler.fit(X)
 
 
 def test_min_max_scaler_zero_variance_features():
@@ -791,8 +789,10 @@ def test_scaler_without_centering():
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
-    assert_raises(ValueError, StandardScaler().fit, X_csr)
-    assert_raises(ValueError, StandardScaler().fit, X_csc)
+    with pytest.raises(ValueError):
+        StandardScaler().fit(X_csr)
+    with pytest.raises(ValueError):
+        StandardScaler().fit(X_csc)
 
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
     X_null = null_transform.fit_transform(X_csr)
@@ -1024,30 +1024,38 @@ def test_scale_sparse_with_mean_raise_exception():
     X_csc = sparse.csc_matrix(X)
 
     # check scaling and fit with direct calls on sparse data
-    assert_raises(ValueError, scale, X_csr, with_mean=True)
-    assert_raises(ValueError, StandardScaler(with_mean=True).fit, X_csr)
+    with pytest.raises(ValueError):
+        scale(X_csr, with_mean=True)
+    with pytest.raises(ValueError):
+        StandardScaler(with_mean=True).fit(X_csr)
 
-    assert_raises(ValueError, scale, X_csc, with_mean=True)
-    assert_raises(ValueError, StandardScaler(with_mean=True).fit, X_csc)
+    with pytest.raises(ValueError):
+        scale(X_csc, with_mean=True)
+    with pytest.raises(ValueError):
+        StandardScaler(with_mean=True).fit(X_csc)
 
     # check transform and inverse_transform after a fit on a dense array
     scaler = StandardScaler(with_mean=True).fit(X)
-    assert_raises(ValueError, scaler.transform, X_csr)
-    assert_raises(ValueError, scaler.transform, X_csc)
+    with pytest.raises(ValueError):
+        scaler.transform(X_csr)
+    with pytest.raises(ValueError):
+        scaler.transform(X_csc)
 
     X_transformed_csr = sparse.csr_matrix(scaler.transform(X))
-    assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
+    with pytest.raises(ValueError):
+        scaler.inverse_transform(X_transformed_csr)
 
     X_transformed_csc = sparse.csc_matrix(scaler.transform(X))
-    assert_raises(ValueError, scaler.inverse_transform, X_transformed_csc)
+    with pytest.raises(ValueError):
+        scaler.inverse_transform(X_transformed_csc)
 
 
 def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
     X = [[np.inf, 5, 6, 7, 8]]
-    assert_raises_regex(ValueError,
-                        "Input contains infinity or a value too large",
-                        scale, X)
+    with pytest.raises(ValueError, match="Input contains infinity "
+                       "or a value too large"):
+        scale(X)
 
 
 def test_robust_scaler_error_sparse():
@@ -1201,57 +1209,63 @@ def test_quantile_transform_check_error():
                           [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
     X_neg = sparse.csc_matrix(X_neg)
 
-    assert_raises_regex(ValueError, "Invalid value for 'n_quantiles': 0.",
-                        QuantileTransformer(n_quantiles=0).fit, X)
-    assert_raises_regex(ValueError, "Invalid value for 'subsample': 0.",
-                        QuantileTransformer(subsample=0).fit, X)
-    assert_raises_regex(ValueError, "The number of quantiles cannot be"
-                        " greater than the number of samples used. Got"
-                        " 1000 quantiles and 10 samples.",
-                        QuantileTransformer(subsample=10).fit, X)
+    err_msg = "Invalid value for 'n_quantiles': 0."
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileTransformer(n_quantiles=0).fit(X)
+    err_msg = "Invalid value for 'subsample': 0."
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileTransformer(subsample=0).fit(X)
+    err_msg = ("The number of quantiles cannot be greater than "
+               "the number of samples used. Got 1000 quantiles "
+               "and 10 samples.")
+    with pytest.raises(ValueError, match=err_msg):
+        QuantileTransformer(subsample=10).fit(X)
 
     transformer = QuantileTransformer(n_quantiles=10)
-    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                        "non-negative sparse matrices.",
-                        transformer.fit, X_neg)
+    err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.fit(X_neg)
     transformer.fit(X)
-    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
-                        "non-negative sparse matrices.",
-                        transformer.transform, X_neg)
+    err_msg = "QuantileTransformer only accepts non-negative sparse matrices."
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.transform(X_neg)
 
     X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
                                [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
-    assert_raises_regex(ValueError, "X does not have the same number of "
-                        "features as the previously fitted data. Got 2"
-                        " instead of 3.",
-                        transformer.transform, X_bad_feat)
-    assert_raises_regex(ValueError, "X does not have the same number of "
-                        "features as the previously fitted data. Got 2"
-                        " instead of 3.",
-                        transformer.inverse_transform, X_bad_feat)
+    err_msg = ("X does not have the same number of features as the previously"
+               " fitted " "data. Got 2 instead of 3.")
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.transform(X_bad_feat)
+    err_msg = ("X does not have the same number of features "
+               "as the previously fitted data. Got 2 instead of 3.")
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.inverse_transform(X_bad_feat)
 
     transformer = QuantileTransformer(n_quantiles=10,
                                       output_distribution='rnd')
     # check that an error is raised at fit time
-    assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                        " 'normal' or 'uniform'. Got 'rnd' instead.",
-                        transformer.fit, X)
+    err_msg = ("'output_distribution' has to be either 'normal' or "
+               "'uniform'. Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.fit(X)
     # check that an error is raised at transform time
     transformer.output_distribution = 'uniform'
     transformer.fit(X)
     X_tran = transformer.transform(X)
     transformer.output_distribution = 'rnd'
-    assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                        " 'normal' or 'uniform'. Got 'rnd' instead.",
-                        transformer.transform, X)
+    err_msg = ("'output_distribution' has to be either 'normal' or 'uniform'."
+               " Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.transform(X)
     # check that an error is raised at inverse_transform time
-    assert_raises_regex(ValueError, "'output_distribution' has to be either"
-                        " 'normal' or 'uniform'. Got 'rnd' instead.",
-                        transformer.inverse_transform, X_tran)
+    err_msg = ("'output_distribution' has to be either 'normal' or 'uniform'."
+               " Got 'rnd' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        transformer.inverse_transform(X_tran)
     # check that an error is raised if input is scalar
-    assert_raise_message(ValueError,
-                         'Expected 2D array, got scalar array instead',
-                         transformer.transform, 10)
+    with pytest.raises(ValueError,
+                       match='Expected 2D array, got scalar array instead'):
+        transformer.transform(10)
     # check that a warning is raised is n_quantiles > n_samples
     transformer = QuantileTransformer(n_quantiles=100)
     warn_msg = "n_quantiles is set to n_samples"
@@ -1541,8 +1555,8 @@ def test_robust_scaler_invalid_range():
     ]:
         scaler = RobustScaler(quantile_range=range_)
 
-        assert_raises_regex(ValueError, r'Invalid quantile range: \(',
-                            scaler.fit, iris.data)
+        with pytest.raises(ValueError, match=r'Invalid quantile range: \('):
+            scaler.fit(iris.data)
 
 
 def test_scale_function_without_centering():
@@ -1562,7 +1576,8 @@ def test_scale_function_without_centering():
     assert_array_almost_equal(X_scaled, X_csc_scaled.toarray())
 
     # raises value error on axis != 0
-    assert_raises(ValueError, scale, X_csr, with_mean=False, axis=1)
+    with pytest.raises(ValueError):
+        scale(X_csr, with_mean=False, axis=1)
 
     assert_array_almost_equal(X_scaled.mean(axis=0),
                               [0., -0.01, 2.24, -0.35, -0.78], 2)
@@ -1951,8 +1966,10 @@ def test_normalize():
     X = np.random.RandomState(37).randn(3, 2)
     assert_array_equal(normalize(X, copy=False),
                        normalize(X.T, axis=0, copy=False).T)
-    assert_raises(ValueError, normalize, [[0]], axis=2)
-    assert_raises(ValueError, normalize, [[0]], norm='l3')
+    with pytest.raises(ValueError):
+        normalize([[0]], axis=2)
+    with pytest.raises(ValueError):
+        normalize([[0]], norm='l3')
 
     rs = np.random.RandomState(0)
     X_dense = rs.randn(10, 5)
@@ -1987,8 +2004,8 @@ def test_normalize():
 
     X_sparse = sparse.csr_matrix(X_dense)
     for norm in ('l1', 'l2'):
-        assert_raises(NotImplementedError, normalize, X_sparse,
-                      norm=norm, return_norm=True)
+        with pytest.raises(NotImplementedError):
+            normalize(X_sparse, norm=norm, return_norm=True)
     _, norms = normalize(X_sparse, norm='max', return_norm=True)
     assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
 
@@ -2045,7 +2062,8 @@ def test_binarizer():
         X_bin = binarizer.transform(X)
 
     # Cannot use threshold < 0 for sparse
-    assert_raises(ValueError, binarizer.transform, sparse.csc_matrix(X))
+    with pytest.raises(ValueError):
+        binarizer.transform(sparse.csc_matrix(X))
 
 
 def test_center_kernel():
@@ -2151,16 +2169,19 @@ def test_quantile_transform_valid_axis():
                   [2, 4, 6, 8, 10],
                   [2.6, 4.1, 2.3, 9.5, 0.1]])
 
-    assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
-                        ". Got axis=2", quantile_transform, X.T, axis=2)
+    with pytest.raises(ValueError, match="axis should be either equal "
+                                         "to 0 or 1. Got axis=2"):
+        quantile_transform(X.T, axis=2)
 
 
 @pytest.mark.parametrize("method", ['box-cox', 'yeo-johnson'])
 def test_power_transformer_notfitted(method):
     pt = PowerTransformer(method=method)
     X = np.abs(X_1col)
-    assert_raises(NotFittedError, pt.transform, X)
-    assert_raises(NotFittedError, pt.inverse_transform, X)
+    with pytest.raises(NotFittedError):
+        pt.transform(X)
+    with pytest.raises(NotFittedError):
+        pt.inverse_transform(X)
 
 
 @pytest.mark.parametrize('method', ['box-cox', 'yeo-johnson'])
@@ -2241,23 +2262,23 @@ def test_power_transformer_boxcox_strictly_positive_exception():
     X_with_negatives = X_2d
     not_positive_message = 'strictly positive'
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.transform, X_with_negatives)
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.transform(X_with_negatives)
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.fit, X_with_negatives)
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.fit(X_with_negatives)
 
-    assert_raise_message(ValueError, not_positive_message,
-                         power_transform, X_with_negatives, 'box-cox')
+    with pytest.raises(ValueError, match=not_positive_message):
+        power_transform(X_with_negatives, 'box-cox')
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.transform, np.zeros(X_2d.shape))
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.transform(np.zeros(X_2d.shape))
 
-    assert_raise_message(ValueError, not_positive_message,
-                         pt.fit, np.zeros(X_2d.shape))
+    with pytest.raises(ValueError, match=not_positive_message):
+        pt.fit(np.zeros(X_2d.shape))
 
-    assert_raise_message(ValueError, not_positive_message,
-                         power_transform, np.zeros(X_2d.shape), 'box-cox')
+    with pytest.raises(ValueError, match=not_positive_message):
+        power_transform(np.zeros(X_2d.shape), 'box-cox')
 
 
 @pytest.mark.parametrize('X', [X_2d, np.abs(X_2d), -np.abs(X_2d),
@@ -2277,11 +2298,11 @@ def test_power_transformer_shape_exception(method):
     # than during fitting
     wrong_shape_message = 'Input data has a different number of features'
 
-    assert_raise_message(ValueError, wrong_shape_message,
-                         pt.transform, X[:, 0:1])
+    with pytest.raises(ValueError, match=wrong_shape_message):
+        pt.transform(X[:, 0:1])
 
-    assert_raise_message(ValueError, wrong_shape_message,
-                         pt.inverse_transform, X[:, 0:1])
+    with pytest.raises(ValueError, match=wrong_shape_message):
+        pt.inverse_transform(X[:, 0:1])
 
 
 def test_power_transformer_method_exception():
@@ -2290,8 +2311,8 @@ def test_power_transformer_method_exception():
 
     # An exception should be raised if PowerTransformer.method isn't valid
     bad_method_message = "'method' must be one of"
-    assert_raise_message(ValueError, bad_method_message,
-                         pt.fit, X)
+    with pytest.raises(ValueError, match=bad_method_message):
+        pt.fit(X)
 
 
 def test_power_transformer_lambda_zero():

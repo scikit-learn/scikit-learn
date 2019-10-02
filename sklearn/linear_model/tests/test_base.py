@@ -123,10 +123,10 @@ def test_fit_intercept():
     y = np.array([1, 1])
 
     lr2_without_intercept = LinearRegression(fit_intercept=False).fit(X2, y)
-    lr2_with_intercept = LinearRegression(fit_intercept=True).fit(X2, y)
+    lr2_with_intercept = LinearRegression().fit(X2, y)
 
     lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
-    lr3_with_intercept = LinearRegression(fit_intercept=True).fit(X3, y)
+    lr3_with_intercept = LinearRegression().fit(X3, y)
 
     assert (lr2_with_intercept.coef_.shape ==
                  lr2_without_intercept.coef_.shape)
@@ -179,7 +179,7 @@ def test_linear_regression_multiple_outcome(random_state=0):
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    reg = LinearRegression(fit_intercept=True)
+    reg = LinearRegression()
     reg.fit((X), Y)
     assert reg.coef_.shape == (2, n_features)
     Y_pred = reg.predict(X)

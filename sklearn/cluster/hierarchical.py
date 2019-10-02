@@ -652,7 +652,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 ###############################################################################
 
-class AgglomerativeClustering(BaseEstimator, ClusterMixin):
+class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
     Agglomerative Clustering
 
@@ -859,10 +859,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
          self.n_leaves_,
          parents) = out[:4]
 
-        if distance_threshold is not None:
-            distances = out[-1]
+        if return_distance:
+            self.distances_ = out[-1]
             self.n_clusters_ = np.count_nonzero(
-                distances >= distance_threshold) + 1
+                self.distances_ >= distance_threshold) + 1
         else:
             self.n_clusters_ = self.n_clusters
 
@@ -989,6 +989,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         node and has children `children_[i - n_features]`. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
+
+    distances_ : array-like, shape (n_nodes-1,)
+        Distances between nodes in the corresponding place in `children_`.
+        Only computed if distance_threshold is not None.
 
     Examples
     --------

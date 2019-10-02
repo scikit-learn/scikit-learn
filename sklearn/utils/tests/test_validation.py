@@ -25,7 +25,7 @@ from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.estimator_checks import NotAnArray
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -41,7 +41,8 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
-    _check_sample_weight)
+    _check_sample_weight,
+    _allclose_dense_sparse)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -201,6 +202,26 @@ def test_check_array_force_all_finite_object():
         check_array(X, dtype=None, force_all_finite=True)
 
 
+@pytest.mark.parametrize(
+    "X, err_msg",
+    [(np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.inf]]),
+      "Input contains NaN, infinity or a value too large for.*int"),
+     (np.array([[1, np.nan]], dtype=np.object),
+      "cannot convert float NaN to integer")]
+)
+@pytest.mark.parametrize("force_all_finite", [True, False])
+def test_check_array_force_all_finite_object_unsafe_casting(
+        X, err_msg, force_all_finite):
+    # casting a float array containing NaN or inf to int dtype should
+    # raise an error irrespective of the force_all_finite parameter.
+    with pytest.raises(ValueError, match=err_msg):
+        check_array(X, dtype=np.int, force_all_finite=force_all_finite)
+
+
 @ignore_warnings
 def test_check_array():
     # accept_sparse == False
@@ -300,7 +321,7 @@ def test_check_array():
     assert_raises(ValueError, check_array, X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
     # convert weird stuff to arrays
-    X_no_array = NotAnArray(X_dense)
+    X_no_array = _NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
@@ -631,35 +652,45 @@ def test_check_symmetric():
 
 
 def test_check_is_fitted():
-    # Check is ValueError raised when non estimator instance passed
-    assert_raises(ValueError, check_is_fitted, ARDRegression, "coef_")
-    assert_raises(TypeError, check_is_fitted, "SVR", "support_")
+    # Check is TypeError raised when non estimator instance passed
+    assert_raises(TypeError, check_is_fitted, ARDRegression)
+    assert_raises(TypeError, check_is_fitted, "SVR")
 
     ard = ARDRegression()
     svr = SVR()
 
     try:
-        assert_raises(NotFittedError, check_is_fitted, ard, "coef_")
-        assert_raises(NotFittedError, check_is_fitted, svr, "support_")
+        assert_raises(NotFittedError, check_is_fitted, ard)
+        assert_raises(NotFittedError, check_is_fitted, svr)
     except ValueError:
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
     try:
-        check_is_fitted(ard, "coef_", "Random message %(name)s, %(name)s")
+        check_is_fitted(ard, msg="Random message %(name)s, %(name)s")
     except ValueError as e:
         assert str(e) == "Random message ARDRegression, ARDRegression"
 
     try:
-        check_is_fitted(svr, "support_", "Another message %(name)s, %(name)s")
+        check_is_fitted(svr, msg="Another message %(name)s, %(name)s")
     except AttributeError as e:
         assert str(e) == "Another message SVR, SVR"
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())
 
-    assert check_is_fitted(ard, "coef_") is None
-    assert check_is_fitted(svr, "support_") is None
+    assert check_is_fitted(ard) is None
+    assert check_is_fitted(svr) is None
+
+    # to be removed in 0.23
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing attributes to check_is_fitted is deprecated",
+        check_is_fitted, ard, ['coef_'])
+    assert_warns_message(
+        DeprecationWarning,
+        "Passing all_or_any to check_is_fitted is deprecated",
+        check_is_fitted, ard, all_or_any=any)
 
 
 def test_check_consistent_length():
@@ -900,3 +931,30 @@ def test_check_sample_weight():
     X = np.ones((5, 2), dtype=np.int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
+
+
+@pytest.mark.parametrize("toarray", [
+    np.array, sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_equals(toarray):
+    base = np.arange(9).reshape(3, 3)
+    x, y = toarray(base), toarray(base)
+    assert _allclose_dense_sparse(x, y)
+
+
+@pytest.mark.parametrize("toarray", [
+    np.array, sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_not_equals(toarray):
+    base = np.arange(9).reshape(3, 3)
+    x, y = toarray(base), toarray(base + 1)
+    assert not _allclose_dense_sparse(x, y)
+
+
+@pytest.mark.parametrize("toarray", [sp.csr_matrix, sp.csc_matrix])
+def test_allclose_dense_sparse_raise(toarray):
+    x = np.arange(9).reshape(3, 3)
+    y = toarray(x + 1)
+
+    msg = ("Can only compare two sparse matrices, not a sparse matrix "
+           "and an array")
+    with pytest.raises(ValueError, match=msg):
+        _allclose_dense_sparse(x, y)
