@@ -99,14 +99,18 @@ def test_lda_predict():
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    assert_raises(TypeError, clf.fit, X, y)
+
+    with pytest.raises(ValueError,
+                       match="shrinkage must be a float or a string"):
+        clf.fit(X, y)
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")
     assert_raises(ValueError, clf.fit, X, y)
-    clf = LinearDiscriminantAnalysis(
-            solver="svd",
-            covariance_estimator=LedoitWolf())
-    assert_raises(NotImplementedError, clf.fit, X, y)
+    clf = LinearDiscriminantAnalysis(solver="svd",
+                                     covariance_estimator=LedoitWolf())
+    with pytest.raises(NotImplementedError,
+                       match="covariance estimator is not supported with svd"):
+        clf.fit(X, y)
 
 
 @pytest.mark.parametrize("n_classes", [2, 3])
@@ -350,10 +354,8 @@ def test_lda_shrinkage():
     """
     X = np.random.rand(100, 10)
     Y = np.random.randint(3, size=(100))
-    c1 = LinearDiscriminantAnalysis(
-            store_covariance=True,
-            shrinkage=0.5,
-            solver="lsqr")
+    c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
+                                    solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
             store_covariance=True,
             covariance_estimator=ShrunkCovariance(shrinkage=0.5),
@@ -361,8 +363,8 @@ def test_lda_shrinkage():
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert_array_almost_equal(c1.means_[i], c2.means_[i])
-    assert_array_almost_equal(c1.covariance_, c2.covariance_)
+        assert np.allclose(c1.means_[i], c2.means_[i])
+    assert np.allclose(c1.covariance_, c2.covariance_)
 
 
 def test_lda_ledoitwolf():
@@ -386,8 +388,8 @@ def test_lda_ledoitwolf():
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert_array_almost_equal(c1.means_[i], c2.means_[i])
-    assert_array_almost_equal(c1.covariance_, c2.covariance_)
+        assert np.allclose(c1.means_[i], c2.means_[i])
+    assert np.allclose(c1.covariance_, c2.covariance_)
 
 
 @pytest.mark.parametrize('n_features', [3, 5])
@@ -480,6 +482,8 @@ def test_qda(solver):
 
     # Number of sample should be bigger than number of classes
     assert_raises(ValueError, clf.fit, X8, y8)
+    with pytest.raises(ValueError, match="The number of samples must be more"):
+        clf.fit(X8, y8)
 
 
 @pytest.mark.parametrize("solver", ["svd", "lsqr"])
@@ -489,10 +493,8 @@ def test_qda_priors(solver):
     n_pos = np.sum(y_pred == 2)
 
     neg = 1e-15
-    clf = QuadraticDiscriminantAnalysis(
-            solver=solver,
-            priors=np.array([neg, 1 - neg])
-    )
+    clf = QuadraticDiscriminantAnalysis(solver=solver,
+                                        priors=np.array([neg, 1 - neg]))
     y_pred = clf.fit(X6, y6).predict(X6)
     n_pos2 = np.sum(y_pred == 2)
 
@@ -502,7 +504,8 @@ def test_qda_priors(solver):
     priors = np.array([0.5, -0.5])
     clf = QuadraticDiscriminantAnalysis(solver=solver, priors=priors)
     msg = "priors must be non-negative"
-    assert_raise_message(ValueError, msg, clf.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
     # Test that priors passed as a list are correctly handled (run to see if
     # failure)
@@ -623,8 +626,8 @@ def test_qda_covariance_sample_estimate():
     c1.fit(X, Y)
     c2.fit(X, Y)
     for i in range(2):
-        assert_array_almost_equal(c1.means_[i], c2.means_[i])
-    assert_array_almost_equal(c1.covariance_, c2.covariance_)
+        assert np.allclose(c1.means_[i], c2.means_[i])
+    assert np.allclose(c1.covariance_, c2.covariance)
 
 
 def test_covariance():
@@ -640,14 +643,16 @@ def test_covariance():
     c_s = _cov(x, 'auto')
     assert_almost_equal(c_s, c_s.T)
 
-    class WrongCovarianceEstimator(BaseEstimator):
-        """ This estimator is wrong because it has no _covariance attribute
+    class InvalidCovarianceEstimator(BaseEstimator):
+        """ This estimator is wrong because it has no covariance_ attribute
         """
         def fit(self, X):
             return self
     for standardize in [True, False]:
-        assert_raises(RuntimeError, _cov, x, None, WrongCovarianceEstimator(),
-                      standardize)
+        with pytest.raises(RuntimeError,
+                           match="InvalidCovarianceEstimator does not have a"
+                                 + " covariance_ attribute"):
+            _cov(x, None, InvalidCovarianceEstimator(), standardize)
 
 
 @pytest.mark.parametrize("solver", ['svd, lsqr', 'eigen'])
