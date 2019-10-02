@@ -356,6 +356,11 @@ Changelog
   neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
   :user:`Kumar Ashutosh <thechargedneutron>`.
 
+- |Feature| Exposed the ``n_jobs`` parameter in :class:`manifold.TSNE` for
+  multi-core calculation of the neighbors graph. This parameter has no
+  impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
+  ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
@@ -532,6 +537,10 @@ Changelog
   Now in these cases, fit() will fail with an Exception.
   :pr:`14286` by :user:`Alex Shacked <alexshacked>`.
 
+- |Fix| The `n_support_` attribute of :class:`svm.SVR` and
+  :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
+  has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -575,12 +584,20 @@ Changelog
   - ``enforce_estimator_tags_y``
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
+  - ``safe_indexing``
 
-- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
-  index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
-  refactoring was done.
-  :pr:`14035` and :pr:`14475` by :user:`Guillaume Lemaitre <glemaitre>`.
+- A new random variable, :class:`utils.fixes.loguniform` implements a
+  log-uniform random variable (e.g., for use in RandomizedSearchCV).
+  For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
+  for ``loguniform(1, 100)``. See :issue:`11232` by
+  :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
+  and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
+
+- |Enhancement| :func:`utils.safe_indexing` (now deprecated) accepts an
+  ``axis`` parameter to index array-like across rows and columns. The column
+  indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
+  DataFrame. An additional refactoring was done. :pr:`14035` and :pr:`14475`
+  by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
@@ -589,6 +606,14 @@ Changelog
 - |Fix| :func:`utils.check_array` is now raising an error instead of casting
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
+
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
+  - ``mocking.MockDataFrame``
+  - ``mocking.CheckingClassifier``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
 
 :mod:`sklearn.isotonic`
 ..................................

@@ -21,7 +21,7 @@ import scipy.sparse as sp
 from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, safe_indexing,
+from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
@@ -937,7 +937,7 @@ def _index_param_value(X, v, indices):
         return v
     if sp.issparse(v):
         v = v.tocsr()
-    return safe_indexing(v, indices)
+    return _safe_indexing(v, indices)
 
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
@@ -1078,7 +1078,7 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return safe_indexing(y, indices)
+    return _safe_indexing(y, indices)
 
 
 def learning_curve(estimator, X, y, groups=None,
