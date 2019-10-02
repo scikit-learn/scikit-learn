@@ -51,8 +51,6 @@ def test_hashing_transform_seed():
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
 
-    #  assert we maintain the precedent behaviour
-    #  where seed=0
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
     indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
                                             False)
