@@ -1164,7 +1164,7 @@ def test_feature_union_fit_params():
             return X
 
     X, y = iris.data, iris.target
-    t = FeatureUnion([('dummy', Dummy())])
+    t = FeatureUnion([('dummy0', Dummy()), ('dummy1', Dummy())])
     with pytest.raises(ValueError):
         t.fit(X, y)
 
