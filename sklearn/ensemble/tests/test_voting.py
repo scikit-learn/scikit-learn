@@ -423,8 +423,10 @@ def test_set_estimator_none(drop):
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = 'All estimators are dropped. At least one is required'
-    assert_raise_message(
-        ValueError, msg, eclf2.set_params(lr=drop, rf=drop, nb=drop).fit, X, y)
+    with pytest.warns(None) as record:
+        with pytest.raises(ValueError, match=msg):
+            eclf2.set_params(lr=drop, rf=drop, nb=drop).fit(X, y)
+    assert record if drop is None else not record
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])
