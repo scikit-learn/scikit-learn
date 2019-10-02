@@ -101,8 +101,9 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         # If converged or at max_iter, adds the cluster
         if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
-            return tuple(my_mean), len(points_within)
+            break
         completed_iterations += 1
+    return tuple(my_mean), len(points_within), completed_iterations
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
@@ -301,6 +302,11 @@ class MeanShift(ClusterMixin, BaseEstimator):
     labels_ :
         Labels of each point.
 
+    n_iter_ : int
+        Maximum number of iterations performed on each seed.
+
+        ..versionadded:: 0.22
+
     Examples
     --------
     >>> from sklearn.cluster import MeanShift
@@ -389,8 +395,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
             (seed, X, nbrs, self.max_iter) for seed in seeds)
         # copy results in a dictionary
         for i in range(len(seeds)):
-            if all_res[i] is not None:
+            if all_res[i][1]:  # i.e. len(points_within) > 0
                 center_intensity_dict[all_res[i][0]] = all_res[i][1]
+
+        self.n_iter_ = max([x[2] for x in all_res])
 
         if not center_intensity_dict:
             # nothing near seeds
