@@ -49,7 +49,7 @@ or on Linux::
 If you choose to use ``conda`` (see the `instructions for downloading conda
 <https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
 and `how to use conda environments
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)::
 
     conda install scikit-learn
 
