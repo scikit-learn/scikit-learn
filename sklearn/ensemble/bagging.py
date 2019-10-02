@@ -557,7 +557,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> #                   n_jobs=None, oob_score=False,
     >>> #                   random_state=0, verbose=0,
     >>> #                   warm_start=False)
-    >>> print(clf.predict([[0, 0, 0, 0]]))
+    >>> clf.predict([[0, 0, 0, 0]])
     [1]
     >>> clf = BaggingClassifier(base_estimator=DummyClassifier(),
     ...                         n_estimators=100, random_state=0).fit(X, y)
@@ -569,7 +569,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> #                   n_estimators=100, n_jobs=None,
     >>> #                   oob_score=False, random_state=0,
     >>> #                   verbose=0, warm_start=False)
-    >>> print(clf.predict([[0, 0, 0, 0]]))
+    >>> clf.predict([[0, 0, 0, 0]])
     [0]
 
     References
