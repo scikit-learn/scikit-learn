@@ -4,11 +4,11 @@
 Installing scikit-learn
 =======================
 
-There are different ways to get scikit-learn installed:
+There are different ways to install scikit-learn:
 
   * :ref:`Install the latest official release <install_official_release>`. This
     is the best approach for most users. It will provide a stable version
-    and pre-build packages are available for most platforms.
+    and pre-built packages are available for most platforms.
 
   * Install the version of scikit-learn provided by your
     :ref:`operating system or Python distribution <install_by_distribution>`.
@@ -19,12 +19,9 @@ There are different ways to get scikit-learn installed:
   * :ref:`Building the package from source
     <install_bleeding_edge>`. This is best for users who want the
     latest-and-greatest features and aren't afraid of running
-    brand-new code.
+    brand-new code. This is also needed for users who wish to contribute to the
+    project.
 
-.. note ::
-
-   If you wish to contribute to the project, it's recommended you
-   :ref:`install the latest development version<install_bleeding_edge>`.
 
 .. _install_official_release:
 
@@ -32,9 +29,10 @@ Installing the latest release
 =============================
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``.
-In that case, in order to avoid modifying system state it is strongly
-recommended to use python3 ``virtualenv``
+the easiest way to install scikit-learn is using ``pip`` or ``conda``.
+
+With ``pip``, in order to avoid potential conflicts with other packages it is
+strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 (see `python3 virtualenv documentation
 <https://docs.python.org/3/tutorial/venv.html>`_).
 
@@ -50,9 +48,8 @@ or on Linux::
     source .myenv/bin/activate
     pip install -U scikit-learn
 
-or ``conda`` (see the
-`instructions for downloading conda
-<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)::
+If you choose to use ``conda`` (see the `instructions for downloading conda
+<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)
 
     conda install scikit-learn
 
