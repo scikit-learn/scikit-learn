@@ -575,6 +575,13 @@ Changelog
   :func:`~utils.estimator_checks.parametrize_with_checks`, to parametrize
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
+  - ``safe_indexing``
+
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
   For example, the outcomes ``1``, ``10`` and ``100`` are all equally likely
@@ -582,11 +589,11 @@ Changelog
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
   and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
 
-- |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
-  index array-like across rows and columns. The column indexing can be done on
-  NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
-  refactoring was done.
-  :pr:`14035` and :pr:`14475` by :user:`Guillaume Lemaitre <glemaitre>`.
+- |Enhancement| :func:`utils.safe_indexing` (now deprecated) accepts an
+  ``axis`` parameter to index array-like across rows and columns. The column
+  indexing can be done on NumPy array, SciPy sparse matrix, and Pandas
+  DataFrame. An additional refactoring was done. :pr:`14035` and :pr:`14475`
+  by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| :func:`utils.extmath.safe_sparse_dot` works between 3D+ ndarray
   and sparse matrix.
