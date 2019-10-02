@@ -48,7 +48,7 @@ def test_errors(pyplot):
               "for estimator MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
-def test_error_no_response(pyplot, response_method, msg):
+def test_error_bad_response(pyplot, response_method, msg):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     class MyClassifier(BaseEstimator):
