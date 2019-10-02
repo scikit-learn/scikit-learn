@@ -511,39 +511,130 @@ Parallelism, resource management, and configuration
 Parallelism
 -----------
 
-Scikit-learn supports parallel implementations in two ways: via the `joblib
-<https://joblib.readthedocs.io/en/latest/>`_ library, or via OpenMP (in C or
-Cython code, which may release the GIL).
+Scikit-learn supports parallel implementations for estimators and other
+utilities in two ways:
+
+- via the `joblib <https://joblib.readthedocs.io/en/latest/>`_ library. In
+  this case the number of threads or processes can be controlled with the
+  ``n_jobs`` parameter.
+- via OpenMP, used in C or Cython code.
+
+In addition, some of the numpy routines that are used internally by
+scikit-learn may also be parallelized if you rely on specific numerical
+libraries such as MKL or OpenBLAS.
+
+We describe these 3 scenarios in the following subsections.
+
+Joblib-based parallelism
+........................
 
 When the underlying implementation uses joblib, the number of jobs that are
 spawned in parallel can be controled via the ``n_jobs`` parameter.
-TODO: describe what joblib actually does
 
-OpenMP is used to parallelize low-level code written in Cython, relying on
-multi-threading exclusively. By default, the implementation will use as many
-threads as possible, while still avoiding over-subscription.
+.. note::
 
-Over-subsription happens when you're trying to spawn too many threads at the
-same time. Consider a case where you're running a grid search (parallelized
-with joblib) with ``n_jobs=16`` over a
-:class:`~HistGradientBoostingClassifier` (parallelized with OpenMP). If each
-instance of :class:`~HistGradientBoostingClassifier` spawns 4 threads,
-that's a total of ``16 * 4 = 64`` threads, which leads to oversubsription of
-physical CPU resources and to thread scheduling overhead if you only have 4
-cores. When spawning its 4 child processes, joblib will make sure to avoid
-over-subscription by limiting the number of threads that each
-:class:`~HistGradientBoostingClassifier` can use.
+    Where (and how) parallelization happens in the estimators is currently
+    poorly documented. Please help us by improving our docs and tackle `issue
+    14228 <https://github.com/scikit-learn/scikit-learn/issues/14228>`_!
 
-You can still control the exact number of threads that are used via the
-``OMP_NUM_THREADS`` environment variable, or using a ``parallel_backend``
-context manager (please refer to `joblib's documentation
-<https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-ressources>`_
-for details).
+Joblib is able to support both multi-processing and multi-threading. Whether
+joblib chooses to spawn a thread or a process depends on the **backend**
+that it's using.
 
-.. Note::
+Scikit-learn generally relies on the ``loky`` backend, which is joblib's
+default backend. Loky is a multi-processing backend. To avoid duplicating
+the memory in each process (which isn't reasonable with big datasets),
+``loky`` will create a `memmap
+<https://docs.scipy.org/doc/numpy/reference/generated/numpy.memmap.html>`_
+that all processes can share, when the data is bigger than 1MB.
 
-    The protection from over-subscription is available starting from
-    ``joblib >= 0.14``.
+In some specific cases (when the code that is run in parallel releases the
+GIL), scikit-learn will indicate to ``joblib`` that a multi-threading
+backend is preferable.
+
+As a user, you may control the backend that joblib will use (regardless of
+what scikit-learn recommends) by using a context manager::
+
+    from joblib import parallel_backend
+
+    with parallel_backend('threading', n_jobs=2):
+        # Your scikit-learn code here
+
+Please refer to the `joblib's docs <https://joblib.readthedocs.io/en/latest/>`_
+for more details.
+
+In practice, whether parallelism is helpful at improving runtime depends on
+many factors. It is usually a good idea to experiment rather than assuming
+that increasing the number of jobs is always a good thing. In some cases it
+can be highly detrimental to performance to run multiple copies of some
+estimators or functions in parallel (see oversubscription below).
+
+The nested use of joblib-based parallelism with the same backend will result
+in an exception. For example, ``GridSearchCV(OneVsRestClassifier(SVC(),
+n_jobs=2), n_jobs=2)`` won't work.
+
+OpenMP-based parallelism
+........................
+
+OpenMP is used to parallelize code written in Cython or C, relying on
+multi-threading exclusively. By default (and unless joblib is trying to
+avoid oversubscription), the implementation will use as many threads as
+possible.
+
+You can control the exact number of threads that are used via the
+``OMP_NUM_THREADS`` environment variable::
+
+    OMP_NUM_THREADS=4 python my_script.py
+
+Parallel Numpy routines from numerical libraries
+................................................
+
+Scikit-learn relies heavily on Numpy, which may be configured to use a
+multi-threaded numerical processor library like MKL or OpenBLAS.
+
+The number of threads used by the BLAS or MKL libraries can be set via the
+``MKL_NUM_THREADS`` and ``OPENBLAS_NUM_THREADS`` environment variables.
+
+Please note that scikit-learn has no direct control over these
+implementations. Scikit-learn solely relies on Numpy.
+
+Oversubscription: spawning too many threads
+...........................................
+
+It is generally recommended to avoid using significantly more processes or
+threads than the number of CPUs on a machine. Over-subscription happens when
+you're trying to spawn too many threads at the same time.
+
+Suppose you have a machine with 4 CPUs. Consider a case where you're running
+a :class:`~GridSearchCV` (parallelized with joblib) with ``n_jobs=8`` over
+a :class:`~HistGradientBoostingClassifier` (parallelized with OpenMP). Each
+instance of :class:`~HistGradientBoostingClassifier` will spawn 4 threads
+(since you have 4 cores). That's a total of ``8 * 4 = 32`` threads, which
+leads to oversubscription of physical CPU resources and to scheduling
+overhead.
+
+Oversubscription can arise in the exact same fashion with parallelized
+routines from MKL or OpenBLAS that are nested in joblib calls.
+
+Starting from ``joblib >= 0.14``, when the ``loky`` backend is used (which
+is the default), joblib will tell its child **processes** to limit the
+number of threads they can use, so as to avoid oversubscription. Back to our
+example from above, that means that if the joblib call from
+:class:`~GridSearchCV` spawns processes, each process will only be able to
+use 1 thread instead of 4, thus mitigating the oversubscription issue.
+
+Note that:
+
+- Manually setting one of the environment variables (``OMP_NUM_THREADS``,
+  ``MKL_NUM_THREADS``, or ``OPENBLAS_NUM_THREADS``) will take precedence
+  over what joblib tries to do. You can also use a context manager (see
+  joblib docs linked below)
+- Joblib is currently unable to avoid oversubscription in a
+  multi-threading context. It can only do so when doing multi-processing.
+
+You will find additional details about joblib mitigation of oversubscription
+in `joblib documentation
+<https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-ressources>`_.
 
 
 Configuration switches
