@@ -76,6 +76,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.dummy import DummyClassifier
+    >>> X = np.array([-1, 1, 1, 1])
+    >>> y = np.array([0, 1, 1, 1])
+    >>> dummy_clf = DummyClassifier(strategy="most_frequent")
+    >>> dummy_clf.fit(X, y)
+    DummyClassifier(strategy='most_frequent')
+    >>> dummy_clf.predict(X)
+    array([1, 1, 1, 1])
+    >>> dummy_clf.score(X, y)
+    0.75
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -403,6 +417,20 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_outputs_ : int,
         Number of outputs.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.dummy import DummyRegressor
+    >>> X = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> y = np.array([2.0, 3.0, 5.0, 10.0])
+    >>> dummy_regr = DummyRegressor(strategy="mean")
+    >>> dummy_regr.fit(X, y)
+    DummyRegressor()
+    >>> dummy_regr.predict(X)
+    array([5., 5., 5., 5.])
+    >>> dummy_regr.score(X, y)
+    0.0
     """
 
     def __init__(self, strategy="mean", constant=None, quantile=None):

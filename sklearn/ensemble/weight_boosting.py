@@ -33,7 +33,7 @@ from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_array, check_random_state, check_X_y, safe_indexing
+from ..utils import check_array, check_random_state, check_X_y, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
@@ -73,7 +73,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _validate_data(self, X, y=None):
 
         # Accept or convert to these sparse matrix formats so we can
-        # use safe_indexing
+        # use _safe_indexing
         accept_sparse = ['csr', 'csc']
         if y is None:
             ret = check_array(X,
@@ -1039,8 +1039,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        X_ = safe_indexing(X, bootstrap_idx)
-        y_ = safe_indexing(y, bootstrap_idx)
+        X_ = _safe_indexing(X, bootstrap_idx)
+        y_ = _safe_indexing(y, bootstrap_idx)
         estimator.fit(X_, y_)
         y_predict = estimator.predict(X)
 
