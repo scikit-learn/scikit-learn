@@ -504,6 +504,9 @@ Changelog
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
+- |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
+  to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
+
 :mod:`sklearn.preprocessing`
 ............................
 
