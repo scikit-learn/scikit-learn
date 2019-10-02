@@ -315,6 +315,10 @@ img.sk-who-uses-carousel-img {
   max-width: 50%;
 }
 
+div#carouselExampleSlidesOnly {
+  min-height: 200px;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
@@ -582,6 +586,13 @@ div.sk-page-content h4 {
   border-radius: 0.3rem;
   font-size: 1.2rem;
   word-wrap: break-word;
+}
+
+div.sk-page-content h1 code,
+div.sk-page-content h2 code,
+div.sk-page-content h3 code,
+div.sk-page-content h4 code {
+  white-space: normal;
 }
 
 /* longtables */
