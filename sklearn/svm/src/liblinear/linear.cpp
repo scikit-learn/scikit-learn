@@ -32,7 +32,6 @@
 #include <locale.h>
 #include "linear.h"
 #include "tron.h"
-#include <iostream>
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -1002,6 +1001,9 @@ static int solve_l2r_l1l2_svc(
 	delete [] alpha;
 	delete [] y;
 	delete [] index;
+	delete [] diag;
+	delete [] upper_bound;
+	delete [] C_;
 	return iter;
 }
 
@@ -1243,6 +1245,9 @@ static int solve_l2r_l1l2_svr(
 	delete [] beta;
 	delete [] QD;
 	delete [] index;
+	delete [] lambda;
+	delete [] upper_bound;
+	delete [] C_;
 	return iter;
 }
 
@@ -1426,6 +1431,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	delete [] alpha;
 	delete [] y;
 	delete [] index;
+	delete [] upper_bound;
 	return iter;
 }
 
@@ -1719,6 +1725,7 @@ static int solve_l1r_l2_svc(
 	delete [] y;
 	delete [] b;
 	delete [] xj_sq;
+	delete [] C;
 	return iter;
 }
 
@@ -2106,6 +2113,7 @@ static int solve_l1r_lr(
 	delete [] exp_wTx_new;
 	delete [] tau;
 	delete [] D;
+	delete [] C;
 	return newton_iter;
 }
 
@@ -2348,6 +2356,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			n_iter=solve_l1r_l2_svc(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
+			delete [] prob_col.W;
 			delete [] x_space;
 			break;
 		}
@@ -2359,6 +2368,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			n_iter=solve_l1r_lr(&prob_col, w, primal_solver_tol, Cp, Cn, max_iter);
 			delete [] prob_col.y;
 			delete [] prob_col.x;
+			delete [] prob_col.W;
 			delete [] x_space;
 			break;
 		}
@@ -2558,7 +2568,11 @@ model* train(const problem *prob, const parameter *param, BlasFunctions *blas_fu
 		free(perm);
 		free(sub_prob.x);
 		free(sub_prob.y);
+		free(sub_prob.W);
 		free(weighted_C);
+		free(newprob.x);
+		free(newprob.y);
+		free(newprob.W);
 	}
 	return model_;
 }
