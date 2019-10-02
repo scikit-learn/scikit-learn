@@ -47,6 +47,7 @@ def test_feature_hasher_strings():
 
 
 def test_hashing_transform_seed():
+    # check the influence of the seed when computing the hashes
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
 
