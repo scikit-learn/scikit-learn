@@ -512,13 +512,12 @@ Parallelism
 -----------
 
 Scikit-learn supports parallel implementations in two ways: via the `joblib
-<https://joblib.readthedocs.io/en/latest/>`_ library, or via OpenMP (through
-Cython, which allows to release the GIL).
+<https://joblib.readthedocs.io/en/latest/>`_ library, or via OpenMP (in C or
+Cython code, which may release the GIL).
 
 When the underlying implementation uses joblib, the number of jobs that are
-spawned in parallel can be controled via the ``n_jobs`` parameter. In most
-cases, scikit-learn uses joblib to rely on multi-processing rather than on
-multi-threading.
+spawned in parallel can be controled via the ``n_jobs`` parameter.
+TODO: describe what joblib actually does
 
 OpenMP is used to parallelize low-level code written in Cython, relying on
 multi-threading exclusively. By default, the implementation will use as many
@@ -526,12 +525,13 @@ threads as possible, while still avoiding over-subscription.
 
 Over-subsription happens when you're trying to spawn too many threads at the
 same time. Consider a case where you're running a grid search (parallelized
-with joblib) with ``n_jobs=4`` over a
+with joblib) with ``n_jobs=16`` over a
 :class:`~HistGradientBoostingClassifier` (parallelized with OpenMP). If each
 instance of :class:`~HistGradientBoostingClassifier` spawns 4 threads,
-that's a total of ``4 * 4 = 16`` threads, which might be too much if you
-only have 4 cores. When spawning its 4 child processes, joblib will make
-sure to avoid over-subscription by limiting the number of threads that each
+that's a total of ``16 * 4 = 64`` threads, which leads to oversubsription of
+physical CPU resources and to thread scheduling overhead if you only have 4
+cores. When spawning its 4 child processes, joblib will make sure to avoid
+over-subscription by limiting the number of threads that each
 :class:`~HistGradientBoostingClassifier` can use.
 
 You can still control the exact number of threads that are used via the
