@@ -85,6 +85,10 @@ Changelog
   between `n_jobs=1` and `n_jobs>1` due to the handling of the random state.
   :pr:`9288` by :user:`Bryan Yang <bryanyang0528>`.
 
+- |Fix| Fixed a bug where `elkan` algorithm in :class:`cluster.KMeans` was
+  producing Segmentation Fault on large arrays due to integer index overflow.
+  :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -339,6 +343,11 @@ Changelog
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |FIX| :class:`linear_model.MultiTaskLassoCV` and
+  :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
+  and `fit_intercept=True`.
+  :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -564,6 +573,8 @@ Changelog
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
 
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
@@ -620,4 +631,10 @@ These changes mostly affect library developers.
 - Added check that pairwise estimators raise error on non-square data
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- Added two common multioutput estimator tests
+  :func:`~utils.estimator_checks.check_classifier_multioutput` and
+  :func:`~utils.estimator_checks.check_regressor_multioutput`.
+  :pr:`13392` by :user:`Rok Mihevc <rok>`.
+
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
+
