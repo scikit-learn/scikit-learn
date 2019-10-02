@@ -582,12 +582,6 @@ Changelog
   :user:`Scott Sievert <stsievert>` and :user:`Nathaniel Saul <sauln>`,
   and `SciPy PR 10815 <https://github.com/scipy/scipy/pull/10815>`.
 
-- |API| The following utils have been deprecated and are now private:
-  - ``choose_check_classifiers_labels``
-  - ``enforce_estimator_tags_y``
-  - ``optimize.newton_cg`
-  - ``random.random_choice_csc``
-
 - |Enhancement| :func:`utils.safe_indexing` accepts an ``axis`` parameter to
   index array-like across rows and columns. The column indexing can be done on
   NumPy array, SciPy sparse matrix, and Pandas DataFrame. An additional
@@ -601,6 +595,14 @@ Changelog
 - |Fix| :func:`utils.check_array` is now raising an error instead of casting
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
+
+- |API| The following utils have been deprecated and are now private:
+  - ``choose_check_classifiers_labels``
+  - ``enforce_estimator_tags_y``
+  - ``mocking.MockDataFrame``
+  - ``mocking.CheckingClassifier``
+  - ``optimize.newton_cg`
+  - ``random.random_choice_csc``
 
 :mod:`sklearn.isotonic`
 ..................................
