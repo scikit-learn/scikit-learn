@@ -31,19 +31,14 @@ import sphinx_gallery
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-    'numpydoc',
-    'sphinx.ext.linkcode', 'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.imgconverter',
-    'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx.ext.autodoc', 'sphinx.ext.autosummary', 'numpydoc',
+    'sphinx.ext.linkcode', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
+    'sphinx.ext.imgconverter', 'sphinx_gallery.gen_gallery', 'sphinx_issues'
 ]
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
-
 
 # For maths, use mathjax by default and svg if NO_MATHJAX env variable is set
 # (useful for viewing the doc offline)
@@ -55,10 +50,7 @@ else:
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
                     'tex-chtml.js')
 
-autodoc_default_options = {
-    'members': True,
-    'inherited-members': True
-}
+autodoc_default_options = {'members': True, 'inherited-members': True}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']
@@ -124,7 +116,6 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
-
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
@@ -134,12 +125,10 @@ html_theme = 'scikit-learn-modern'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'google_analytics': True,
-                      'mathjax_path': mathjax_path}
+html_theme_options = {'google_analytics': True, 'mathjax_path': mathjax_path}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
-
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -171,8 +160,7 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html',
-                         'documentation': 'documentation.html'}
+html_additional_pages = {'index': 'index.html'}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -197,7 +185,6 @@ html_use_index = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'scikit-learndoc'
 
-
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -207,7 +194,8 @@ latex_elements = {
     # 'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    'preamble': r"""
+    'preamble':
+    r"""
         \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}
         \usepackage{morefloats}\usepackage{enumitem} \setlistdepth{10}
         """
@@ -216,8 +204,10 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('contents', 'user_guide.tex', 'scikit-learn user guide',
-                    'scikit-learn developers', 'manual'), ]
+latex_documents = [
+    ('contents', 'user_guide.tex', 'scikit-learn user guide',
+     'scikit-learn developers', 'manual'),
+]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -233,8 +223,8 @@ trim_doctests_flags = True
 
 # intersphinx configuration
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/{.major}'.format(
-        sys.version_info), None),
+    'python':
+    ('https://docs.python.org/{.major}'.format(sys.version_info), None),
     'numpy': ('https://docs.scipy.org/doc/numpy/', None),
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
@@ -247,10 +237,9 @@ if 'dev' in version:
 else:
     match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
     if match is None:
-        raise ValueError(
-            'Ill-formed version: {!r}. Expected either '
-            "a version containing 'dev' "
-            'or a version like X.Y or X.Y.Z.'.format(version))
+        raise ValueError('Ill-formed version: {!r}. Expected either '
+                         "a version containing 'dev' "
+                         'or a version like X.Y or X.Y.Z.'.format(version))
 
     major, minor = match.groups()
     binder_branch = '{}.{}.X'.format(major, minor)
@@ -260,7 +249,8 @@ sphinx_gallery_conf = {
     'backreferences_dir': os.path.join('modules', 'generated'),
     'show_memory': True,
     'reference_url': {
-        'sklearn': None},
+        'sklearn': None
+    },
     'examples_dirs': ['../examples'],
     'gallery_dirs': ['auto_examples'],
     'binder': {
@@ -273,13 +263,11 @@ sphinx_gallery_conf = {
     }
 }
 
-
 # The following dictionary contains the information used to create the
 # thumbnails for the front page of the scikit-learn home page.
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600}
-
 
 # enable experimental module so that experimental estimators can be
 # discovered properly by sphinx
@@ -313,14 +301,15 @@ def setup(app):
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
-linkcode_resolve = make_linkcode_resolve('sklearn',
-                                         'https://github.com/scikit-learn/'
-                                         'scikit-learn/blob/{revision}/'
-                                         '{package}/{path}#L{lineno}')
+linkcode_resolve = make_linkcode_resolve(
+    'sklearn', 'https://github.com/scikit-learn/'
+    'scikit-learn/blob/{revision}/'
+    '{package}/{path}#L{lineno}')
 
-warnings.filterwarnings("ignore", category=UserWarning,
+warnings.filterwarnings("ignore",
+                        category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
-                                ' non-GUI backend, so cannot show the figure.')
+                        ' non-GUI backend, so cannot show the figure.')
 
 # Reduces the output of estimators
 sklearn.set_config(print_changed_only=True)
