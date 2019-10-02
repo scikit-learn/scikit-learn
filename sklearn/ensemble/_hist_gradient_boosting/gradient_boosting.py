@@ -355,7 +355,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 if self.loss_.need_update_leaves_values:
                     self.loss_.update_leaves_values(grower, y_train,
-                                                    raw_predictions[k, :])
+                                                    raw_predictions[k, :],
+                                                    sample_weight_train)
 
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_
