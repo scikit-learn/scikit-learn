@@ -691,15 +691,13 @@ def test_sparse_precomputed():
 
 
 def test_sparse_fit_support_vectors_empty():
-    x_train = sparse.csr_matrix([[0, 1, 0, 0],
+    X_train = sparse.csr_matrix([[0, 1, 0, 0],
                                  [0, 0, 0, 1],
                                  [0, 0, 1, 0],
                                  [0, 0, 0, 1]])
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
-    model = svm.SVR(C=316.227766017, cache_size=200, coef0=0.0, degree=3,
-                    epsilon=0.1, gamma=1.0, kernel='linear', max_iter=15000,
-                    shrinking=True, tol=0.001, verbose=False)
-    model.fit(x_train, y_train)
+    model = svm.SVR(kernel='linear')
+    model.fit(X_train, y_train)
     assert model.support_vectors_.data.size == 0
     assert model.dual_coef_.data.size == 0
 
