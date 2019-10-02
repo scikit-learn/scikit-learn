@@ -15,6 +15,7 @@ def data():
 class NoFitIndicatorImputer(_BaseImputer):
     def fit(self, X, y=None):
         return self
+
     def transform(self, X, y=None):
         return self._concatenate_indicator(X, self._transform_indicator(X))
 
@@ -23,6 +24,7 @@ class NoTransformIndicatorImputer(_BaseImputer):
     def fit(self, X, y=None):
         super()._fit_indicator(X)
         return self
+
     def transform(self, X, y=None):
         return self._concatenate_indicator(X, None)
 
