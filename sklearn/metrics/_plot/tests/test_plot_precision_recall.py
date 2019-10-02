@@ -6,43 +6,36 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
 
 
-@pytest.fixture(scope="module")
-def data_binary():
-    return load_breast_cancer(return_X_y=True)
+def test_errors(pyplot):
+    X, y_binary = make_classification(n_classes=2, n_samples=50,
+                                      random_state=0)
 
-
-def test_error_non_binary(pyplot):
-    X, y = load_iris(return_X_y=True)
-    clf = DecisionTreeClassifier()
-    clf.fit(X, y)
-
-    msg = "Estimator should solve a binary classification problem"
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(clf, X, y)
-
-
-def test_error_binary(pyplot, data_binary):
-    X, y = data_binary
-    clf = DecisionTreeClassifier()
+    # Unfitted classifer
+    binary_clf = DecisionTreeClassifier()
     with pytest.raises(NotFittedError):
-        plot_precision_recall_curve(clf, X, y)
+        plot_precision_recall_curve(binary_clf, X, y_binary)
+    binary_clf.fit(X, y_binary)
 
-    n_samples = X.shape[0]
-    _, y_multiclass = make_classification(n_samples=n_samples,
+    _, y_multiclass = make_classification(n_samples=X.shape[0],
                                           n_informative=3,
                                           n_classes=3)
-    clf.fit(X, y)
-    msg = "only binary format is not supported, got multiclass"
+    multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
+
+    # Fitted multiclass classifier with binary data
+    msg = "Estimator should solve a binary classification problem"
     with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(clf, X, y_multiclass)
+        plot_precision_recall_curve(multi_clf, X, y_binary)
+
+    # Fitted binary classifier with multiclass data
+    msg = "Only binary format is supported, got multiclass"
+    with pytest.raises(ValueError, match=msg):
+        plot_precision_recall_curve(binary_clf, X, y_multiclass)
 
 
 @pytest.mark.parametrize(
@@ -55,8 +48,8 @@ def test_error_binary(pyplot, data_binary):
               "for estimator MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
-def test_error_no_response(pyplot, data_binary, response_method, msg):
-    X, y = data_binary
+def test_error_no_response(pyplot, response_method, msg):
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     class MyClassifier(BaseEstimator):
         def fit(self, X, y):
@@ -72,9 +65,8 @@ def test_error_no_response(pyplot, data_binary, response_method, msg):
 @pytest.mark.parametrize("response_method",
                          ["predict_proba", "decision_function"])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
-def test_plot_precision_recall(pyplot, response_method, data_binary,
-                               with_sample_weight):
-    X, y = data_binary
+def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     lr = LogisticRegression().fit(X, y)
 
