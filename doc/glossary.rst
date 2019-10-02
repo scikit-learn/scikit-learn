@@ -697,6 +697,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
@@ -854,10 +855,10 @@ Class APIs and Estimator Types
     feature extractors
         A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object of :term:`features` for each sample
-        (and thus a 2-dimensional array-like for a set of samples).  In other
-        words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        produces an :term:`array-like` object of :term:`features` for each
+        sample (and thus a 2-dimensional array-like for a set of samples).  In
+        other words, it (lossily) maps a non-rectangular data representation
+        into :term:`rectangular` data.
 
         Feature extractors must implement at least:
 
@@ -977,7 +978,7 @@ such as:
         Cross-validation estimators are named `EstimatorCV` and tend to be
         roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
         advantage of using a cross-validation estimator over the canonical
-        `Estimator` class along with :ref:`grid search <grid_search>` is
+        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
         that they can take advantage of warm-starting by reusing precomputed
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
@@ -1546,6 +1547,12 @@ functions or non-estimator constructors.
         When ``n_jobs`` is not 1, the estimator being parallelized must be
         picklable.  This means, for instance, that lambdas cannot be used
         as estimator parameters.
+
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
 
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a

@@ -70,7 +70,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
@@ -1692,12 +1692,16 @@ def test_custom_run_search():
 
     results = mycv.cv_results_
     check_results(results, gscv)
-    for attr in dir(gscv):
-        if attr[0].islower() and attr[-1:] == '_' and \
-           attr not in {'cv_results_', 'best_estimator_',
-                        'refit_time_'}:
-            assert getattr(gscv, attr) == getattr(mycv, attr), \
-                   "Attribute %s not equal" % attr
+    # TODO: remove in v0.24, the deprecation goes away then.
+    with pytest.warns(DeprecationWarning,
+                      match="attribute is to be deprecated from version 0.22"):
+        for attr in dir(gscv):
+            if (attr[0].islower() and attr[-1:] == '_' and
+                    attr not in {'cv_results_', 'best_estimator_',
+                                 'refit_time_',
+                                 }):
+                assert getattr(gscv, attr) == getattr(mycv, attr), \
+                    "Attribute %s not equal" % attr
 
 
 def test__custom_fit_no_run_search():

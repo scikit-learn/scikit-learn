@@ -145,6 +145,7 @@
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
+from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
 
@@ -2610,12 +2611,6 @@ def nodeheap_sort(DTYPE_t[::1] vals):
 
     return np.asarray(vals_sorted), np.asarray(indices)
 
-# Reimplementation for MSVC support
-cdef inline double fmin(double a, double b):
-    return min(a, b)
-
-cdef inline double fmax(double a, double b) nogil:
-    return max(a, b)
 
 cdef inline DTYPE_t _total_node_weight(NodeData_t* node_data,
                                        DTYPE_t* sample_weight,

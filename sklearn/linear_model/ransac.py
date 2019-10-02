@@ -53,8 +53,8 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
-                      MultiOutputMixin):
+class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
+                      MultiOutputMixin, BaseEstimator):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -338,8 +338,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         # number of data samples
         n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
-
-        n_samples, _ = X.shape
 
         self.n_trials_ = 0
         max_trials = self.max_trials

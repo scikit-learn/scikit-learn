@@ -1,5 +1,4 @@
 """Unsupervised nearest neighbors learner"""
-
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import RadiusNeighborsMixin
@@ -40,30 +39,13 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         nature of the problem.
 
     metric : string or callable, default 'minkowski'
-        metric to use for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
-
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
-        efficient than passing the metric name as a string.
-
-        Distance matrices are not supported.
-
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics.
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        in which case only "nonzero" elements may be considered neighbors.
 
     p : integer, optional (default = 2)
         Parameter for the Minkowski metric from

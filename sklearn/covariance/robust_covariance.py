@@ -576,8 +576,8 @@ class MinCovDet(EmpiricalCovariance):
         the robust estimates of location and shape.
 
     dist_ : array-like, shape (n_samples,)
-        Mahalanobis distances of the training set (on which `fit` is called)
-        observations.
+        Mahalanobis distances of the training set (on which :meth:`fit` is
+        called) observations.
 
     Examples
     --------

@@ -65,7 +65,7 @@ class _ValidationScoreCallback:
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
+class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
@@ -124,7 +124,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         if self.n_iter_no_change < 1:
             raise ValueError("n_iter_no_change must be >= 1")
         if not (0.0 < self.validation_fraction < 1.0):
-            raise ValueError("validation_fraction must be in ]0, 1[")
+            raise ValueError("validation_fraction must be in range (0, 1)")
         if self.learning_rate in ("constant", "invscaling", "adaptive"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
@@ -420,7 +420,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
+class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -762,7 +762,7 @@ class SGDClassifier(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -1050,7 +1050,7 @@ class SGDClassifier(BaseSGDClassifier):
         return np.log(self.predict_proba(X))
 
 
-class BaseSGDRegressor(BaseSGD, RegressorMixin):
+class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     loss_functions = {
         "squared_loss": (SquaredLoss, ),
@@ -1374,7 +1374,7 @@ class SGDRegressor(BaseSGDRegressor):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
