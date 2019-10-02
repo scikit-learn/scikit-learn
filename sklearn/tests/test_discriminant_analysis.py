@@ -100,7 +100,7 @@ def test_lda_predict():
     assert_raises(NotImplementedError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
 
-    with pytest.raises(ValueError,
+    with pytest.raises(TypeError,
                        match="shrinkage must be a float or a string"):
         clf.fit(X, y)
     # Test unknown solver
@@ -627,7 +627,7 @@ def test_qda_covariance_sample_estimate():
     c2.fit(X, Y)
     for i in range(2):
         assert np.allclose(c1.means_[i], c2.means_[i])
-    assert np.allclose(c1.covariance_, c2.covariance)
+    assert np.allclose(c1.covariance_, c2.covariance_)
 
 
 def test_covariance():

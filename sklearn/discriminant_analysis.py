@@ -637,8 +637,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                 raise NotImplementedError('shrinkage not supported')
             if self.covariance_estimator is not None:
                 raise NotImplementedError(
-                        'covariance estimator'
-                        'is not supported'
+                        'covariance estimator '
+                        'is not supported '
                         'with svd solver. Try another solver')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
@@ -990,7 +990,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.solver == 'svd':
             if self.covariance_estimator is not None:
                 raise NotImplementedError(
-                    'covariance estimator is not'
+                    'covariance estimator is not '
                     'supported with svd solver. Try another solver')
             self._solve_svd(X, y)
         elif self.solver == 'lsqr':
