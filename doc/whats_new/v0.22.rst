@@ -89,6 +89,9 @@ Changelog
   producing Segmentation Fault on large arrays due to integer index overflow.
   :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
 
+- |Fix| :class:`~cluster.MeanShift` now accepts a :term:`max_iter` with a
+  default value of 300 instead of always using the default 300.
+
 :mod:`sklearn.compose`
 ......................
 
