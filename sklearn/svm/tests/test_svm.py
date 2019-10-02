@@ -1191,8 +1191,9 @@ def test_gamma_scale():
 
 
 def test_n_support_oneclass_svr():
-    # Make sure n_support is not zero for oneclass and SVR
-    # non regression test for issue #14774
+    # Make n_support is correct for oneclass and SVR (used to be
+    # non-initialized)
+    # this is a non regression test for issue #14774
     X = np.array([[0], [0.44], [0.45], [0.46], [1]])
     clf = svm.OneClassSVM()
     assert not hasattr(clf, 'n_support_')
