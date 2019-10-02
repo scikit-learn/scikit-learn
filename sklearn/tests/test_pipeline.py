@@ -1156,7 +1156,7 @@ def test_feature_union_fit_params():
     # Regression test for issue: #15117
     class Dummy(TransformerMixin, BaseEstimator):
         def fit(self, X, y=None, **fit_params):
-            if not fit_params:
+            if fit_params != {'a': 0}:
                 raise ValueError
             return self
 
