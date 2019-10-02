@@ -38,8 +38,6 @@ strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 
 That gives, on Windows::
 
-    python -m venv .myenv
-    .myenv\Scripts\activate
     pip install -U scikit-learn
 
 or on Linux::
@@ -49,7 +47,9 @@ or on Linux::
     pip install -U scikit-learn
 
 If you choose to use ``conda`` (see the `instructions for downloading conda
-<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_)
+<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
+and `how to use conda environments
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)
 
     conda install scikit-learn
 
