@@ -2,12 +2,12 @@
 
 The original database was available from (now defunct)
 
-    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+    https://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
 
-    http://www.cs.nyu.edu/~roweis/
+    https://cs.nyu.edu/~roweis/
 """
 
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
@@ -18,16 +18,17 @@ from os import makedirs, remove
 
 import numpy as np
 from scipy.io.matlab import loadmat
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
+from .base import _refresh_cache
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
 
 # The original data can be found at:
-# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
+# https://cs.nyu.edu/~roweis/data/olivettifaces.mat
 FACES = RemoteFileMetadata(
     filename='olivettifaces.mat',
     url='https://ndownloader.figshare.com/files/5976027',
@@ -36,7 +37,7 @@ FACES = RemoteFileMetadata(
 
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
-                         download_if_missing=True):
+                         download_if_missing=True, return_X_y=False):
     """Load the Olivetti faces data-set from AT&T (classification).
 
     Download it if necessary.
@@ -69,24 +70,26 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns `(data, target)` instead of a `Bunch` object. See
+        below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.22
+
     Returns
     -------
-    An object with the following attributes:
+    bunch : Bunch object with the following attributes:
+        - data: ndarray, shape (400, 4096). Each row corresponds to a ravelled
+          face image of original size 64 x 64 pixels.
+        - images : ndarray, shape (400, 64, 64). Each row is a face image
+          corresponding to one of the 40 subjects of the dataset.
+        - target : ndarray, shape (400,). Labels associated to each face image.
+          Those labels are ranging from 0-39 and correspond to the
+          Subject IDs.
+        - DESCR : string. Description of the modified Olivetti Faces Dataset.
 
-    data : numpy array of shape (400, 4096)
-        Each row corresponds to a ravelled face image of original size
-        64 x 64 pixels.
-
-    images : numpy array of shape (400, 64, 64)
-        Each row is a face image corresponding to one of the 40 subjects
-        of the dataset.
-
-    target : numpy array of shape (400, )
-        Labels associated to each face image. Those labels are ranging from
-        0-39 and correspond to the Subject IDs.
-
-    DESCR : string
-        Description of the modified Olivetti Faces Dataset.
+    (data, target) : tuple if `return_X_y=True`
+        .. versionadded:: 0.22
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -107,7 +110,9 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(filepath)
+        faces = _refresh_cache([filepath], 6)
+        # TODO: Revert to the following line in v0.23
+        # faces = joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
@@ -122,12 +127,16 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
+    faces_vectorized = faces.reshape(len(faces), -1)
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    return Bunch(data=faces.reshape(len(faces), -1),
+    if return_X_y:
+        return faces_vectorized, target
+
+    return Bunch(data=faces_vectorized,
                  images=faces,
                  target=target,
                  DESCR=fdescr)

@@ -1,17 +1,14 @@
 """Testing for Spectral Clustering methods"""
-from __future__ import division
 
 import numpy as np
 from scipy import sparse
 
 import pytest
 
-from sklearn.externals.six.moves import cPickle
+import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
@@ -20,6 +17,7 @@ from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
+from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets.samples_generator import make_blobs
 
 try:
@@ -52,7 +50,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
 
         assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
 
-        model_copy = cPickle.loads(cPickle.dumps(model))
+        model_copy = pickle.loads(pickle.dumps(model))
         assert model_copy.n_clusters == model.n_clusters
         assert model_copy.eigen_solver == model.eigen_solver
         assert_array_equal(model_copy.labels_, model.labels_)
@@ -70,8 +68,9 @@ def test_spectral_unknown_mode():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, eigen_solver="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            eigen_solver="<unknown>")
 
 
 def test_spectral_unknown_assign_labels():
@@ -86,8 +85,9 @@ def test_spectral_unknown_assign_labels():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, assign_labels="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            assign_labels="<unknown>")
 
 
 def test_spectral_clustering_sparse():
@@ -103,13 +103,31 @@ def test_spectral_clustering_sparse():
     assert adjusted_rand_score(y, labels) == 1
 
 
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    X, y = make_blobs(n_samples=200, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors).fit(X)
+        graph = nn.kneighbors_graph(X, mode='connectivity')
+        labels = SpectralClustering(random_state=0, n_clusters=2,
+                                    affinity='precomputed_nearest_neighbors',
+                                    n_neighbors=n_neighbors).fit(graph).labels_
+        results.append(labels)
+
+    assert_array_equal(results[0], results[1])
+
+
 def test_affinities():
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
     X, y = make_blobs(n_samples=20, random_state=0,
-                      centers=[[1, 1], [-1, -1]], cluster_std=0.01
-                     )
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -139,7 +157,7 @@ def test_affinities():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        assert kwargs == {}    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
@@ -148,7 +166,8 @@ def test_affinities():
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
-    assert_raises(ValueError, sp.fit, X)
+    with pytest.raises(ValueError):
+        sp.fit(X)
 
 
 @pytest.mark.parametrize('n_samples', [50, 100, 150, 500])
@@ -202,6 +221,26 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
         assert adjusted_rand_score(labels_arpack, labels_amg) == 1
     else:
-        assert_raises(
-            ValueError, spectral_clustering,
-            graph, n_clusters=2, eigen_solver='amg', random_state=0)
+        with pytest.raises(ValueError):
+            spectral_clustering(graph, n_clusters=2, eigen_solver='amg',
+                                random_state=0)
+
+
+def test_n_components():
+    # Test that after adding n_components, result is different and
+    # n_components = n_clusters by default
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+    sp = SpectralClustering(n_clusters=2, random_state=0)
+    labels = sp.fit(X).labels_
+    # set n_components = n_cluster and test if result is the same
+    labels_same_ncomp = SpectralClustering(n_clusters=2, n_components=2,
+                                           random_state=0).fit(X).labels_
+    # test that n_components=n_clusters by default
+    assert_array_equal(labels, labels_same_ncomp)
+
+    # test that n_components affect result
+    # n_clusters=8 by default, and set n_components=2
+    labels_diff_ncomp = SpectralClustering(n_components=2,
+                                           random_state=0).fit(X).labels_
+    assert not np.array_equal(labels, labels_diff_ncomp)

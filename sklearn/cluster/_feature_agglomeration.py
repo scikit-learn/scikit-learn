@@ -21,8 +21,6 @@ class AgglomerationTransform(TransformerMixin):
     A class for feature agglomeration via the transform interface
     """
 
-    pooling_func = np.mean
-
     def transform(self, X):
         """
         Transform a new matrix using the built clustering
@@ -38,23 +36,21 @@ class AgglomerationTransform(TransformerMixin):
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
-        check_is_fitted(self, "labels_")
+        check_is_fitted(self)
 
-        pooling_func = self.pooling_func
         X = check_array(X)
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")
-        if pooling_func == np.mean and not issparse(X):
+        if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
             nX = np.array([np.bincount(self.labels_, X[i, :]) / size
                           for i in range(n_samples)])
         else:
-            nX = []
-            for l in np.unique(self.labels_):
-                nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
+            nX = [self.pooling_func(X[:, self.labels_ == l], axis=1)
+                  for l in np.unique(self.labels_)]
             nX = np.array(nX).T
         return nX
 
@@ -75,7 +71,7 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        check_is_fitted(self, "labels_")
+        check_is_fitted(self)
 
         unil, inverse = np.unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]

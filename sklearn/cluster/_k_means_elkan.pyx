@@ -1,7 +1,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: profile=True
 #
 # Author: Andreas Mueller
 #
@@ -31,7 +30,7 @@ cdef floating euclidean_dist(floating* a, floating* b, int n_features) nogil:
 cdef update_labels_distances_inplace(
         floating* X, floating* centers, floating[:, :] center_half_distances,
         int[:] labels, floating[:, :] lower_bounds, floating[:] upper_bounds,
-        int n_samples, int n_features, int n_clusters):
+        Py_ssize_t n_samples, int n_features, int n_clusters):
     """
     Calculate upper and lower bounds for each sample.
 
@@ -70,7 +69,7 @@ cdef update_labels_distances_inplace(
         The distance of each sample from its closest cluster center.  This is
         modified in place by the function.
 
-    n_samples : int
+    n_samples : Py_ssize_t
         The number of samples.
 
     n_features : int
@@ -84,7 +83,8 @@ cdef update_labels_distances_inplace(
     cdef floating* x
     cdef floating* c
     cdef floating d_c, dist
-    cdef int c_x, j, sample
+    cdef int c_x, j
+    cdef Py_ssize_t sample
     for sample in range(n_samples):
         # assign first cluster center
         c_x = 0
@@ -145,7 +145,8 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
     cdef floating* x_p
     cdef Py_ssize_t n_samples = X_.shape[0]
     cdef Py_ssize_t n_features = X_.shape[1]
-    cdef int point_index, center_index, label
+    cdef Py_ssize_t point_index
+    cdef int center_index, label
     cdef floating upper_bound, distance
     cdef floating[:, :] center_half_distances = euclidean_distances(centers_) / 2.
     cdef floating[:, :] lower_bounds = np.zeros((n_samples, n_clusters), dtype=dtype)

@@ -309,7 +309,7 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(BaseEstimator, SelectorMixin):
+class _BaseFilter(SelectorMixin, BaseEstimator):
     """Initialize the univariate feature selection.
 
     Parameters
@@ -420,7 +420,7 @@ class SelectPercentile(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
-        super(SelectPercentile, self).__init__(score_func)
+        super().__init__(score_func)
         self.percentile = percentile
 
     def _check_params(self, X, y):
@@ -429,7 +429,7 @@ class SelectPercentile(_BaseFilter):
                              % self.percentile)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         # Cater for NaNs
         if self.percentile == 100:
@@ -504,7 +504,7 @@ class SelectKBest(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, k=10):
-        super(SelectKBest, self).__init__(score_func)
+        super().__init__(score_func)
         self.k = k
 
     def _check_params(self, X, y):
@@ -514,7 +514,7 @@ class SelectKBest(_BaseFilter):
                              % (X.shape[1], self.k))
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         if self.k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
@@ -583,11 +583,11 @@ class SelectFpr(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFpr, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         return self.pvalues_ < self.alpha
 
@@ -649,11 +649,11 @@ class SelectFdr(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFdr, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
@@ -712,11 +712,11 @@ class SelectFwe(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFwe, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         return (self.pvalues_ < self.alpha / len(self.pvalues_))
 
@@ -786,7 +786,7 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        super(GenericUnivariateSelect, self).__init__(score_func)
+        super().__init__(score_func)
         self.mode = mode
         self.param = param
 
@@ -811,7 +811,7 @@ class GenericUnivariateSelect(_BaseFilter):
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'scores_')
+        check_is_fitted(self)
 
         selector = self._make_selector()
         selector.pvalues_ = self.pvalues_

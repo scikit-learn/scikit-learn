@@ -11,12 +11,12 @@ from math import sqrt
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -340,7 +340,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     X = check_array(X, order='F', copy=copy_X)
@@ -479,7 +479,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     Gram = check_array(Gram, order='F', copy=copy_Gram)
@@ -539,7 +539,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
+class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     """Orthogonal Matching Pursuit model (OMP)
 
     Read more in the :ref:`User Guide <omp>`.
@@ -556,7 +556,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -568,9 +568,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
-        calculations. Improves performance when `n_targets` or `n_samples` is
-        very large. Note that if you already have such matrices, you can pass
-        them directly to the fit method.
+        calculations. Improves performance when :term:`n_targets` or
+        :term:`n_samples` is very large. Note that if you already have such
+        matrices, you can pass them directly to the fit method.
 
     Attributes
     ----------
@@ -583,6 +583,17 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     n_iter_ : int or array-like
         Number of active features across every target.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuit
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
+    >>> reg.score(X, y)
+    0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
+
     Notes
     -----
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
@@ -593,7 +604,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     See also
     --------
@@ -670,7 +681,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
-    -----------
+    ----------
     X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
 
@@ -690,7 +701,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -742,8 +753,10 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
     return np.dot(coefs.T, X_test.T) - y_test
 
 
-class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Matching Pursuit model (OMP)
+class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
+    """Cross-validated Orthogonal Matching Pursuit model (OMP).
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -757,7 +770,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
     fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+        (i.e. data is expected to be centered).
 
     normalize : boolean, optional, default True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -775,19 +788,18 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value if None will change from 3-fold to 5-fold
-            in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int or None, optional (default=None)
         Number of CPUs to use during the cross validation.
@@ -814,6 +826,20 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=100, n_informative=10,
+    ...                        noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
+    >>> reg.score(X, y)
+    0.9991...
+    >>> reg.n_nonzero_coefs_
+    10
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
+
     See also
     --------
     orthogonal_mp
@@ -828,7 +854,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv='warn', n_jobs=None, verbose=False):
+                 max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize

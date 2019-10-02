@@ -5,8 +5,10 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
+import pytest
 import sys
 import warnings
+import re
 
 import numpy as np
 
@@ -15,32 +17,27 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 
-
-np.seterr(all='warn')
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
-digits_dataset_multi = load_digits(n_class=3)
+X_digits, y_digits = load_digits(n_class=3, return_X_y=True)
 
-X_digits_multi = MinMaxScaler().fit_transform(digits_dataset_multi.data[:200])
-y_digits_multi = digits_dataset_multi.target[:200]
+X_digits_multi = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_multi = y_digits[:200]
 
-digits_dataset_binary = load_digits(n_class=2)
+X_digits, y_digits = load_digits(n_class=2, return_X_y=True)
 
-X_digits_binary = MinMaxScaler().fit_transform(
-    digits_dataset_binary.data[:200])
-y_digits_binary = digits_dataset_binary.target[:200]
+X_digits_binary = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_binary = y_digits[:200]
 
 classification_datasets = [(X_digits_multi, y_digits_multi),
                            (X_digits_binary, y_digits_binary)]
@@ -49,6 +46,8 @@ boston = load_boston()
 
 Xboston = StandardScaler().fit_transform(boston.data)[: 200]
 yboston = boston.target[:200]
+
+regression_datasets = [(Xboston, yboston)]
 
 iris = load_iris()
 
@@ -176,7 +175,8 @@ def test_gradient():
     for n_labels in [2, 3]:
         n_samples = 5
         n_features = 10
-        X = np.random.random((n_samples, n_features))
+        random_state = np.random.RandomState(seed=42)
+        X = random_state.rand(n_samples, n_features)
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
 
@@ -229,42 +229,74 @@ def test_gradient():
             assert_almost_equal(numgrad, grad)
 
 
-def test_lbfgs_classification():
+@pytest.mark.parametrize('X,y', classification_datasets)
+def test_lbfgs_classification(X, y):
     # Test lbfgs on classification.
     # It should achieve a score higher than 0.95 for the binary and multi-class
     # versions of the digits dataset.
-    for X, y in classification_datasets:
-        X_train = X[:150]
-        y_train = y[:150]
-        X_test = X[150:]
+    X_train = X[:150]
+    y_train = y[:150]
+    X_test = X[150:]
+    expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
 
-        expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
-
-        for activation in ACTIVATION_TYPES:
-            mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
-                                max_iter=150, shuffle=True, random_state=1,
-                                activation=activation)
-            mlp.fit(X_train, y_train)
-            y_predict = mlp.predict(X_test)
-            assert_greater(mlp.score(X_train, y_train), 0.95)
-            assert_equal((y_predict.shape[0], y_predict.dtype.kind),
-                         expected_shape_dtype)
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
+                            max_iter=150, shuffle=True, random_state=1,
+                            activation=activation)
+        mlp.fit(X_train, y_train)
+        y_predict = mlp.predict(X_test)
+        assert mlp.score(X_train, y_train) > 0.95
+        assert ((y_predict.shape[0], y_predict.dtype.kind) ==
+                expected_shape_dtype)
 
 
-def test_lbfgs_regression():
+@pytest.mark.parametrize('X,y', regression_datasets)
+def test_lbfgs_regression(X, y):
     # Test lbfgs on the boston dataset, a regression problems.
-    X = Xboston
-    y = yboston
     for activation in ACTIVATION_TYPES:
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
                            max_iter=150, shuffle=True, random_state=1,
                            activation=activation)
         mlp.fit(X, y)
         if activation == 'identity':
-            assert_greater(mlp.score(X, y), 0.84)
+            assert mlp.score(X, y) > 0.84
         else:
             # Non linear models perform much better than linear bottleneck:
-            assert_greater(mlp.score(X, y), 0.95)
+            assert mlp.score(X, y) > 0.95
+
+
+@pytest.mark.parametrize('X,y', classification_datasets)
+def test_lbfgs_classification_maxfun(X, y):
+    # Test lbfgs parameter max_fun.
+    # It should independently limit the number of iterations for lbfgs.
+    max_fun = 10
+    # classification tests
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
+                            max_iter=150, max_fun=max_fun, shuffle=True,
+                            random_state=1, activation=activation)
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
+
+
+@pytest.mark.parametrize('X,y', regression_datasets)
+def test_lbfgs_regression_maxfun(X, y):
+    # Test lbfgs parameter max_fun.
+    # It should independently limit the number of iterations for lbfgs.
+    max_fun = 10
+    # regression tests
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
+                           max_iter=150, max_fun=max_fun, shuffle=True,
+                           random_state=1, activation=activation)
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
+
+    mlp.max_fun = -1
+    with pytest.raises(ValueError):
+        mlp.fit(X, y)
 
 
 def test_learning_rate_warmstart():
@@ -282,9 +314,9 @@ def test_learning_rate_warmstart():
             post_eta = mlp._optimizer.learning_rate
 
         if learning_rate == 'constant':
-            assert_equal(prev_eta, post_eta)
+            assert prev_eta == post_eta
         elif learning_rate == 'invscaling':
-            assert_equal(mlp.learning_rate_init / pow(8 + 1, mlp.power_t),
+            assert (mlp.learning_rate_init / pow(8 + 1, mlp.power_t) ==
                          post_eta)
 
 
@@ -297,7 +329,7 @@ def test_multilabel_classification():
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
-    assert_equal(mlp.score(X, y), 1)
+    assert mlp.score(X, y) > 0.97
 
     # test partial fit method
     mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=50, max_iter=150,
@@ -305,16 +337,22 @@ def test_multilabel_classification():
                         learning_rate_init=0.2)
     for i in range(100):
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
-    assert_greater(mlp.score(X, y), 0.9)
+    assert mlp.score(X, y) > 0.9
+
+    # Make sure early stopping still work now that spliting is stratified by
+    # default (it is disabled for multilabel classification)
+    mlp = MLPClassifier(early_stopping=True)
+    mlp.fit(X, y).predict(X)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
     mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50, max_iter=200,
                        random_state=1)
     mlp.fit(X, y)
-    assert_greater(mlp.score(X, y), 0.9)
+    assert mlp.score(X, y) > 0.9
 
 
 def test_partial_fit_classes_error():
@@ -323,7 +361,8 @@ def test_partial_fit_classes_error():
     y = [0]
     clf = MLPClassifier(solver='sgd')
     clf.partial_fit(X, y, classes=[0, 1])
-    assert_raises(ValueError, clf.partial_fit, X, y, classes=[1, 2])
+    with pytest.raises(ValueError):
+        clf.partial_fit(X, y, classes=[1, 2])
 
 
 def test_partial_fit_classification():
@@ -345,7 +384,7 @@ def test_partial_fit_classification():
             mlp.partial_fit(X, y, classes=np.unique(y))
         pred2 = mlp.predict(X)
         assert_array_equal(pred1, pred2)
-        assert_greater(mlp.score(X, y), 0.95)
+        assert mlp.score(X, y) > 0.95
 
 
 def test_partial_fit_unseen_classes():
@@ -356,7 +395,7 @@ def test_partial_fit_unseen_classes():
     clf.partial_fit([[1], [2], [3]], ["a", "b", "c"],
                     classes=["a", "b", "c", "d"])
     clf.partial_fit([[4]], ["d"])
-    assert_greater(clf.score([[1], [2], [3], [4]], ["a", "b", "c", "d"]), 0)
+    assert clf.score([[1], [2], [3], [4]], ["a", "b", "c", "d"]) > 0
 
 
 def test_partial_fit_regression():
@@ -382,7 +421,7 @@ def test_partial_fit_regression():
         pred2 = mlp.predict(X)
         assert_almost_equal(pred1, pred2, decimal=2)
         score = mlp.score(X, y)
-        assert_greater(score, 0.75)
+        assert score > 0.75
 
 
 def test_partial_fit_errors():
@@ -391,40 +430,44 @@ def test_partial_fit_errors():
     y = [1, 0]
 
     # no classes passed
-    assert_raises(ValueError,
-                  MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
+    with pytest.raises(ValueError):
+        MLPClassifier(solver='sgd').partial_fit(X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
-def test_params_errors():
+@pytest.mark.parametrize(
+        "args",
+        [{'hidden_layer_sizes': -1},
+         {'max_iter': -1},
+         {'shuffle': 'true'},
+         {'alpha': -1},
+         {'learning_rate_init': -1},
+         {'momentum': 2},
+         {'momentum': -0.5},
+         {'nesterovs_momentum': 'invalid'},
+         {'early_stopping': 'invalid'},
+         {'validation_fraction': 1},
+         {'validation_fraction': -0.5},
+         {'beta_1': 1},
+         {'beta_1': -0.5},
+         {'beta_2': 1},
+         {'beta_2': -0.5},
+         {'epsilon': -0.5},
+         {'n_iter_no_change': -1},
+         {'solver': 'hadoken'},
+         {'learning_rate': 'converge'},
+         {'activation': 'cloak'}]
+)
+def test_params_errors(args):
     # Test that invalid parameters raise value error
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier
 
-    assert_raises(ValueError, clf(hidden_layer_sizes=-1).fit, X, y)
-    assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, clf(shuffle='true').fit, X, y)
-    assert_raises(ValueError, clf(alpha=-1).fit, X, y)
-    assert_raises(ValueError, clf(learning_rate_init=-1).fit, X, y)
-    assert_raises(ValueError, clf(momentum=2).fit, X, y)
-    assert_raises(ValueError, clf(momentum=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(nesterovs_momentum='invalid').fit, X, y)
-    assert_raises(ValueError, clf(early_stopping='invalid').fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=1).fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
-
-    assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
-    assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
-    assert_raises(ValueError, clf(activation='cloak').fit, X, y)
+    with pytest.raises(ValueError):
+        clf(**args).fit(X, y)
 
 
 def test_predict_proba_binary():
@@ -432,7 +475,8 @@ def test_predict_proba_binary():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
-    clf = MLPClassifier(hidden_layer_sizes=5)
+    clf = MLPClassifier(hidden_layer_sizes=5, activation='logistic',
+                        random_state=1)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -443,11 +487,11 @@ def test_predict_proba_binary():
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
 
-    assert_equal(y_proba.shape, (n_samples, n_classes))
+    assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
 
-    assert_equal(roc_auc_score(y, y_proba[:, 1]), 1.0)
+    assert roc_auc_score(y, y_proba[:, 1]) == 1.0
 
 
 def test_predict_proba_multiclass():
@@ -466,7 +510,7 @@ def test_predict_proba_multiclass():
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
 
-    assert_equal(y_proba.shape, (n_samples, n_classes))
+    assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
 
@@ -483,16 +527,43 @@ def test_predict_proba_multilabel():
     clf.fit(X, Y)
     y_proba = clf.predict_proba(X)
 
-    assert_equal(y_proba.shape, (n_samples, n_classes))
+    assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(y_proba > 0.5, Y)
 
     y_log_proba = clf.predict_log_proba(X)
     proba_max = y_proba.argmax(axis=1)
     proba_log_max = y_log_proba.argmax(axis=1)
 
-    assert_greater((y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1), 1e-10)
+    assert (y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1) > 1e-10
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
+
+
+def test_shuffle():
+    # Test that the shuffle parameter affects the training process (it should)
+    X, y = make_regression(n_samples=50, n_features=5, n_targets=1,
+                           random_state=0)
+
+    # The coefficients will be identical if both do or do not shuffle
+    for shuffle in [True, False]:
+        mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp1.fit(X, y)
+        mlp2.fit(X, y)
+
+        assert np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+    # The coefficients will be slightly different if shuffle=True
+    mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=True)
+    mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=False)
+    mlp1.fit(X, y)
+    mlp2.fit(X, y)
+
+    assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
 
 def test_sparse_matrices():
@@ -519,7 +590,7 @@ def test_tolerance():
     y = [1, 0]
     clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd')
     clf.fit(X, y)
-    assert_greater(clf.max_iter, clf.n_iter_)
+    assert clf.max_iter > clf.n_iter_
 
 
 def test_verbose_sgd():
@@ -546,13 +617,13 @@ def test_early_stopping():
     clf = MLPClassifier(tol=tol, max_iter=3000, solver='sgd',
                         early_stopping=True)
     clf.fit(X, y)
-    assert_greater(clf.max_iter, clf.n_iter_)
+    assert clf.max_iter > clf.n_iter_
 
     valid_scores = clf.validation_scores_
     best_valid_score = clf.best_validation_score_
-    assert_equal(max(valid_scores), best_valid_score)
-    assert_greater(best_valid_score + tol, valid_scores[-2])
-    assert_greater(best_valid_score + tol, valid_scores[-1])
+    assert max(valid_scores) == best_valid_score
+    assert best_valid_score + tol > valid_scores[-2]
+    assert best_valid_score + tol > valid_scores[-1]
 
 
 def test_adaptive_learning_rate():
@@ -561,8 +632,8 @@ def test_adaptive_learning_rate():
     clf = MLPClassifier(tol=0.5, max_iter=3000, solver='sgd',
                         learning_rate='adaptive')
     clf.fit(X, y)
-    assert_greater(clf.max_iter, clf.n_iter_)
-    assert_greater(1e-6, clf._optimizer.learning_rate)
+    assert clf.max_iter > clf.n_iter_
+    assert 1e-6 > clf._optimizer.learning_rate
 
 
 @ignore_warnings(category=RuntimeWarning)
@@ -588,7 +659,8 @@ def test_warm_start():
         message = ('warm_start can only be used where `y` has the same '
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
-        assert_raise_message(ValueError, message, clf.fit, X, y_i)
+        with pytest.raises(ValueError, match=re.escape(message)):
+            clf.fit(X, y_i)
 
 
 def test_n_iter_no_change():
@@ -606,8 +678,8 @@ def test_n_iter_no_change():
         clf.fit(X, y)
 
         # validate n_iter_no_change
-        assert_equal(clf._no_improvement_count, n_iter_no_change + 1)
-        assert_greater(max_iter, clf.n_iter_)
+        assert clf._no_improvement_count == n_iter_no_change + 1
+        assert max_iter > clf.n_iter_
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -629,7 +701,19 @@ def test_n_iter_no_change_inf():
     clf.fit(X, y)
 
     # validate n_iter_no_change doesn't cause early stopping
-    assert_equal(clf.n_iter_, max_iter)
+    assert clf.n_iter_ == max_iter
 
     # validate _update_no_improvement_count() was always triggered
-    assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+    assert clf._no_improvement_count == clf.n_iter_ - 1
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    mlp = MLPClassifier(early_stopping=True)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+        mlp.fit(X, y)

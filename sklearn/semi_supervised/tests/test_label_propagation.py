@@ -1,10 +1,9 @@
 """ test the label propagation module """
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
@@ -32,7 +31,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        assert_equal(clf.transduction_[2], 1)
+        assert clf.transduction_[2] == 1
 
 
 def test_distribution():
@@ -64,19 +63,6 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
-
-
-def test_alpha_deprecation():
-    X, y = make_classification(n_samples=100)
-    y[::3] = -1
-
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = lp_default.fit(X, y).transduction_
-
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
-
-    assert_array_equal(lp_default_y, lp_0_y)
 
 
 def test_label_spreading_closed_form():
@@ -133,10 +119,8 @@ def test_valid_alpha():
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
     for alpha in [-0.1, 0, 1, 1.1, None]:
-        assert_raises(ValueError,
-                      lambda **kwargs:
-                      label_propagation.LabelSpreading(**kwargs).fit(X, y),
-                      alpha=alpha)
+        with pytest.raises(ValueError):
+            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 def test_convergence_speed():
@@ -157,11 +141,11 @@ def test_convergence_warning():
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert_equal(mdl.n_iter_, mdl.max_iter)
+    assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert_equal(mdl.n_iter_, mdl.max_iter)
+    assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)

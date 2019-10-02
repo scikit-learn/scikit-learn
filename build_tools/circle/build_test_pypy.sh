@@ -3,7 +3,7 @@ set -x
 set -e
 
 apt-get -yq update
-apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache
+apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
 
 pip install virtualenv
 
@@ -18,13 +18,28 @@ source pypy-env/bin/activate
 python --version
 which python
 
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy==1.14.4 Cython pytest
-pip install "scipy>=1.1.0" sphinx numpydoc docutils
+# XXX: numpy version pinning can be reverted once PyPy
+#      compatibility is resolved for numpy v1.6.x. For instance,
+#      when PyPy3 >6.0 is released (see numpy/numpy#12740)
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
+pip install scipy sphinx numpydoc docutils joblib pillow
 
 ccache -M 512M
 export CCACHE_COMPRESS=1
 export PATH=/usr/lib/ccache:$PATH
+export LOKY_MAX_CPU_COUNT="2"
+export OMP_NUM_THREADS="1"
 
+python setup.py build_ext --inplace -j 3
 pip install -e .
 
-make test
+# Check that Python implementation is PyPy
+python - << EOL
+import platform
+from sklearn.utils import IS_PYPY
+assert IS_PYPY is True, "platform={}!=PyPy".format(platform.python_implementation())
+EOL
+
+python -m pytest sklearn/
+python -m pytest doc/sphinxext/
+python -m pytest $(find doc -name '*.rst' | sort)

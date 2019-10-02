@@ -22,7 +22,7 @@ technique for distance based method.
 .. topic:: References:
 
  * Sanjoy Dasgupta. 2000.
-   `Experiments with random projection. <http://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
+   `Experiments with random projection. <https://cseweb.ucsd.edu/~dasgupta/papers/randomf.pdf>`_
    In Proceedings of the Sixteenth conference on Uncertainty in artificial
    intelligence (UAI'00), Craig Boutilier and Moisés Goldszmidt (Eds.). Morgan
    Kaufmann Publishers Inc., San Francisco, CA, USA, 143-151.
@@ -141,7 +141,7 @@ projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
-  >>> X = np.random.rand(100,10000)
+  >>> X = np.random.rand(100, 10000)
   >>> transformer = random_projection.SparseRandomProjection()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.shape

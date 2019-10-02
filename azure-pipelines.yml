@@ -1,0 +1,94 @@
+# Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
+jobs:
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-16.04
+    matrix:
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
+      # i.e. numpy 1.11 and scipy 0.17
+      py35_ubuntu_atlas:
+        DISTRIB: 'ubuntu'
+        PYTHON_VERSION: '3.5'
+        JOBLIB_VERSION: '0.11'
+        SKLEARN_NO_OPENMP: 'True'
+      # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
+      py35_conda_openblas:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '3.5'
+        INSTALL_MKL: 'false'
+        NUMPY_VERSION: '1.11.0'
+        SCIPY_VERSION: '0.17.0'
+        PANDAS_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PYTEST_VERSION: '*'
+        PILLOW_VERSION: '4.0.0'
+        MATPLOTLIB_VERSION: '1.5.1'
+        # later version of joblib are not packaged in conda for Python 3.5
+        JOBLIB_VERSION: '0.12.3'
+        COVERAGE: 'true'
+      # Linux environment to test the latest available dependencies and MKL.
+      # It runs tests requiring pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        PYTHON_VERSION: '*'
+        PYTEST_VERSION: '4.6.2'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
+
+- template: build_tools/azure/posix-32.yml
+  parameters:
+    name: Linux32
+    vmImage: ubuntu-16.04
+    matrix:
+      py35_ubuntu_atlas_32bit:
+        DISTRIB: 'ubuntu-32'
+        PYTHON_VERSION: '3.5'
+        JOBLIB_VERSION: '0.11'
+        SKLEARN_NO_OPENMP: 'True'
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: xcode9-macos10.13
+    matrix:
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
+
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: vs2017-win2016
+    matrix:
+      py37_conda_mkl:
+        PYTHON_VERSION: '3.7'
+        CHECK_WARNINGS: 'true'
+        PYTHON_ARCH: '64'
+        PYTEST_VERSION: '*'
+        COVERAGE: 'true'
+      py35_pip_openblas_32bit:
+        PYTHON_VERSION: '3.5'
+        PYTHON_ARCH: '32'

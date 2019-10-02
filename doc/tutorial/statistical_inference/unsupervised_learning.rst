@@ -33,13 +33,11 @@ algorithms. The simplest clustering algorithm is
 ::
 
     >>> from sklearn import cluster, datasets
-    >>> iris = datasets.load_iris()
-    >>> X_iris = iris.data
-    >>> y_iris = iris.target
+    >>> X_iris, y_iris = datasets.load_iris(return_X_y=True)
 
     >>> k_means = cluster.KMeans(n_clusters=3)
-    >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
-    KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
+    >>> k_means.fit(X_iris)
+    KMeans(n_clusters=3)
     >>> print(k_means.labels_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
@@ -117,8 +115,8 @@ algorithms. The simplest clustering algorithm is
         ...    face = misc.face(gray=True)
     	>>> X = face.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(n_clusters=5, n_init=1)
-    	>>> k_means.fit(X) # doctest: +ELLIPSIS
-    	KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
+    	>>> k_means.fit(X)
+        KMeans(n_clusters=5, n_init=1)
     	>>> values = k_means.cluster_centers_.squeeze()
     	>>> labels = k_means.labels_
     	>>> face_compressed = np.choose(labels, values)
@@ -214,8 +212,8 @@ transposed data.
 
    >>> agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
    ...                                      n_clusters=32)
-   >>> agglo.fit(X) # doctest: +ELLIPSIS
-   FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',...
+   >>> agglo.fit(X)
+   FeatureAgglomeration(connectivity=..., n_clusters=32)
    >>> X_reduced = agglo.transform(X)
 
    >>> X_approx = agglo.inverse_transform(X_reduced)
@@ -275,8 +273,7 @@ data by projecting on a principal subspace.
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+    PCA()
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
 

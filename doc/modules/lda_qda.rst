@@ -15,7 +15,7 @@ surface, respectively.
 
 These classifiers are attractive because they have closed-form solutions that
 can be easily computed, are inherently multiclass, have proven to work well in
-practice and have no hyperparameters to tune.
+practice, and have no hyperparameters to tune.
 
 .. |ldaqda| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_qda_001.png
         :target: ../auto_examples/classification/plot_lda_qda.html
@@ -43,7 +43,7 @@ linear subspace consisting of the directions which maximize the separation
 between classes (in a precise sense discussed in the mathematics section
 below). The dimension of the output is necessarily less than the number of
 classes, so this is, in general, a rather strong dimensionality reduction, and
-only makes senses in a multiclass setting.
+only makes sense in a multiclass setting.
 
 This is implemented in
 :func:`discriminant_analysis.LinearDiscriminantAnalysis.transform`. The desired
@@ -70,10 +70,10 @@ the class conditional distribution of the data :math:`P(X|y=k)` for each class
 and we select the class :math:`k` which maximizes this conditional probability.
 
 More specifically, for linear and quadratic discriminant analysis,
-:math:`P(X|y)` is modelled as a multivariate Gaussian distribution with
+:math:`P(X|y)` is modeled as a multivariate Gaussian distribution with
 density:
 
-.. math:: P(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right) 
+.. math:: P(X | y=k) = \frac{1}{(2\pi)^{d/2} |\Sigma_k|^{1/2}}\exp\left(-\frac{1}{2} (X-\mu_k)^t \Sigma_k^{-1} (X-\mu_k)\right)
 
 where :math:`d` is the number of features.
 
@@ -85,7 +85,7 @@ matrices, or by a regularized estimator: see the section on shrinkage below).
 
 In the case of LDA, the Gaussians for each class are assumed to share the same
 covariance matrix: :math:`\Sigma_k = \Sigma` for all :math:`k`. This leads to
-linear decision surfaces between, as can be seen by comparing the
+linear decision surfaces, which can be seen by comparing the
 log-probability ratios :math:`\log[P(y=k | X) / P(y=l | X)]`:
 
 .. math::
@@ -127,7 +127,7 @@ classifier, there is a dimensionality reduction by linear projection onto a
 :math:`K-1` dimensional space.
 
 We can reduce the dimension even more, to a chosen :math:`L`, by projecting
-onto the linear subspace :math:`H_L` which maximize the variance of the
+onto the linear subspace :math:`H_L` which maximizes the variance of the
 :math:`\mu^*_k` after projection (in effect, we are doing a form of PCA for the
 transformed class means :math:`\mu^*_k`). This :math:`L` corresponds to the
 ``n_components`` parameter used in the

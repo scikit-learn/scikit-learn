@@ -4,11 +4,13 @@ Testing for Clustering methods
 """
 
 import numpy as np
+import pytest
+from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import (
-    assert_equal, assert_false, assert_true, assert_array_equal, assert_raises,
-    assert_warns, assert_warns_message, assert_no_warnings)
+    assert_array_equal, assert_warns,
+    assert_warns_message, assert_no_warnings)
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import (
@@ -35,7 +37,7 @@ def test_affinity_propagation():
 
     n_clusters_ = len(cluster_centers_indices)
 
-    assert_equal(n_clusters, n_clusters_)
+    assert n_clusters == n_clusters_
 
     af = AffinityPropagation(preference=preference, affinity="precomputed")
     labels_precomputed = af.fit(S).labels_
@@ -48,8 +50,8 @@ def test_affinity_propagation():
     cluster_centers_indices = af.cluster_centers_indices_
 
     n_clusters_ = len(cluster_centers_indices)
-    assert_equal(np.unique(labels).size, n_clusters_)
-    assert_equal(n_clusters, n_clusters_)
+    assert np.unique(labels).size == n_clusters_
+    assert n_clusters == n_clusters_
 
     # Test also with no copy
     _, labels_no_copy = affinity_propagation(S, preference=preference,
@@ -57,11 +59,16 @@ def test_affinity_propagation():
     assert_array_equal(labels, labels_no_copy)
 
     # Test input validation
-    assert_raises(ValueError, affinity_propagation, S[:, :-1])
-    assert_raises(ValueError, affinity_propagation, S, damping=0)
+    with pytest.raises(ValueError):
+        affinity_propagation(S[:, :-1])
+    with pytest.raises(ValueError):
+        affinity_propagation(S, damping=0)
     af = AffinityPropagation(affinity="unknown")
-    assert_raises(ValueError, af.fit, X)
-
+    with pytest.raises(ValueError):
+        af.fit(X)
+    af_2 = AffinityPropagation(affinity='precomputed')
+    with pytest.raises(TypeError):
+        af_2.fit(csr_matrix((3, 3)))
 
 def test_affinity_propagation_predict():
     # Test AffinityPropagation.predict
@@ -75,13 +82,15 @@ def test_affinity_propagation_predict_error():
     # Test exception in AffinityPropagation.predict
     # Not fitted.
     af = AffinityPropagation(affinity="euclidean")
-    assert_raises(ValueError, af.predict, X)
+    with pytest.raises(ValueError):
+        af.predict(X)
 
     # Predict not supported when affinity="precomputed".
     S = np.dot(X, X.T)
     af = AffinityPropagation(affinity="precomputed")
     af.fit(S)
-    assert_raises(ValueError, af.predict, X)
+    with pytest.raises(ValueError):
+        af.predict(X)
 
 
 def test_affinity_propagation_fit_non_convergence():
@@ -148,17 +157,33 @@ def test_equal_similarities_and_preferences():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
     S = -euclidean_distances(X, squared=True)
 
-    assert_false(_equal_similarities_and_preferences(S, np.array(0)))
-    assert_false(_equal_similarities_and_preferences(S, np.array([0, 0])))
-    assert_false(_equal_similarities_and_preferences(S, np.array([0, 1])))
+    assert not _equal_similarities_and_preferences(S, np.array(0))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 0]))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Equal distances
     X = np.array([[0, 0], [1, 1]])
     S = -euclidean_distances(X, squared=True)
 
     # Different preferences
-    assert_false(_equal_similarities_and_preferences(S, np.array([0, 1])))
+    assert not _equal_similarities_and_preferences(S, np.array([0, 1]))
 
     # Same preferences
-    assert_true(_equal_similarities_and_preferences(S, np.array([0, 0])))
-    assert_true(_equal_similarities_and_preferences(S, np.array(0)))
+    assert _equal_similarities_and_preferences(S, np.array([0, 0]))
+    assert _equal_similarities_and_preferences(S, np.array(0))
+
+
+@pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
+                                     np.zeros((1, 10))])
+def test_affinity_propagation_convergence_warning_dense_sparse(centers):
+    """Non-regression, see #13334"""
+    rng = np.random.RandomState(42)
+    X = rng.rand(40, 10)
+    y = (4 * rng.rand(40)).astype(np.int)
+    ap = AffinityPropagation()
+    ap.fit(X, y)
+    ap.cluster_centers_ = centers
+    with pytest.warns(None) as record:
+        assert_array_equal(ap.predict(X),
+                           np.zeros(X.shape[0], dtype=int))
+    assert len(record) == 0

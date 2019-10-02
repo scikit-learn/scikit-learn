@@ -5,10 +5,10 @@ This document is intended to explain how to edit
 the machine learning cheat sheet, originally created
 by Andreas Mueller:
 
-(http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html)
+(https://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html)
 
 The image is made interactive using an imagemap, and uses the jQuery Map Hilight plugin module
-by David Lynch (http://davidlynch.org/projects/maphilight/docs/) to highlight
+by David Lynch (https://davidlynch.org/projects/maphilight/docs/) to highlight
 the different items on the image upon mouseover.
 
 Modifying the map on the docs is currently a little bit tedious,

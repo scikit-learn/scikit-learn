@@ -8,7 +8,7 @@
 import numpy as np
 import warnings
 
-from sklearn.exceptions import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array
 from ..utils.validation import check_is_fitted
@@ -233,7 +233,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator, ClusterMixin):
+class AffinityPropagation(ClusterMixin, BaseEstimator):
     """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -297,9 +297,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AffinityPropagation().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AffinityPropagation(affinity='euclidean', convergence_iter=15, copy=True,
-              damping=0.5, max_iter=200, preference=None, verbose=False)
+    >>> clustering
+    AffinityPropagation()
     >>> clustering.labels_
     array([0, 0, 0, 1, 1, 1])
     >>> clustering.predict([[0, 0], [4, 4]])
@@ -351,20 +350,29 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         return self.affinity == "precomputed"
 
     def fit(self, X, y=None):
-        """ Create affinity matrix from negative euclidean distances, then
-        apply affinity propagation clustering.
+        """Fit the clustering from features, or affinity matrix.
 
         Parameters
         ----------
-
-        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
-            Data matrix or, if affinity is ``precomputed``, matrix of
-            similarities / affinities.
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse feature matrix
+            is provided, it will be converted into a sparse ``csr_matrix``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self
 
         """
-        X = check_array(X, accept_sparse='csr')
+        if self.affinity == "precomputed":
+            accept_sparse = False
+        else:
+            accept_sparse = 'csr'
+        X = check_array(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
@@ -390,23 +398,46 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            New data to predict.
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            New data to predict. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        labels : array, shape (n_samples,)
-            Index of the cluster each sample belongs to.
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
         """
-        check_is_fitted(self, "cluster_centers_indices_")
+        check_is_fitted(self)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
-        if self.cluster_centers_.size > 0:
+        if self.cluster_centers_.shape[0] > 0:
             return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "
                           "Labeling every sample as '-1'.", ConvergenceWarning)
             return np.array([-1] * X.shape[0])
+
+    def fit_predict(self, X, y=None):
+        """Fit the clustering from features or affinity matrix, and return
+        cluster labels.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse feature matrix
+            is provided, it will be converted into a sparse ``csr_matrix``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)

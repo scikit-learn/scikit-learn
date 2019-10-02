@@ -20,9 +20,9 @@ A tutorial on statistical-learning for scientific data processing
 
     Scikit-learn is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
-    packages (`NumPy <http://www.scipy.org>`_, `SciPy
-    <http://www.scipy.org>`_, `matplotlib
-    <http://matplotlib.org>`_).
+    packages (`NumPy <https://www.numpy.org/>`_, `SciPy
+    <https://scipy.org/>`_, `matplotlib
+    <https://matplotlib.org/>`_).
 
 .. include:: ../../includes/big_toc_css.rst
 

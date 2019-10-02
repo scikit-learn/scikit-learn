@@ -16,9 +16,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
-from ..externals import six
-from ..externals.six import moves
-from ..externals.six import string_types
+
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -76,7 +74,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        for i in moves.xrange(max_iter):
+        for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
@@ -105,7 +103,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    for ii in moves.xrange(max_iter):
+    for ii in range(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
@@ -228,11 +226,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         K is 'None'.
 
     W : array, shape (n_components, n_components)
-        Estimated un-mixing matrix.
-        The mixing matrix can be obtained by::
-
-            w = np.dot(W, K.T)
-            A = w.T * (w * w.T).I
+        The square matrix that unmixes the data after whitening.
+        The mixing matrix is the pseudo-inverse of matrix ``W K``
+        if K is not None, else it is the inverse of W.
 
     S : array, shape (n_samples, n_components) | None
         Estimated source matrix
@@ -254,6 +250,10 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     contain the independent components and A is a linear mixing
     matrix. In short ICA attempts to `un-mix' the data by estimating an
     un-mixing matrix W where ``S = W K X.``
+    While FastICA was proposed to estimate as many sources
+    as features, it is possible to estimate less by setting
+    n_components < n_features. It this case K is not a square matrix
+    and the estimated A is the pseudo-inverse of ``W K``.
 
     This implementation was originally made for data of shape
     [n_features, n_samples]. Now the input is transposed
@@ -261,128 +261,45 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     faster for Fortran-ordered input.
 
     Implemented using FastICA:
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
-    random_state = check_random_state(random_state)
-    fun_args = {} if fun_args is None else fun_args
-    # make interface compatible with other decompositions
-    # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES,
-                    ensure_min_samples=2).T
 
-    alpha = fun_args.get('alpha', 1.0)
-    if not 1 <= alpha <= 2:
-        raise ValueError('alpha must be in [1,2]')
-
-    if fun == 'logcosh':
-        g = _logcosh
-    elif fun == 'exp':
-        g = _exp
-    elif fun == 'cube':
-        g = _cube
-    elif callable(fun):
-        def g(x, fun_args):
-            return fun(x, **fun_args)
-    else:
-        exc = ValueError if isinstance(fun, six.string_types) else TypeError
-        raise exc("Unknown function %r;"
-                  " should be one of 'logcosh', 'exp', 'cube' or callable"
-                  % fun)
-
-    n, p = X.shape
-
-    if not whiten and n_components is not None:
-        n_components = None
-        warnings.warn('Ignoring n_components with whiten=False.')
-
-    if n_components is None:
-        n_components = min(n, p)
-    if (n_components > min(n, p)):
-        n_components = min(n, p)
-        warnings.warn('n_components is too large: it will be set to %s' % n_components)
+    est = FastICA(n_components=n_components, algorithm=algorithm,
+                  whiten=whiten, fun=fun, fun_args=fun_args,
+                  max_iter=max_iter, tol=tol, w_init=w_init,
+                  random_state=random_state)
+    sources = est._fit(X, compute_sources=compute_sources)
 
     if whiten:
-        # Centering the columns (ie the variables)
-        X_mean = X.mean(axis=-1)
-        X -= X_mean[:, np.newaxis]
-
-        # Whitening and preprocessing by PCA
-        u, d, _ = linalg.svd(X, full_matrices=False)
-
-        del _
-        K = (u / d).T[:n_components]  # see (6.33) p.140
-        del u, d
-        X1 = np.dot(K, X)
-        # see (13.6) p.267 Here X1 is white and data
-        # in X has been projected onto a subspace by PCA
-        X1 *= np.sqrt(p)
-    else:
-        # X must be casted to floats to avoid typing issues with numpy
-        # 2.0 and the line below
-        X1 = as_float_array(X, copy=False)  # copy has been taken care of
-
-    if w_init is None:
-        w_init = np.asarray(random_state.normal(size=(n_components,
-                            n_components)), dtype=X1.dtype)
-
-    else:
-        w_init = np.asarray(w_init)
-        if w_init.shape != (n_components, n_components):
-            raise ValueError('w_init has invalid shape -- should be %(shape)s'
-                             % {'shape': (n_components, n_components)})
-
-    kwargs = {'tol': tol,
-              'g': g,
-              'fun_args': fun_args,
-              'max_iter': max_iter,
-              'w_init': w_init}
-
-    if algorithm == 'parallel':
-        W, n_iter = _ica_par(X1, **kwargs)
-    elif algorithm == 'deflation':
-        W, n_iter = _ica_def(X1, **kwargs)
-    else:
-        raise ValueError('Invalid algorithm: must be either `parallel` or'
-                         ' `deflation`.')
-    del X1
-
-    if whiten:
-        if compute_sources:
-            S = np.dot(np.dot(W, K), X).T
-        else:
-            S = None
         if return_X_mean:
             if return_n_iter:
-                return K, W, S, X_mean, n_iter
+                return (est.whitening_, est._unmixing, sources, est.mean_,
+                        est.n_iter_)
             else:
-                return K, W, S, X_mean
+                return est.whitening_, est._unmixing, sources, est.mean_
         else:
             if return_n_iter:
-                return K, W, S, n_iter
+                return est.whitening_, est._unmixing, sources, est.n_iter_
             else:
-                return K, W, S
+                return est.whitening_, est._unmixing, sources
 
     else:
-        if compute_sources:
-            S = np.dot(W, X).T
-        else:
-            S = None
         if return_X_mean:
             if return_n_iter:
-                return None, W, S, None, n_iter
+                return None, est._unmixing, sources, None, est.n_iter_
             else:
-                return None, W, S, None
+                return None, est._unmixing, sources, None
         else:
             if return_n_iter:
-                return None, W, S, n_iter
+                return None, est._unmixing, sources, est.n_iter_
             else:
-                return None, W, S
+                return None, est._unmixing, sources
 
 
-class FastICA(BaseEstimator, TransformerMixin):
+class FastICA(TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     Read more in the :ref:`User Guide <ICA>`.
@@ -408,7 +325,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         point. Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -433,15 +350,26 @@ class FastICA(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     components_ : 2D array, shape (n_components, n_features)
-        The unmixing matrix.
+        The linear operator to apply to the data to get the independent
+        sources. This is equal to the unmixing matrix when ``whiten`` is
+        False, and equal to ``np.dot(unmixing_matrix, self.whitening_)`` when
+        ``whiten`` is True.
 
     mixing_ : array, shape (n_features, n_components)
-        The mixing matrix.
+        The pseudo-inverse of ``components_``. It is the linear operator
+        that maps independent sources to the data.
+
+    mean_ : array, shape(n_features)
+        The mean over features. Only set if `self.whiten` is True.
 
     n_iter_ : int
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
+
+    whitening_ : array, shape (n_components, n_features)
+        Only set if whiten is 'True'. This is the pre-whitening matrix
+        that projects data onto the first `n_components` principal components.
 
     Examples
     --------
@@ -457,15 +385,15 @@ class FastICA(BaseEstimator, TransformerMixin):
     Notes
     -----
     Implementation based on
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
-        super(FastICA, self).__init__()
+        super().__init__()
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "
                              "(max_iter={})".format(max_iter))
@@ -497,26 +425,121 @@ class FastICA(BaseEstimator, TransformerMixin):
             X_new : array-like, shape (n_samples, n_components)
         """
         fun_args = {} if self.fun_args is None else self.fun_args
-        whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
-            X=X, n_components=self.n_components, algorithm=self.algorithm,
-            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
-            max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-            random_state=self.random_state, return_X_mean=True,
-            compute_sources=compute_sources, return_n_iter=True)
+        random_state = check_random_state(self.random_state)
+
+        # make interface compatible with other decompositions
+        # a copy is required only for non whitened data
+        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                        ensure_min_samples=2).T
+
+        alpha = fun_args.get('alpha', 1.0)
+        if not 1 <= alpha <= 2:
+            raise ValueError('alpha must be in [1,2]')
+
+        if self.fun == 'logcosh':
+            g = _logcosh
+        elif self.fun == 'exp':
+            g = _exp
+        elif self.fun == 'cube':
+            g = _cube
+        elif callable(self.fun):
+            def g(x, fun_args):
+                return self.fun(x, **fun_args)
+        else:
+            exc = ValueError if isinstance(self.fun, str) else TypeError
+            raise exc(
+                "Unknown function %r;"
+                " should be one of 'logcosh', 'exp', 'cube' or callable"
+                % self.fun
+            )
+
+        n_samples, n_features = X.shape
+
+        n_components = self.n_components
+        if not self.whiten and n_components is not None:
+            n_components = None
+            warnings.warn('Ignoring n_components with whiten=False.')
+
+        if n_components is None:
+            n_components = min(n_samples, n_features)
+        if (n_components > min(n_samples, n_features)):
+            n_components = min(n_samples, n_features)
+            warnings.warn(
+                'n_components is too large: it will be set to %s'
+                % n_components
+            )
 
         if self.whiten:
-            self.components_ = np.dot(unmixing, whitening)
-            self.mean_ = X_mean
-            self.whitening_ = whitening
-        else:
-            self.components_ = unmixing
+            # Centering the columns (ie the variables)
+            X_mean = X.mean(axis=-1)
+            X -= X_mean[:, np.newaxis]
 
-        self.mixing_ = linalg.pinv(self.components_)
+            # Whitening and preprocessing by PCA
+            u, d, _ = linalg.svd(X, full_matrices=False)
+
+            del _
+            K = (u / d).T[:n_components]  # see (6.33) p.140
+            del u, d
+            X1 = np.dot(K, X)
+            # see (13.6) p.267 Here X1 is white and data
+            # in X has been projected onto a subspace by PCA
+            X1 *= np.sqrt(n_features)
+        else:
+            # X must be casted to floats to avoid typing issues with numpy
+            # 2.0 and the line below
+            X1 = as_float_array(X, copy=False)  # copy has been taken care of
+
+        w_init = self.w_init
+        if w_init is None:
+            w_init = np.asarray(random_state.normal(
+                size=(n_components, n_components)), dtype=X1.dtype)
+
+        else:
+            w_init = np.asarray(w_init)
+            if w_init.shape != (n_components, n_components):
+                raise ValueError(
+                    'w_init has invalid shape -- should be %(shape)s'
+                    % {'shape': (n_components, n_components)})
+
+        kwargs = {'tol': self.tol,
+                  'g': g,
+                  'fun_args': fun_args,
+                  'max_iter': self.max_iter,
+                  'w_init': w_init}
+
+        if self.algorithm == 'parallel':
+            W, n_iter = _ica_par(X1, **kwargs)
+        elif self.algorithm == 'deflation':
+            W, n_iter = _ica_def(X1, **kwargs)
+        else:
+            raise ValueError('Invalid algorithm: must be either `parallel` or'
+                             ' `deflation`.')
+        del X1
 
         if compute_sources:
-            self.__sources = sources
+            if self.whiten:
+                S = np.dot(np.dot(W, K), X).T
+            else:
+                S = np.dot(W, X).T
+        else:
+            S = None
 
-        return sources
+        self.n_iter_ = n_iter
+
+        if self.whiten:
+            self.components_ = np.dot(W, K)
+            self.mean_ = X_mean
+            self.whitening_ = K
+        else:
+            self.components_ = W
+
+        self.mixing_ = linalg.pinv(self.components_)
+        self._unmixing = W
+
+        if compute_sources:
+            self.__sources = S
+
+        return S
 
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
@@ -553,7 +576,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y='deprecated', copy=True):
+    def transform(self, X, copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -561,9 +584,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -571,12 +592,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
@@ -599,7 +615,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        check_is_fitted(self, 'mixing_')
+        check_is_fitted(self)
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
         X = np.dot(X, self.mixing_.T)

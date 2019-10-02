@@ -28,15 +28,14 @@ print(__doc__)
 
 # Load data from https://www.openml.org/d/554
 X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+X = X / 255.
 
 # rescale the data, use the traditional train/test split
 X_train, X_test = X[:60000], X[60000:]
 y_train, y_test = y[:60000], y[60000:]
 
-# mlp = MLPClassifier(hidden_layer_sizes=(100, 100), max_iter=400, alpha=1e-4,
-#                     solver='sgd', verbose=10, tol=1e-4, random_state=1)
 mlp = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10, alpha=1e-4,
-                    solver='sgd', verbose=10, tol=1e-4, random_state=1,
+                    solver='sgd', verbose=10, random_state=1,
                     learning_rate_init=.1)
 
 mlp.fit(X_train, y_train)

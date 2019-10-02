@@ -25,7 +25,7 @@ Q&A communities with Machine Learning practitioners
 
 .. _`How do I learn machine learning?`: https://www.quora.com/How-do-I-learn-machine-learning-1
 
-.. _`multiple subdomains for Machine Learning questions`: http://meta.stackexchange.com/questions/130524/which-stack-exchange-website-for-machine-learning-and-computational-algorithms
+.. _`multiple subdomains for Machine Learning questions`: https://meta.stackexchange.com/q/130524
 
 -- _'An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford': https://www.coursera.org/learn/machine-learning
 

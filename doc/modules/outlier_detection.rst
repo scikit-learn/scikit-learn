@@ -8,9 +8,9 @@ Novelty and Outlier Detection
 
 Many applications require being able to decide whether a new observation
 belongs to the same distribution as existing observations (it is an
-`inlier`), or should be considered as different (it is an outlier).
+*inlier*), or should be considered as different (it is an *outlier*).
 Often, this ability is used to clean real data sets. Two important
-distinction must be made:
+distinctions must be made:
 
 :outlier detection:
   The training data contains outliers which are defined as observations that
@@ -35,7 +35,7 @@ a low density region of the training data, considered as normal in this
 context.
 
 The scikit-learn project provides a set of machine learning tools that
-can be used both for novelty or outliers detection. This strategy is
+can be used both for novelty or outlier detection. This strategy is
 implemented with objects learning in an unsupervised way from the data::
 
     estimator.fit(X_train)
@@ -76,6 +76,18 @@ not available.
   and not on the training samples as this would lead to wrong results.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
+
+The behavior of :class:`neighbors.LocalOutlierFactor` is summarized in the
+following table.
+
+===================== ================================ =====================
+Method                Outlier detection                Novelty detection
+===================== ================================ =====================
+``fit_predict``       OK                               Not available
+``predict``           Not available                    Use only on new data
+``decision_function`` Not available                    Use only on new data
+``score_samples``     Use ``negative_outlier_factor_`` Use only on new data
+===================== ================================ =====================
 
 
 Overview of outlier detection methods
@@ -141,7 +153,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
+      <https://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
       Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -162,7 +174,7 @@ Outlier Detection
 
 Outlier detection is similar to novelty detection in the sense that
 the goal is to separate a core of regular observations from some
-polluting ones, called "outliers". Yet, in the case of outlier
+polluting ones, called *outliers*. Yet, in the case of outlier
 detection, we don't have a clean data set representing the population
 of regular observations that can be used to train any tool.
 
@@ -227,12 +239,31 @@ Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
-This strategy is illustrated below.
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
+
+This algorithm is illustrated below.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
+
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
 
 .. topic:: Examples:
 
@@ -341,19 +372,7 @@ Note that ``fit_predict`` is not available in this case.
   The scores of abnormality of the training samples are always accessible
   through the ``negative_outlier_factor_`` attribute.
 
-The behavior of LOF is summarized in the following table.
-
-====================  ================================  =====================
-Method                Outlier detection                 Novelty detection
-====================  ================================  =====================
-`fit_predict`         OK                                Not available
-`predict`             Not available                     Use only on test data
-`decision_function`   Not available                     Use only on test data
-`score_samples`       Use `negative_outlier_factor_`    Use only on test data
-====================  ================================  =====================
-
-
-This strategy is illustrated below.
+Novelty detection with Local Outlier Factor is illustrated below.
 
   .. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lof_novelty_detection_001.png
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html

@@ -19,8 +19,6 @@ from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..externals import six
-
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
@@ -107,7 +105,8 @@ class PCA(_BasePCA):
     """Principal component analysis (PCA)
 
     Linear dimensionality reduction using Singular Value Decomposition of the
-    data to project it to a lower dimensional space.
+    data to project it to a lower dimensional space. The input data is centered
+    but not scaled for each feature before applying the SVD.
 
     It uses the LAPACK implementation of the full SVD or a randomized truncated
     SVD by the method of Halko et al. 2009, depending on the shape of the input
@@ -224,6 +223,8 @@ class PCA(_BasePCA):
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
 
+        .. versionadded:: 0.19
+
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
@@ -235,6 +236,12 @@ class PCA(_BasePCA):
         number is estimated from input data. Otherwise it equals the parameter
         n_components, or the lesser value of n_features and n_samples
         if n_components is None.
+
+    n_features_ : int
+        Number of features in the training data.
+
+    n_samples_ : int
+        Number of samples in the training data.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
@@ -248,11 +255,11 @@ class PCA(_BasePCA):
 
     References
     ----------
-    For n_components == 'mle', this class uses the method of `Minka, T. P.
-    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604`
+    For n_components == 'mle', this class uses the method of *Minka, T. P.
+    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
 
     Implements the probabilistic PCA model from:
-    `Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
+    Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
     component analysis". Journal of the Royal Statistical Society:
     Series B (Statistical Methodology), 61(3), 611-622.
     via the score and score_samples methods.
@@ -261,13 +268,13 @@ class PCA(_BasePCA):
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    *Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
-    SIAM review, 53(2), 217-288.` and also
-    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    SIAM review, 53(2), 217-288.* and also
+    *Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68.`
+    Applied and Computational Harmonic Analysis, 30(1), 47-68.*
 
 
     Examples
@@ -277,29 +284,26 @@ class PCA(_BasePCA):
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    PCA(n_components=2)
+    >>> print(pca.explained_variance_ratio_)
     [0.9924... 0.0075...]
-    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    >>> print(pca.singular_values_)
     [6.30061... 0.54980...]
 
     >>> pca = PCA(n_components=2, svd_solver='full')
-    >>> pca.fit(X)                 # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
-      svd_solver='full', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    >>> pca.fit(X)
+    PCA(n_components=2, svd_solver='full')
+    >>> print(pca.explained_variance_ratio_)
     [0.9924... 0.00755...]
-    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    >>> print(pca.singular_values_)
     [6.30061... 0.54980...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
     >>> pca.fit(X)
-    PCA(copy=True, iterated_power='auto', n_components=1, random_state=None,
-      svd_solver='arpack', tol=0.0, whiten=False)
-    >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
+    PCA(n_components=1, svd_solver='arpack')
+    >>> print(pca.explained_variance_ratio_)
     [0.99244...]
-    >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
+    >>> print(pca.singular_values_)
     [6.30061...]
 
     See also
@@ -355,6 +359,10 @@ class PCA(_BasePCA):
         -------
         X_new : array-like, shape (n_samples, n_components)
 
+        Notes
+        -----
+        This method returns a Fortran-ordered array. To convert it to a
+        C-ordered array, use 'np.ascontiguousarray'.
         """
         U, S, V = self._fit(X)
         U = U[:, :self.n_components_]
@@ -424,7 +432,7 @@ class PCA(_BasePCA):
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
         elif n_components >= 1:
-            if not isinstance(n_components, (numbers.Integral, np.integer)):
+            if not isinstance(n_components, numbers.Integral):
                 raise ValueError("n_components=%r must be of type int "
                                  "when greater than or equal to 1, "
                                  "was of type=%r"
@@ -479,7 +487,7 @@ class PCA(_BasePCA):
         """
         n_samples, n_features = X.shape
 
-        if isinstance(n_components, six.string_types):
+        if isinstance(n_components, str):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))
@@ -489,7 +497,7 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
-        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+        elif not isinstance(n_components, numbers.Integral):
             raise ValueError("n_components=%r must be of type int "
                              "when greater than or equal to 1, was of type=%r"
                              % (n_components, type(n_components)))
@@ -561,7 +569,7 @@ class PCA(_BasePCA):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        check_is_fitted(self, 'mean_')
+        check_is_fitted(self)
 
         X = check_array(X)
         Xr = X - self.mean_

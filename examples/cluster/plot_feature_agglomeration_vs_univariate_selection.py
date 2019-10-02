@@ -24,13 +24,13 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg, ndimage
+from joblib import Memory
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.utils import Memory
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
@@ -63,7 +63,7 @@ y += noise_coef * noise  # add noise
 cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
-mem = Memory(cachedir=cachedir, verbose=1)
+mem = Memory(location=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)
