@@ -187,7 +187,7 @@ def _partition_estimators(n_estimators, n_jobs):
 
 class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
                                  metaclass=ABCMeta):
-    """Base class for ensemble learners based on heterogeneous estimators.
+    """Base class for heterogeneous ensemble of learners.
 
     Parameters
     ----------
@@ -216,7 +216,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
 
     def _validate_estimators(self):
         if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError(
+            raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a list"
                 " of (string, estimator) tuples."
             )
