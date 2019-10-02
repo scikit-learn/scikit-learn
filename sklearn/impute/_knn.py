@@ -162,7 +162,6 @@ class KNNImputer(_BaseImputer):
         -------
         self : object
         """
-        super()._fit_indicator(X)
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
@@ -176,7 +175,8 @@ class KNNImputer(_BaseImputer):
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self._copy)
+                        force_all_finite=force_all_finite, copy=self.copy)
+        super()._fit_indicator(X)
 
         _check_weights(self.weights)
         self._fit_X = X
@@ -203,38 +203,39 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X_ = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                         force_all_finite=force_all_finite, copy=self._copy)
+        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                        force_all_finite=force_all_finite, copy=self.copy)
+        X_indicator = self._transform_indicator(X)
 
-        if X_.shape[1] != self._fit_X.shape[1]:
+        if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed")
 
-        mask = _get_mask(X_, self.missing_values)
+        mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
 
         # Removes columns where the training data is all nan
         if not np.any(mask):
             valid_mask = ~np.all(mask_fit_X, axis=0)
-            return X_[:, valid_mask]
+            return X[:, valid_mask]
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
         # Pairwise distances between receivers and fitted samples
-        dist = pairwise_distances(X_[row_missing_idx, :], self._fit_X,
+        dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
                                   metric=self.metric,
                                   missing_values=self.missing_values,
                                   force_all_finite=force_all_finite)
 
         # Maps from indices from X to indices in dist matrix
-        dist_idx_map = np.zeros(X_.shape[0], dtype=np.int)
+        dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
         non_missing_fix_X = np.logical_not(mask_fit_X)
 
         # Find and impute missing
         valid_idx = []
-        for col in range(X_.shape[1]):
+        for col in range(X.shape[1]):
 
             potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
 
@@ -262,7 +263,7 @@ class KNNImputer(_BaseImputer):
             if all_nan_receivers_idx.size:
                 col_mean = np.ma.array(self._fit_X[:, col],
                                        mask=mask_fit_X[:, col]).mean()
-                X_[all_nan_receivers_idx, col] = col_mean
+                X[all_nan_receivers_idx, col] = col_mean
 
                 if len(all_nan_receivers_idx) == len(receivers_idx):
                     # all receivers imputed with mean
@@ -277,6 +278,6 @@ class KNNImputer(_BaseImputer):
             value = self._calc_impute(dist_subset, n_neighbors,
                                       self._fit_X[potential_donors_idx, col],
                                       mask_fit_X[potential_donors_idx, col])
-            X_[receivers_idx, col] = value
+            X[receivers_idx, col] = value
 
-        return super()._transform_indicator(X, X_[:, valid_idx])
+        return super()._concatenate_indicator(X[:, valid_idx], X_indicator)

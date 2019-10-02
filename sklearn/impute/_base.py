@@ -77,22 +77,37 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     def _fit_indicator(self, X):
         """Fit a MissingIndicator and trigger a copy of X as well."""
         if self.add_indicator:
-            self._copy = True
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values, error_on_new=False
             )
             self.indicator_.fit(X)
         else:
-            self._copy = getattr(self, 'copy', True)
             self.indicator_ = None
 
-    def _transform_indicator(self, X, X_trans_imputer):
-        """Concatenate imputed data with data from missing indicator."""
+    def _transform_indicator(self, X):
+        """Compute the indicator mask."""
         if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(X)
-            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X_trans_imputer = hstack((X_trans_imputer, X_trans_indicator))
-        return X_trans_imputer
+            if not hasattr(self, 'indicator_'):
+                raise ValueError(
+                    "Make sure to call _fit_indicator before to "
+                    "_transform_indicator"
+                )
+            return self.indicator_.transform(X)
+
+    def _concatenate_indicator(self, X_imputed, X_indicator=None):
+        """Concatenate indicator mask with the imputed data."""
+        if self.add_indicator:
+            hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
+            if X_indicator is not None:
+                X_imputed = hstack((X_imputed, X_indicator))
+            else:
+                raise ValueError(
+                    "Impossible to concatenate data from the missing "
+                    "indicator because they are not provided. Make sure to "
+                    "call _fit_indicator and _transform_indicator in the "
+                    "imputer implementation."
+                )
+        return X_imputed
 
     def _more_tags(self):
         return {'allow_nan': is_scalar_nan(self.missing_values)}
@@ -215,7 +230,7 @@ class SimpleImputer(_BaseImputer):
 
         try:
             X = check_array(X, accept_sparse='csc', dtype=dtype,
-                            force_all_finite=force_all_finite, copy=self._copy)
+                            force_all_finite=force_all_finite, copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
                 raise ValueError("Cannot use {0} strategy with non-numeric "
@@ -248,8 +263,8 @@ class SimpleImputer(_BaseImputer):
         -------
         self : SimpleImputer
         """
-        super()._fit_indicator(X)
         X = self._validate_input(X)
+        super()._fit_indicator(X)
 
         # default fill_value is 0 for numerical input and "missing_value"
         # otherwise
@@ -386,13 +401,14 @@ class SimpleImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X_ = self._validate_input(X)
+        X = self._validate_input(X)
+        X_indicator = super()._transform_indicator(X)
 
         statistics = self.statistics_
 
-        if X_.shape[1] != statistics.shape[0]:
+        if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
-                             % (X_.shape[1], self.statistics_.shape[0]))
+                             % (X.shape[1], self.statistics_.shape[0]))
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -405,35 +421,35 @@ class SimpleImputer(_BaseImputer):
             valid_statistics_indexes = np.flatnonzero(valid_mask)
 
             if invalid_mask.any():
-                missing = np.arange(X_.shape[1])[invalid_mask]
+                missing = np.arange(X.shape[1])[invalid_mask]
                 if self.verbose:
                     warnings.warn("Deleting features without "
                                   "observed values: %s" % missing)
-                X_ = X_[:, valid_statistics_indexes]
+                X = X[:, valid_statistics_indexes]
 
         # Do actual imputation
-        if sparse.issparse(X_):
+        if sparse.issparse(X):
             if self.missing_values == 0:
                 raise ValueError("Imputation not possible when missing_values "
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                mask = _get_mask(X_.data, self.missing_values)
+                mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
-                    np.arange(len(X_.indptr) - 1, dtype=np.int),
-                    np.diff(X_.indptr))[mask]
+                    np.arange(len(X.indptr) - 1, dtype=np.int),
+                    np.diff(X.indptr))[mask]
 
-                X_.data[mask] = valid_statistics[indexes].astype(X_.dtype,
-                                                                 copy=False)
+                X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                                copy=False)
         else:
-            mask = _get_mask(X_, self.missing_values)
+            mask = _get_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
 
-            X_[coordinates] = values
+            X[coordinates] = values
 
-        return super()._transform_indicator(X, X_)
+        return super()._concatenate_indicator(X, X_indicator)
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
