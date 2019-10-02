@@ -89,7 +89,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         if self.add_indicator:
             if not hasattr(self, 'indicator_'):
                 raise ValueError(
-                    "Make sure to call _fit_indicator before to "
+                    "Make sure to call _fit_indicator before "
                     "_transform_indicator"
                 )
             return self.indicator_.transform(X)
