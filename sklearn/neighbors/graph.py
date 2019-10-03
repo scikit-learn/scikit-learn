@@ -45,7 +45,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     Parameters
     ----------
-    X : array-like or BallTree, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features) or BallTree
         Sample data, in the form of a numpy array or a precomputed
         :class:`BallTree`.
 
@@ -123,7 +123,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Parameters
     ----------
-    X : array-like or BallTree, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features) or BallTree
         Sample data, in the form of a numpy array or a precomputed
         :class:`BallTree`.
 

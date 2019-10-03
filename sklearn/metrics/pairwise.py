@@ -27,7 +27,7 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
@@ -228,7 +228,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
+    X_norm_squared : array-like of shape (n_samples,), optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.

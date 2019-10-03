@@ -136,10 +136,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values.
         """
         return self._fit(X, y)
@@ -271,7 +271,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -293,14 +293,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -318,7 +318,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -466,15 +466,15 @@ class RFECV(RFE):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like, shape = [n_samples], optional
+        groups : array-like of shape (n_samples,) or None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
