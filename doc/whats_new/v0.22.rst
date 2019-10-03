@@ -236,6 +236,10 @@ Changelog
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
+- |Feature| :class:`ensemble.IsolationForest` now has `feature_weight`
+  parameters that enable feature selection based on input weight. :pr:`11915`
+  by :user:`Zijie (ZJ) Poh <zjpoh>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
