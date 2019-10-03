@@ -1717,18 +1717,3 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
-
-
-def test_errors_when_key_not_in_scorer_dict():
-    def scorer(est, X, y):
-        return {"my_key": 1}
-
-    X, y = make_classification(n_samples=30, random_state=0)
-    train, test = next(ShuffleSplit().split(X))
-    clf = SVC(kernel="linear", random_state=0)
-
-    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
-
-    msg = "dict returned by scorer must contain not_my_key"
-    with pytest.raises(ValueError, match=msg):
-        _fit_and_score(*fit_and_score_args, check_scorer_key='not_my_key')

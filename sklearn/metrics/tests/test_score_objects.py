@@ -202,30 +202,10 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
         assert scorer is None
 
 
-def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in
-    # single metric scoring parameter so we can run the tests
-    # that we will run for check_scoring, for check_multimetric_scoring
-    # too for single-metric usecases
-
-    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
-    # For all single metric use cases, it should register as not multimetric
-    assert not is_multi
-    if args[0] is not None:
-        assert scorers is not None
-        names, scorers = zip(*scorers.items())
-        assert len(scorers) == 1
-        assert names[0] == 'score'
-        scorers = scorers[0]
-    return scorers
-
-
 def test_check_scoring_and_check_multimetric_scoring():
     check_scoring_validator_for_single_metric_usecases(check_scoring)
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
-    check_scoring_validator_for_single_metric_usecases(
-        check_multimetric_scoring_single_metric_wrapper)
 
     # For multiple metric use cases
     # Make sure it works for the valid cases
@@ -237,8 +217,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         estimator = LinearSVC(random_state=0)
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 
-        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert is_multi
+        scorers = _check_multimetric_scoring(estimator, scoring)
         assert isinstance(scorers, dict)
         assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
@@ -589,7 +568,7 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
@@ -616,7 +595,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf.fit(X, y)
 
     scorers = ['roc_auc', 'neg_log_loss']
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -639,7 +618,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf.fit(X, y)
 
     scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -657,7 +636,7 @@ def test_multimetric_scorer_sanity_check():
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
 
     result = multi_scorer(clf, X, y)

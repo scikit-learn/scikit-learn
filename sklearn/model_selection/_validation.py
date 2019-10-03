@@ -220,13 +220,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
+
+    if callable(scoring) or scoring is None or isinstance(scoring, str):
+        scorers = {"score": check_scoring(estimator, scoring)}
+    else:
+        scorers = _check_multimetric_scoring(estimator, scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
+    results = parallel(
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
@@ -234,18 +238,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    zipped_scores = list(zip(*scores))
+    results = _aggregate_list_of_dicts(results, constructor=list)
     if return_train_score:
-        train_scores = zipped_scores.pop(0)
-        train_scores = _aggregate_score_dicts(train_scores)
+        train_scores = _aggregate_list_of_dicts(results["train_scores"])
     if return_estimator:
-        fitted_estimators = zipped_scores.pop()
-    test_scores, fit_times, score_times = zipped_scores
-    test_scores = _aggregate_score_dicts(test_scores)
+        fitted_estimators = results["estimator"]
+    test_scores = _aggregate_list_of_dicts(results["test_scores"])
 
     ret = {}
-    ret['fit_time'] = np.array(fit_times)
-    ret['score_time'] = np.array(score_times)
+    ret['fit_time'] = np.array(results["fit_time"])
+    ret['score_time'] = np.array(results["score_time"])
 
     if return_estimator:
         ret['estimator'] = fitted_estimators
@@ -394,7 +396,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan, check_scorer_key=None):
+                   error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -455,33 +457,30 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
-    check_scorer_key : str or None, default=None
-        If a string and scorer returns a dictionary, the keys will be check
-        to contain `check_scorer_key`.
-
     Returns
     -------
-    train_scores : dict of scorer name -> float, optional
-        Score on training set (for all the scorers),
-        returned only if `return_train_score` is `True`.
+    result: dict with the following attributes
+        train_scores : dict of scorer name -> float, optional
+            Score on training set (for all the scorers),
+            returned only if `return_train_score` is `True`.
 
-    test_scores : dict of scorer name -> float, optional
-        Score on testing set (for all the scorers).
+        test_scores : dict of scorer name -> float, optional
+            Score on testing set (for all the scorers).
 
-    n_test_samples : int
-        Number of test samples.
+        n_test_samples : int
+            Number of test samples.
 
-    fit_time : float
-        Time spent for fitting in seconds.
+        fit_time : float
+            Time spent for fitting in seconds.
 
-    score_time : float
-        Time spent for scoring in seconds.
+        score_time : float
+            Time spent for scoring in seconds.
 
-    parameters : dict or None, optional
-        The parameters that have been evaluated.
+        parameters : dict or None, optional
+            The parameters that have been evaluated.
 
-    estimator : estimator object
-        The fitted estimator
+        estimator : estimator object
+            The fitted estimator
     """
     if verbose > 1:
         if parameters is None:
@@ -496,7 +495,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = {k: _index_param_value(X, v, train)
                   for k, v in fit_params.items()}
 
-    train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
 
@@ -543,12 +541,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer)
 
-    # check scorer keys
-    if (check_scorer_key is not None and isinstance(test_scores, dict)
-            and check_scorer_key not in test_scores):
-        raise ValueError("dict returned by scorer must contain {}".format(
-            check_scorer_key))
-
     if verbose > 2:
         if isinstance(test_scores, dict):
             for scorer_name in sorted(test_scores):
@@ -567,17 +559,19 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         print(_message_with_time('CV', msg, total_time))
 
-    ret = [train_scores, test_scores] if return_train_score else [test_scores]
-
+    result = {"test_scores": test_scores}
+    if return_train_score:
+        result["train_scores"] = train_scores
     if return_n_test_samples:
-        ret.append(_num_samples(X_test))
+        result["n_test_samples"] = _num_samples(X_test)
     if return_times:
-        ret.extend([fit_time, score_time])
+        result["fit_time"] = fit_time
+        result["score_time"] = score_time
     if return_parameters:
-        ret.append(parameters)
+        result["parameters"] = parameters
     if return_estimator:
-        ret.append(estimator)
-    return ret
+        result["estimator"] = estimator
+    return result
 
 
 def _score(estimator, X_test, y_test, scorer):
@@ -1258,23 +1252,32 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose, return_times) for train, test in cv_iter)
+        out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(delayed(_fit_and_score)(
+        results = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
-        out = np.array(out)
-        n_cv_folds = out.shape[0] // n_unique_ticks
-        dim = 4 if return_times else 2
-        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
+        results = _aggregate_list_of_dicts(results, constructor=list)
+        train_scores = (np.array(results["train_scores"])
+                        .reshape(-1, n_unique_ticks).T)
 
-    out = np.asarray(out).transpose((2, 1, 0))
+        test_scores = (np.array(results["test_scores"])
+                       .reshape(-1, n_unique_ticks).T)
+        out = [train_scores, test_scores]
+
+        if return_times:
+            fit_times = (np.array(results["fit_time"])
+                         .reshape(-1, n_unique_ticks).T)
+            score_times = (np.array(results["score_time"])
+                           .reshape(-1, n_unique_ticks).T)
+            out.extend([fit_times, score_times])
 
     ret = train_sizes_abs, out[0], out[1]
 
@@ -1479,21 +1482,24 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
-    out = parallel(delayed(_fit_and_score)(
+    results = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-    out = np.asarray(out)
     n_params = len(param_range)
-    n_cv_folds = out.shape[0] // n_params
-    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
-    return out[0], out[1]
+    results = _aggregate_list_of_dicts(results)
+    train_scores = (np.asarray(results["train_scores"])
+                    .reshape(-1, n_params).T)
+    test_scores = (np.asarray(results["test_scores"])
+                   .reshape(-1, n_params).T)
+
+    return train_scores, test_scores
 
 
-def _aggregate_score_dicts(scores):
+def _aggregate_list_of_dicts(scores, constructor=np.asarray):
     """Aggregate the list of dict to dict of np ndarray
 
     The aggregated output of _fit_and_score will be a list of dict
@@ -1511,10 +1517,10 @@ def _aggregate_score_dicts(scores):
     -------
 
     >>> scores = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
-    ...           {'a': 10, 'b': 10}]                         # doctest: +SKIP
-    >>> _aggregate_score_dicts(scores)                        # doctest: +SKIP
+    ...           {'a': 10, 'b': 10}]
+    >>> _aggregate_list_of_dicts(scores)
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    return {key: np.asarray([score[key] for score in scores])
+    return {key: constructor([score[key] for score in scores])
             for key in scores[0]}
