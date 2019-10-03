@@ -845,3 +845,17 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0, n_iter=300).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_n_jobs(method):
+    """Make sure that the n_jobs parameter doesn't impact the output"""
+    random_state = check_random_state(0)
+    n_features = 10
+    X = random_state.randn(30, n_features)
+    X_tr_ref = TSNE(n_components=2, method=method, perplexity=30.0,
+                    angle=0, n_jobs=1, random_state=0).fit_transform(X)
+    X_tr = TSNE(n_components=2, method=method, perplexity=30.0,
+                angle=0, n_jobs=2, random_state=0).fit_transform(X)
+
+    assert_allclose(X_tr_ref, X_tr)

@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict

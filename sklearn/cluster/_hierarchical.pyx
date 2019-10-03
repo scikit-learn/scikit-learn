@@ -18,16 +18,13 @@ from ..utils.fast_dict cimport IntFloatDict
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.map cimport map as cpp_map
+from libc.math cimport fmax
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
 ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
-
-# Reimplementation for MSVC support
-cdef inline double fmax(double a, double b):
-    return max(a, b)
 
 ###############################################################################
 # Utilities for computing the ward momentum
