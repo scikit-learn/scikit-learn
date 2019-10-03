@@ -309,7 +309,7 @@ from other sources:
 - some routines may be parallelized with OpenMP (for code written in C or
   Cython).
 - scikit-learn relies a lot on numpy, which in turn may rely on numerical
-  libraries like MKL or OpenBLAS which can provide parallelized
+  libraries like MKL, OpenBLAS or BLIS which can provide parallel
   implementations.
 
 For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
