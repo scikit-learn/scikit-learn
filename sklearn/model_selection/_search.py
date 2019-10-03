@@ -368,13 +368,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     # NOTE we are not using the return value as the scorer by itself should be
     # validated before. We use check_scoring only to reject multimetric scorer
     check_scoring(estimator, scorer)
-    scores, n_samples_test = _fit_and_score(estimator, X, y,
-                                            scorer, train,
-                                            test, verbose, parameters,
-                                            fit_params=fit_params,
-                                            return_n_test_samples=True,
-                                            error_score=error_score)
-    return scores, parameters, n_samples_test
+    results = _fit_and_score(estimator, X, y, scorer, train,
+                             test, verbose, parameters,
+                             fit_params=fit_params,
+                             return_n_test_samples=True,
+                             error_score=error_score)
+    return results["test_scores"], parameters, results["n_test_samples"]
 
 
 def _check_param_grid(param_grid):
@@ -752,19 +751,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, scorers, n_splits, out):
         n_candidates = len(candidate_params)
+        results = _aggregate_list_of_dicts(out, constructor=list)
 
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
+        test_score_dicts = results["test_scores"]
+        test_sample_counts = results["n_test_samples"]
+        fit_time = results["fit_time"]
+        score_time = results["score_time"]
 
         # test_score_dicts and train_score dicts are lists of dictionaries and
         # we make them into dict of lists
         test_scores = _aggregate_list_of_dicts(test_score_dicts)
         if self.return_train_score:
+            train_score_dicts = results["train_scores"]
             train_scores = _aggregate_list_of_dicts(train_score_dicts)
 
         results = {}

@@ -1499,8 +1499,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     return train_scores, test_scores
 
 
-def _aggregate_list_of_dicts(scores, constructor=np.asarray):
-    """Aggregate the list of dict to dict of np ndarray
+def _aggregate_list_of_dicts(elements, constructor=np.asarray):
+    """Aggregate the list of dicts
 
     The aggregated output of _fit_and_score will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
@@ -1509,18 +1509,20 @@ def _aggregate_list_of_dicts(scores, constructor=np.asarray):
     Parameters
     ----------
 
-    scores : list of dict
-        List of dicts of the scores for all scorers. This is a flat list,
+    elements : list of dict
+        List of dicts of the elements for all scorers. This is a flat list,
         assumed originally to be of row major order.
+
+    constructor : function, default=np.asarray
+        Used to combine elements of dictionaries in list
 
     Example
     -------
 
-    >>> scores = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
-    ...           {'a': 10, 'b': 10}]
-    >>> _aggregate_list_of_dicts(scores)
-    {'a': array([1, 2, 3, 10]),
-     'b': array([10, 2, 3, 10])}
+    >>> elements = [{'a': 1, 'b':10}, {'a': 2, 'b':2}, {'a': 3, 'b':3},
+    ...             {'a': 10, 'b': 10}] # doctest: +SKIP
+    >>> _aggregate_list_of_dicts(elements) # doctest: +SKIP
+    {'a': array([1, 2, 3, 10]), 'b': array([10, 2, 3, 10])}
     """
-    return {key: constructor([score[key] for score in scores])
-            for key in scores[0]}
+    return {key: constructor([elm[key] for elm in elements])
+            for key in elements[0]}
