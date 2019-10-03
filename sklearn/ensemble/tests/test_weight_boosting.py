@@ -515,7 +515,7 @@ def test_adaboostregressor_sample_weight():
     # check that giving weight will have an influence on the error computed
     # for a weak learner
     rng = np.random.RandomState(42)
-    X = np.linspace(0, 100, num=10000)
+    X = np.linspace(0, 100, num=1000)
     y = (.8 * X + 0.2) + (rng.rand(X.shape[0]) * 0.0001)
     X = X.reshape(-1, 1)
 
@@ -567,8 +567,8 @@ def test_adaboost_consistent_predict(algorithm):
 
 @pytest.mark.parametrize(
     'model, X, y',
-    [(AdaBoostClassifier(), *datasets.load_iris(return_X_y=True)),
-     (AdaBoostRegressor(), *datasets.load_boston(return_X_y=True))]
+    [(AdaBoostClassifier(), iris.data, iris.target),
+     (AdaBoostRegressor(), boston.data, boston.target)]
 )
 def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
