@@ -142,7 +142,7 @@ df = load_mtpl2(n_samples=60000)
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
-df.loc[(df.ClaimAmount == 0) & (df.ClaimNb >= 1), "ClaimNb"] = 0
+df.loc[(df["ClaimAmount"] == 0) & (df["ClaimNb"] >= 1), "ClaimNb"] = 0
 
 # Correct for unreasonable observations (that might be data error)
 # and a few exceptionally large claim amounts
@@ -150,30 +150,26 @@ df["ClaimNb"] = df["ClaimNb"].clip(upper=4)
 df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
 
+log_scale_transformer = make_pipeline(
+    FunctionTransformer(np.log, validate=False),
+    StandardScaler()
+)
+
 column_trans = ColumnTransformer(
     [
-        ("Veh_Driv_Age", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
-        (
-            "Veh_Brand_Gas_Region",
-            OneHotEncoder(),
-            ["VehBrand", "VehPower", "VehGas", "Region", "Area"],
-        ),
-        ("BonusMalus", "passthrough", ["BonusMalus"]),
-        (
-            "Density_log",
-            make_pipeline(
-                FunctionTransformer(np.log, validate=False), StandardScaler()
-            ),
-            ["Density"],
-        ),
+        ("binned_numeric", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
+        ("onehot_categorical", OneHotEncoder(),
+         ["VehBrand", "VehPower", "VehGas", "Region", "Area"]),
+        ("passthrough_numeric", "passthrough", ["BonusMalus"]),
+        ("log_scaled_numeric", log_scale_transformer, ["Density"]),
     ],
     remainder="drop",
 )
 X = column_trans.fit_transform(df)
 
 
-df["Frequency"] = df.ClaimNb / df.Exposure
-df["AvgClaimAmount"] = df.ClaimAmount / np.fmax(df.ClaimNb, 1)
+df["Frequency"] = df["ClaimNb"] / df["Exposure"]
+df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 
 print(df[df.ClaimAmount > 0].head())
 
@@ -268,7 +264,7 @@ print(scores)
 # the drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
 
-fig, ax = plt.subplots(2, 2, figsize=(16, 8))
+fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(16, 8))
 fig.subplots_adjust(hspace=0.3, wspace=0.2)
 
 plot_obs_pred(
@@ -369,18 +365,12 @@ print(scores)
 # it is conditional on having at least one claim, and cannot be used to predict
 # the average claim amount per policy in general.
 
-print(
-    "Mean AvgClaim Amount per policy:              %.2f "
-    % df_train.AvgClaimAmount.mean()
-)
-print(
-    "Mean AvgClaim Amount | NbClaim > 0:           %.2f"
-    % df_train.AvgClaimAmount[df_train.AvgClaimAmount > 0].mean()
-)
-print(
-    "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
-    % glm_sev.predict(X_train).mean()
-)
+print("Mean AvgClaim Amount per policy:              %.2f "
+      % df_train["AvgClaimAmount"].mean())
+print("Mean AvgClaim Amount | NbClaim > 0:           %.2f"
+      % df_train["AvgClaimAmount"][df_train["AvgClaimAmount"] > 0].mean())
+print("Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
+      % glm_sev.predict(X_train).mean())
 
 
 ##############################################################################
@@ -388,7 +378,7 @@ print(
 # We can visually compare observed and predicted values, aggregated for
 # the drivers age (``DrivAge``).
 
-fig, ax = plt.subplots(1, 2, figsize=(16, 4))
+fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(16, 4))
 
 # plot DivAge
 plot_obs_pred(
@@ -500,9 +490,9 @@ for subset_label, X, df in [
     res.append(
         {
             "subset": subset_label,
-            "observed": df.ClaimAmount.values.sum(),
+            "observed": df["ClaimAmount"].values.sum(),
             "predicted, frequency*severity model": np.sum(
-                df.Exposure.values*glm_freq.predict(X)*glm_sev.predict(X)
+                df["Exposure"].values*glm_freq.predict(X)*glm_sev.predict(X)
             ),
             "predicted, tweedie, power=%.2f"
             % glm_total.best_estimator_.family.power: np.sum(
@@ -512,3 +502,4 @@ for subset_label, X, df in [
     )
 
 print(pd.DataFrame(res).set_index("subset").T)
+plt.plot()
