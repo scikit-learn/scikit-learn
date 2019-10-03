@@ -10,6 +10,7 @@ from sklearn.utils.estimator_checks import pairwise_estimator_convert_X
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.optimize import newton_cg
 from sklearn.utils.random import random_choice_csc
+from sklearn.utils import safe_indexing
 
 
 # This file tests the utils that are deprecated
@@ -78,3 +79,9 @@ def test_newton_cg():
 def test_random_choice_csc():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         random_choice_csc(10, [[2]])
+
+
+# TODO: remove in 0.24
+def test_safe_indexing():
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
+        safe_indexing([1, 2], 0)
