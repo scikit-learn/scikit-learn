@@ -1779,3 +1779,39 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_callable_multimetric_same_as_list_of_strings():
+    def custom_scorer(est, X, y):
+        y_pred = est.predict(X)
+        return {'recall': recall_score(y, y_pred),
+                'accuracy': accuracy_score(y, y_pred)}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    est = LinearSVC(random_state=42)
+    search_callable = GridSearchCV(est, {'C': [0.1, 1]},
+                                   scoring=custom_scorer, refit='recall')
+    search_str = GridSearchCV(est, {'C': [0.1, 1]},
+                              scoring=['recall', 'accuracy'], refit='recall')
+
+    search_callable.fit(X, y)
+    search_str.fit(X, y)
+
+    assert search_callable.best_score_ == pytest.approx(search_str.best_score_)
+    assert search_callable.best_index_ == search_str.best_index_
+
+
+def test_callable_multimetric_error_on_invalid_key():
+    def bad_scorer(est, X, y):
+        return {'bad_name': 1}
+
+    X, y = make_classification(n_samples=40, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring=bad_scorer, refit='good_name')
+
+    msg = ('For multi-metric scoring, the parameter refit must be set to a '
+           'scorer key or a callable to refit')
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)

@@ -394,7 +394,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan):
+                   error_score=np.nan, check_scorer_key=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -454,6 +454,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
+
+    check_scorer_key : str or None, default=None
+        If a string and scorer returns a dictionary, the keys will be check
+        to contain `check_scorer_key`.
 
     Returns
     -------
@@ -538,6 +542,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer)
+
+    # check scorer keys
+    if (check_scorer_key is not None and isinstance(test_scores, dict)
+            and check_scorer_key not in test_scores):
+        raise ValueError("dict returned by scorer must contain {}".format(
+            check_scorer_key))
+
     if verbose > 2:
         if isinstance(test_scores, dict):
             for scorer_name in sorted(test_scores):
