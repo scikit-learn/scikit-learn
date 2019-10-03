@@ -13,7 +13,6 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
@@ -22,7 +21,7 @@ from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
 from sklearn.ensemble.iforest import _average_path_length
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris, fetch_kddcup99
+from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
@@ -209,55 +208,47 @@ def test_iforest_performance():
     assert roc_auc_score(y_test, y_pred) > 0.98
 
 
-@pytest.mark.filterwarnings('ignore:default contamination')
-@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_iforest_performance_feature_weight():
     """Test Isolation Forest performs well"""
 
+    n_fea = 5
+    n_noise = 100
+
     rng = np.random.RandomState(2)
 
-    data = fetch_kddcup99("SF")
-
-    # Selecting numerical features
-    X = data.data[:, [0, 2, 3]]
-    # Take classes to be normal and others.
-    y = data.target == b'normal.'
-
-    # Add noise to data
-    # Get range of X
-    min_val = float("inf")
-    max_val = float("-inf")
-    for i in range(3):
-        min_val = min(min_val, X[:, i].min())
-        max_val = max(max_val, X[:, i].max())
-    # Adding 10 dimensions of uniform distributed noise
-    # We only need to cover the range of X because isolated forest
-    # doesn't do any handling beyond the min/max values
-    n_noise = 10
-    X_w_noise = np.hstack(
-        [X, rng.uniform(min_val, max_val, size=(X.shape[0], n_noise))]
+    # Generate data with some abnormal observations
+    X = np.vstack(
+        [
+            # Normally distributed points
+            0.3 * rng.randn(1000, n_fea),
+            # Uniform, i.e. might be outliers
+            rng.uniform(low=-4, high=4, size=(200, n_fea))
+        ]
     )
+    X = np.hstack([X, rng.uniform(-4, 4, size=(X.shape[0], n_noise))])
+    # Lower score -> More abnormal
+    y = [1] * 1000 + [0] * 200
 
     # Calculate feature weight using kurtosis
     # Unset fisher so that normal distribution has a value of 3
     # and uniform distribution has a value of 1.2, a smaller value
-    feature_weight = kurtosis(X_w_noise, fisher=False)
+    feature_weight = kurtosis(X, fisher=False)
     feature_weight /= feature_weight.sum()
 
     # fit the model without feature weight and not all features
     clf_wo = IsolationForest(random_state=rng)
-    clf_wo.fit(X_w_noise)
+    clf_wo.fit(X)
 
     # fit the model with feature weight and not all features
     clf_w = IsolationForest(
-        random_state=rng, feature_weight=feature_weight, max_features=4
+        random_state=rng, feature_weight=feature_weight, max_features=10
     )
-    clf_w.fit(X_w_noise)
+    clf_w.fit(X)
 
     # With feature weight should be better than without
-    assert_greater(
-        roc_auc_score(y, clf_w.score_samples(X_w_noise)),
-        roc_auc_score(y, clf_wo.score_samples(X_w_noise)),
+    assert (
+        roc_auc_score(y, clf_w.score_samples(X)) >
+        roc_auc_score(y, clf_wo.score_samples(X))
     )
 
 
