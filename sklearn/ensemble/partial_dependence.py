@@ -104,12 +104,12 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         The target features for which the partial dependency should be
         computed (size should be smaller than 3 for visual renderings).
 
-    grid : array-like, shape=(n_points, len(target_variables))
+    grid : array-like of shape (n_points, n_target_variables)
         The grid of ``target_variables`` values for which the
         partial dependency should be evaluated (either ``grid`` or ``X``
         must be specified).
 
-    X : array-like, shape=(n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
         a ``grid`` for the ``target_variables``. The ``grid`` comprises
         ``grid_resolution`` equally spaced points between the two
@@ -211,8 +211,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ----------
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
-
-    X : array-like, shape=(n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data on which ``gbrt`` was trained.
 
     features : seq of ints, strings, or tuples of ints or strings

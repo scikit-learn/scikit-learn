@@ -139,7 +139,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
 
         """
