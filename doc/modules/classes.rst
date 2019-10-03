@@ -758,6 +758,9 @@ Plotting
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
+The following subsections are only rough guidelines: the same estimator can
+fall into multiple categories, depending on its parameters.
+
 .. currentmodule:: sklearn
 
 Linear classifiers
@@ -803,6 +806,12 @@ Bayesian regressors
 Regressors with variable selection
 ----------------------------------
 
+The following estimators have built-in variable selection fitting
+procedures, but any estimator using a L1 or elastic-net penalty also
+performs variable selection: typically :class:`~linear_model.ElasticNet`,
+:class:`~linear_model.Lasso`, :class:`~linear_model.SGDRegressor` or
+:class:`~sklearn.linear_model.SGDClassifier` (with the appropriate penalty).
+
 .. autosummary::
    :toctree: generated/
    :template: class.rst
@@ -815,19 +824,13 @@ Regressors with variable selection
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
 
-Outlier-robust regressors
--------------------------
+Multi-task linear regressors with variable selection
+----------------------------------------------------
 
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.HuberRegressor
-   linear_model.RANSACRegressor
-   linear_model.TheilSenRegressor
-
-Multi-task linear regressors
-----------------------------
+These estimators fit multiple regression problems (or tasks) jointly, while
+inducing sparse coefficients. While the inferred coefficients may differ
+between the tasks, they are constrained to agree on the features that are
+selected (non-zero coefficients).
 
 .. autosummary::
    :toctree: generated/
@@ -837,6 +840,20 @@ Multi-task linear regressors
    linear_model.MultiTaskElasticNetCV
    linear_model.MultiTaskLasso
    linear_model.MultiTaskLassoCV
+
+Outlier-robust regressors
+-------------------------
+
+Any estimator using the Huber loss would also be robust to outliers, e.g.
+:class:`~linear_model.SGDRegressor` with ``loss='huber'``.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.HuberRegressor
+   linear_model.RANSACRegressor
+   linear_model.TheilSenRegressor
 
 Miscellaneous
 -------------
