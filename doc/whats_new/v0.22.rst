@@ -255,6 +255,10 @@ Changelog
   removed in v0.24. :pr:`14520` by
   :user:`Guillem G. Subies <guillemgsubies>`.
 
+- |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
+  removes accents from strings that are in NFKD normalized form. :pr:`15100` by
+  :user:`Daniel Grady <DGrady>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
