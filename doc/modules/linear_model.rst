@@ -907,13 +907,13 @@ Generalized Linear Models (GLM) extend linear models in two ways
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
-.. math::    \hat{y}(w, x) = h(x^\top w) = h(w_0 + w_1 x_1 + ... + w_p x_p).
+.. math::    \hat{y}(w, X) = h(x^\top w) = h(w_0 + w_1 X_1 + ... + w_p X_p).
 
 Secondly, the squared loss function is replaced by the unit deviance :math:`d`
 of a reproductive exponential dispersion model (EDM) [11]_. The minimization
 problem becomes
 
-.. math::    \min_{w} \frac{1}{2 \sum_i s_i} \sum_i s_i \cdot d(y_i, \hat{y}(w, x_i)) + \frac{\alpha}{2} ||w||_2
+.. math::    \min_{w} \frac{1}{2 \sum_i s_i} \sum_i s_i \cdot d(y_i, \hat{y}(w, X_i)) + \frac{\alpha}{2} ||w||_2
 
 with sample weights :math:`s`, and L2 regularization penalty :math:`\alpha`.
 The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
@@ -939,8 +939,8 @@ Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                
 Usage
 -----
 
-In the following use cases, a loss different from the squared loss might be
-appropriate:
+A GLM loss different from the classical squared loss might be appropriate in
+the following cases:
 
   * If the target values :math:`y` are counts (non-negative integer valued) or
     frequencies (non-negative), you might use a Poisson deviance with log-link.
@@ -985,13 +985,8 @@ of the unit variance function:
    * If you want to model a relative frequency, i.e. counts per exposure (time,
      volume, ...) you can do so by a Poisson distribution and passing
      :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
-     together with :math:`s=\mathrm{exposure}` as sample weights. This is done
-     in both examples linked below.
-   * The fit itself does not need Y to be from an EDM, but only assumes
-     the first two moments to be :math:`E[Y_i]=\mu_i=h((Xw)_i)` and
-     :math:`Var[Y_i]=\frac{\phi}{s_i} v(\mu_i)`.
-   * If the target `y` is a ratio, appropriate sample weights ``s`` should be
-     provided.
+     together with :math:`s=\mathrm{exposure}` as sample weights.
+
      As an example, consider Poisson distributed counts z (integers) and
      weights s=exposure (time, money, persons years, ...). Then you fit
      y = z/s, i.e. ``PoissonRegressor.fit(X, y, sample_weight=s)``.
@@ -999,6 +994,10 @@ of the unit variance function:
      Considering :math:`\bar{y} = \frac{\\sum_i s_i y_i}{\sum_i s_i}`,
      in this case one might say that y has a 'scaled' Poisson distribution.
      The same holds for other distributions.
+
+   * The fit itself does not need Y to be from an EDM, but only assumes
+     the first two moments to be :math:`E[Y_i]=\mu_i=h((Xw)_i)` and
+     :math:`Var[Y_i]=\frac{\phi}{s_i} v(\mu_i)`.
 
 The estimator can be used as follows::
 
