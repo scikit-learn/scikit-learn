@@ -26,8 +26,6 @@ from sklearn.linear_model import Ridge
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import train_test_split
 
-GLM_SOLVERS = ['lbfgs']
-
 
 @pytest.fixture(scope="module")
 def regression_data():
@@ -176,14 +174,13 @@ def test_glm_check_input_argument(check_input):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('solver', GLM_SOLVERS)
-def test_glm_identity_regression(solver):
+def test_glm_identity_regression():
     """Test GLM regression with identity link on a simple dataset."""
     coef = [1., 2.]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
     glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
-                                     fit_intercept=False, solver=solver)
+                                     fit_intercept=False)
     res = glm.fit(X, y)
     assert_allclose(res.coef_, coef, rtol=1e-6)
 
@@ -193,15 +190,14 @@ def test_glm_identity_regression(solver):
     [NormalDistribution(), PoissonDistribution(),
      GammaDistribution(), InverseGaussianDistribution(),
      TweedieDistribution(power=1.5), TweedieDistribution(power=4.5)])
-@pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-6)])
-def test_glm_log_regression(family, solver, tol):
+def test_glm_log_regression(family):
     """Test GLM regression with log link on a simple dataset."""
     coef = [0.2, -0.1]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
                 alpha=0, family=family, link='log', fit_intercept=False,
-                solver=solver, tol=tol)
+                tol=1e-6)
     res = glm.fit(X, y)
     assert_allclose(res.coef_, coef, rtol=5e-6)
 
@@ -239,8 +235,7 @@ def test_warm_start(fit_intercept):
 
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('solver', GLM_SOLVERS)
-def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
+def test_normal_ridge_comparison(n_samples, n_features, fit_intercept):
     """Compare with Ridge regression for Normal distributions."""
     alpha = 1.0
     test_size = 10
@@ -264,8 +259,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
 
     glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
                                      link='identity', fit_intercept=True,
-                                     solver=solver, check_input=False,
-                                     max_iter=300)
+                                     check_input=False, max_iter=300)
     glm.fit(X_train, y_train)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, atol=5e-5)
@@ -274,8 +268,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept, solver):
     assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=5e-5)
 
 
-@pytest.mark.parametrize('solver, tol', [('lbfgs', 1e-7)])
-def test_poisson_glmnet(solver, tol):
+def test_poisson_glmnet():
     """Compare Poisson regression with L2 regularization and LogLink to glmnet
     """
     # library("glmnet")
@@ -294,19 +287,16 @@ def test_poisson_glmnet(solver, tol):
     glm = GeneralizedLinearRegressor(alpha=1,
                                      fit_intercept=True, family='poisson',
                                      link='log', tol=1e-7,
-                                     solver=solver, max_iter=300,
-                                     )
+                                     max_iter=300)
     glm.fit(X, y)
     assert_allclose(glm.intercept_, -0.12889386979, rtol=1e-5)
     assert_allclose(glm.coef_, [0.29019207995, 0.03741173122], rtol=1e-5)
 
 
-@pytest.mark.parametrize("solver", GLM_SOLVERS)
-def test_convergence_warning(solver, regression_data):
+def test_convergence_warning(regression_data):
     X, y = regression_data
 
-    est = GeneralizedLinearRegressor(solver=solver,
-                                     max_iter=1, tol=1e-20)
+    est = GeneralizedLinearRegressor(max_iter=1, tol=1e-20)
     with pytest.warns(ConvergenceWarning):
         est.fit(X, y)
 
