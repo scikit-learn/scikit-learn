@@ -25,7 +25,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
-from sklearn.utils.mocking import _NoSampleWeightWrapper
+from sklearn.utils._mocking import _NoSampleWeightWrapper
 from sklearn import datasets
 
 
