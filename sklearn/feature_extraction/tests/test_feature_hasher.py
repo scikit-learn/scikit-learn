@@ -54,20 +54,18 @@ def test_hashing_transform_seed():
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
     indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
                                             False)
-    assert_array_equal(indices, [96,  13,  22,  96,  13,  22, 116])
-    assert_array_equal(indptr, [0, 4, 7])
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
-                                            False, seed=0)
-    assert_array_equal(indices, [96,  13,  22,  96,  13,  22, 116])
-    assert_array_equal(indptr, [0, 4, 7])
+    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                                False, seed=0)
+    assert_array_equal(indices, indices_0)
+    assert_array_equal(indptr, indptr_0)
 
     raw_X_ = (((f, 1) for f in x) for x in raw_X)
-    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
-                                            False, seed=1)
-    assert_array_equal(indices, [114, 125,  44, 114, 125,  44,  39])
-    assert_array_equal(indptr, [0, 4, 7])
+    indices_1, _, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                         False, seed=1)
+    with pytest.raises(AssertionError):
+        assert_array_equal(indices, indices_1)
 
 
 def test_feature_hasher_pairs():
