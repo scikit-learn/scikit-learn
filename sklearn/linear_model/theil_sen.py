@@ -35,7 +35,7 @@ def _modified_weiszfeld_step(X, x_old):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -84,7 +84,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -157,7 +157,7 @@ def _lstsq(X, y, indices, fit_intercept):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Design matrix, where n_samples is the number of samples and
         n_features is the number of features.
 

@@ -255,6 +255,10 @@ Changelog
   removed in v0.24. :pr:`14520` by
   :user:`Guillem G. Subies <guillemgsubies>`.
 
+- |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
+  removes accents from strings that are in NFKD normalized form. :pr:`15100` by
+  :user:`Daniel Grady <DGrady>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -342,6 +346,10 @@ Changelog
 - |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
+
+- |FIX| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+  ``scores_``, ``n_iter_`` and ``coefs_paths_`` attribute would have a wrong
+  ordering with ``penalty='elastic-net'``. :pr:`15044` by `Nicolas Hug`_
 
 - |FIX| :class:`linear_model.MultiTaskLassoCV` and
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
@@ -503,6 +511,9 @@ Changelog
 - |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
+
+- |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
+  to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
 
 :mod:`sklearn.preprocessing`
 ............................
