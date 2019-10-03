@@ -42,8 +42,6 @@ That gives, on Windows::
 
 or on Linux::
 
-    python3 -m venv .myenv
-    source .myenv/bin/activate
     pip install -U scikit-learn
 
 If you choose to use ``conda`` (see the `instructions for downloading conda
