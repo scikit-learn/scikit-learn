@@ -923,7 +923,7 @@ likelihood as
               \left( \log p(y|\mu,\phi)
               - \log p(y|y,\phi)\right).
 
-The following table lists some specific EDM distributions—all are Tweedie
+The following table lists some specific EDM distributions—all are instances of Tweedie
 distributions—and some of their properties.
 
 ================= ===============================  ====================================== ============================================
