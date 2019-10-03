@@ -24,7 +24,7 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils.mocking import _NoSampleWeightWrapper
+from sklearn.utils._mocking import _NoSampleWeightWrapper
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
