@@ -1513,7 +1513,7 @@ functions or non-estimator constructors.
         :term:`joblib`.
 
         ``n_jobs`` is an integer, specifying the maximum number of concurrently
-        running jobs. If 1 is given, no joblib parallelism is used at all,
+        running workers. If 1 is given, no joblib parallelism is used at all,
         which is useful for debugging. If set to -1, all CPUs are used. For
         ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used. For example with
         ``n_jobs=-2``, all CPUs but one are used.

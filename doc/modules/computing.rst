@@ -520,16 +520,17 @@ utilities in two ways:
 - via OpenMP, used in C or Cython code.
 
 In addition, some of the numpy routines that are used internally by
-scikit-learn may also be parallelized if you rely on specific numerical
-libraries such as MKL, OpenBLAS, or BLIS.
+scikit-learn may also be parallelized if numpy is installed with specific
+numerical libraries such as MKL, OpenBLAS, or BLIS.
 
 We describe these 3 scenarios in the following subsections.
 
 Joblib-based parallelism
 ........................
 
-When the underlying implementation uses joblib, the number of jobs that are
-spawned in parallel can be controled via the ``n_jobs`` parameter.
+When the underlying implementation uses joblib, the number of workers
+(threads or processes) that are spawned in parallel can be controled via the
+``n_jobs`` parameter.
 
 .. note::
 
@@ -566,8 +567,8 @@ for more details.
 
 In practice, whether parallelism is helpful at improving runtime depends on
 many factors. It is usually a good idea to experiment rather than assuming
-that increasing the number of jobs is always a good thing. In some cases it
-can be highly detrimental to performance to run multiple copies of some
+that increasing the number of workers is always a good thing. In some cases
+it can be highly detrimental to performance to run multiple copies of some
 estimators or functions in parallel (see oversubscription below).
 
 OpenMP-based parallelism
