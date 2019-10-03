@@ -17,7 +17,7 @@ from sklearn.linear_model._glm.link import (
     IdentityLink,
     LogLink,
 )
-from sklearn.linear_model._glm.distribution import (
+from sklearn._loss.glm_distribution import (
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,

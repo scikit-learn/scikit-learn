@@ -25,6 +25,7 @@ the lower the better
 import numpy as np
 import warnings
 
+from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
@@ -672,7 +673,6 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     >>> mean_tweedie_deviance(y_true, y_pred, power=1)
     1.4260...
     """
-    from ..linear_model._glm.distribution import TweedieDistribution
     y_type, y_true, y_pred, _ = _check_reg_targets(
         y_true, y_pred, None, dtype=[np.float64, np.float32])
     if y_type == 'continuous-multioutput':

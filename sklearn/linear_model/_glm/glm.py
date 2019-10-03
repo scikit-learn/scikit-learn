@@ -15,7 +15,7 @@ from ...base import BaseEstimator, RegressorMixin
 from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
-from .distribution import (
+from ..._loss.glm_distribution import (
         ExponentialDispersionModel,
         TweedieDistribution,
         EDM_DISTRIBUTIONS

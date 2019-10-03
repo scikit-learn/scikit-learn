@@ -9,7 +9,7 @@ from numpy.testing import (
 from scipy.optimize import check_grad
 import pytest
 
-from sklearn.linear_model._glm.distribution import (
+from sklearn._loss.glm_distribution import (
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
