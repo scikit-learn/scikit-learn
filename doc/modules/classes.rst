@@ -774,8 +774,8 @@ Linear classifiers
    linear_model.RidgeClassifierCV
    linear_model.SGDClassifier
 
-Traditional linear regressors
------------------------------
+Classical linear regressors
+---------------------------
 
 .. autosummary::
    :toctree: generated/
