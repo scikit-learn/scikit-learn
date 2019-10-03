@@ -55,6 +55,8 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     cdef int m = D.shape[0]
     cdef int n = D.shape[1]
 
+    cdef int last_idx = 0
+
     # We scan the matrices row by row.
     # Given row px in X and row py in Y, we find the positions (i and j
     # respectively), in .indices where the indices for the two rows start.
@@ -75,10 +77,8 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
             j = Y_indptr[py]
             d = 0.0
             while i < X_indptr[px + 1] and j < Y_indptr[py + 1]:
-                if i < X_indptr[px + 1]:
-                    ix = X_indices[i]
-                if j < Y_indptr[py + 1]:
-                    iy = Y_indices[j]
+                ix = X_indices[i]
+                iy = Y_indices[j]
 
                 if ix == iy:
                     d = d + fabs(X_data[i] - Y_data[j])
@@ -92,13 +92,13 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                     j = j + 1
 
             if i == X_indptr[px + 1]:
-                while j < Y_indptr[py + 1]:
-                    iy = Y_indices[j]
+                last_idx = Y_indptr[py + 1]
+                while j < last_idx:
                     d = d + fabs(Y_data[j])
                     j = j + 1
             else:
-                while i < X_indptr[px + 1]:
-                    ix = X_indices[i]
+                last_idx = X_indptr[px + 1]
+                while i < last_idx:
                     d = d + fabs(X_data[i])
                     i = i + 1
 
