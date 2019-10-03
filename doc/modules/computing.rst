@@ -542,9 +542,9 @@ joblib chooses to spawn a thread or a process depends on the **backend**
 that it's using.
 
 Scikit-learn generally relies on the ``loky`` backend, which is joblib's
-default backend. Loky is a multi-processing backend. To avoid duplicating
-the memory in each process (which isn't reasonable with big datasets),
-``loky`` will create a `memmap
+default backend. Loky is a multi-processing backend. When doing
+multi-processing, in order to avoid duplicating the memory in each process
+(which isn't reasonable with big datasets), joblib will create a `memmap
 <https://docs.scipy.org/doc/numpy/reference/generated/numpy.memmap.html>`_
 that all processes can share, when the data is bigger than 1MB.
 
@@ -587,7 +587,7 @@ Parallel Numpy routines from numerical libraries
 ................................................
 
 Scikit-learn relies heavily on Numpy, which may be configured to use a
-multi-threaded numerical library like MKL or OpenBLAS.
+multi-threaded numerical library like MKL, OpenBLAS or BLIS.
 
 The number of threads used by the OpenBLAS, MKL or BLIS libraries can be set
 via the ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, and
@@ -631,7 +631,8 @@ Note that:
   context manager (see joblib docs linked below). The total number of thread
   will be ``n_jobs * <LIB>_NUM_THREADS``.
 - Joblib is currently unable to avoid oversubscription in a
-  multi-threading context. It can only do so when doing multi-processing.
+  multi-threading context. It can only do so with the ``loky`` backend
+  (which spawns processes).
 
 You will find additional details about joblib mitigation of oversubscription
 in `joblib documentation
