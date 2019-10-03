@@ -18,6 +18,8 @@ clean-ctags:
 clean: clean-ctags
 	$(PYTHON) setup.py clean
 	rm -rf dist
+	# TODO: Remove in when all modules are removed.
+	$(PYTHON) sklearn/_build_utils/deprecated_modules.py
 
 in: inplace # just a shortcut
 inplace:

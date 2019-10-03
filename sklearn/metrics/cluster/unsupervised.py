@@ -12,7 +12,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils import safe_indexing
+from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
@@ -350,7 +350,7 @@ def davies_bouldin_score(X, labels):
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
     for k in range(n_labels):
-        cluster_k = safe_indexing(X, labels == k)
+        cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
         centroids[k] = centroid
         intra_dists[k] = np.average(pairwise_distances(

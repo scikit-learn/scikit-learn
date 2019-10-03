@@ -150,7 +150,7 @@ plt.show()
 # Area under ROC for the multiclass problem
 # .........................................
 # The :func:`sklearn.metrics.roc_auc_score` function can be used for
-# multi-class classification. The mutliclass One-vs-One scheme compares every
+# multi-class classification. The multi-class One-vs-One scheme compares every
 # unique pairwise combination of classes. In this section, we calcuate the AUC
 # using the OvR and OvO schemes. We report a macro average, and a
 # prevalence-weighted average.

@@ -226,6 +226,8 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+.. _rolling_your_own_estimator:
+
 Rolling your own estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn-compatible,

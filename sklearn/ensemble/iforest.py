@@ -68,7 +68,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         on the scores of the samples.
 
             - If 'auto', the threshold is determined as in the
-            original paper.
+              original paper.
             - If float, the contamination should be in the range [0, 0.5].
 
         .. versionchanged:: 0.22
@@ -211,7 +211,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         y : Ignored
