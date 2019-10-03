@@ -571,7 +571,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             mean (:math:`\y_\textrm{pred}`):
             :math:`v(\y_\textrm{pred}) = \y_\textrm{pred}^{power}`.
 
-            For ``0<power<1``, no distribution exists.
+            For ``0 < power < 1``, no distribution exists.
 
             Special cases are:
 
