@@ -31,18 +31,14 @@ Installing the latest release
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` or ``conda``.
 
-With ``pip``, in order to avoid potential conflicts with other packages it is
+With ``pip``::
+
+    pip install -U scikit-learn
+
+Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 (see `python3 virtualenv documentation
 <https://docs.python.org/3/tutorial/venv.html>`_).
-
-That gives, on Windows::
-
-    pip install -U scikit-learn
-
-or on Linux::
-
-    pip install -U scikit-learn
 
 If you choose to use ``conda`` (see the `instructions for downloading conda
 <https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
