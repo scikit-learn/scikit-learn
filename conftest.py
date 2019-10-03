@@ -6,6 +6,7 @@
 # the one from site-packages.
 
 import platform
+from time import time
 from distutils.version import LooseVersion
 
 import pytest
@@ -84,7 +85,11 @@ def pytest_runtest_setup(item):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=True)
 
+    global tic
+    tic = time()
+
 
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
+    print(" {:.3f}s ".format(time() - tic), end="")
