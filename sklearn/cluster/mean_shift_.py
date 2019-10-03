@@ -35,7 +35,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
 
     Parameters
     ----------
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input points.
 
     quantile : float, default 0.3
@@ -115,7 +115,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Parameters
     ----------
 
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input data.
 
     bandwidth : float, optional
@@ -126,7 +126,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
 
-    seeds : array-like, shape=[n_seeds, n_features] or None
+    seeds : array-like of shape (n_seeds, n_features) or None
         Point used as initial kernel locations. If None and bin_seeding=False,
         each data point is used as a seed. If None and bin_seeding=True,
         see bin_seeding.
@@ -256,7 +256,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Parameters
     ----------
 
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input points, the same points that will be used in mean_shift.
 
     bin_size : float
@@ -272,7 +272,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
 
     Returns
     -------
-    bin_seeds : array-like, shape=[n_samples, n_features]
+    bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
 
@@ -408,7 +408,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape=[n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Samples to cluster.
 
         y : Ignored

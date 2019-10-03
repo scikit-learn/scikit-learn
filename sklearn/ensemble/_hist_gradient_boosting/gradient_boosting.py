@@ -85,10 +85,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -557,7 +557,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
         Returns

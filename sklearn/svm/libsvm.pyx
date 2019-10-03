@@ -217,10 +217,13 @@ def fit(
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
         copy_SV(support_vectors.data, model, support_vectors.shape)
 
-    # TODO: do only in classification
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV
-    n_class_SV = np.empty(n_class, dtype=np.int32)
-    copy_nSV(n_class_SV.data, model)
+    if svm_type == 0 or svm_type == 1:
+        n_class_SV = np.empty(n_class, dtype=np.int32)
+        copy_nSV(n_class_SV.data, model)
+    else:
+        # OneClass and SVR are considered to have 2 classes
+        n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
 
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB

@@ -228,7 +228,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
+    X_norm_squared : array-like of shape (n_samples,), optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
