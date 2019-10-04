@@ -342,8 +342,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           `'predict_proba'`, `'decision_function'` or `'predict'` in that
           order.
         * otherwise, one of `'predict_proba'`, `'decision_function'` or
-         `'predict'`. If the method is not implemented by the estimator, it
-         will raise an error.
+          `'predict'`. If the method is not implemented by the estimator, it
+          will raise an error.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel all `estimators` `fit`.
