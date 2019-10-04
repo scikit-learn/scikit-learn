@@ -27,7 +27,7 @@ from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
                               _MultimetricScorer)
-from ..exceptions import FitFailedWarning
+from ..exceptions import FitFailedWarning, NotFittedError
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -221,8 +221,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    if callable(scoring) or scoring is None or isinstance(scoring, str):
-        scorers = {"score": check_scoring(estimator, scoring)}
+    if callable(scoring):
+        scorers = scoring
+    elif scoring is None or isinstance(scoring, str):
+        scorers = check_scoring(estimator, scoring)
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
 
@@ -235,15 +237,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            error_score=error_score)
+            error_score=error_score, return_fit_failed=True)
         for train, test in cv.split(X, y, groups))
 
     results = _aggregate_list_of_dicts(results, constructor=list)
-    if return_train_score:
-        train_scores = _aggregate_list_of_dicts(results["train_scores"])
+
+    info_dict = _check_fit_and_score_results(results, error_score)
+    score_names = info_dict["score_names"]
+    test_scores = info_dict["test_scores"]
+
     if return_estimator:
         fitted_estimators = results["estimator"]
-    test_scores = _aggregate_list_of_dicts(results["test_scores"])
 
     ret = {}
     ret['fit_time'] = np.array(results["fit_time"])
@@ -252,13 +256,50 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    for name in scorers:
+    for name in score_names:
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
+            train_scores = info_dict["train_scores"]
             key = 'train_%s' % name
             ret[key] = np.array(train_scores[name])
 
     return ret
+
+
+def _check_fit_and_score_results(results, error_score):
+    """Checks _fit_and_score results. Handles scoring as a callable and
+    normalizes scores into a list of dictionaries.
+    """
+    fit_failed = results["fit_failed"]
+    test_score_dicts = results["test_scores"]
+
+    if all(fit_failed):
+        raise NotFittedError("All estimators failed to fit")
+
+    successful_score = test_score_dicts[fit_failed.index(False)]
+    if any(fit_failed) and isinstance(successful_score, dict):
+        for i in np.flatnonzero(fit_failed):
+            # error_score is a number
+            test_score_dicts[i] = {name: error_score
+                                   for name in successful_score}
+
+    output = {}
+    # converts single metrics into a list of dictionaries
+    if not isinstance(successful_score, dict):
+        test_score_dicts = [{"score": elm} for elm in test_score_dicts]
+        output["score_names"] = ["score"]
+    else:
+        output["score_names"] = list(successful_score.keys())
+
+    output["test_scores"] = _aggregate_list_of_dicts(test_score_dicts)
+
+    if "train_scores" in results:
+        train_score_dicts = results["train_scores"]
+        if not isinstance(successful_score, dict):
+            train_score_dicts = [{"score": elm} for elm in train_score_dicts]
+        output["train_scores"] = _aggregate_list_of_dicts(train_score_dicts)
+
+    return output
 
 
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
@@ -396,7 +437,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan):
+                   error_score=np.nan, return_fit_failed=False):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -457,6 +498,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
+    return_fit_failed : bool, default=False
+        Whether to return if estimatored failed to fit, when error_score is
+        numeric.
+
     Returns
     -------
     result: dict with the following attributes
@@ -481,6 +526,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
         estimator : estimator object
             The fitted estimator
+
+        fit_failed : bool
+            The estimator failed to fit.
     """
     if verbose > 1:
         if parameters is None:
@@ -503,6 +551,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    result = {}
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -533,8 +582,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
-
+        if return_fit_failed:
+            result["fit_failed"] = True
     else:
+        if return_fit_failed:
+            result["fit_failed"] = False
+
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer)
         score_time = time.time() - start_time - fit_time
@@ -559,7 +612,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         print(_message_with_time('CV', msg, total_time))
 
-    result = {"test_scores": test_scores}
+    result["test_scores"] = test_scores
     if return_train_score:
         result["train_scores"] = train_scores
     if return_n_test_samples:
