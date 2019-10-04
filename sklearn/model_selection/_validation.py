@@ -278,8 +278,9 @@ def _check_fit_and_score_results(results, error_score):
 
     successful_score = test_score_dicts[fit_failed.index(False)]
     if any(fit_failed) and isinstance(successful_score, dict):
-        for i in np.flatnonzero(fit_failed):
-            # error_score is a number
+        for i, failed in enumerate(fit_failed):
+            if not failed:
+                continue
             test_score_dicts[i] = {name: error_score
                                    for name in successful_score}
 
