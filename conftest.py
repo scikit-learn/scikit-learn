@@ -13,6 +13,7 @@ from _pytest.doctest import DoctestItem
 
 from sklearn import set_config
 from sklearn.utils import _IS_32BIT
+from sklearn.externals import _pilutil
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -67,6 +68,13 @@ def pytest_collection_modifyitems(config, items):
 
         for item in items:
             if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)
+    elif not _pilutil.pillow_installed:
+        skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
+        for item in items:
+            if item.name in [
+                    "sklearn.feature_extraction.image.PatchExtractor",
+                    "sklearn.feature_extraction.image.extract_patches_2d"]:
                 item.add_marker(skip_marker)
 
 
