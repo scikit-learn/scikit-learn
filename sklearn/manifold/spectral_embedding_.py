@@ -371,7 +371,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             raise
 
     if norm_laplacian:
-            embedding = embedding / dd
+        embedding = embedding / dd
     embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
         return embedding[1:n_components].T
