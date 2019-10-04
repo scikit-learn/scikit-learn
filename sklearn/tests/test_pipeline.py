@@ -1195,4 +1195,3 @@ def test_feature_union_warns_with_none():
 
     with pytest.warns(DeprecationWarning, match=msg):
         union.fit_transform(X)
-
