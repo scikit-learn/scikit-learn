@@ -160,7 +160,10 @@ def test_bin_seeds():
 @pytest.mark.parametrize('max_iter', [1, 100])
 def test_max_iter(max_iter):
     clusters1, _ = mean_shift(X, max_iter=max_iter)
-    clusters2 = MeanShift(max_iter=max_iter).fit(X).cluster_centers_
+    ms = MeanShift(max_iter=max_iter).fit(X)
+    clusters2 = ms.cluster_centers_
+
+    assert ms.n_iter_ <= ms.max_iter
     assert len(clusters1) == len(clusters2)
 
     for c1, c2 in zip(clusters1, clusters2):

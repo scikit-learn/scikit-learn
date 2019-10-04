@@ -292,7 +292,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
-        ..versionadded:: 0.22
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -305,7 +305,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     n_iter_ : int
         Maximum number of iterations performed on each seed.
 
-        ..versionadded:: 0.22
+        .. versionadded:: 0.22
 
     Examples
     --------
