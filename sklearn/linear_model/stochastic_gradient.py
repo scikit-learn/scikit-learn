@@ -892,7 +892,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
 
     t_ : int
         Number of weight updates performed during training.

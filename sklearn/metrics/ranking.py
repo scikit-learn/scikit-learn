@@ -155,7 +155,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         The label of the positive class. Only applied to binary ``y_true``.
         For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -288,7 +288,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
         Will be ignored when ``y_true`` is binary.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     max_fpr : float > 0 and <= 1, optional
@@ -381,10 +381,10 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     Parameters
     ----------
-    y_true : array-like, shape = (n_samples, )
+    y_true : array-like of shape (n_samples,)
         True multiclass labels.
 
-    y_score : array-like, shape = (n_samples, n_classes)
+    y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
@@ -412,7 +412,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     """
@@ -489,7 +489,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     pos_label : int or str, default=None
         The label of the positive class
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -600,7 +600,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -679,7 +679,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     drop_intermediate : boolean, optional (default=True)
@@ -809,7 +809,7 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -896,7 +896,7 @@ def coverage_error(y_true, y_score, sample_weight=None):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -955,7 +955,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns

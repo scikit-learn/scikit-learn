@@ -115,27 +115,27 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples,)
+    y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
 
-    classes_ : array-like, shape = (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in X_train_
 
-    pi_ : array-like, shape = (n_samples,)
+    pi_ : array-like of shape (n_samples,)
         The probabilities of the positive class for the training points
         X_train_
 
-    W_sr_ : array-like, shape = (n_samples,)
+    W_sr_ : array-like of shape (n_samples,)
         Square root of W, the Hessian of log-likelihood of the latent function
         values for the observed labels. Since W is diagonal, only the diagonal
         of sqrt(W) is stored.
@@ -160,10 +160,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values, must be binary
 
         Returns
@@ -248,11 +248,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
         check_is_fitted(self)
@@ -270,11 +270,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array-like, shape = (n_samples, n_classes)
+        C : array-like of shape (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute ``classes_``.
@@ -310,7 +310,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
@@ -560,7 +560,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
-    classes_ : array-like, shape = (n_classes,)
+    classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
     n_classes_ : int
@@ -602,10 +602,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values, must be binary
 
         Returns
@@ -656,11 +656,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
         check_is_fitted(self)
@@ -672,11 +672,11 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array-like, shape = (n_samples, n_classes)
+        C : array-like of shape (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -707,7 +707,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or none
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. In the case of multi-class classification, theta may
             be the  hyperparameters of the compound kernel or of an individual
