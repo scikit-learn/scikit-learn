@@ -24,7 +24,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression

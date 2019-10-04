@@ -588,6 +588,13 @@ div.sk-page-content h4 {
   word-wrap: break-word;
 }
 
+div.sk-page-content h1 code,
+div.sk-page-content h2 code,
+div.sk-page-content h3 code,
+div.sk-page-content h4 code {
+  white-space: normal;
+}
+
 /* longtables */
 
 table.longtable p {
@@ -990,6 +997,20 @@ div.sphx-glr-thumbcontainer {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+/* authors */
+.sk-authors-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sk-authors-container > div {
+  width: 100px;
+  margin: 5px;
+  font-size: 0.9rem;
+}
+
 
 /* testimonial */
 
