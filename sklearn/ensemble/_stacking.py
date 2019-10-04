@@ -14,7 +14,7 @@ from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
 from ..base import MetaEstimatorMixin
 
-from .base import _parallel_fit_estimator
+from ._base import _parallel_fit_estimator
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV

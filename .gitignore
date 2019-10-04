@@ -80,3 +80,14 @@ sklearn/linear_model/sag_fast.pyx
 # deprecated paths
 # TODO: Remove in 0.24
 sklearn/utils/mocking.py
+
+sklearn/ensemble/bagging.py
+sklearn/ensemble/base.py
+sklearn/ensemble/forest.py
+sklearn/ensemble/gb.py
+sklearn/ensemble/iforest.py
+sklearn/ensemble/stacking.py
+sklearn/ensemble/voting.py
+sklearn/ensemble/weight_boosting.py
+sklearn/tree/export.py
+sklearn/tree/tree_base.py
