@@ -1,9 +1,9 @@
 
 .. _advanced-installation:
 
-===================================
-Advanced installation instructions
-===================================
+==================================================================
+Installing the development version of scikit-learn (master branch)
+==================================================================
 
 .. _install_nightly_builds:
 
