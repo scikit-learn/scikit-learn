@@ -375,7 +375,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
             Transformed samples
         """
         last_step = self._final_estimator
@@ -461,7 +461,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_proba : array-like, shape = [n_samples, n_classes]
+        y_proba : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -480,7 +480,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -518,7 +518,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        y_score : array-like, shape = [n_samples, n_classes]
+        y_score : array-like of shape (n_samples, n_classes)
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
@@ -540,7 +540,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
         """
         # _final_estimator is None or has transform, otherwise attribute error
         # XXX: Handling the None case means we can't use if_delegate_has_method
@@ -562,7 +562,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        Xt : array-like, shape = [n_samples, n_transformed_features]
+        Xt : array-like of shape  (n_samples, n_transformed_features)
             Data samples, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features. Must fulfill
             input requirements of last step of pipeline's
@@ -570,7 +570,7 @@ class Pipeline(_BaseComposition):
 
         Returns
         -------
-        Xt : array-like, shape = [n_samples, n_features]
+        Xt : array-like of shape (n_samples, n_features)
         """
         # raise AttributeError if necessary for hasattr behaviour
         # XXX: Handling the None case means we can't use if_delegate_has_method
@@ -887,7 +887,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                   trans.get_feature_names()])
         return feature_names
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, **fit_params):
         """Fit all transformers using X.
 
         Parameters
@@ -903,7 +903,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : FeatureUnion
             This estimator
         """
-        transformers = self._parallel_func(X, y, {}, _fit_one)
+        transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
             return self
