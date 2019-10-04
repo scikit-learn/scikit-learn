@@ -239,7 +239,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
 
-    def decide_which_solver(requested_solver, laplacian, n_nodes, n_components):
+    def decide_which_solver(requested_solver, laplacian, n_nodes,
+                            n_components):
         if requested_solver == 'arpack':
             return 'arpack'
         if requested_solver == 'amg':
@@ -333,7 +334,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         embedding = diffusion_map.T[:n_components]
         if embedding.shape[0] == 1:
             raise ValueError
-        return  embedding
+        return embedding
 
     def do_embedding_scipy_eigh(laplacian):
         # see note above under arpack why lobpcg has problems with small
@@ -343,21 +344,26 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             laplacian = laplacian.toarray()
         _, diffusion_map = eigh(laplacian)
         embedding = diffusion_map.T[:n_components]
-        return  embedding
+        return embedding
 
-    solver_fn = {'arpack': do_embedding_arpack, 'amg': do_embedding_amg, 'lobpcg': do_embedding_lobpcg,
-               'scipy_eigh':do_embedding_scipy_eigh}
+    solver_fn = {'arpack': do_embedding_arpack, 'amg': do_embedding_amg,
+                 'lobpcg': do_embedding_lobpcg,
+                 'scipy_eigh': do_embedding_scipy_eigh}
 
     try:
-        chosen_solver = decide_which_solver(requested_solver= eigen_solver, laplacian=laplacian,
-                                        n_nodes=n_nodes, n_components=n_components)
+        chosen_solver = decide_which_solver(requested_solver=eigen_solver,
+                                            laplacian=laplacian,
+                                            n_nodes=n_nodes,
+                                            n_components=n_components)
         embedding = solver_fn[chosen_solver](laplacian)
     except RuntimeError:
         if chosen_solver == 'arpack':
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
-            chosen_solver = decide_which_solver(requested_solver= "lobpcg", laplacian=laplacian,
-                                        n_nodes=n_nodes, n_components=n_components)
+            chosen_solver = decide_which_solver(requested_solver="lobpcg",
+                                                laplacian=laplacian,
+                                                n_nodes=n_nodes,
+                                                n_components=n_components)
             # Revert the laplacian to its opposite to have lobpcg work
             laplacian *= -1
             embedding = solver_fn[chosen_solver](laplacian)
@@ -371,6 +377,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         return embedding[1:n_components].T
     else:
         return embedding[:n_components].T
+
 
 class SpectralEmbedding(BaseEstimator):
     """Spectral embedding for non-linear dimensionality reduction.
