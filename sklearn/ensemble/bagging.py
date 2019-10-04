@@ -551,11 +551,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
-    >>> print(clf.predict([[0, 0, 0, 0]]))
+    >>> clf.predict([[0, 0, 0, 0]])
     [1]
     >>> clf = BaggingClassifier(base_estimator=SVC(),
     ...                         n_estimators=100, random_state=0).fit(X, y)
-    >>> print(clf.predict([[0, 0, 0, 0]]))
+    >>> clf.predict([[0, 0, 0, 0]])
     [1]
 
     References
