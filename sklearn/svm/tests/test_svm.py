@@ -691,6 +691,7 @@ def test_sparse_precomputed():
 
 
 def test_sparse_fit_support_vectors_empty():
+    # Regression test for #14893
     X_train = sparse.csr_matrix([[0, 1, 0, 0],
                                  [0, 0, 0, 1],
                                  [0, 0, 1, 0],
