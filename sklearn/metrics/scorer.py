@@ -459,7 +459,7 @@ def _check_multimetric_scoring(estimator, scoring):
         A dict mapping each scorer name to its validated scorer.
     """
     err_msg_generic = ("scoring should either be a single string or "
-                       "callable for single metric evaluation or a "
+                       "callable or a "
                        "list/tuple of strings or a dict of scorer name "
                        "mapped to the callable for multiple metric "
                        "evaluation. Got %s of type %s"

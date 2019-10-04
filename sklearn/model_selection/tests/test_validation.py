@@ -315,8 +315,8 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, estimator, X, y,
                         scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (".*should either be.*string or callable.*for "
-                            "single.*.*dict.*for multi.*")
+    error_message_regexp = (".*should either be.*string or callable.*"
+                            ".*.*dict.*for multi.*")
 
     # Empty dict should raise invalid scoring error
     assert_raises_regex(ValueError, "An empty dict",
@@ -339,16 +339,6 @@ def test_cross_validate_invalid_scoring_param():
                         "binary and continuous targets",
                         cross_validate, estimator, X, y,
                         scoring={"foo": multiclass_scorer})
-
-    multivalued_scorer = make_scorer(confusion_matrix)
-
-    # Multiclass Scorers that return multiple values are not supported yet
-    assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
-                        scoring=multivalued_scorer)
-    assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
-                        scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
