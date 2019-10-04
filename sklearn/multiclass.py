@@ -191,10 +191,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -231,10 +231,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes]
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -283,12 +283,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like, shape = [n_samples, ], [n_samples, n_classes].
+        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
@@ -335,11 +335,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : (sparse) array-like, shape = [n_samples, n_classes]
+        T : (sparse) array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -366,11 +366,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
         """
         check_is_fitted(self)
         if len(self.estimators_) == 1:
@@ -493,10 +493,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         Returns
@@ -533,10 +533,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Multi-class targets.
 
         classes : array, shape (n_classes, )
@@ -583,7 +583,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -606,11 +606,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        Y : array-like, shape = [n_samples, n_classes]
+        Y : array-like of shape (n_samples, n_classes)
         """
         check_is_fitted(self)
 
@@ -720,7 +720,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         y : numpy array of shape [n_samples]
@@ -769,7 +769,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like, shape = [n_samples, n_features]
+        X : (sparse) array-like of shape (n_samples, n_features)
             Data.
 
         Returns
