@@ -335,7 +335,7 @@ class BaseEstimator:
         if not warm_start_with:  # None or empty dict
             return False
 
-        def find_param(param_name):
+        def param_increases(param_name):
             # util to make sure the param is warm-startable, and to know
             # whether the param must be increase or decrease while
             # warm-started.
@@ -357,7 +357,7 @@ class BaseEstimator:
         )
         for param_name, new_value in warm_start_with.items():
             current_value = self.get_params()[param_name]
-            must_increase = find_param(param_name)
+            must_increase = param_increases(param_name)
             direction = 'increasing' if must_increase else 'decreasing'
             if ((must_increase and new_value < current_value) or
                     (not must_increase and new_value > current_value)):
