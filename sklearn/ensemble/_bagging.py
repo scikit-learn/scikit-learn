@@ -222,15 +222,15 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if the base estimator supports
             sample weighting.
@@ -250,11 +250,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -265,7 +265,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Override value used when constructing base estimator. Only
             supported if the base estimator has a max_depth parameter.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if the base estimator supports
             sample weighting.
@@ -524,7 +524,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     estimators_features_ : list of arrays
         The subset of drawn features for each base estimator.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     n_classes_ : int or list
@@ -534,7 +534,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_decision_function_ : array of shape = [n_samples, n_classes]
+    oob_decision_function_ : array of shape (n_samples, n_classes)
         Decision function computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -642,13 +642,13 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted classes.
         """
         predicted_probabilitiy = self.predict_proba(X)
@@ -667,13 +667,13 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -717,13 +717,13 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -772,7 +772,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
@@ -912,7 +912,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         Score of the training dataset obtained using an out-of-bag estimate.
         This attribute exists only when ``oob_score`` is True.
 
-    oob_prediction_ : array of shape = [n_samples]
+    oob_prediction_ : ndarray of shape (n_samples,)
         Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
@@ -969,13 +969,13 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples. Sparse matrices are accepted only if
             they are supported by the base estimator.
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : ndarray of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self)

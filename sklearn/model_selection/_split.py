@@ -19,7 +19,7 @@ from inspect import signature
 
 import numpy as np
 
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
@@ -1163,6 +1163,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
                      **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
 
+    def __repr__(self):
+        return _build_repr(self)
+
 
 class RepeatedKFold(_RepeatedSplits):
     """Repeated K-Fold cross validator.
@@ -2126,8 +2129,8 @@ def train_test_split(*arrays, **options):
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    return list(chain.from_iterable((_safe_indexing(a, train),
+                                     _safe_indexing(a, test)) for a in arrays))
 
 
 # Tell nose that train_test_split is not a test.
@@ -2158,6 +2161,8 @@ def _build_repr(self):
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
+                if value is None and hasattr(self, 'cvargs'):
+                    value = self.cvargs.get(key, None)
             if len(w) and w[0].category == DeprecationWarning:
                 # if the parameter is deprecated, don't show it
                 continue

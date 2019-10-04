@@ -235,10 +235,10 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         X : array-like or sparse matrix, shape [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
             raises error if sample_weight is passed and base_estimator
             fit method does not support it.
@@ -338,8 +338,6 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         # number of data samples
         n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
-
-        n_samples, _ = X.shape
 
         self.n_trials_ = 0
         max_trials = self.max_trials

@@ -108,7 +108,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     sigma_ : array-like of shape (n_features, n_features)
         Estimated variance-covariance matrix of the weights
 
-    scores_ : array-like of shape (n_iter_ + 1,)
+    scores_ : array-like of shape (n_iter_+1,)
         If computed_score is True, value of the log marginal likelihood (to be
         maximized) at each iteration of the optimization. The array starts
         with the value of the log marginal likelihood obtained for the initial
@@ -452,6 +452,10 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     scores_ : float
         if computed, value of the objective function (to be maximized)
+
+    intercept_ : float
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     Examples
     --------
