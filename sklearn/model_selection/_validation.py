@@ -21,7 +21,7 @@ import scipy.sparse as sp
 from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, safe_indexing,
+from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
@@ -143,7 +143,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Returns
     -------
-    scores : dict of float arrays of shape=(n_splits,)
+    scores : dict of float arrays of shape (n_splits,)
         Array of scores of the estimator for each run of the cross validation.
 
         A dict of arrays containing the score/time arrays for each scorer is
@@ -151,8 +151,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
             ``test_score``
                 The score array for test scores on each cv split.
+                Suffix ``_score`` in ``test_score`` changes to a specific
+                metric like ``test_r2`` or ``test_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
             ``train_score``
                 The score array for train scores on each cv split.
+                Suffix ``_score`` in ``train_score`` changes to a specific
+                metric like ``train_r2`` or ``train_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
                 This is available only if ``return_train_score`` parameter
                 is ``True``.
             ``fit_time``
@@ -931,7 +937,7 @@ def _index_param_value(X, v, indices):
         return v
     if sp.issparse(v):
         v = v.tocsr()
-    return safe_indexing(v, indices)
+    return _safe_indexing(v, indices)
 
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
@@ -1072,7 +1078,7 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return safe_indexing(y, indices)
+    return _safe_indexing(y, indices)
 
 
 def learning_curve(estimator, X, y, groups=None,

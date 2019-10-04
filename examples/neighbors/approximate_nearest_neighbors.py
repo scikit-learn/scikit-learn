@@ -18,29 +18,28 @@ training point as its own neighbor in the count of `n_neighbors`, and for
 compatibility reasons, one extra neighbor is computed when
 `mode == 'distance'`. Please note that we do the same in the proposed wrappers.
 
-Sample output:
+Sample output::
 
-```
-Benchmarking on MNIST_2000:
----------------------------
-AnnoyTransformer:                    0.583 sec
-NMSlibTransformer:                   0.321 sec
-KNeighborsTransformer:               1.225 sec
-TSNE with AnnoyTransformer:          4.903 sec
-TSNE with NMSlibTransformer:         5.009 sec
-TSNE with KNeighborsTransformer:     6.210 sec
-TSNE with internal NearestNeighbors: 6.365 sec
+    Benchmarking on MNIST_2000:
+    ---------------------------
+    AnnoyTransformer:                    0.583 sec
+    NMSlibTransformer:                   0.321 sec
+    KNeighborsTransformer:               1.225 sec
+    TSNE with AnnoyTransformer:          4.903 sec
+    TSNE with NMSlibTransformer:         5.009 sec
+    TSNE with KNeighborsTransformer:     6.210 sec
+    TSNE with internal NearestNeighbors: 6.365 sec
 
-Benchmarking on MNIST_10000:
-----------------------------
-AnnoyTransformer:                    4.457 sec
-NMSlibTransformer:                   2.080 sec
-KNeighborsTransformer:               30.680 sec
-TSNE with AnnoyTransformer:          30.225 sec
-TSNE with NMSlibTransformer:         43.295 sec
-TSNE with KNeighborsTransformer:     64.845 sec
-TSNE with internal NearestNeighbors: 64.984 sec
-```
+    Benchmarking on MNIST_10000:
+    ----------------------------
+    AnnoyTransformer:                    4.457 sec
+    NMSlibTransformer:                   2.080 sec
+    KNeighborsTransformer:               30.680 sec
+    TSNE with AnnoyTransformer:          30.225 sec
+    TSNE with NMSlibTransformer:         43.295 sec
+    TSNE with KNeighborsTransformer:     64.845 sec
+    TSNE with internal NearestNeighbors: 64.984 sec
+
 """
 # Author: Tom Dupre la Tour
 #
