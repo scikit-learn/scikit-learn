@@ -238,10 +238,8 @@ Changelog
 
 - |Fix| Stacking and Voting estimators now ensure that their underlying
   estimators are either all classifiers or all regressors.
-  We introduced a new base class
-  Stacking (:class:`ensemble.StackingClassifier` and
-  :class:`ensemble.StackingRegressor`) and Voting
-  (:class:`ensemble.VotingClassifier` and :class:`VotingRegressor`) estimators
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
   now raise consistent error messages.
   :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
