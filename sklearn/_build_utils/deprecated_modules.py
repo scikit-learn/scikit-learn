@@ -17,7 +17,7 @@ _DEPRECATED_MODULES = {
     ('_weight_boosting', 'sklearn.ensemble.weight_boosting', 'sklearn.ensemble'),
     ('_tree_base', 'sklearn.tree.tree', 'sklearn.tree'),
     ('_export', 'sklearn.tree.export', 'sklearn.tree'),
-    ('_tree', 'sklearn.tree.tree_base', 'sklearn.tree'),
+    ('_tree', 'sklearn.tree.tree', 'sklearn.tree'),
 }
 
 _FILE_CONTENT_TEMPLATE = """from .{new_module_name} import *  # noqa
