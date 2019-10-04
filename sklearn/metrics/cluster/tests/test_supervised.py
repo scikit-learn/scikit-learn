@@ -36,8 +36,6 @@ def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
         expected = (r'Found input variables with inconsistent numbers '
                     r'of samples: \[2, 3\]')
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1], [1, 1, 1])
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
 
