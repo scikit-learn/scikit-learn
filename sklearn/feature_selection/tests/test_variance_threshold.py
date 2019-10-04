@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_raises
+from sklearn.utils.testing import assert_array_equal
 
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
@@ -19,8 +19,10 @@ def test_zero_variance():
         sel = VarianceThreshold().fit(X)
         assert_array_equal([0, 1, 3, 4], sel.get_support(indices=True))
 
-    assert_raises(ValueError, VarianceThreshold().fit, [[0, 1, 2, 3]])
-    assert_raises(ValueError, VarianceThreshold().fit, [[0, 1], [0, 1]])
+    with pytest.raises(ValueError):
+        VarianceThreshold().fit([[0, 1, 2, 3]])
+    with pytest.raises(ValueError):
+        VarianceThreshold().fit([[0, 1], [0, 1]])
 
 
 def test_variance_threshold():

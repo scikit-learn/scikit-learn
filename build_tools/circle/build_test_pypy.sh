@@ -3,7 +3,7 @@ set -x
 set -e
 
 apt-get -yq update
-apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache
+apt-get -yq install libatlas-dev libatlas-base-dev liblapack-dev gfortran ccache libopenblas-dev
 
 pip install virtualenv
 

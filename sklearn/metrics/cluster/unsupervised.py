@@ -12,7 +12,7 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils import safe_indexing
+from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
@@ -185,7 +185,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
-        the distance array itself, use "precomputed" as the metric.
+        the distance array itself, use "precomputed" as the metric. Precomputed
+        distance matrices must have 0 along the diagonal.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -210,6 +211,16 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     """
     X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
+
+    # Check for non-zero diagonal entries in precomputed distance matrix
+    if metric == 'precomputed':
+        atol = np.finfo(X.dtype).eps * 100
+        if np.any(np.abs(np.diagonal(X)) > atol):
+            raise ValueError(
+                'The precomputed distance matrix contains non-zero '
+                'elements on the diagonal. Use np.fill_diagonal(X, 0).'
+            )
+
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
@@ -339,7 +350,7 @@ def davies_bouldin_score(X, labels):
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
     for k in range(n_labels):
-        cluster_k = safe_indexing(X, labels == k)
+        cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
         centroids[k] = centroid
         intra_dists[k] = np.average(pairwise_distances(

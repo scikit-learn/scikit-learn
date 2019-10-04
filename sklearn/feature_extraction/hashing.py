@@ -24,7 +24,7 @@ def _iteritems(d):
     return d.iteritems() if hasattr(d, "iteritems") else d.items()
 
 
-class FeatureHasher(BaseEstimator, TransformerMixin):
+class FeatureHasher(TransformerMixin, BaseEstimator):
     """Implements feature hashing, aka the hashing trick.
 
     This class turns sequences of symbolic feature names (strings) into
@@ -139,7 +139,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
 
         """

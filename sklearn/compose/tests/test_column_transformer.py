@@ -8,7 +8,6 @@ import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
@@ -648,7 +647,8 @@ def test_column_transformer_get_feature_names():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans', Trans(), [0, 1])])
     # raise correct error when not fitted
-    assert_raises(NotFittedError, ct.get_feature_names)
+    with pytest.raises(NotFittedError):
+        ct.get_feature_names()
     # raise correct error when no feature names are available
     ct.fit(X_array)
     assert_raise_message(AttributeError,

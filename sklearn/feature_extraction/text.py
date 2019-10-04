@@ -32,7 +32,7 @@ from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import ChangedBehaviorWarning
+from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
 
 __all__ = ['HashingVectorizer',
@@ -129,10 +129,13 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    normalized = unicodedata.normalize('NFKD', s)
-    if normalized == s:
+    try:
+        # If `s` is ASCII-compatible, then it does not contain any accented
+        # characters and we can avoid an expensive list comprehension
+        s.encode("ASCII", errors="strict")
         return s
-    else:
+    except UnicodeEncodeError:
+        normalized = unicodedata.normalize('NFKD', s)
         return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
@@ -391,6 +394,7 @@ class VectorizerMixin:
 
         and n-grams generation.
         """
+
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
                 self._validate_custom_analyzer()
@@ -405,6 +409,7 @@ class VectorizerMixin:
                            preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
+
             return partial(_analyze, ngrams=self._char_wb_ngrams,
                            preprocessor=preprocess, decoder=self.decode)
 
@@ -450,9 +455,11 @@ class VectorizerMixin:
             self.fixed_vocabulary_ = False
 
     def _check_vocabulary(self):
-        """Check if vocabulary is empty or missing (not fit-ed)"""
-        msg = "%(name)s - Vocabulary wasn't fitted."
-        check_is_fitted(self, 'vocabulary_', msg=msg),
+        """Check if vocabulary is empty or missing (not fitted)"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+            if not self.fixed_vocabulary_:
+                raise NotFittedError("Vocabulary not fitted or provided")
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -466,8 +473,34 @@ class VectorizerMixin:
                 "lower boundary larger than the upper boundary."
                 % str(self.ngram_range))
 
+    def _warn_for_unused_params(self):
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
+        if self.preprocessor is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'preprocessor' will not be used"
+                          " since 'analyzer' is callable'")
+
+        if (self.ngram_range != (1, 1) and self.ngram_range is not None
+                and callable(self.analyzer)):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
+        if self.analyzer != 'word' or callable(self.analyzer):
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.token_pattern is not None and \
+               self.token_pattern != r"(?u)\b\w\w+\b":
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since 'analyzer' != 'word'")
+
+
+class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -547,6 +580,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -571,7 +605,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -582,6 +619,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
@@ -679,6 +717,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._warn_for_unused_params()
         self._validate_params()
 
         self._get_hasher().fit(X, y=y)
@@ -696,7 +735,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         if isinstance(X, str):
@@ -729,7 +768,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         return self.fit(X, y).transform(X)
@@ -751,7 +790,7 @@ def _document_frequency(X):
         return np.diff(X.indptr)
 
 
-class CountVectorizer(BaseEstimator, VectorizerMixin):
+class CountVectorizer(VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -803,6 +842,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -828,10 +868,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n)
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -842,6 +885,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
@@ -1091,6 +1135,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
+        self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
 
@@ -1172,10 +1217,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
-
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
-
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1189,7 +1230,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Parameters
         ----------
-        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
@@ -1216,8 +1257,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
 
         self._check_vocabulary()
 
@@ -1233,7 +1272,7 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(BaseEstimator, TransformerMixin):
+class TfidfTransformer(TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1380,7 +1419,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1460,6 +1499,7 @@ class TfidfVectorizer(CountVectorizer):
     preprocessor : callable or None (default=None)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default=None)
         Override the string tokenization step while preserving the
@@ -1475,6 +1515,7 @@ class TfidfVectorizer(CountVectorizer):
         out of the raw, unprocessed input.
 
         .. versionchanged:: 0.21
+
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
         analyzer.
@@ -1500,10 +1541,13 @@ class TfidfVectorizer(CountVectorizer):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n) (default=(1, 1))
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     max_df : float in range [0.0, 1.0] or int (default=1.0)
         When building the vocabulary ignore terms that have a document
@@ -1702,6 +1746,7 @@ class TfidfVectorizer(CountVectorizer):
         self : TfidfVectorizer
         """
         self._check_params()
+        self._warn_for_unused_params()
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1754,7 +1799,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The tfidf vector is not fitted')
 
         # FIXME Remove copy parameter support in 0.24
         if copy != "deprecated":

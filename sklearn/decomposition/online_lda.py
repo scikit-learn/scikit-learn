@@ -132,7 +132,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     return (doc_topic_distr, suff_stats)
 
 
-class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
+class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     """Latent Dirichlet Allocation with online variational Bayes algorithm
 
     .. versionadded:: 0.17
@@ -155,7 +155,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         In [1]_, this is called `eta`.
 
     learning_method : 'batch' | 'online', default='batch'
-        Method used to update `_component`. Only used in `fit` method.
+        Method used to update `_component`. Only used in :meth:`fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
@@ -200,7 +200,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         up to two-fold.
 
     total_samples : int, optional (default=1e6)
-        Total number of documents. Only used in the `partial_fit` method.
+        Total number of documents. Only used in the :meth:`partial_fit` method.
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when
@@ -245,6 +245,17 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of passes over the dataset.
 
+    bound_ : float
+        Final perplexity score on training set.
+
+    doc_topic_prior_ : float
+        Prior of document topic distribution `theta`. If the value is None,
+        it is `1 / n_components`.
+
+    topic_word_prior_ : float
+        Prior of topic word distribution `beta`. If the value is None, it is
+        `1 / n_components`.
+
     Examples
     --------
     >>> from sklearn.decomposition import LatentDirichletAllocation
@@ -263,8 +274,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
     References
     ----------
-    [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
-        David M. Blei, Francis Bach, 2010
+    .. [1] "Online Learning for Latent Dirichlet Allocation", Matthew D.
+        Hoffman, David M. Blei, Francis Bach, 2010
 
     [2] "Stochastic Variational Inference", Matthew D. Hoffman, David M. Blei,
         Chong Wang, John Paisley, 2013
@@ -379,7 +390,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
-                                self.verbose - 1))
+                                                           self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -455,6 +466,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_batch_iter_ += 1
         return
 
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
     def _check_non_neg_array(self, X, whom):
         """check X format
 
@@ -500,8 +514,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 (n_features, self.components_.shape[1]))
 
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs,
+                      verbose=max(0, self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -541,8 +555,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # change to perplexity later
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)
-        with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+        with Parallel(n_jobs=n_jobs,
+                      verbose=max(0, self.verbose - 1)) as parallel:
             for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
@@ -594,7 +608,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_components)
             Document topic distribution for X.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
@@ -748,7 +762,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Perplexity score.
         """
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         X = self._check_non_neg_array(X,
                                       "LatentDirichletAllocation.perplexity")

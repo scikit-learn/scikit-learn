@@ -53,8 +53,8 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
-                      MultiOutputMixin):
+class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
+                      MultiOutputMixin, BaseEstimator):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -235,10 +235,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         X : array-like or sparse matrix, shape [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
             raises error if sample_weight is passed and base_estimator
             fit method does not support it.
@@ -338,8 +338,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         # number of data samples
         n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
-
-        n_samples, _ = X.shape
 
         self.n_trials_ = 0
         max_trials = self.max_trials
@@ -466,7 +464,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.predict(X)
 
@@ -488,6 +486,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         z : float
             Score of the prediction.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.score(X, y)

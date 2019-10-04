@@ -115,7 +115,7 @@ class QuantileEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'quantile')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.quantile)
@@ -158,7 +158,7 @@ class MeanEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'mean')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
@@ -210,7 +210,7 @@ class LogOddsEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'prior')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
@@ -262,7 +262,7 @@ class PriorProbabilityEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'priors')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
@@ -316,7 +316,7 @@ class ZeroEstimator:
         y : array, shape (n_samples,)
             Returns predicted values.
         """
-        check_is_fitted(self, 'n_classes')
+        check_is_fitted(self)
 
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
         y.fill(0.0)
@@ -1088,7 +1088,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return (score.ravel() >= 0.0).astype(np.int)
 
 
-class VerboseReporter(object):
+class VerboseReporter:
     """Reports verbose output to stdout.
 
     Parameters
@@ -1170,9 +1170,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def __init__(self, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
-                 init, subsample, max_features,
+                 init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto',
+                 warm_start=False, presort='deprecated',
                  validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-4):
 
@@ -1188,6 +1188,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.max_depth = max_depth
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
         self.init = init
         self.random_state = random_state
         self.alpha = alpha
@@ -1233,7 +1234,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_features=self.max_features,
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
-                presort=self.presort)
+                ccp_alpha=self.ccp_alpha)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1332,10 +1333,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "integer. %r was passed"
                              % self.n_iter_no_change)
 
-        allowed_presort = ('auto', True, False)
-        if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
+        if self.presort != 'deprecated':
+            warnings.warn("The parameter 'presort' is deprecated and has no "
+                          "effect. It will be removed in v0.24. You can "
+                          "suppress this warning by not passing any value "
+                          "to the 'presort' parameter. We also recommend "
+                          "using HistGradientBoosting models instead.",
+                          DeprecationWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -1390,7 +1394,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _check_initialized(self):
         """Check that the estimator is initialized, raising an error if not."""
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self)
 
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
@@ -1525,20 +1529,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        if self.presort is True and issparse(X):
-            raise ValueError(
-                "Presorting is not supported for sparse matrices.")
-
-        presort = self.presort
-        # Allow presort to be 'auto', which means True if the dataset is dense,
-        # otherwise it will be False.
-        if presort == 'auto':
-            presort = not issparse(X)
-
         X_idx_sorted = None
-        if presort:
-            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
-                                             dtype=np.int32)
 
         # fit the boosting stages
         n_stages = self._fit_stages(
@@ -1683,7 +1674,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         raw_predictions : generator of array, shape (n_samples, k)
             The raw predictions of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
@@ -1741,7 +1732,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self, 'estimators_',
+        check_is_fitted(self,
                         msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(
@@ -1808,7 +1799,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return leaves
 
 
-class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
+class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
@@ -1921,8 +1912,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     init : estimator or 'zero', optional (default=None)
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide `fit` and `predict_proba`. If 'zero', the
-        initial raw predictions are set to zero. By default, a
+        ``init`` has to provide :meth:`fit` and :meth:`predict_proba`. If
+        'zero', the initial raw predictions are set to zero. By default, a
         ``DummyEstimator`` predicting the classes priors is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -1965,14 +1956,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : bool or 'auto', optional (default='auto')
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. Auto mode by default will use presorting on dense data and
-        default to normal sorting on sparse data. Setting presort to true on
-        sparse data will raise an error.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
-        .. versionadded:: 0.17
-           *presort* parameter.
+        .. deprecated :: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -1998,6 +1985,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         number), the training stops.
 
         .. versionadded:: 0.20
+
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -2034,7 +2029,7 @@ shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Notes
@@ -2072,8 +2067,8 @@ shape (n_estimators, ``loss_.K``)
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 presort='deprecated', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2088,7 +2083,7 @@ shape (n_estimators, ``loss_.K``)
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -2118,7 +2113,7 @@ shape (n_estimators, ``loss_.K``)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
             order of the classes corresponds to that in the attribute
-            `classes_`. Regression and binary classification produce an
+            :term:`classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
         X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
@@ -2145,7 +2140,7 @@ shape (n_estimators, ``loss_.K``)
         score : generator of array, shape (n_samples, k)
             The decision function of the input samples, which corresponds to
             the raw values predicted from the trees of the ensemble . The
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
@@ -2213,7 +2208,7 @@ shape (n_estimators, ``loss_.K``)
         -------
         p : array, shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         raw_predictions = self.decision_function(X)
         try:
@@ -2243,7 +2238,7 @@ shape (n_estimators, ``loss_.K``)
         -------
         p : array, shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         proba = self.predict_proba(X)
         return np.log(proba)
@@ -2276,7 +2271,7 @@ shape (n_estimators, ``loss_.K``)
                                  self.loss)
 
 
-class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
+class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     """Gradient Boosting for regression.
 
     GB builds an additive model in a forward stage-wise fashion;
@@ -2388,10 +2383,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     init : estimator or 'zero', optional (default=None)
         An estimator object that is used to compute the initial predictions.
-        ``init`` has to provide `fit` and `predict`. If 'zero', the initial
-        raw predictions are set to zero. By default a ``DummyEstimator`` is
-        used, predicting either the average target value (for loss='ls'), or
-        a quantile for the other losses.
+        ``init`` has to provide :term:`fit` and :term:`predict`. If 'zero', the
+        initial raw predictions are set to zero. By default a
+        ``DummyEstimator`` is used, predicting either the average target value
+        (for loss='ls'), or a quantile for the other losses.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -2437,14 +2432,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : bool or 'auto', optional (default='auto')
-        Whether to presort the data to speed up the finding of best splits in
-        fitting. Auto mode by default will use presorting on dense data and
-        default to normal sorting on sparse data. Setting presort to true on
-        sparse data will raise an error.
+    presort : deprecated, default='deprecated'
+        This parameter is deprecated and will be removed in v0.24.
 
-        .. versionadded:: 0.17
-           optional parameter *presort*.
+        .. deprecated :: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -2471,6 +2462,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.20
 
+    ccp_alpha : non-negative float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
+        :ref:`minimal_cost_complexity_pruning` for details.
+
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -2531,8 +2529,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 warm_start=False, presort='deprecated',
+                 validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2546,7 +2545,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def predict(self, X):
         """Predict regression target for X.

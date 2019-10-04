@@ -652,7 +652,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 ###############################################################################
 
-class AgglomerativeClustering(BaseEstimator, ClusterMixin):
+class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
     Agglomerative Clustering
 
@@ -1025,7 +1025,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data
 
         y : Ignored

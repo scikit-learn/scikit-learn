@@ -58,6 +58,9 @@ __version__ = '0.22.dev0'
 # the outer OpenMP parallel section.
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
+# Workaround issue discovered in intel-openmp 2019.5:
+# https://github.com/ContinuumIO/anaconda-issues/issues/11294
+os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 
 try:
     # This variable is injected in the __builtins__ by the build
