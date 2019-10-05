@@ -72,7 +72,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, func=None, *, inverse_func=None, validate=False,
+    def __init__(self, *, func=None, inverse_func=None, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
                  inv_kw_args=None):
         self.func = func

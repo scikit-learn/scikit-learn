@@ -55,7 +55,7 @@ def test_parameter_checking():
         msg = ("init = '{}' can only be used when "
                "n_components <= min(n_samples, n_features)"
                .format(init))
-        assert_raise_message(ValueError, msg, NMF(3, init=init).fit, A)
+        assert_raise_message(ValueError, msg, NMF(3, init).fit, A)
         assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
                              3, init)
 

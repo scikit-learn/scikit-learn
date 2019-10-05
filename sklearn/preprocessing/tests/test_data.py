@@ -112,12 +112,10 @@ def test_polynomial_features():
     deg2 = 2
 
     for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
-        P_test = PolynomialFeatures(degree=deg,
-                                    include_bias=True).fit_transform(X)
+        P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
         assert_array_almost_equal(P_test, P)
 
-        P_test = PolynomialFeatures(degree=deg,
-                                    include_bias=False).fit_transform(X)
+        P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
         assert_array_almost_equal(P_test, P[:, 1:])
 
     interact = PolynomialFeatures(2, interaction_only=True, include_bias=True)

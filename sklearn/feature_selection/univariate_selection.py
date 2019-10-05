@@ -421,7 +421,7 @@ class SelectPercentile(_BaseFilter):
     """
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, percentile=10):
+    def __init__(self, *, score_func=f_classif, percentile=10):
         super().__init__(score_func)
         self.percentile = percentile
 
@@ -506,7 +506,7 @@ class SelectKBest(_BaseFilter):
     """
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, k=10):
+    def __init__(self, *, score_func=f_classif, k=10):
         super().__init__(score_func)
         self.k = k
 
@@ -586,7 +586,7 @@ class SelectFpr(_BaseFilter):
     """
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -653,7 +653,7 @@ class SelectFdr(_BaseFilter):
     """
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -717,7 +717,7 @@ class SelectFwe(_BaseFilter):
     """
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, alpha=5e-2):
+    def __init__(self, *, score_func=f_classif, alpha=5e-2):
         super().__init__(score_func)
         self.alpha = alpha
 
@@ -766,7 +766,7 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X, y = load_breast_cancer(return_X_y=True)
     >>> X.shape
     (569, 30)
-    >>> transformer = GenericUnivariateSelect(chi2, mode='k_best', param=20)
+    >>> transformer = GenericUnivariateSelect(chi2, 'k_best', param=20)
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
     (569, 20)
@@ -792,7 +792,7 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fwe': SelectFwe}
 
     @_deprecate_positional_args
-    def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
+    def __init__(self, *, score_func=f_classif, mode='percentile', param=1e-5):
         super().__init__(score_func)
         self.mode = mode
         self.param = param
