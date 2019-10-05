@@ -41,8 +41,8 @@ def _get_valid_samples_by_column(X, col):
      (MinMaxScaler(), minmax_scale, False, False),
      (StandardScaler(), scale, False, False),
      (StandardScaler(with_mean=False), scale, True, False),
-     (PowerTransformer(method='yeo-johnson'), power_transform, False, False),
-     (PowerTransformer(method='box-cox'), power_transform, False, True),
+     (PowerTransformer('yeo-johnson'), power_transform, False, False),
+     (PowerTransformer('box-cox'), power_transform, False, True),
      (QuantileTransformer(n_quantiles=10), quantile_transform, True, False),
      (RobustScaler(), robust_scale, False, False),
      (RobustScaler(with_centering=False), robust_scale, True, False)]
