@@ -326,6 +326,10 @@ img.sk-footer-funding-logo {
   margin-bottom: 8px;
 }
 
+a.sk-footer-funding-link:hover {
+  text-decoration: none;
+}
+
 ul.sk-landing-call-list li {
   margin-bottom: 0.25rem;
 }
