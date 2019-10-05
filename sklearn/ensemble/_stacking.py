@@ -55,48 +55,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         else:
             self.final_estimator_ = clone(default)
 
-    def set_params(self, **params):
-        """Set the parameters for the stacking estimator.
-
-        Valid parameter keys can be listed with `get_params()`.
-
-        Parameters
-        ----------
-        params : keyword arguments
-            Specific parameters using e.g.
-            `set_params(parameter_name=new_value)`. In addition, to setting the
-            parameters of the stacking estimator, the individual estimator of
-            the stacking estimators can also be set, or can be removed by
-            setting them to 'drop'.
-
-        Examples
-        --------
-        In this example, the RandomForestClassifier is removed.
-
-        >>> from sklearn.linear_model import LogisticRegression
-        >>> from sklearn.ensemble import RandomForestClassifier
-        >>> from sklearn.ensemble import VotingClassifier
-        >>> clf1 = LogisticRegression()
-        >>> clf2 = RandomForestClassifier()
-        >>> eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
-        >>> eclf.set_params(rf='drop')
-        StackingClassifier(estimators=[('lr', LogisticRegression()),
-                                        ('rf', 'drop')])
-        """
-        super()._set_params('estimators', **params)
-        return self
-
-    def get_params(self, deep=True):
-        """Get the parameters of the stacking estimator.
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well.
-        """
-        return super()._get_params('estimators', deep=deep)
-
     def _concatenate_predictions(self, X, predictions):
         """Concatenate the predictions of each first layer learner and
         possibly the input dataset `X`.
