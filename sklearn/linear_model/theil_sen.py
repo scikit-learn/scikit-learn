@@ -21,7 +21,6 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils import check_X_y
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -294,8 +293,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, copy_X=True,
+    def __init__(self, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept

@@ -35,7 +35,6 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -792,8 +791,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-    @_deprecate_positional_args
-    def __init__(self, *,
+    def __init__(self,
                  criterion="gini",
                  splitter="best",
                  max_depth=None,
@@ -1145,8 +1143,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
-    @_deprecate_positional_args
-    def __init__(self, *,
+    def __init__(self,
                  criterion="mse",
                  splitter="best",
                  max_depth=None,
@@ -1412,8 +1409,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    @_deprecate_positional_args
-    def __init__(self, *,
+    def __init__(self,
                  criterion="gini",
                  splitter="random",
                  max_depth=None,
@@ -1608,8 +1604,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    @_deprecate_positional_args
-    def __init__(self, *,
+    def __init__(self,
                  criterion="mse",
                  splitter="random",
                  max_depth=None,

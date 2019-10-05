@@ -58,7 +58,6 @@ from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
 
 
@@ -2061,7 +2060,6 @@ shape (n_estimators, ``loss_.K``)
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    @_deprecate_positional_args
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
@@ -2525,8 +2523,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    @_deprecate_positional_args
-    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
+    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,

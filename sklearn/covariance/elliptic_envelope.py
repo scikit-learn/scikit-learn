@@ -5,7 +5,6 @@
 import numpy as np
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
-from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
@@ -105,9 +104,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        (1999)
 
     """
-
-    @_deprecate_positional_args
-    def __init__(self, *, store_precision=True, assume_centered=False,
+    def __init__(self, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
         super().__init__(

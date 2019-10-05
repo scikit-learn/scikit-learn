@@ -40,7 +40,6 @@ from ..metrics import accuracy_score, r2_score
 from ..utils.validation import check_is_fitted
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 
 __all__ = [
     'AdaBoostClassifier',
@@ -388,10 +387,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
     """
-
-    @_deprecate_positional_args
     def __init__(self,
-                 base_estimator=None, *,
+                 base_estimator=None,
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
@@ -942,10 +939,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
-
-    @_deprecate_positional_args
     def __init__(self,
-                 base_estimator=None, *,
+                 base_estimator=None,
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',

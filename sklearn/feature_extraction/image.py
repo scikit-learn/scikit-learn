@@ -16,7 +16,6 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -476,9 +475,7 @@ class PatchExtractor(BaseEstimator):
     Patches shape: (545706, 2, 2)
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, patch_size=None, max_patches=None,
-                 random_state=None):
+    def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state

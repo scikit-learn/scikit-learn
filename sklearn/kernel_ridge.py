@@ -11,7 +11,6 @@ from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
-from .utils.validation import _deprecate_positional_args
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -105,10 +104,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> clf.fit(X, y)
     KernelRidge(alpha=1.0)
     """
-
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1, kernel="linear", gamma=None, degree=3,
-                 coef0=1, kernel_params=None):
+    def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
         self.alpha = alpha
         self.kernel = kernel
         self.gamma = gamma

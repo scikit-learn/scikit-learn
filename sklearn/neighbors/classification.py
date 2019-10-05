@@ -13,7 +13,6 @@ from scipy import stats
 from six import string_types
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
-from ..utils.validation import _deprecate_positional_args
 
 import warnings
 from .base import \
@@ -144,8 +143,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *,
+    def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -377,8 +375,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, radius=1.0, weights='uniform',
+    def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
                  **kwargs):

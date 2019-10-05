@@ -61,7 +61,6 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ["RandomForestClassifier",
@@ -1000,9 +999,8 @@ class RandomForestClassifier(ForestClassifier):
     --------
     DecisionTreeClassifier, ExtraTreesClassifier
     """
-    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100, *,
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1272,9 +1270,8 @@ class RandomForestRegressor(ForestRegressor):
     --------
     DecisionTreeRegressor, ExtraTreesRegressor
     """
-    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100, *,
+                 n_estimators=100,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1545,9 +1542,8 @@ class ExtraTreesClassifier(ForestClassifier):
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
     """
-    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100, *,
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1787,10 +1783,8 @@ class ExtraTreesRegressor(ForestRegressor):
     sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
     RandomForestRegressor: Ensemble regressor using trees with optimal splits.
     """
-
-    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100, *,
+                 n_estimators=100,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1978,9 +1972,8 @@ class RandomTreesEmbedding(BaseForest):
     criterion = 'mse'
     max_features = 1
 
-    @_deprecate_positional_args
     def __init__(self,
-                 n_estimators=100, *,
+                 n_estimators=100,
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,

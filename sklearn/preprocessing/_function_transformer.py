@@ -3,7 +3,6 @@ import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import _allclose_dense_sparse
-from ..utils.validation import _deprecate_positional_args
 
 
 def _identity(X):
@@ -71,8 +70,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         Dictionary of additional keyword arguments to pass to inverse_func.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, *, func=None, inverse_func=None, validate=False,
+    def __init__(self, func=None, inverse_func=None, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
                  inv_kw_args=None):
         self.func = func

@@ -40,7 +40,6 @@ from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
-from .utils.validation import _deprecate_positional_args
 
 
 __all__ = ["SparseRandomProjection",
@@ -476,8 +475,7 @@ class GaussianRandomProjection(BaseRandomProjection):
     SparseRandomProjection
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components='auto', *, eps=0.1, random_state=None):
+    def __init__(self, n_components='auto', eps=0.1, random_state=None):
         super().__init__(
             n_components=n_components,
             eps=eps,
@@ -613,8 +611,7 @@ class SparseRandomProjection(BaseRandomProjection):
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components='auto', *, density='auto', eps=0.1,
+    def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
         super().__init__(
             n_components=n_components,

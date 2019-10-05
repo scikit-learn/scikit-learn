@@ -13,7 +13,6 @@ from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import pinvh
 
 
@@ -147,7 +146,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
@@ -487,8 +485,7 @@ class ARDRegression(RegressorMixin, LinearModel):
     discarded.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
                  copy_X=True, verbose=False):

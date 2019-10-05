@@ -11,7 +11,6 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
-from ..utils.validation import _deprecate_positional_args
 
 
 def _tosequence(X):
@@ -92,8 +91,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
       features encoded as columns of arbitrary data types.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
+    def __init__(self, dtype=np.float64, separator="=", sparse=True,
                  sort=True):
         self.dtype = dtype
         self.separator = separator

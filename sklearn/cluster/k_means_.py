@@ -29,7 +29,6 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
@@ -792,8 +791,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
+    def __init__(self, n_clusters=8, init='k-means++', n_init=10,
                  max_iter=300, tol=1e-4, precompute_distances='auto',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs=None, algorithm='auto'):
@@ -1465,8 +1463,7 @@ class MiniBatchKMeans(KMeans):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
+    def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01):

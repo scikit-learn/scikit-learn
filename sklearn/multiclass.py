@@ -48,7 +48,6 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
-from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -183,8 +182,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Whether a OneVsRestClassifier is a multilabel classifier.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -486,8 +484,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, n_jobs=None):
+    def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -711,8 +708,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        2008.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, code_size=1.5, random_state=None,
+    def __init__(self, estimator, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size

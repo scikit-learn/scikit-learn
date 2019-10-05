@@ -30,7 +30,6 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
@@ -664,8 +663,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-    @_deprecate_positional_args
-    def __init__(self, *, input='content', encoding='utf-8',
+    def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -974,7 +972,6 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
     be safely removed using delattr or set to None before pickling.
     """
 
-    @_deprecate_positional_args
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -1353,8 +1350,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Press, pp. 118-120.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
+    def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1656,8 +1652,7 @@ class TfidfVectorizer(CountVectorizer):
     be safely removed using delattr or set to None before pickling.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, input='content', encoding='utf-8',
+    def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",

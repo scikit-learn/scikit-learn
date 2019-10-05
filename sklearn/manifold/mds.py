@@ -13,7 +13,6 @@ import warnings
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..utils.validation import _deprecate_positional_args
 from ..isotonic import IsotonicRegression
 
 
@@ -361,8 +360,7 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=2, *, metric=True, n_init=4,
+    def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components

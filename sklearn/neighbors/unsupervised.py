@@ -3,7 +3,6 @@ from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import RadiusNeighborsMixin
 from .base import UnsupervisedMixin
-from ..utils.validation import _deprecate_positional_args
 
 
 class NearestNeighbors(NeighborsBase, KNeighborsMixin,
@@ -104,8 +103,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *, radius=1.0,
+    def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=None, **kwargs):
         super().__init__(

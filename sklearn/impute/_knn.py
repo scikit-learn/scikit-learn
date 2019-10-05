@@ -10,7 +10,6 @@ from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils.mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KNNImputer(TransformerMixin, BaseEstimator):
@@ -78,8 +77,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
            [8. , 8. , 7. ]])
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
+    def __init__(self, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True):
 
         self.missing_values = missing_values

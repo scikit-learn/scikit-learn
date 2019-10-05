@@ -13,7 +13,6 @@ from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -116,8 +115,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, n_features_to_select=None, step=1,
+    def __init__(self, estimator, n_features_to_select=None, step=1,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
@@ -452,8 +450,7 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    @_deprecate_positional_args
-    def __init__(self, estimator, *, step=1, min_features_to_select=1, cv=None,
+    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
                  scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step

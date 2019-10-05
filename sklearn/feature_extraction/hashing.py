@@ -8,7 +8,6 @@ import scipy.sparse as sp
 
 from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.validation import _deprecate_positional_args
 
 if not IS_PYPY:
     from ._hashing import transform as _hashing_transform
@@ -84,7 +83,6 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
 
-    @_deprecate_positional_args
     def __init__(self, n_features=(2 ** 20), input_type="dict",
                  dtype=np.float64, alternate_sign=True):
         self._validate_params(n_features, input_type)

@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
-from ..utils.validation import _deprecate_positional_args
 
 
 class Perceptron(BaseSGDClassifier):
@@ -145,8 +144,7 @@ class Perceptron(BaseSGDClassifier):
 
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    @_deprecate_positional_args
-    def __init__(self, *, penalty=None, alpha=0.0001, fit_intercept=True,
+    def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,

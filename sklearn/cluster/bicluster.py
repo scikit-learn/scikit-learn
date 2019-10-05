@@ -18,7 +18,6 @@ from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array
-from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ['SpectralCoclustering',
@@ -275,8 +274,7 @@ class SpectralCoclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, svd_method='randomized',
+    def __init__(self, n_clusters=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
@@ -420,8 +418,7 @@ class SpectralBiclustering(BaseSpectral):
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, method='bistochastic',
+    def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):

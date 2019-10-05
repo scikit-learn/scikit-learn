@@ -20,7 +20,6 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fastica', 'FastICA']
 
@@ -468,8 +467,7 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
+    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()

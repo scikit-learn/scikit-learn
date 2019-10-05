@@ -14,7 +14,6 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
@@ -634,8 +633,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         Journal of Shanghai Univ.  8:406 (2004)
     """
 
-    @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *, n_components=2, reg=1E-3,
+    def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
                  neighbors_algorithm='auto', random_state=None, n_jobs=None):

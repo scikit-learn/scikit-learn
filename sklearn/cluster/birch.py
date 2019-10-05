@@ -13,7 +13,6 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
@@ -422,8 +421,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     the leaf node are updated.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, threshold=0.5, branching_factor=50, n_clusters=3,
+    def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
                  compute_labels=True, copy=True):
         self.threshold = threshold
         self.branching_factor = branching_factor

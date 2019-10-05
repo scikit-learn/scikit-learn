@@ -8,7 +8,6 @@ import numpy as np
 
 from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -133,8 +132,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     MiniBatchSparsePCA
     DictionaryLearning
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
+    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
                  U_init=None, V_init=None, verbose=False, random_state=None,
                  normalize_components='deprecated'):
@@ -335,8 +333,7 @@ class MiniBatchSparsePCA(SparsePCA):
     SparsePCA
     DictionaryLearning
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
+    def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
                  normalize_components='deprecated'):

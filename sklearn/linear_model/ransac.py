@@ -14,7 +14,6 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
-from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -208,8 +207,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
-    @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, min_samples=None,
+    def __init__(self, base_estimator=None, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,

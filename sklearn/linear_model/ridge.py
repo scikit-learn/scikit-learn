@@ -28,7 +28,6 @@ from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics.scorer import check_scoring
@@ -735,8 +734,7 @@ class Ridge(RegressorMixin, _BaseRidge):
     Ridge()
 
     """
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         super().__init__(
@@ -891,8 +889,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     advantage of the multi-variate response support in Ridge.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
         super().__init__(
@@ -1510,8 +1507,7 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(MultiOutputMixin, LinearModel):
-    @_deprecate_positional_args
-    def __init__(self, *, alphas=(0.1, 1.0, 10.0),
+    def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
@@ -1806,8 +1802,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
         super().__init__(

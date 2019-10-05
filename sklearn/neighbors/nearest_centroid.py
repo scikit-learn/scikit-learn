@@ -16,7 +16,6 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import pairwise_distances
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
@@ -83,8 +82,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, metric='euclidean', shrink_threshold=None):
+    def __init__(self, metric='euclidean', shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
 
