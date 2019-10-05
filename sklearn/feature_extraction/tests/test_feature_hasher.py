@@ -32,7 +32,7 @@ def test_feature_hasher_strings():
 
         it = (x for x in raw_X)                 # iterable
 
-        h = FeatureHasher(n_features=n_features, input_type="string",
+        h = FeatureHasher(n_features, input_type="string",
                           alternate_sign=False)
         X = h.transform(it)
 
