@@ -1019,8 +1019,7 @@ The :class:`PatchExtractor` class works in the same way as
 implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> extractor = image.PatchExtractor(patch_size=(2, 2))
-    >>> patches = extractor.transform(five_images)
+    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 

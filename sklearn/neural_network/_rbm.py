@@ -101,7 +101,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         on Machine Learning (ICML) 2008
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=256, *, learning_rate=0.1, batch_size=10,
+    def __init__(self, *, n_components=256, learning_rate=0.1, batch_size=10,
                  n_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate

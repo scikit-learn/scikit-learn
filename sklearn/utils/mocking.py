@@ -1,7 +1,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from .validation import _num_samples, check_array, _deprecate_positional_args
+from .validation import _num_samples, check_array
 
 
 class ArraySlicingWrapper:
@@ -62,8 +62,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     foo_param
     expected_fit_params
     """
-    @_deprecate_positional_args
-    def __init__(self, *, check_y=None, check_X=None, foo_param=0,
+    def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
         self.check_y = check_y
         self.check_X = check_X
