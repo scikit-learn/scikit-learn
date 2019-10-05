@@ -15,6 +15,7 @@ from ..base import is_classifier, is_regressor
 from ..base import MetaEstimatorMixin
 
 from .base import _parallel_fit_estimator
+from .base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
@@ -32,33 +33,21 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
 
-class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
+class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
-    _required_parameters = ['estimators']
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  pass_through=False):
-        self.estimators = estimators
+        super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.pass_through = pass_through
-
-    @abstractmethod
-    def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
-            )
-        names, estimators = zip(*self.estimators)
-        self._validate_names(names)
-        return names, estimators
 
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
@@ -177,13 +166,6 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
-
-        has_estimator = any(est != 'drop' for est in all_estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
 
         stack_method = [self.stack_method] * len(all_estimators)
 
@@ -348,8 +330,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           `'predict_proba'`, `'decision_function'` or `'predict'` in that
           order.
         * otherwise, one of `'predict_proba'`, `'decision_function'` or
-         `'predict'`. If the method is not implemented by the estimator, it
-         will raise an error.
+          `'predict'`. If the method is not implemented by the estimator, it
+          will raise an error.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel all `estimators` `fit`.
@@ -427,16 +409,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             pass_through=pass_through,
             verbose=verbose
         )
-
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_classifier(est):
-                raise ValueError(
-                    "The estimator {} should be a classifier."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=LogisticRegression())
@@ -667,16 +639,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             pass_through=pass_through,
             verbose=verbose
         )
-
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_regressor(est):
-                raise ValueError(
-                    "The estimator {} should be a regressor."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=RidgeCV())

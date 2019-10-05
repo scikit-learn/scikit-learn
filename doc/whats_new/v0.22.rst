@@ -89,6 +89,11 @@ Changelog
   producing Segmentation Fault on large arrays due to integer index overflow.
   :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
 
+- |Fix| :class:`~cluster.MeanShift` now accepts a :term:`max_iter` with a
+  default value of 300 instead of always using the default 300. It also now
+  exposes an ``n_iter_`` indicating the maximum number of iterations performed
+  on each seed. :pr:`15120` by `Adrin Jalali`_.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -236,6 +241,13 @@ Changelog
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
+- |Fix| Stacking and Voting estimators now ensure that their underlying
+  estimators are either all classifiers or all regressors.
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
+  now raise consistent error messages.
+  :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -254,6 +266,10 @@ Changelog
   :meth:`feature_extraction.text.TfidfVectorizer.transform` it will be
   removed in v0.24. :pr:`14520` by
   :user:`Guillem G. Subies <guillemgsubies>`.
+
+- |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
+  removes accents from strings that are in NFKD normalized form. :pr:`15100` by
+  :user:`Daniel Grady <DGrady>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -343,6 +359,10 @@ Changelog
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
+- |FIX| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+  ``scores_``, ``n_iter_`` and ``coefs_paths_`` attribute would have a wrong
+  ordering with ``penalty='elastic-net'``. :pr:`15044` by `Nicolas Hug`_
+
 - |FIX| :class:`linear_model.MultiTaskLassoCV` and
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
   and `fit_intercept=True`.
@@ -421,6 +441,10 @@ Changelog
 - |API| ``scoring="neg_brier_score"`` should be used instead of
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
+
+- |Efficiency| Improved performance of
+  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
+  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
 
 :mod:`sklearn.model_selection`
 ..............................

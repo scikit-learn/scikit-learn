@@ -683,11 +683,13 @@ class PartialDependenceDisplay:
         Feature names corrsponding to the indicies in ``features``.
 
     target_idx : int
+
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed.
+
         Ignored in binary classification or classical regression settings.
 
     pdp_lim : dict
