@@ -52,7 +52,8 @@ X_iris, y_iris = load_iris(return_X_y=True)
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestClassifier(random_state=42)]
 )
-def test_stacking_classifier_iris(cv, final_estimator):
+@pytest.mark.parametrize("pass_through", [False, True])
+def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, y_test = train_test_split(
@@ -60,7 +61,8 @@ def test_stacking_classifier_iris(cv, final_estimator):
     )
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     clf = StackingClassifier(
-        estimators=estimators, final_estimator=final_estimator, cv=cv
+        estimators=estimators, final_estimator=final_estimator, cv=cv,
+        pass_through=pass_through
     )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
@@ -161,7 +163,8 @@ def test_stacking_regressor_drop_estimator():
      (RandomForestRegressor(random_state=42), {}),
      (DummyRegressor(), {'return_std': True})]
 )
-def test_stacking_regressor_diabetes(cv, final_estimator, predict_params):
+@pytest.mark.parameterize("pass_through", [False, True])
+def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, pass_through):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
@@ -169,7 +172,8 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params):
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(
-        estimators=estimators, final_estimator=final_estimator, cv=cv
+        estimators=estimators, final_estimator=final_estimator, cv=cv,
+        pass_through=pass_through
     )
     reg.fit(X_train, y_train)
     result = reg.predict(X_test, **predict_params)
