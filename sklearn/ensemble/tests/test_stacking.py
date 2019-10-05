@@ -164,7 +164,8 @@ def test_stacking_regressor_drop_estimator():
      (DummyRegressor(), {'return_std': True})]
 )
 @pytest.mark.parameterize("pass_through", [False, True])
-def test_stacking_regressor_diabetes(cv, final_estimator, predict_params, pass_through):
+def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
+                                     pass_through):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
