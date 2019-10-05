@@ -109,7 +109,8 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         return super()._get_params('estimators', deep=deep)
 
     def _concatenate_predictions(self, X, predictions):
-        """Concatenate the predictions of each first layer learner.
+        """Concatenate the predictions of each first layer learner and
+        possibly the input dataset `X`.
 
         This helper is in charge of ensuring the preditions are 2D arrays and
         it will drop one of the probability column when using probabilities
