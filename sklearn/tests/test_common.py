@@ -12,8 +12,6 @@ import sys
 import re
 import pkgutil
 from inspect import isgenerator
-from inspect import Parameter
-from inspect import signature
 from functools import partial
 
 import pytest
