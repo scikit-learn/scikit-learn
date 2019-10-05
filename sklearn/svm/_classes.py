@@ -1822,7 +1822,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         }
 
 
-class SVDD(BaseLibSVM, OutlierMixin):
+class SVDD(OutlierMixin, BaseLibSVM):
     """Support Vector Data Description (SVDD) for Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution by finding the
