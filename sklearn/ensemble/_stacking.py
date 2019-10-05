@@ -39,13 +39,15 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, verbose=0,
+                 pass_through=False):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
+        self.pass_through = pass_through
 
     @abstractmethod
     def _validate_estimators(self):
@@ -106,7 +108,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         """
         return super()._get_params('estimators', deep=deep)
 
-    def _concatenate_predictions(self, predictions):
+    def _concatenate_predictions(self, X, predictions):
         """Concatenate the predictions of each first layer learner.
 
         This helper is in charge of ensuring the preditions are 2D arrays and
@@ -127,7 +129,10 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
                     X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
-        return np.concatenate(X_meta, axis=1)
+        if self.pass_through:
+            return np.concatenate([X] + X_meta, axis=1)
+        else:
+            return np.concatenate(X_meta, axis=1)
 
     @staticmethod
     def _method_name(name, estimator, method):
@@ -227,7 +232,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
             if est != 'drop'
         ]
 
-        X_meta = self._concatenate_predictions(predictions)
+        X_meta = self._concatenate_predictions(X, predictions)
         if sample_weight is not None:
             try:
                 self.final_estimator_.fit(
@@ -254,7 +259,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
             for est, meth in zip(self.estimators_, self.stack_method_)
             if est != 'drop'
         ]
-        return self._concatenate_predictions(predictions)
+        return self._concatenate_predictions(X, predictions)
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict(self, X, **predict_params):
@@ -350,6 +355,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
+    pass_through : bool, default=False
+        Whether or not to concatenate the original data ``X`` with the output
+        of ``estimators`` to feed the ``final_estimator``.
+
     Attributes
     ----------
     estimators_ : list of estimators
@@ -406,13 +415,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, pass_through=False,
+                 verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             stack_method=stack_method,
             n_jobs=n_jobs,
+            pass_through=pass_through,
             verbose=verbose
         )
 
@@ -597,6 +608,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
+    pass_through : bool, default=False
+        Whether or not to concatenate the original data ``X`` with the output
+        of ``estimators`` to feed the ``final_estimator``.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -641,13 +656,14 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 verbose=0):
+                 pass_through=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             stack_method="predict",
             n_jobs=n_jobs,
+            pass_through=pass_through,
             verbose=verbose
         )
 
