@@ -90,7 +90,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Attributes
     ----------
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         Class labels known to the classifier
 
     effective_metric_ : string or callble
@@ -329,7 +329,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     Attributes
     ----------
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         Class labels known to the classifier.
 
     effective_metric_ : string or callble

@@ -240,7 +240,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Sample matrix.
         dict_type : callable, optional
             Constructor for feature mappings. Must conform to the

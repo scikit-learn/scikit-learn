@@ -180,11 +180,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 expanded_class_weight = compute_sample_weight(
                     self.class_weight, y_original)
 
-        else:
-            self.classes_ = [None] * self.n_outputs_
-            self.n_classes_ = [1] * self.n_outputs_
-
-        self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+            self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -341,7 +337,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                                 min_weight_leaf,
                                                 random_state)
 
-        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+        if is_classifier(self):
+            self.tree_ = Tree(self.n_features_,
+                              self.n_classes_, self.n_outputs_)
+        else:
+            self.tree_ = Tree(self.n_features_,
+                              # TODO: tree should't need this in this case
+                              np.array([1] * self.n_outputs_, dtype=np.intp),
+                              self.n_outputs_)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -362,7 +365,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
@@ -397,7 +400,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -408,7 +411,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        y : array of shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes, or the predict values.
         """
         check_is_fitted(self)
@@ -448,7 +451,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -476,7 +479,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -505,9 +508,15 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.ccp_alpha == 0.0:
             return
 
-        # build pruned treee
-        n_classes = np.atleast_1d(self.n_classes_)
-        pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        # build pruned tree
+        if is_classifier(self):
+            n_classes = np.atleast_1d(self.n_classes_)
+            pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
+        else:
+            pruned_tree = Tree(self.n_features_,
+                               # TODO: the tree shouldn't need this param
+                               np.array([1] * self.n_outputs_, dtype=np.intp),
+                               self.n_outputs_)
         _build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
         self.tree_ = pruned_tree
@@ -715,11 +724,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Attributes
     ----------
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances. The higher, the more important the
         feature. The importance of a feature is computed as the (normalized)
         total reduction of the criterion brought by that feature.  It is also
@@ -828,15 +837,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The training input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (class labels) as integers or strings.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node. Splits are also
@@ -847,7 +856,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+        X_idx_sorted : array-like of shape (n_samples, n_features), optional
             The indexes of the sorted training input samples. If many tree
             are grown on the same dataset, this allows the ordering to be
             cached between trees. If None, the data will be sorted here.
@@ -877,7 +886,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -887,7 +896,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -921,14 +930,14 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+        p : array of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -1075,7 +1084,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Attributes
     ----------
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
@@ -1178,16 +1187,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The training input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csc_matrix``.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The target values (real numbers). Use ``dtype=np.float64`` and
             ``order='C'`` for maximum efficiency.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted. Splits
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node.
@@ -1196,7 +1205,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+        X_idx_sorted : array-like of shape (n_samples, n_features), optional
             The indexes of the sorted training input samples. If many tree
             are grown on the same dataset, this allows the ordering to be
             cached between trees. If None, the data will be sorted here.
@@ -1213,6 +1222,22 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
+
+    @property
+    def classes_(self):
+        # TODO: Remove method in 0.24
+        msg = ("the classes_ attribute is to be deprecated from version "
+               "0.22 and will be removed in 0.24.")
+        warnings.warn(msg, DeprecationWarning)
+        return np.array([None] * self.n_outputs_)
+
+    @property
+    def n_classes_(self):
+        # TODO: Remove method in 0.24
+        msg = ("the n_classes_ attribute is to be deprecated from version "
+               "0.22 and will be removed in 0.24.")
+        warnings.warn(msg, DeprecationWarning)
+        return np.array([1] * self.n_outputs_, dtype=np.intp)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1362,7 +1387,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Attributes
     ----------
-    classes_ : array of shape = [n_classes] or a list of such arrays
+    classes_ : array of shape (n_classes,) or a list of such arrays
         The classes labels (single output problem),
         or a list of arrays of class labels (multi-output problem).
 
@@ -1374,7 +1399,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    feature_importances_ : array of shape = [n_features]
+    feature_importances_ : ndarray of shape (n_features,)
         Return the feature importances (the higher, the more important the
         feature).
 

@@ -46,10 +46,10 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    centroids_ : array-like, shape = [n_classes, n_features]
+    centroids_ : array-like of shape (n_classes, n_features)
         Centroid of each class.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     Examples
@@ -92,7 +92,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
@@ -179,11 +179,11 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
 
         Notes
         -----
