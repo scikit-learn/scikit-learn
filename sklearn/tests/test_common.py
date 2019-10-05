@@ -233,27 +233,3 @@ def test_all_tests_are_importable():
                                  '__init__.py or an add_subpackage directive '
                                  'in the parent '
                                  'setup.py'.format(missing_tests))
-
-
-WHITELIST = set(['n_components', 'estimator', 'base_estimator', 'n_clusters',
-                 'n_neighbors', 'steps', 'regressor', 'transformers',
-                 'n_estimators', 'transformer_list', 'score_func', 'func',
-                 'degree', 'estimators'])
-
-
-@pytest.mark.parametrize(
-    "name, Estimator",
-    [(name, Estimator)
-     for name, Estimator in all_estimators() if not name.startswith("_")])
-def test_estimators_keyword_only(name, Estimator):
-    sig = signature(Estimator)
-    if not sig.parameters:
-        return
-    params = list(sig.parameters.items())
-    first_param_name, first_param = params[0]
-    if first_param_name in WHITELIST:
-        assert first_param.kind == Parameter.POSITIONAL_OR_KEYWORD
-        params = params[1:]
-    # remove parameters without defaults
-    params = [p for p in params if p[1].default != Parameter.empty]
-    assert all(p[1].kind == Parameter.KEYWORD_ONLY for p in params)
