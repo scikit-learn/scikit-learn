@@ -442,6 +442,10 @@ Changelog
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
+- |Efficiency| Improved performance of
+  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
+  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
