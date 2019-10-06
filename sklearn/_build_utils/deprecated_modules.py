@@ -15,9 +15,8 @@ _DEPRECATED_MODULES = {
     ('_iforest', 'sklearn.ensemble.iforest', 'sklearn.ensemble'),
     ('_voting', 'sklearn.ensemble.voting', 'sklearn.ensemble'),
     ('_weight_boosting', 'sklearn.ensemble.weight_boosting', 'sklearn.ensemble'),
-    ('_tree_base', 'sklearn.tree.tree', 'sklearn.tree'),
+    ('_base', 'sklearn.tree.tree', 'sklearn.tree'),
     ('_export', 'sklearn.tree.export', 'sklearn.tree'),
-    ('_tree', 'sklearn.tree.tree', 'sklearn.tree'),
 }
 
 _FILE_CONTENT_TEMPLATE = """from .{new_module_name} import *  # noqa
