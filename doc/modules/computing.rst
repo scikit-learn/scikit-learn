@@ -630,7 +630,7 @@ Note that:
    ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, or ``BLIS_NUM_THREADS``)
    will take precedence over what joblib tries to do. The total number of
    threads will be ``n_jobs * <LIB>_NUM_THREADS``. Note that setting this
-   limit will also impact your computations the main process, which will
+   limit will also impact your computations in the main process, which will
    only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
    finer control over the number of threads in its workers (see joblib docs
    linked below).
