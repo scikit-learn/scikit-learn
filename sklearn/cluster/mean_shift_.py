@@ -35,7 +35,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
 
     Parameters
     ----------
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input points.
 
     quantile : float, default 0.3
@@ -101,8 +101,9 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         # If converged or at max_iter, adds the cluster
         if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
-            return tuple(my_mean), len(points_within)
+            break
         completed_iterations += 1
+    return tuple(my_mean), len(points_within), completed_iterations
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
@@ -115,7 +116,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Parameters
     ----------
 
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input data.
 
     bandwidth : float, optional
@@ -126,7 +127,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
 
-    seeds : array-like, shape=[n_seeds, n_features] or None
+    seeds : array-like of shape (n_seeds, n_features) or None
         Point used as initial kernel locations. If None and bin_seeding=False,
         each data point is used as a seed. If None and bin_seeding=True,
         see bin_seeding.
@@ -178,72 +179,12 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
-
-    if bandwidth is None:
-        bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
-    elif bandwidth <= 0:
-        raise ValueError("bandwidth needs to be greater than zero or None,"
-                         " got %f" % bandwidth)
-    if seeds is None:
-        if bin_seeding:
-            seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
-        else:
-            seeds = X
-    n_samples, n_features = X.shape
-    center_intensity_dict = {}
-
-    # We use n_jobs=1 because this will be used in nested calls under
-    # parallel calls to _mean_shift_single_seed so there is no need for
-    # for further parallelism.
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
-
-    # execute iterations on all seeds in parallel
-    all_res = Parallel(n_jobs=n_jobs)(
-        delayed(_mean_shift_single_seed)
-        (seed, X, nbrs, max_iter) for seed in seeds)
-    # copy results in a dictionary
-    for i in range(len(seeds)):
-        if all_res[i] is not None:
-            center_intensity_dict[all_res[i][0]] = all_res[i][1]
-
-    if not center_intensity_dict:
-        # nothing near seeds
-        raise ValueError("No point was within bandwidth=%f of any seed."
-                         " Try a different seeding strategy \
-                         or increase the bandwidth."
-                         % bandwidth)
-
-    # POST PROCESSING: remove near duplicate points
-    # If the distance between two kernels is less than the bandwidth,
-    # then we have to remove one because it is a duplicate. Remove the
-    # one with fewer points.
-
-    sorted_by_intensity = sorted(center_intensity_dict.items(),
-                                 key=lambda tup: (tup[1], tup[0]),
-                                 reverse=True)
-    sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-    unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth,
-                            n_jobs=n_jobs).fit(sorted_centers)
-    for i, center in enumerate(sorted_centers):
-        if unique[i]:
-            neighbor_idxs = nbrs.radius_neighbors([center],
-                                                  return_distance=False)[0]
-            unique[neighbor_idxs] = 0
-            unique[i] = 1  # leave the current point as unique
-    cluster_centers = sorted_centers[unique]
-
-    # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
-    labels = np.zeros(n_samples, dtype=np.int)
-    distances, idxs = nbrs.kneighbors(X)
-    if cluster_all:
-        labels = idxs.flatten()
-    else:
-        labels.fill(-1)
-        bool_selector = distances.flatten() <= bandwidth
-        labels[bool_selector] = idxs.flatten()[bool_selector]
-    return cluster_centers, labels
+    model = MeanShift(bandwidth=bandwidth, seeds=seeds,
+                      min_bin_freq=min_bin_freq,
+                      bin_seeding=bin_seeding,
+                      cluster_all=cluster_all, n_jobs=n_jobs,
+                      max_iter=max_iter).fit(X)
+    return model.cluster_centers_, model.labels_
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
@@ -256,7 +197,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Parameters
     ----------
 
-    X : array-like, shape=[n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Input points, the same points that will be used in mean_shift.
 
     bin_size : float
@@ -272,7 +213,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
 
     Returns
     -------
-    bin_seeds : array-like, shape=[n_samples, n_features]
+    bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
 
@@ -347,6 +288,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    max_iter : int, default=300
+        Maximum number of iterations, per seed point before the clustering
+        operation terminates (for that seed point), if has not converged yet.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
@@ -354,6 +301,11 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     labels_ :
         Labels of each point.
+
+    n_iter_ : int
+        Maximum number of iterations performed on each seed.
+
+        .. versionadded:: 0.22
 
     Examples
     --------
@@ -395,31 +347,99 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=None):
+                 min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
         self.n_jobs = n_jobs
+        self.max_iter = max_iter
 
     def fit(self, X, y=None):
         """Perform clustering.
 
         Parameters
         ----------
-        X : array-like, shape=[n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Samples to cluster.
 
         y : Ignored
 
         """
         X = check_array(X)
-        self.cluster_centers_, self.labels_ = \
-            mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
-                       min_bin_freq=self.min_bin_freq,
-                       bin_seeding=self.bin_seeding,
-                       cluster_all=self.cluster_all, n_jobs=self.n_jobs)
+        bandwidth = self.bandwidth
+        if bandwidth is None:
+            bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
+        elif bandwidth <= 0:
+            raise ValueError("bandwidth needs to be greater than zero or None,"
+                             " got %f" % bandwidth)
+
+        seeds = self.seeds
+        if seeds is None:
+            if self.bin_seeding:
+                seeds = get_bin_seeds(X, bandwidth, self.min_bin_freq)
+            else:
+                seeds = X
+        n_samples, n_features = X.shape
+        center_intensity_dict = {}
+
+        # We use n_jobs=1 because this will be used in nested calls under
+        # parallel calls to _mean_shift_single_seed so there is no need for
+        # for further parallelism.
+        nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
+
+        # execute iterations on all seeds in parallel
+        all_res = Parallel(n_jobs=self.n_jobs)(
+            delayed(_mean_shift_single_seed)
+            (seed, X, nbrs, self.max_iter) for seed in seeds)
+        # copy results in a dictionary
+        for i in range(len(seeds)):
+            if all_res[i][1]:  # i.e. len(points_within) > 0
+                center_intensity_dict[all_res[i][0]] = all_res[i][1]
+
+        self.n_iter_ = max([x[2] for x in all_res])
+
+        if not center_intensity_dict:
+            # nothing near seeds
+            raise ValueError("No point was within bandwidth=%f of any seed."
+                             " Try a different seeding strategy \
+                             or increase the bandwidth."
+                             % bandwidth)
+
+        # POST PROCESSING: remove near duplicate points
+        # If the distance between two kernels is less than the bandwidth,
+        # then we have to remove one because it is a duplicate. Remove the
+        # one with fewer points.
+
+        sorted_by_intensity = sorted(center_intensity_dict.items(),
+                                     key=lambda tup: (tup[1], tup[0]),
+                                     reverse=True)
+        sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
+        unique = np.ones(len(sorted_centers), dtype=np.bool)
+        nbrs = NearestNeighbors(radius=bandwidth,
+                                n_jobs=self.n_jobs).fit(sorted_centers)
+        for i, center in enumerate(sorted_centers):
+            if unique[i]:
+                neighbor_idxs = nbrs.radius_neighbors([center],
+                                                      return_distance=False)[0]
+                unique[neighbor_idxs] = 0
+                unique[i] = 1  # leave the current point as unique
+        cluster_centers = sorted_centers[unique]
+
+        # ASSIGN LABELS: a point belongs to the cluster that it is closest to
+        nbrs = NearestNeighbors(n_neighbors=1,
+                                n_jobs=self.n_jobs).fit(cluster_centers)
+        labels = np.zeros(n_samples, dtype=np.int)
+        distances, idxs = nbrs.kneighbors(X)
+        if self.cluster_all:
+            labels = idxs.flatten()
+        else:
+            labels.fill(-1)
+            bool_selector = distances.flatten() <= bandwidth
+            labels[bool_selector] = idxs.flatten()[bool_selector]
+
+        self.cluster_centers_, self.labels_ = cluster_centers, labels
         return self
 
     def predict(self, X):

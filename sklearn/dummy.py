@@ -55,19 +55,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    constant : int or str or array of shape = [n_outputs]
+    constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
-    classes_ : array or list of array of shape = [n_classes]
+    classes_ : array or list of array of shape (n_classes,)
         Class labels for each output.
 
-    n_classes_ : array or list of array of shape = [n_classes]
+    n_classes_ : array or list of array of shape (n_classes,)
         Number of label for each output.
 
-    class_prior_ : array or list of array of shape = [n_classes]
+    class_prior_ : array or list of array of shape (n_classes,)
         Probability of each class for each output.
 
     n_outputs_ : int,
@@ -106,10 +106,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -184,7 +184,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
         """
         check_is_fitted(self)
@@ -260,7 +260,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-lke of shape = [n_samples, n_classes]
+        P : array-like or list of array-lke of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -323,7 +323,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape = [n_samples, n_classes]
+        P : array-like or list of array-like of shape (n_samples, n_classes)
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
@@ -352,10 +352,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             as passing real test samples, since DummyClassifier
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -400,7 +400,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array of shape = [n_outputs]
+    constant : int or float or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -446,10 +446,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -529,10 +529,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
 
-        y_std : array, shape = [n_samples] or [n_samples, n_outputs]
+        y_std : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self)
@@ -574,10 +574,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             as passing real test samples, since DummyRegressor
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns

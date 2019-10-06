@@ -186,10 +186,10 @@ def chi2(X, y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = (n_samples, n_features_in)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Sample vectors.
 
-    y : array-like, shape = (n_samples,)
+    y : array-like of shape (n_samples,)
         Target vector (class labels).
 
     Returns
@@ -327,10 +327,10 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values (class labels in classification, real numbers in
             regression).
 
@@ -383,10 +383,10 @@ class SelectPercentile(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
     Examples
@@ -467,10 +467,10 @@ class SelectKBest(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned only scores.
 
     Examples
@@ -551,10 +551,10 @@ class SelectFpr(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
     Examples
@@ -624,10 +624,10 @@ class SelectFdr(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
     References
@@ -693,10 +693,10 @@ class SelectFwe(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
 
     See also
@@ -747,10 +747,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
     Attributes
     ----------
-    scores_ : array-like, shape=(n_features,)
+    scores_ : array-like of shape (n_features,)
         Scores of features.
 
-    pvalues_ : array-like, shape=(n_features,)
+    pvalues_ : array-like of shape (n_features,)
         p-values of feature scores, None if `score_func` returned scores only.
 
     Examples

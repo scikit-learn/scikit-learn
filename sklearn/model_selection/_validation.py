@@ -143,7 +143,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Returns
     -------
-    scores : dict of float arrays of shape=(n_splits,)
+    scores : dict of float arrays of shape (n_splits,)
         Array of scores of the estimator for each run of the cross validation.
 
         A dict of arrays containing the score/time arrays for each scorer is
