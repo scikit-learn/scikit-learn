@@ -23,7 +23,7 @@ from ._stacking import StackingRegressor
 
 from . import partial_dependence
 
-__all__ = ["BaseEnsemble", "BaseBagging",
+__all__ = ["BaseEnsemble",
            "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "BaggingClassifier",
