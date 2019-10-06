@@ -131,10 +131,9 @@ def test_iforest_error():
         IsolationForest(behaviour='old').fit(X)
 
     # test feature_weight length matches n_features:
-    assert_raises(ValueError, IsolationForest(feature_weight=[1]).fit, X)
-    # test feature_weight adding up to 1:
-    assert_raises(ValueError, IsolationForest,
-                  feature_weight=[0.1, 0.2, 0.3, 0.3])
+    msg = "Feature weights must have shape"
+    with pytest.raises(ValueError, match=msg):
+        IsolationForest(feature_weight=[1]).fit(X)
 
 
 def test_recalculate_max_depth():
@@ -233,7 +232,6 @@ def test_iforest_performance_feature_weight():
     # Unset fisher so that normal distribution has a value of 3
     # and uniform distribution has a value of 1.2, a smaller value
     feature_weight = kurtosis(X, fisher=False)
-    feature_weight /= feature_weight.sum()
 
     # fit the model without feature weight and not all features
     clf_wo = IsolationForest(random_state=rng)

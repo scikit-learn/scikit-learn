@@ -31,12 +31,12 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _generate_indices(random_state, bootstrap, n_population, n_samples,
-                      feature_weight=None):
+                      p=None):
     """Draw randomly sampled indices."""
     # Draw sample indices
-    if feature_weight is not None:
-        indices = random_state.choice(n_population, n_samples, bootstrap,
-                                      feature_weight)
+    if p is not None:
+        indices = random_state.choice(a=n_population, size=n_samples,
+                                      replace=bootstrap, p=p)
     elif bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:

@@ -199,9 +199,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self.contamination = contamination
 
         if self.feature_weight is not None:
-            if np.abs(np.sum(self.feature_weight) - 1) > 1e-7:
-                raise ValueError("Feature weights sum to {}, do not sum to 1."
-                                 .format(np.sum(feature_weight)))
+            # Normalize feature weight
+            self.feature_weight /= np.sum(self.feature_weight)
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by iforest")
