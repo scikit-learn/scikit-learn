@@ -15,7 +15,9 @@ print(__doc__)
 
 import numpy as np
 
+import matplotlib
 from matplotlib import pyplot as plt
+matplotlib.use('tkagg')
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import (RBF, Matern, RationalQuadratic,
