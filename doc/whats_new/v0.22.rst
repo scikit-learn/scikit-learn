@@ -528,6 +528,10 @@ Changelog
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
 
+- |API| `None` as a transformer is now deprecated in
+  :class:`pipeline.FeatureUnion`. Please use `'drop'` instead. :pr:`15053` by
+  `Thomas Fan`_.
+
 - |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
   to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
 
