@@ -6,8 +6,8 @@ Poisson regression and non-normal loss
 This example illustrates the use of log-linear Poisson regression
 on the French Motor Third-Party Liability Claims dataset [1] and compares
 it with models learned with least squared error. The goal is to predict the
-number of insurance claims (or frequency) following car accidents for a
-policyholder given historical data over a population of policyholders.
+expected number of insurance claims (or frequency) following car accidents for
+a policyholder given historical data over a population of policyholders.
 
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018).
@@ -42,8 +42,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 from sklearn.metrics import mean_poisson_deviance
 
 
-def load_mtpl2(n_samples=None):
-    """Fetcher for French Motor Third-Party Liability Claims dataset
+def load_mtpl2(n_samples=100000):
+    """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
     ----------
@@ -122,9 +122,13 @@ print(
 print("Average Frequency = {}"
       .format(np.average(df["Frequency"], weights=df["Exposure"])))
 
+print("Percentage of zero claims = {0:%}"
+      .format(df.loc[df["ClaimNb"] == 0, "Exposure"].sum() /
+              df["Exposure"].sum()))
+
 ##############################################################################
 #
-# It worth noting that 96 % of policyholders have zero claims, and if we were
+# It worth noting that 92 % of policyholders have zero claims, and if we were
 # to convert this problem into a binary classification task, it would be
 # significantly imbalanced.
 #
@@ -143,7 +147,7 @@ dummy.fit(df_train, df_train["Frequency"],
 
 
 def score_estimator(estimator, df_test):
-    """Score an estimator on the test set"""
+    """Score an estimator on the test set."""
 
     y_pred = estimator.predict(df_test)
 
@@ -154,13 +158,14 @@ def score_estimator(estimator, df_test):
           mean_absolute_error(df_test["Frequency"], y_pred,
                               df_test["Exposure"]))
 
-    # ignore negative predictions, as they are invalid for
+    # ignore non-positive predictions, as they are invalid for
     # the Poisson deviance
     mask = y_pred > 0
     if (~mask).any():
-        warnings.warn("estimator yields negative predictions for {} samples "
-                      "out of {}. These will be ignored while computing the "
-                      "Poisson deviance".format((~mask).sum(), mask.shape[0]))
+        warnings.warn("Estimator yields non-positive predictions for {} "
+                      "samples out of {}. These will be ignored while "
+                      "computing the Poisson deviance"
+                      .format((~mask).sum(), mask.shape[0]))
 
     print("mean Poisson deviance: %.3f" %
           mean_poisson_deviance(df_test["Frequency"][mask],
@@ -182,12 +187,12 @@ ridge.fit(df_train, df_train["Frequency"],
 
 ##############################################################################
 #
-# The Poisson deviance cannot be computed on negative values predicted by the
-# model. For models that do return a few negative predictions
+# The Poisson deviance cannot be computed on non-positive values predicted by
+# the model. For models that do return a few non-positive predictions
 # (e.g. :class:`linear_model.Ridge`) we ignore the corresponding samples,
 # meaning that the obtained Poisson deviance is approximate. An alternative
-# apporach could be to use class:`compose.TransformedTargetRegressor`
-# meta-estimator to map ``y_pred`` to strictly positive domain.
+# approach could be to use :class:`compose.TransformedTargetRegressor`
+# meta-estimator to map ``y_pred`` to a strictly positive domain.
 
 print("Ridge evaluation:")
 score_estimator(ridge, df_test)
@@ -210,9 +215,9 @@ score_estimator(poisson, df_test)
 #
 # Finally, we will consider a non-linear model, namely a random forest. Random
 # forests do not require the categorical data to be one-hot encoded, instead
-# we encode each category label with an arbirtrary integer using
+# we encode each category label with an arbitrary integer using
 # :class:`preprocessing.OrdinalEncoder` to make the model faster to train (the
-# same information is encoded with a small number of features than with
+# same information is encoded with a smaller number of features than with
 # one-hot encoding).
 
 rf_preprocessor = ColumnTransformer(
@@ -238,12 +243,13 @@ score_estimator(rf, df_test)
 
 ##############################################################################
 #
-# The random forest model also minimizes the conditional least square error.
-# However because of a higher predictive power it also results in a smaller
-# Poisson deviance than the Poisson regression model.
+# Like the Ridge regression above, the random forest model minimizes the
+# conditional squared error, too. However, because of a higher predictive
+# power, it also results in a smaller Poisson deviance than the Poisson
+# regression model.
 #
 # Evaluating models with a single train / test split is prone to random
-# fluctuations. If computation resources allow, it should be verified that
+# fluctuations. If computing resources allow, it should be verified that
 # cross-validated performance metrics would lead to similar conclusions.
 #
 # The qualitative difference between these models can also be visualized by
@@ -274,7 +280,7 @@ for idx, model in enumerate([ridge, poisson, rf]):
 #
 # The experimental data presents a long tail distribution for ``y``. In all
 # models we predict the mean expected value, so we will have necessarily fewer
-# extreme values. Additionally normal distribution used in ``Ridge`` and
+# extreme values. Additionally, normal distribution used in ``Ridge`` and
 # ``RandomForestRegressor`` has a constant variance, while for the Poisson
 # distribution used in ``PoissonRegressor``, the variance is proportional to
 # the mean predicted value.
@@ -291,11 +297,10 @@ for idx, model in enumerate([ridge, poisson, rf]):
 
 def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
                                   n_bins=100):
-    """Compare predictions and observations for bins ordered by y_pred
+    """Compare predictions and observations for bins ordered by y_pred.
 
     We order the samples by ``y_pred`` and split it in bins.
-    In each bin the observed mean is compared with the predicted
-    mean.
+    In each bin the observed mean is compared with the predicted mean.
 
     Parameters
     ----------
@@ -306,7 +311,7 @@ def _mean_frequency_by_risk_group(y_true, y_pred, sample_weight=None,
     sample_weight : array-like of shape (n_samples,)
         Sample weights.
     n_bins: int
-        number of bins to use
+        Number of bins to use.
 
     Returns
     -------
@@ -370,10 +375,10 @@ plt.tight_layout()
 # values.
 #
 # However, for some business applications, we are not necessarily interested
-# in the the ability of the model in predicting the expected frequency value
-# but instead in predicting which policyholder groups are the riskiest and
-# which are the safest. In this case the model evaluation would cast the
-# problem as a ranking problem rather than a regression problem.
+# in the ability of the model to predict the expected frequency value, but
+# instead to predict which policyholder groups are the riskiest and which are
+# the safest. In this case, the model evaluation would cast the problem as a
+# ranking problem rather than a regression problem.
 #
 # To compare the 3 models under this light on, one can plot the fraction of
 # the number of claims vs the fraction of exposure for test samples ordered by
@@ -435,6 +440,6 @@ ax.legend(loc="lower right")
 #
 # This last point is expected due to the nature of the problem: the occurrence
 # of accidents is mostly dominated by circumstantial causes that are not
-# captured in the columns of the dataset.
+# captured in the columns of the dataset or that are indeed random.
 
 plt.show()
