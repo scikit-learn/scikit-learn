@@ -257,7 +257,7 @@ score_estimator(rf, df_test)
 # values:
 
 
-fig, axes = plt.subplots(1, 4, figsize=(16, 3))
+fig, axes = plt.subplots(1, 4, figsize=(16, 3), sharey=True)
 fig.subplots_adjust(bottom=0.2)
 n_bins = 20
 df_train["Frequency"].hist(bins=np.linspace(-1, 10, n_bins), ax=axes[0])
@@ -265,6 +265,7 @@ df_train["Frequency"].hist(bins=np.linspace(-1, 10, n_bins), ax=axes[0])
 axes[0].set_title("Data")
 axes[0].set_yscale('log')
 axes[0].set_xlabel("y (observed Frequency)")
+axes[0].set_ylim([1E2, 5E5])
 
 for idx, model in enumerate([ridge, poisson, rf]):
     y_pred = model.predict(df_train)
