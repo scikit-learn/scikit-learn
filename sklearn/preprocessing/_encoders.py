@@ -549,8 +549,9 @@ class OrdinalEncoder(_BaseEncoder):
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
 
-        For string values, categories has to be either 'lexicographic' or a list.
-        The used categories can be found in the ``categories_`` attribute.
+        For string values, categories has to be either 'lexicographic' or
+        a list. The used categories can be found in the
+        ``categories_`` attribute.
 
     dtype : number type, default np.float64
         Desired dtype of output.
