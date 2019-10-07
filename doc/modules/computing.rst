@@ -511,8 +511,8 @@ Parallelism, resource management, and configuration
 Parallelism
 -----------
 
-Scikit-learn supports parallel implementations for estimators and other
-utilities in two ways:
+Some scikit-learn estimators and utilities can parallelize costly operations
+using multiple CPU cores, thanks to the following components:
 
 - via the `joblib <https://joblib.readthedocs.io/en/latest/>`_ library. In
   this case the number of threads or processes can be controlled with the
@@ -587,22 +587,30 @@ You can control the exact number of threads that are used via the
 Parallel Numpy routines from numerical libraries
 ................................................
 
-Scikit-learn relies heavily on Numpy, which may be configured to use a
-multi-threaded numerical library like MKL, OpenBLAS or BLIS.
+Scikit-learn relies heavily on NumPy and SciPy, which internally call
+multi-threaded linear algebra routines implemented in libraries such as MKL,
+OpenBLAS or BLIS.
 
 The number of threads used by the OpenBLAS, MKL or BLIS libraries can be set
 via the ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, and
 ``BLIS_NUM_THREADS`` environment variables.
 
 Please note that scikit-learn has no direct control over these
-implementations. Scikit-learn solely relies on Numpy.
+implementations. Scikit-learn solely relies on Numpy and Scipy.
+
+.. note::
+    At the time of writing (2019), NumPy and SciPy packages distributed on
+    pypi.org (used by ``pip``) and on the conda-forge channel are linked
+    with OpenBLAS, while conda packages shipped on the "defaults" channel
+    from anaconda.org are linked by default with MKL.
+
 
 Oversubscription: spawning too many threads
 ...........................................
 
 It is generally recommended to avoid using significantly more processes or
 threads than the number of CPUs on a machine. Over-subscription happens when
-you're trying to run too many threads at the same time.
+a program is running too many threads at the same time.
 
 Suppose you have a machine with 8 CPUs. Consider a case where you're running
 a :class:`~GridSearchCV` (parallelized with joblib) with ``n_jobs=8`` over
