@@ -150,7 +150,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
             _hashing_transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign)
+                               self.alternate_sign, seed=0)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:
