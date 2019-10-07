@@ -2068,7 +2068,6 @@ shape (n_estimators, ``loss_.K``)
            [0, 1, 0, 1, 1],
            [1, 1, 0, 1, 1]])
 
-
     See also
     --------
     sklearn.ensemble.HistGradientBoostingClassifier,
