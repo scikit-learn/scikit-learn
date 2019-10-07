@@ -789,16 +789,6 @@ Classical linear regressors
    linear_model.RidgeCV
    linear_model.SGDRegressor
 
-Bayesian regressors
--------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   linear_model.ARDRegression
-   linear_model.BayesianRidge
-
 Regressors with variable selection
 ----------------------------------
 
@@ -822,6 +812,16 @@ or :class:`~sklearn.linear_model.SGDClassifier` with an appropriate penalty.
    linear_model.LassoLarsIC
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
+
+Bayesian regressors
+-------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.ARDRegression
+   linear_model.BayesianRidge
 
 Multi-task linear regressors with variable selection
 ----------------------------------------------------
