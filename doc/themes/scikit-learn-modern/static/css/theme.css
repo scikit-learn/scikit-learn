@@ -1044,6 +1044,43 @@ div.testimonial p {
   padding-left: 230px;
 }
 
+/* Installation quickstart */
+
+/* Hide expandable content by default */
+.sk-expandable {
+  visibility: collapse;
+  background: #ddd;
+}
+
+/* Show hidden content when the checkbox is checked */
+#quickstart-mac:checked ~ * .mac {
+  visibility: visible;
+}
+
+#quickstart-win:checked ~ * .win {
+  visibility: visible;
+}
+
+#quickstart-lin:checked ~ * .lin {
+  visibility: visible;
+}
+
+#quickstart-venv:checked ~ * .venv {
+  visibility: visible;
+}
+
+#quickstart-pip:checked ~ * .pip {
+  visibility: visible;
+}
+
+#quickstart-conda:checked ~ * .conda {
+  visibility: visible;
+}
+
+#quickstart-source:checked ~ * .source {
+  visibility: visible;
+}
+
 /* Algorithm cheet-sheet */
 
 div.sk-page-content img.map {

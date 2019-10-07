@@ -28,6 +28,53 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
+Quickstart
+----------
+
+.. raw:: html
+
+  <div class="install">
+       <p><strong>System</strong></p>
+          <input type="radio" name="os" id="quickstart-mac">
+          <label for="quickstart-mac">macOS / OSX</label>
+          <input type="radio" name="os" id="quickstart-win" value="checked">
+          <label for="quickstart-win">Windows</label>
+          <input type="radio" name="os" id="quickstart-lin">
+          <label for="quickstart-lin">Linux</label>
+       <p><strong>Packager</strong></p>
+          <input type="radio" name="packager" id="quickstart-pip" value="checked">
+          <label for="quickstart-pip">pip</label>
+          <input type="radio" name="packager" id="quickstart-conda">
+          <label for="quickstart-conda">conda</label>
+          <input type="radio" name="packager" id="quickstart-source">
+          <label for="quickstart-source">source</label>
+       <p><strong>Pip Virtual Environment</strong></p>
+          <input type="radio" name="config" id="quickstart-venv">
+          <label for="quickstart-venv">Yes</label>
+          <input type="radio" name="config" id="no-quickstart-venv" value="checked">
+          <label for="no-quickstart-venv">No</label>
+       </span>
+       <div><pre>
+       <code>
+          <span class="sk-expandable venv">python -m venv .env</span>
+          <span class="sk-expandable venv mac">source .env/bin/activate</span>
+          <span class="sk-expandable venv linux">source .env/bin/activate</span>
+          <span class="sk-expandable venv windows">.env\Scripts\activate</span>
+          <span class="sk-expandable pip">pip install -U scikit-learn</span>
+          <span class="sk-expandable conda">conda install scikit-learn </span>
+          <span class="sk-expandable source">git clone https://github.com/scikit-learn/scikit-learn</span>
+          <span class="sk-expandable source">cd scikit-learn</span>
+          <span class="sk-expandable source linux">export PYTHONPATH=`pwd`</span>
+          <span class="sk-expandable source windows">set PYTHONPATH=/path/to/scikit-learn</span>
+          <span class="sk-expandable source">pip install -r requirements.txt</span>
+          <span class="sk-expandable source">python install --editable .</span>
+       </code>
+       </pre></div>
+  </div>
+
+Read more
+---------
+
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` or ``conda``.
 
