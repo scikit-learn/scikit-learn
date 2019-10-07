@@ -89,6 +89,11 @@ Changelog
   producing Segmentation Fault on large arrays due to integer index overflow.
   :pr:`15057` by :user:`Vladimir Korolev <balodja>`.
 
+- |Fix| :class:`~cluster.MeanShift` now accepts a :term:`max_iter` with a
+  default value of 300 instead of always using the default 300. It also now
+  exposes an ``n_iter_`` indicating the maximum number of iterations performed
+  on each seed. :pr:`15120` by `Adrin Jalali`_.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -235,6 +240,13 @@ Changelog
   :class:`ensemble.RandomTreesEmbedding`. :pr:`14682` by
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
+
+- |Fix| Stacking and Voting estimators now ensure that their underlying
+  estimators are either all classifiers or all regressors.
+  :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,
+  and :class:`ensemble.VotingClassifier` and :class:`VotingRegressor`
+  now raise consistent error messages.
+  :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
@@ -430,6 +442,10 @@ Changelog
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
 
+- |Efficiency| Improved performance of
+  :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
+  :pr:`15049` by `Paolo Toccaceli <ptocca>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -511,6 +527,10 @@ Changelog
 - |Enhancement| :class:`pipeline.Pipeline` now supports :term:`score_samples` if
   the final estimator does.
   :pr:`13806` by :user:`Anaël Beaugnon <ab-anssi>`.
+
+- |API| `None` as a transformer is now deprecated in
+  :class:`pipeline.FeatureUnion`. Please use `'drop'` instead. :pr:`15053` by
+  `Thomas Fan`_.
 
 - |Fix| The `fit` in :class:`~pipeline.FeatureUnion` now accepts `fit_params`
   to pass to the underlying transformers. :pr:`15119` by `Adrin Jalali`_.
