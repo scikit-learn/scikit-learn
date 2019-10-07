@@ -7,9 +7,8 @@ from contextlib import suppress
 # (new_module_name, deprecated_path, correct_import_path)
 _DEPRECATED_MODULES = {
     # TODO: Remove in 0.24
-    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
+    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
-    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
     ('_affinity_propagation', 'sklearn.cluster.affinity_propagation_',
      'sklearn.cluster'),
     ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster'),
