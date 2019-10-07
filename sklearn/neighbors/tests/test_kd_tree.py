@@ -142,25 +142,6 @@ def test_kd_tree_two_point(dualtree):
     assert_array_almost_equal(counts, counts_true)
 
 
-@pytest.mark.parametrize('protocol', (0, 1, 2))
-def test_kd_tree_pickle(protocol):
-    import pickle
-    rng = check_random_state(0)
-    X = rng.random_sample((10, 3))
-    kdt1 = KDTree(X, leaf_size=1)
-    ind1, dist1 = kdt1.query(X)
-
-    def check_pickle_protocol(protocol):
-        s = pickle.dumps(kdt1, protocol=protocol)
-        kdt2 = pickle.loads(s)
-        ind2, dist2 = kdt2.query(X)
-        assert_array_almost_equal(ind1, ind2)
-        assert_array_almost_equal(dist1, dist2)
-        assert isinstance(kdt2, KDTree)
-
-    check_pickle_protocol(protocol)
-
-
 def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 

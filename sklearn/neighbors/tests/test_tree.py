@@ -1,3 +1,6 @@
+# License: BSD 3 clause
+
+import pickle
 import itertools
 
 import numpy as np
@@ -8,7 +11,6 @@ from sklearn.neighbors.ball_tree import BallTree
 from sklearn.neighbors.kd_tree import KDTree
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_allclose
 from numpy.testing import assert_array_almost_equal
 
 rng = np.random.RandomState(42)
@@ -28,6 +30,10 @@ METRICS = {'euclidean': {},
 
 KD_TREE_METRICS = ['euclidean', 'manhattan', 'chebyshev', 'minkowski']
 BALL_TREE_METRICS = list(METRICS.keys())
+
+
+def dist_func(x1, x2, p):
+    return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
@@ -60,3 +66,32 @@ def test_kd_tree_query(Cls, metric, k, dualtree, breadth_first):
     # don't check indices here: if there are any duplicate distances,
     # the indices may not match.  Distances should not have this problem.
     assert_array_almost_equal(dist1, dist2)
+
+
+@pytest.mark.parametrize(
+        "Cls, metric",
+        [(KDTree, 'euclidean'), (BallTree, 'euclidean'),
+         (BallTree, dist_func)])
+@pytest.mark.parametrize('protocol', (0, 1, 2))
+def test_pickle(Cls, metric, protocol):
+    rng = check_random_state(0)
+    X = rng.random_sample((10, 3))
+
+    if hasattr(metric, '__call__'):
+        kwargs = {'p': 2}
+    else:
+        kwargs = {}
+
+    tree1 = Cls(X, leaf_size=1, metric=metric, **kwargs)
+
+    ind1, dist1 = tree1.query(X)
+
+    s = pickle.dumps(tree1, protocol=protocol)
+    tree2 = pickle.loads(s)
+
+    ind2, dist2 = tree2.query(X)
+
+    assert_array_almost_equal(ind1, ind2)
+    assert_array_almost_equal(dist1, dist2)
+
+    assert isinstance(tree2, Cls)
