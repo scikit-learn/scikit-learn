@@ -340,6 +340,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             if len(self.feature_weight) != self.n_features_:
                 raise ValueError("Feature weights must have shape "
                                  "[n_features]")
+            # Normalize feature weight
+            self.feature_weight /= np.sum(self.feature_weight)
 
         # Other checks
         if not self.bootstrap and self.oob_score:
