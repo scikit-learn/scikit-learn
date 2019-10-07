@@ -70,7 +70,8 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     assert clf.score(X_test, y_test) > 0.8
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == 6
+    expected_column_count = 10 if pass_through else 6
+    assert X_trans.shape[1] == expected_column_count
 
     clf.set_params(lr='drop')
     clf.fit(X_train, y_train)
@@ -81,7 +82,8 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
         clf.decision_function(X_test)
 
     X_trans = clf.transform(X_test)
-    assert X_trans.shape[1] == 3
+    expected_column_count_drop = 7 if pass_through else 3
+    assert X_trans.shape[1] == expected_column_count_drop
 
 
 def test_stacking_classifier_drop_column_binary_classification():
@@ -183,14 +185,16 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
         assert len(result) == expected_result_length
 
     X_trans = reg.transform(X_test)
-    assert X_trans.shape[1] == 2
+    expected_column_count = 12 if pass_through else 2
+    assert X_trans.shape[1] == expected_column_count
 
     reg.set_params(lr='drop')
     reg.fit(X_train, y_train)
     reg.predict(X_test)
 
     X_trans = reg.transform(X_test)
-    assert X_trans.shape[1] == 1
+    expected_column_count_drop = 11 if pass_through else 1
+    assert X_trans.shape[1] == expected_column_count_drop
 
 
 def test_stacking_classifier_drop_binary_prob():
