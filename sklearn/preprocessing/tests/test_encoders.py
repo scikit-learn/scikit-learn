@@ -474,11 +474,11 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
     np.array([['a', 'B', 'cat'], ['b', 'A', 'cat']], dtype=object)
     ], ids=['mixed', 'numeric', 'object'])
 def test_ordinal_encoder(X):
-    enc = OrdinalEncoder(categories='lexicographic')
+    enc = OrdinalEncoder(categories='sort')
     exp = np.array([[0, 1, 0],
                     [1, 0, 0]], dtype='int64')
     assert_array_equal(enc.fit_transform(X), exp.astype('float64'))
-    enc = OrdinalEncoder(categories='lexicographic', dtype='int64')
+    enc = OrdinalEncoder(categories='sort', dtype='int64')
     assert_array_equal(enc.fit_transform(X), exp)
 
 
@@ -512,7 +512,7 @@ def test_ordinal_encoder_specified_categories(X, X2, cats, cat_dtype):
 
 def test_ordinal_encoder_inverse():
     X = [['abc', 2, 55], ['def', 1, 55]]
-    enc = OrdinalEncoder(categories='lexicographic')
+    enc = OrdinalEncoder(categories='sort')
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
@@ -528,7 +528,7 @@ def test_ordinal_encoder_inverse():
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_raise_missing(X):
-    ohe = OrdinalEncoder(categories='lexicographic')
+    ohe = OrdinalEncoder(categories='sort')
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit(X)
@@ -679,7 +679,7 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-def test_categorical_lexicographic():
+def test_categorical_sort():
     enc = OrdinalEncoder()
     X = [['Male', 1], ['Female', 3], ['Female', 2]]
     with pytest.warns(DeprecationWarning, match="From version 0.24"):
