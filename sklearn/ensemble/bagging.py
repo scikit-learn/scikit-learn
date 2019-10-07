@@ -541,7 +541,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-
     Examples
     --------
     >>> from sklearn.svm import SVC
