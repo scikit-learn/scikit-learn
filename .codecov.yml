@@ -22,3 +22,4 @@ coverage:
 
 ignore:
 - "sklearn/externals"
+- "sklearn/_build_utils"
