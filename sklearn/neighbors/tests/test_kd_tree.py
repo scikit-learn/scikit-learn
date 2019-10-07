@@ -10,10 +10,6 @@ from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_allclose
 
-rng = np.random.RandomState(42)
-V = rng.random_sample((3, 3))
-V = np.dot(V, V.T)
-
 DIMENSION = 3
 
 METRICS = {'euclidean': {},
@@ -144,6 +140,7 @@ def test_kd_tree_two_point(dualtree):
 
 def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
+    rng = np.random.RandomState(42)
 
     for row in range(n_pts):
         d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
@@ -162,6 +159,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
+    rng = np.random.RandomState(42)
     vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
     i1 = np.argsort(vals)
@@ -172,6 +170,7 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
+    rng = np.random.RandomState(42)
     dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
     ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
 
