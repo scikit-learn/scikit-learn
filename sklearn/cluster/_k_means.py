@@ -1,3 +1,16 @@
+"""K-means clustering"""
+
+# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
+#          Thomas Rueckstiess <ruecksti@in.tum.de>
+#          James Bergstra <james.bergstra@umontreal.ca>
+#          Jan Schlueter <scikit-learn@jan-schlueter.de>
+#          Nelle Varoquaux
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Olivier Grisel <olivier.grisel@ensta.org>
+#          Mathieu Blondel <mathieu@mblondel.org>
+#          Robert Layton <robertlayton@gmail.com>
+# License: BSD 3 clause
+
 import warnings
 
 import numpy as np
