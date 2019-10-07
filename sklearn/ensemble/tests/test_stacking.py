@@ -52,8 +52,8 @@ X_iris, y_iris = load_iris(return_X_y=True)
 @pytest.mark.parametrize(
     "final_estimator", [None, RandomForestClassifier(random_state=42)]
 )
-@pytest.mark.parametrize("pass_through", [False, True])
-def test_stacking_classifier_iris(cv, final_estimator, pass_through):
+@pytest.mark.parametrize("passthrough", [False, True])
+def test_stacking_classifier_iris(cv, final_estimator, passthrough):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, y_test = train_test_split(
@@ -62,7 +62,7 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     clf = StackingClassifier(
         estimators=estimators, final_estimator=final_estimator, cv=cv,
-        pass_through=pass_through
+        passthrough=passthrough
     )
     clf.fit(X_train, y_train)
     clf.predict(X_test)
@@ -70,7 +70,7 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
     assert clf.score(X_test, y_test) > 0.8
 
     X_trans = clf.transform(X_test)
-    expected_column_count = 10 if pass_through else 6
+    expected_column_count = 10 if passthrough else 6
     assert X_trans.shape[1] == expected_column_count
 
     clf.set_params(lr='drop')
@@ -82,7 +82,7 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through):
         clf.decision_function(X_test)
 
     X_trans = clf.transform(X_test)
-    expected_column_count_drop = 7 if pass_through else 3
+    expected_column_count_drop = 7 if passthrough else 3
     assert X_trans.shape[1] == expected_column_count_drop
 
 
@@ -165,9 +165,9 @@ def test_stacking_regressor_drop_estimator():
      (RandomForestRegressor(random_state=42), {}),
      (DummyRegressor(), {'return_std': True})]
 )
-@pytest.mark.parametrize("pass_through", [False, True])
+@pytest.mark.parametrize("passthrough", [False, True])
 def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
-                                     pass_through):
+                                     passthrough):
     # prescale the data to avoid convergence warning without using a pipeline
     # for later assert
     X_train, X_test, y_train, _ = train_test_split(
@@ -176,7 +176,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(
         estimators=estimators, final_estimator=final_estimator, cv=cv,
-        pass_through=pass_through
+        passthrough=passthrough
     )
     reg.fit(X_train, y_train)
     result = reg.predict(X_test, **predict_params)
@@ -185,7 +185,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
         assert len(result) == expected_result_length
 
     X_trans = reg.transform(X_test)
-    expected_column_count = 12 if pass_through else 2
+    expected_column_count = 12 if passthrough else 2
     assert X_trans.shape[1] == expected_column_count
 
     reg.set_params(lr='drop')
@@ -193,7 +193,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
     reg.predict(X_test)
 
     X_trans = reg.transform(X_test)
-    expected_column_count_drop = 11 if pass_through else 1
+    expected_column_count_drop = 11 if passthrough else 1
     assert X_trans.shape[1] == expected_column_count_drop
 
 

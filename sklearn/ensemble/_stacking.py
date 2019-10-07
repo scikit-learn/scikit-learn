@@ -40,14 +40,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
-                 pass_through=False):
+                 passthrough=False):
         super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
-        self.pass_through = pass_through
+        self.passthrough = passthrough
 
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
@@ -77,7 +77,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                     X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
-        if self.pass_through:
+        if self.passthrough:
             return np.concatenate([X] + X_meta, axis=1)
         else:
             return np.concatenate(X_meta, axis=1)
@@ -296,7 +296,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
-    pass_through : bool, default=False
+    passthrough : bool, default=False
         Whether or not to concatenate the original data ``X`` with the output
         of ``estimators`` to feed the ``final_estimator``.
 
@@ -356,7 +356,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, pass_through=False,
+                 stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
             estimators=estimators,
@@ -364,7 +364,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             cv=cv,
             stack_method=stack_method,
             n_jobs=n_jobs,
-            pass_through=pass_through,
+            passthrough=passthrough,
             verbose=verbose
         )
 
@@ -539,7 +539,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
-    pass_through : bool, default=False
+    passthrough : bool, default=False
         Whether or not to concatenate the original data ``X`` with the output
         of ``estimators`` to feed the ``final_estimator``.
 
@@ -587,14 +587,14 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 pass_through=False, verbose=0):
+                 passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             stack_method="predict",
             n_jobs=n_jobs,
-            pass_through=pass_through,
+            passthrough=passthrough,
             verbose=verbose
         )
 
