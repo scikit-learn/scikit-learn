@@ -699,8 +699,8 @@ def test_sparse_fit_support_vectors_empty():
     y_train = np.array([0.04, 0.04, 0.10, 0.16])
     model = svm.SVR(kernel='linear')
     model.fit(X_train, y_train)
-    assert model.support_vectors_.data.size == 0
-    assert model.dual_coef_.data.size == 0
+    assert not model.support_vectors_.data.size
+    assert not model.dual_coef_.data.size
 
 
 def test_linearsvc_parameters():

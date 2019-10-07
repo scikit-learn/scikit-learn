@@ -287,7 +287,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         n_SV = self.support_vectors_.shape[0]
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
-        if dual_coef_indices.size == 0:
+        if not n_SV:
             self.dual_coef_ = sp.csr_matrix([])
         else:
             dual_coef_indptr = np.arange(0, dual_coef_indices.size + 1,
