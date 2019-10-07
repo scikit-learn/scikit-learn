@@ -480,10 +480,10 @@ To convert categorical features to such integer codes, we can use the
 :class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
 new feature of integers (0 to n_categories - 1)::
 
-    >>> enc = preprocessing.OrdinalEncoder(categories='sort')
+    >>> enc = preprocessing.OrdinalEncoder(categories='lexicographic')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)
-    OrdinalEncoder(categories='sort')
+    OrdinalEncoder(categories='lexicographic')
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 

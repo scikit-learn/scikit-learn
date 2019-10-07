@@ -74,7 +74,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _fit(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
-        if self.categories not in ['auto', 'sort']:
+        if self.categories not in ['auto', 'lexicographic']:
             if len(self.categories) != n_features:
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
@@ -544,12 +544,12 @@ class OrdinalEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - 'sort': : Determine categories by sorting the training data
+        - 'lexicographic': : Determine categories by sorting the training data
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
 
-        For string values, categories has to be either 'sort' or a list.
+        For string values, categories has to be either 'lexicographic' or a list.
         The used categories can be found in the ``categories_`` attribute.
 
     dtype : number type, default np.float64
@@ -568,10 +568,10 @@ class OrdinalEncoder(_BaseEncoder):
     values per feature and transform the data to an ordinal encoding.
 
     >>> from sklearn.preprocessing import OrdinalEncoder
-    >>> enc = OrdinalEncoder(categories='sort')
+    >>> enc = OrdinalEncoder(categories='lexicographic')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    OrdinalEncoder(categories='sort')
+    OrdinalEncoder(categories='lexicographic')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 3], ['Male', 1]])
@@ -615,7 +615,7 @@ class OrdinalEncoder(_BaseEncoder):
             warnings.warn(
                 "From version 0.24, OrdinalEncoder's categories='auto' "
                 "setting will not work with string-valued features. "
-                "categories='sort' or an explicit "
+                "categories='lexicographic' or an explicit "
                 "category order will be required.",
                 DeprecationWarning, stacklevel=1)
 
