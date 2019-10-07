@@ -19,7 +19,6 @@ V_mahalanobis = np.dot(V_mahalanobis, V_mahalanobis.T)
 
 DIMENSION = 3
 
-
 METRICS = {'euclidean': {},
            'manhattan': {},
            'minkowski': dict(p=3),
