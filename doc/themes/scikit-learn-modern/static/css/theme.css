@@ -1021,27 +1021,17 @@ div.testimonial h2 {
   line-height: 1.1em;
   font-size: 22px;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
   color: #1c1c1c;
-  padding-left: 230px;
 }
 
 div.testimonial span.testimonial-author p {
   font-size: 0.8em;
   font-style: italic;
   color: #808080;
-}
-
-div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
-  color: #1c1c1c;
-  padding-left: 230px;
 }
 
 /* Algorithm cheet-sheet */
@@ -1053,6 +1043,34 @@ div.sk-page-content img.map {
   -webkit-transform: scale(0.5);
       -ms-transform: scale(0.5);
           transform: scale(0.5);
+}
+
+/* sponsor */
+
+div.sk-sponsor-div {
+  display: flex;
+  flex-wrap: wrap;
+  -webkit-flex-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+div.sk-sponsor-div-box {
+  width: 100%;
+}
+
+@media screen and (min-width: 500px) {
+  div.sk-sponsor-div-box {
+    width: 50%;
+  }
+}
+
+table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
+  border-style: none;
+  background-color: white;
+  vertical-align: middle;
+  text-align: center;
 }
 
 /* pygments - highlightning */
