@@ -2594,8 +2594,8 @@ def check_estimator_sparse_dense(name, estimator_orig):
 
         set_random_state(estimator)
         set_random_state(estimator_sp)
-        X_converted = pairwise_estimator_convert_X(X, estimator)
-        X_sp_converted = pairwise_estimator_convert_X(X_sp, estimator)
+        X_converted = _pairwise_estimator_convert_X(X, estimator)
+        X_sp_converted = _pairwise_estimator_convert_X(X_sp, estimator)
         try:
             estimator_sp.fit(X_sp_converted, y)
             estimator.fit(X_converted, y)
