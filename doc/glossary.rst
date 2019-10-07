@@ -1522,10 +1522,6 @@ functions or non-estimator constructors.
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
 
-        When ``n_jobs`` is not 1, the estimator being parallelized must be
-        picklable. This means, for instance, that lambda-functions cannot be
-        used as estimator parameters.
-
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
         <parallelism>`.
