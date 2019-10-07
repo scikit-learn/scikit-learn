@@ -12,6 +12,7 @@ from sklearn.manifold.spectral_embedding_ import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
+from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
@@ -125,7 +126,9 @@ def test_spectral_embedding_two_components(seed=36):
     assert normalized_mutual_info_score(true_label, label_) == 1.0
 
 
-def test_spectral_embedding_precomputed_affinity(seed=36):
+@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)],
+                         ids=["dense", "sparse"])
+def test_spectral_embedding_precomputed_affinity(X, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
     se_precomp = SpectralEmbedding(n_components=2, affinity="precomputed",
@@ -133,14 +136,33 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
-    embed_precomp = se_precomp.fit_transform(rbf_kernel(S, gamma=gamma))
-    embed_rbf = se_rbf.fit_transform(S)
+    embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
+    embed_rbf = se_rbf.fit_transform(X)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
     assert _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
-def test_spectral_embedding_callable_affinity(seed=36):
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors).fit(S)
+        graph = nn.kneighbors_graph(S, mode='connectivity')
+        embedding = SpectralEmbedding(random_state=0, n_components=2,
+                                      affinity='precomputed_nearest_neighbors',
+                                      n_neighbors=n_neighbors
+                                      ).fit(graph).embedding_
+        results.append(embedding)
+
+    assert_array_equal(results[0], results[1])
+
+
+@pytest.mark.parametrize("X", [S, sparse.csr_matrix(S)],
+                         ids=["dense", "sparse"])
+def test_spectral_embedding_callable_affinity(X, seed=36):
     # Test spectral embedding with callable affinity
     gamma = 0.9
     kern = rbf_kernel(S, gamma=gamma)
@@ -152,8 +174,8 @@ def test_spectral_embedding_callable_affinity(seed=36):
     se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
-    embed_rbf = se_rbf.fit_transform(S)
-    embed_callable = se_callable.fit_transform(S)
+    embed_rbf = se_rbf.fit_transform(X)
+    embed_callable = se_callable.fit_transform(X)
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)

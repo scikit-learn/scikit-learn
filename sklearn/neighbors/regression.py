@@ -13,7 +13,6 @@
 import warnings
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
@@ -78,6 +77,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -146,25 +148,25 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
+    @property
+    def _pairwise(self):
+        # For cross-validation routines to split data correctly
+        return self.metric == 'precomputed'
+
     def predict(self, X):
         """Predict the target for the provided data
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
+        y : array of int, shape = [n_queries] or [n_queries, n_outputs]
             Target values
         """
-        if issparse(X) and self.metric == 'precomputed':
-            raise ValueError(
-                "Sparse matrices not supported for prediction with "
-                "precomputed kernels. Densify your matrix."
-            )
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
@@ -249,6 +251,9 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -315,13 +320,13 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
+        X : array-like, shape (n_queries, n_features), \
+                or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
         Returns
         -------
-        y : array of float, shape = [n_samples] or [n_samples, n_outputs]
+        y : array of float, shape = [n_queries] or [n_queries, n_outputs]
             Target values
         """
         X = check_array(X, accept_sparse='csr')

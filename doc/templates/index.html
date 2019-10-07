@@ -1,0 +1,256 @@
+{% extends "layout.html" %}
+{% set title = 'scikit-learn: machine learning in Python' %}
+{% block content %}
+<div class="container-fluid sk-landing-bg py-3">
+  <div class="container sk-landing-container">
+    <div class="row">
+      <div class="col-md-6 mb-3 mb-md-0">
+        <h1 class="sk-landing-header text-white text-monospace">scikit-learn</h1>
+        <h4 class="sk-landing-subheader text-white font-italic mb-3">Machine Learning in Python</h4>
+        <a class="btn sk-landing-btn mb-1" href="{{ pathto('getting_started') }}" role="button">Getting Started</a>
+        <a class="btn sk-landing-btn mb-1" href="whats_new.html" role="button">Whats New in {{ version }}</a>
+        <a class="btn sk-landing-btn mb-1" href="{{ pathto('documentation') }}" role="button">Documentation</a>
+      </div>
+      <div class="col-md-6 d-flex">
+        <ul class="sk-landing-header-body">
+          <li>Simple and efficient tools for predictive data analysis</li>
+          <li>Accessible to everybody, and reusable in various contexts</li>
+          <li>Built on NumPy, SciPy, and matplotlib</li>
+          <li>Open source, commercially usable - BSD license</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container sk-landing-container pt-3 body" role="main">
+  <div class="row no-gutters">
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="supervised_learning.html#supervised-learning"><h4 class="sk-card-title card-title">Classification</h4></a>
+          <p class="card-text">Identifying which category an object belongs to.</p>
+          <p class="card-text"><strong>Applications:</strong> Spam detection, image recognition.</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/svm.html#svm-classification">SVM</a>,
+          <a href="modules/neighbors.html#classification">nearest neighbors</a>,
+          <a href="modules/ensemble.html#forest">random forest</a>,
+          and <a href="supervised_learning.html#supervised-learning">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/classification/plot_classifier_comparison.html"  aria-label="Classification">
+          <img src="_images/sphx_glr_plot_classifier_comparison_001_carousel.png" class="sk-index-img" style="width:initial;max-width:initial" alt="Classifier comparison">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#classification" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="supervised_learning.html#supervised-learning"><h4 class="sk-card-title card-title">Regression</h4></a>
+          <p class="card-text">Predicting a continuous-valued attribute associated with an object.</p>
+          <p class="card-text"><strong>Applications:</strong> Drug response, Stock prices.</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/svm.html#svm-regression">SVR</a>,
+          <a href="modules/linear_model.html#ridge-regression">nearest neighbors</a>,
+          <a href="modules/linear_model.html#lasso">random forest</a>,
+          and <a href="supervised_learning.html#supervised-learning">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/ensemble/plot_adaboost_regression.html"  aria-label="Regression">
+          <img src="_images/sphx_glr_plot_adaboost_regression_thumb.png" class="sk-index-img" alt="Decision Tree Regression with AdaBoost">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/clustering.html#clustering"><h4 class="sk-card-title card-title">Clustering</h4></a>
+          <p class="card-text">Automatic grouping of similar objects into sets.</p>
+          <p class="card-text"><strong>Applications:</strong> Customer segmentation, Grouping experiment outcomes</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/clustering.html#k-means">k-Means</a>,
+          <a href="modules/clustering.html#spectral-clustering">spectral clustering</a>,
+          <a href="modules/clustering.html#mean-shift">mean-shift</a>,
+          and <a href="modules/clustering.html#clustering">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/cluster/plot_kmeans_digits.html"  aria-label="Clustering">
+          <img src="_images/sphx_glr_plot_kmeans_digits_thumb.png" class="sk-index-img" alt="A demo of K-Means clustering on the handwritten digits data">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#cluster-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/decomposition.html#decompositions"><h4 class="sk-card-title card-title">Dimensionality reduction</h4></a>
+          <p class="card-text">Reducing the number of random variables to consider.</p>
+          <p class="card-text"><strong>Applications:</strong> Visualization, Increased efficiency</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/decomposition.html#pca">k-Means</a>,
+          <a href="modules/feature_selection.html#feature-selection">feature selection</a>,
+          <a href="modules/decomposition.html#nmf">non-negative matrix factorization</a>,
+          and <a href="modules/decomposition.html#decompositions">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/decomposition/plot_pca_iris.html"  aria-label="Dimensionality reduction">
+          <img src="_images/sphx_glr_plot_pca_iris_thumb.png" class="sk-index-img" alt="PCA example with Iris Data-set">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#decomposition-examples" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="model_selection.html#model-selection"><h4 class="sk-card-title card-title">Model selection</h4></a>
+          <p class="card-text">Comparing, validating and choosing parameters and models.</p>
+          <p class="card-text"><strong>Applications:</strong> Improved accuracy via parameter tuning</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/grid_search.html#grid-search">grid search</a>,
+          <a href="modules/cross_validation.html#cross-validation">cross validation</a>,
+          <a href="modules/model_evaluation.html#model-evaluation">metrics</a>,
+          and <a href="modules/decomposition.html#decompositions">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/model_selection/plot_multi_metric_evaluation.html"  aria-label="Model selection">
+            <img src="_images/sphx_glr_plot_multi_metric_evaluation_thumb.png" class="sk-index-img" alt="Demonstration of multi-metric evaluation on cross_val_score and GridSearchCV">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#model-selection" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3 px-md-2 sk-px-xl-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <a href="modules/preprocessing.html#preprocessing"><h4 class="sk-card-title card-title">Preprocessing</h4></a>
+          <p class="card-text">Feature extraction and normalization.</p>
+          <p class="card-text"><strong>Applications:</strong>  Transforming input data such as text for use with machine learning algorithms.</br>
+          <strong>Algorithms:</strong>
+          <a href="modules/preprocessing.html#preprocessing">preprocessing</a>,
+          <a href="modules/feature_extraction.html#feature-extraction">feature extraction</a>,
+          and <a href="modules/preprocessing.html#preprocessing">more...</a></p>
+        </div>
+        <div class="overflow-hidden mx-2 text-center flex-fill">
+          <a href="auto_examples/preprocessing/plot_discretization_strategies.html"  aria-label="Preprocessing">
+          <img src="_images/sphx_glr_plot_discretization_strategies_thumb.png" class="sk-index-img" alt="Demonstrating the different strategies of KBinsDiscretizer">
+          </a>
+        </div>
+          <a href="auto_examples/index.html#preprocessing" class="sk-btn-primary btn text-white btn-block" role="button">Examples</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid sk-landing-bg-more-info py-3">
+  <div class="container sk-landing-container">
+    <div class="row">
+      <div class="col-md-4">
+        <h4 class="sk-landing-call-header">News</h4>
+        <ul class="sk-landing-call-list list-unstyled">
+        <li><strong>On-going development:</strong>
+        <a href="https://scikit-learn.org/dev/whats_new.html"><strong>What's new</strong> (Changelog)</a>
+        </li>
+        <li><strong>Scikit-learn from 0.21 requires Python 3.5 or greater.</strong>
+        </li>
+        <li><strong>July 2019.</strong> scikit-learn 0.21.3 (<a href="whats_new.html#version-0-21-3">Changelog</a>) and 0.20.4 (<a href="whats_new.html#version-0-20-4">Changelog</a>) are available for download.
+        </li>
+        <li><strong>May 2019.</strong> scikit-learn 0.21.0 to 0.21.2 are available for download (<a href="whats_new.html#version-0-21">Changelog</a>).
+        </li>
+        <li><strong>March 2019.</strong> scikit-learn 0.20.3 is available for download (<a href="whats_new.html#version-0-20-3">Changelog</a>).
+        </li>
+        <li><strong>September 2018.</strong> scikit-learn 0.20.0 is available for download (<a href="whats_new.html#version-0-20-0">Changelog</a>).
+        </li>
+        <li><strong>July 2018.</strong> scikit-learn 0.19.2 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
+        </li>
+        <li><strong>July 2017.</strong> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
+        </li>
+        </ul>
+      </div>
+      <div class="col-md-4">
+        <h4 class="sk-landing-call-header">Community</h4>
+        <ul class="sk-landing-call-list list-unstyled">
+        <li><strong>About us:</strong> See <a href="about.html#people">authors</a> and <a href="developers/contributing.html">contributing</a></li>
+        <li><strong>More Machine Learning:</strong> Find <a href="related_projects.html">related projects</a></li>
+        <li><strong>Questions?</strong> See <a href="faq.html">FAQ</a> and <a href="https://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a></li>
+        <li><strong>Mailing list:</strong> <a href="https://mail.python.org/mailman/listinfo/scikit-learn">scikit-learn@python.org</a></li>
+        <li><strong>Gitter:</strong> <a href="https://gitter.im/scikit-learn/scikit-learn">gitter.im/scikit-learn</a></li>
+        </ul>
+
+        <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+            <input type="hidden" value="_s-xclick" name="cmd">
+            <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+        </form>
+        <a class="btn btn-warning btn-big sk-donate-btn mb-1" onclick="document.getElementById('paypal-form').submit(); ">Help us, <strong>donate!</strong></a>
+        <a class="btn btn-warning btn-big mb-1" href="about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+        <p class="mt-2">
+            <a href="about.html#funding">Read more about donations</a>
+        </p>
+      </div>
+      <div class="col-md-4">
+        <h4 class="sk-landing-call-header">Who uses scikit-learn?</h4>
+        <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/inria.png" alt="inria">
+            <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+            </div>
+            <div class="carousel-item">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/spotify.png" alt="spotify">
+            <em>"I think it's the most well-designed ML package I've seen so far."</em>
+            </div>
+            <div class="carousel-item">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/change-logo.png" alt="change-logo">
+            <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
+            </div>
+            <div class="carousel-item">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/telecomparistech.jpg" alt="telecomparistech">
+            <em>"The great benefit of scikit-learn is its fast learning curve [...]"</em>
+            </div>
+            <div class="carousel-item">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/aweber.png" alt="aweber">
+            <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
+            </div>
+            <div class="carousel-item">
+            <img class="d-block mx-auto sk-who-uses-carousel-img img-thumbnail" src="_images/yhat.png" alt="yhat">
+            <em>"scikit-learn makes doing advanced analysis in Python accessible to anyone."</em>
+            </div>
+          </div>
+        </div>
+        <p class="text-right">
+            <a href="testimonials/testimonials.html">More testimonials</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid py-3">
+  <div class="container sk-landing-container">
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <small>Funding provided by INRIA and others</small>
+        </div>
+        <div class="col-md-6 text-center">
+            <a href="about.html#funding" class="text-decoration-none">
+                <img class="sk-footer-funding-logo" src="_static/inria-small.png" title="INRIA">
+                <img class="sk-footer-funding-logo" src="_static/google-small.png" title="Google">
+                <img class="sk-footer-funding-logo" src="_static/telecom-small.png" title="Télécom ParisTech">
+                <img class="sk-footer-funding-logo" src="_static/fnrs-logo-small.png" title="FNRS">
+                <img class="sk-footer-funding-logo" src="_static/sloan_logo-small.png" title="Alfred P. Sloan Foundation" >
+                <img class="sk-footer-funding-logo" src="_static/columbia-small.png" title="Columbia University">
+                <img class="sk-footer-funding-logo" src="_static/sydney-stacked-small.png" title="The University of Sydney">
+            </a>
+        </div>
+        <div class="col-md-2 text-md-right">
+            <small><a href="about.html#funding">More info on our contributors</a></small>
+        </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
