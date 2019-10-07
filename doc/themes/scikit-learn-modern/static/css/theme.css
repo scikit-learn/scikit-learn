@@ -1017,6 +1017,7 @@ div.sphx-glr-thumbcontainer {
 div.testimonial h2 {
   background-color: transparent;
   color: #008EB2;
+  padding: 0;
   height: 26px;
   line-height: 1.1em;
   font-size: 22px;
@@ -1045,9 +1046,9 @@ div.sk-page-content img.map {
           transform: scale(0.5);
 }
 
-/* sponsor */
+/* sponsors and testimonials */
 
-div.sk-sponsor-div {
+div.sk-sponsor-div div.sk-testimonial-div {
   display: flex;
   flex-wrap: wrap;
   -webkit-flex-align: center;
@@ -1056,12 +1057,12 @@ div.sk-sponsor-div {
   align-items: center;
 }
 
-div.sk-sponsor-div-box {
+div.sk-sponsor-div-box div.sk-testimonial-div-box {
   width: 100%;
 }
 
 @media screen and (min-width: 500px) {
-  div.sk-sponsor-div-box {
+  div.sk-sponsor-div-box div.sk-testimonial-div-box {
     width: 50%;
   }
 }

@@ -16,8 +16,8 @@ Who is using scikit-learn?
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-learn is an indispensable part of the Python machine learning
 toolkit at JPMorgan. It is very widely used across all parts of the bank
@@ -36,7 +36,7 @@ Stephen Simmons, VP, Athena Research, JPMorgan
 
    </span>
     </div>
-    <div class="sk-sponsor-div-box">
+    <div class="sk-testimonial-div-box">
 
 .. image:: images/jpmorgan.png
     :width: 120pt
@@ -53,8 +53,8 @@ Stephen Simmons, VP, Athena Research, JPMorgan
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-learn provides a toolbox with solid implementations of a bunch of
 state-of-the-art models and makes it easy to plug them into existing
@@ -72,7 +72,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
    </span>
     </div>
-    <div class="sk-sponsor-div-box">
+    <div class="sk-testimonial-div-box">
 
 .. image:: images/spotify.png
     :width: 120pt
@@ -89,8 +89,8 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 .. title Scikit-learn for efficient and easier machine learning research
 .. Author: Gaël Varoquaux
@@ -116,7 +116,7 @@ Gaël Varoquaux, research at Parietal
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/inria.png
     :width: 120pt
@@ -134,8 +134,8 @@ Gaël Varoquaux, research at Parietal
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Betaworks is a NYC-based startup studio that builds new products, grows
 companies, and invests in others. Over the past 8 years we’ve launched a
@@ -158,7 +158,7 @@ Gilad Lotan, Chief Data Scientist
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/betaworks.png
     :width: 120pt
@@ -176,8 +176,8 @@ Gilad Lotan, Chief Data Scientist
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Hugging Face we're using NLP and probabilistic models to generate
 conversational Artificial intelligences that are fun to chat with. Despite using
@@ -198,7 +198,7 @@ Julien Chaumond, Chief Technology Officer
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/huggingface.png
     :width: 120pt
@@ -216,8 +216,8 @@ Julien Chaumond, Chief Technology Officer
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Building a classifier is typically an iterative process of exploring
 the data, selecting the features (the attributes of the data believed
@@ -237,7 +237,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/evernote.png
     :width: 120pt
@@ -254,8 +254,8 @@ Mark Ayzenshtat, VP, Augmented Intelligence
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Telecom ParisTech, scikit-learn is used for hands-on sessions and home
 assignments in introductory and advanced machine learning courses. The classes
@@ -273,7 +273,7 @@ Alexandre Gramfort, Assistant Professor
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/telecomparistech.jpg
     :width: 120pt
@@ -290,8 +290,8 @@ Alexandre Gramfort, Assistant Professor
 -----------------------------------------
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Booking.com, we use machine learning algorithms for many different
 applications, such as recommending hotels and destinations to our customers,
@@ -314,7 +314,7 @@ Melanie Mueller, Data Scientist
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/booking.png
     :width: 120pt
@@ -331,8 +331,8 @@ Melanie Mueller, Data Scientist
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 The scikit-learn toolkit is indispensable for the Data Analysis and Management
 team at AWeber.  It allows us to do AWesome stuff we would not otherwise have
@@ -357,7 +357,7 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/aweber.png
     :width: 120pt
@@ -374,8 +374,8 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 The combination of consistent APIs, thorough documentation, and top notch
 implementation make scikit-learn our favorite machine learning package in
@@ -395,7 +395,7 @@ Greg Lamp, Co-founder Yhat
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/yhat.png
     :width: 120pt
@@ -412,8 +412,8 @@ Greg Lamp, Co-founder Yhat
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 The Python scikit-learn toolkit is a core tool in the data science
 group at Rangespan. Its large collection of well documented models and
@@ -433,7 +433,7 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/rangespan.png
     :width: 120pt
@@ -450,8 +450,8 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Birchbox, we face a range of machine learning problems typical to
 E-commerce: product recommendation, user clustering, inventory prediction,
@@ -472,7 +472,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/birchbox.jpg
     :width: 120pt
@@ -490,8 +490,8 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-learn is our #1 toolkit for all things machine learning
 at Bestofmedia. We use it for a variety of tasks (e.g. spam fighting,
@@ -511,7 +511,7 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/bestofmedia-logo.png
     :width: 120pt
@@ -528,8 +528,8 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At change.org we automate the use of scikit-learn's RandomForestClassifier
 in our production systems to drive email targeting that reaches millions
@@ -547,7 +547,7 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/change-logo.png
     :width: 120pt
@@ -564,8 +564,8 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At PHIMECA Engineering, we use scikit-learn estimators as surrogates for
 expensive-to-evaluate numerical models (mostly but not exclusively
@@ -587,7 +587,7 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/phimeca.png
     :width: 120pt
@@ -604,8 +604,8 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
 techniques in analysis and in production, despite having a small team.  We use
@@ -626,7 +626,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/howaboutwe.png
     :width: 120pt
@@ -644,8 +644,8 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
 unique dataset that allows us to identify who’s really influential and in which
@@ -667,7 +667,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/peerindex.png
     :width: 120pt
@@ -685,8 +685,8 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 DataRobot is building next generation predictive analytics software to make data scientists more productive, and scikit-learn is an integral part of our system. The variety of machine learning techniques in combination with the solid implementations that scikit-learn offers makes it a one-stop-shopping library for machine learning in Python. Moreover, its consistent API, well-tested code and permissive licensing allow us to use it in a production environment. Scikit-learn has literally saved us years of work we would have had to do ourselves to bring our product to market.
 
@@ -700,7 +700,7 @@ Jeremy Achin, CEO & Co-founder DataRobot Inc.
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/datarobot.png
     :width: 120pt
@@ -718,8 +718,8 @@ Jeremy Achin, CEO & Co-founder DataRobot Inc.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 We're using scikit-learn at OkCupid to evaluate and improve our matchmaking
 system. The range of features it has, especially preprocessing utilities, means
@@ -737,7 +737,7 @@ David Koh - Senior Data Scientist at OkCupid
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/okcupid.png
     :width: 120pt
@@ -755,8 +755,8 @@ David Koh - Senior Data Scientist at OkCupid
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Lovely, we strive to deliver the best apartment marketplace, with respect to
 our users and our listings. From understanding user behavior, improving data
@@ -776,7 +776,7 @@ Simon Frid - Data Scientist, Lead at Lovely
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/lovely.png
     :width: 120pt
@@ -795,8 +795,8 @@ Simon Frid - Data Scientist, Lead at Lovely
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Data Publica builds a new predictive sales tool for commercial and marketing teams called C-Radar.
 We extensively use scikit-learn to build segmentations of customers through clustering, and to predict future customers based on past partnerships success or failure.
@@ -814,7 +814,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/datapublica.png
     :width: 120pt
@@ -833,8 +833,8 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-learn is the cornerstone of all the machine learning projects carried at
 Machinalis. It has a consistent API, a wide selection of algorithms and lots
@@ -858,7 +858,7 @@ Rafael Carrascosa, Lead developer
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/machinalis.png
     :width: 120pt
@@ -876,8 +876,8 @@ Rafael Carrascosa, Lead developer
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-learn is helping to drive Moore’s Law, via Solido. Solido creates
 computer-aided design tools used by the majority of top-20 semiconductor
@@ -900,7 +900,7 @@ Trent McConaghy, founder, Solido Design Automation Inc.
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/solido_logo.png
     :width: 120pt
@@ -919,8 +919,8 @@ Trent McConaghy, founder, Solido Design Automation Inc.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 We employ scikit-learn for rapid prototyping and custom-made Data Science
 solutions within our in-memory based Business Intelligence Software
@@ -940,7 +940,7 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/infonea.jpg
     :width: 120pt
@@ -958,8 +958,8 @@ Thorsten Kranz, Data Scientist, Coma Soft AG.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Our software, Data Science Studio (DSS), enables users to create data services
 that combine `ETL <https://en.wikipedia.org/wiki/Extract,_transform,_load>`_ with
@@ -981,7 +981,7 @@ Florian Douetteau, CEO, Dataiku
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/dataiku_logo.png
     :width: 120pt
@@ -998,8 +998,8 @@ Florian Douetteau, CEO, Dataiku
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Here at Otto Group, one of global Big Five B2C online retailers, we are using
 scikit-learn in all aspects of our daily work from data exploration to development
@@ -1020,7 +1020,7 @@ Christian Rammig, Head of Data Science, Otto Group
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/ottogroup_logo.png
     :width: 120pt
@@ -1037,8 +1037,8 @@ Christian Rammig, Head of Data Science, Otto Group
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
 to run the business and optimize our users' experience. It powers our
@@ -1058,7 +1058,7 @@ Vlasios Vasileiou, Head of Data Science, Zopa
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/zopa.png
     :width: 120pt
@@ -1075,8 +1075,8 @@ Vlasios Vasileiou, Head of Data Science, Zopa
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div">
+   <div class="sk-testimonial-div-box">
 
 Scikit-Learn is integral to the Machine Learning Ecosystem at Mars. Whether
 we're designing better recipes for petfood or closely analysing our cocoa
@@ -1096,7 +1096,7 @@ Michael Fitzke Next Generation Technologies Sr Leader, Mars Inc.
 
    </span>
    </div>
-   <div class="sk-sponsor-div-box">
+   <div class="sk-testimonial-div-box">
 
 .. image:: images/mars.png
     :width: 120pt
