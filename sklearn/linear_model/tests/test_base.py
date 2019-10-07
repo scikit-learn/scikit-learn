@@ -9,20 +9,22 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
 from sklearn.linear_model.base import _rescale_data
+from sklearn.linear_model.base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_greater
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
+rtol = 1e-6
 
 
 def test_linear_regression():
@@ -69,8 +71,8 @@ def test_linear_regression_sample_weights():
             coefs1 = reg.coef_
             inter1 = reg.intercept_
 
-            assert_equal(reg.coef_.shape, (X.shape[1], ))  # sanity checks
-            assert_greater(reg.score(X, y), 0.5)
+            assert reg.coef_.shape == (X.shape[1], )  # sanity checks
+            assert reg.score(X, y) > 0.5
 
             # Closed form of the weighted least square
             # theta = (X^T W X)^(-1) * X^T W y
@@ -121,16 +123,16 @@ def test_fit_intercept():
     y = np.array([1, 1])
 
     lr2_without_intercept = LinearRegression(fit_intercept=False).fit(X2, y)
-    lr2_with_intercept = LinearRegression(fit_intercept=True).fit(X2, y)
+    lr2_with_intercept = LinearRegression().fit(X2, y)
 
     lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
-    lr3_with_intercept = LinearRegression(fit_intercept=True).fit(X3, y)
+    lr3_with_intercept = LinearRegression().fit(X3, y)
 
-    assert_equal(lr2_with_intercept.coef_.shape,
+    assert (lr2_with_intercept.coef_.shape ==
                  lr2_without_intercept.coef_.shape)
-    assert_equal(lr3_with_intercept.coef_.shape,
+    assert (lr3_with_intercept.coef_.shape ==
                  lr3_without_intercept.coef_.shape)
-    assert_equal(lr2_without_intercept.coef_.ndim,
+    assert (lr2_without_intercept.coef_.ndim ==
                  lr3_without_intercept.coef_.ndim)
 
 
@@ -150,6 +152,26 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.parametrize('normalize', [True, False])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+    # Test that linear regression agrees between sparse and dense
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    Xcsr = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    clf_dense = LinearRegression(**params)
+    clf_sparse = LinearRegression(**params)
+    clf_dense.fit(X, y)
+    clf_sparse.fit(Xcsr, y)
+    assert clf_dense.intercept_ == pytest.approx(clf_sparse.intercept_)
+    assert_allclose(clf_dense.coef_, clf_sparse.coef_)
+
+
 def test_linear_regression_multiple_outcome(random_state=0):
     # Test multiple-outcome linear regressions
     X, y = make_regression(random_state=random_state)
@@ -157,9 +179,9 @@ def test_linear_regression_multiple_outcome(random_state=0):
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    reg = LinearRegression(fit_intercept=True)
+    reg = LinearRegression()
     reg.fit((X), Y)
-    assert_equal(reg.coef_.shape, (2, n_features))
+    assert reg.coef_.shape == (2, n_features)
     Y_pred = reg.predict(X)
     reg.fit(X, y)
     y_pred = reg.predict(X)
@@ -176,7 +198,7 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 
     ols = LinearRegression()
     ols.fit(X, Y)
-    assert_equal(ols.coef_.shape, (2, n_features))
+    assert ols.coef_.shape == (2, n_features)
     Y_pred = ols.predict(X)
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
@@ -320,7 +342,7 @@ def test_csr_preprocess_data():
     X[X < 2.5] = 0.0
     csr = sparse.csr_matrix(X)
     csr_, y, _, _, _ = _preprocess_data(csr, y, True)
-    assert_equal(csr_.getformat(), 'csr')
+    assert csr_.getformat() == 'csr'
 
 
 @pytest.mark.parametrize('is_sparse', (True, False))
@@ -375,34 +397,34 @@ def test_dtype_preprocess_data():
                 _preprocess_data(X_64, y_32, fit_intercept=fit_intercept,
                                  normalize=normalize, return_mean=True))
 
-            assert_equal(Xt_32.dtype, np.float32)
-            assert_equal(yt_32.dtype, np.float32)
-            assert_equal(X_mean_32.dtype, np.float32)
-            assert_equal(y_mean_32.dtype, np.float32)
-            assert_equal(X_norm_32.dtype, np.float32)
+            assert Xt_32.dtype == np.float32
+            assert yt_32.dtype == np.float32
+            assert X_mean_32.dtype == np.float32
+            assert y_mean_32.dtype == np.float32
+            assert X_norm_32.dtype == np.float32
 
-            assert_equal(Xt_64.dtype, np.float64)
-            assert_equal(yt_64.dtype, np.float64)
-            assert_equal(X_mean_64.dtype, np.float64)
-            assert_equal(y_mean_64.dtype, np.float64)
-            assert_equal(X_norm_64.dtype, np.float64)
+            assert Xt_64.dtype == np.float64
+            assert yt_64.dtype == np.float64
+            assert X_mean_64.dtype == np.float64
+            assert y_mean_64.dtype == np.float64
+            assert X_norm_64.dtype == np.float64
 
-            assert_equal(Xt_3264.dtype, np.float32)
-            assert_equal(yt_3264.dtype, np.float32)
-            assert_equal(X_mean_3264.dtype, np.float32)
-            assert_equal(y_mean_3264.dtype, np.float32)
-            assert_equal(X_norm_3264.dtype, np.float32)
+            assert Xt_3264.dtype == np.float32
+            assert yt_3264.dtype == np.float32
+            assert X_mean_3264.dtype == np.float32
+            assert y_mean_3264.dtype == np.float32
+            assert X_norm_3264.dtype == np.float32
 
-            assert_equal(Xt_6432.dtype, np.float64)
-            assert_equal(yt_6432.dtype, np.float64)
-            assert_equal(X_mean_6432.dtype, np.float64)
-            assert_equal(y_mean_6432.dtype, np.float64)
-            assert_equal(X_norm_6432.dtype, np.float64)
+            assert Xt_6432.dtype == np.float64
+            assert yt_6432.dtype == np.float64
+            assert X_mean_6432.dtype == np.float64
+            assert y_mean_6432.dtype == np.float64
+            assert X_norm_6432.dtype == np.float64
 
-            assert_equal(X_32.dtype, np.float32)
-            assert_equal(y_32.dtype, np.float32)
-            assert_equal(X_64.dtype, np.float64)
-            assert_equal(y_64.dtype, np.float64)
+            assert X_32.dtype == np.float32
+            assert y_32.dtype == np.float32
+            assert X_64.dtype == np.float64
+            assert y_64.dtype == np.float64
 
             assert_array_almost_equal(Xt_32, Xt_64)
             assert_array_almost_equal(yt_32, yt_64)
@@ -423,3 +445,48 @@ def test_rescale_data():
     rescaled_y2 = y * np.sqrt(sample_weight)
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
+
+
+def test_fused_types_make_dataset():
+    iris = load_iris()
+
+    X_32 = iris.data.astype(np.float32)
+    y_32 = iris.target.astype(np.float32)
+    X_csr_32 = sparse.csr_matrix(X_32)
+    sample_weight_32 = np.arange(y_32.size, dtype=np.float32)
+
+    X_64 = iris.data.astype(np.float64)
+    y_64 = iris.target.astype(np.float64)
+    X_csr_64 = sparse.csr_matrix(X_64)
+    sample_weight_64 = np.arange(y_64.size, dtype=np.float64)
+
+    # array
+    dataset_32, _ = make_dataset(X_32, y_32, sample_weight_32)
+    dataset_64, _ = make_dataset(X_64, y_64, sample_weight_64)
+    xi_32, yi_32, _, _ = dataset_32._next_py()
+    xi_64, yi_64, _, _ = dataset_64._next_py()
+    xi_data_32, _, _ = xi_32
+    xi_data_64, _, _ = xi_64
+
+    assert xi_data_32.dtype == np.float32
+    assert xi_data_64.dtype == np.float64
+    assert_allclose(yi_64, yi_32, rtol=rtol)
+
+    # csr
+    datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
+    datasetcsr_64, _ = make_dataset(X_csr_64, y_64, sample_weight_64)
+    xicsr_32, yicsr_32, _, _ = datasetcsr_32._next_py()
+    xicsr_64, yicsr_64, _, _ = datasetcsr_64._next_py()
+    xicsr_data_32, _, _ = xicsr_32
+    xicsr_data_64, _, _ = xicsr_64
+
+    assert xicsr_data_32.dtype == np.float32
+    assert xicsr_data_64.dtype == np.float64
+
+    assert_allclose(xicsr_data_64, xicsr_data_32, rtol=rtol)
+    assert_allclose(yicsr_64, yicsr_32, rtol=rtol)
+
+    assert_array_equal(xi_data_32, xicsr_data_32)
+    assert_array_equal(xi_data_64, xicsr_data_64)
+    assert_array_equal(yi_32, yicsr_32)
+    assert_array_equal(yi_64, yicsr_64)

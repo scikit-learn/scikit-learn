@@ -52,8 +52,8 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/svm/plot_iris.html
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_svc_001.png
+   :target: ../auto_examples/svm/plot_iris_svc.html
    :align: center
 
 
@@ -75,12 +75,9 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
     >>> y = [0, 1]
-    >>> clf = svm.SVC(gamma='scale')
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+    >>> clf = svm.SVC()
+    >>> clf.fit(X, y)
+    SVC()
 
 After being fitted, the model can then be used to predict new values::
 
@@ -97,10 +94,10 @@ can be found in members ``support_vectors_``, ``support_`` and
     array([[0., 0.],
            [1., 1.]])
     >>> # get indices of support vectors
-    >>> clf.support_ # doctest: +ELLIPSIS
+    >>> clf.support_
     array([0, 1]...)
     >>> # get number of support vectors for each class
-    >>> clf.n_support_ # doctest: +ELLIPSIS
+    >>> clf.n_support_
     array([1, 1]...)
 
 .. _svm_multi_class:
@@ -113,18 +110,15 @@ approach (Knerr et al., 1990) for multi- class classification. If
 ``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
 classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to aggregate the results of the
+``decision_function_shape`` option allows to monotically transform the results of the
 "one-against-one" classifiers to a decision function of shape ``(n_samples,
-n_classes)``::
+n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC(gamma='scale', decision_function_shape='ovo')
-    >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+    >>> clf = svm.SVC(decision_function_shape='ovo')
+    >>> clf.fit(X, Y)
+    SVC(decision_function_shape='ovo')
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -138,11 +132,8 @@ multi-class strategy, thus training n_class models. If there are only
 two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
-    >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
+    >>> lin_clf.fit(X, Y)
+    LinearSVC()
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -235,6 +226,17 @@ If confidence scores are required, but these do not have to be probabilities,
 then it is advisable to set ``probability=False``
 and use ``decision_function`` instead of ``predict_proba``.
 
+Please note that when ``decision_function_shape='ovr'`` and ``n_classes > 2``,
+unlike ``decision_function``, the ``predict`` method does not try to break ties
+by default. You can set ``break_ties=True`` for the output of ``predict`` to be
+the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
+first class among the tied classes will always be returned; but have in mind
+that it comes with a computational cost.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
+   :target: ../auto_examples/svm/plot_svm_tie_breaking.html
+   :align: center
+
 .. topic:: References:
 
  * Wu, Lin and Weng,
@@ -279,7 +281,7 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
@@ -303,8 +305,8 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are three different implementations of Support Vector Regression: 
-:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+There are three different implementations of Support Vector Regression:
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
 linear kernels, while :class:`NuSVR` implements a slightly different
 formulation than :class:`SVR` and :class:`LinearSVR`. See
@@ -318,10 +320,8 @@ floating point values instead of integer values::
     >>> X = [[0, 0], [2, 2]]
     >>> y = [0.5, 2.5]
     >>> clf = svm.SVR()
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1,
-        gamma='auto_deprecated', kernel='rbf', max_iter=-1, shrinking=True,
-        tol=0.001, verbose=False)
+    >>> clf.fit(X, y)
+    SVR()
     >>> clf.predict([[1, 1]])
     array([1.5])
 
@@ -338,7 +338,7 @@ Density estimation, novelty detection
 =======================================
 
 The class :class:`OneClassSVM` implements a One-Class SVM which is used in
-outlier detection. 
+outlier detection.
 
 See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
@@ -393,7 +393,7 @@ Tips on Practical Use
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
     
-    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
     threshold. Meanwhile, larger ``C`` values will take more time to train, 
     sometimes up to 10 times longer, as shown by Fan et al. (2008)
@@ -529,11 +529,8 @@ test vectors must be provided.
     >>> clf = svm.SVC(kernel='precomputed')
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
-    >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='precomputed', max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+    >>> clf.fit(gram, y)
+    SVC(kernel='precomputed')
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])

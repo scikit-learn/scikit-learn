@@ -6,15 +6,13 @@ Multi-dimensional Scaling (MDS)
 # License: BSD
 
 import numpy as np
+from joblib import Parallel, delayed, effective_n_jobs
 
 import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
 from ..isotonic import IsotonicRegression
 
 

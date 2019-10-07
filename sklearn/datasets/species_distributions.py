@@ -41,19 +41,17 @@ from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-import sys
-
 import logging
 import numpy as np
+
+import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from sklearn.datasets.base import _pkl_filepath
-from sklearn.utils import _joblib
-
-PY3_OR_LATER = sys.version_info[0] >= 3
+from .base import _pkl_filepath
+from .base import _refresh_cache
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -106,12 +104,7 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY3_OR_LATER:
-        # Numpy recarray wants Python 3 str but not bytes...
-        names = F.readline().decode('ascii').strip().split(',')
-    else:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
+    names = F.readline().decode('ascii').strip().split(',')
 
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
@@ -162,7 +155,7 @@ def fetch_species_distributions(data_home=None,
         instead of trying to download the data from the source site.
 
     Returns
-    --------
+    -------
     The data is returned as a Bunch object with the following attributes:
 
     coverages : array, shape = [14, 1592, 1212]
@@ -265,8 +258,10 @@ def fetch_species_distributions(data_home=None,
                       test=test,
                       train=train,
                       **extra_params)
-        _joblib.dump(bunch, archive_path, compress=9)
+        joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = _joblib.load(archive_path)
+        bunch = _refresh_cache([archive_path], 9)
+        # TODO: Revert to the following line in v0.23
+        # bunch = joblib.load(archive_path)
 
     return bunch

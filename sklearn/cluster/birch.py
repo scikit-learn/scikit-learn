@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -11,11 +10,10 @@ from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError, ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
 
@@ -29,7 +27,7 @@ def _iterate_sparse_X(X):
     X_data = X.data
     X_indptr = X.indptr
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
         nonzero_indices = X_indices[startptr:endptr]
@@ -87,7 +85,7 @@ def _split_node(node, threshold, branching_factor):
     return new_subcluster1, new_subcluster2
 
 
-class _CFNode(object):
+class _CFNode:
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -240,7 +238,7 @@ class _CFNode(object):
                 return True
 
 
-class _CFSubcluster(object):
+class _CFSubcluster:
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.
@@ -279,7 +277,7 @@ class _CFSubcluster(object):
         if linear_sum is None:
             self.n_samples_ = 0
             self.squared_sum_ = 0.0
-            self.linear_sum_ = 0
+            self.centroid_ = self.linear_sum_ = 0
         else:
             self.n_samples_ = 1
             self.centroid_ = self.linear_sum_ = linear_sum
@@ -321,7 +319,7 @@ class _CFSubcluster(object):
             self.sq_norm_)
 
 
-class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -354,9 +352,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         - `None` : the final clustering step is not performed and the
           subclusters are returned as they are.
 
-        - `sklearn.cluster` Estimator : If a model is provided, the model is
-          fit treating the subclusters as new samples and the initial data is
-          mapped to the label of the closest subcluster.
+        - :mod:`sklearn.cluster` Estimator : If a model is provided, the model
+          is fit treating the subclusters as new samples and the initial data
+          is mapped to the label of the closest subcluster.
 
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
@@ -392,11 +390,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
-    ... compute_labels=True)
-    >>> brc.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
-       threshold=0.5)
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
@@ -538,16 +534,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        is_fitted = hasattr(self, 'subcluster_centers_')
+        check_is_fitted(self)
 
-        # Called by partial_fit, before fitting.
-        has_partial_fit = hasattr(self, 'partial_fit_')
-
-        # Should raise an error if one does not fit before predicting.
-        if not (is_fitted or has_partial_fit):
-            raise NotFittedError("Fit training data before predicting")
-
-        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
+        if (hasattr(self, 'subcluster_centers_') and
+                X.shape[1] != self.subcluster_centers_.shape[1]):
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
@@ -592,7 +582,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        check_is_fitted(self, 'subcluster_centers_')
+        check_is_fitted(self)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

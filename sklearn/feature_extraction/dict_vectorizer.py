@@ -3,16 +3,14 @@
 # License: BSD 3 clause
 
 from array import array
+from collections.abc import Mapping
 from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
-from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
-from ..utils.fixes import _Mapping as Mapping
 
 
 def _tosequence(X):
@@ -23,7 +21,7 @@ def _tosequence(X):
         return tosequence(X)
 
 
-class DictVectorizer(BaseEstimator, TransformerMixin):
+class DictVectorizer(TransformerMixin, BaseEstimator):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
@@ -59,8 +57,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be
+        sorted when fitting. True by default.
 
     Attributes
     ----------
@@ -118,8 +116,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         vocab = {}
 
         for x in X:
-            for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+            for f, v in x.items():
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                 if f not in vocab:
                     feature_names.append(f)
@@ -127,7 +125,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if self.sort:
             feature_names.sort()
-            vocab = dict((f, i) for i, f in enumerate(feature_names))
+            vocab = {f: i for i, f in enumerate(feature_names)}
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
@@ -164,8 +162,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # collect all the possible feature names and build sparse matrix at
         # same time
         for x in X:
-            for f, v in six.iteritems(x):
-                if isinstance(v, six.string_types):
+            for f, v in x.items():
+                if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -242,7 +240,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Sample matrix.
         dict_type : callable, optional
             Constructor for feature mappings. Must conform to the
@@ -258,7 +256,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
 
         names = self.feature_names_
-        dicts = [dict_type() for _ in xrange(n_samples)]
+        dicts = [dict_type() for _ in range(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
@@ -298,8 +296,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
-                for f, v in six.iteritems(x):
-                    if isinstance(v, six.string_types):
+                for f, v in x.items():
+                    if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
@@ -344,9 +342,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
         >>> v.get_feature_names()
         ['bar', 'baz', 'foo']
-        >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
-        DictVectorizer(dtype=..., separator='=', sort=True,
-                sparse=True)
+        >>> v.restrict(support.get_support())
+        DictVectorizer()
         >>> v.get_feature_names()
         ['bar', 'foo']
         """
@@ -359,7 +356,10 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(six.iteritems(new_vocab),
+        self.feature_names_ = [f for f, i in sorted(new_vocab.items(),
                                                     key=itemgetter(1))]
 
         return self
+
+    def _more_tags(self):
+        return {'X_types': ["dict"]}

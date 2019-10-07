@@ -16,7 +16,6 @@ The plots represent the distribution of the prediction latency as a boxplot.
 # Authors: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from collections import defaultdict
 
 import time
@@ -279,12 +278,11 @@ configuration = {
     'estimators': [
         {'name': 'Linear Model',
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
-                                  l1_ratio=0.25, fit_intercept=True,
-                                  tol=1e-4),
+                                  l1_ratio=0.25, tol=1e-4),
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
-         'instance': RandomForestRegressor(n_estimators=100),
+         'instance': RandomForestRegressor(),
          'complexity_label': 'estimators',
          'complexity_computer': lambda clf: clf.n_estimators},
         {'name': 'SVR',

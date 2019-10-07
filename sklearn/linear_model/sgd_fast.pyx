@@ -21,8 +21,8 @@ from numpy.math cimport INFINITY
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from ..utils.weight_vector cimport WeightVector
+from ..utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
 
@@ -508,6 +508,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -831,11 +833,11 @@ cdef void l1penalty(WeightVector w, double * q_data_ptr,
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = w_data_ptr[idx]
-        if wscale * w_data_ptr[idx] > 0.0:
+        if wscale * z > 0.0:
             w_data_ptr[idx] = max(
                 0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
 
-        elif wscale * w_data_ptr[idx] < 0.0:
+        elif wscale * z < 0.0:
             w_data_ptr[idx] = min(
                 0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
 

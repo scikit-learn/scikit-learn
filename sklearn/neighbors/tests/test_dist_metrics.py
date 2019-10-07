@@ -6,6 +6,8 @@ from numpy.testing import assert_array_almost_equal
 
 import pytest
 
+from distutils.version import LooseVersion
+from scipy import __version__ as scipy_version
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
@@ -21,8 +23,8 @@ rng = check_random_state(0)
 d = 4
 n1 = 20
 n2 = 25
-X1 = rng.random_sample((n1, d)).astype('float64')
-X2 = rng.random_sample((n2, d)).astype('float64')
+X1 = rng.random_sample((n1, d)).astype('float64', copy=False)
+X2 = rng.random_sample((n2, d)).astype('float64', copy=False)
 
 # make boolean arrays: ones and zeros
 X1_bool = X1.round(0)
@@ -101,6 +103,11 @@ def check_pdist(metric, kwargs, D_true):
 def check_pdist_bool(metric, D_true):
     dm = DistanceMetric.get_metric(metric)
     D12 = dm.pairwise(X1_bool)
+    # Based on https://github.com/scipy/scipy/pull/7373
+    # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
+    # was changed to return 0, instead of nan.
+    if metric == 'jaccard' and LooseVersion(scipy_version) < '1.2.0':
+        D_true[np.isnan(D_true)] = 0
     assert_array_almost_equal(D12, D_true)
 
 

@@ -59,8 +59,8 @@ benchmarks/bench_covertype_data/
 *.c
 *.cpp
 
-!*/src/*.c
-!*/src/*.cpp
+!/**/src/**/*.c
+!/**/src/**/*.cpp
 *.sln
 *.pyproj
 
@@ -68,3 +68,15 @@ benchmarks/bench_covertype_data/
 .cache
 .pytest_cache/
 _configtest.o.d
+
+# Used by mypy
+.mypy_cache/
+
+# files generated from a template
+sklearn/utils/seq_dataset.pyx
+sklearn/utils/seq_dataset.pxd
+sklearn/linear_model/sag_fast.pyx
+
+# deprecated paths
+# TODO: Remove in 0.24
+sklearn/utils/mocking.py

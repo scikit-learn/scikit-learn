@@ -13,16 +13,14 @@ import os
 import shutil
 import tempfile
 import numpy as np
+import pytest
 from functools import partial
-from sklearn.externals import six
 from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_raises
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
@@ -71,30 +69,31 @@ def setup_module():
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
-        f.write(six.b('Text file to be ignored by the dataset loader.'))
+        f.write(b'Text file to be ignored by the dataset loader.')
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
-        f.write(six.b("10\n"))
-        more_than_two = [name for name, count in six.iteritems(counts)
+        f.write(b"10\n")
+        more_than_two = [name for name, count in counts.items()
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
             first, second = random_state.sample(range(counts[name]), 2)
-            f.write(six.b('%s\t%d\t%d\n' % (name, first, second)))
+            f.write(('%s\t%d\t%d\n' % (name, first, second)).encode())
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
             first_index = random_state.choice(np.arange(counts[first_name]))
             second_index = random_state.choice(np.arange(counts[second_name]))
-            f.write(six.b('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                                second_name, second_index)))
+            f.write(('%s\t%d\t%s\t%d\n' % (first_name, first_index,
+                                           second_name, second_index)
+                     ).encode())
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write(b"Fake place holder that won't be tested")
 
     with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write(b"Fake place holder that won't be tested")
 
 
 def teardown_module():
@@ -106,8 +105,9 @@ def teardown_module():
 
 
 def test_load_empty_lfw_people():
-    assert_raises(IOError, fetch_lfw_people, data_home=SCIKIT_LEARN_EMPTY_DATA,
-                  download_if_missing=False)
+    with pytest.raises(IOError):
+        fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA,
+                         download_if_missing=False)
 
 
 def test_load_fake_lfw_people():
@@ -117,8 +117,8 @@ def test_load_fake_lfw_people():
 
     # The data is croped around the center as a rectangular bounding box
     # around the face. Colors are converted to gray levels:
-    assert_equal(lfw_people.images.shape, (10, 62, 47))
-    assert_equal(lfw_people.data.shape, (10, 2914))
+    assert lfw_people.images.shape == (10, 62, 47)
+    assert lfw_people.data.shape == (10, 2914)
 
     # the target is array of person integer ids
     assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
@@ -132,7 +132,7 @@ def test_load_fake_lfw_people():
     lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, resize=None,
                                   slice_=None, color=True,
                                   download_if_missing=False)
-    assert_equal(lfw_people.images.shape, (17, 250, 250, 3))
+    assert lfw_people.images.shape == (17, 250, 250, 3)
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_people.target,
@@ -150,14 +150,15 @@ def test_load_fake_lfw_people():
 
 
 def test_load_fake_lfw_people_too_restrictive():
-    assert_raises(ValueError, fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
-                  min_faces_per_person=100, download_if_missing=False)
+    with pytest.raises(ValueError):
+        fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100,
+                         download_if_missing=False)
 
 
 def test_load_empty_lfw_pairs():
-    assert_raises(IOError, fetch_lfw_pairs,
-                  data_home=SCIKIT_LEARN_EMPTY_DATA,
-                  download_if_missing=False)
+    with pytest.raises(IOError):
+        fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA,
+                        download_if_missing=False)
 
 
 def test_load_fake_lfw_pairs():
@@ -166,7 +167,7 @@ def test_load_fake_lfw_pairs():
 
     # The data is croped around the center as a rectangular bounding box
     # around the face. Colors are converted to gray levels:
-    assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 62, 47))
+    assert lfw_pairs_train.pairs.shape == (10, 2, 62, 47)
 
     # the target is whether the person is the same or not
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
@@ -180,7 +181,7 @@ def test_load_fake_lfw_pairs():
     lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA, resize=None,
                                       slice_=None, color=True,
                                       download_if_missing=False)
-    assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 250, 250, 3))
+    assert lfw_pairs_train.pairs.shape == (10, 2, 250, 250, 3)
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])

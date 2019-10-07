@@ -430,24 +430,6 @@ and in this
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 
-.. warning::
-
-    Multithreaded BLAS libraries sometimes conflict with Python's
-    ``multiprocessing`` module, which is used by e.g. ``GridSearchCV`` and
-    most other estimators that take an ``n_jobs`` argument (with the exception
-    of ``SGDClassifier``, ``SGDRegressor``, ``Perceptron``,
-    ``PassiveAggressiveClassifier`` and tree-based methods such as random
-    forests). This is true of Apple's Accelerate and OpenBLAS when built with
-    OpenMP support.
-
-    Besides scikit-learn, NumPy and SciPy also use BLAS internally, as
-    explained earlier.
-
-    If you experience hanging subprocesses with ``n_jobs>1`` or ``n_jobs=-1``,
-    make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
-    or upgrade to Python 3.4 which has a new version of ``multiprocessing``
-    that should be immune to this problem.
-
 .. _working_memory:
 
 Limiting Working Memory
@@ -518,7 +500,7 @@ sufficient to not generate the relevant features, leaving their columns empty.
 Links
 ......
 
-  - `scikit-learn developer performance documentation <../developers/performance.html>`_
+  - :ref:`scikit-learn developer performance documentation <performance-howto>`
   - `Scipy sparse matrix formats documentation <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_
 
 Parallelism, resource management, and configuration
@@ -570,6 +552,11 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
     is supported. In addition, dumps from joblib.Memory might be incompatible,
     and you might loose some caches and have to redownload some datasets.
+
+    .. deprecated:: 0.21
+
+       As of version 0.21 this parameter has no effect, vendored joblib was
+       removed and site joblib is always used.
 
 :SKLEARN_ASSUME_FINITE:
 

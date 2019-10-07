@@ -14,11 +14,8 @@ from libc.math cimport sqrt
 import numpy as np
 cimport numpy as np
 
-cdef extern from "cblas.h":
-    double ddot "cblas_ddot"(int, double *, int, double *, int) nogil
-    void dscal "cblas_dscal"(int, double, double *, int) nogil
-    void daxpy "cblas_daxpy" (int, double, const double*,
-                              int, double*, int) nogil
+from ._cython_blas cimport _dot, _scal, _axpy
+
 
 np.import_array()
 
@@ -37,8 +34,6 @@ cdef class WeightVector(object):
         The numpy array which backs the weight vector.
     aw : ndarray, dtype=double, order='C'
         The numpy array which backs the average_weight vector.
-    w_data_ptr : double*
-        A pointer to the data of the numpy array.
     wscale : double
         The scale of the vector.
     n_features : int
@@ -46,24 +41,17 @@ cdef class WeightVector(object):
     sq_norm : double
         The squared norm of ``w``.
     """
-
-    def __cinit__(self,
-                  np.ndarray[double, ndim=1, mode='c'] w,
-                  np.ndarray[double, ndim=1, mode='c'] aw):
-        cdef double *wdata = <double *>w.data
-
+    def __cinit__(self, double [::1] w, double [::1] aw):
         if w.shape[0] > INT_MAX:
             raise ValueError("More than %d features not supported; got %d."
                              % (INT_MAX, w.shape[0]))
-        self.w = w
-        self.w_data_ptr = wdata
         self.wscale = 1.0
         self.n_features = w.shape[0]
-        self.sq_norm = ddot(<int>w.shape[0], wdata, 1, wdata, 1)
+        self.sq_norm = _dot(<int>w.shape[0], &w[0], 1, &w[0], 1)
 
-        self.aw = aw
-        if self.aw is not None:
-            self.aw_data_ptr = <double *>aw.data
+        self.w_data_ptr = &w[0]
+        if aw is not None:
+            self.aw_data_ptr = &aw[0]
             self.average_a = 0.0
             self.average_b = 1.0
 
@@ -182,15 +170,14 @@ cdef class WeightVector(object):
 
     cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
-        if self.aw is not None:
-            daxpy(<int>self.aw.shape[0], self.average_a,
-                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
-            dscal(<int>self.aw.shape[0], 1.0 / self.average_b,
-                  <double *>self.aw.data, 1)
+        if self.aw_data_ptr != NULL:
+            _axpy(self.n_features, self.average_a,
+                  self.w_data_ptr, 1, self.aw_data_ptr, 1)
+            _scal(self.n_features, 1.0 / self.average_b, self.aw_data_ptr, 1)
             self.average_a = 0.0
             self.average_b = 1.0
 
-        dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+        _scal(self.n_features, self.wscale, self.w_data_ptr, 1)
         self.wscale = 1.0
 
     cdef double norm(self) nogil:

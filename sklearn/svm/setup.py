@@ -2,8 +2,6 @@ import os
 from os.path import join
 import numpy
 
-from sklearn._build_utils import get_blas_info
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -39,9 +37,9 @@ def configuration(parent_package='', top_path=None):
                          )
 
     # liblinear module
-    cblas_libs, blas_info = get_blas_info()
+    libraries = []
     if os.name == 'posix':
-        cblas_libs.append('m')
+        libraries.append('m')
 
     liblinear_sources = ['liblinear.pyx',
                          join('src', 'liblinear', '*.cpp')]
@@ -51,15 +49,13 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries=cblas_libs,
-                         include_dirs=[join('..', 'src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=blas_info.pop('extra_compile_args',
-                                                          []),
+                         libraries=libraries,
+                         include_dirs=[join('.', 'src', 'liblinear'),
+                                       join('..', 'utils'),
+                                       numpy.get_include()],
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
-                         ** blas_info)
+                         )
 
     # end liblinear module
 
