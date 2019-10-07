@@ -591,68 +591,71 @@ def cross_validation(
     Parameters
     ----------
 
-    X : array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float of shape (n_samples, n_features)
 
-    Y : array, dtype=float, size=[n_samples]
+    Y : array, dtype=float of shape (n_samples,)
         target vector
 
     n_fold : int32
         Number of folds for cross validation.
 
-    svm_type : {0, 1, 2, 3, 4}, optional
+    svm_type : {0, 1, 2, 3, 4}, default=0
         Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
-        respectively. 0 by default.
+        respectively.
 
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, default='rbf'
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
-        or precomputed. 'rbf' by default.
+        or precomputed.
 
-    degree : int32, optional
+    degree : int32, default=3
         Degree of the polynomial kernel (only relevant if kernel is
-        set to polynomial), 3 by default.
+        set to polynomial).
 
-    gamma : float64, optional
+    gamma : float64, default=0.1
         Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
-        kernels. 0.1 by default.
+        kernels.
 
-    coef0 : float64, optional
-        Independent parameter in poly/sigmoid kernel. 0 by default.
+    coef0 : float64, default=0.0
+        Independent parameter in poly/sigmoid kernel.
 
-    tol : float64, optional
-        Numeric stopping criterion (WRITEME). 1e-3 by default.
+    tol : float64, default=1e-3
+        Numeric stopping criterion (WRITEME).
 
-    C : float64, optional
-        C parameter in C-Support Vector Classification. 1 by default.
+    C : float64, default=1
+        C parameter in C-Support Vector Classification.
 
-    nu : float64, optional
-        0.5 by default.
+    nu : float64, default=0.5
+        An upper bound on the fraction of training errors and a lower bound of
+        the fraction of support vectors. Should be in the interval (0, 1].
 
-    epsilon : double, optional
-        0.1 by default.
+    epsilon : double, default=0.1
+        Epsilon parameter in the epsilon-insensitive loss function.
 
-    class_weight : array, dtype float64, shape (n_classes,), optional
-        np.empty(0) by default.
+    class_weight : array, dtype=float64, shape (n_classes,), \
+            default=np.empty(0)
+        Set the parameter C of class i to class_weight[i]*C for
+        SVC. If not given, all classes are supposed to have
+        weight one.
 
-    sample_weight : array, dtype float64, shape (n_samples,), optional
-        np.empty(0) by default.
+    sample_weight : array, dtype=float64, shape (n_samples,), \
+            default=np.empty(0)
+        Weights assigned to each sample.
 
-    shrinking : int, optional
-        1 by default.
+    shrinking : int, default=1
+        Whether to use the shrinking heuristic.
 
-    probability : int, optional
-        0 by default.
+    probability : int, default=0
+        Whether to enable probability estimates.
 
-    cache_size : float64, optional
-        Cache size for gram matrix columns (in megabytes). 100 by default.
+    cache_size : float64, default=100
+        Cache size for gram matrix columns (in megabytes).
 
-    max_iter : int (-1 for no limit), optional.
+    max_iter : int (-1 for no limit), default=-1
         Stop solver after this many iterations regardless of accuracy
         (XXX Currently there is no API to know whether this kicked in.)
-        -1 by default.
 
-    random_seed : int, optional
+    random_seed : int, default=0
         Seed for the random number generator used for probability estimates.
-        0 by default.
 
     Returns
     -------
