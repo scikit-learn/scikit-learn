@@ -784,10 +784,6 @@ Classical linear regressors
    :toctree: generated/
    :template: class.rst
 
-   linear_model.ElasticNet
-   linear_model.ElasticNetCV
-   linear_model.Lasso
-   linear_model.LassoCV
    linear_model.LinearRegression
    linear_model.Ridge
    linear_model.RidgeCV
@@ -808,16 +804,19 @@ Regressors with variable selection
 
 The following estimators have built-in variable selection fitting
 procedures, but any estimator using a L1 or elastic-net penalty also
-performs variable selection: typically :class:`~linear_model.ElasticNet`,
-:class:`~linear_model.Lasso`, :class:`~linear_model.SGDRegressor` or
-:class:`~sklearn.linear_model.SGDClassifier` (with the appropriate penalty).
+performs variable selection: typically :class:`~linear_model.SGDRegressor`
+or :class:`~sklearn.linear_model.SGDClassifier` with an appropriate penalty.
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   linear_model.ElasticNet
+   linear_model.ElasticNetCV
    linear_model.Lars
    linear_model.LarsCV
+   linear_model.Lasso
+   linear_model.LassoCV
    linear_model.LassoLars
    linear_model.LassoLarsCV
    linear_model.LassoLarsIC
