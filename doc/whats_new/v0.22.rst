@@ -572,6 +572,9 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
+- |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
+  ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
 :mod:`sklearn.tree`
 ...................
 
