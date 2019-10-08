@@ -679,7 +679,7 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-def test_categorical_sort():
+def test_ordinal_encoder_deprecated_categories_auto_with_string_labels():
     enc = OrdinalEncoder()
     X = [['Male', 1], ['Female', 3], ['Female', 2]]
     with pytest.warns(DeprecationWarning, match="From version 0.24"):
