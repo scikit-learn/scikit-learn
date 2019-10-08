@@ -78,9 +78,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                 else:
                     X_meta.append(preds)
         if self.passthrough:
-            return np.concatenate([X] + X_meta, axis=1)
-        else:
-            return np.concatenate(X_meta, axis=1)
+            X_meta.append(X)
+
+        return np.concatenate(X_meta, axis=1)
 
     @staticmethod
     def _method_name(name, estimator, method):
