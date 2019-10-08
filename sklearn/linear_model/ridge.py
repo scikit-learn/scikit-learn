@@ -1823,7 +1823,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         y : array-like, shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : {float, numpy array}, shape (n_samples), default=None
+        sample_weight : {float, numpy array of shape (n_samples,)}, default=None
             Sample weight.
 
         Returns
