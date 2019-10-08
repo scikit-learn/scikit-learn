@@ -315,10 +315,15 @@ img.sk-who-uses-carousel-img {
   max-width: 50%;
 }
 
+div#carouselExampleSlidesOnly {
+  min-height: 200px;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
   margin: 0 8px;
+  margin-bottom: 8px;
 }
 
 ul.sk-landing-call-list li {
@@ -581,6 +586,13 @@ div.sk-page-content h4 {
   border-radius: 0.3rem;
   font-size: 1.2rem;
   word-wrap: break-word;
+}
+
+div.sk-page-content h1 code,
+div.sk-page-content h2 code,
+div.sk-page-content h3 code,
+div.sk-page-content h4 code {
+  white-space: normal;
 }
 
 /* longtables */
@@ -985,6 +997,20 @@ div.sphx-glr-thumbcontainer {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
+
+/* authors */
+.sk-authors-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sk-authors-container > div {
+  width: 100px;
+  margin: 5px;
+  font-size: 0.9rem;
+}
+
 
 /* testimonial */
 

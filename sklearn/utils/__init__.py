@@ -270,8 +270,63 @@ def _determine_key_type(key):
     raise ValueError(err_msg)
 
 
+# TODO: remove in 0.24
+@deprecated("safe_indexing is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
+
+    .. deprecated:: 0.22
+        This function was deprecated in version 0.22 and will be removed in
+        version 0.24.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
+
+    indices : bool, int, str, slice, array-like
+
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
+
+    axis : int, default=0
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    return _safe_indexing(X, indices, axis)
+
+
+def _safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    .. warning::
+
+        This utility is documented, but **private**. This means that
+        backward compatibility might be broken without any deprecation
+        cycle.
 
     Parameters
     ----------
@@ -358,7 +413,7 @@ def _get_column_indices(X, key):
     elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
-            idx = safe_indexing(np.arange(n_columns), key)
+            idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'
@@ -549,7 +604,7 @@ def resample(*arrays, **options):
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]

@@ -249,7 +249,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         shape = [n_samples, n_features]
         Training data
 
-    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+    y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     alpha : {float, array-like},
@@ -521,7 +521,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
+class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -602,7 +602,7 @@ class _BaseRidge(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         return self
 
 
-class Ridge(RegressorMixin, _BaseRidge):
+class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     """Linear least squares with l2 regularization.
 
     Minimizes the objective function::
@@ -749,10 +749,10 @@ class Ridge(RegressorMixin, _BaseRidge):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or numpy array of shape [n_samples]
@@ -866,7 +866,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples
@@ -904,10 +904,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples,n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values
 
         sample_weight : float or numpy array of shape (n_samples,)
@@ -1213,7 +1213,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : sparse matrix, shape = (n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
 
         A : np.ndarray, shape = (n_features, n_features)
 
@@ -1406,10 +1406,10 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. Will be cast to float64 if necessary
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to float64 if necessary
 
         sample_weight : float or array-like of shape [n_samples]
@@ -1531,7 +1531,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(MultiOutputMixin, LinearModel):
+class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1549,11 +1549,11 @@ class _BaseRidgeCV(MultiOutputMixin, LinearModel):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data. If using GCV, will be cast to float64
             if necessary.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]
@@ -1603,7 +1603,7 @@ class _BaseRidgeCV(MultiOutputMixin, LinearModel):
         return self
 
 
-class RidgeCV(RegressorMixin, _BaseRidgeCV):
+class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     """Ridge regression with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1802,7 +1802,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     alpha_ : float
         Estimated regularization parameter
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples

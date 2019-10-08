@@ -89,7 +89,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -134,7 +134,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -246,7 +246,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
         y : (sparse) array-like, shape (n_samples, n_outputs)
             Multi-output targets.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -362,7 +362,7 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
+        p : array of shape (n_samples, n_classes), or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -530,7 +530,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
@@ -690,7 +690,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
