@@ -1633,25 +1633,18 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Examples
     --------
-    >>> from sklearn.linear_model import ExtraTreesClassifier
+    >>> from sklearn.ensemble import ExtraTreesClassifier
     >>> from sklearn.datasets import make_classification
 
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = ExtraTreesClassifier(n_estimators = 100, 
-                                    random_state = 100)
+    >>> clf = ExtraTreesClassifier(n_estimators = 100, random_state = 100)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    ExtraTreesClassifier(bootstrap=False, class_weight=None, criterion='gini',
-           max_depth=None, max_features='auto', max_leaf_nodes=None,
-           min_impurity_decrease=0.0, min_impurity_split=None,
-           min_samples_leaf=1, min_samples_split=2,
-           min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
-           oob_score=False, random_state=100, verbose=0, warm_start=False)
+    ExtraTreesClassifier(random_state=100)
            
-    >>> print(clf.coef_)
-    [0.10625438 0.29079613 0.43360443 0.16934507]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
-
+    >>> clf.feature_importances_
+    array([0.10625438, 0.29079613, 0.43360443, 0.16934507])
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
 
     References
     ----------
@@ -1664,7 +1657,6 @@ class ExtraTreesClassifier(ForestClassifier):
     sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
-
 
     """
     def __init__(self,
