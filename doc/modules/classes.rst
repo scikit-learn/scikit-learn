@@ -1539,7 +1539,7 @@ Plotting
    utils.multiclass.unique_labels
    utils.murmurhash3_32
    utils.resample
-   utils.safe_indexing
+   utils._safe_indexing
    utils.safe_mask
    utils.safe_sqr
    utils.shuffle
@@ -1595,6 +1595,7 @@ To be removed in 0.23
    metrics.calinski_harabaz_score
    metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
+   utils.safe_indexing
 
 .. autosummary::
    :toctree: generated/

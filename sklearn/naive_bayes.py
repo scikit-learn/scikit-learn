@@ -63,11 +63,11 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
             Predicted target values for X
         """
         check_is_fitted(self)
@@ -81,11 +81,11 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_classes]
+        C : array-like of shape (n_samples, n_classes)
             Returns the log-probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -103,11 +103,11 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array-like, shape = [n_samples, n_classes]
+        C : array-like of shape (n_samples, n_classes)
             Returns the probability of the samples for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
@@ -525,20 +525,20 @@ class BaseDiscreteNB(BaseNB):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
-        classes : array-like, shape = [n_classes] (default=None)
+        classes : array-like of shape (n_classes) (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples] (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -593,14 +593,14 @@ class BaseDiscreteNB(BaseNB):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -827,7 +827,7 @@ class ComplementNB(BaseDiscreteNB):
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples
@@ -938,7 +938,7 @@ class BernoulliNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Examples

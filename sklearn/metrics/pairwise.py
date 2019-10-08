@@ -228,7 +228,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
+    X_norm_squared : array-like of shape (n_samples,), optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
@@ -736,6 +736,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         else shape is (n_samples_X, n_samples_Y) and D contains
         the pairwise L1 distances.
 
+    Notes
+    --------
+    When X and/or Y are CSR sparse matrices and they are not already
+    in canonical format, this function modifies them in-place to
+    make them canonical.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
@@ -765,10 +771,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
 
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
+        X.sum_duplicates()   # this also sorts indices in-place
+        Y.sum_duplicates()
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr,
                           Y.data, Y.indices, Y.indptr,
-                          X.shape[1], D)
+                          D)
         return D
 
     if sum_over_features:

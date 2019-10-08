@@ -1002,6 +1002,20 @@ div.sphx-glr-thumbcontainer {
   word-wrap: break-word;
 }
 
+/* authors */
+.sk-authors-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sk-authors-container > div {
+  width: 100px;
+  margin: 5px;
+  font-size: 0.9rem;
+}
+
+
 /* testimonial */
 
 div.testimonial h2 {
