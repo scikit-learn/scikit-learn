@@ -909,7 +909,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like of shape (n_samples,)
             Target values
 
-        sample_weight : {float, numpy array}, shape (n_samples), default=None
+        sample_weight : {float, numpy array of shape (n_samples,)}, default=None
             Sample weight.
 
             .. versionadded:: 0.17
