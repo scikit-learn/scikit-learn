@@ -319,17 +319,6 @@ div#carouselExampleSlidesOnly {
   min-height: 200px;
 }
 
-img.sk-footer-funding-logo {
-  max-height: 36px;
-  max-width: 80px;
-  margin: 0 8px;
-  margin-bottom: 8px;
-}
-
-a.sk-footer-funding-link:hover {
-  text-decoration: none;
-}
-
 ul.sk-landing-call-list li {
   margin-bottom: 0.25rem;
 }
