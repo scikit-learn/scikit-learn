@@ -2043,30 +2043,17 @@ shape (n_estimators, ``loss_.K``)
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_classification(n_samples=20, random_state=22)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=5,
-    ...                                                     random_state=22)
-    >>> clf = GradientBoostingClassifier(n_estimators=2, max_depth=1,
-    ...                                  warm_start=True, random_state=22)
+    >>> X, y = make_classification()
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> clf = GradientBoostingClassifier()
     >>> clf.fit(X_train, y_train)
-    GradientBoostingClassifier(max_depth=1, n_estimators=2, random_state=22,
-                               warm_start=True)
+    GradientBoostingClassifier()
     >>> clf.predict(X_test)
-    array([0, 1, 0, 1, 1])
-    >>> clf.score(X_test, y_test)
-    0.8
-    >>> clf.set_params(n_estimators=4).fit(X_train, y_train)  # add 2 stages
-    GradientBoostingClassifier(max_depth=1, n_estimators=4, random_state=22,
-                               warm_start=True)
-    >>> np.array(list(clf.staged_predict(X_test)))
-    array([[0, 0, 0, 0, 0],
-           [0, 1, 0, 1, 1],
-           [0, 1, 0, 1, 1],
-           [1, 1, 0, 1, 1]])
+    array([...])
+    >>> clf.score(X_test, y_test)  # doctest: +SKIP
 
     See also
     --------
@@ -2534,32 +2521,17 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_regression(n_samples=12, random_state=22)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=3,
-    ...                                                     random_state=22)
-    >>> reg = GradientBoostingRegressor(n_estimators=2, max_depth=1,
-    ...                                 warm_start=True, random_state=22)
+    >>> X, y = make_regression()
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> reg = GradientBoostingRegressor()
     >>> reg.fit(X_train, y_train)
-    GradientBoostingRegressor(max_depth=1, n_estimators=2, random_state=22,
-                              warm_start=True)
+    GradientBoostingRegressor()
     >>> reg.predict(X_test)
-    array([-14.15181029, -64.81580953, -14.15181029])
-    >>> reg.score(X_test, y_test)
-    0.10...
-    >>> reg.set_params(n_estimators=4).fit(X_train, y_train)  # add 2 stages
-    GradientBoostingRegressor(max_depth=1, n_estimators=4, random_state=22,
-                              warm_start=True)
-    >>> np.array(list(reg.staged_predict(X_test)))
-    array([[-24.8179154 , -51.48317815, -24.8179154 ],
-           [-14.15181029, -64.81580953, -14.15181029],
-           [ -4.5523157 , -76.81517777,  -4.5523157 ],
-           [  4.08722943, -87.61460918,   4.08722943]])
-    >>> reg.score(X_test, y_test)
-    0.36...
+    array([...])
+    >>> reg.score(X_test, y_test)  # doctest: +SKIP
 
     See also
     --------
