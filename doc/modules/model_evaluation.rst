@@ -3,7 +3,7 @@
 .. _model_evaluation:
 
 ===========================================================
-Metrics and scorers: quantifying the quality of predictions
+Metrics and scoring: quantifying the quality of predictions
 ===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
