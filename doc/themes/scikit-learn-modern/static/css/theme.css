@@ -1048,37 +1048,37 @@ div.testimonial p {
 
 /* Hide expandable content by default */
 .sk-expandable {
-  visibility: collapse;
+  display: none;
   background: #ddd;
 }
 
 /* Show hidden content when the checkbox is checked */
 #quickstart-mac:checked ~ * .mac {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-win:checked ~ * .win {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-lin:checked ~ * .lin {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-venv:checked ~ * .venv {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-pip:checked ~ * .pip {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-conda:checked ~ * .conda {
-  visibility: visible;
+  display: block;
 }
 
 #quickstart-source:checked ~ * .source {
-  visibility: visible;
+  display: block;
 }
 
 /* Algorithm cheet-sheet */
