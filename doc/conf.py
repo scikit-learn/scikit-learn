@@ -272,8 +272,13 @@ class SubSectionTitleOrder:
     def __call__(self, directory):
         src_path = os.path.normpath(os.path.join(self.src_dir, directory))
         readme = os.path.join(src_path, "README.txt")
-        with open(readme, 'r') as f:
-            content = f.read()
+
+        try:
+            with open(readme, 'r') as f:
+                content = f.read()
+        except FileNotFoundError:
+            return directory
+
         title_match = self.regex.search(content)
         if title_match is not None:
             return title_match.group(1)
