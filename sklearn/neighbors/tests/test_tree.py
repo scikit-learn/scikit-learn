@@ -50,7 +50,7 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
 @pytest.mark.parametrize('k', (1, 3, 5))
 @pytest.mark.parametrize('dualtree', (True, False))
 @pytest.mark.parametrize('breadth_first', (True, False))
-def test_kd_tree_query(Cls, metric, k, dualtree, breadth_first):
+def test_nn_tree_query(Cls, metric, k, dualtree, breadth_first):
     rng = check_random_state(0)
     X = rng.random_sample((40, DIMENSION))
     Y = rng.random_sample((10, DIMENSION))
