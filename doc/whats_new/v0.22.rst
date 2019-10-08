@@ -9,6 +9,10 @@ Version 0.22.0
 
 **In Development**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
+
 Changed models
 --------------
 
@@ -572,6 +576,9 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
+- |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
+  ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -638,6 +645,10 @@ Changelog
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
 
+- |Fix| :func:`utils.check_array` will now correctly detect numeric dtypes in
+  pandas dataframes, fixing a bug where ``float32`` was upcast to ``float64``
+  unnecessarily. :pre:`15094` by `Andreas Müller`_.
+  
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
