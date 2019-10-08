@@ -749,8 +749,8 @@ Plotting
 
 .. _linear_model_ref:
 
-:mod:`sklearn.linear_model`: Generalized Linear Models
-======================================================
+:mod:`sklearn.linear_model`: Linear Models
+==========================================
 
 .. automodule:: sklearn.linear_model
    :no-members:
@@ -758,18 +758,51 @@ Plotting
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
+The following subsections are only rough guidelines: the same estimator can
+fall into multiple categories, depending on its parameters.
+
 .. currentmodule:: sklearn
+
+Linear classifiers
+------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
+   linear_model.PassiveAggressiveClassifier
+   linear_model.Perceptron
+   linear_model.RidgeClassifier
+   linear_model.RidgeClassifierCV
+   linear_model.SGDClassifier
+
+Classical linear regressors
+---------------------------
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   linear_model.ARDRegression
-   linear_model.BayesianRidge
+   linear_model.LinearRegression
+   linear_model.Ridge
+   linear_model.RidgeCV
+   linear_model.SGDRegressor
+
+Regressors with variable selection
+----------------------------------
+
+The following estimators have built-in variable selection fitting
+procedures, but any estimator using a L1 or elastic-net penalty also
+performs variable selection: typically :class:`~linear_model.SGDRegressor`
+or :class:`~sklearn.linear_model.SGDClassifier` with an appropriate penalty.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.GammaRegressor
-   linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -777,33 +810,74 @@ Plotting
    linear_model.LassoLars
    linear_model.LassoLarsCV
    linear_model.LassoLarsIC
-   linear_model.LinearRegression
-   linear_model.LogisticRegression
-   linear_model.LogisticRegressionCV
-   linear_model.MultiTaskLasso
-   linear_model.MultiTaskElasticNet
-   linear_model.MultiTaskLassoCV
-   linear_model.MultiTaskElasticNetCV
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
-   linear_model.PassiveAggressiveClassifier
-   linear_model.PassiveAggressiveRegressor
-   linear_model.Perceptron
-   linear_model.PoissonRegressor
+
+Bayesian regressors
+-------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.ARDRegression
+   linear_model.BayesianRidge
+
+Multi-task linear regressors with variable selection
+----------------------------------------------------
+
+These estimators fit multiple regression problems (or tasks) jointly, while
+inducing sparse coefficients. While the inferred coefficients may differ
+between the tasks, they are constrained to agree on the features that are
+selected (non-zero coefficients).
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.MultiTaskElasticNet
+   linear_model.MultiTaskElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskLassoCV
+
+Outlier-robust regressors
+-------------------------
+
+Any estimator using the Huber loss would also be robust to outliers, e.g.
+:class:`~linear_model.SGDRegressor` with ``loss='huber'``.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.HuberRegressor
    linear_model.RANSACRegressor
-   linear_model.Ridge
-   linear_model.RidgeClassifier
-   linear_model.RidgeClassifierCV
-   linear_model.RidgeCV
-   linear_model.SGDClassifier
-   linear_model.SGDRegressor
    linear_model.TheilSenRegressor
+
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+A generalization of linear models that allows for response variables to
+have error distribution other than a normal distribution is implemented
+in the following models,
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
    linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
+Miscellaneous
+-------------
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   linear_model.PassiveAggressiveRegressor
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lars_path_gram
