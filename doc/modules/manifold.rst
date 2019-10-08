@@ -7,19 +7,6 @@
 Manifold learning
 =================
 
-.. rst-class:: quote
-
-                 | Look for the bare necessities
-                 | The simple bare necessities
-                 | Forget about your worries and your strife
-                 | I mean the bare necessities
-                 | Old Mother Nature's recipes
-                 | That bring the bare necessities of life
-                 |
-                 |             -- Baloo's song [The Jungle Book]
-
-
-
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_compare_methods_001.png
    :target: ../auto_examples/manifold/plot_compare_methods.html
    :align: center
