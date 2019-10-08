@@ -18,7 +18,7 @@ from ..base import clone, TransformerMixin
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
-from ..utils import safe_indexing
+from ..utils import _safe_indexing
 from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
@@ -444,7 +444,7 @@ boolean mask array or callable
             return Parallel(n_jobs=self.n_jobs)(
                 delayed(func)(
                     transformer=clone(trans) if not fitted else trans,
-                    X=safe_indexing(X, column, axis=1),
+                    X=_safe_indexing(X, column, axis=1),
                     y=y,
                     weight=weight,
                     message_clsname='ColumnTransformer',

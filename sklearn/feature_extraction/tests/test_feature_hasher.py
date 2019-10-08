@@ -4,6 +4,7 @@ from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.feature_extraction import FeatureHasher
+from sklearn.feature_extraction._hashing import transform as _hashing_transform
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
 from sklearn.exceptions import SklearnDeprecationWarning
@@ -44,6 +45,28 @@ def test_feature_hasher_strings():
         assert X[1].sum() == 3
 
         assert X.nnz == 6
+
+
+def test_hashing_transform_seed():
+    # check the influence of the seed when computing the hashes
+    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
+             ["bar".encode("ascii"), "baz", "quux"]]
+
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices, indptr, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                            False)
+
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices_0, indptr_0, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                                False, seed=0)
+    assert_array_equal(indices, indices_0)
+    assert_array_equal(indptr, indptr_0)
+
+    raw_X_ = (((f, 1) for f in x) for x in raw_X)
+    indices_1, _, _ = _hashing_transform(raw_X_, 2 ** 7, str,
+                                         False, seed=1)
+    with pytest.raises(AssertionError):
+        assert_array_equal(indices, indices_1)
 
 
 def test_feature_hasher_pairs():

@@ -1296,27 +1296,6 @@ def test_backend_respected():
     assert ba.count == 0
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-@pytest.mark.parametrize('oob_score', (True, False))
-def test_multi_target(name, oob_score):
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-
-    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
-
-    X = iris.data
-
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
-
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
-
-
 def test_forest_feature_importances_sum():
     X, y = make_classification(n_samples=15, n_informative=3, random_state=1,
                                n_classes=3)

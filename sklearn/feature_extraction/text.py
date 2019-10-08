@@ -130,10 +130,13 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    normalized = unicodedata.normalize('NFKD', s)
-    if normalized == s:
+    try:
+        # If `s` is ASCII-compatible, then it does not contain any accented
+        # characters and we can avoid an expensive list comprehension
+        s.encode("ASCII", errors="strict")
         return s
-    else:
+    except UnicodeEncodeError:
+        normalized = unicodedata.normalize('NFKD', s)
         return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
@@ -733,7 +736,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         if isinstance(X, str):
@@ -766,7 +769,7 @@ class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         return self.fit(X, y).transform(X)
@@ -1228,7 +1231,7 @@ class CountVectorizer(VectorizerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------

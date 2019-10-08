@@ -114,7 +114,7 @@ else [n_classes, n_features]
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     n_iter_ : int
@@ -199,14 +199,14 @@ else [n_classes, n_features]
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target vector relative to X
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
@@ -386,14 +386,14 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target vector relative to X
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
             samples. If not provided,
             then each sample is given unit weight.
@@ -551,10 +551,10 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
@@ -574,13 +574,13 @@ class SVC(BaseSVC):
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
@@ -757,10 +757,10 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [n_SV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     n_support_ : array-like, dtype=int32, shape = [n_class]
@@ -780,10 +780,10 @@ class NuSVC(BaseSVC):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : array, shape = [n_class * (n_class-1) / 2]
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
         Constants in decision function.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     fit_status_ : int
@@ -927,10 +927,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]
@@ -1056,10 +1056,10 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]
@@ -1177,10 +1177,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like, shape = [n_SV]
+    support_ : array-like of shape (n_SV)
         Indices of support vectors.
 
-    support_vectors_ : array-like, shape = [nSV, n_features]
+    support_vectors_ : array-like of shape (n_SV, n_features)
         Support vectors.
 
     dual_coef_ : array, shape = [1, n_SV]

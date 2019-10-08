@@ -283,7 +283,7 @@ class UntaggedBinaryClassifier(DecisionTreeClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        if self.n_classes_ > 2:
+        if np.all(self.n_classes_ > 2):
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -297,7 +297,7 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=True)
         if (y <= 0).any():
             raise ValueError('negative y values not supported!')
         return super().fit(X, y)
@@ -424,7 +424,9 @@ def test_check_estimator():
     check_estimator(TaggedBinaryClassifier)
 
     # Check regressor with requires_positive_y estimator tag
-    check_estimator(RequiresPositiveYRegressor)
+    msg = 'negative y values not supported!'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        RequiresPositiveYRegressor)
 
 
 def test_check_outlier_corruption():
@@ -514,7 +516,7 @@ def test_check_no_attributes_set_in_init():
 
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
-    # kernel or  metric
+    # kernel or metric
 
     # test precomputed kernel
     est = SVC(kernel='precomputed')

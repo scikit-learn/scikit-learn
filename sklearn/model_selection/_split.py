@@ -19,7 +19,7 @@ from inspect import signature
 
 import numpy as np
 
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
@@ -2130,8 +2130,8 @@ def train_test_split(*arrays, **options):
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    return list(chain.from_iterable((_safe_indexing(a, train),
+                                     _safe_indexing(a, test)) for a in arrays))
 
 
 # Tell nose that train_test_split is not a test.

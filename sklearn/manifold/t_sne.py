@@ -577,6 +577,16 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search. This parameter
+        has no impact when ``metric="precomputed"`` or
+        (``metric="euclidean"`` and ``method="exact"``).
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -621,7 +631,8 @@ class TSNE(BaseEstimator):
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 random_state=None, method='barnes_hut', angle=0.5,
+                 n_jobs=None):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -635,6 +646,7 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+        self.n_jobs = n_jobs
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -694,7 +706,8 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
-                    distances = pairwise_distances(X, metric=self.metric)
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   n_jobs=self.n_jobs)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -720,6 +733,7 @@ class TSNE(BaseEstimator):
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto',
+                                   n_jobs=self.n_jobs,
                                    n_neighbors=n_neighbors,
                                    metric=self.metric)
             t0 = time()
