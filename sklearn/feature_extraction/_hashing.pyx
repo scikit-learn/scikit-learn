@@ -17,7 +17,8 @@ from ..utils.fixes import sp_version
 np.import_array()
 
 
-def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
+def transform(raw_X, Py_ssize_t n_features, dtype,
+              bint alternate_sign=1, unsigned int seed=0):
     """Guts of FeatureHasher.transform.
 
     Returns
@@ -65,7 +66,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
 
-            h = murmurhash3_bytes_s32(<bytes>f, 0)
+            h = murmurhash3_bytes_s32(<bytes>f, seed)
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features

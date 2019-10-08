@@ -21,7 +21,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_no_warnings
 
-from sklearn.base import clone, BaseEstimator
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
@@ -35,6 +35,7 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 
+iris = load_iris()
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -240,7 +241,6 @@ def test_pipeline_init_tuple():
 
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Test with Anova + LogisticRegression
@@ -319,7 +319,6 @@ def test_pipeline_raise_set_params_error():
 
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
@@ -334,7 +333,6 @@ def test_pipeline_methods_pca_svm():
 
 
 def test_pipeline_score_samples_pca_lof():
-    iris = load_iris()
     X = iris.data
     # Test that the score_samples method is implemented on a pipeline.
     # Test that the score_samples method on pipeline yields same results as
@@ -365,7 +363,6 @@ def test_score_samples_on_pipeline_without_score_samples():
 
 def test_pipeline_methods_preprocessing_svm():
     # Test the various methods of the pipeline (preprocessing + svm).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     n_samples = X.shape[0]
@@ -398,7 +395,6 @@ def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
     # test that the fit_predict on pipeline yields same results as applying
     # transform and clustering steps separately
-    iris = load_iris()
     scaler = StandardScaler()
     km = KMeans(random_state=0)
     # As pipeline doesn't clone estimators on construction,
@@ -456,7 +452,6 @@ def test_predict_with_predict_params():
 
 def test_feature_union():
     # basic sanity check for feature union
-    iris = load_iris()
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
@@ -530,7 +525,6 @@ def test_make_union_kwargs():
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
-    iris = load_iris()
     X = iris.data
     pca = PCA(n_components=2, svd_solver='full')
     pipeline = Pipeline([('pca', pca)])
@@ -549,7 +543,6 @@ def test_pipeline_transform():
 
 def test_pipeline_fit_transform():
     # Test whether pipeline works with a transformer missing fit_transform
-    iris = load_iris()
     X = iris.data
     y = iris.target
     transf = Transf()
@@ -771,7 +764,6 @@ def test_make_pipeline():
 
 def test_feature_union_weights():
     # test feature union with transformer weights
-    iris = load_iris()
     X = iris.data
     y = iris.target
     pca = PCA(n_components=2, svd_solver='randomized', random_state=0)
@@ -865,7 +857,6 @@ def test_feature_union_feature_names():
 
 
 def test_classes_property():
-    iris = load_iris()
     X = iris.data
     y = iris.target
 
@@ -907,6 +898,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
+# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
 @pytest.mark.parametrize('drop', ['drop', None])
 def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
@@ -920,25 +912,33 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
-    ft.set_params(m2=drop)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m2=drop)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else not record
 
-    ft.set_params(m3=drop)
-    assert_array_equal([[]], ft.fit(X).transform(X))
-    assert_array_equal([[]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m3=drop)
+        assert_array_equal([[]], ft.fit(X).transform(X))
+        assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert record if drop is None else not record
 
-    # check we can change back
-    ft.set_params(m3=mult3)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
+    with pytest.warns(None) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert record if drop is None else not record
 
-    # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else not record
 
 
 def test_step_name_validation():
@@ -987,7 +987,6 @@ def test_set_params_nested_pipeline():
 def test_pipeline_wrong_memory():
     # Test that an error is raised when memory is not a string or a Memory
     # instance
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Define memory as an integer
@@ -1022,7 +1021,6 @@ def test_pipeline_with_cache_attribute():
 
 
 def test_pipeline_memory():
-    iris = load_iris()
     X = iris.data
     y = iris.target
     cachedir = mkdtemp()
@@ -1138,7 +1136,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
       r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
@@ -1161,3 +1159,39 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_feature_union_fit_params():
+    # Regression test for issue: #15117
+    class Dummy(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None, **fit_params):
+            if fit_params != {'a': 0}:
+                raise ValueError
+            return self
+
+        def transform(self, X, y=None):
+            return X
+
+    X, y = iris.data, iris.target
+    t = FeatureUnion([('dummy0', Dummy()), ('dummy1', Dummy())])
+    with pytest.raises(ValueError):
+        t.fit(X, y)
+
+    with pytest.raises(ValueError):
+        t.fit_transform(X, y)
+
+    t.fit(X, y, a=0)
+    t.fit_transform(X, y, a=0)
+
+
+# TODO: Remove in 0.24 when None is removed
+def test_feature_union_warns_with_none():
+    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
+           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
+
+    X = [[1, 2, 3], [4, 5, 6]]
+
+    with pytest.warns(DeprecationWarning, match=msg):
+        union.fit_transform(X)

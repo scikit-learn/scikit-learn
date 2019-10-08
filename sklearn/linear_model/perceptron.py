@@ -108,7 +108,7 @@ class Perceptron(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     t_ : int

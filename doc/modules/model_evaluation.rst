@@ -61,7 +61,7 @@ Scoring                           Function                                      
 'accuracy'                        :func:`metrics.accuracy_score`
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
+'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged

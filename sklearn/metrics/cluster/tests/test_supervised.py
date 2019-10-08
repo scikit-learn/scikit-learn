@@ -34,8 +34,8 @@ score_funcs = [
 @ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
-        expected = ('labels_true and labels_pred must have same size,'
-                    ' got 2 and 3')
+        expected = (r'Found input variables with inconsistent numbers '
+                    r'of samples: \[2, 3\]')
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
 

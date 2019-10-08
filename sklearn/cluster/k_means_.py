@@ -987,7 +987,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         y : Ignored
@@ -1011,7 +1011,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         y : Ignored
@@ -1041,7 +1041,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to transform.
 
         Returns
@@ -1067,7 +1067,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         sample_weight : array-like, shape (n_samples,), optional
@@ -1091,7 +1091,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data.
 
         y : Ignored
@@ -1666,7 +1666,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Coordinates of the data points to cluster. It must be noted that
             X will be copied if it is not C-contiguous.
 
@@ -1737,7 +1737,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         sample_weight : array-like, shape (n_samples,), optional
