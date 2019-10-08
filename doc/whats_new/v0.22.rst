@@ -603,7 +603,7 @@ Miscellaneous
 
 - |API| Scikit-learn currently converts any input data structure implementing a duck array
   to a numpy array (using ``__array__``) to ensusure consistent behavior instead of
-  relying on ``__array_function__``.
+  relying on ``__array_function__`` (see `NEP 18`_).
 
 - |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
   using a non-fitted estimators are now more uniform.
