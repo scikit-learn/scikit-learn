@@ -1425,7 +1425,7 @@ class _RidgeGCV(LinearModel):
                          multi_output=True, y_numeric=True)
 
         # if classification, LabelBinarizer applied first in RidgeClassifierCV
-        # y (output of lb) would be -1 or 1 only
+        # then output of labelBinarizer (y) would be -1 or 1 only
         is_clf = ((y == -1) | (y == 1)).all()
 
         if np.any(self.alphas <= 0):
@@ -1484,7 +1484,6 @@ class _RidgeGCV(LinearModel):
         else:
 
             if not is_clf:
-
                 # The scorer want an object that will make the predictions but
                 # they are already computed efficiently by _RidgeGCV. This
                 # identity_estimator will just return them
@@ -1498,7 +1497,6 @@ class _RidgeGCV(LinearModel):
                        for i in range(len(self.alphas))]
 
             else:
-
                 scorer.needs_threshold = True
                 y = y.argmax(axis=1)
 
