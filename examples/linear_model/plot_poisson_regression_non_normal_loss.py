@@ -256,26 +256,32 @@ score_estimator(rf, df_test)
 # comparing the histogram of observed target values with that of predicted
 # values:
 
-
-fig, axes = plt.subplots(1, 4, figsize=(16, 3), sharey=True)
+fig, axes = plt.subplots(2, 4, figsize=(16, 6), sharey=True)
 fig.subplots_adjust(bottom=0.2)
 n_bins = 20
-df_train["Frequency"].hist(bins=np.linspace(-1, 10, n_bins), ax=axes[0])
+for row_idx, label, df in zip(range(2),
+                              ["train", "test"],
+                              [df_train, df_test]):
+    df["Frequency"].hist(bins=np.linspace(-1, 30, n_bins),
+                         ax=axes[row_idx, 0])
 
-axes[0].set_title("Data")
-axes[0].set_yscale('log')
-axes[0].set_xlabel("y (observed Frequency)")
-axes[0].set_ylim([1E2, 5E5])
+    axes[row_idx, 0].set_title("Data")
+    axes[row_idx, 0].set_yscale('log')
+    axes[row_idx, 0].set_xlabel("y (observed Frequency)")
+    axes[row_idx, 0].set_ylim([1e1, 5e5])
+    axes[row_idx, 0].set_ylabel(label + " samples")
 
-for idx, model in enumerate([ridge, poisson, rf]):
-    y_pred = model.predict(df_train)
+    for idx, model in enumerate([ridge, poisson, rf]):
+        y_pred = model.predict(df)
 
-    pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins), ax=axes[idx+1])
-    axes[idx + 1].set(
-        title=model[-1].__class__.__name__,
-        yscale='log',
-        xlabel="y_pred (predicted expected Frequency)"
-    )
+        pd.Series(y_pred).hist(bins=np.linspace(-1, 4, n_bins),
+                               ax=axes[row_idx, idx+1])
+        axes[row_idx, idx + 1].set(
+            title=model[-1].__class__.__name__,
+            yscale='log',
+            xlabel="y_pred (predicted expected Frequency)"
+        )
+plt.tight_layout()
 
 ##############################################################################
 #
