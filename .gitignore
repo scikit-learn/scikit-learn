@@ -80,3 +80,7 @@ sklearn/linear_model/sag_fast.pyx
 # deprecated paths
 # TODO: Remove in 0.24
 sklearn/utils/mocking.py
+
+sklearn/mixture/base.py
+sklearn/mixture/gaussian_mixture.py
+sklearn/mixture/bayesian_mixture.py
