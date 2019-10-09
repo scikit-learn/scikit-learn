@@ -28,7 +28,7 @@ from .link import (
 
 
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
-    """Regression via a Generalized Linear Model (GLM) with penalties.
+    """Regression via a penalized Generalized Linear Model (GLM).
 
     GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
     fitting and predicting the mean of the target y as y_pred=h(X*w).
@@ -575,19 +575,19 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
             Special cases are:
 
-            +-------+------------------+
-            | Power | Distribution     |
-            +=======+==================+
-            | 0     | Normal           |
-            +-------+------------------+
-            | 1     | Poisson          |
-            +-------+------------------+
-            | (1,2) | Compound Poisson |
-            +-------+------------------+
-            | 2     | Gamma            |
-            +-------+------------------+
-            | 3     | Inverse Gaussian |
-            +-------+------------------+
+            +-------+------------------------+
+            | Power | Distribution           |
+            +=======+========================+
+            | 0     | Normal                 |
+            +-------+------------------------+
+            | 1     | Poisson                |
+            +-------+------------------------+
+            | (1,2) | Compound Poisson Gamma |
+            +-------+------------------------+
+            | 2     | Gamma                  |
+            +-------+------------------------+
+            | 3     | Inverse Gaussian       |
+            +-------+------------------------+
 
     alpha : float, optional (default=1)
         Constant that multiplies the penalty terms and thus determines the
