@@ -535,14 +535,16 @@ folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
 Example of stratified 3-fold cross-validation on a dataset with 50 samples from
-two unbalanced classes and comparing with :class:`KFold` split::
+two unbalanced classes and comparing with :class:`KFold`::
 
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
 
-  >>> X, y = np.ones((50,1)), np.hstack(([0]*45, [1]*5))
+  >>> X, y = np.ones((50, 1)), np.hstack(([0] * 45, [1] * 5))
 
   >>> skf = StratifiedKFold(n_splits=3)
+  >>> print('Number of samples in each class for StratifiedKFold')
+  Number of samples in each class for StratifiedKFold 
   >>> for train, test in skf.split(X, y):  
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
@@ -550,6 +552,8 @@ two unbalanced classes and comparing with :class:`KFold` split::
   train -  [30  3]   |   test -  [15  2]
   train -  [30  4]   |   test -  [15  1]
   >>> kf = KFold(n_splits=3)
+  >>> print('Number of samples in each class for KFold')
+  Number of samples in each class for KFold
   >>> for train, test in kf.split(X, y):
   ...     print('train -  {}   |   test -  {}'.format(
   ...         np.bincount(y[train]), np.bincount(y[test])))
