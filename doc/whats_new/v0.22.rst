@@ -420,10 +420,10 @@ Changelog
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
 
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
-  Tweedie deviance for a power parameter ``power``. Also add mean Poisson
+  Tweedie deviance for a given ``power`` parameter. Also add mean Poisson
   deviance :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
   :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
-  deviance for `power=1` and `power=2` respectively.
+  deviance for ``power=1`` and ``power=2`` respectively.
   :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
   `Roman Yurchak`_.
 
