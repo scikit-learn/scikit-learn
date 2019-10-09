@@ -117,3 +117,23 @@ from sklearn.datasets import fetch_openml
 
 titanic = fetch_openml('titanic', version=1, as_frame=True)
 print(titanic.data.head()[['pclass', 'embarked']])
+
+############################################################################
+# Precomputed sparse nearest neighbors graph
+# ------------------------------------------
+# Most estimators based on nearest neighbors graphs now accept precomputed
+# sparse graphs as input, to reuse the same graph for multiple estimator fits.
+# To use this feature in a pipeline, one can use the `memory` parameter, along
+# with one of the two new transformers, :func:`neighbors.KNeighborsTransformer
+# and :func:`neighbors.RadiusNeighborsTransformer`. The precomputation can also
+# be performed by custom estimators to use alternative implementations, such as
+# approximate nearest neighbors methods. See more details in the
+# :ref:`User Guide <_neighbors_transformer>`.
+
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.manifold import Isomap
+from sklearn.pipeline import make_pipeline
+estimator = make_pipeline(
+    KNeighborsTransformer(n_neighbors=5, mode='distance'),
+    Isomap(neighbors_algorithm='precomputed'),
+    memory='/path/to/cache')
