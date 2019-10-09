@@ -62,10 +62,6 @@ strong {
   font-weight: bold;
 }
 
-div.line-block {
-  height: 0;
-}
-
 a code {
   color: inherit;
 }
@@ -154,6 +150,21 @@ div.clearer {
 .sk-btn-primary:active {
   background-color: #3499cd;
   border-color: #3499cd;
+}
+
+/* Quote */
+
+.quote {
+  text-align: right;
+  line-height: 1.5em;
+  font-style: italic;
+  margin: 2em 3em 1em 3em;
+}
+
+.line-block {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 /* Search */
