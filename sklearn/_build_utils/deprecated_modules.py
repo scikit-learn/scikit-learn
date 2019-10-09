@@ -7,7 +7,11 @@ from contextlib import suppress
 # (new_module_name, deprecated_path, correct_import_path)
 _DEPRECATED_MODULES = {
     # TODO: Remove in 0.24
-    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils')
+    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
+
+    ('_base', 'sklearn.svm.base', 'sklearn.svm'),
+    ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm'),
+    ('_classes', 'sklearn.svm.classes', 'sklearn.svm'),
 }
 
 _FILE_CONTENT_TEMPLATE = """from .{new_module_name} import *  # noqa
