@@ -410,15 +410,15 @@ plot_obs_pred(
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
-# 4. Total claim amount -- Compound Poisson distribution
-# -------------------------------------------------------
+# 4. Total claim amount -- Compound Poisson Gamma distribution
+#    ------------------------------------------------------------
 #
 # As mentioned in the introduction, the total claim amount can be modeled
 # either as the product of the frequency model by the severity model,
 # denormalized by exposure. In the following code sample, the
-# ``score_estimator`` is extended to score such a model. The mean deviance
-# is computed assuming a Tweedie distribution with ``power=1.5`` to be
-# comparable with the model from the following section,
+# ``score_estimator`` is extended to score such a model. The mean deviance is
+# computed assuming a Tweedie distribution with ``power=1.5`` to be comparable
+# with the model from the following section,
 
 
 scores = score_estimator(
@@ -436,9 +436,9 @@ print(scores)
 ##############################################################################
 #
 # Indeed, an alternative approach for modeling the total loss is with a unique
-# Compound Poisson model, also corresponding to a Tweedie model
-# with a power :math:`p \in (1, 2)`. We determine the optimal hyperparameter
-# ``p`` with a grid search,
+# Compound Poisson Gamma model, also corresponding to a Tweedie model with a
+# power :math:`p \in (1, 2)`. We determine the optimal hyperparameter ``p``
+# with a grid search:
 
 from sklearn.model_selection import GridSearchCV
 
@@ -475,12 +475,13 @@ print(scores)
 ##############################################################################
 #
 # In this example, the mean absolute error is lower for the Compound Poisson
-# model than when using separate models for frequency and severity.
+# Gamma model than when using the product of the predictions of separate
+# models for frequency and severity.
 #
-# We can additionally validate these models by comparing observed and predicted
-# total claim amount over the test and train subsets. We see that in our case
-# the frequency-severity model underestimates the total claim amount, whereas
-# the Tweedie model overestimates.
+# We can additionally validate these models by comparing observed and
+# predicted total claim amount over the test and train subsets. We see that,
+# on average, the frequency-severity model underestimates the total claim
+# amount, whereas the Tweedie model overestimates.
 
 res = []
 for subset_label, X, df in [
