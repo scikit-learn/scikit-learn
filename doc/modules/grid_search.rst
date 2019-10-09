@@ -121,6 +121,7 @@ discrete choices (which will be sampled uniformly) can be specified::
 This example uses the ``scipy.stats`` module, which contains many useful
 distributions for sampling parameters, such as ``expon``, ``gamma``,
 ``uniform`` or ``randint``.
+
 In principle, any function can be passed that provides a ``rvs`` (random
 variate sample) method to sample a value. A call to the ``rvs`` function should
 provide independent random samples from possible parameter values on
@@ -138,6 +139,22 @@ consecutive calls.
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
+
+A continuous log-uniform random variable is available through
+:class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
+log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
+100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
+num=1000)``. This is an alias to SciPy's `stats.reciprocal
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+
+Mirroring the example above in grid search, we can specify a continuous random
+variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
+
+  from sklearn.utils.fixes import loguniform
+  {'C': loguniform(1e0, 1e3),
+   'gamma': loguniform(1e-4, 1e-3),
+   'kernel': ['rbf'],
+   'class_weight':['balanced', None]}
 
 .. topic:: Examples:
 
@@ -196,10 +213,13 @@ for an example usage.
 
 Composite estimators and parameter spaces
 -----------------------------------------
-`GridSearchCV` and `RandomizedSearchCV` allow searching over parameters of
-composite or nested estimators such as `pipeline.Pipeline`,
-`ColumnTransformer`, `VotingClassifier` or `CalibratedClassifierCV`
-using a dedicated ``<estimator>__<parameter>`` syntax::
+:class:`GridSearchCV` and :class:`RandomizedSearchCV` allow searching over
+parameters of composite or nested estimators such as
+:class:`~sklearn.pipeline.Pipeline`,
+:class:`~sklearn.compose.ColumnTransformer`,
+:class:`~sklearn.ensemble.VotingClassifier` or
+:class:`~sklearn.calibration.CalibratedClassifierCV` using a dedicated
+``<estimator>__<parameter>`` syntax::
 
   >>> from sklearn.model_selection import GridSearchCV
   >>> from sklearn.calibration import CalibratedClassifierCV

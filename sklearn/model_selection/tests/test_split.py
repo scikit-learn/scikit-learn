@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
@@ -978,6 +978,17 @@ def test_repeated_cv_value_errors():
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
         assert_raises(ValueError, cv, n_repeats=0)
         assert_raises(ValueError, cv, n_repeats=1.5)
+
+
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
+def test_repeated_cv_repr(RepeatedCV):
+    n_splits, n_repeats = 2, 6
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv_repr = ('{}(n_repeats=6, n_splits=2, random_state=None)'
+                        .format(repeated_cv.__class__.__name__))
+    assert repeated_cv_repr == repr(repeated_cv)
 
 
 def test_repeated_kfold_determinstic_split():
