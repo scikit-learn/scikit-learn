@@ -561,6 +561,9 @@ two unbalanced classes and comparing with :class:`KFold`::
   train -  [28  5]   |   test -  [17]
   train -  [34]   |   test -  [11  5]
 
+We can see that :class:StratifiedKFold preserves the class ratios 
+(approximately 1 / 10) in both train and test dataset.
+
 Here is a visualization of the cross-validation behavior.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
