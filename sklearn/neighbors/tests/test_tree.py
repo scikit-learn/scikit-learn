@@ -28,7 +28,7 @@ METRICS = {'euclidean': {},
            'mahalanobis': dict(V=V_mahalanobis)}
 
 KD_TREE_METRICS = ['euclidean', 'manhattan', 'chebyshev', 'minkowski']
-BALL_TREE_METRICS = list(METRICS.keys())
+BALL_TREE_METRICS = list(METRICS)
 
 
 def dist_func(x1, x2, p):
