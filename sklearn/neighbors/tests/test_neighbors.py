@@ -1,19 +1,22 @@
 from itertools import product
 
+import pytest
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
 
-import pytest
-
 from sklearn import metrics
 from sklearn import neighbors, datasets
+from sklearn.base import clone
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import EfficiencyWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
+from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -133,15 +136,15 @@ def test_not_fitted_error_gets_raised():
     assert_raises(NotFittedError, neighbors_.radius_neighbors_graph, X)
 
 
-def test_precomputed(random_state=42):
+@ignore_warnings(category=EfficiencyWarning)
+def check_precomputed(make_train_test, estimators):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
-    rng = np.random.RandomState(random_state)
+    rng = np.random.RandomState(42)
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((3, 4))
-    DXX = metrics.pairwise_distances(X, metric='euclidean')
-    DYX = metrics.pairwise_distances(Y, X, metric='euclidean')
-    for method in ['kneighbors']:
+    DXX, DYX = make_train_test(X, Y)
+    for method in ['kneighbors', ]:
         # TODO: also test radius_neighbors, but requires different assertion
 
         # As a feature matrix (n_samples by n_features)
@@ -175,17 +178,125 @@ def test_precomputed(random_state=42):
         assert_raises(ValueError, getattr(nbrs_D, method), X)
 
     target = np.arange(X.shape[0])
-    for Est in (neighbors.KNeighborsClassifier,
-                neighbors.RadiusNeighborsClassifier,
-                neighbors.KNeighborsRegressor,
-                neighbors.RadiusNeighborsRegressor):
-        print(Est)
+    for Est in estimators:
         est = Est(metric='euclidean')
         est.radius = est.n_neighbors = 1
         pred_X = est.fit(X, target).predict(Y)
         est.metric = 'precomputed'
         pred_D = est.fit(DXX, target).predict(DYX)
         assert_array_almost_equal(pred_X, pred_D)
+
+
+def test_precomputed_dense():
+    def make_train_test(X_train, X_test):
+        return (metrics.pairwise_distances(X_train),
+                metrics.pairwise_distances(X_test, X_train))
+
+    estimators = [
+        neighbors.KNeighborsClassifier, neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsClassifier, neighbors.RadiusNeighborsRegressor
+    ]
+    check_precomputed(make_train_test, estimators)
+
+
+@pytest.mark.parametrize('fmt', ['csr', 'lil'])
+def test_precomputed_sparse_knn(fmt):
+    def make_train_test(X_train, X_test):
+        nn = neighbors.NearestNeighbors(n_neighbors=3 + 1).fit(X_train)
+        return (nn.kneighbors_graph(X_train, mode='distance').asformat(fmt),
+                nn.kneighbors_graph(X_test, mode='distance').asformat(fmt))
+
+    # We do not test RadiusNeighborsClassifier and RadiusNeighborsRegressor
+    # since the precomputed neighbors graph is built with k neighbors only.
+    estimators = [
+        neighbors.KNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+    ]
+    check_precomputed(make_train_test, estimators)
+
+
+@pytest.mark.parametrize('fmt', ['csr', 'lil'])
+def test_precomputed_sparse_radius(fmt):
+    def make_train_test(X_train, X_test):
+        nn = neighbors.NearestNeighbors(radius=1).fit(X_train)
+        return (nn.radius_neighbors_graph(X_train,
+                                          mode='distance').asformat(fmt),
+                nn.radius_neighbors_graph(X_test,
+                                          mode='distance').asformat(fmt))
+
+    # We do not test KNeighborsClassifier and KNeighborsRegressor
+    # since the precomputed neighbors graph is built with a radius.
+    estimators = [
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.RadiusNeighborsRegressor,
+    ]
+    check_precomputed(make_train_test, estimators)
+
+
+def test_is_sorted_by_data():
+    # Test that _is_sorted_by_data works as expected. In CSR sparse matrix,
+    # entries in each row can be sorted by indices, by data, or unsorted.
+    # _is_sorted_by_data should return True when entries are sorted by data,
+    # and False in all other cases.
+
+    # Test with sorted 1D array
+    X = csr_matrix(np.arange(10))
+    assert _is_sorted_by_data(X)
+    # Test with unsorted 1D array
+    X[0, 2] = 5
+    assert not _is_sorted_by_data(X)
+
+    # Test when the data is sorted in each sample, but not necessarily
+    # between samples
+    X = csr_matrix([[0, 1, 2], [3, 0, 0], [3, 4, 0], [1, 0, 2]])
+    assert _is_sorted_by_data(X)
+
+    # Test with duplicates entries in X.indptr
+    data, indices, indptr = [0, 4, 2, 2], [0, 1, 1, 1], [0, 2, 2, 4]
+    X = csr_matrix((data, indices, indptr), shape=(3, 3))
+    assert _is_sorted_by_data(X)
+
+
+@ignore_warnings(category=EfficiencyWarning)
+def test_check_precomputed():
+    # Test that _check_precomputed returns a graph sorted by data
+    X = csr_matrix(np.abs(np.random.RandomState(42).randn(10, 10)))
+    assert not _is_sorted_by_data(X)
+    Xt = _check_precomputed(X)
+    assert _is_sorted_by_data(Xt)
+
+    # est with a different number of nonzero entries for each sample
+    mask = np.random.RandomState(42).randint(2, size=(10, 10))
+    X = X.toarray()
+    X[mask == 1] = 0
+    X = csr_matrix(X)
+    assert not _is_sorted_by_data(X)
+    Xt = _check_precomputed(X)
+    assert _is_sorted_by_data(Xt)
+
+
+@ignore_warnings(category=EfficiencyWarning)
+def test_precomputed_sparse_invalid():
+    dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
+    dist_csr = csr_matrix(dist)
+    neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
+    neigh.fit(dist_csr)
+    neigh.kneighbors(None, n_neighbors=1)
+    neigh.kneighbors(np.array([[0., 0., 0.]]), n_neighbors=2)
+
+    # Ensures enough number of nearest neighbors
+    dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
+    dist_csr = csr_matrix(dist)
+    neigh.fit(dist_csr)
+    msg = "2 neighbors per samples are required, but some samples have only 1"
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, None, n_neighbors=1)
+
+    # Checks error with inconsistent distance matrix
+    dist = np.array([[5., 2., 1.], [-2., 0., 3.], [1., 3., 0.]])
+    dist_csr = csr_matrix(dist)
+    msg = "Negative values in data passed to precomputed distance matrix."
+    assert_raises_regex(ValueError, msg, neigh.kneighbors, dist_csr,
+                        n_neighbors=1)
 
 
 def test_precomputed_cross_validation():
@@ -821,6 +932,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
+@ignore_warnings(category=EfficiencyWarning)
 def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,
@@ -846,10 +958,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
             assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
-            if issparse(sparsev(X2_pre)):
-                assert_raises(ValueError, knn_pre.predict, X2_pre)
-            else:
-                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
+            assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
@@ -1318,6 +1427,7 @@ def test_k_and_radius_neighbors_duplicates():
 
         rng = nn.radius_neighbors_graph([[0], [1]], radius=1.5,
                                         mode='distance')
+        rng.sort_indices()
         assert_array_equal(rng.A, [[0, 1], [1, 0]])
         assert_array_equal(rng.indices, [0, 1, 0, 1])
         assert_array_equal(rng.data, [0, 1, 1, 0])
@@ -1498,3 +1608,45 @@ def test_radius_neighbors_predict_proba():
         proba_label = np.where(proba.sum(axis=1) == 0,
                                outlier_label, proba_label)
         assert_array_equal(pred, proba_label)
+
+
+def test_pipeline_with_nearest_neighbors_transformer():
+    # Test chaining KNeighborsTransformer and classifiers/regressors
+    rng = np.random.RandomState(0)
+    X = 2 * rng.rand(40, 5) - 1
+    X2 = 2 * rng.rand(40, 5) - 1
+    y = rng.rand(40, 1)
+
+    n_neighbors = 12
+    radius = 1.5
+    # We precompute more neighbors than necessary, to have equivalence between
+    # k-neighbors estimator after radius-neighbors transformer, and vice-versa.
+    factor = 2
+
+    k_trans = neighbors.KNeighborsTransformer(
+        n_neighbors=n_neighbors, mode='distance')
+    k_trans_factor = neighbors.KNeighborsTransformer(
+        n_neighbors=int(n_neighbors * factor), mode='distance')
+
+    r_trans = neighbors.RadiusNeighborsTransformer(
+        radius=radius, mode='distance')
+    r_trans_factor = neighbors.RadiusNeighborsTransformer(
+        radius=int(radius * factor), mode='distance')
+
+    k_reg = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors)
+    r_reg = neighbors.RadiusNeighborsRegressor(radius=radius)
+
+    test_list = [(k_trans, k_reg), (k_trans_factor, r_reg),
+                 (r_trans, r_reg), (r_trans_factor, k_reg), ]
+
+    for trans, reg in test_list:
+        # compare the chained version and the compact version
+        reg_compact = clone(reg)
+        reg_precomp = clone(reg)
+        reg_precomp.set_params(metric='precomputed')
+
+        reg_chain = make_pipeline(clone(trans), reg_precomp)
+
+        y_pred_chain = reg_chain.fit(X, y).predict(X2)
+        y_pred_compact = reg_compact.fit(X, y).predict(X2)
+        assert_array_almost_equal(y_pred_chain, y_pred_compact)

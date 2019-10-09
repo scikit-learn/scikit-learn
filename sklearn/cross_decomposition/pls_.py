@@ -241,11 +241,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like, shape = [n_samples, n_targets]
+        Y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
@@ -387,11 +387,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like, shape = [n_samples, n_targets]
+        Y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
@@ -425,7 +425,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
@@ -450,11 +450,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like, shape = [n_samples, n_targets]
+        y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
@@ -818,11 +818,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like, shape = [n_samples, n_targets]
+        Y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
@@ -868,11 +868,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like, shape = [n_samples, n_targets]
+        Y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
@@ -893,11 +893,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like, shape = [n_samples, n_targets]
+        y : array-like of shape (n_samples, n_targets)
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 

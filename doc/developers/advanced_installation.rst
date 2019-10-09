@@ -1,31 +1,9 @@
 
 .. _advanced-installation:
 
-===================================
-Advanced installation instructions
-===================================
-
-There are different ways to get scikit-learn installed:
-
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version
-    and pre-build packages are available for most platforms.
-
-  * Install the version of scikit-learn provided by your
-    :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is a quick option for those who have operating systems
-    that distribute scikit-learn. It might not provide the latest release
-    version.
-
-  * :ref:`Building the package from source
-    <install_bleeding_edge>`. This is best for users who want the
-    latest-and-greatest features and aren't afraid of running
-    brand-new code. This document describes how to build from source.
-
-.. note::
-
-    If you wish to contribute to the project, you need to
-    :ref:`install the latest development version<install_bleeding_edge>`.
+==================================================================
+Installing the development version of scikit-learn (master branch)
+==================================================================
 
 .. _install_nightly_builds:
 
