@@ -110,6 +110,10 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
+The :class:`Ridge` regressor has a classifier variant:
+:class:`RidgeClassifier`. This classifier first converts binary targets to
+``{-1, 1}`` and then treats the problem as a regression task, optimizing
+the same objective as above.
 
 .. topic:: Examples:
 
