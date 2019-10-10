@@ -27,6 +27,27 @@ from .link import (
 )
 
 
+def _safe_lin_pred(X, coef):
+    """Compute the linear predictor taking care if intercept is present."""
+    if coef.size == X.shape[1] + 1:
+        return X @ coef[1:] + coef[0]
+    else:
+        return X @ coef
+
+
+def _y_pred_deviance_derivative(coef, X, y, weights, family, link):
+    """Compute y_pred and the derivative of the deviance w.r.t coef."""
+    lin_pred = _safe_lin_pred(X, coef)
+    y_pred = link.inverse(lin_pred)
+    d1 = link.inverse_derivative(lin_pred)
+    temp = d1 * family.deviance_derivative(y, y_pred, weights)
+    if coef.size == X.shape[1] + 1:
+        devp = np.concatenate(([temp.sum()], temp @ X))
+    else:
+        devp = temp @ X  # same as X.T @ temp
+    return y_pred, devp
+
+
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a penalized Generalized Linear Model (GLM).
 
@@ -251,8 +272,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if solver == 'lbfgs':
             def func(coef, X, y, weights, alpha, family, link):
-                y_pred, devp = family._y_pred_deviance_derivative(
-                    coef, X, y, weights, link
+                y_pred, devp = _y_pred_deviance_derivative(
+                    coef, X, y, weights, family, link
                 )
                 dev = family.deviance(y, y_pred, weights)
                 intercept = (coef.size == X.shape[1] + 1)

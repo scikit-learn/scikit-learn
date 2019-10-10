@@ -13,14 +13,6 @@ import numpy as np
 from scipy.special import xlogy
 
 
-def _safe_lin_pred(X, coef):
-    """Compute the linear predictor taking care if intercept is present."""
-    if coef.size == X.shape[1] + 1:
-        return X @ coef[1:] + coef[0]
-    else:
-        return X @ coef
-
-
 DistributionBoundary = namedtuple("DistributionBoundary",
                                   ("value", "inclusive"))
 
@@ -198,17 +190,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         """
         return weights * self.unit_deviance_derivative(y, y_pred)
 
-    def _y_pred_deviance_derivative(self, coef, X, y, weights, link):
-        """Compute y_pred and the derivative of the deviance w.r.t coef."""
-        lin_pred = _safe_lin_pred(X, coef)
-        y_pred = link.inverse(lin_pred)
-        d1 = link.inverse_derivative(lin_pred)
-        temp = d1 * self.deviance_derivative(y, y_pred, weights)
-        if coef.size == X.shape[1] + 1:
-            devp = np.concatenate(([temp.sum()], temp @ X))
-        else:
-            devp = temp @ X  # same as X.T @ temp
-        return y_pred, devp
 
 
 class TweedieDistribution(ExponentialDispersionModel):
