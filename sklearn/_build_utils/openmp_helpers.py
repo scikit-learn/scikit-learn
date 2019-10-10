@@ -152,9 +152,15 @@ def check_openmp_support():
             nthreads = int(output[0].strip().split('=')[1])
             openmp_supported = (len(output) == nthreads)
         else:
+            print("########################")
+            print("output error")
+            print("########################")
             openmp_supported = False
 
     except (CompileError, LinkError, subprocess.CalledProcessError):
+        print("########################")
+        print("compile error")
+        print("########################")
         openmp_supported = False
 
     err_message = textwrap.dedent(
