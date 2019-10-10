@@ -1551,15 +1551,16 @@ def test_precision_recall_f1_no_labels_check_warnings(average):
     y_pred = np.zeros_like(y_true)
 
     func = precision_recall_fscore_support
-    p, r, f, s = assert_warns(UndefinedMetricWarning, func, y_true, y_pred,
-                              average=average, beta=1.0)
-    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score, y_true, y_pred,
-                         average=average, beta=1.0)
+    with pytest.warns(UndefinedMetricWarning):
+        p, r, f, s = func(y_true, y_pred, average=average, beta=1.0)
 
     assert_almost_equal(p, 0)
     assert_almost_equal(r, 0)
     assert_almost_equal(f, 0)
     assert s is None
+
+    with pytest.warns(UndefinedMetricWarning):
+        fbeta = fbeta_score(y_true, y_pred, average=average, beta=1.0)
 
     assert_almost_equal(fbeta, 0)
 
@@ -1613,16 +1614,18 @@ def test_precision_recall_f1_no_labels_average_none_warn():
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
 
-    p, r, f, s = assert_warns(UndefinedMetricWarning,
-                              precision_recall_fscore_support,
-                              y_true, y_pred, average=None, beta=1)
-    fbeta = assert_warns(UndefinedMetricWarning, fbeta_score, y_true, y_pred,
-                         beta=1, average=None)
+    with pytest.warns(UndefinedMetricWarning):
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, average=None, beta=1
+        )
 
     assert_array_almost_equal(p, [0, 0, 0], 2)
     assert_array_almost_equal(r, [0, 0, 0], 2)
     assert_array_almost_equal(f, [0, 0, 0], 2)
     assert_array_almost_equal(s, [0, 0, 0], 2)
+
+    with pytest.warns(UndefinedMetricWarning):
+        fbeta = fbeta_score(y_true, y_pred, beta=1, average=None)
 
     assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
