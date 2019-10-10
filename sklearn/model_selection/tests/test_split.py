@@ -1,4 +1,5 @@
 """Test the split module"""
+import numbers
 import warnings
 import pytest
 import numpy as np
