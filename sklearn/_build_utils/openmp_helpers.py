@@ -18,6 +18,16 @@ from distutils.errors import CompileError, LinkError
 
 CCODE = textwrap.dedent(
     """\
+    #include <stdio.h>
+    int main(void) {
+    printf("success\\n");
+    return 0;
+    }
+    """)
+
+
+CCODE_OPENMP = textwrap.dedent(
+    """\
     #include <omp.h>
     #include <stdio.h>
     int main(void) {
@@ -26,6 +36,63 @@ CCODE = textwrap.dedent(
     return 0;
     }
     """)
+
+
+def compile_test_program(CCODE, extra_preargs=[], extra_postargs=[]):
+    """Check that some C code can be compiled and run"""
+    ccompiler = new_compiler()
+    customize_compiler(ccompiler)
+
+    # extra_(pre/post)args can be a callable to make it possible to get it's
+    # value from the compiler
+    if callable(extra_preargs):
+        extra_preargs = extra_preargs(ccompiler)
+    if callable(extra_postargs):
+        extra_postargs = extra_postargs(ccompiler)
+
+    start_dir = os.path.abspath('.')
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        os.chdir(tmp_dir)
+
+        # Write test program
+        with open('test_program.c', 'w') as f:
+            f.write(CCODE)
+
+        os.mkdir('objects')
+
+        # Compile, test program
+        ccompiler.compile(['test_program.c'], output_dir='objects',
+                          extra_postargs=extra_postargs)
+
+        # Link test program
+        objects = glob.glob(
+            os.path.join('objects', '*' + ccompiler.obj_extension))
+        ccompiler.link_executable(objects, 'test_program',
+                                  extra_preargs=extra_preargs,
+                                  extra_postargs=extra_postargs)
+
+        # Run test program
+        output = subprocess.check_output('./test_program')
+        output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
+
+        os.chdir(start_dir)
+
+    return output
+
+
+def basic_check_build():
+    """Check basic compilation and linking of C code"""
+    try:
+        output = compile_test_program(CCODE)
+        if 'success' in output[0]:
+            compiler_ok = True
+        else:
+            compiler_ok = False
+    except (CompileError, LinkError, subprocess.CalledProcessError):
+        compiler_ok = False
+
+    return compiler_ok
 
 
 def get_openmp_flag(compiler):
@@ -59,59 +126,36 @@ def get_openmp_flag(compiler):
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
-    ccompiler = new_compiler()
-    customize_compiler(ccompiler)
-
     if os.getenv('SKLEARN_NO_OPENMP'):
         # Build explicitly without OpenMP support
         return False
 
-    start_dir = os.path.abspath('.')
+    if not basic_check_build():
+        # simple build without OpenMP fails. No need to check OpenMP (avoids
+        # possible wrong interpretation of error message)
+        return False
 
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        try:
-            os.chdir(tmp_dir)
+    extra_preargs = os.getenv('LDFLAGS', None)
+    if extra_preargs is not None:
+        extra_preargs = extra_preargs.split(" ")
+    else:
+        extra_preargs = []
 
-            # Write test program
-            with open('test_openmp.c', 'w') as f:
-                f.write(CCODE)
+    extra_postargs = get_openmp_flag
 
-            os.mkdir('objects')
-
-            # Compile, test program
-            openmp_flags = get_openmp_flag(ccompiler)
-            ccompiler.compile(['test_openmp.c'], output_dir='objects',
-                              extra_postargs=openmp_flags)
-
-            # Link test program
-            extra_preargs = os.getenv('LDFLAGS', None)
-            if extra_preargs is not None:
-                extra_preargs = extra_preargs.split(" ")
-            else:
-                extra_preargs = []
-
-            objects = glob.glob(
-                os.path.join('objects', '*' + ccompiler.obj_extension))
-            ccompiler.link_executable(objects, 'test_openmp',
+    try:
+        output = compile_test_program(CCODE_OPENMP,
                                       extra_preargs=extra_preargs,
-                                      extra_postargs=openmp_flags)
+                                      extra_postargs=extra_postargs)
 
-            # Run test program
-            output = subprocess.check_output('./test_openmp')
-            output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
-
-            # Check test program output
-            if 'nthreads=' in output[0]:
-                nthreads = int(output[0].strip().split('=')[1])
-                openmp_supported = (len(output) == nthreads)
-            else:
-                openmp_supported = False
-
-        except (CompileError, LinkError, subprocess.CalledProcessError):
+        if 'nthreads=' in output[0]:
+            nthreads = int(output[0].strip().split('=')[1])
+            openmp_supported = (len(output) == nthreads)
+        else:
             openmp_supported = False
 
-        finally:
-            os.chdir(start_dir)
+    except (CompileError, LinkError, subprocess.CalledProcessError):
+        openmp_supported = False
 
     err_message = textwrap.dedent(
         """
