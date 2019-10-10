@@ -482,7 +482,7 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility(Klass, random_state):
     y2 = [0] * 8 + [1] * 8
 
     kwargs = {}
-    if not 'Repeated' in Klass.__name__:
+    if 'Repeated' not in Klass.__name__:
         # RepeatedXXXFold don't have a shuffle parameter
         kwargs = {'shuffle': True}
     cv = Klass(3, random_state=random_state, **kwargs)
