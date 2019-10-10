@@ -1530,3 +1530,11 @@ def test_random_state_reproducibility(Klass, random_state):
     expected = list(cv.split(X, y, groups=y))
     for _ in range(10):
         np.testing.assert_equal(list(cv.split(X, y, groups=y)), expected)
+
+
+@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+def test_random_state_shuffle_false(Klass):
+    # passing a non-default random_state when shuffle=False makes no sense
+    with pytest.raises(ValueError,
+                       match='will have no effect when shuffle is False'):
+        cv = Klass(3, shuffle=False, random_state=0)
