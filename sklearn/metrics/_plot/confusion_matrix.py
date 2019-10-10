@@ -48,8 +48,8 @@ class ConfusionMatrixDisplay:
         self.normalize = normalize
         self.target_names = target_names
 
-    def plot(self, include_values=True, cmap='viridis', xticks_rotation=0.0,
-             ax=None):
+    def plot(self, include_values=True, cmap='viridis',
+             xticks_rotation='vertical', values_format=None, ax=None):
         """Plot visualization.
 
         Parameters
@@ -60,8 +60,14 @@ class ConfusionMatrixDisplay:
         cmap : str or matplotlib Colormap, default='viridis'
             Colormap recognized by matplotlib.
 
-        xticks_rotation: float, default=0.0
+        xticks_rotation : {'vertical', 'horizontal'} or float, \
+                         default='vertical'
             Rotation of xtick labels.
+
+        values_format : str, default=None
+            Format specification for values in confusion matrix. If None,
+            the format specification is '.2f' for a normalized matrix, and
+            'd' for a unnormalized matrix.
 
         ax : matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -87,11 +93,13 @@ class ConfusionMatrixDisplay:
 
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
-            fmt = '.2f' if self.normalize else 'd'
+            if values_format is None:
+                values_format = '.2f' if self.normalize else 'd'
             thresh = (cm.max() - cm.min()) / 2.
             for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
-                self.text_[i, j] = ax.text(j, i, format(cm[i, j], fmt),
+                self.text_[i, j] = ax.text(j, i,
+                                           format(cm[i, j], values_format),
                                            ha="center", va="center",
                                            color=color)
 
@@ -102,8 +110,8 @@ class ConfusionMatrixDisplay:
                yticklabels=self.target_names,
                ylabel="True label",
                xlabel="Predicted label")
-        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation,
-                 ha="right", rotation_mode="anchor")
+
+        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
         self.ax_ = ax
@@ -113,7 +121,9 @@ class ConfusionMatrixDisplay:
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
                           labels=None, target_names=None,
                           include_values=True, normalize=True,
-                          xticks_rotation=0.0, cmap='viridis', ax=None):
+                          xticks_rotation='vertical',
+                          values_format=None,
+                          cmap='viridis', ax=None):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <visualizations>`.
@@ -148,8 +158,14 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     normalize : bool, default=True
         Normalizes confusion matrix.
 
-    xticks_rotation: float, default=0.0
+    xticks_rotation : {'vertical', 'horizontal'} or float, \
+                        default='vertical'
         Rotation of xtick labels.
+
+    values_format : str, default=None
+        Format specification for values in confusion matrix. If None,
+        the format specification is '.2f' for a normalized matrix, and
+        'd' for a unnormalized matrix.
 
     cmap : str or matplotlib Colormap, default='viridis'
         Colormap recognized by matplotlib.
