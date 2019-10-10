@@ -107,7 +107,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0,
+    def __init__(self, *, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
                  copy_X=True, verbose=0):
@@ -435,8 +435,8 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, verbose=0):
+    def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
+                 tol=1e-4, warm_start=False, copy_X=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link='log', max_iter=max_iter,
@@ -514,8 +514,8 @@ class GammaRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, verbose=0):
+    def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
+                 tol=1e-4, warm_start=False, copy_X=True, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="gamma", link='log', max_iter=max_iter,
@@ -626,7 +626,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, power=0.0, alpha=1.0, fit_intercept=True,
+    def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,
                  warm_start=False, copy_X=True, verbose=0):
 
