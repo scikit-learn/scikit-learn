@@ -60,7 +60,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
         """
         # Note that currently supported distributions have +inf upper bound
@@ -92,7 +92,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
         """
         pass  # pragma: no cover
@@ -105,7 +105,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Target values.
         """
         pass  # pragma: no cover
@@ -121,10 +121,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
 
         check_input : bool, default=False
@@ -132,7 +132,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
             they will be propagated as NaN.
         Returns
         -------
-        deviance: array, shape (n_samples,)
+        deviance: array of shape (n_samples,)
             Computed deviance
         """
         pass  # pragma: no cover
@@ -147,10 +147,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
         """
         return -2 * (y - y_pred) / self.unit_variance(y_pred)
@@ -168,13 +168,13 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
 
-        weights : array, shape (n_samples,) (default=1)
+        weights : {int, array of shape (n_samples,)}, default=1
             Weights or exposure to which variance is inverse proportional.
         """
         return np.sum(weights * self.unit_deviance(y, y_pred))
@@ -193,7 +193,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Predicted mean.
 
-        weights : array, shape (n_samples,) (default=1)
+        weights : {int, array of shape (n_samples,)}, default=1
             Weights or exposure to which variance is inverse proportional.
         """
         return weights * self.unit_deviance_derivative(y, y_pred)
@@ -231,7 +231,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
     Parameters
     ----------
-    power : float (default=0)
+    power : float, default=0
             The variance power of the `unit_variance`
             :math:`v(y_\textrm{pred}) = y_\textrm{pred}^{power}`.
             For ``0<power<1``, no distribution exists.
@@ -276,7 +276,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
         """
         return np.power(y_pred, self.power)
@@ -287,7 +287,7 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
         """
         return self.power * np.power(y_pred, self.power - 1)
@@ -302,10 +302,10 @@ class TweedieDistribution(ExponentialDispersionModel):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : array of shape (n_samples,)
             Target values.
 
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Predicted mean.
 
         check_input : bool, default=False
@@ -313,7 +313,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             they will be propagated as NaN.
         Returns
         -------
-        deviance: array, shape (n_samples,)
+        deviance: array of shape (n_samples,)
             Computed deviance
         """
         p = self.power

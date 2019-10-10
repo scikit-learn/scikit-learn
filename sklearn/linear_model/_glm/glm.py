@@ -45,24 +45,23 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    alpha : float, optional (default=1)
+    alpha : float, default=1
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.  ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
     family : {'normal', 'poisson', 'gamma', 'inverse-gaussian'} \
-            or an instance of class ExponentialDispersionModel, \
-            optional(default='normal')
+            or an ExponentialDispersionModel instance, default='normal'
         The distributional assumption of the GLM, i.e. which distribution from
         the EDM, specifies the loss function to be minimized.
 
     link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
-            optional (default='auto')
+            default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         (X*coef) to expectation (y_pred). Option 'auto' sets the link
         depending on the chosen family as follows:
@@ -71,39 +70,39 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'log' for families 'poisson', 'gamma', 'inverse-gaussian'
 
-    solver : 'lbfgs', optional (default='lbfgs')
+    solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximal number of iterations for the solver.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.
 
-    warm_start : boolean, optional (default=False)
+    warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_``.
 
-    copy_X : boolean, optional, (default=True)
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    check_input : boolean, optional (default=True)
+    check_input : bool, default=True
         Allow to bypass several checks on input: y values in range of family,
         sample_weight non-negative.
         Don't use this parameter unless you know what you do.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array of shape (n_features,)
         Estimated coefficients for the linear predictor (X*coef_+intercept_) in
         the GLM.
 
@@ -134,14 +133,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : {None, array-like}, shape (n_samples,),\
-                optional (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights w_i for each sample. Note that for an
             Exponential Dispersion Model (EDM), one has
             Var[Y_i]=phi/w_i * v(y_pred).
@@ -304,12 +302,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
@@ -323,12 +321,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Returns predicted values.
         """
         # check_array is done in _linear_predictor
@@ -353,14 +351,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             True values of target.
 
-        sample_weight : {None, array-like}, shape (n_samples,), optional \
-                (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -407,38 +404,38 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     Parameters
     ----------
-    alpha : float, optional (default=1)
+    alpha : float, default=1
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.  ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximal number of iterations for the solver.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.
 
-    warm_start : boolean, optional (default=False)
+    warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : boolean, optional, (default=True)
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array of shape (n_features,)
         Estimated coefficients for the linear predictor (X*coef_+intercept_) in
         the GLM.
 
@@ -486,38 +483,38 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     Parameters
     ----------
-    alpha : float, optional (default=1)
+    alpha : float, default=1
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.  ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix X must have full column rank
         (no collinearities).
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximal number of iterations for the solver.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.
 
-    warm_start : boolean, optional (default=False)
+    warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : boolean, optional, (default=True)
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,)
+    coef_ : array of shape (n_features,)
         Estimated coefficients for the linear predictor (X*coef_+intercept_) in
         the GLM.
 
@@ -565,7 +562,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     Parameters
     ----------
-    power : float (default=0)
+    power : float, default=0
             The power determines the underlying target distribution. By
             definition it links distribution variance (:math:`v`) and
             mean (:math:`\y_\textrm{pred}`):
@@ -589,7 +586,7 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             | 3     | Inverse Gaussian       |
             +-------+------------------------+
 
-    alpha : float, optional (default=1)
+    alpha : float, default=1
         Constant that multiplies the penalty terms and thus determines the
         regularization strength.  ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix X must have full column rank
@@ -604,33 +601,34 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
         - 'log' for Poisson,  Gamma or Inverse Gaussian distributions
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximal number of iterations for the solver.
 
-    tol : float, optional (default=1e-4)
+    tol : float, default=1e-4
         Stopping criterion. For the lbfgs solver,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function.
 
-    warm_start : boolean, optional (default=False)
+    warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : boolean, optional, (default=True)
+    copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) Estimated coefficients for the linear
-        predictor (X*coef_+intercept_) in the GLM.
+    coef_ : array of shape (n_features,)
+        Estimated coefficients for the linear predictor (X*coef_+intercept_)
+        in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.

@@ -23,7 +23,7 @@ class BaseLink(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Usually the (predicted) mean.
         """
         pass  # pragma: no cover
@@ -34,7 +34,7 @@ class BaseLink(metaclass=ABCMeta):
 
         Parameters
         ----------
-        y_pred : array, shape (n_samples,)
+        y_pred : array of shape (n_samples,)
             Usually the (predicted) mean.
         """
         pass  # pragma: no cover
@@ -48,7 +48,7 @@ class BaseLink(metaclass=ABCMeta):
 
         Parameters
         ----------
-        lin_pred : array, shape (n_samples,)
+        lin_pred : array of shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
         pass  # pragma: no cover
@@ -59,7 +59,7 @@ class BaseLink(metaclass=ABCMeta):
 
         Parameters
         ----------
-        lin_pred : array, shape (n_samples,)
+        lin_pred : array of shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
         pass  # pragma: no cover
