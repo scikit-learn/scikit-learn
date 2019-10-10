@@ -164,16 +164,6 @@ def test_glm_copy_X_argument(copy_X):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('check_input', ['not bool', 1, 0, [True]])
-def test_glm_check_input_argument(check_input):
-    """Test GLM for invalid check_input argument."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(check_input=check_input)
-    with pytest.raises(ValueError, match="check_input must be bool"):
-        glm.fit(X, y)
-
-
 def test_glm_identity_regression():
     """Test GLM regression with identity link on a simple dataset."""
     coef = [1., 2.]
@@ -291,7 +281,7 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept):
 
     glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
                                      link='identity', fit_intercept=True,
-                                     check_input=False, max_iter=300)
+                                     max_iter=300)
     glm.fit(X_train, y_train)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, atol=5e-5)

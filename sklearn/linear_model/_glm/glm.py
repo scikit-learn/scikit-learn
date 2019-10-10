@@ -92,11 +92,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    check_input : bool, default=True
-        Allow to bypass several checks on input: y values in range of family,
-        sample_weight non-negative.
-        Don't use this parameter unless you know what you do.
-
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
@@ -115,7 +110,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
-                 copy_X=True, check_input=True, verbose=0):
+                 copy_X=True, verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.family = family
@@ -125,7 +120,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.tol = tol
         self.warm_start = warm_start
         self.copy_X = copy_X
-        self.check_input = check_input
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
@@ -213,9 +207,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.copy_X, bool):
             raise ValueError("The argument copy_X must be bool;"
                              " got {0}".format(self.copy_X))
-        if not isinstance(self.check_input, bool):
-            raise ValueError("The argument check_input must be bool; got "
-                             "(check_input={0})".format(self.check_input))
 
         family = self._family_instance
         link = self._link_instance
@@ -228,12 +219,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         _, n_features = X.shape
 
-        if self.check_input:
-            if not np.all(family.in_y_range(y)):
-                raise ValueError("Some value(s) of y are out of the valid "
-                                 "range for family {0}"
-                                 .format(family.__class__.__name__))
-            # TODO: if alpha=0 check that X is not rank deficient
+        if not np.all(family.in_y_range(y)):
+            raise ValueError("Some value(s) of y are out of the valid "
+                             "range for family {0}"
+                             .format(family.__class__.__name__))
+        # TODO: if alpha=0 check that X is not rank deficient
 
         # rescaling of sample_weight
         #
