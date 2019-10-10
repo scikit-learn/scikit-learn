@@ -45,9 +45,6 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
-BIG_INT = 2**32  # Numpy seeds must be between 0 and 2**32 - 1
-
-
 class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
@@ -299,9 +296,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state  # only here for repr to work
-        self.seed = random_state
-        if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(BIG_INT)
+        self.seed = _get_seed_from_random_state_param(random_state)
 
 
     def split(self, X, y=None, groups=None):
@@ -1105,9 +1100,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         self.n_repeats = n_repeats
         self.cvargs = cvargs
         self.random_state = random_state  # only here for repr to work
-        self.seed = random_state
-        if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(BIG_INT)
+        self.seed = _get_seed_from_random_state_param(random_state)
 
     def split(self, X, y=None, groups=None):
         """Generates indices to split data into training and test set.
@@ -1137,8 +1130,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         rng = check_random_state(self.seed)
 
         for _ in range(n_repeats):
-            # the local rng object will be consumed exactly once in __init__
-            # of self.cv, hence ensuring that each repeatition yields
+            # the local rng object will be consumed exactly once in
+            # self.cv.__init__, hence ensuring that each repetition yields
             # different folds.
             cv = self.cv(random_state=rng, shuffle=True,
                          **self.cvargs)
@@ -1280,9 +1273,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         self.train_size = train_size
         self._default_test_size = 0.1
         self.random_state = random_state  # only here for repr to work
-        self.seed = random_state
-        if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(BIG_INT)
+        self.seed = _get_seed_from_random_state_param(random_state)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -2171,3 +2162,14 @@ def _build_repr(self):
         params[key] = value
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
+
+
+def _get_seed_from_random_state_param(random_state):
+    # Generate a random seed from a random_state parameter which can be an
+    # int, None or an instance. The seed will then be used as the unique
+    # source of RNG in split().
+    if isinstance(random_state, numbers.Integral):
+        return random_state
+    else:
+        BIG_INT = 2**32  # Numpy seeds must be between 0 and 2**32 - 1
+        return check_random_state(random_state).randint(BIG_INT)
