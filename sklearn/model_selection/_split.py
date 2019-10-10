@@ -45,6 +45,9 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
+BIG_INT = 2**32  # Numpy seeds must be between 0 and 2**32 - 1
+
+
 class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
@@ -298,7 +301,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         self.random_state = random_state  # only here for repr to work
         self.seed = random_state
         if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(10000)
+            self.seed = check_random_state(random_state).randint(BIG_INT)
 
 
     def split(self, X, y=None, groups=None):
@@ -1104,7 +1107,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         self.random_state = random_state  # only here for repr to work
         self.seed = random_state
         if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(10000)
+            self.seed = check_random_state(random_state).randint(BIG_INT)
 
     def split(self, X, y=None, groups=None):
         """Generates indices to split data into training and test set.
@@ -1206,8 +1209,8 @@ class RepeatedKFold(_RepeatedSplits):
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 1] TEST: [2 3]
+    TRAIN: [2 3] TEST: [0 1]
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
 
@@ -1247,16 +1250,16 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
-    ...     random_state=36851234)
+    ...     random_state=36851235)
     >>> for train_index, test_index in rskf.split(X, y):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
+    TRAIN: [0 2] TEST: [1 3]
+    TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 3] TEST: [1 2]
     TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [0 3] TEST: [1 2]
 
     See also
     --------
@@ -1279,7 +1282,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         self.random_state = random_state  # only here for repr to work
         self.seed = random_state
         if not isinstance(random_state, numbers.Integral):
-            self.seed = check_random_state(random_state).randint(10000)
+            self.seed = check_random_state(random_state).randint(BIG_INT)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
