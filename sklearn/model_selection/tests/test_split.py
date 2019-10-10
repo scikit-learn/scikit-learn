@@ -472,28 +472,6 @@ def test_shuffle_kfold():
     assert sum(all_folds) == 300
 
 
-@pytest.mark.parametrize('Klass', [KFold, StratifiedKFold, RepeatedKFold,
-                                   RepeatedStratifiedKFold])
-@pytest.mark.parametrize('random_state', [0, None, np.random.RandomState(0)])
-def test_shuffle_kfold_stratifiedkfold_reproducibility(Klass, random_state):
-    X = np.ones(15)  # Divisible by 3
-    y = [0] * 7 + [1] * 8
-    X2 = np.ones(16)  # Not divisible by 3
-    y2 = [0] * 8 + [1] * 8
-
-    kwargs = {}
-    if 'Repeated' not in Klass.__name__:
-        # RepeatedXXXFold don't have a shuffle parameter
-        kwargs = {'shuffle': True}
-    cv = Klass(3, random_state=random_state, **kwargs)
-
-    expected_1 = list(cv.split(X, y))
-    expected_2 = list(cv.split(X2, y2))
-    for _ in range(10):
-        np.testing.assert_equal(list(cv.split(X, y)), expected_1)
-        np.testing.assert_equal(list(cv.split(X2, y2)), expected_2)
-
-
 def test_shuffle_stratifiedkfold():
     # Check that shuffling is happening when requested, and for proper
     # sample coverage
@@ -1525,3 +1503,30 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+@pytest.mark.parametrize('Klass', [
+    KFold,
+    StratifiedKFold,
+    RepeatedKFold,
+    RepeatedStratifiedKFold,
+    ShuffleSplit,
+    StratifiedShuffleSplit,
+    GroupShuffleSplit]
+)
+@pytest.mark.parametrize('random_state', [0, None, np.random.RandomState(0)])
+def test_random_state_reproducibility(Klass, random_state):
+    # Randomized CV iterators should consistently yield the same splits for
+    # different calls to split(), no matter the random state.
+    X = np.arange(20).reshape(-1, 1)
+    y = [0] * 10 + [1] * 10
+
+    kwargs = {}
+    if Klass in (KFold, StratifiedKFold):
+        # The other classes don't have a shuffle parameter
+        kwargs = {'shuffle': True}
+    cv = Klass(3, random_state=random_state, **kwargs)
+
+    expected = list(cv.split(X, y, groups=y))
+    for _ in range(10):
+        np.testing.assert_equal(list(cv.split(X, y, groups=y)), expected)

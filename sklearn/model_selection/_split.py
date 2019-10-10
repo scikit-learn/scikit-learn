@@ -410,10 +410,6 @@ class KFold(_BaseKFold):
     ``n_samples // n_splits + 1``, other folds have size
     ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
 
-    Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
-    to an integer.
-
     See also
     --------
     StratifiedKFold
@@ -719,12 +715,6 @@ class StratifiedKFold(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
-
-        Notes
-        -----
-        Randomized CV splitters may return different results for each call of
-        split. You can make the results identical by setting ``random_state``
-        to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
@@ -1221,12 +1211,6 @@ class RepeatedKFold(_RepeatedSplits):
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
 
-    Notes
-    -----
-    Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
-    to an integer.
-
     See also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
@@ -1273,12 +1257,6 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [1 2] TEST: [0 3]
     TRAIN: [0 3] TEST: [1 2]
-
-    Notes
-    -----
-    Randomized CV splitters may return different results for each call of
-    split. You can make the results identical by setting ``random_state``
-    to an integer.
 
     See also
     --------
