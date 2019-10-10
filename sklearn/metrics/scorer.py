@@ -31,7 +31,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score)
+               brier_score_loss, jaccard_score, gini_score)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -634,6 +634,8 @@ neg_mean_gamma_deviance_scorer = make_scorer(
     mean_gamma_deviance, greater_is_better=False
 )
 
+gini_scorer = make_scorer(gini_score)
+
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
@@ -707,7 +709,8 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                mutual_info_score=mutual_info_scorer,
                adjusted_mutual_info_score=adjusted_mutual_info_scorer,
                normalized_mutual_info_score=normalized_mutual_info_scorer,
-               fowlkes_mallows_score=fowlkes_mallows_scorer)
+               fowlkes_mallows_score=fowlkes_mallows_scorer,
+               gini_score=gini_scorer)
 
 
 for name, metric in [('precision', precision_score),

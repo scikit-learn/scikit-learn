@@ -14,6 +14,8 @@ from .ranking import ndcg_score
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
+from .ranking import gini_score
+from .ranking import lorenz_curve
 
 from .classification import accuracy_score
 from .classification import balanced_accuracy_score
@@ -106,6 +108,7 @@ __all__ = [
     'fbeta_score',
     'fowlkes_mallows_score',
     'get_scorer',
+    'gini_score',
     'hamming_loss',
     'hinge_loss',
     'homogeneity_completeness_v_measure',
@@ -114,6 +117,7 @@ __all__ = [
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
+    'lorenz_curve',
     'log_loss',
     'make_scorer',
     'nan_euclidean_distances',
