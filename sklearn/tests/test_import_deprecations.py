@@ -29,7 +29,7 @@ from sklearn.utils.testing import assert_run_python_script
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning
-    # We only need one entry per file, no need to check multiple imports of
+    # We only need one entry per file, no need to check multiple imports from
     # the same file.
 
     # TODO: remove in 0.24
