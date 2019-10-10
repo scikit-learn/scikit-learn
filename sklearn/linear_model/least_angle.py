@@ -809,6 +809,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
+    jitter : float, default=0.0001
+        Uniform noise parameter, added to the y values, to satisfy \
+        the model's assumption of one-at-a-time computations \
+        (Efron et al. 2004).
+
     Attributes
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
@@ -855,7 +860,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
+                 jitter=10e-5):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -864,6 +870,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
+        self.jitter = jitter
 
     @staticmethod
     def _get_gram(precompute, X, y):
@@ -963,6 +970,13 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
+        noise = np.random.uniform(high=self.jitter, size=len(y))
+
+        if y.ndim == 2:
+            noise = noise.reshape(-1,1)
+
+        y = y + noise
+
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
                   Xy=Xy)
 
@@ -1030,6 +1044,11 @@ class LassoLars(Lars):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
+    jitter : float, default=0.0001
+        Uniform noise parameter, added to the y values, to satisfy \
+        the model's assumption of one-at-a-time computations \
+        (Efron et al. 2004).
+
     positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
@@ -1074,7 +1093,7 @@ class LassoLars(Lars):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     LassoLars(alpha=0.01)
     >>> print(reg.coef_)
-    [ 0.         -0.963257...]
+    [ 0.         -0.9632...]
 
     See also
     --------
@@ -1092,7 +1111,7 @@ class LassoLars(Lars):
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 positive=False, jitter=10e-5):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1103,6 +1122,7 @@ class LassoLars(Lars):
         self.copy_X = copy_X
         self.eps = eps
         self.fit_path = fit_path
+        self.jitter = jitter
 
 
 ###############################################################################
