@@ -1,4 +1,4 @@
-
+from contextlib import suppress
 import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
@@ -6,6 +6,10 @@ import pytest
 from sklearn.feature_extraction import FeatureHasher
 from sklearn.utils.testing import (ignore_warnings,
                                    fails_if_pypy)
+# suppress error because module is not built on pypy
+with suppress(ModuleNotFoundError):
+    from sklearn.feature_extraction._hashing import transform as \
+            _hashing_transform
 
 pytestmark = fails_if_pypy
 
@@ -47,9 +51,6 @@ def test_feature_hasher_strings():
 
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
-    # import is here because _hashing is not build on pypy
-    from sklearn.feature_extraction._hashing import transform as \
-            _hashing_transform
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
 
