@@ -120,7 +120,7 @@ class ConfusionMatrixDisplay:
 
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
                           labels=None, target_names=None,
-                          include_values=True, normalize=True,
+                          include_values=True, normalize=False,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
@@ -155,7 +155,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     include_values : bool, default=True
         Includes values in confusion matrix.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         Normalizes confusion matrix.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \

@@ -35,7 +35,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import fetch_lfw_people
 from sklearn.metrics import classification_report
-from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import confusion_matrix
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
@@ -124,8 +124,7 @@ y_pred = clf.predict(X_test_pca)
 print("done in %0.3fs" % (time() - t0))
 
 print(classification_report(y_test, y_pred, target_names=target_names))
-plot_confusion_matrix(clf, X_test_pca, y_test, target_names=target_names,
-                      xticks_rotation='vertical')
+print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
 
 # #############################################################################
