@@ -129,7 +129,7 @@ def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
     if os.getenv('SKLEARN_NO_OPENMP'):
         # Build explicitly without OpenMP support
-        return "explicit disabled"
+        return "explicitly disabled"
 
     if not basic_check_build():
         # simple build without OpenMP fails. No need to check OpenMP (avoids
