@@ -439,7 +439,7 @@ class SVC(BaseSVC):
     The implementation is based on libsvm. The fit time scales at least
     quadratically with the number of samples and may be impractical
     beyond tens of thousands of samples. For large datasets
-    consider using :class:`sklearn.linear_model.LinearSVC` or
+    consider using :class:`sklearn.svm.LinearSVC` or
     :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
     :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
@@ -863,7 +863,7 @@ class SVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.linear_model.LinearSVR` or
+    datasets consider using :class:`sklearn.svm.LinearSVR` or
     :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
     :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
