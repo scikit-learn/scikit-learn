@@ -534,8 +534,9 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 3-fold cross-validation on a dataset with 50 samples from
-two unbalanced classes and comparing with :class:`KFold`::
+Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
+two unbalanced classes.  We show the number of samples in each class and compare with 
+:class:`KFold`.
 
   >>> from sklearn.model_selection import StratifiedKFold, KFold
   >>> import numpy as np
@@ -561,7 +562,7 @@ two unbalanced classes and comparing with :class:`KFold`::
   train -  [28  5]   |   test -  [17]
   train -  [34]   |   test -  [11  5]
 
-We can see that :class:StratifiedKFold preserves the class ratios 
+We can see that :class:`StratifiedKFold` preserves the class ratios 
 (approximately 1 / 10) in both train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
