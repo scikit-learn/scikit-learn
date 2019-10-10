@@ -1512,8 +1512,8 @@ def test_leave_p_out_empty_trainset():
     RepeatedStratifiedKFold,
     ShuffleSplit,
     StratifiedShuffleSplit,
-    GroupShuffleSplit]
-)
+    GroupShuffleSplit
+])
 @pytest.mark.parametrize('random_state', [0, None, np.random.RandomState(0)])
 def test_random_state_reproducibility(Klass, random_state):
     # Randomized CV iterators should consistently yield the same splits for
@@ -1528,9 +1528,44 @@ def test_random_state_reproducibility(Klass, random_state):
         kwargs = {'shuffle': True}
     cv = Klass(3, random_state=random_state, **kwargs)
 
-    expected = list(cv.split(X, y, groups=groups))
+    expected = list(cv.split(X, y, groups))
     for _ in range(10):
-        np.testing.assert_equal(list(cv.split(X, y, groups=groups)), expected)
+        np.testing.assert_equal(list(cv.split(X, y, groups)), expected)
+
+
+@pytest.mark.parametrize('Klass', [
+    KFold,
+    StratifiedKFold,
+    RepeatedKFold,
+    RepeatedStratifiedKFold,
+    ShuffleSplit,
+    StratifiedShuffleSplit,
+    GroupShuffleSplit
+])
+@pytest.mark.parametrize('random_state', [0, None, np.random.RandomState(0)])
+def test_different_instances_splits(Klass, random_state):
+    # 2 different instances of a randomized splitter should yield the same
+    # splits if the same int is passed as random_state. If random_state is
+    # None or an instance, splits should be different.
+    X = np.arange(20).reshape(-1, 1)
+    y = [0] * 10 + [1] * 10
+    groups = np.arange(20)
+
+    kwargs = {}
+    if Klass in (KFold, StratifiedKFold):
+        # The other classes don't have a shuffle parameter
+        kwargs = {'shuffle': True}
+    cv1 = Klass(3, random_state=random_state, **kwargs)
+    cv2 = Klass(3, random_state=random_state, **kwargs)
+
+    folds_1 = list(cv1.split(X, y, groups))
+    folds_2 = list(cv2.split(X, y, groups))
+
+    if isinstance(random_state, numbers.Integral):
+        np.testing.assert_equal(folds_1, folds_2)
+    else:
+        with pytest.raises(AssertionError):
+            np.testing.assert_equal(folds_1, folds_2)
 
 
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
