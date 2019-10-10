@@ -1520,6 +1520,7 @@ def test_random_state_reproducibility(Klass, random_state):
     # different calls to split(), no matter the random state.
     X = np.arange(20).reshape(-1, 1)
     y = [0] * 10 + [1] * 10
+    groups = np.arange(20)
 
     kwargs = {}
     if Klass in (KFold, StratifiedKFold):
@@ -1527,9 +1528,9 @@ def test_random_state_reproducibility(Klass, random_state):
         kwargs = {'shuffle': True}
     cv = Klass(3, random_state=random_state, **kwargs)
 
-    expected = list(cv.split(X, y, groups=y))
+    expected = list(cv.split(X, y, groups=groups))
     for _ in range(10):
-        np.testing.assert_equal(list(cv.split(X, y, groups=y)), expected)
+        np.testing.assert_equal(list(cv.split(X, y, groups=groups)), expected)
 
 
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
