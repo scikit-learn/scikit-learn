@@ -1,4 +1,5 @@
 
+from contextlib import suppress
 import numpy as np
 from numpy.testing import assert_array_equal
 import pytest
@@ -49,8 +50,10 @@ def test_feature_hasher_strings():
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
     # import is here to avoid importing on pypy
-    from sklearn.feature_extraction._hashing import transform as \
-            _hashing_transform
+    with suppress(ImportError):
+        from sklearn.feature_extraction._hashing import (
+                transform as _hashing_transform)
+
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
 
