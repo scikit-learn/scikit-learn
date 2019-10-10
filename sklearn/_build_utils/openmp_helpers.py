@@ -38,7 +38,7 @@ CCODE_OPENMP = textwrap.dedent(
     """)
 
 
-def compile_test_program(CCODE, extra_preargs=[], extra_postargs=[]):
+def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
     """Check that some C code can be compiled and run"""
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
