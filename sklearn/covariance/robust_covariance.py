@@ -296,7 +296,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
             cov_computation_method=cov_computation_method,
             random_state=random_state
         ) for j in range(n_trials))
-    ############
+
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
         zip(*all_estimates)
 
@@ -449,19 +449,6 @@ def fast_mcd(X, support_fraction=None,
                                              n_features))
             n_best_sub = 2
 
-        # start parallel loop
-        def _select_candidates(x, n_support, n_trials, select=1, n_iter=30,
-                               verbose=False,
-                               cov_computation_method=empirical_covariance,
-                               random_state=None, n_jobs=None, iter=None):
-
-            return select_candidates(
-                x, n_support, n_trials, select=select,
-                n_iter=n_iter,
-                verbose=verbose,
-                cov_computation_method=cov_computation_method,
-                random_state=random_state, n_jobs=n_jobs), iter
-
         results = Parallel(n_jobs=n_jobs)(delayed(_select_candidates)(
                 x=X[samples_shuffle[(i * n_samples_subsets):
                                     (i * n_samples_subsets +
@@ -547,6 +534,20 @@ def fast_mcd(X, support_fraction=None,
         dist = d[0]
 
     return location, covariance, support, dist
+
+
+# start parallel loop
+def _select_candidates(x, n_support, n_trials, select=1, n_iter=30,
+                       verbose=False,
+                       cov_computation_method=empirical_covariance,
+                       random_state=None, n_jobs=None, iter=None):
+
+    return select_candidates(
+        x, n_support, n_trials, select=select,
+        n_iter=n_iter,
+        verbose=verbose,
+        cov_computation_method=cov_computation_method,
+        random_state=random_state, n_jobs=n_jobs), iter
 
 
 class MinCovDet(EmpiricalCovariance):
