@@ -48,15 +48,16 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
 
-from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.metrics import lorenz_curve
 
 
-def load_mtpl2(n_samples=100000):
+def load_mtpl2(n_samples=None):
     """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
     ----------
-    n_samples: int, default=100000
+    n_samples: int, default=None
       number of samples to select (for faster run time). Full dataset has
       678013 samples.
     """
@@ -138,7 +139,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
 
-df = load_mtpl2(n_samples=60000)
+df = load_mtpl2()
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
@@ -188,7 +189,7 @@ print(df[df.ClaimAmount > 0].head())
 # ``y = ClaimNb / Exposure``, which is still a (scaled) Poisson distribution,
 # and use ``Exposure`` as `sample_weight`.
 
-df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
+df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=40)
 
 # Some of the features are colinear, we use a weak penalization to avoid
 # numerical issues.
@@ -449,7 +450,7 @@ print(scores)
 # \in (1, 2)`.
 #
 # We determine the optimal hyperparameter ``p`` with a grid search so as to
-# minimize the deviance:
+# maximize the Gini coefficient (a risk ranking metric):
 
 from sklearn.model_selection import GridSearchCV
 
@@ -458,7 +459,7 @@ from sklearn.model_selection import GridSearchCV
 params = {"power": np.linspace(1 + eps, 2 - eps, 5)}
 
 X_train_small, _, df_train_small, _ = train_test_split(
-    X_train, df_train, train_size=5000)
+    X_train, df_train, train_size=5000, random_state=0)
 
 # This can takes a while on the full training set, therefore we do the
 # hyper-parameter search on a random subset, hoping that the best value of
@@ -467,15 +468,17 @@ X_train_small, _, df_train_small, _ = train_test_split(
 # convergence.
 glm_total = TweedieRegressor(max_iter=10000, alpha=1e-2)
 search = GridSearchCV(
-    glm_total, cv=3,
-    param_grid=params, n_jobs=-1, verbose=10,
-    refit=False,
+    glm_total, param_grid=params, cv=3, scoring="gini_score",
+    n_jobs=-1, verbose=1, refit=False
 )
 search.fit(
     X_train_small, df_train_small["ClaimAmount"],
     sample_weight=df_train_small["Exposure"]
 )
 print("Best hyper-parameters: %s" % search.best_params_)
+cv_results = pd.DataFrame(search.cv_results_).sort_values(
+    "mean_test_score", ascending=False)
+print(cv_results[["param_power", "mean_test_score", "std_test_score"]])
 
 glm_total.set_params(**search.best_params_)
 glm_total.fit(X_train, df_train["ClaimAmount"],
@@ -524,30 +527,24 @@ print(pd.DataFrame(res).set_index("subset").T)
 
 ##############################################################################
 #
-# Finally, we can compare the two models using a plot of cumulated claims: for
-# each model, the policyholders are ranked from riskiest to safest and the
-# actual cumulated claims are plotted against the cumulated exposure.
+# Finally, we can compare the two models using a plot of Lorenz curve of
+# cumulated claims: for each model, the policyholders are ranked from safest
+# to riskiest and the actual cumulated claims are plotted against the
+# cumulated exposure.
 #
-# The area under the curve can be used as a model selection metric to quantify
-# the ability of the model to rank policyholders. Note that this metric does
-# not reflect the ability of the models to make accurate predictions in terms
-# of absolute value of total claim amounts but only in terms of relative
-# amounts as a ranking metric.
+# The Gini coefficient can be computed from the areas under curve to compare
+# the model to the random baseline. This coefficient can be used as a model
+# selection metric to quantify the ability of the model to rank policyholders.
+# A Gini coefficient close to 0 means random ranking, while larger Gini
+# coefficient of 1 mean more discriminative rankings.
+#
+# Note that this metric does not reflect the ability of the models to make
+# accurate predictions in terms of absolute value of total claim amounts but
+# only in terms of relative amounts as a ranking metric.
 #
 # Both models are able to rank policyholders by risky-ness significantly
 # better than chance although they are also both far from perfect due to the
 # natural difficulty of the prediction problem from few features.
-
-
-def _cumulated_claim_amount(y_true, y_pred, exposure):
-    ranking = np.argsort(y_pred)[::-1]  # from riskiest to safest
-    ranked_exposure = exposure[ranking]
-    ranked_claim_amount = y_true[ranking]
-    cumulated_exposure = np.cumsum(ranked_exposure)
-    cumulated_exposure /= cumulated_exposure[-1]
-    cumulated_claim_amount = np.cumsum(ranked_claim_amount)
-    cumulated_claim_amount /= cumulated_claim_amount[-1]
-    return cumulated_exposure, cumulated_claim_amount
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -557,21 +554,19 @@ y_pred_total = glm_total.predict(X_test)
 
 for label, y_pred in [("Frequency * Severity model", y_pred_product),
                       ("Compound Poisson Gamma", y_pred_total)]:
-    cum_exposure, cum_claims = _cumulated_claim_amount(
-        df_test["ClaimAmount"].values,
-        y_pred,
-        df_test["Exposure"].values)
-    area = auc(cum_exposure, cum_claims)
-    label += " (area under curve: {:.3f})".format(area)
+    cum_exposure, cum_claims, gini = lorenz_curve(
+        df_test["ClaimAmount"], y_pred,
+        sample_weight=df_test["Exposure"],
+        return_gini=True)
+    label += " (Gini coefficient: {:.3f})".format(gini)
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = _cumulated_claim_amount(
-    df_test["ClaimAmount"].values,
-    df_test["ClaimAmount"].values,
-    df_test["Exposure"].values)
-area = auc(cum_exposure, cum_claims)
-label = "Oracle (area under curve: {:.3f})".format(area)
+cum_exposure, cum_claims, gini = lorenz_curve(
+    df_test["ClaimAmount"], df_test["ClaimAmount"],
+    sample_weight=df_test["Exposure"],
+    return_gini=True)
+label = "Oracle (Gini coefficient: {:.3f})".format(gini)
 ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
 
 # Random Baseline
@@ -582,5 +577,5 @@ ax.set(
     xlabel='Fraction of exposure (from riskiest to safest)',
     ylabel='Fraction of total claim amount'
 )
-ax.legend(loc="lower right")
+ax.legend(loc="upper left")
 plt.plot()
