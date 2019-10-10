@@ -747,7 +747,7 @@ class SGDClassifier(BaseSGDClassifier):
         not achievable with 'l2'.
 
     alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
+        Constant that multiplies the regularization term. Defaults to 0.0001.
         Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
@@ -892,7 +892,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
 
     t_ : int
         Number of weight updates performed during training.

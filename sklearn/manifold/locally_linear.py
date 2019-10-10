@@ -706,7 +706,7 @@ class LocallyLinearEmbedding(TransformerMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------

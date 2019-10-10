@@ -8,7 +8,7 @@ from ..neighbors.base import _get_weights
 from ..neighbors.base import _check_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
 
 
