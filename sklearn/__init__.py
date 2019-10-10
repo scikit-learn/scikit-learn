@@ -14,6 +14,7 @@ See http://scikit-learn.org for complete documentation.
 """
 import sys
 import re
+import textwrap
 import warnings
 import logging
 import os
@@ -97,17 +98,17 @@ else:
                'show_versions']
 
     if _openmp_warn_unsupported():
-        import textwrap
+        base_url = "dev" if __version__.endswith(".dev0") else "stable"
         message = textwrap.dedent(
             """
             Scikit-learn has been built without OpenMP support. Some estimators
-            will run in sequential mode and their `n_jobs` parameter will have
-            no effect. You can find instructions to build scikit-learn with
+            will run in sequential mode instead of leveraging thread-based
+            parallelism. You can find instructions to build scikit-learn with
             OpenMP support at this adress:
 
-                https://scikit-learn.org/dev/developers/advanced_installation.html
+                https://scikit-learn.org/{}/developers/advanced_installation.html
             """)
-        warnings.warn(message)
+        warnings.warn(message.format(base_url))
 
 
 def setup_module(module):
