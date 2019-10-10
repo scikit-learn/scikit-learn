@@ -178,7 +178,7 @@ def test_cross_validator_with_default_params():
             assert np.asarray(train).dtype.kind == 'i'
 
         # Test if the repr works without any errors
-        # assert cv_repr == repr(cv)
+        assert cv_repr == repr(cv)
 
     # ValueError for get_n_splits methods
     msg = "The 'X' parameter should not be None."
