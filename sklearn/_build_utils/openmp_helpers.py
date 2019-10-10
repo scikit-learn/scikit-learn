@@ -75,9 +75,6 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
         # Run test program
         output = subprocess.check_output('./test_program')
         output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
-        print("###################")
-        print(output)
-        print("##################")
 
         os.chdir(start_dir)
 
@@ -155,15 +152,9 @@ def check_openmp_support():
             nthreads = int(output[0].strip().split('=')[1])
             openmp_supported = (len(output) == nthreads)
         else:
-            print("########################")
-            print("output error")
-            print("########################")
             openmp_supported = False
 
     except (CompileError, LinkError, subprocess.CalledProcessError):
-        print("########################")
-        print("compile error")
-        print("########################")
         openmp_supported = False
 
     err_message = textwrap.dedent(
