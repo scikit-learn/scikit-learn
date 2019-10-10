@@ -191,7 +191,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return weights * self.unit_deviance_derivative(y, y_pred)
 
 
-
 class TweedieDistribution(ExponentialDispersionModel):
     r"""A class for the Tweedie distribution.
 
