@@ -21,7 +21,7 @@ import numpy as np
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array
+from ...utils.validation import check_array, check_consistent_length
 from ...utils.fixes import comb, _astype_copy_false
 
 
@@ -36,14 +36,18 @@ def check_clusterings(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
-        The true labels
+    labels_true : array-like of shape (n_samples,)
+        The true labels.
 
-    labels_pred : int array, shape = [n_samples]
-        The predicted labels
+    labels_pred : array-like of shape (n_samples,)
+        The predicted labels.
     """
-    labels_true = np.asarray(labels_true)
-    labels_pred = np.asarray(labels_pred)
+    labels_true = check_array(
+        labels_true, ensure_2d=False, ensure_min_samples=0
+    )
+    labels_pred = check_array(
+        labels_pred, ensure_2d=False, ensure_min_samples=0
+    )
 
     # input checks
     if labels_true.ndim != 1:
@@ -52,10 +56,8 @@ def check_clusterings(labels_true, labels_pred):
     if labels_pred.ndim != 1:
         raise ValueError(
             "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
-    if labels_true.shape != labels_pred.shape:
-        raise ValueError(
-            "labels_true and labels_pred must have same size, got %d and %d"
-            % (labels_true.shape[0], labels_pred.shape[0]))
+    check_consistent_length(labels_true, labels_pred)
+
     return labels_true, labels_pred
 
 
@@ -82,7 +84,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
     labels_true : int array, shape = [n_samples]
         Ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
     eps : None or float, optional.
@@ -162,7 +164,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         Ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
     Returns
@@ -271,7 +273,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     beta : float
@@ -341,7 +343,7 @@ def homogeneity_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     Returns
@@ -411,7 +413,7 @@ def completeness_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     Returns
@@ -488,7 +490,7 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     beta : float
@@ -590,7 +592,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     contingency : {None, array, sparse matrix}, \
@@ -603,6 +605,10 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     -------
     mi : float
        Mutual information, a non-negative value
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
 
     See also
     --------
@@ -673,7 +679,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : string, optional (default: 'arithmetic')
@@ -792,7 +798,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : string, optional (default: 'arithmetic')
@@ -947,6 +953,10 @@ def entropy(labels):
     ----------
     labels : int array, shape = [n_samples]
         The labels
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if len(labels) == 0:
         return 1.0

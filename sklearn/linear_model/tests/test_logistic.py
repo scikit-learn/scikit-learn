@@ -13,6 +13,7 @@ from sklearn.metrics.scorer import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils.testing import assert_almost_equal
@@ -373,9 +374,9 @@ def test_consistency_path():
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
+            X, y, Cs=Cs, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0, multi_class='ovr')
-        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
+        lr = LogisticRegression(C=Cs[0], tol=1e-4,
                                 intercept_scaling=10000., random_state=0,
                                 multi_class='ovr', solver=solver)
         lr.fit(X, y)
@@ -596,9 +597,9 @@ def test_logistic_cv_sparse():
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
-    clf = LogisticRegressionCV(fit_intercept=True)
+    clf = LogisticRegressionCV()
     clf.fit(X, y)
-    clfs = LogisticRegressionCV(fit_intercept=True)
+    clfs = LogisticRegressionCV()
     clfs.fit(csr, y)
     assert_array_almost_equal(clfs.coef_, clf.coef_)
     assert_array_almost_equal(clfs.intercept_, clf.intercept_)
@@ -1760,3 +1761,33 @@ def test_penalty_none(solver):
         "LogisticRegressionCV",
         lr.fit, X, y
     )
+
+
+def test_scores_attribute_layout_elasticnet():
+    # Non regression test for issue #14955.
+    # when penalty is elastic net the scores_ attribute has shape
+    # (n_classes, n_Cs, n_l1_ratios)
+    # We here make sure that the second dimension indeed corresponds to Cs and
+    # the third dimension corresponds to l1_ratios.
+
+    X, y = make_classification(n_samples=1000, random_state=0)
+    cv = StratifiedKFold(n_splits=5, shuffle=False)
+
+    l1_ratios = [.1, .9]
+    Cs = [.1, 1, 10]
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', solver='saga',
+                                l1_ratios=l1_ratios, Cs=Cs, cv=cv,
+                                random_state=0)
+    lrcv.fit(X, y)
+
+    avg_scores_lrcv = lrcv.scores_[1].mean(axis=0)  # average over folds
+
+    for i, C in enumerate(Cs):
+        for j, l1_ratio in enumerate(l1_ratios):
+
+            lr = LogisticRegression(penalty='elasticnet', solver='saga', C=C,
+                                    l1_ratio=l1_ratio, random_state=0)
+
+            avg_score_lr = cross_val_score(lr, X, y, cv=cv).mean()
+            assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)

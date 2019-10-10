@@ -65,7 +65,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            check_is_fitted(self, 'coef_')
+            check_is_fitted(self)
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):

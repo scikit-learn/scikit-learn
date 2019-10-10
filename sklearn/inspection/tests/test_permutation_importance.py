@@ -26,8 +26,7 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
     rng = np.random.RandomState(42)
     n_repeats = 5
 
-    dataset = load_boston()
-    X, y = dataset.data, dataset.target
+    X, y = load_boston(return_X_y=True)
     y_with_little_noise = (
         y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
 

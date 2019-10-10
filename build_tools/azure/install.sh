@@ -24,9 +24,18 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
+version_ge() {
+    # The two version numbers are seperated with a new line is piped to sort
+    # -rV. The -V activates for version number sorting and -r sorts in
+    # decending order. If the first argument is the top element of the sort, it
+    # is greater than or equal to the second argument.
+    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
+}
+
 if [[ "$DISTRIB" == "conda" ]]; then
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION pytest-cov \
-                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
+                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -51,6 +60,15 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
 
+    # Old packages coming from the 'free' conda channel have been removed but
+    # we are using them for testing Python 3.5. See
+    # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
+    # for more details. restore_free_channel is defined starting from conda 4.7
+    conda_version=$(conda -V | awk '{print $2}')
+    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
+        conda config --set restore_free_channel true
+    fi
+
 	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
@@ -68,6 +86,14 @@ elif [[ "$DISTRIB" == "ubuntu-32" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest==$PYTEST_VERSION pytest-cov cython joblib==$JOBLIB_VERSION
+elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Since conda main channel usually lacks behind on the latest releases,
+    # we use pypi to test against the latest releases of the dependencies.
+    # conda is still used as a convenient way to install Python and pip.
+    make_conda "python=$PYTHON_VERSION"
+    python -m pip install numpy scipy joblib cython
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
+    python -m pip install pandas matplotlib pyamg
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -75,7 +101,11 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+    # numpydoc requires sphinx
+    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
+    # collections.abc so as to not raise a spurious deprecation warning
+    python -m pip install sphinx==2.1.2
+    python -m pip install numpydoc
 fi
 
 python --version

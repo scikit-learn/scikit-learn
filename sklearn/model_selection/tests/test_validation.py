@@ -22,7 +22,7 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
@@ -765,8 +765,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
     cv = KFold()
 
     est = Ridge()
@@ -962,7 +961,7 @@ def test_cross_val_predict_unbalanced():
     # Change the first sample to a new class
     y[0] = 2
     clf = LogisticRegression(random_state=1, solver="liblinear")
-    cv = StratifiedKFold(n_splits=2, random_state=1)
+    cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
     assert y[test[0]][0] == 2  # sanity check for further assertions

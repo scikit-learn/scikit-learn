@@ -151,6 +151,10 @@ fi
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
+# Insert the version warning for deployment
+find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
+\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
+
 cd -
 set +o pipefail
 

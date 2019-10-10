@@ -233,7 +233,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
 ###############################################################################
 
-class AffinityPropagation(BaseEstimator, ClusterMixin):
+class AffinityPropagation(ClusterMixin, BaseEstimator):
     """Perform Affinity Propagation Clustering of data.
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -407,7 +407,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         labels : ndarray, shape (n_samples,)
             Cluster labels.
         """
-        check_is_fitted(self, "cluster_centers_indices_")
+        check_is_fitted(self)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")

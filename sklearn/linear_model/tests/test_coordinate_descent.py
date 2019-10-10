@@ -359,10 +359,10 @@ def test_enet_cv_positive_constraint():
 
 
 def test_uniform_targets():
-    enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
-    m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
-    lasso = LassoCV(fit_intercept=True, n_alphas=3)
-    m_lasso = MultiTaskLassoCV(fit_intercept=True, n_alphas=3)
+    enet = ElasticNetCV(n_alphas=3)
+    m_enet = MultiTaskElasticNetCV(n_alphas=3)
+    lasso = LassoCV(n_alphas=3)
+    m_lasso = MultiTaskLassoCV(n_alphas=3)
 
     models_single_task = (enet, lasso)
     models_multi_task = (m_enet, m_lasso)
@@ -432,7 +432,7 @@ def test_enet_multitarget():
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
                                n_informative_features=10, n_targets=n_targets)
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True)
+    estimator = ElasticNet(alpha=0.01)
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
                                  estimator.dual_gap_)
@@ -555,8 +555,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
@@ -695,8 +694,7 @@ def test_enet_copy_X_False_check_input_False():
 def test_overrided_gram_matrix():
     X, y, _, _ = build_dataset(n_samples=20, n_features=10)
     Gram = X.T.dot(X)
-    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram,
-                     fit_intercept=True)
+    clf = ElasticNet(selection='cyclic', tol=1e-8, precompute=Gram)
     assert_warns_message(UserWarning,
                          "Gram matrix was provided but X was centered"
                          " to fit intercept, "
@@ -866,3 +864,37 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+@pytest.mark.parametrize("precompute, inner_precompute", [
+    (True, True),
+    ('auto', False),
+    (False, False),
+])
+def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
+                                         inner_precompute):
+    X, y, _, _ = build_dataset()
+    calls = 0
+
+    class LassoMock(Lasso):
+        def fit(self, X, y):
+            super().fit(X, y)
+            nonlocal calls
+            calls += 1
+            assert self.precompute == inner_precompute
+
+    monkeypatch.setattr("sklearn.linear_model.coordinate_descent.Lasso",
+                        LassoMock)
+    clf = LassoCV(precompute=precompute)
+    clf.fit(X, y)
+    assert calls > 0
+
+
+def test_multi_task_lasso_cv_dtype():
+    n_samples, n_features = 10, 3
+    rng = np.random.RandomState(42)
+    X = rng.binomial(1, .5, size=(n_samples, n_features))
+    X = X.astype(int)  # make it explicit that X is int
+    y = X[:, [0, 0]].copy()
+    est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
+    assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)

@@ -3,6 +3,7 @@
 from collections.abc import Iterable, Sized
 from io import StringIO
 from itertools import chain, product
+from functools import partial
 import pickle
 import sys
 from types import GeneratorType
@@ -22,7 +23,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -69,7 +70,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
@@ -121,17 +122,18 @@ y = np.array([1, 1, 2, 2])
 def assert_grid_iter_equals_getitem(grid):
     assert list(grid) == [grid[i] for i in range(len(grid))]
 
-
+@pytest.mark.parametrize("klass", [ParameterGrid,
+                                   partial(ParameterSampler, n_iter=10)])
 @pytest.mark.parametrize(
     "input, error_type, error_message",
-    [(0, TypeError, r'Parameter grid is not a dict or a list \(0\)'),
-     ([{'foo': [0]}, 0], TypeError, r'Parameter grid is not a dict \(0\)'),
-     ({'foo': 0}, TypeError, "Parameter grid value is not iterable "
+    [(0, TypeError, r'Parameter .* is not a dict or a list \(0\)'),
+     ([{'foo': [0]}, 0], TypeError, r'Parameter .* is not a dict \(0\)'),
+     ({'foo': 0}, TypeError, "Parameter.* value is not iterable .*"
       r"\(key='foo', value=0\)")]
 )
-def test_validate_parameter_grid_input(input, error_type, error_message):
+def test_validate_parameter_input(klass, input, error_type, error_message):
     with pytest.raises(error_type, match=error_message):
-        ParameterGrid(input)
+        klass(input)
 
 
 def test_parameter_grid():
@@ -208,7 +210,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
                          "Expected fit parameter(s) ['eggs'] not seen.",
                          searcher.fit, X, y, spam=np.ones(10))
     assert_raise_message(AssertionError,
-                         "Fit parameter spam has length 1; expected 4.",
+                         "Fit parameter spam has length 1; expected",
                          searcher.fit, X, y, spam=np.ones(1),
                          eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
@@ -883,8 +885,10 @@ def test_random_search_cv_results():
     n_splits = 3
     n_search_iter = 30
 
-    params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    param_keys = ('param_C', 'param_gamma')
+    params = [{'kernel': ['rbf'], 'C': expon(scale=10),
+               'gamma': expon(scale=0.1)},
+              {'kernel': ['poly'], 'degree': [2, 3]}]
+    param_keys = ('param_C', 'param_degree', 'param_gamma', 'param_kernel')
     score_keys = ('mean_test_score', 'mean_train_score',
                   'rank_test_score',
                   'split0_test_score', 'split1_test_score',
@@ -907,9 +911,17 @@ def test_random_search_cv_results():
         # Check results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-        # For random_search, all the param array vals should be unmasked
-        assert not(any(np.ma.getmaskarray(cv_results['param_C'])) or
-                   any(np.ma.getmaskarray(cv_results['param_gamma'])))
+        n_candidates = len(search.cv_results_['params'])
+        assert all((cv_results['param_C'].mask[i] and
+                    cv_results['param_gamma'].mask[i] and
+                    not cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'linear')
+        assert all((not cv_results['param_C'].mask[i] and
+                    not cv_results['param_gamma'].mask[i] and
+                    cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'rbf')
 
 
 @pytest.mark.parametrize(
@@ -1475,10 +1487,11 @@ def test_grid_search_failing_classifier_raise():
 
 def test_parameters_sampler_replacement():
     # raise warning if n_iter is bigger than total parameter space
-    params = {'first': [0, 1], 'second': ['a', 'b', 'c']}
-    sampler = ParameterSampler(params, n_iter=7)
-    n_iter = 7
-    grid_size = 6
+    params = [{'first': [0, 1], 'second': ['a', 'b', 'c']},
+              {'third': ['two', 'values']}]
+    sampler = ParameterSampler(params, n_iter=9)
+    n_iter = 9
+    grid_size = 8
     expected_warning = ('The total space of parameters %d is smaller '
                         'than n_iter=%d. Running %d iterations. For '
                         'exhaustive searches, use GridSearchCV.'
@@ -1487,9 +1500,9 @@ def test_parameters_sampler_replacement():
                          list, sampler)
 
     # degenerates to GridSearchCV if n_iter the same as grid_size
-    sampler = ParameterSampler(params, n_iter=6)
+    sampler = ParameterSampler(params, n_iter=8)
     samples = list(sampler)
-    assert len(samples) == 6
+    assert len(samples) == 8
     for values in ParameterGrid(params):
         assert values in samples
 
@@ -1679,12 +1692,16 @@ def test_custom_run_search():
 
     results = mycv.cv_results_
     check_results(results, gscv)
-    for attr in dir(gscv):
-        if attr[0].islower() and attr[-1:] == '_' and \
-           attr not in {'cv_results_', 'best_estimator_',
-                        'refit_time_'}:
-            assert getattr(gscv, attr) == getattr(mycv, attr), \
-                   "Attribute %s not equal" % attr
+    # TODO: remove in v0.24, the deprecation goes away then.
+    with pytest.warns(DeprecationWarning,
+                      match="attribute is to be deprecated from version 0.22"):
+        for attr in dir(gscv):
+            if (attr[0].islower() and attr[-1:] == '_' and
+                    attr not in {'cv_results_', 'best_estimator_',
+                                 'refit_time_',
+                                 }):
+                assert getattr(gscv, attr) == getattr(mycv, attr), \
+                    "Attribute %s not equal" % attr
 
 
 def test__custom_fit_no_run_search():

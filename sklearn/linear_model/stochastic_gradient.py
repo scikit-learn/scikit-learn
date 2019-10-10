@@ -65,7 +65,7 @@ class _ValidationScoreCallback:
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
+class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
@@ -96,18 +96,18 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self.tol = tol
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
 
     def set_params(self, *args, **kwargs):
         super().set_params(*args, **kwargs)
-        self._validate_params(set_max_iter=False)
+        self._validate_params()
         return self
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
+    def _validate_params(self, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -124,7 +124,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         if self.n_iter_no_change < 1:
             raise ValueError("n_iter_no_change must be >= 1")
         if not (0.0 < self.validation_fraction < 1.0):
-            raise ValueError("validation_fraction must be in ]0, 1[")
+            raise ValueError("validation_fraction must be in range (0, 1)")
         if self.learning_rate in ("constant", "invscaling", "adaptive"):
             if self.eta0 <= 0.0:
                 raise ValueError("eta0 must be > 0")
@@ -139,9 +139,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
-
-        if not set_max_iter:
-            return
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -423,7 +420,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
+class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -750,7 +747,7 @@ class SGDClassifier(BaseSGDClassifier):
         not achievable with 'l2'.
 
     alpha : float
-        Constant that multiplies the regularization term. Defaults to 0.0001
+        Constant that multiplies the regularization term. Defaults to 0.0001.
         Also used to compute learning_rate when set to 'optimal'.
 
     l1_ratio : float
@@ -765,7 +762,7 @@ class SGDClassifier(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -895,7 +892,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     loss_function_ : concrete ``LossFunction``
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
 
     t_ : int
         Number of weight updates performed during training.
@@ -982,7 +979,7 @@ class SGDClassifier(BaseSGDClassifier):
         return self._predict_proba
 
     def _predict_proba(self, X):
-        check_is_fitted(self, "t_")
+        check_is_fitted(self)
 
         if self.loss == "log":
             return self._predict_proba_lr(X)
@@ -1053,7 +1050,7 @@ class SGDClassifier(BaseSGDClassifier):
         return np.log(self.predict_proba(X))
 
 
-class BaseSGDRegressor(BaseSGD, RegressorMixin):
+class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     loss_functions = {
         "squared_loss": (SquaredLoss, ),
@@ -1216,7 +1213,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         array, shape (n_samples,)
            Predicted target values per element in X.
         """
-        check_is_fitted(self, ["t_", "coef_", "intercept_"], all_or_any=all)
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
 
@@ -1377,7 +1374,7 @@ class SGDRegressor(BaseSGDRegressor):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 

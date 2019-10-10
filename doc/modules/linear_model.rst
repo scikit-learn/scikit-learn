@@ -1,8 +1,8 @@
 .. _linear_model:
 
-=========================
-Generalized Linear Models
-=========================
+=============
+Linear Models
+=============
 
 .. currentmodule:: sklearn.linear_model
 
@@ -67,7 +67,7 @@ Ordinary Least Squares Complexity
 
 The least squares solution is computed using the singular value
 decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of 
+this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
 :math:`n_{\text{samples}} \geq n_{\text{features}}`.
 
@@ -146,9 +146,10 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> reg.alpha_
     0.01
 
-Specifying the value of the `cv` attribute will trigger the use of
-cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
-cross-validation, rather than Generalized Cross-Validation.
+Specifying the value of the :term:`cv` attribute will trigger the use of
+cross-validation with :class:`~sklearn.model_selection.GridSearchCV`, for
+example `cv=10` for 10-fold cross-validation, rather than Generalized
+Cross-Validation.
 
 .. topic:: References
 
@@ -216,11 +217,11 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 
 Setting regularization parameter
@@ -384,11 +385,11 @@ the duality gap computation used for convergence control.
 
     * "Regularization Path For Generalized linear Models by Coordinate Descent",
       Friedman, Hastie & Tibshirani, J Stat Softw, 2010 (`Paper
-      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`_).
+      <https://www.jstatsoft.org/article/view/v033i01/v33i01.pdf>`__).
     * "An Interior-Point Method for Large-Scale L1-Regularized Least Squares,"
       S. J. Kim, K. Koh, M. Lustig, S. Boyd and D. Gorinevsky,
       in IEEE Journal of Selected Topics in Signal Processing, 2007
-      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`_)
+      (`Paper <https://web.stanford.edu/~boyd/papers/pdf/l1_ls.pdf>`__)
 
 .. _multi_task_elastic_net:
 
@@ -430,7 +431,7 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where the number of features 
+  - It is numerically efficient in contexts where the number of features
     is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
@@ -732,9 +733,9 @@ classifier. In this model, the probabilities describing the possible outcomes
 of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`. 
-This implementation can fit binary, One-vs-Rest, or multinomial logistic 
-regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
+Logistic regression is implemented in :class:`LogisticRegression`.
+This implementation can fit binary, One-vs-Rest, or multinomial logistic
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
 .. note::
@@ -868,6 +869,14 @@ with 'log' loss, which might be even faster but requires more tuning.
    A logistic regression with :math:`\ell_1` penalty yields sparse models, and can
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
+
+.. note:: **P-value estimation**
+
+    It is possible to obtain the p-values and confidence intervals for
+    coefficients in cases of regression without penalization. The `statsmodels
+    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    Within sklearn, one could use bootstrapping instead as well.  
+
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
 cross-validation support, to find the optimal `C` and `l1_ratio` parameters

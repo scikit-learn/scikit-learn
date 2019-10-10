@@ -28,7 +28,7 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg, _check_optimize_result
+from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
@@ -933,8 +933,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
-            w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
-                                     maxiter=max_iter, tol=tol)
+            w0, n_iter_i = _newton_cg(hess, func, grad, w0, args=args,
+                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, None,
@@ -1160,8 +1160,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores = list()
 
-    if isinstance(scoring, str):
-        scoring = get_scorer(scoring)
+    scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1620,15 +1619,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
 
         ovr = (self.multi_class in ["ovr", "warn"] or
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
@@ -1653,11 +1652,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
@@ -1676,11 +1675,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     L1 and L2 regularization, with a dual formulation only for the L2 penalty.
     Elastic-Net penalty is only supported by the saga solver.
 
-    For the grid of `Cs` values and `l1_ratios` values, the best
-    hyperparameter is selected by the cross-validator `StratifiedKFold`, but
-    it can be changed using the `cv` parameter. The 'newton-cg', 'sag',
-    'saga' and 'lbfgs' solvers can warm-start the coefficients (see
-    :term:`Glossary<warm_start>`).
+    For the grid of `Cs` values and `l1_ratios` values, the best hyperparameter
+    is selected by the cross-validator
+    :class:`~sklearn.model_selection.StratifiedKFold`, but it can be changed
+    using the :term:`cv` parameter. The 'newton-cg', 'sag', 'saga' and 'lbfgs'
+    solvers can warm-start the coefficients (see :term:`Glossary<warm_start>`).
 
     Read more in the :ref:`User Guide <logistic_regression>`.
 
@@ -1814,7 +1813,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Note that this only applies to the solver and not the cross-validation
+        generator.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -2200,14 +2201,29 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # if elasticnet was used, add the l1_ratios dimension to some
         # attributes
         if self.l1_ratios is not None:
+            # with n_cs=2 and n_l1_ratios=3
+            # the layout of scores is
+            # [c1, c2, c1, c2, c1, c2]
+            #   l1_1 ,  l1_2 ,  l1_3
+            # To get a 2d array with the following layout
+            #      l1_1, l1_2, l1_3
+            # c1 [[ .  ,  .  ,  .  ],
+            # c2  [ .  ,  .  ,  .  ]]
+            # We need to first reshape and then transpose.
+            # The same goes for the other arrays
             for cls, coefs_path in self.coefs_paths_.items():
                 self.coefs_paths_[cls] = coefs_path.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size, -1))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size, -1))
+                self.coefs_paths_[cls] = np.transpose(self.coefs_paths_[cls],
+                                                      (0, 2, 1, 3))
             for cls, score in self.scores_.items():
                 self.scores_[cls] = score.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size))
+                self.scores_[cls] = np.transpose(self.scores_[cls], (0, 2, 1))
+
             self.n_iter_ = self.n_iter_.reshape(
-                (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
+                (-1, len(folds), self.l1_ratios_.size, self.Cs_.size))
+            self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
 
         return self
 
@@ -2217,13 +2233,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -2240,7 +2256,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                           "This warning will disappear in version 0.22.",
                           ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-        if isinstance(scoring, str):
-            scoring = get_scorer(scoring)
+
+        scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)

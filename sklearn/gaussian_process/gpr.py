@@ -19,8 +19,8 @@ from ..utils.validation import check_X_y, check_array
 from ..utils.optimize import _check_optimize_result
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
-                               MultiOutputMixin):
+class GaussianProcessRegressor(MultiOutputMixin,
+                               RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -114,20 +114,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples, [n_output_dims])
+    y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
 
     kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_ : array-like, shape = (n_samples,)
+    alpha_ : array-like of shape (n_samples,)
         Dual coefficients of training data points in kernel space
 
     log_marginal_likelihood_value_ : float
@@ -164,10 +164,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples, [n_output_dims])
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         Returns
@@ -273,7 +273,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Query points where the GP is evaluated
 
         return_std : bool, default: False
@@ -357,7 +357,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features)
             Query points where the GP samples are evaluated
 
         n_samples : int, default: 1
@@ -394,7 +394,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.

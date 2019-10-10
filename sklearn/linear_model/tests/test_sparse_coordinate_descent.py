@@ -25,8 +25,8 @@ def test_normalize_option():
     # Check that the normalize option in enet works
     X = sp.csc_matrix([[-1], [0], [1]])
     y = [-1, 0, 1]
-    clf_dense = ElasticNet(fit_intercept=True, normalize=True)
-    clf_sparse = ElasticNet(fit_intercept=True, normalize=True)
+    clf_dense = ElasticNet(normalize=True)
+    clf_sparse = ElasticNet(normalize=True)
     clf_dense.fit(X, y)
     X = sp.csc_matrix(X)
     clf_sparse.fit(X, y)
@@ -216,7 +216,7 @@ def test_enet_multitarget():
     n_targets = 3
     X, y = make_sparse_data(n_targets=n_targets)
 
-    estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
+    estimator = ElasticNet(alpha=0.01, precompute=None)
     # XXX: There is a bug when precompute is not None!
     estimator.fit(X, y)
     coef, intercept, dual_gap = (estimator.coef_,

@@ -71,7 +71,7 @@ from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
-class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
+class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for label propagation module.
 
     Parameters
@@ -157,7 +157,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -176,7 +176,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -184,7 +184,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
             Normalized probability distributions across
             class labels
         """
-        check_is_fitted(self, 'X_')
+        check_is_fitted(self)
 
         X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
                                              'bsr', 'lil', 'dia'])
@@ -209,7 +209,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             A {n_samples by n_samples} size matrix will be created from this
 
         y : array_like, shape = [n_samples]
