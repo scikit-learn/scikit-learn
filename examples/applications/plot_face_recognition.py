@@ -125,7 +125,7 @@ print("done in %0.3fs" % (time() - t0))
 
 print(classification_report(y_test, y_pred, target_names=target_names))
 plot_confusion_matrix(clf, X_test_pca, y_test, target_names=target_names,
-                      normalize=False)
+                      xticks_rotation='vertical')
 
 
 # #############################################################################

@@ -49,7 +49,7 @@ class ConfusionMatrixDisplay:
         self.target_names = target_names
 
     def plot(self, include_values=True, cmap='viridis',
-             xticks_rotation='vertical', values_format=None, ax=None):
+             xticks_rotation='horizontal', values_format=None, ax=None):
         """Plot visualization.
 
         Parameters
@@ -121,7 +121,7 @@ class ConfusionMatrixDisplay:
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
                           labels=None, target_names=None,
                           include_values=True, normalize=True,
-                          xticks_rotation='vertical',
+                          xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
     """Plot Confusion Matrix.
