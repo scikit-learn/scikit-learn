@@ -915,7 +915,7 @@ problem becomes
 
 .. math::    \min_{w} \frac{1}{2 \sum_i s_i} \sum_i s_i \cdot d(y_i, \hat{y}(w, X_i)) + \frac{\alpha}{2} ||w||_2
 
-with sample weights :math:`s`, and L2 regularization penalty :math:`\alpha`.
+with sample weights :math:`s_i`, and L2 regularization penalty :math:`\alpha`.
 The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
 likelihood as
 
