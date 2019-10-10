@@ -78,7 +78,7 @@ else:
     from . import __check_build
     from .base import clone
     from .utils._show_versions import show_versions
-    from .utils.openmp_helpers import openmp_status
+    from .utils.openmp_helpers import _openmp_warn_unsupported
 
     __check_build  # avoid flakes unused variable error
 
@@ -96,7 +96,7 @@ else:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
 
-    if openmp_status() == "unsupported":
+    if _openmp_warn_unsupported():
         import textwrap
         message = textwrap.dedent(
             """
