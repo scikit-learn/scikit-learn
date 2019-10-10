@@ -539,15 +539,15 @@ print(pd.DataFrame(res).set_index("subset").T)
 # natural difficulty of the prediction problem from few features.
 
 
-def _cumulated_claims(y_true, y_pred, exposure):
-    idx_sort = np.argsort(y_pred)[::-1]  # from riskiest to safest
-    sorted_exposure = exposure[idx_sort]
-    sorted_frequencies = y_true[idx_sort]
-    cumulated_exposure = np.cumsum(sorted_exposure)
+def _cumulated_claim_amount(y_true, y_pred, exposure):
+    ranking = np.argsort(y_pred)[::-1]  # from riskiest to safest
+    ranked_exposure = exposure[ranking]
+    ranked_claim_amount = y_true[ranking]
+    cumulated_exposure = np.cumsum(ranked_exposure)
     cumulated_exposure /= cumulated_exposure[-1]
-    cumulated_claims = np.cumsum(sorted_exposure * sorted_frequencies)
-    cumulated_claims /= cumulated_claims[-1]
-    return cumulated_exposure, cumulated_claims
+    cumulated_claim_amount = np.cumsum(ranked_claim_amount)
+    cumulated_claim_amount /= cumulated_claim_amount[-1]
+    return cumulated_exposure, cumulated_claim_amount
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
@@ -557,8 +557,8 @@ y_pred_total = glm_total.predict(X_test)
 
 for label, y_pred in [("Frequency * Severity model", y_pred_product),
                       ("Compound Poisson Gamma", y_pred_total)]:
-    cum_exposure, cum_claims = _cumulated_claims(
-        df_test["Frequency"].values,
+    cum_exposure, cum_claims = _cumulated_claim_amount(
+        df_test["ClaimAmount"].values,
         y_pred,
         df_test["Exposure"].values)
     area = auc(cum_exposure, cum_claims)
@@ -566,9 +566,9 @@ for label, y_pred in [("Frequency * Severity model", y_pred_product),
     ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = _cumulated_claims(
-    df_test["Frequency"].values,
-    df_test["Frequency"].values,
+cum_exposure, cum_claims = _cumulated_claim_amount(
+    df_test["ClaimAmount"].values,
+    df_test["ClaimAmount"].values,
     df_test["Exposure"].values)
 area = auc(cum_exposure, cum_claims)
 label = "Oracle (area under curve: {:.3f})".format(area)
