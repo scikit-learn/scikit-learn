@@ -30,12 +30,12 @@ digits = datasets.load_digits()
 # matplotlib.pyplot.imread.  Note that each image must have the same size. For these
 # images, we know which digit they represent: it is given in the 'target' of
 # the dataset.
+_, axes = plt.subplots(2, 4)
 images_and_labels = list(zip(digits.images, digits.target))
-for index, (image, label) in enumerate(images_and_labels[:4]):
-    plt.subplot(2, 4, index + 1)
-    plt.axis('off')
-    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-    plt.title('Training: %i' % label)
+for ax, (image, label) in zip(axes[0, :], images_and_labels[:4]):
+    ax.set_axis_off()
+    ax.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    ax.set_title('Training: %i' % label)
 
 # To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
@@ -52,15 +52,19 @@ classifier.fit(data[:n_samples // 2], digits.target[:n_samples // 2])
 expected = digits.target[n_samples // 2:]
 predicted = classifier.predict(data[n_samples // 2:])
 
+images_and_predictions = list(zip(digits.images[n_samples // 2:], predicted))
+for ax, (image, prediction) in zip(axes[1, :], images_and_predictions[:4]):
+    ax.set_axis_off()
+    ax.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    ax.set_title('Prediction: %i' % prediction)
+
 print("Classification report for classifier %s:\n%s\n"
       % (classifier, metrics.classification_report(expected, predicted)))
-print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
+fig, ax = plt.subplots()
+disp = metrics.plot_confusion_matrix(classifier, data[n_samples // 2:],
+                                     expected, ax=ax)
+fig.suptitle("Confusion Matrix")
+print("Confusion matrix:\n%s" % disp.confusion_matrix)
 
-images_and_predictions = list(zip(digits.images[n_samples // 2:], predicted))
-for index, (image, prediction) in enumerate(images_and_predictions[:4]):
-    plt.subplot(2, 4, index + 5)
-    plt.axis('off')
-    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-    plt.title('Prediction: %i' % prediction)
 
 plt.show()
