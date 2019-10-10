@@ -7,6 +7,7 @@ from sklearn.datasets import make_classification
 from sklearn.svm import SVC, SVR
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
 
 @pytest.fixture(scope="module")
@@ -152,3 +153,26 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     text_text = np.array([
         t.get_text() for t in disp.text_.ravel(order="C")])
     assert_array_equal(expected_text, text_text)
+
+
+def test_confusion_matrix_contrast(pyplot):
+    cm = np.eye(2) / 2
+    disp = ConfusionMatrixDisplay(cm, normalize=True, target_names=[0, 1])
+
+    disp.plot(cmap=pyplot.cm.gray)
+    # diagonal text is black
+    assert_allclose(disp.text_[0, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
+    assert_allclose(disp.text_[1, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
+
+    # oof-diagonal text is white
+    assert_allclose(disp.text_[0, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+    assert_allclose(disp.text_[1, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+    disp.plot(cmap=pyplot.cm.gray_r)
+    # diagonal text is white
+    assert_allclose(disp.text_[0, 1].get_color(), [0.0, 0.0, 0.0, 1.0])
+    assert_allclose(disp.text_[1, 0].get_color(), [0.0, 0.0, 0.0, 1.0])
+
+    # oof-diagonal text is black
+    assert_allclose(disp.text_[0, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
+    assert_allclose(disp.text_[1, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
