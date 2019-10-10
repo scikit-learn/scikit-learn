@@ -805,11 +805,10 @@ to shuffle the data indices before splitting them. Note that:
   validation performed by specifying ``cv=some_integer`` to
   :func:`cross_val_score`, grid search, etc. Keep in mind that
   :func:`train_test_split` still returns a random split.
-* The ``random_state`` parameter defaults to ``None``, meaning that the
-  shuffling will be different every time ``KFold(..., shuffle=True)`` is
-  iterated. However, ``GridSearchCV`` will use the same shuffling for each set
-  of parameters validated by a single call to its ``fit`` method.
-* To get identical results for each split, set ``random_state`` to an integer.
+* The ``random_state`` parameter defaults to ``None``, meaning that different
+  instances of e.g. ``KFold(..., shuffle=True)``) will give different splits.
+* No matter what the ``random_state`` is, calling ``split()`` multiple times
+  on the same instance will always yield the same splits.
 
 Cross validation and model selection
 ====================================
