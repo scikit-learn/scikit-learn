@@ -57,7 +57,7 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
 
         # Write test program
         with open('test_program.c', 'w') as f:
-            f.write(CCODE)
+            f.write(code)
 
         os.mkdir('objects')
 
@@ -88,7 +88,7 @@ def basic_check_build():
     """Check basic compilation and linking of C code"""
     try:
         output = compile_test_program(CCODE)
-        if 'success' in output[0]:
+        if "success" in output[0]:
             compiler_ok = True
         else:
             compiler_ok = False
