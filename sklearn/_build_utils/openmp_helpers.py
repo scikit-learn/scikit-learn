@@ -75,6 +75,9 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
         # Run test program
         output = subprocess.check_output('./test_program')
         output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
+        print("###################")
+        print(output)
+        print("##################")
 
         os.chdir(start_dir)
 
