@@ -1482,7 +1482,7 @@ class _RidgeGCV(LinearModel):
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
-                alpha_score = - squared_errors.mean()
+                alpha_score = -squared_errors.mean()
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
@@ -1491,7 +1491,7 @@ class _RidgeGCV(LinearModel):
                     _IdentityEstimator(), predictions.ravel(), y.ravel())
                 if self.store_cv_values:
                     self.cv_values_[:, i] = predictions.ravel()
-            if (best_score is None) or (alpha_score >= best_score):
+            if (best_score is None) or (alpha_score > best_score):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
 
         self.alpha_ = best_alpha
