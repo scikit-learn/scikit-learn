@@ -128,7 +128,7 @@ def _openml_url_bytes(openml_path, data_home, expected_md5_checksum=None):
             raise ValueError("md5checksum: {} does not match expected: "
                              "{}".format(file_md5.hexdigest(),
                                          expected_md5))
-        return bytes(fsrc_bytes)
+        return fsrc_bytes
 
     if data_home is None:
         fsrc = urlopen(req)
