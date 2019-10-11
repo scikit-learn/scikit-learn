@@ -408,7 +408,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                         (mask,
                                          X.indices.copy(),
                                          X.indptr.copy()),
-                                         shape=X.shape, dtype=bool)
+                                        shape=X.shape, dtype=bool)
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
