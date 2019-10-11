@@ -1196,16 +1196,17 @@ class RepeatedKFold(_RepeatedSplits):
     >>> from sklearn.model_selection import RepeatedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
-    >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
+    >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652123)
     >>> for train_index, test_index in rkf.split(X):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
-    TRAIN: [0 1] TEST: [2 3]
     TRAIN: [2 3] TEST: [0 1]
-    TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [0 3] TEST: [1 2]
+    TRAIN: [0 1] TEST: [2 3]
+    TRAIN: [0 2] TEST: [1 3]
+    TRAIN: [1 3] TEST: [0 2]
+
 
     See also
     --------
@@ -1243,16 +1244,17 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
-    ...     random_state=36851235)
+    ...     random_state=2)
     >>> for train_index, test_index in rskf.split(X, y):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...
-    TRAIN: [0 2] TEST: [1 3]
     TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [0 2] TEST: [1 3]
     TRAIN: [0 3] TEST: [1 2]
     TRAIN: [1 2] TEST: [0 3]
+
 
     See also
     --------
@@ -2171,5 +2173,5 @@ def _get_seed_from_random_state_param(random_state):
     if isinstance(random_state, numbers.Integral):
         return random_state
     else:
-        BIG_INT = 2**32  # Numpy seeds must be between 0 and 2**32 - 1
+        BIG_INT = 2**32 - 1
         return check_random_state(random_state).randint(BIG_INT)
