@@ -75,6 +75,18 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
+      pylatest_conda_mkl_no_openmp:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
+        USE_OPENMP: 'false'
 
 - template: build_tools/azure/windows.yml
   parameters:
