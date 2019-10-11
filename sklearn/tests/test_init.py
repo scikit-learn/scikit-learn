@@ -12,6 +12,7 @@ except Exception as e:
     _top_import_error = e
 
 from sklearn.utils.testing import assert_run_python_script
+from sklearn.utils._openmp_helpers import _openmp_supported
 
 
 def test_import_skl():
@@ -27,4 +28,5 @@ def test_import_openmp_warning():
     try:
         assert_run_python_script("import sklearn", ignore_warnings=False)
     except AssertionError as err:
-        assert "Scikit-learn has been built without OpenMP support" in str(err)
+        match = "Scikit-learn has been built without OpenMP support"
+        assert not _openmp_supported() and match in str(err)
