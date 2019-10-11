@@ -34,6 +34,7 @@ random sampling procedures.
 - :class:`impute.IterativeImputer` when `X` has features with no missing
   values. |Feature|
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
+- :class:`linear_model.RidgeCV` when `cv` is `None`. |Efficiency|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
 
@@ -371,6 +372,12 @@ Changelog
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
+
+- |Efficiency| :class:`linear_model.RidgeCV` now does not allocate a potentially
+  large array to store dual coefficients for all hyperparameters during its
+  `fit`, nor an array to store all LOO predictions unless `store_cv_values` is
+  `True`.
+  :pr:`15183` by :user:`Jérôme Dockès <jeromedockes>`.
 
 :mod:`sklearn.manifold`
 .......................
