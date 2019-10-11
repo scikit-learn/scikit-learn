@@ -240,19 +240,19 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                self.statistics_, _missing_mask = self._sparse_fit(X,
+                self.statistics_, missing_mask = self._sparse_fit(X,
                                                     self.strategy,
                                                     self.missing_values,
                                                     fill_value)
 
                 sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
                                       else sparse.csc_matrix)
-                self._missing_mask = sparse_constructor(
-                    (_missing_mask, X.indices.copy(), X.indptr.copy()),
+                missing_mask = sparse_constructor(
+                    (missing_mask, X.indices.copy(), X.indptr.copy()),
                     shape=X.shape, dtype=bool)
 
         else:
-            self.statistics_, self._missing_mask = self._dense_fit(X,
+            self.statistics_, missing_mask = self._dense_fit(X,
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
@@ -262,7 +262,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                     missing_values=self.missing_values,
                                     error_on_new=False,
                                     precomputed=True)
-            self.indicator_.fit(self._missing_mask)
+            self.indicator_.fit(missing_mask)
         else:
             self.indicator_ = None
 
@@ -367,15 +367,12 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._validate_input(X)
-
+        X_ = X
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
-
-        if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(self._missing_mask)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -405,10 +402,19 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                 indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                     np.diff(X.indptr))[mask]
 
+                sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                                      else sparse.csc_matrix)
+                missing_mask = sparse_constructor(
+                                        (mask,
+                                         X.indices.copy(),
+                                         X.indptr.copy()),
+                                         shape=X.shape, dtype=bool)
+
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
         else:
-            mask = _get_mask(X, self.missing_values)
+            missing_mask = _get_mask(X_, self.missing_values)
+            mask = missing_mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
@@ -416,6 +422,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
             X[coordinates] = values
 
         if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(missing_mask)
             hstack = sparse.hstack if sparse.issparse(X) else np.hstack
             X = hstack((X, X_trans_indicator))
 
