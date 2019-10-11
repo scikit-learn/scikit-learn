@@ -2174,4 +2174,4 @@ def _get_seed_from_random_state_param(random_state):
         return random_state
     else:
         BIG_INT = 2**32 - 1
-        return check_random_state(random_state).randint(BIG_INT)
+        return check_random_state(random_state).randint(BIG_INT, dtype='u8')
