@@ -51,6 +51,7 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
+from .base import _refresh_cache
 
 # The original data can be found at:
 # https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
@@ -259,6 +260,8 @@ def fetch_species_distributions(data_home=None,
                       **extra_params)
         joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = joblib.load(archive_path)
+        bunch = _refresh_cache([archive_path], 9)
+        # TODO: Revert to the following line in v0.23
+        # bunch = joblib.load(archive_path)
 
     return bunch

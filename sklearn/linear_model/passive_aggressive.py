@@ -24,7 +24,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -124,6 +124,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
@@ -184,7 +191,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of the training data
 
         y : numpy array of shape [n_samples]
@@ -224,7 +231,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]
@@ -265,7 +272,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -349,6 +356,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
@@ -408,7 +419,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of training data
 
         y : numpy array of shape [n_samples]
@@ -431,7 +442,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]

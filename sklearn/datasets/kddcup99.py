@@ -20,6 +20,7 @@ import joblib
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
+from .base import _refresh_cache
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
@@ -292,8 +293,10 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X, y = _refresh_cache([samples_path, targets_path], 0)
+        # TODO: Revert to the following two lines in v0.23
+        # X = joblib.load(samples_path)
+        # y = joblib.load(targets_path)
 
     return Bunch(data=X, target=y)
 

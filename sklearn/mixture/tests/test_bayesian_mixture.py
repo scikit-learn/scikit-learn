@@ -20,7 +20,7 @@ from sklearn.mixture import BayesianGaussianMixture
 
 from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils.testing import assert_greater_equal, ignore_warnings
+from sklearn.utils.testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -303,7 +303,7 @@ def test_monotonic_likelihood():
             for _ in range(600):
                 prev_lower_bound = current_lower_bound
                 current_lower_bound = bgmm.fit(X).lower_bound_
-                assert_greater_equal(current_lower_bound, prev_lower_bound)
+                assert current_lower_bound >= prev_lower_bound
 
                 if bgmm.converged_:
                     break
@@ -485,4 +485,4 @@ def test_bayesian_mixture_predict_predict_proba():
             Y_pred = bgmm.predict(X)
             Y_pred_proba = bgmm.predict_proba(X).argmax(axis=1)
             assert_array_equal(Y_pred, Y_pred_proba)
-            assert_greater_equal(adjusted_rand_score(Y, Y_pred), .95)
+            assert adjusted_rand_score(Y, Y_pred) >= .95

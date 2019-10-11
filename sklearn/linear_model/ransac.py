@@ -11,7 +11,7 @@ from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from .base import LinearRegression
 from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
@@ -53,16 +53,12 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
-class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
-                      MultiOutputMixin):
+class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
+                      MultiOutputMixin, BaseEstimator):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
-    from a subset of inliers from the complete data set. More information can
-    be found in the general documentation of linear models.
-
-    A detailed description of the algorithm can be found in the documentation
-    of the ``linear_model`` sub-package.
+    from a subset of inliers from the complete data set.
 
     Read more in the :ref:`User Guide <ransac_regression>`.
 
@@ -235,10 +231,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         X : array-like or sparse matrix, shape [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples]
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
             raises error if sample_weight is passed and base_estimator
             fit method does not support it.
@@ -324,8 +320,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
             raise ValueError("%s does not support sample_weight. Samples"
                              " weights are only used for the calibration"
                              " itself." % estimator_name)
-        if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         n_inliers_best = 1
         score_best = -np.inf
@@ -339,8 +334,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         # number of data samples
         n_samples = X.shape[0]
         sample_idxs = np.arange(n_samples)
-
-        n_samples, _ = X.shape
 
         self.n_trials_ = 0
         max_trials = self.max_trials
@@ -467,7 +460,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.predict(X)
 
@@ -489,6 +482,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         z : float
             Score of the prediction.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
 
         return self.estimator_.score(X, y)

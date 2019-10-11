@@ -15,8 +15,6 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster.supervised import adjusted_rand_score
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -42,9 +40,14 @@ def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
     X = rng.normal(size=(5, 5))
-    assert_raises(ValueError, AgglomerativeClustering(linkage='foo').fit, X)
-    assert_raises(ValueError, linkage_tree, X, linkage='foo')
-    assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
+    with pytest.raises(ValueError):
+        AgglomerativeClustering(linkage='foo').fit(X)
+
+    with pytest.raises(ValueError):
+        linkage_tree(X, linkage='foo')
+
+    with pytest.raises(ValueError):
+        linkage_tree(X, connectivity=np.ones((4, 4)))
 
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
@@ -75,11 +78,11 @@ def test_structured_linkage_tree():
         assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
-        assert_raises(ValueError,
-                      tree_builder, X.T, np.ones((4, 4)))
+        with pytest.raises(ValueError):
+            tree_builder(X.T, np.ones((4, 4)))
         # Check that fitting with no samples raises an error
-        assert_raises(ValueError,
-                      tree_builder, X.T[:0], connectivity)
+        with pytest.raises(ValueError):
+            tree_builder(X.T[:0], connectivity)
 
 
 def test_unstructured_linkage_tree():
@@ -93,7 +96,7 @@ def test_unstructured_linkage_tree():
             children, n_nodes, n_leaves, parent = assert_warns(
                 UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
-        assert_equal(len(children) + n_leaves, n_nodes)
+        assert len(children) + n_leaves == n_nodes
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
@@ -102,7 +105,7 @@ def test_unstructured_linkage_tree():
                     UserWarning, tree_builder, this_X.T, n_clusters=10)
 
             n_nodes = 2 * X.shape[1] - 1
-            assert_equal(len(children) + n_leaves, n_nodes)
+            assert len(children) + n_leaves == n_nodes
 
 
 def test_height_linkage_tree():
@@ -125,7 +128,8 @@ def test_agglomerative_clustering_wrong_arg_memory():
     X = rng.randn(n_samples, 50)
     memory = 5
     clustering = AgglomerativeClustering(memory=memory)
-    assert_raises(ValueError, clustering.fit, X)
+    with pytest.raises(ValueError):
+        clustering.fit(X)
 
 
 def test_zero_cosine_linkage_tree():
@@ -180,7 +184,8 @@ def test_agglomerative_clustering():
             connectivity=sparse.lil_matrix(
                 connectivity.toarray()[:10, :10]),
             linkage=linkage)
-        assert_raises(ValueError, clustering.fit, X)
+        with pytest.raises(ValueError):
+            clustering.fit(X)
 
     # Test that using ward with another metric than euclidean raises an
     # exception
@@ -189,7 +194,8 @@ def test_agglomerative_clustering():
         connectivity=connectivity.toarray(),
         affinity="manhattan",
         linkage="ward")
-    assert_raises(ValueError, clustering.fit, X)
+    with pytest.raises(ValueError):
+        clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
     for affinity in PAIRED_DISTANCES.keys():
@@ -242,7 +248,8 @@ def test_ward_agglomeration():
     assert_array_almost_equal(agglo.transform(X_full), X_red)
 
     # Check that fitting with no samples raises a ValueError
-    assert_raises(ValueError, agglo.fit, X[:0])
+    with pytest.raises(ValueError):
+        agglo.fit(X[:0])
 
 
 def test_single_linkage_clustering():
@@ -303,7 +310,8 @@ def test_scikit_vs_scipy():
             assess_same_labelling(cut, cut_)
 
     # Test error management in _hc_cut
-    assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
+    with pytest.raises(ValueError):
+        _hc_cut(n_leaves + 1, children, n_leaves)
 
 
 def test_identical_points():
@@ -538,7 +546,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - 1)
+    assert n_nodes == n_samples - 1
 
     # When n_clusters is large, greater than max of 100 and 0.02 * n_samples.
     # we should stop when there are n_clusters.
@@ -550,7 +558,7 @@ def test_compute_full_tree():
     agc.fit(X)
     n_samples = X.shape[0]
     n_nodes = agc.children_.shape[0]
-    assert_equal(n_nodes, n_samples - n_clusters)
+    assert n_nodes == n_samples - n_clusters
 
 
 def test_n_components():
@@ -562,7 +570,7 @@ def test_n_components():
     connectivity = np.eye(5)
 
     for linkage_func in _TREE_BUILDERS.values():
-        assert_equal(ignore_warnings(linkage_func)(X, connectivity)[1], 5)
+        assert ignore_warnings(linkage_func)(X, connectivity)[1] == 5
 
 
 def test_agg_n_clusters():

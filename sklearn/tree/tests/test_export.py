@@ -5,15 +5,13 @@ from re import finditer, search
 from textwrap import dedent
 
 from numpy.random import RandomState
+import pytest
 
 from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz, plot_tree, export_text
 from io import StringIO
-from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
-                                   assert_less_equal, assert_raises_regex,
-                                   assert_raise_message)
 from sklearn.exceptions import NotFittedError
 
 # toy sample
@@ -46,7 +44,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test with feature_names
     contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
@@ -63,7 +61,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test with class_names
     contents1 = export_graphviz(clf, class_names=["yes", "no"], out_file=None)
@@ -81,7 +79,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test plot_options
     contents1 = export_graphviz(clf, filled=True, impurity=False,
@@ -103,7 +101,7 @@ def test_graphviz_toy():
                 'headlabel="False"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test max_depth
     contents1 = export_graphviz(clf, max_depth=0,
@@ -118,7 +116,7 @@ def test_graphviz_toy():
                 '0 -> 2 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test max_depth with plot_options
     contents1 = export_graphviz(clf, max_depth=0, filled=True,
@@ -133,7 +131,7 @@ def test_graphviz_toy():
                 '0 -> 2 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test multi-output with weighted samples
     clf = DecisionTreeClassifier(max_depth=2,
@@ -166,7 +164,7 @@ def test_graphviz_toy():
                 '2 -> 4 ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test regression output with plot_options
     clf = DecisionTreeRegressor(max_depth=3,
@@ -197,7 +195,7 @@ def test_graphviz_toy():
                 '{rank=same ; 1; 2} ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
+    assert contents1 == contents2
 
     # Test classifier with degraded learning set
     clf = DecisionTreeClassifier(max_depth=3)
@@ -217,7 +215,8 @@ def test_graphviz_errors():
 
     # Check not-fitted decision tree error
     out = StringIO()
-    assert_raises(NotFittedError, export_graphviz, clf, out)
+    with pytest.raises(NotFittedError):
+        export_graphviz(clf, out)
 
     clf.fit(X, y)
 
@@ -225,29 +224,30 @@ def test_graphviz_errors():
     # mismatches with number of features
     message = ("Length of feature_names, "
                "1 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a"])
 
     message = ("Length of feature_names, "
                "3 does not match number of features, 2")
-    assert_raise_message(ValueError, message, export_graphviz, clf, None,
-                         feature_names=["a", "b", "c"])
+    with pytest.raises(ValueError, match=message):
+        export_graphviz(clf, None, feature_names=["a", "b", "c"])
 
     # Check error when argument is not an estimator
     message = "is not an estimator instance"
-    assert_raise_message(TypeError, message,
-                         export_graphviz, clf.fit(X, y).tree_)
+    with pytest.raises(TypeError, match=message):
+        export_graphviz(clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
-    assert_raises(IndexError, export_graphviz, clf, out, class_names=[])
+    with pytest.raises(IndexError):
+        export_graphviz(clf, out, class_names=[])
 
     # Check precision error
     out = StringIO()
-    assert_raises_regex(ValueError, "should be greater or equal",
-                        export_graphviz, clf, out, precision=-1)
-    assert_raises_regex(ValueError, "should be an integer",
-                        export_graphviz, clf, out, precision="1")
+    with pytest.raises(ValueError, match="should be greater or equal"):
+        export_graphviz(clf, out, precision=-1)
+    with pytest.raises(ValueError, match="should be an integer"):
+        export_graphviz(clf, out, precision="1")
 
 
 def test_friedman_mse_in_graphviz():
@@ -262,7 +262,7 @@ def test_friedman_mse_in_graphviz():
         export_graphviz(estimator[0], out_file=dot_data)
 
     for finding in finditer(r"\[.*?samples.*?\]", dot_data.getvalue()):
-        assert_in("friedman_mse", finding.group())
+        assert "friedman_mse" in finding.group()
 
 
 def test_precision():
@@ -291,8 +291,8 @@ def test_precision():
 
             # check value
             for finding in finditer(r"value = \d+\.\d+", dot_data):
-                assert_less_equal(
-                    len(search(r"\.\d+", finding.group()).group()),
+                assert (
+                    len(search(r"\.\d+", finding.group()).group()) <=
                     precision + 1)
             # check impurity
             if is_classifier(clf):
@@ -302,11 +302,11 @@ def test_precision():
 
             # check impurity
             for finding in finditer(pattern, dot_data):
-                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                assert (len(search(r"\.\d+", finding.group()).group()) ==
                              precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
-                assert_equal(len(search(r"\.\d+", finding.group()).group()),
+                assert (len(search(r"\.\d+", finding.group()).group()) ==
                              precision + 1)
 
 
@@ -314,18 +314,18 @@ def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
 
-    assert_raise_message(ValueError,
-                         "max_depth bust be >= 0, given -1",
-                         export_text, clf, max_depth=-1)
-    assert_raise_message(ValueError,
-                         "feature_names must contain 2 elements, got 1",
-                         export_text, clf, feature_names=['a'])
-    assert_raise_message(ValueError,
-                         "decimals must be >= 0, given -1",
-                         export_text, clf, decimals=-1)
-    assert_raise_message(ValueError,
-                         "spacing must be > 0, given 0",
-                         export_text, clf, spacing=0)
+    err_msg = "max_depth bust be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, max_depth=-1)
+    err_msg = "feature_names must contain 2 elements, got 1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, feature_names=['a'])
+    err_msg = "decimals must be >= 0, given -1"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, decimals=-1)
+    err_msg = "spacing must be > 0, given 0"
+    with pytest.raises(ValueError, match=err_msg):
+        export_text(clf, spacing=0)
 
 
 def test_export_text():

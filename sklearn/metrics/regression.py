@@ -19,10 +19,12 @@ the lower the better
 #          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
+#          Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
 
 import numpy as np
+from scipy.special import xlogy
 import warnings
 
 from ..utils.validation import (check_array, check_consistent_length,
@@ -38,11 +40,14 @@ __ALL__ = [
     "mean_squared_log_error",
     "median_absolute_error",
     "r2_score",
-    "explained_variance_score"
+    "explained_variance_score",
+    "mean_tweedie_deviance",
+    "mean_poisson_deviance",
+    "mean_gamma_deviance",
 ]
 
 
-def _check_reg_targets(y_true, y_pred, multioutput):
+def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     """Check that y_true and y_pred belong to the same regression task
 
     Parameters
@@ -61,22 +66,24 @@ def _check_reg_targets(y_true, y_pred, multioutput):
         The type of the true target data, as output by
         'utils.multiclass.type_of_target'
 
-    y_true : array-like of shape = (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples, n_outputs)
         Estimated target values.
 
-    multioutput : array-like of shape = (n_outputs) or string in ['raw_values',
+    multioutput : array-like of shape (n_outputs) or string in ['raw_values',
         uniform_average', 'variance_weighted'] or None
         Custom output weights if ``multioutput`` is array-like or
         just the corresponding argument if ``multioutput`` is a
         correct keyword.
+    dtype: str or list, default="numeric"
+        the dtype argument passed to check_array
 
     """
     check_consistent_length(y_true, y_pred)
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, dtype=dtype)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=dtype)
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -120,13 +127,13 @@ def mean_absolute_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average']
@@ -184,20 +191,20 @@ def mean_absolute_error(y_true, y_pred,
 
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
-                       multioutput='uniform_average'):
+                       multioutput='uniform_average', squared=True):
     """Mean squared error regression loss
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average']
@@ -210,6 +217,9 @@ def mean_squared_error(y_true, y_pred,
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
+    squared : boolean value, optional (default = True)
+        If True returns MSE value, if False returns RMSE value.
 
     Returns
     -------
@@ -224,6 +234,10 @@ def mean_squared_error(y_true, y_pred,
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
     0.375
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred, squared=False)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
@@ -246,7 +260,8 @@ def mean_squared_error(y_true, y_pred,
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    mse = np.average(output_errors, weights=multioutput)
+    return mse if squared else np.sqrt(mse)
 
 
 def mean_squared_log_error(y_true, y_pred,
@@ -258,17 +273,17 @@ def mean_squared_log_error(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average'] \
-            or array-like of shape = (n_outputs)
+            or array-like of shape (n_outputs)
 
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
@@ -322,10 +337,10 @@ def median_absolute_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples)
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples)
+    y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
     Returns
@@ -359,13 +374,13 @@ def explained_variance_score(y_true, y_pred,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average', \
@@ -453,13 +468,13 @@ def r2_score(y_true, y_pred, sample_weight=None,
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape = (n_samples), optional
+    sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
     multioutput : string in ['raw_values', 'uniform_average', \
@@ -586,10 +601,10 @@ def max_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples)
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples)
+    y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
     Returns
@@ -609,3 +624,181 @@ def max_error(y_true, y_pred):
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in max_error")
     return np.max(np.abs(y_true - y_pred))
+
+
+def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
+    """Mean Tweedie deviance regression loss.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    power : float, default=0
+        Tweedie power parameter. Either power <= 0 or power >= 1.
+
+        The higher `p` the less weight is given to extreme
+        deviations between true and predicted targets.
+
+        - power < 0: Extreme stable distribution. Requires: y_pred > 0.
+        - power = 0 : Normal distribution, output corresponds to
+          mean_squared_error. y_true and y_pred can be any real numbers.
+        - power = 1 : Poisson distribution. Requires: y_true >= 0 and
+          y_pred > 0.
+        - 1 < p < 2 : Compound Poisson distribution. Requires: y_true >= 0
+          and y_pred > 0.
+        - power = 2 : Gamma distribution. Requires: y_true > 0 and y_pred > 0.
+        - power = 3 : Inverse Gaussian distribution. Requires: y_true > 0
+          and y_pred > 0.
+        - otherwise : Positive stable distribution. Requires: y_true > 0
+          and y_pred > 0.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> y_true = [2, 0, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_tweedie_deviance(y_true, y_pred, power=1)
+    1.4260...
+    """
+    y_type, y_true, y_pred, _ = _check_reg_targets(
+        y_true, y_pred, None, dtype=[np.float64, np.float32])
+    if y_type == 'continuous-multioutput':
+        raise ValueError("Multioutput not supported in mean_tweedie_deviance")
+    check_consistent_length(y_true, y_pred, sample_weight)
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        sample_weight = sample_weight[:, np.newaxis]
+
+    message = ("Mean Tweedie deviance error with power={} can only be used on "
+               .format(power))
+    if power < 0:
+        # 'Extreme stable', y_true any realy number, y_pred > 0
+        if (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y_pred.")
+        dev = 2 * (np.power(np.maximum(y_true, 0), 2 - power)
+                   / ((1 - power) * (2 - power))
+                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
+                   + np.power(y_pred, 2 - power)/(2 - power))
+    elif power == 0:
+        # Normal distribution, y_true and y_pred any real number
+        dev = (y_true - y_pred)**2
+    elif power < 1:
+        raise ValueError("Tweedie deviance is only defined for power<=0 and "
+                         "power>=1.")
+    elif power == 1:
+        # Poisson distribution, y_true >= 0, y_pred > 0
+        if (y_true < 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "non-negative y_true and strictly "
+                             "positive y_pred.")
+        dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
+    elif power == 2:
+        # Gamma distribution, y_true and y_pred > 0
+        if (y_true <= 0).any() or (y_pred <= 0).any():
+            raise ValueError(message + "strictly positive y_true and y_pred.")
+        dev = 2 * (np.log(y_pred/y_true) + y_true/y_pred - 1)
+    else:
+        if power < 2:
+            # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
+            if (y_true < 0).any() or (y_pred <= 0).any():
+                raise ValueError(message + "non-negative y_true and strictly "
+                                           "positive y_pred.")
+        else:
+            if (y_true <= 0).any() or (y_pred <= 0).any():
+                raise ValueError(message + "strictly positive y_true and "
+                                           "y_pred.")
+
+        dev = 2 * (np.power(y_true, 2 - power)/((1 - power) * (2 - power))
+                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
+                   + np.power(y_pred, 2 - power)/(2 - power))
+
+    return np.average(dev, weights=sample_weight)
+
+
+def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Poisson deviance regression loss.
+
+    Poisson deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=1`.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true >= 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_poisson_deviance
+    >>> y_true = [2, 0, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_poisson_deviance(y_true, y_pred)
+    1.4260...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=1
+    )
+
+
+def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
+    """Mean Gamma deviance regression loss.
+
+    Gamma deviance is equivalent to the Tweedie deviance with
+    the power parameter `p=2`. It is invariant to scaling of
+    the target variable, and mesures relative errors.
+
+    Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
+
+    Parameters
+    ----------
+    y_true : array-like of shape (n_samples,)
+        Ground truth (correct) target values. Requires y_true > 0.
+
+    y_pred : array-like of shape (n_samples,)
+        Estimated target values. Requires y_pred > 0.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
+
+    Returns
+    -------
+    loss : float
+        A non-negative floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_gamma_deviance
+    >>> y_true = [2, 0.5, 1, 4]
+    >>> y_pred = [0.5, 0.5, 2., 2.]
+    >>> mean_gamma_deviance(y_true, y_pred)
+    1.0568...
+    """
+    return mean_tweedie_deviance(
+        y_true, y_pred, sample_weight=sample_weight, power=2
+    )

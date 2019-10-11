@@ -28,9 +28,6 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -165,13 +162,13 @@ def test_gaussian_mixture_attributes():
                           covariance_type=covariance_type,
                           init_params=init_params).fit(X)
 
-    assert_equal(gmm.n_components, n_components)
-    assert_equal(gmm.covariance_type, covariance_type)
-    assert_equal(gmm.tol, tol)
-    assert_equal(gmm.reg_covar, reg_covar)
-    assert_equal(gmm.max_iter, max_iter)
-    assert_equal(gmm.n_init, n_init)
-    assert_equal(gmm.init_params, init_params)
+    assert gmm.n_components == n_components
+    assert gmm.covariance_type == covariance_type
+    assert gmm.tol == tol
+    assert gmm.reg_covar == reg_covar
+    assert gmm.max_iter == max_iter
+    assert gmm.n_init == n_init
+    assert gmm.init_params == init_params
 
 
 def test_check_X():
@@ -567,7 +564,7 @@ def test_gaussian_mixture_predict_predict_proba():
         Y_pred = g.predict(X)
         Y_pred_proba = g.predict_proba(X).argmax(axis=1)
         assert_array_equal(Y_pred, Y_pred_proba)
-        assert_greater(adjusted_rand_score(Y, Y_pred), .95)
+        assert adjusted_rand_score(Y, Y_pred) > .95
 
 
 @pytest.mark.filterwarnings("ignore:.*did not converge.*")
@@ -595,7 +592,7 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         Y_pred1 = f.fit(X).predict(X)
         Y_pred2 = g.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
-        assert_greater(adjusted_rand_score(Y, Y_pred2), .95)
+        assert adjusted_rand_score(Y, Y_pred2) > .95
 
 
 def test_gaussian_mixture_fit_predict_n_init():
@@ -706,7 +703,7 @@ def test_multiple_init():
         train2 = GaussianMixture(n_components=n_components,
                                  covariance_type=cv_type,
                                  random_state=0, n_init=5).fit(X).score(X)
-        assert_greater_equal(train2, train1)
+        assert train2 >= train1
 
 
 def test_gaussian_mixture_n_parameters():
@@ -719,7 +716,7 @@ def test_gaussian_mixture_n_parameters():
         g = GaussianMixture(
             n_components=n_components, covariance_type=cv_type,
             random_state=rng).fit(X)
-        assert_equal(g._n_parameters(), n_params[cv_type])
+        assert g._n_parameters() == n_params[cv_type]
 
 
 def test_bic_1d_1component():
@@ -874,7 +871,7 @@ def test_score():
     gmm2 = GaussianMixture(n_components=n_components, n_init=1, reg_covar=0,
                            random_state=rng,
                            covariance_type=covar_type).fit(X)
-    assert_greater(gmm2.score(X), gmm1.score(X))
+    assert gmm2.score(X) > gmm1.score(X)
 
 
 def test_score_samples():
@@ -893,7 +890,7 @@ def test_score_samples():
                          "before using this method.", gmm.score_samples, X)
 
     gmm_score_samples = gmm.fit(X).score_samples(X)
-    assert_equal(gmm_score_samples.shape[0], rand_data.n_samples)
+    assert gmm_score_samples.shape[0] == rand_data.n_samples
 
 
 def test_monotonic_likelihood():
@@ -920,7 +917,7 @@ def test_monotonic_likelihood():
                     current_log_likelihood = gmm.fit(X).score(X)
                 except ConvergenceWarning:
                     pass
-                assert_greater_equal(current_log_likelihood,
+                assert (current_log_likelihood >=
                                      prev_log_likelihood)
 
                 if gmm.converged_:
@@ -1021,11 +1018,11 @@ def test_sample():
 
         # Check shapes of sampled data, see
         # https://github.com/scikit-learn/scikit-learn/issues/7701
-        assert_equal(X_s.shape, (n_samples, n_features))
+        assert X_s.shape == (n_samples, n_features)
 
         for sample_size in range(1, 100):
             X_s, _ = gmm.sample(sample_size)
-            assert_equal(X_s.shape, (sample_size, n_features))
+            assert X_s.shape == (sample_size, n_features)
 
 
 @ignore_warnings(category=ConvergenceWarning)

@@ -10,6 +10,7 @@ import os
 import csv
 import sys
 import shutil
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -94,14 +95,14 @@ def load_files(container_path, description=None, categories=None,
     load the files in memory.
 
     To use text files in a scikit-learn classification or clustering algorithm,
-    you will need to use the `sklearn.feature_extraction.text` module to build
-    a feature extraction transformer that suits your problem.
+    you will need to use the :mod`~sklearn.feature_extraction.text` module to
+    build a feature extraction transformer that suits your problem.
 
     If you set load_content=True, you should also specify the encoding of the
     text using the 'encoding' parameter. For many modern text files, 'utf-8'
     will be the correct encoding. If you leave encoding equal to None, then the
     content will be made of bytes instead of Unicode, and you will not be able
-    to use most functions in `sklearn.feature_extraction.text`.
+    to use most functions in :mod:`~sklearn.feature_extraction.text`.
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
@@ -723,8 +724,8 @@ def load_boston(return_X_y=False):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> boston = load_boston()
-    >>> print(boston.data.shape)
+    >>> X, y = load_boston(return_X_y=True)
+    >>> print(X.shape)
     (506, 13)
     """
     module_path = dirname(__file__)
@@ -919,3 +920,31 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
+
+
+def _refresh_cache(files, compress):
+    # TODO: REMOVE in v0.23
+    import joblib
+    msg = "sklearn.externals.joblib is deprecated in 0.21"
+    with warnings.catch_warnings(record=True) as warns:
+        data = tuple([joblib.load(f) for f in files])
+
+    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
+
+    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
+    for w in other_warns:
+        warnings.warn(message=w.message, category=w.category)
+
+    if refresh_needed:
+        try:
+            for value, path in zip(data, files):
+                joblib.dump(value, path, compress=compress)
+        except IOError:
+            message = ("This dataset will stop being loadable in scikit-learn "
+                       "version 0.23 because it references a deprecated "
+                       "import path. Consider removing the following files "
+                       "and allowing it to be cached anew:\n%s"
+                       % ("\n".join(files)))
+            warnings.warn(message=message, category=DeprecationWarning)
+
+    return data[0] if len(data) == 1 else data

@@ -133,7 +133,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         If ``False``, return the number of correctly classified samples.
         Otherwise, return the fraction of correctly classified samples.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -211,12 +211,12 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
     -------
-    C : array, shape = [n_classes, n_classes]
+    C : ndarray of shape (n_classes, n_classes)
         Confusion matrix
 
     References
@@ -325,7 +325,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
         of shape (n_samples, n_outputs) or (n_samples,)
         Estimated targets as returned by a classifier
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights
 
     labels : array-like
@@ -533,7 +533,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
         Weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -601,7 +601,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
         over the sample set. Otherwise, return the average of Jaccard
         similarity coefficient.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -659,7 +659,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Read more in the :ref:`User Guide <jaccard_score>`.
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
@@ -706,7 +706,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -815,7 +815,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    sample_weight : array-like of shape = [n_samples], default None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -897,7 +897,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1014,7 +1014,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1067,7 +1067,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of recall in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
+    favors recall (``beta -> 0`` considers only precision, ``beta -> +inf``
     only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1081,7 +1081,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         Estimated targets as returned by a classifier.
 
     beta : float
-        Weight of precision in harmonic mean.
+        Determines the weight of recall in the combined score.
 
     labels : list, optional
         The set of labels to include when ``average != 'binary'``, and their
@@ -1126,7 +1126,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1340,7 +1340,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1400,8 +1400,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     ``UndefinedMetricWarning`` will be raised.
     """
-    if beta <= 0:
-        raise ValueError("beta should be >0 in the F-beta score")
+    if beta < 0:
+        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
 
@@ -1428,11 +1428,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             'precision', 'predicted', average, warn_for)
     recall = _prf_divide(tp_sum, true_sum,
                          'recall', 'true', average, warn_for)
-    # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-    # and true are nonzero, in which case, F is well-defined and zero
-    denom = beta2 * precision + recall
-    denom[denom == 0.] = 1  # avoid division by 0
-    f_score = (1 + beta2) * precision * recall / denom
+    if np.isposinf(beta):
+        f_score = recall
+    else:
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
+        denom = beta2 * precision + recall
+        denom[denom == 0.] = 1  # avoid division by 0
+        f_score = (1 + beta2) * precision * recall / denom
 
     # Average the results
     if average == 'weighted':
@@ -1518,7 +1521,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1623,7 +1626,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -1686,7 +1689,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     y_pred : 1d array-like
         Estimated targets as returned by a classifier.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     adjusted : bool, default=False
@@ -1763,7 +1766,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     target_names : list of strings
         Optional display names matching the labels (same order).
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     digits : int
@@ -1795,7 +1798,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         micro average (averaging the total true positives, false negatives and
         false positives) it is only shown for multi-label or multi-class
         with a subset of classes because it is accuracy otherwise.
-        See also:func:`precision_recall_fscore_support` for more details
+        See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
         Note that in binary classification, recall of the positive class
@@ -1960,7 +1963,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
            for the number of labels when y_true is binary label indicators,
            so it is unnecessary for the user to specify.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
         .. versionadded:: 0.18
@@ -2078,7 +2081,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     labels : array-like, optional (default=None)
@@ -2195,7 +2198,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     labels : array, optional, default None
         Contains all the labels for the problem. Used in multiclass hinge loss.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -2316,7 +2319,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     pos_label : int or str, default=None
@@ -2366,7 +2369,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
     # otherwise pos_label is set to the greater label
     # (different from precision_recall_curve/roc_curve,
     # the purpose is to keep backward compatibility).

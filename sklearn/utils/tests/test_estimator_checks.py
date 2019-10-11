@@ -10,13 +10,14 @@ from io import StringIO
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
 from sklearn.utils.testing import (assert_raises_regex,
-                                   assert_equal, ignore_warnings,
-                                   assert_warns, assert_raises)
+                                   ignore_warnings,
+                                   assert_warns, assert_raises,
+                                   SkipTest)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import set_checking_parameters
+from sklearn.utils.estimator_checks import _set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
@@ -42,7 +43,7 @@ class CorrectNotFittedError(ValueError):
     """
 
 
-class BaseBadClassifier(BaseEstimator, ClassifierMixin):
+class BaseBadClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         return self
 
@@ -169,7 +170,7 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
         return self
 
     def predict(self, X):
-        check_is_fitted(self, 'coef_')
+        check_is_fitted(self)
         X = check_array(X)
         return np.ones(X.shape[0])
 
@@ -281,7 +282,7 @@ class UntaggedBinaryClassifier(DecisionTreeClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        if self.n_classes_ > 2:
+        if np.all(self.n_classes_ > 2):
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -295,7 +296,7 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=True)
         if (y <= 0).any():
             raise ValueError('negative y values not supported!')
         return super().fit(X, y)
@@ -414,7 +415,7 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(LogisticRegression)
-    check_estimator(LogisticRegression())
+    check_estimator(LogisticRegression(C=0.01))
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
@@ -422,7 +423,9 @@ def test_check_estimator():
     check_estimator(TaggedBinaryClassifier)
 
     # Check regressor with requires_positive_y estimator tag
-    check_estimator(RequiresPositiveYRegressor)
+    msg = 'negative y values not supported!'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        RequiresPositiveYRegressor)
 
 
 def test_check_outlier_corruption():
@@ -451,23 +454,23 @@ def test_check_estimator_clones():
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-            set_checking_parameters(est)
+            _set_checking_parameters(est)
             set_random_state(est)
             # without fitting
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
         with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-            set_checking_parameters(est)
+            _set_checking_parameters(est)
             set_random_state(est)
             # with fitting
             est.fit(iris.data + 10, iris.target)
             old_hash = joblib.hash(est)
             check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+        assert old_hash == joblib.hash(est)
 
 
 def test_check_estimators_unfitted():
@@ -483,11 +486,11 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    class NonConformantEstimatorPrivateSet:
+    class NonConformantEstimatorPrivateSet(BaseEstimator):
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    class NonConformantEstimatorNoParamSet:
+    class NonConformantEstimatorNoParamSet(BaseEstimator):
         def __init__(self, you_should_set_this_=None):
             pass
 
@@ -510,7 +513,7 @@ def test_check_no_attributes_set_in_init():
 
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
-    # kernel or  metric
+    # kernel or metric
 
     # test precomputed kernel
     est = SVC(kernel='precomputed')
@@ -519,6 +522,19 @@ def test_check_estimator_pairwise():
     # test precomputed metric
     est = KNeighborsRegressor(metric='precomputed')
     check_estimator(est)
+
+
+def test_check_estimator_required_parameters_skip():
+    class MyEstimator(BaseEstimator):
+        _required_parameters = ["special_parameter"]
+
+        def __init__(self, special_parameter):
+            self.special_parameter = special_parameter
+
+    assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
+                                  r"which requires parameters "
+                                  r"\['special_parameter'\]",
+                                  check_estimator, MyEstimator)
 
 
 def run_tests_without_pytest():

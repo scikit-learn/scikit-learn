@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -16,9 +17,7 @@ from sklearn.metrics.cluster.supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
-        assert_equal, assert_almost_equal, assert_raise_message,
-        ignore_warnings
-)
+        assert_almost_equal, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
 
 
@@ -35,18 +34,18 @@ score_funcs = [
 @ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
-        expected = ('labels_true and labels_pred must have same size,'
-                    ' got 2 and 3')
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1], [1, 1, 1])
+        expected = (r'Found input variables with inconsistent numbers '
+                    r'of samples: \[2, 3\]')
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [[0, 1], [1, 0]], [1, 1, 1])
+        expected = r"labels_true must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1, 0], [[1, 1], [0, 0]])
+        expected = r"labels_pred must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
 def test_generalized_average():
@@ -62,13 +61,13 @@ def test_generalized_average():
 @ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert_equal(score_func([], []), 1.0)
-        assert_equal(score_func([0], [1]), 1.0)
-        assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
-        assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
-        assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
-        assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
-        assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+        assert score_func([], []) == 1.0
+        assert score_func([0], [1]) == 1.0
+        assert score_func([0, 0, 0], [0, 0, 0]) == 1.0
+        assert score_func([0, 1, 0], [42, 7, 42]) == 1.0
+        assert score_func([0., 1., 0.], [42., 7., 42.]) == 1.0
+        assert score_func([0., 1., 2.], [42., 7., 2.]) == 1.0
+        assert score_func([0, 1, 2], [42, 7, 2]) == 1.0
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
@@ -213,7 +212,7 @@ def test_adjusted_mutual_info_score():
     ami = adjusted_mutual_info_score(labels_a, labels_b)
     assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
-    assert_equal(ami, 1.0)
+    assert ami == 1.0
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
@@ -263,10 +262,8 @@ def test_contingency_matrix_sparse():
     C = contingency_matrix(labels_a, labels_b)
     C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
-    C_sparse = assert_raise_message(ValueError,
-                                    "Cannot set 'eps' when sparse=True",
-                                    contingency_matrix, labels_a, labels_b,
-                                    eps=1e-10, sparse=True)
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse=True"):
+        contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
 
 
 @ignore_warnings(category=FutureWarning)
@@ -275,10 +272,10 @@ def test_exactly_zero_info_score():
     for i in np.logspace(1, 4, 4).astype(np.int):
         labels_a, labels_b = (np.ones(i, dtype=np.int),
                               np.arange(i, dtype=np.int))
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
+        assert v_measure_score(labels_a, labels_b) == 0.0
+        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
         for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(labels_a, labels_b,
                                               method) == 0.0

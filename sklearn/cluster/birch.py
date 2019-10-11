@@ -319,7 +319,7 @@ class _CFSubcluster:
             self.sq_norm_)
 
 
-class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -352,9 +352,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         - `None` : the final clustering step is not performed and the
           subclusters are returned as they are.
 
-        - `sklearn.cluster` Estimator : If a model is provided, the model is
-          fit treating the subclusters as new samples and the initial data is
-          mapped to the label of the closest subcluster.
+        - :mod:`sklearn.cluster` Estimator : If a model is provided, the model
+          is fit treating the subclusters as new samples and the initial data
+          is mapped to the label of the closest subcluster.
 
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
@@ -534,8 +534,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
-                        all_or_any=any)
+        check_is_fitted(self)
 
         if (hasattr(self, 'subcluster_centers_') and
                 X.shape[1] != self.subcluster_centers_.shape[1]):
@@ -583,7 +582,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        check_is_fitted(self, 'subcluster_centers_')
+        check_is_fitted(self)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

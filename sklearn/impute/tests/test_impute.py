@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
+from sklearn.datasets import load_boston
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -65,21 +66,22 @@ def _check_statistics(X, X_true,
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
 
-def test_imputation_shape():
+@pytest.mark.parametrize("strategy",
+                         ['mean', 'median', 'most_frequent', "constant"])
+def test_imputation_shape(strategy):
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent', "constant"]:
-        imputer = SimpleImputer(strategy=strategy)
-        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert X_imputed.shape == (10, 2)
-        X_imputed = imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
+    imputer = SimpleImputer(strategy=strategy)
+    X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+    assert X_imputed.shape == (10, 2)
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
 
-        iterative_imputer = IterativeImputer(initial_strategy=strategy)
-        X_imputed = iterative_imputer.fit_transform(X)
-        assert X_imputed.shape == (10, 2)
+    iterative_imputer = IterativeImputer(initial_strategy=strategy)
+    X_imputed = iterative_imputer.fit_transform(X)
+    assert X_imputed.shape == (10, 2)
 
 
 @pytest.mark.parametrize("strategy", ["const", 101, None])
@@ -455,6 +457,18 @@ def test_imputation_missing_value_in_test_array(Imputer):
     imputer.fit(train).transform(test)
 
 
+@pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
+def test_iterative_imputer_one_feature(X):
+    # check we exit early when there is a single feature
+    imputer = IterativeImputer().fit(X)
+    assert imputer.n_iter_ == 0
+    imputer = IterativeImputer()
+    imputer.fit([[1], [2]])
+    assert imputer.n_iter_ == 0
+    imputer.fit([[1], [np.nan]])
+    assert imputer.n_iter_ == 0
+
+
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
@@ -585,6 +599,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
                                max_iter=max_iter,
                                n_nearest_features=5,
                                sample_posterior=False,
+                               skip_complete=True,
                                min_value=0,
                                max_value=1,
                                verbose=1,
@@ -921,6 +936,62 @@ def test_iterative_imputer_early_stopping():
                                random_state=rng)
     imputer.fit(X_missing)
     assert imputer.n_iter_ == imputer.max_iter
+
+
+def test_iterative_imputer_catch_warning():
+    # check that we catch a RuntimeWarning due to a division by zero when a
+    # feature is constant in the dataset
+    X, y = load_boston(return_X_y=True)
+    n_samples, n_features = X.shape
+
+    # simulate that a feature only contain one category during fit
+    X[:, 3] = 1
+
+    # add some missing values
+    rng = np.random.RandomState(0)
+    missing_rate = 0.15
+    for feat in range(n_features):
+        sample_idx = rng.choice(
+            np.arange(n_samples), size=int(n_samples * missing_rate),
+            replace=False
+        )
+        X[sample_idx, feat] = np.nan
+
+    imputer = IterativeImputer(n_nearest_features=5, sample_posterior=True)
+    with pytest.warns(None) as record:
+        X_fill = imputer.fit_transform(X, y)
+    assert not record.list
+    assert not np.any(np.isnan(X_fill))
+
+
+@pytest.mark.parametrize(
+    "skip_complete", [True, False]
+)
+def test_iterative_imputer_skip_non_missing(skip_complete):
+    # check the imputing strategy when missing data are present in the
+    # testing set only.
+    # taken from: https://github.com/scikit-learn/scikit-learn/issues/14383
+    rng = np.random.RandomState(0)
+    X_train = np.array([
+        [5, 2, 2, 1],
+        [10, 1, 2, 7],
+        [3, 1, 1, 1],
+        [8, 4, 2, 2]
+    ])
+    X_test = np.array([
+        [np.nan, 2, 4, 5],
+        [np.nan, 4, 1, 2],
+        [np.nan, 1, 10, 1]
+    ])
+    imputer = IterativeImputer(
+        initial_strategy='mean', skip_complete=skip_complete, random_state=rng
+    )
+    X_test_est = imputer.fit(X_train).transform(X_test)
+    if skip_complete:
+        # impute with the initial strategy: 'mean'
+        assert_allclose(X_test_est[:, 0], np.mean(X_train[:, 0]))
+    else:
+        assert_allclose(X_test_est[:, 0], [11, 7, 12], rtol=1e-4)
 
 
 @pytest.mark.parametrize(

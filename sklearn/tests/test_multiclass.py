@@ -6,11 +6,9 @@ import scipy.sparse as sp
 from re import escape
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.multiclass import OneVsRestClassifier
@@ -66,16 +64,16 @@ def test_ovr_fit_predict():
     # A classifier which implements decision_function.
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ovr.estimators_), n_classes)
+    assert len(ovr.estimators_) == n_classes
 
     clf = LinearSVC(random_state=0)
     pred2 = clf.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(np.mean(iris.target == pred), np.mean(iris.target == pred2))
+    assert np.mean(iris.target == pred) == np.mean(iris.target == pred2)
 
     # A classifier which implements predict_proba.
     ovr = OneVsRestClassifier(MultinomialNB())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_greater(np.mean(iris.target == pred), 0.65)
+    assert np.mean(iris.target == pred) > 0.65
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -91,8 +89,8 @@ def test_ovr_partial_fit():
     pred2 = ovr2.fit(X, y).predict(X)
 
     assert_almost_equal(pred, pred2)
-    assert_equal(len(ovr.estimators_), len(np.unique(y)))
-    assert_greater(np.mean(y == pred), 0.65)
+    assert len(ovr.estimators_) == len(np.unique(y))
+    assert np.mean(y == pred) > 0.65
 
     # Test when mini batches doesn't have all classes
     # with SGDClassifier
@@ -107,7 +105,7 @@ def test_ovr_partial_fit():
     ovr1 = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
                                              shuffle=False, random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
-    assert_equal(np.mean(pred == y), np.mean(pred1 == y))
+    assert np.mean(pred == y) == np.mean(pred1 == y)
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsRestClassifier(SVC())
@@ -132,17 +130,17 @@ def test_ovr_ovo_regressor():
     # function
     ovr = OneVsRestClassifier(DecisionTreeRegressor())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ovr.estimators_), n_classes)
+    assert len(ovr.estimators_) == n_classes
     assert_array_equal(np.unique(pred), [0, 1, 2])
     # we are doing something sensible
-    assert_greater(np.mean(pred == iris.target), .9)
+    assert np.mean(pred == iris.target) > .9
 
     ovr = OneVsOneClassifier(DecisionTreeRegressor())
     pred = ovr.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ovr.estimators_), n_classes * (n_classes - 1) / 2)
+    assert len(ovr.estimators_) == n_classes * (n_classes - 1) / 2
     assert_array_equal(np.unique(pred), [0, 1, 2])
     # we are doing something sensible
-    assert_greater(np.mean(pred == iris.target), .9)
+    assert np.mean(pred == iris.target) > .9
 
 
 def test_ovr_fit_predict_sparse():
@@ -204,7 +202,7 @@ def test_ovr_always_present():
     y_pred = ovr.predict(X)
     assert_array_equal(np.array(y_pred), np.array(y))
     y_pred = ovr.decision_function(X)
-    assert_equal(np.unique(y_pred[:, -2:]), 1)
+    assert np.unique(y_pred[:, -2:]) == 1
     y_pred = ovr.predict_proba(X)
     assert_array_equal(y_pred[:, -1], np.ones(X.shape[0]))
 
@@ -233,7 +231,7 @@ def test_ovr_multiclass():
                      LinearRegression(), Ridge(),
                      ElasticNet()):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
-        assert_equal(set(clf.classes_), classes)
+        assert set(clf.classes_) == classes
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_array_equal(y_pred, ["eggs"])
 
@@ -253,24 +251,24 @@ def test_ovr_binary():
 
     def conduct_test(base_clf, test_predict_proba=False):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
-        assert_equal(set(clf.classes_), classes)
+        assert set(clf.classes_) == classes
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
         assert_array_equal(y_pred, ["eggs"])
         if hasattr(base_clf, 'decision_function'):
             dec = clf.decision_function(X)
-            assert_equal(dec.shape, (5,))
+            assert dec.shape == (5,)
 
         if test_predict_proba:
             X_test = np.array([[0, 0, 4]])
             probabilities = clf.predict_proba(X_test)
-            assert_equal(2, len(probabilities[0]))
-            assert_equal(clf.classes_[np.argmax(probabilities, axis=1)],
+            assert 2 == len(probabilities[0])
+            assert (clf.classes_[np.argmax(probabilities, axis=1)] ==
                          clf.predict(X_test))
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
         y_pred = clf.predict([[3, 0, 0]])[0]
-        assert_equal(y_pred, 1)
+        assert y_pred == 1
 
     for base_clf in (LinearSVC(random_state=0), LinearRegression(),
                      Ridge(), ElasticNet()):
@@ -302,8 +300,8 @@ def test_ovr_multilabel():
 def test_ovr_fit_predict_svc():
     ovr = OneVsRestClassifier(svm.SVC())
     ovr.fit(iris.data, iris.target)
-    assert_equal(len(ovr.estimators_), 3)
-    assert_greater(ovr.score(iris.data, iris.target), .9)
+    assert len(ovr.estimators_) == 3
+    assert ovr.score(iris.data, iris.target) > .9
 
 
 def test_ovr_multilabel_dataset():
@@ -450,10 +448,10 @@ def test_ovr_coef_():
             # test with dense and sparse coef
             ovr.fit(X, iris.target)
             shape = ovr.coef_.shape
-            assert_equal(shape[0], n_classes)
-            assert_equal(shape[1], iris.data.shape[1])
+            assert shape[0] == n_classes
+            assert shape[1] == iris.data.shape[1]
             # don't densify sparse coefficients
-            assert_equal(sp.issparse(ovr.estimators_[0].coef_),
+            assert (sp.issparse(ovr.estimators_[0].coef_) ==
                          sp.issparse(ovr.coef_))
 
 
@@ -489,12 +487,12 @@ def test_ovo_fit_predict():
     # A classifier which implements decision_function.
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     ovo.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+    assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
     # A classifier which implements predict_proba.
     ovo = OneVsOneClassifier(MultinomialNB())
     ovo.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
+    assert len(ovo.estimators_) == n_classes * (n_classes - 1) / 2
 
 
 def test_ovo_partial_fit_predict():
@@ -508,8 +506,8 @@ def test_ovo_partial_fit_predict():
     ovo2 = OneVsOneClassifier(MultinomialNB())
     ovo2.fit(X, y)
     pred2 = ovo2.predict(X)
-    assert_equal(len(ovo1.estimators_), n_classes * (n_classes - 1) / 2)
-    assert_greater(np.mean(y == pred1), 0.65)
+    assert len(ovo1.estimators_) == n_classes * (n_classes - 1) / 2
+    assert np.mean(y == pred1) > 0.65
     assert_almost_equal(pred1, pred2)
 
     # Test when mini-batches have binary target classes
@@ -521,8 +519,8 @@ def test_ovo_partial_fit_predict():
     pred2 = ovo2.fit(X, y).predict(X)
 
     assert_almost_equal(pred1, pred2)
-    assert_equal(len(ovo1.estimators_), len(np.unique(y)))
-    assert_greater(np.mean(y == pred1), 0.65)
+    assert len(ovo1.estimators_) == len(np.unique(y))
+    assert np.mean(y == pred1) > 0.65
 
     ovo = OneVsOneClassifier(MultinomialNB())
     X = np.random.rand(14, 2)
@@ -555,13 +553,13 @@ def test_ovo_decision_function():
     # first binary
     ovo_clf.fit(iris.data, iris.target == 0)
     decisions = ovo_clf.decision_function(iris.data)
-    assert_equal(decisions.shape, (n_samples,))
+    assert decisions.shape == (n_samples,)
 
     # then multi-class
     ovo_clf.fit(iris.data, iris.target)
     decisions = ovo_clf.decision_function(iris.data)
 
-    assert_equal(decisions.shape, (n_samples, n_classes))
+    assert decisions.shape == (n_samples, n_classes)
     assert_array_equal(decisions.argmax(axis=1), ovo_clf.predict(iris.data))
 
     # Compute the votes
@@ -592,7 +590,7 @@ def test_ovo_decision_function():
         # to compute the aggregate decision function. The iris dataset
         # has 150 samples with a couple of duplicates. The OvO decisions
         # can resolve most of the ties:
-        assert_greater(len(np.unique(decisions[:, class_idx])), 146)
+        assert len(np.unique(decisions[:, class_idx])) > 146
 
 
 def test_ovo_gridsearch():
@@ -628,7 +626,7 @@ def test_ovo_ties():
     # For the rest, there is no tie and the prediction is the argmax
     assert_array_equal(np.argmax(votes[1:], axis=1), ovo_prediction[1:])
     # For the tie, the prediction is the class with the highest score
-    assert_equal(ovo_prediction[0], normalized_confidences[0].argmax())
+    assert ovo_prediction[0] == normalized_confidences[0].argmax()
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -644,7 +642,7 @@ def test_ovo_ties2():
         multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
                                                   tol=None))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
-        assert_equal(ovo_prediction[0], i % 3)
+        assert ovo_prediction[0] == i % 3
 
 
 def test_ovo_string_y():
@@ -685,12 +683,12 @@ def test_ecoc_fit_predict():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
                                 code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ecoc.estimators_), n_classes * 2)
+    assert len(ecoc.estimators_) == n_classes * 2
 
     # A classifier which implements predict_proba.
     ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
-    assert_equal(len(ecoc.estimators_), n_classes * 2)
+    assert len(ecoc.estimators_) == n_classes * 2
 
 
 def test_ecoc_gridsearch():
@@ -727,7 +725,7 @@ def test_pairwise_indices():
     precomputed_indices = ovr_false.pairwise_indices_
 
     for idx in precomputed_indices:
-        assert_equal(idx.shape[0] * n_estimators / (n_estimators - 1),
+        assert (idx.shape[0] * n_estimators / (n_estimators - 1) ==
                      linear_kernel.shape[0])
 
 

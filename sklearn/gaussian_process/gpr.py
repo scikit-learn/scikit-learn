@@ -9,18 +9,18 @@ from operator import itemgetter
 
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve_triangular
-from scipy.optimize import fmin_l_bfgs_b
+import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
 from ..utils.validation import check_X_y, check_array
-from ..exceptions import ConvergenceWarning
+from ..utils.optimize import _check_optimize_result
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
-                               MultiOutputMixin):
+class GaussianProcessRegressor(MultiOutputMixin,
+                               RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes
@@ -77,7 +77,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
                 # the corresponding value of the target function.
                 return theta_opt, func_min
 
-        Per default, the 'fmin_l_bfgs_b' algorithm from scipy.optimize
+        Per default, the 'L-BGFS-B' algorithm from scipy.optimize.minimize
         is used. If None is passed, the kernel's parameters are kept fixed.
         Available internal optimizers are::
 
@@ -114,20 +114,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     Attributes
     ----------
-    X_train_ : array-like, shape = (n_samples, n_features)
+    X_train_ : array-like of shape (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_ : array-like, shape = (n_samples, [n_output_dims])
+    y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
 
     kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_ : array-like, shape = (n_samples, n_samples)
+    L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_ : array-like, shape = (n_samples,)
+    alpha_ : array-like of shape (n_samples,)
         Dual coefficients of training data points in kernel space
 
     log_marginal_likelihood_value_ : float
@@ -164,10 +164,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data
 
-        y : array-like, shape = (n_samples, [n_output_dims])
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         Returns
@@ -210,10 +210,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             def obj_func(theta, eval_gradient=True):
                 if eval_gradient:
                     lml, grad = self.log_marginal_likelihood(
-                        theta, eval_gradient=True)
+                        theta, eval_gradient=True, clone_kernel=False)
                     return -lml, -grad
                 else:
-                    return -self.log_marginal_likelihood(theta)
+                    return -self.log_marginal_likelihood(theta,
+                                                         clone_kernel=False)
 
             # First optimize starting from theta specified in kernel
             optima = [(self._constrained_optimization(obj_func,
@@ -241,7 +242,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
-                self.log_marginal_likelihood(self.kernel_.theta)
+                self.log_marginal_likelihood(self.kernel_.theta,
+                                             clone_kernel=False)
 
         # Precompute quantities required for predictions which are independent
         # of actual query points
@@ -271,7 +273,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Query points where the GP is evaluated
 
         return_std : bool, default: False
@@ -355,7 +357,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features)
             Query points where the GP samples are evaluated
 
         n_samples : int, default: 1
@@ -386,12 +388,13 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             y_samples = np.hstack(y_samples)
         return y_samples
 
-    def log_marginal_likelihood(self, theta=None, eval_gradient=False):
+    def log_marginal_likelihood(self, theta=None, eval_gradient=False,
+                                clone_kernel=True):
         """Returns log-marginal likelihood of theta for training data.
 
         Parameters
         ----------
-        theta : array-like, shape = (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,) or None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
@@ -400,6 +403,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
+
+        clone_kernel : bool, default=True
+            If True, the kernel attribute is copied. If False, the kernel
+            attribute is modified, but may result in a performance improvement.
 
         Returns
         -------
@@ -417,7 +424,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
                     "Gradient can only be evaluated for theta!=None")
             return self.log_marginal_likelihood_value_
 
-        kernel = self.kernel_.clone_with_theta(theta)
+        if clone_kernel:
+            kernel = self.kernel_.clone_with_theta(theta)
+        else:
+            kernel = self.kernel_
+            kernel.theta = theta
 
         if eval_gradient:
             K, K_gradient = kernel(self.X_train_, eval_gradient=True)
@@ -461,12 +472,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
 
     def _constrained_optimization(self, obj_func, initial_theta, bounds):
         if self.optimizer == "fmin_l_bfgs_b":
-            theta_opt, func_min, convergence_dict = \
-                fmin_l_bfgs_b(obj_func, initial_theta, bounds=bounds)
-            if convergence_dict["warnflag"] != 0:
-                warnings.warn("fmin_l_bfgs_b terminated abnormally with the "
-                              " state: %s" % convergence_dict,
-                              ConvergenceWarning)
+            opt_res = scipy.optimize.minimize(
+                obj_func, initial_theta, method="L-BFGS-B", jac=True,
+                bounds=bounds)
+            _check_optimize_result("lbfgs", opt_res)
+            theta_opt, func_min = opt_res.x, opt_res.fun
         elif callable(self.optimizer):
             theta_opt, func_min = \
                 self.optimizer(obj_func, initial_theta, bounds=bounds)

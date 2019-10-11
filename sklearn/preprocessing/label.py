@@ -168,8 +168,11 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
 
 
-class LabelEncoder(BaseEstimator, TransformerMixin):
-    """Encode labels with value between 0 and n_classes-1.
+class LabelEncoder(TransformerMixin, BaseEstimator):
+    """Encode target labels with value between 0 and n_classes-1.
+
+    This transformer should be used to encode target values, *i.e.* `y`, and
+    not the input `X`.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
 
@@ -208,8 +211,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OrdinalEncoder : encode categorical features
-        using a one-hot or ordinal encoding scheme.
+    sklearn.preprocessing.OrdinalEncoder : Encode categorical features
+        using an ordinal encoding scheme.
+
+    sklearn.preprocessing.OneHotEncoder : Encode categorical features
+        as a one-hot numeric array.
     """
 
     def fit(self, y):
@@ -256,7 +262,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -277,7 +283,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape [n_samples]
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
         y = column_or_1d(y, warn=True)
         # inverse transform of empty array is empty array
         if _num_samples(y) == 0:
@@ -294,7 +300,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return {'X_types': ['1dlabels']}
 
 
-class LabelBinarizer(BaseEstimator, TransformerMixin):
+class LabelBinarizer(TransformerMixin, BaseEstimator):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -465,7 +471,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Y : numpy array or CSR matrix of shape [n_samples, n_classes]
             Shape will be [n_samples, 1] for binary problems.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         y_is_multilabel = type_of_target(y).startswith('multilabel')
         if y_is_multilabel and not self.y_type_.startswith('multilabel'):
@@ -508,7 +514,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         linear model's decision_function method directly as the input
         of inverse_transform.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if threshold is None:
             threshold = (self.pos_label + self.neg_label) / 2.
@@ -775,7 +781,7 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         raise ValueError("{0} format is not supported".format(output_type))
 
 
-class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
+class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     """Transform between iterable of iterables and a multilabel format
 
     Although a list of sets or tuples is a very intuitive format for multilabel
@@ -814,6 +820,23 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> list(mlb.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
+    A common mistake is to pass in a list, which leads to the following issue:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit(['sci-fi', 'thriller', 'comedy'])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['-', 'c', 'd', 'e', 'f', 'h', 'i', 'l', 'm', 'o', 'r', 's', 't',
+        'y'], dtype=object)
+
+    To correct this, the list of labels should be passed in as:
+
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit([['sci-fi', 'thriller', 'comedy']])
+    MultiLabelBinarizer()
+    >>> mlb.classes_
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
+
     See also
     --------
     sklearn.preprocessing.OneHotEncoder : encode categorical features
@@ -825,7 +848,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         self.sparse_output = sparse_output
 
     def fit(self, y):
-        """Fit the label sets binarizer, storing `classes_`
+        """Fit the label sets binarizer, storing :term:`classes_`
 
         Parameters
         ----------
@@ -911,7 +934,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         class_to_index = self._build_cache()
         yt = self._transform(y, class_to_index)
@@ -976,7 +999,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             The set of labels for each sample such that `y[i]` consists of
             `classes_[j]` for each `yt[i, j] == 1`.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         if yt.shape[1] != len(self.classes_):
             raise ValueError('Expected indicator for {0} classes, but got {1}'

@@ -2,7 +2,7 @@
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
-
+import pytest
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -13,11 +13,11 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.estimator_checks import _NotAnArray
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -30,17 +30,6 @@ from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn import datasets
-
-
-class NotAnArray:
-    """An object that is convertable to an array. This is useful to
-    simulate a Pandas timeseries."""
-
-    def __init__(self, data):
-        self.data = data
-
-    def __array__(self, dtype=None):
-        return self.data
 
 
 EXAMPLES = {
@@ -59,7 +48,7 @@ EXAMPLES = {
         # Only valid when data is dense
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
-        NotAnArray(np.array([[-3, 3], [3, -3]])),
+        _NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -69,7 +58,7 @@ EXAMPLES = {
         np.array([1, 0, 2], dtype=np.float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
-        NotAnArray(np.array([1, 0, 2])),
+        _NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array(['a', 'b', 'c']),
@@ -86,7 +75,7 @@ EXAMPLES = {
         np.array([['a', 'b'], ['c', 'd']]),
         np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
-        NotAnArray(np.array([[1, 0, 2]])),
+        _NotAnArray(np.array([[1, 0, 2]])),
     ],
     'binary': [
         [0, 1],
@@ -100,7 +89,7 @@ EXAMPLES = {
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
-        NotAnArray(np.array([[0], [1]])),
+        _NotAnArray(np.array([[0], [1]])),
         [1, -1],
         [3, 5],
         ['a'],
@@ -154,7 +143,7 @@ MULTILABEL_SEQUENCES = [
     [[1], [2], [0, 1]],
     [(), (2), (0, 1)],
     np.array([[], [1, 2]], dtype='object'),
-    NotAnArray(np.array([[], [1, 2]], dtype='object'))
+    _NotAnArray(np.array([[], [1, 2]], dtype='object'))
 ]
 
 
@@ -280,9 +269,9 @@ def test_check_classification_targets():
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert_equal(type_of_target(example), group,
-                         msg=('type_of_target(%r) should be %r, got %r'
-                              % (example, group, type_of_target(example))))
+            assert type_of_target(example) == group, (
+                'type_of_target(%r) should be %r, got %r'
+                % (example, group, type_of_target(example)))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'
@@ -294,14 +283,14 @@ def test_type_of_target():
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
-    try:
-        from pandas import SparseSeries
-    except ImportError:
-        raise SkipTest("Pandas not found")
 
-    y = SparseSeries([1, 0, 0, 1, 0])
-    msg = "y cannot be class 'SparseSeries'."
-    assert_raises_regex(ValueError, msg, type_of_target, y)
+def test_type_of_target_pandas_sparse():
+    pd = pytest.importorskip("pandas")
+
+    y = pd.SparseArray([1, np.nan, np.nan, 1, np.nan])
+    msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
+    with pytest.raises(ValueError, match=msg):
+        type_of_target(y)
 
 
 def test_class_distribution():

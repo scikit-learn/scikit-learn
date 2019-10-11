@@ -19,7 +19,6 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
@@ -471,8 +470,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.99)
-    assert_greater(score2, 0.99)
+    assert score1 > 0.99
+    assert score2 > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -485,8 +484,8 @@ def test_sag_regressor():
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.5)
-    assert_greater(score2, 0.5)
+    assert score1 > 0.5
+    assert score2 > 0.5
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')

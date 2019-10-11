@@ -15,6 +15,7 @@ from distutils.version import LooseVersion
 import numpy as np
 import scipy.sparse as sp
 import scipy
+import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 
@@ -38,6 +39,19 @@ try:  # SciPy >= 0.19
 except ImportError:
     from scipy.misc import comb, logsumexp  # noqa
 
+if sp_version >= (1, 4):
+    from scipy.sparse.linalg import lobpcg
+else:
+    # Backport of lobpcg functionality from scipy 1.4.0, can be removed
+    # once support for sp_version < (1, 4) is dropped
+    from ..externals._lobpcg import lobpcg  # noqa
+
+if sp_version >= (1, 3):
+    # Preserves earlier default choice of pinvh cutoff `cond` value.
+    # Can be removed once issue #14055 is fully addressed.
+    from ..externals._scipy_linalg import pinvh
+else:
+    from scipy.linalg import pinvh # noqa
 
 if sp_version >= (0, 19):
     def _argmax(arr_or_spmatrix, axis=None):
@@ -243,3 +257,52 @@ def _joblib_parallel_args(**kwargs):
         if require == 'sharedmem':
             args['backend'] = 'threading'
     return args
+
+
+class loguniform(scipy.stats.reciprocal):
+    """A class supporting log-uniform random variables.
+
+    Parameters
+    ----------
+    low : float
+        The minimum value
+    high : float
+        The maximum value
+
+    Methods
+    -------
+    rvs(self, size=None, random_state=None)
+        Generate log-uniform random variables
+
+    The most useful method for Scikit-learn usage is highlighted here.
+    For a full list, see
+    `scipy.stats.reciprocal
+    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+    This list includes all functions of ``scipy.stats`` continuous
+    distributions such as ``pdf``.
+
+    Notes
+    -----
+    This class generates values between ``low`` and ``high`` or
+
+        low <= loguniform(low, high).rvs() <= high
+
+    The logarithmic probability density function (PDF) is uniform. When
+    ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
+    are random variales that are equally likely to be returned.
+
+    This class is an alias to ``scipy.stats.reciprocal``, which uses the
+    reciprocal distribution:
+    https://en.wikipedia.org/wiki/Reciprocal_distribution
+
+    Examples
+    --------
+
+    >>> from sklearn.utils.fixes import loguniform
+    >>> rv = loguniform(1e-3, 1e1)
+    >>> rvs = rv.rvs(random_state=42, size=1000)
+    >>> rvs.min()  # doctest: +SKIP
+    0.0010435856341129003
+    >>> rvs.max()  # doctest: +SKIP
+    9.97403052786026
+    """

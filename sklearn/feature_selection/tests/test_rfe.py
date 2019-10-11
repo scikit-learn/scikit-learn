@@ -16,7 +16,6 @@ from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater, assert_equal
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -66,7 +65,7 @@ def test_rfe_features_importance():
                                  random_state=generator, max_depth=2)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
-    assert_equal(len(rfe.ranking_), X.shape[1])
+    assert len(rfe.ranking_) == X.shape[1]
 
     clf_svc = SVC(kernel="linear")
     rfe_svc = RFE(estimator=clf_svc, n_features_to_select=4, step=0.1)
@@ -89,7 +88,7 @@ def test_rfe():
     rfe.fit(X, y)
     X_r = rfe.transform(X)
     clf.fit(X_r, y)
-    assert_equal(len(rfe.ranking_), X.shape[1])
+    assert len(rfe.ranking_) == X.shape[1]
 
     # sparse model
     clf_sparse = SVC(kernel="linear")
@@ -97,11 +96,11 @@ def test_rfe():
     rfe_sparse.fit(X_sparse, y)
     X_r_sparse = rfe_sparse.transform(X_sparse)
 
-    assert_equal(X_r.shape, iris.data.shape)
+    assert X_r.shape == iris.data.shape
     assert_array_almost_equal(X_r[:10], iris.data[:10])
 
     assert_array_almost_equal(rfe.predict(X), clf.predict(iris.data))
-    assert_equal(rfe.score(X, y), clf.score(iris.data, iris.target))
+    assert rfe.score(X, y) == clf.score(iris.data, iris.target)
     assert_array_almost_equal(X_r, X_r_sparse.toarray())
 
 
@@ -117,8 +116,8 @@ def test_rfe_mockclassifier():
     rfe.fit(X, y)
     X_r = rfe.transform(X)
     clf.fit(X_r, y)
-    assert_equal(len(rfe.ranking_), X.shape[1])
-    assert_equal(X_r.shape, iris.data.shape)
+    assert len(rfe.ranking_) == X.shape[1]
+    assert X_r.shape == iris.data.shape
 
 
 def test_rfecv():
@@ -131,8 +130,8 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-    assert_equal(len(rfecv.grid_scores_), X.shape[1])
-    assert_equal(len(rfecv.ranking_), X.shape[1])
+    assert len(rfecv.grid_scores_) == X.shape[1]
+    assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
 
     # All the noisy variable were filtered out
@@ -169,13 +168,13 @@ def test_rfecv():
     # RFECV is to return the FEWEST features that maximize the CV score.
     # Because test_scorer always returns 1.0 in this example, RFECV should
     # reduce the dimensionality to a single feature (i.e. n_features_ = 1)
-    assert_equal(rfecv.n_features_, 1)
+    assert rfecv.n_features_ == 1
 
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2)
     rfecv.fit(X, y)
-    assert_equal(len(rfecv.grid_scores_), 6)
-    assert_equal(len(rfecv.ranking_), X.shape[1])
+    assert len(rfecv.grid_scores_) == 6
+    assert len(rfecv.ranking_) == X.shape[1]
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
 
@@ -203,8 +202,8 @@ def test_rfecv_mockclassifier():
     rfecv = RFECV(estimator=MockClassifier(), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-    assert_equal(len(rfecv.grid_scores_), X.shape[1])
-    assert_equal(len(rfecv.ranking_), X.shape[1])
+    assert len(rfecv.grid_scores_) == X.shape[1]
+    assert len(rfecv.ranking_) == X.shape[1]
 
 
 def test_rfecv_verbose_output():
@@ -223,7 +222,7 @@ def test_rfecv_verbose_output():
 
     verbose_output = sys.stdout
     verbose_output.seek(0)
-    assert_greater(len(verbose_output.readline()), 0)
+    assert len(verbose_output.readline()) > 0
 
 
 def test_rfecv_grid_scores_size():
@@ -248,11 +247,11 @@ def test_rfecv_grid_scores_size():
 
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
-    assert_equal(rfe._estimator_type, "classifier")
+    assert rfe._estimator_type == "classifier"
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
-    assert_greater(score.min(), .7)
+    assert score.min() > .7
 
 
 def test_rfe_min_step():
@@ -264,17 +263,17 @@ def test_rfe_min_step():
     # Test when floor(step * n_features) <= 0
     selector = RFE(estimator, step=0.01)
     sel = selector.fit(X, y)
-    assert_equal(sel.support_.sum(), n_features // 2)
+    assert sel.support_.sum() == n_features // 2
 
     # Test when step is between (0,1) and floor(step * n_features) > 0
     selector = RFE(estimator, step=0.20)
     sel = selector.fit(X, y)
-    assert_equal(sel.support_.sum(), n_features // 2)
+    assert sel.support_.sum() == n_features // 2
 
     # Test when step is an integer
     selector = RFE(estimator, step=5)
     sel = selector.fit(X, y)
-    assert_equal(sel.support_.sum(), n_features // 2)
+    assert sel.support_.sum() == n_features // 2
 
 
 def test_number_of_subsets_of_features():
@@ -307,9 +306,9 @@ def test_number_of_subsets_of_features():
                   n_features_to_select=n_features_to_select, step=step)
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
-        assert_equal(np.max(rfe.ranking_),
+        assert (np.max(rfe.ranking_) ==
                      formula1(n_features, n_features_to_select, step))
-        assert_equal(np.max(rfe.ranking_),
+        assert (np.max(rfe.ranking_) ==
                      formula2(n_features, n_features_to_select, step))
 
     # In RFECV, 'fit' calls 'RFE._fit'
@@ -331,9 +330,9 @@ def test_number_of_subsets_of_features():
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
-        assert_equal(rfecv.grid_scores_.shape[0],
+        assert (rfecv.grid_scores_.shape[0] ==
                      formula1(n_features, n_features_to_select, step))
-        assert_equal(rfecv.grid_scores_.shape[0],
+        assert (rfecv.grid_scores_.shape[0] ==
                      formula2(n_features, n_features_to_select, step))
 
 

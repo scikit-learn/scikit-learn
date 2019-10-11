@@ -7,7 +7,7 @@ import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract, signature
+from inspect import signature
 
 import sklearn
 from sklearn.utils import IS_PYPY
