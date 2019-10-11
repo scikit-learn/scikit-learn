@@ -372,7 +372,7 @@ def test_missing_values_minmax_imputation():
     # n_samples need to be large enough to minimize the likelihood of having
     # several candidate splits with the same gain value in a given tree.
     X_train, X_test, y_train, y_test = make_missing_value_data(
-        n_samples=int(1e4), seed=0)
+        n_samples=int(1e4), seed=1)
 
     # Use a small number of leaf nodes and iterations so as to keep
     # under-fitting models to minimize the likelihood of ties when training the

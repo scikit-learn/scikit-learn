@@ -1497,7 +1497,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
         X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
                                    random_state=0)
 
-    cv = StratifiedKFold(5, random_state=0)
+    cv = StratifiedKFold(5)
 
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
@@ -1528,7 +1528,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
     X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
                                random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    cv = StratifiedKFold(5, random_state=0)
+    cv = StratifiedKFold(5)
 
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
@@ -1771,7 +1771,7 @@ def test_scores_attribute_layout_elasticnet():
     # the third dimension corresponds to l1_ratios.
 
     X, y = make_classification(n_samples=1000, random_state=0)
-    cv = StratifiedKFold(n_splits=5, shuffle=False)
+    cv = StratifiedKFold(n_splits=5)
 
     l1_ratios = [.1, .9]
     Cs = [.1, 1, 10]

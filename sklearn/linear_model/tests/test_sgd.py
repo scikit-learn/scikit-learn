@@ -356,13 +356,16 @@ def test_adaptive_longer_than_constant(klass):
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
                                    SGDRegressor, SparseSGDRegressor])
 def test_validation_set_not_used_for_training(klass):
+    # We compare the coefs of clf1 (trained with early stopping) with the coefs
+    # of clf2 (trained on the same data as clf1 after train_test_split is
+    # called)
     X, Y = iris.data, iris.target
     validation_fraction = 0.4
     seed = 42
     shuffle = False
     max_iter = 10
     clf1 = klass(early_stopping=True,
-                 random_state=np.random.RandomState(seed),
+                 random_state=seed,
                  validation_fraction=validation_fraction,
                  learning_rate='constant', eta0=0.01,
                  tol=None, max_iter=max_iter, shuffle=shuffle)
@@ -370,7 +373,7 @@ def test_validation_set_not_used_for_training(klass):
     assert clf1.n_iter_ == max_iter
 
     clf2 = klass(early_stopping=False,
-                 random_state=np.random.RandomState(seed),
+                 random_state=seed,
                  learning_rate='constant', eta0=0.01,
                  tol=None, max_iter=max_iter, shuffle=shuffle)
 
