@@ -46,7 +46,7 @@ print(metrics.classification_report(y_test, y_predicted,
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
-#import matplotlib.pyplot as plt
+#import matlotlib.pyplot as plt
 #plt.matshow(cm, cmap=plt.cm.jet)
 #plt.show()
 
