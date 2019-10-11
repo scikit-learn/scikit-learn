@@ -859,7 +859,7 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60):
+def assert_run_python_script(source_code, timeout=60, ignore_warnings=True):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and not print
@@ -878,6 +878,9 @@ def assert_run_python_script(source_code, timeout=60):
     os.close(fd)
     try:
         with open(source_file, 'wb') as f:
+            if ignore_warnings:
+                f.write(("import warnings; warnings.filterwarnings('ignore');")
+                        .encode('utf-8'))
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
