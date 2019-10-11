@@ -79,7 +79,7 @@ else:
     from . import __check_build
     from .base import clone
     from .utils._show_versions import show_versions
-    from .utils.openmp_helpers import _openmp_warn_unsupported
+    from .utils._openmp_helpers import _openmp_supported  # noqa
 
     __check_build  # avoid flakes unused variable error
 
@@ -97,18 +97,22 @@ else:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
 
-    if _openmp_warn_unsupported():
+    class PerformanceWarning(Warning):
+        pass
+
+    if not _openmp_supported():  # noqa
         base_url = "dev" if __version__.endswith(".dev0") else "stable"
         message = textwrap.dedent(
             """
+
             Scikit-learn has been built without OpenMP support. Some estimators
             will run in sequential mode instead of leveraging thread-based
             parallelism. You can find instructions to build scikit-learn with
-            OpenMP support at this adress:
+            OpenMP support at this address:
 
                 https://scikit-learn.org/{}/developers/advanced_installation.html
             """)
-        warnings.warn(message.format(base_url))
+        warnings.warn(message.format(base_url), PerformanceWarning)
 
 
 def setup_module(module):

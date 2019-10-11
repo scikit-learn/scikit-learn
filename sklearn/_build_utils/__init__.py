@@ -6,10 +6,12 @@ Utilities useful during the build.
 
 
 import os
-
-from distutils.version import LooseVersion
+import sklearn
 import contextlib
 
+from distutils.version import LooseVersion
+
+from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
 
 
@@ -40,20 +42,13 @@ def build_from_c_and_cpp_files(extensions):
 
 def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
-    openmp_status = check_openmp_support()
-    if openmp_status == "explicitly disabled":
-        # SKLEARN_NO_OPENMP is set
-        with_openmp = False
-        explicitly_disabled = True
-    elif openmp_status in ("unrelated fail", "unsupported"):
-        # either build fails even without OpenMP
-        # or build fails with openmp and SKLEARN_NO_OPENMP is not set
-        with_openmp = False
-        explicitly_disabled = False
-        os.environ["SKLEARN_NO_OPENMP"] = "True"
-    else:
-        with_openmp = True
-        explicitly_disabled = False
+    # Fast fail before cythonization if compiler fails compiling basic test
+    # code even without OpenMP
+    basic_check_build()
+
+    # check simple compilation with OpenMP. If it fails scikit-learn will be
+    # built without OpenMP.
+    sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
@@ -87,6 +82,5 @@ def maybe_cythonize_extensions(top_path, config):
             config.ext_modules,
             nthreads=n_jobs,
             compile_time_env={
-                'SKLEARN_OPENMP_SUPPORTED': with_openmp,
-                'SKLEARN_OPENMP_EXPLICITLY_DISABLED': explicitly_disabled},
+                'SKLEARN_OPENMP_SUPPORTED': sklearn._OPENMP_SUPPORTED},
             compiler_directives={'language_level': 3})
