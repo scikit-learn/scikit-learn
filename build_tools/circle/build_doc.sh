@@ -176,9 +176,10 @@ affected_doc_warnings() {
     then
         for af in ${files[@]}
         do
-          grep WARNING ~/log.txt | grep $af
+          warn+=`grep WARNING ~/log.txt | grep $af`
         done
     fi
+    echo "$warn"
 }
 
 if [ -n "$CI_PULL_REQUEST" ]
