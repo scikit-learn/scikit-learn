@@ -873,6 +873,8 @@ def assert_run_python_script(source_code, timeout=60, ignore_warnings=True):
         The Python source code to execute.
     timeout : int
         Time in seconds before timeout.
+    ignore_warnings : bool
+        Whether warnings should be ignored in the output or not.
     """
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
     os.close(fd)
