@@ -122,7 +122,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -326,7 +326,7 @@ class _CalibratedClassifier:
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -413,7 +413,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y : ndarray, shape (n_samples,)
         The targets.
 
-    sample_weight : array-like, shape = [n_samples] or None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
 
     Returns
@@ -487,7 +487,7 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         y : array-like, shape (n_samples,)
             Training target.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns

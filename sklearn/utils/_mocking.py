@@ -75,11 +75,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        y : array-like of shape (n_samples, n_output) or (n_samples,), optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -119,11 +119,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        Y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        Y : array-like of shape (n_samples, n_output) or (n_samples,), optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
         """
