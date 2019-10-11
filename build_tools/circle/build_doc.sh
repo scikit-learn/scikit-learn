@@ -187,7 +187,7 @@ then
     warnings=$(affected_doc_warnings)
     if [ -z "$warnings" ]
     then
-        warnings="/home/circleci/project/ does not contain warnings"
+        warnings="/home/circleci/project/ no warnings"
     fi
     echo "$warnings"
 
