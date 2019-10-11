@@ -1048,6 +1048,16 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
+class _IdentityEstimator:
+    """Hack to call a scorer when we already have the predictions."""
+
+    def decision_function(self, y_predict):
+        return y_predict
+
+    def predict(self, y_predict):
+        return y_predict
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1454,43 +1464,38 @@ class _RidgeGCV(LinearModel):
         else:
             sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
 
+        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)),
-                             dtype=X.dtype)
-        C = []
-        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
+        if self.store_cv_values:
+            self.cv_values_ = np.empty(
+                (n_samples * n_y, len(self.alphas)), dtype=X.dtype)
+
+        best_coef, best_score, best_alpha = None, None, None
+
         for i, alpha in enumerate(self.alphas):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
-                cv_values[:, i] = squared_errors.ravel()
+                alpha_score = - squared_errors.mean()
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                cv_values[:, i] = predictions.ravel()
-            C.append(c)
+                alpha_score = scorer(
+                    _IdentityEstimator(), predictions.ravel(), y.ravel())
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = predictions.ravel()
+            if (best_score is None) or (alpha_score >= best_score):
+                best_coef, best_score, best_alpha = c, alpha_score, alpha
 
-        if error:
-            best = cv_values.mean(axis=0).argmin()
-        else:
-            # The scorer want an object that will make the predictions but
-            # they are already computed efficiently by _RidgeGCV. This
-            # identity_estimator will just return them
-            def identity_estimator():
-                pass
-            identity_estimator.decision_function = lambda y_predict: y_predict
-            identity_estimator.predict = lambda y_predict: y_predict
-
-            # signature of scorer is (estimator, X, y)
-            out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
-                   for i in range(len(self.alphas))]
-            best = np.argmax(out)
-
-        self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
+        self.alpha_ = best_alpha
+        self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
         X_offset += X_mean * X_scale
@@ -1501,7 +1506,7 @@ class _RidgeGCV(LinearModel):
                 cv_values_shape = n_samples, len(self.alphas)
             else:
                 cv_values_shape = n_samples, n_y, len(self.alphas)
-            self.cv_values_ = cv_values.reshape(cv_values_shape)
+            self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
 
