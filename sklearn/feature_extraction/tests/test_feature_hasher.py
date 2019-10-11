@@ -52,7 +52,7 @@ def test_hashing_transform_seed():
     try:
         from sklearn.feature_extraction._hashing import (
                 transform as _hashing_transform)
-    except ImportError:
+    except ImportError:  # pragma: no cover
         return
 
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
