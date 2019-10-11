@@ -538,7 +538,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k],
+	    return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
         y = y_store_unique_indices
@@ -1636,9 +1637,9 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> from sklearn.ensemble import ExtraTreesClassifier
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = ExtraTreesClassifier(n_estimators = 100, random_state = 100)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    ExtraTreesClassifier(random_state=100)
+    >>> clf = ExtraTreesClassifier(n_estimators=100)
+    >>> clf.fit(X, y)
+    ExtraTreesClassifier(n_estimators=100)
     >>> clf.feature_importances_
     array([0.10625438, 0.29079613, 0.43360443, 0.16934507])
     >>> clf.predict([[0, 0, 0, 0]])
