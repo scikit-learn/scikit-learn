@@ -1396,8 +1396,10 @@ def lorenz_curve(y_true, y_pred, sample_weight=None,
                  ascending_predictions=True,
                  normalize=True,
                  return_gini=False):
-    y_true = check_array(y_true, ensure_2d=False)
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False,
+                         dtype=[np.float64, np.float32])
+    y_pred = check_array(y_pred, ensure_2d=False,
+                         dtype=[np.float64, np.float32])
     check_consistent_length(y_true, y_pred)
     y_true_min = y_true.min()
     if y_true_min < 0:
@@ -1407,7 +1409,8 @@ def lorenz_curve(y_true, y_pred, sample_weight=None,
     if sample_weight is None:
         sample_weight = np.ones(len(y_true), dtype=np.float64)
     else:
-        sample_weight = check_array(sample_weight, ensure_2d=False)
+        sample_weight = check_array(sample_weight, ensure_2d=False,
+                                    dtype=[np.float64, np.float32])
         check_consistent_length(y_true, sample_weight)
 
     # Rank the ranking base on y_pred
