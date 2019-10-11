@@ -973,7 +973,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         noise = np.random.uniform(high=self.jitter, size=len(y))
 
         if y.ndim == 2:
-            noise = noise.reshape(-1,1)
+            noise = noise.reshape(-1, 1)
 
         y = y + noise
 
