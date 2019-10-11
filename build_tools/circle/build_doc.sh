@@ -172,10 +172,13 @@ affected_doc_paths() {
 affected_doc_warnings() {
     files=$(git diff --name-only origin/master...$CIRCLE_SHA1)
     # Look for sphinx warnings only in files affected by the PR
-    for af in ${files[@]}
-    do
-      grep WARNING ~/log.txt | grep $af
-    done
+    if [ -n "$files" ]
+    then
+        for af in ${files[@]}
+        do
+          grep WARNING ~/log.txt | grep $af
+        done
+    fi
 }
 
 if [ -n "$CI_PULL_REQUEST" ]
