@@ -553,6 +553,30 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
+def test_ridge_gcv_stored_predictions():
+    X, y = make_regression()
+    ridge_cv = RidgeCV(fit_intercept=False, scoring="neg_mean_squared_error",
+                       store_cv_values=True)
+    ridge_cv.fit(X, y)
+    ridge = Ridge(fit_intercept=False)
+    loo_pred = cross_val_predict(ridge, X, y, cv=len(X))
+    assert_allclose(loo_pred, ridge_cv.cv_values_[:, 1])
+
+
+def test_ridge_gcv_decision_function_scoring():
+
+    def scorer(estimator, X, Y):
+        pred = estimator.decision_function(X)
+        return np.sum((pred - Y)**2)
+
+    X, y = make_regression()
+    ridge_1 = _RidgeGCV(
+        fit_intercept=False, scoring=scorer, store_cv_values=True).fit(X, y)
+    ridge_2 = _RidgeGCV(
+        fit_intercept=False, scoring=scorer, store_cv_values=True).fit(X, y)
+    assert ridge_1.best_score_ == pytest.approx(ridge_2.best_score_)
+
+
 @pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv'])
 def test_check_gcv_mode_error(mode):
     X, y = make_regression(n_samples=5, n_features=2)

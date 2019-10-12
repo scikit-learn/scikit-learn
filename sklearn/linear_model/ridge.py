@@ -1495,6 +1495,7 @@ class _RidgeGCV(LinearModel):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
 
         self.alpha_ = best_alpha
+        self.best_score_ = best_score
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
