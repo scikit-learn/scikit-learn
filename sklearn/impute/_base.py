@@ -240,16 +240,15 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                self.statistics_, missing_mask = self._sparse_fit(X,
-                                                    self.strategy,
-                                                    self.missing_values,
-                                                    fill_value)
+                self.statistics_, missing_mask = self._sparse_fit(
+                    X, self.strategy, self.missing_values, fill_value)
 
-                sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
-                                      else sparse.csc_matrix)
-                missing_mask = sparse_constructor(
-                    (missing_mask, X.indices.copy(), X.indptr.copy()),
-                    shape=X.shape, dtype=bool)
+                if self.add_indicator:
+                    sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                                          else sparse.csc_matrix)
+                    missing_mask = sparse_constructor(
+                        (missing_mask, X.indices.copy(), X.indptr.copy()),
+                        shape=X.shape, dtype=bool)
 
         else:
             self.statistics_, missing_mask = self._dense_fit(X,
@@ -377,6 +376,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
+            valid_statistics_indexes = slice(None)
         else:
             # same as np.isnan but also works for object dtypes
             invalid_mask = _get_mask(statistics, np.nan)
@@ -402,22 +402,20 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                 indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                     np.diff(X.indptr))[mask]
 
-                sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
-                                      else sparse.csc_matrix)
-                missing_mask = sparse_constructor(
-                                        (mask,
-                                         X.indices.copy(),
-                                         X.indptr.copy()),
-                                        shape=X.shape, dtype=bool)
+                if self.add_indicator:
+                    sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                                          else sparse.csc_matrix)
+                    missing_mask = sparse_constructor(
+                                            (mask,
+                                             X.indices.copy(),
+                                             X.indptr.copy()),
+                                            shape=X.shape, dtype=bool)
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
         else:
             missing_mask = _get_mask(X_, self.missing_values)
-            try:
-                mask = missing_mask[:, valid_statistics_indexes]
-            except UnboundLocalError:
-                mask = missing_mask
+            mask = missing_mask[:, valid_statistics_indexes]
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
