@@ -81,5 +81,4 @@ sklearn/linear_model/sag_fast.pyx
 # TODO: Remove in 0.24
 sklearn/utils/mocking.py
 sklearn/utils/weight_vector.py
-sklearn/utils/seq_dataset.pyx
-sklearn/utils/seq_dataset.pxd
+sklearn/utils/seq_dataset.py

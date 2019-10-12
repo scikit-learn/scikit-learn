@@ -22,7 +22,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from ..utils._weight_vector cimport WeightVector
-from ..utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
+from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
 
