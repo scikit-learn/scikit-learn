@@ -487,7 +487,7 @@ number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel)
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-\frac{1}{2} d(x_i / l, x_j / l)^2\right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{d(x_i, x_j)^2}{2l^2} \right)
 
 This kernel is infinitely differentiable, which implies that GPs with this
 kernel as covariance function have mean square derivatives of all orders, and are thus
@@ -570,7 +570,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-2 \left(\text{sin}(\pi / p * d(x_i, x_j)) / l\right)^2\right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi \|x_i - x_j\| / p}{ l^ 2} \right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:

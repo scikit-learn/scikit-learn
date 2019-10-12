@@ -464,6 +464,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     classifiers are fitted. Note that this class thus does not implement
     a true multi-class Laplace approximation.
 
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
     Parameters
     ----------
     kernel : kernel object

@@ -648,10 +648,22 @@ class KernelOperator(Kernel):
 
 
 class Sum(KernelOperator):
-    """Sum-kernel k1 + k2 of two kernels k1 and k2.
+    """The `Sum` kernel takes two kernels :math:`k_1` and :math:`k_2`
+    and combines them via
+    .. math::
+        k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)
 
-    The resulting kernel is defined as
-    k_sum(X, Y) = k1(X, Y) + k2(X, Y)
+    Using the Sum-kernel is equivalent to adding two kernels::
+
+
+        RBF() + RBF()
+
+    is the same as::
+
+        Sum( RBF(), RBF() )
+
+    As a reference on how to best combine different kernels, we refer to [1]_.
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -663,6 +675,26 @@ class Sum(KernelOperator):
     k2 : Kernel object
         The second base-kernel of the sum-kernel
 
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    Advice on Covariance functions".
+    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RBF, Sum, ConstantKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Sum( ConstantKernel(2), RBF() )
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> kernel
+    1.41**2 + RBF(length_scale=1)
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -722,10 +754,21 @@ class Sum(KernelOperator):
 
 
 class Product(KernelOperator):
-    """Product-kernel k1 * k2 of two kernels k1 and k2.
+    """The `Product` kernel takes two kernels :math:`k_1` and :math:`k_2`
+    and combines them via
+    .. math::
+        k_{prod}(X, Y) = k_1(X, Y) * k_2(X, Y)
 
-    The resulting kernel is defined as
-    k_prod(X, Y) = k1(X, Y) * k2(X, Y)
+    Using the Product-kernel is equivalent to multiplying two kernels::
+
+        RBF() * RBF()
+
+    is the same as::
+
+        Product( RBF(), RBF() )
+
+    As a reference on how to best combine different kernels, we refer to [1]_.
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -736,6 +779,28 @@ class Product(KernelOperator):
 
     k2 : Kernel object
         The second base-kernel of the product-kernel
+
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    Advice on Covariance functions".
+    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RBF, Product, ConstantKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Product( ConstantKernel(2), RBF() )
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> kernel
+    1.41**2 * RBF(length_scale=1)
+
 
     """
 
@@ -797,10 +862,13 @@ class Product(KernelOperator):
 
 
 class Exponentiation(Kernel):
-    """Exponentiate kernel by given exponent.
+    """The `Exponentiation` kernel takes one base kernel and a scalar parameter
+    :math:`exponent` and combines them via
+    .. math::
+        k_{exp}(X, Y) = k(X, Y) ^\\text{exponent}
 
-    The resulting kernel is defined as
-    k_exp(X, Y) = k(X, Y) ** exponent
+    As a reference on how to best combine different kernels, we refer to [1]_.
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -811,6 +879,28 @@ class Exponentiation(Kernel):
 
     exponent : float
         The exponent for the base kernel
+
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook: Advice on Covariance functions".
+        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RationalQuadratic, Exponentiation
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Exponentiation( RationalQuadratic(), exponent=2 )
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([781.91445768, 518.44313575]), array([9.99995045e-06, 9.99993380e-06]))
+
+
 
     """
     def __init__(self, kernel, exponent):
@@ -960,7 +1050,19 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
     the other factor (kernel) or as part of a sum-kernel, where it modifies
     the mean of the Gaussian process.
 
-    k(x_1, x_2) = constant_value for all x_1, x_2
+    .. math::
+        k(x_1, x_2) = constant\\_value \\;\\forall\\; x_1, x_2
+
+    Adding a constant kernel is equivalent to adding a constant::
+
+            kernel = RBF() + ConstantKernel(constant_value=2)
+
+    is the same as::
+
+            kernel = RBF() + 2
+
+    As a reference on how to best combine different kernels, we refer to [1]_.
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -972,6 +1074,26 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
     constant_value_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on constant_value
+
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook: Advice on Covariance functions".
+        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RBF, ConstantKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = RBF() + ConstantKernel(constant_value=2)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([781.91445766, 518.44313575]), array([1.00120724e-05, 1.00127377e-05]))
 
     """
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
@@ -1059,7 +1181,11 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     normally-distributed. The parameter noise_level equals the variance of this
     noise.
 
-    k(x_1, x_2) = noise_level if x_1 == x_2 else 0
+    .. math::
+        k(x_1, x_2) = noise\\_level \\text{ if } x_i == x_j \\text{ else } 0
+
+    As a reference on how to best combine different kernels, we refer to [1]_.
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -1070,6 +1196,28 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
     noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on noise_level
+
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    Advice on Covariance functions".
+    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = DotProduct() + WhiteKernel(noise_level=0.5)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.36802961190570527
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([653.08820061, 592.1687693 ]), array([316.68016355, 316.65121822]))
+
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1152,16 +1300,23 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
-    "squared exponential" kernel. It is parameterized by a length-scale
-    parameter length_scale>0, which can either be a scalar (isotropic variant
+    "squared exponential" kernel. It is parameterized by a length scale
+    parameter :math:`l>0`, which can either be a scalar (isotropic variant
     of the kernel) or a vector with the same number of dimensions as the inputs
     X (anisotropic variant of the kernel). The kernel is given by:
 
-    k(x_i, x_j) = exp(-1 / 2 d(x_i / length_scale, x_j / length_scale)^2)
+    .. math::
+        k(x_i, x_j) = \\exp(- \\frac{d(x_i, x_j)^2}{2l^2} )
+
+    where :math:`l` is the length scale of the kernel. For advice on how to
+    set the length scale parameter, see e.g. [1]_.
 
     This kernel is infinitely differentiable, which implies that GPs with this
     kernel as covariance function have mean square derivatives of all orders,
     and are thus very smooth.
+    See [2]_, Chapter 4, Section 4.2, for further details of the RBF kernel.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -1175,6 +1330,33 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on length_scale
 
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    Advice on Covariance functions".
+    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    .. [2] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+    "Gaussian Processes for Machine Learning". The MIT Press.
+    <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * RBF(1.0)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9866666666666667
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.83548752, 0.03228706, 0.13222543],
+           [0.79064206, 0.06525643, 0.14410151]])
+
+    .. versionadded:: 0.22
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1265,16 +1447,24 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 class Matern(RBF):
     """ Matern kernel.
 
-    The class of Matern kernels is a generalization of the RBF and the
-    absolute exponential kernel parameterized by an additional parameter
-    nu. The smaller nu, the less smooth the approximated function is.
-    For nu=inf, the kernel becomes equivalent to the RBF kernel and for nu=0.5
-    to the absolute exponential kernel. Important intermediate values are
-    nu=1.5 (once differentiable functions) and nu=2.5 (twice differentiable
-    functions).
+    The class of Matern kernels is a generalization of the :class:`RBF`. It has an
+    additional parameter :math:`\\nu` which controls the smoothness of
+    the resulting function. The smaller :math:`\\nu`, the less smooth
+    the approximated function is. As :math:`\nu\rightarrow\infty`, the
+    kernel becomes equivalent to the :class:`RBF` kernel. When :math:`\nu = 1/2`,
+    the Matérn kernel becomes identical to the absolute exponential kernel.
+    Important intermediate values are :math:`\\nu=1.5` (once differentiable functions)
+    and :math:`\\nu=2.5` (twice differentiable functions).
 
-    See Rasmussen and Williams 2006, pp84 for details regarding the
-    different variants of the Matern kernel.
+    The kernel is given by:
+    .. math::
+         k(x_i, x_j) = \\sigma^2\\frac{1}{\\Gamma(\\nu)2^{\\nu-1}}\\Bigg(\\gamma\\sqrt{2\\nu} d(x_i / l, x_j / l)\\Bigg)^\\nu K_\\nu\\Bigg(\\gamma\\sqrt{2\\nu} d(x_i / l, x_j / l)\\Bigg),
+
+
+    See [1]_, Chapter 4, Section 4.2, for details regarding the different
+    variants of the Matern kernel.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -1299,6 +1489,30 @@ class Matern(RBF):
         (appr. 10 times higher) since they require to evaluate the modified
         Bessel function. Furthermore, in contrast to l, nu is kept fixed to
         its initial value and not optimized.
+
+    References
+    ----------
+    .. [1] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+    "Gaussian Processes for Machine Learning". The MIT Press.
+    <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import Matern
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * Matern(length_scale=1.0, nu=1.5)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9866666666666667
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.85138298, 0.03687445, 0.11174258],
+            [0.80864428, 0.06935318, 0.12200254]])
+
+
+    .. versionadded:: 0.22
 
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
@@ -1416,12 +1630,18 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Rational Quadratic kernel.
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
-    sum) of RBF kernels with different characteristic length-scales. It is
-    parameterized by a length-scale parameter length_scale>0 and a scale
-    mixture parameter alpha>0. Only the isotropic variant where length_scale is
-    a scalar is supported at the moment. The kernel given by:
+    sum) of RBF kernels with different characteristic length scales. It is
+    parameterized by a length scale parameter :math:`l>0` and a scale
+    mixture parameter :math:`\\alpha>0`. Only the isotropic variant where length_scale is
+    a scalar is supported at the moment. The kernel is given by:
 
-    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha * length_scale^2))^-alpha
+    .. math::
+        k(x_i, x_j) = (1 + \\frac{d(x_i, x_j)^2 }{ 2*\\alpha * l^2})^-\\alpha
+
+    where :math:`\\alpha` is the scale mixture parameter and :math:`l` is the length scale
+    of the kernel. For advice on how to set the parameters, see e.g. [1]_.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -1438,6 +1658,31 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on alpha
+
+    References
+    ----------
+
+    .. [1] `David Duvenau (2014). "The Kernel Cookbook:
+    Advice on Covariance functions".
+    <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import Matern
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = RationalQuadratic(length_scale=1.0, alpha=1.5)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9733...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.88817693, 0.05664141, 0.05518166],
+            [0.86782306, 0.0707478 , 0.06142914]])
+
+
+    .. versionadded:: 0.22
 
     """
     def __init__(self, length_scale=1.0, alpha=1.0,
@@ -1529,15 +1774,20 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    r"""Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel (aka periodic kernel).
 
-    The ExpSineSquared kernel allows modeling periodic functions. It is
-    parameterized by a length-scale parameter length_scale>0 and a periodicity
-    parameter periodicity>0. Only the isotropic variant where l is a scalar is
-    supported at the moment. The kernel given by:
+    The ExpSineSquared kernel allows one to model functions which repeat
+    themselves exactly. It is parameterized by a length-scale parameter :math:`l>0`
+    and a periodicity parameter :math:`p>0`. Only the isotropic variant
+    where l is a scalar is supported at the moment. The kernel given by:
 
-    k(x_i, x_j) =
-    exp(-2 (sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
+    .. math::
+        k(x_i, x_j) = \\exp(- \\frac{ 2\\sin^2(\\pi |x_i - x_j|/p}{ l^ 2} )
+
+    where :math:`l` is the length scale of the kernel and :math:`p` is the
+    periodicity of the kernel.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
 
     .. versionadded:: 0.18
 
@@ -1554,6 +1804,24 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     periodicity_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on periodicity
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import ExpSineSquared
+    >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
+    >>> kernel = ExpSineSquared(length_scale=1, periodicity=1)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.01449437948246757
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([425.64897645, 457.50916254]), array([0.38945651, 0.34670857]))
+
+
+    .. versionadded:: 0.22
+
 
     """
     def __init__(self, length_scale=1.0, periodicity=1.0,
@@ -1645,16 +1913,20 @@ class DotProduct(Kernel):
     r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
-    regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
-    . , D) and a prior of N(0, \sigma_0^2) on the bias. The DotProduct kernel
+    regression by putting N(0, 1) priors on the coefficients of :math:`x_d (d = 1, . .
+    . , D)` and a prior of :math:`N(0, \\sigma_0^2)` on the bias. The DotProduct kernel
     is invariant to a rotation of the coordinates about the origin, but not
-    translations. It is parameterized by a parameter sigma_0^2. For
-    sigma_0^2 =0, the kernel is called the homogeneous linear kernel, otherwise
+    translations. It is parameterized by a parameter sigma_0 :math:`\\sigma`
+    which controls the inhomogenity of the kernel. For sigma_0^2 =0,
+    the kernel is called the homogeneous linear kernel, otherwise
     it is inhomogeneous. The kernel is given by
 
-    k(x_i, x_j) = sigma_0 ^ 2 + x_i \cdot x_j
+    .. math::
+        k(x_i, x_j) = \\sigma_0 ^ 2 + x_i \cdot x_j
 
     The DotProduct kernel is commonly combined with exponentiation.
+    See [1]_, Chapter 4, Section 4.2, for further details regarding the
+    DotProduct kernel.
 
     .. versionadded:: 0.18
 
@@ -1666,6 +1938,26 @@ class DotProduct(Kernel):
 
     sigma_0_bounds : pair of floats >= 0, default: (1e-5, 1e5)
         The lower and upper bound on l
+
+    References
+    ----------
+    .. [1] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+    "Gaussian Processes for Machine Learning". The MIT Press.
+    <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = DotProduct() + WhiteKernel()
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.3680...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
 
