@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
@@ -203,6 +204,36 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
     assert X_trans.shape[1] == expected_column_count_drop
     if passthrough:
         assert_allclose(X_test, X_trans[:, -10:])
+
+
+def test_stacking_regressor_sparse_passthrough():
+    # Check passthrough behavior on a sparse X matrix
+    X_train, X_test, y_train, _ = train_test_split(
+        csr_matrix(scale(X_diabetes)), y_diabetes, random_state=42
+    )
+    estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
+    rf = RandomForestRegressor(n_estimators=10, random_state=42)
+    clf = StackingRegressor(
+        estimators=estimators, final_estimator=rf, cv=5, passthrough=True
+    )
+    clf.fit(X_train, y_train)
+    X_trans = clf.transform(X_test)
+    assert_allclose(X_test.toarray(), X_trans[:, -10:].toarray())
+
+
+def test_stacking_classifier_sparse_passthrough():
+    # Check passthrough behavior on a sparse X matrix
+    X_train, X_test, y_train, _ = train_test_split(
+        csr_matrix(scale(X_iris)), y_iris, random_state=42
+    )
+    estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
+    rf = RandomForestClassifier(n_estimators=10, random_state=42)
+    clf = StackingClassifier(
+        estimators=estimators, final_estimator=rf, cv=5, passthrough=True
+    )
+    clf.fit(X_train, y_train)
+    X_trans = clf.transform(X_test)
+    assert_allclose(X_test.toarray(), X_trans[:, -4:].toarray())
 
 
 def test_stacking_classifier_drop_binary_prob():
