@@ -50,7 +50,6 @@ def test_hashing_transform_seed():
     # import is here to avoid importing on pypy
     from sklearn.feature_extraction._hashing import (
             transform as _hashing_transform)
-
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
 
