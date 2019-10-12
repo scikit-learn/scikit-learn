@@ -1433,17 +1433,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
-
-    Examples
-    --------
-    >>> from sklearn.datasets import load_boston
-    >>> from sklearn.model_selection import cross_val_score
-    >>> from sklearn.tree import ExtraTreeRegressor
-    >>> X, y = load_boston(return_X_y=True)
-    >>> regressor = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
-    >>> cross_val_score(regressor, X, y, cv=5)
-    array([-0.3316...,  0.5417...,  0.4175...,  0.2529..., -2.6084...])
-
     """
     def __init__(self,
                  criterion="gini",
@@ -1639,6 +1628,17 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.tree import ExtraTreeRegressor
+    >>> X, y = load_boston(return_X_y=True)
+    >>> regressor = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
+    >>> cross_val_score(regressor, X, y, cv=5)
+    array([-0.3316...,  0.5417...,  0.4175...,  0.2529..., -2.6084...])
+
     """
     def __init__(self,
                  criterion="mse",
