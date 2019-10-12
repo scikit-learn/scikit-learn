@@ -1345,29 +1345,27 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.pipeline import Pipeline
     >>> import numpy as np
-    >>> corpus = np.array([['this', 'is', 'the', 'first', 'document'],
-    ...                    ['this', 'document', 'is', 'the', 'second',
-    ...                     'document'],
-    ...                    ['and', 'this', 'is', 'the', 'third', 'one'],
-    ...                    ['is', 'this', 'the', 'first', 'document']])
+    >>> corpus = ['this is the first document',
+    ...           'this document is the second document',
+    ...           'and this is the third one',
+    ...           'is this the first document']
     >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
     ...               'and', 'one']
-    >>> count_matrix = np.array([[(np.array(doc)==word).sum()
-    ...                          for word in vocabulary]
-    ...                          for doc in corpus])
-    >>> count_matrix
+    >>> pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)), 
+    ...                  ('tfid', TfidfTransformer())])
+    >>> pipe.fit(corpus)
+    >>> pipe['count'].transform(corpus).toarray()
     array([[1, 1, 1, 1, 0, 1, 0, 0],
            [1, 2, 0, 1, 1, 1, 0, 0],
            [1, 0, 0, 1, 0, 1, 1, 1],
            [1, 1, 1, 1, 0, 1, 0, 0]])
-    >>> tfidftransformer = TfidfTransformer(use_idf=True,
-    ...                                     smooth_idf=False).fit(count_matrix)
-    >>> tfidftransformer.idf_
-    array([1.        , 1.28768207, 1.69314718, 1.        , 2.38629436,
-           1.        , 2.38629436, 2.38629436])
-    >>> sparse_tfidf_matrix = tfidftransformer.transform(count_matrix)
-    >>> sparse_tfidf_matrix.shape
+    >>> pipe['tfid'].idf_
+    array([1.        , 1.22314355, 1.51082562, 1.        , 1.91629073,
+           1.        , 1.91629073, 1.91629073])
+    >>> pipe.transform(corpus).shape
     (4, 8)
 
     References
