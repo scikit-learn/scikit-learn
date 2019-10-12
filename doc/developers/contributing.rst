@@ -513,6 +513,28 @@ underestimate how easy an issue is to solve!
 
     Note that not all issues which need contributors will have this tag.
 
+Stalled and Unclaimed Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The preferred workflow for claiming and working on issues is:
+
+* To determine if an issue is taken   
+
+  * Check the conversation to see if anyone has said that they're working on it 
+  * Check for linked PRs 
+
+* When a contributor comments on a issue to say they are working on it,
+  a PR is expected within 2 weeks (new contributor) or 4 weeks 
+  (contributor or core dev), unless an larger time frame is explicitly given.
+  Beyond that time, another contributor can take the issue without 
+  asking for permission and make a PR for it.
+
+* PRs that have a requested change and no response from the author for 1 month 
+  are considered stale. For stale PRs, another contributor may ask if the author 
+  plans to work on it, and if no response is given within 2 weeks make a new PR 
+  to continue the work.
+
+These are the general guidelines to follow, the specifics may vary from issue to issue. 
+
 .. _contribute_documentation:
 
 Documentation
