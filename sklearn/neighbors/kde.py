@@ -69,6 +69,18 @@ class KernelDensity(BaseEstimator):
         Additional parameters to be passed to the tree for use with the
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import sklearn.neighbors as neighbors
+    >>> bandwidth = 1
+    >>> kde = neighbors.KernelDensity(bandwidth=bandwidth, kernel="tophat")
+    >>> data = [[0.0], [0.1], [4.0]]
+    >>> samples = [[0.0], [1.0], [2.0], [4.0]]
+    >>> kde.fit(data)
+    >>> np.exp(kde.score_samples(samples))*2*bandwidth*len(data)
+    array([0.33333333, 0.16666667, 0.        , 0.16666667])
     """
     def __init__(self, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
