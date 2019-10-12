@@ -689,6 +689,20 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     code_book_ : numpy array of shape [n_classes, code_size]
         Binary array containing the code of each class.
 
+    Examples
+    --------
+    >>> from sklearn.multiclass import OutputCodeClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = OutputCodeClassifier(
+    ...                            estimator=RandomForestClassifier(), 
+    ...                            random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
+
     References
     ----------
 
