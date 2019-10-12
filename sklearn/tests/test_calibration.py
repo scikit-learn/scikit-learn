@@ -22,6 +22,7 @@ from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
+from sklearn.utils._mocking import CheckingClassifier
 
 
 def test_calibration():
@@ -341,3 +342,21 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+def test_calibration_with_fit_params():
+    """Tests that fit_params are passed to the underlying base estimator
+
+    https://github.com/scikit-learn/scikit-learn/issues/12384
+
+    """
+    n_samples = 100
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42)
+
+    fit_params = {'a': y, 'b': y}
+
+    clf = CheckingClassifier(expected_fit_params=fit_params)
+    pc_clf = CalibratedClassifierCV(clf)
+
+    pc_clf.fit(X, y, **fit_params)

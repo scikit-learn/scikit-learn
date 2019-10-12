@@ -115,6 +115,20 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             assert self.check_X(T)
         return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
 
+    def predict_proba(self, T):
+        """
+        Parameters
+        ----------
+        T : indexable, length n_samples
+        """
+        if self.check_X is not None:
+            assert self.check_X(T)
+
+        num_classes = len(self.classes_)
+        y_proba = np.ones((_num_samples(T), num_classes))
+        y_proba /= num_classes
+        return y_proba
+
     def score(self, X=None, Y=None):
         """
         Parameters

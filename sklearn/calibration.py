@@ -111,7 +111,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self.method = method
         self.cv = cv
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model
 
         Parameters
@@ -124,6 +124,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the fit method of the underlying
+            classifier.
 
         Returns
         -------
@@ -181,12 +185,19 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 base_estimator_sample_weight = sample_weight
             for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
+
+                fit_params_train = {}
+                if fit_params:
+                    for k, v in fit_params.items():
+                        check_consistent_length(y, v)
+                        fit_params_train[k] = v[train]
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(
                         X[train], y[train],
-                        sample_weight=base_estimator_sample_weight[train])
+                        sample_weight=base_estimator_sample_weight[train],
+                        **fit_params_train)
                 else:
-                    this_estimator.fit(X[train], y[train])
+                    this_estimator.fit(X[train], y[train], **fit_params_train)
 
                 calibrated_classifier = _CalibratedClassifier(
                     this_estimator, method=self.method,
