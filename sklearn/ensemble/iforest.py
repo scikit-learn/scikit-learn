@@ -139,21 +139,29 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
-    Example
-    -------
-    import numpy as np
-    from sklearn.ensemble import IsolationForest
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.ensemble import IsolationForest
+    >>> rng = np.random.RandomState(42)
+    >>> n_samples, n_outliers = 10, 1
+    >>> norms = rng.uniform(low=-6, high=-5, size=(n_samples-n_outliers, 2))
+    >>> outlier = rng.uniform(low=8, high=10, size=(n_outliers, 2))
+    >>> X = np.concatenate([norms, outlier], axis=0)
+    >>> clf = IsolationForest(behaviour="new",
+    ...                       contamination=n_outliers/n_samples,
+    ...                       max_samples=n_samples,
+    ...                       random_state=rng
+    ...                       ).fit(X)
+    >>> print(clf.predict(norms))
+    [1 1 1 1 1 1 1 1 1]
+    >>> print(clf.predict(outlier))
+    [-1]
 
-    rng = np.random.RandomState(42)
-    n_samples, n_outliers = 10, 1
-    norms = rng.uniform(low=-6, high=-5, size=(n_samples-n_outliers, 2))
-    outlier = rng.uniform(low=8, high=10, size=(n_outliers, 2))
-    X = np.concatenate([norms, outlier], axis=0)
-    clf = IsolationForest(behaviour='new', max_samples=n_samples,
-                        random_state=rng, contamination=n_outliers/n_samples)
-    clf.fit(X)
-    print(clf.predict(norms))
-    print(clf.predict(outlier))
+IsolationForest(behaviour='new', bootstrap=False, contamination=0.1,
+            max_features=1.0, max_samples=10, n_estimators=100, n_jobs=None,
+            random_state=42, verbose=0)
+
 
     Notes
     -----
