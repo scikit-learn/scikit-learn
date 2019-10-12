@@ -478,6 +478,11 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         mask_missing_values : ndarray, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
+
+        X_missing_mask : ndarray, shape (n_samples, n_features)
+            Input data's mask matrix indicating missing datapoints, where
+            "n_samples" is the number of samples and "n_features" is the
+            number of features.
         """
         if is_scalar_nan(self.missing_values):
             force_all_finite = "allow-nan"
@@ -489,7 +494,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)
-        _missing_mask = mask_missing_values
+        X_missing_mask = mask_missing_values
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                                             missing_values=self.missing_values,
@@ -503,7 +508,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         Xt = X[:, valid_mask]
         mask_missing_values = mask_missing_values[:, valid_mask]
 
-        return Xt, X_filled, mask_missing_values, _missing_mask
+        return Xt, X_filled, mask_missing_values, X_missing_mask
 
     def fit_transform(self, X, y=None):
         """Fits the imputer on X and return the transformed X.
@@ -550,7 +555,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         self._max_value = np.inf if self.max_value is None else self.max_value
 
         self.initial_imputer_ = None
-        X, Xt, mask_missing_values, _missing_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
@@ -558,7 +563,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
                                 error_on_new=False,
                                 precomputed=True,
                                 )
-            X_trans_indicator = self.indicator_.fit_transform(_missing_mask)
+            X_trans_indicator = self.indicator_.fit_transform(missing_mask)
         else:
             self.indicator_ = None
 
@@ -650,10 +655,10 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values, _missing_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, missing_mask = self._initial_imputation(X)
 
         if self.add_indicator:
-            X_trans_indicator = self.indicator_.transform(_missing_mask)
+            X_trans_indicator = self.indicator_.transform(missing_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return Xt

@@ -244,7 +244,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                     X, self.strategy, self.missing_values, fill_value)
 
                 if self.add_indicator:
-                    sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                    sparse_constructor = (sparse.csr_matrix
+                                          if X.format == 'csr'
                                           else sparse.csc_matrix)
                     missing_mask = sparse_constructor(
                         (missing_mask, X.indices.copy(), X.indptr.copy()),
@@ -403,7 +404,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                     np.diff(X.indptr))[mask]
 
                 if self.add_indicator:
-                    sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
+                    sparse_constructor = (sparse.csr_matrix
+                                          if X.format == 'csr'
                                           else sparse.csc_matrix)
                     missing_mask = sparse_constructor(
                                             (mask,
