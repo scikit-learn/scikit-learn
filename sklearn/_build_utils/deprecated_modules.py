@@ -10,6 +10,7 @@ _DEPRECATED_MODULES = {
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
+    ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
 }
 
 _FILE_CONTENT_TEMPLATE = """from .{new_module_name} import *  # noqa
