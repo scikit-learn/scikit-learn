@@ -158,11 +158,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> print(clf.predict(outlier))
     [-1]
 
-IsolationForest(behaviour='new', bootstrap=False, contamination=0.1,
-            max_features=1.0, max_samples=10, n_estimators=100, n_jobs=None,
-            random_state=42, verbose=0)
-
-
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
