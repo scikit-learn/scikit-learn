@@ -66,7 +66,7 @@ class ConvergenceWarning(UserWarning):
     ...    except ValueError:
     ...        pass
     ...    print(w[-1].message)
-    Number of distinct clusters (3) found smaller than n_clusters (4). 
+    Number of distinct clusters (3) found smaller than n_clusters (4).
     Possibly due to duplicate points in X.
 
     .. versionchanged:: 0.18
