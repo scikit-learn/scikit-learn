@@ -1637,11 +1637,11 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> from sklearn.ensemble import ExtraTreesClassifier
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = ExtraTreesClassifier(n_estimators=100)
+    >>> clf = ExtraTreesClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
-    ExtraTreesClassifier(n_estimators=100)
+    ExtraTreesClassifier(random_state=0)
     >>> clf.feature_importances_
-    array([0.10625438, 0.29079613, 0.43360443, 0.16934507])
+    array([0.09408348, 0.27497025, 0.45581085, 0.17513543])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
 
