@@ -1633,11 +1633,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     --------
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.ensemble import BaggingRegressor
     >>> from sklearn.tree import ExtraTreeRegressor
     >>> X, y = load_boston(return_X_y=True)
-    >>> regressor = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
-    >>> cross_val_score(regressor, X, y, cv=5)
-    array([-0.3316...,  0.5417...,  0.4175...,  0.2529..., -2.6084...])
+    >>> extra_tree = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
+    >>> reg = BaggingRegressor(extra_tree, n_estimators=10, bootstrap=True, random_state=0)
+    >>> cross_val_score(reg, X, y, cv=5)
+    array([0.7265..., 0.7969..., 0.8320..., 0.4814..., 0.0300...])
 
     """
     def __init__(self,
