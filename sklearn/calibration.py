@@ -23,7 +23,7 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_array, indexable, column_or_1d
+from .utils import _safe_indexing, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline
@@ -33,8 +33,9 @@ from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
-def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
-                              method, classes, sample_weight=None):
+def _fit_calibrated_classifer(estimator, X, y, train, test,
+                              method, classes, sample_weight=None,
+                              sample_weight_base_estimator=None, **fit_params):
     """Fit calibrated classifier for a given dataset split.
 
     Returns
@@ -42,16 +43,25 @@ def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
     calibrated_classifier : estimator object
         The calibrated estimator.
     """
-    if sample_weight is not None and supports_sw:
+    fit_params_train = {}
+    for key, val in fit_params.items():
+        check_consistent_length(y, val)
+        fit_params_train[key] = _safe_indexing(val, train)
+
+    # Differentiate between sample_weight (used for the
+    # _CalibratedClassifier) and sample_weight_base_estimator (used
+    # for the base estimator).
+    if sample_weight_base_estimator is not None:
         estimator.fit(X[train], y[train],
-                      sample_weight=sample_weight[train])
+                      sample_weight=_safe_indexing(sample_weight_base_estimator, train),
+                      **fit_params_train)
     else:
-        estimator.fit(X[train], y[train])
+        estimator.fit(X[train], y[train], **fit_params_train)
 
     calibrated_classifier = _CalibratedClassifier(estimator,
                                                   method=method,
                                                   classes=classes)
-    sw = None if sample_weight is None else sample_weight[test]
+    sw = None if sample_weight is None else _safe_indexing(sample_weight, test)
     calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
     return calibrated_classifier
 
@@ -199,7 +209,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         self.cv = cv
         self.n_jobs = n_jobs
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the calibrated model
 
         Parameters
@@ -212,6 +222,10 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the fit method of the underlying
+            classifier.
 
         Returns
         -------
@@ -266,30 +280,32 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
-            supports_sw = "sample_weight" in fit_parameters
-
+            base_estimator_supports_sw = "sample_weight" in fit_parameters
+            sample_weight_base_estimator = None
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
-                if not supports_sw:
+                if not base_estimator_supports_sw:
                     estimator_name = type(base_estimator).__name__
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
+                else:
+                    sample_weight_base_estimator = sample_weight
 
             parallel = Parallel(n_jobs=self.n_jobs)
 
             self.calibrated_classifiers_ = parallel(delayed(
-                _fit_calibrated_classifer)(clone(base_estimator),
-                                           X, y,
-                                           train=train, test=test,
-                                           method=self.method,
-                                           classes=self.classes_,
-                                           supports_sw=supports_sw,
-                                           sample_weight=sample_weight)
-                                                    for train, test
-                                                    in cv.split(X, y))
-
+                _fit_calibrated_classifer)(
+                    clone(base_estimator),
+                    X, y,
+                    train=train, test=test,
+                    method=self.method,
+                    classes=self.classes_,
+                    sample_weight=sample_weight,
+                    sample_weight_base_estimator=sample_weight_base_estimator,
+                    **fit_params
+                ) for train, test in cv.split(X, y))
         return self
 
     def predict_proba(self, X):
