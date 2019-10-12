@@ -1642,6 +1642,23 @@ class ExtraTreesClassifier(ForestClassifier):
     sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_boston
+    >>> from sklearn.ensemble import ExtraTreesRegressor
+    >>> boston=load_boston()
+    >>> etr=ExtraTreesRegressor(random_state=0)  # doctest: +ELLIPSIS
+    >>> b_x, b_y=load_boston(return_X_y=True)
+    >>> etr.fit(b_x, b_y)
+    ExtraTreesRegressor(random_state=0)
+    >>> etr.feature_importances_
+    array([0.0309..., 0.0060..., 0.0256..., 0.0150..., 0.0382...,
+        0.3388..., 0.0216..., 0.0308..., 0.0239..., 0.0454...,
+        0.0487..., 0.0191..., 0.3553...])
+    >>> etr.predict([np.zeros(13)])
+    array([28.253])
     """
     def __init__(self,
                  n_estimators=100,
