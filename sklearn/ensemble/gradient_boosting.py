@@ -2510,6 +2510,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     sklearn.ensemble.HistGradientBoostingRegressor,
     sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.datasets import load_boston
+    >>> X, y = load_boston(return_X_y=True)
+    >>> est = GradientBoostingRegressor().fit(X, y)
+    >>> print(est.score(X, y))
+    >>> print(est.feature_importances_)
+    >>> print(est.predict(X[1:2]))
+
     References
     ----------
     J. Friedman, Greedy Function Approximation: A Gradient Boosting
