@@ -2049,6 +2049,7 @@ shape (n_estimators, ``loss_.K``)
     >>> X = [[3.1415,1.4142], [2.7182, 0.57721]]
     >>> y =  [1, 2]
     >>> gradient_boosting_classifier.fit(X, y)
+    >>> GradientBoostingClassifier()
     >>> gradient_boosting_classifier.predict([[1, 2]])
     >>> array([1])
 
