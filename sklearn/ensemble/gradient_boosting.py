@@ -2516,9 +2516,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> from sklearn.datasets import load_boston
     >>> X, y = load_boston(return_X_y=True)
     >>> est = GradientBoostingRegressor().fit(X, y)
-    >>> print(est.score(X, y))
-    >>> print(est.feature_importances_)
-    >>> print(est.predict(X[1:2]))
+    >>> est.score(X, y)
+    0.9761405838418584
+    >>> est.predict(X[1:2])
+    array([21.96320179])
 
     References
     ----------
