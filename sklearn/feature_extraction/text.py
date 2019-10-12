@@ -1355,8 +1355,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
     ...               'and', 'one']
     >>> pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
-    ...                  ('tfid', TfidfTransformer())])
-    >>> pipe.fit(corpus)
+    ...                  ('tfid', TfidfTransformer())]).fit(corpus)
     >>> pipe['count'].transform(corpus).toarray()
     array([[1, 1, 1, 1, 0, 1, 0, 0],
            [1, 2, 0, 1, 1, 1, 0, 0],
