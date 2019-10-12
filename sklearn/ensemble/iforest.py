@@ -153,8 +153,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> norms = rng.uniform(low=-6, high=-5, size=(n_samples-n_outliers, 2))
     >>> outlier = rng.uniform(low=8, high=10, size=(n_outliers, 2))
     >>> X = np.concatenate([norms, outlier], axis=0)
-    >>> clf = IsolationForest(behaviour="new",
-    ...                       contamination=n_outliers/n_samples,
+    >>> clf = IsolationForest(contamination=n_outliers/n_samples,
     ...                       max_samples=n_samples,
     ...                       random_state=rng
     ...                       ).fit(X)
