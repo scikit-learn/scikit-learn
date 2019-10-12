@@ -168,6 +168,19 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
     --------
     SimpleImputer : Univariate imputation of missing values.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.impute import IterativeImputer
+    >>> imp_mean = IterativeImputer(random_state=0)
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    IterativeImputer(random_state=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> print(imp_mean.transform(X))
+    [[ 6.9584...   2.          3.        ]
+    [ 4.           2.6000...   6.        ]
+    [10.           4.9999...   9.        ]]
+
     Notes
     -----
     To support imputation in inductive mode we store each feature's estimator
