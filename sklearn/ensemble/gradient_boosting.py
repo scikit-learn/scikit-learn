@@ -2041,6 +2041,17 @@ shape (n_estimators, ``loss_.K``)
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+    >>> gradient_boosting_classifier = GradientBoostingClassifier()
+    >>> X = [[3.1415,1.4142], [2.7182, 0.57721]]
+    >>> y =  [1, 2]
+    >>> gradient_boosting_classifier.fit(X, y)
+    >>> gradient_boosting_classifier.predict([[1, 2]])
+    >>> array([1])
+    
+
     See also
     --------
     sklearn.ensemble.HistGradientBoostingClassifier,
