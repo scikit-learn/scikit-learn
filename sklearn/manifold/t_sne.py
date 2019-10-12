@@ -630,8 +630,8 @@ class TSNE(BaseEstimator):
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
-                 metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5,
+                 metric="euclidean", metric_params=None, init="random",
+                 verbose=0, random_state=None, method='barnes_hut', angle=0.5,
                  n_jobs=None):
         self.n_components = n_components
         self.perplexity = perplexity
@@ -641,6 +641,7 @@ class TSNE(BaseEstimator):
         self.n_iter_without_progress = n_iter_without_progress
         self.min_grad_norm = min_grad_norm
         self.metric = metric
+        self.metric_params = metric_params
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -693,6 +694,8 @@ class TSNE(BaseEstimator):
         n_samples = X.shape[0]
 
         neighbors_nn = None
+        metric_params_ = ({} if self.metric_params is None
+                          else self.metric_params.copy())
         if self.method == "exact":
             # Retrieve the distance matrix, either using the precomputed one or
             # computing it.
@@ -707,7 +710,8 @@ class TSNE(BaseEstimator):
                                                    squared=True)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
-                                                   n_jobs=self.n_jobs)
+                                                   n_jobs=self.n_jobs,
+                                                   **metric_params_)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -736,6 +740,12 @@ class TSNE(BaseEstimator):
                                    n_jobs=self.n_jobs,
                                    n_neighbors=n_neighbors,
                                    metric=self.metric)
+            if 'p' in metric_params_:
+                p = metric_params_.pop('p')
+                knn.set_params(p=p)
+            if len(metric_params_) > 0:
+                knn.set_params(metric_params=metric_params_)
+
             t0 = time()
             knn.fit(X)
             duration = time() - t0
