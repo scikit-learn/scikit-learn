@@ -2046,14 +2046,16 @@ shape (n_estimators, ``loss_.K``)
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_classification()
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> clf = GradientBoostingClassifier()
+    >>> X, y = make_classification(random_state=42)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=42)
+    >>> clf = GradientBoostingClassifier(random_state=42)
     >>> clf.fit(X_train, y_train)
-    GradientBoostingClassifier()
+    GradientBoostingClassifier(random_state=42)
     >>> clf.predict(X_test)
     array([...])
-    >>> clf.score(X_test, y_test)  # doctest: +SKIP
+    >>> clf.score(X_test, y_test)
+    0.92
 
     See also
     --------
@@ -2524,14 +2526,16 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sklearn.model_selection import train_test_split
-    >>> X, y = make_regression()
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> reg = GradientBoostingRegressor()
+    >>> X, y = make_regression(random_state=42)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=42)
+    >>> reg = GradientBoostingRegressor(random_state=42)
     >>> reg.fit(X_train, y_train)
-    GradientBoostingRegressor()
+    GradientBoostingRegressor(random_state=42)
     >>> reg.predict(X_test)
     array([...])
-    >>> reg.score(X_test, y_test)  # doctest: +SKIP
+    >>> reg.score(X_test, y_test)
+    0.52...
 
     See also
     --------
