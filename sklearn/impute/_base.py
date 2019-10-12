@@ -414,7 +414,10 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                                                 copy=False)
         else:
             missing_mask = _get_mask(X_, self.missing_values)
-            mask = missing_mask[:, valid_statistics_indexes]
+            try:
+                mask = missing_mask[:, valid_statistics_indexes]
+            except:
+                mask = missing_mask
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
