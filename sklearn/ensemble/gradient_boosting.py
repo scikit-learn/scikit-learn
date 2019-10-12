@@ -2050,7 +2050,7 @@ shape (n_estimators, ``loss_.K``)
     >>> y =  [1, 2]
     >>> gradient_boosting_classifier = gradient_boosting_classifier.fit(X, y)
     >>> gradient_boosting_classifier.predict([[1, 2]])
-    array([1])
+    array([2])
 
     See also
     --------
