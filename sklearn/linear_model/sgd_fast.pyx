@@ -21,7 +21,7 @@ from numpy.math cimport INFINITY
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from ..utils.weight_vector cimport WeightVector
+from ..utils._weight_vector cimport WeightVector
 from ..utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()

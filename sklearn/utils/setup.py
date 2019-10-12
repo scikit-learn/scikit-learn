@@ -63,8 +63,8 @@ def configuration(parent_package='', top_path=None):
                          sources=['seq_dataset.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension('weight_vector',
-                         sources=['weight_vector.pyx'],
+    config.add_extension('_weight_vector',
+                         sources=['_weight_vector.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

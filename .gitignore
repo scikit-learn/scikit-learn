@@ -80,3 +80,4 @@ sklearn/linear_model/sag_fast.pyx
 # deprecated paths
 # TODO: Remove in 0.24
 sklearn/utils/mocking.py
+sklearn/utils/weight_vector.py
