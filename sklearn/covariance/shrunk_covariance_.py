@@ -92,10 +92,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage : float, 0 <= shrinkage <= 1
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
     Examples
     --------
     >>> import numpy as np
@@ -108,7 +104,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = ShrunkCovariance().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7387..., 0.2536...],
            [0.2536..., 0.4110...]])
     >>> cov.location_
@@ -135,7 +131,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -376,7 +372,7 @@ class LedoitWolf(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=50)
     >>> cov = LedoitWolf().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.4406..., 0.1616...],
            [0.1616..., 0.8022...]])
     >>> cov.location_
@@ -410,7 +406,7 @@ class LedoitWolf(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
         y
@@ -565,7 +561,7 @@ class OAS(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
         y

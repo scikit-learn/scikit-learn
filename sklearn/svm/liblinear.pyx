@@ -25,19 +25,17 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
 
     if is_sparse:
         problem = csr_set_problem(
-                (<np.ndarray[np.float64_t, ndim=1, mode='c']>X.data).data,
-                (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).shape,
+                (<np.ndarray>X.data).data, X.dtype == np.float64,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indices).data,
-                (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).shape,
                 (<np.ndarray[np.int32_t,   ndim=1, mode='c']>X.indptr).data,
-                Y.data, (<np.int32_t>X.shape[1]), bias,
-                sample_weight.data)
+                (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
+                (<np.int32_t>X.nnz), bias, sample_weight.data, Y.data)
     else:
         problem = set_problem(
-                (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).data,
-                Y.data,
-                (<np.ndarray[np.float64_t, ndim=2, mode='c']>X).shape,
-                bias, sample_weight.data)
+                (<np.ndarray>X).data, X.dtype == np.float64,
+                (<np.int32_t>X.shape[0]), (<np.int32_t>X.shape[1]),
+                (<np.int32_t>np.count_nonzero(X)), bias, sample_weight.data,
+                Y.data)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.intc)
@@ -61,6 +59,11 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
     with nogil:
         model = train(problem, param, &blas_functions)
 
+    ### FREE
+    free_problem(problem)
+    free_parameter(param)
+    # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
+
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
@@ -81,11 +84,7 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         w = np.empty((nr_class, nr_feature),order='F')
         copy_w(w.data, model, len_w)
 
-    ### FREE
     free_and_destroy_model(&model)
-    free_problem(problem)
-    free_parameter(param)
-    # destroy_param(param)  don't call this or it will destroy class_weight_label and class_weight
 
     return w, n_iter
 

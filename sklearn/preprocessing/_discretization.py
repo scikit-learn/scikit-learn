@@ -18,7 +18,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
 
-class KBinsDiscretizer(BaseEstimator, TransformerMixin):
+class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     """Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
@@ -70,7 +70,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
-    >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
     >>> Xt  # doctest: +SKIP
@@ -211,7 +211,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, (numbers.Integral, np.integer)):
+            if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
                                  "Received {}, expected int."
                                  .format(KBinsDiscretizer.__name__,
@@ -253,7 +253,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
@@ -294,7 +294,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         if 'onehot' in self.encode:
             Xt = self._encoder.inverse_transform(Xt)

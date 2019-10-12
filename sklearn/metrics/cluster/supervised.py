@@ -16,13 +16,12 @@ better.
 
 
 from math import log
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array
+from ...utils.validation import check_array, check_consistent_length
 from ...utils.fixes import comb, _astype_copy_false
 
 
@@ -37,14 +36,18 @@ def check_clusterings(labels_true, labels_pred):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
-        The true labels
+    labels_true : array-like of shape (n_samples,)
+        The true labels.
 
-    labels_pred : int array, shape = [n_samples]
-        The predicted labels
+    labels_pred : array-like of shape (n_samples,)
+        The predicted labels.
     """
-    labels_true = np.asarray(labels_true)
-    labels_pred = np.asarray(labels_pred)
+    labels_true = check_array(
+        labels_true, ensure_2d=False, ensure_min_samples=0
+    )
+    labels_pred = check_array(
+        labels_pred, ensure_2d=False, ensure_min_samples=0
+    )
 
     # input checks
     if labels_true.ndim != 1:
@@ -53,10 +56,8 @@ def check_clusterings(labels_true, labels_pred):
     if labels_pred.ndim != 1:
         raise ValueError(
             "labels_pred must be 1D: shape is %r" % (labels_pred.shape,))
-    if labels_true.shape != labels_pred.shape:
-        raise ValueError(
-            "labels_true and labels_pred must have same size, got %d and %d"
-            % (labels_true.shape[0], labels_pred.shape[0]))
+    check_consistent_length(labels_true, labels_pred)
+
     return labels_true, labels_pred
 
 
@@ -83,7 +84,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None, sparse=False):
     labels_true : int array, shape = [n_samples]
         Ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
     eps : None or float, optional.
@@ -163,7 +164,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         Ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
     Returns
@@ -186,13 +187,13 @@ def adjusted_rand_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete be not always pure, hence penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.57...
 
     ARI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
-      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 2])
       0.57...
 
     If classes members are completely split across different clusters, the
@@ -272,7 +273,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     beta : float
@@ -342,7 +343,7 @@ def homogeneity_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     Returns
@@ -375,20 +376,16 @@ def homogeneity_score(labels_true, labels_pred):
     perfectly homogeneous::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       1.000000
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """
@@ -416,7 +413,7 @@ def completeness_score(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     Returns
@@ -493,7 +490,7 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     labels_true : int array, shape = [n_samples]
         ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
     beta : float
@@ -535,10 +532,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     are complete be not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     Labelings that have pure clusters with members coming from the same
@@ -546,24 +541,20 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
-      ...                                                  # doctest: +ELLIPSIS
       0.8...
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.66...
 
     If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     Clusters that include samples from totally different classes totally
     destroy the homogeneity of the labeling, hence::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 0, 0]))
-      ...                                                  # doctest: +ELLIPSIS
       0.0...
 
     """
@@ -601,7 +592,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     contingency : {None, array, sparse matrix}, \
@@ -614,6 +605,10 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     -------
     mi : float
        Mutual information, a non-negative value
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
 
     See also
     --------
@@ -654,7 +649,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
 
 def adjusted_mutual_info_score(labels_true, labels_pred,
-                               average_method='warn'):
+                               average_method='arithmetic'):
     """Adjusted Mutual Information between two clusterings.
 
     Adjusted Mutual Information (AMI) is an adjustment of the Mutual
@@ -684,16 +679,18 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'warn')
+    average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'max' will be used. The default will change to
-        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
+
+        .. versionchanged:: 0.22
+           The default value of ``average_method`` changed from 'max' to
+           'arithmetic'.
 
     Returns
     -------
@@ -739,12 +736,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
-    if average_method == 'warn':
-        warnings.warn("The behavior of AMI will change in version 0.22. "
-                      "To match the behavior of 'v_measure_score', AMI will "
-                      "use average_method='arithmetic' by default.",
-                      FutureWarning)
-        average_method = 'max'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
@@ -779,7 +770,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
 
 
 def normalized_mutual_info_score(labels_true, labels_pred,
-                                 average_method='warn'):
+                                 average_method='arithmetic'):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is a normalization of the Mutual
@@ -807,16 +798,18 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'warn')
+    average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'geometric' will be used. The default will change to
-        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
+
+        .. versionchanged:: 0.22
+           The default value of ``average_method`` changed from 'geometric' to
+           'arithmetic'.
 
     Returns
     -------
@@ -852,12 +845,6 @@ def normalized_mutual_info_score(labels_true, labels_pred,
       0.0
 
     """
-    if average_method == 'warn':
-        warnings.warn("The behavior of NMI will change in version 0.22. "
-                      "To match the behavior of 'v_measure_score', NMI will "
-                      "use average_method='arithmetic' by default.",
-                      FutureWarning)
-        average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
@@ -966,6 +953,10 @@ def entropy(labels):
     ----------
     labels : int array, shape = [n_samples]
         The labels
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if len(labels) == 0:
         return 1.0

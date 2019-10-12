@@ -19,7 +19,8 @@ from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
 
-class NearestCentroid(BaseEstimator, ClassifierMixin):
+
+class NearestCentroid(ClassifierMixin, BaseEstimator):
     """Nearest centroid classifier.
 
     Each class is represented by its centroid, with test samples classified to
@@ -45,8 +46,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    centroids_ : array-like, shape = [n_classes, n_features]
-        Centroid of each class
+    centroids_ : array-like of shape (n_classes, n_features)
+        Centroid of each class.
+
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
 
     Examples
     --------
@@ -56,7 +60,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid(metric='euclidean', shrink_threshold=None)
+    NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -88,7 +92,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
             Note that centroid shrinking cannot be used with sparse matrices.
@@ -175,11 +179,11 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
 
         Notes
         -----
@@ -187,7 +191,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
-        check_is_fitted(self, 'centroids_')
+        check_is_fitted(self)
 
         X = check_array(X, accept_sparse='csr')
         return self.classes_[pairwise_distances(

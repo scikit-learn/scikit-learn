@@ -8,18 +8,17 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
-import warnings
 from time import time
 import numpy as np
 from scipy import linalg
-import scipy.sparse as sp
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils.validation import check_non_negative
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
@@ -54,14 +53,14 @@ def _joint_probabilities(distances, desired_perplexity, verbose):
     # the desired perplexity
     distances = distances.astype(np.float32, copy=False)
     conditional_P = _utils._binary_search_perplexity(
-        distances, None, desired_perplexity, verbose)
+        distances, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
     return P
 
 
-def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
+def _joint_probabilities_nn(distances, desired_perplexity, verbose):
     """Compute joint probabilities p_ij from distances using just nearest
     neighbors.
 
@@ -71,11 +70,9 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
     Parameters
     ----------
-    distances : array, shape (n_samples, k)
-        Distances of samples to its k nearest neighbors.
-
-    neighbors : array, shape (n_samples, k)
-        Indices of the k nearest-neighbors for each samples.
+    distances : CSR sparse matrix, shape (n_samples, n_samples)
+        Distances of samples to its n_neighbors nearest neighbors. All other
+        distances are left to zero (and are not materialized in memory).
 
     desired_perplexity : float
         Desired perplexity of the joint probability distributions.
@@ -91,17 +88,18 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
     t0 = time()
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
-    n_samples, k = neighbors.shape
-    distances = distances.astype(np.float32, copy=False)
-    neighbors = neighbors.astype(np.int64, copy=False)
+    distances.sort_indices()
+    n_samples = distances.shape[0]
+    distances_data = distances.data.reshape(n_samples, -1)
+    distances_data = distances_data.astype(np.float32, copy=False)
     conditional_P = _utils._binary_search_perplexity(
-        distances, neighbors, desired_perplexity, verbose)
+        distances_data, desired_perplexity, verbose)
     assert np.all(np.isfinite(conditional_P)), \
         "All probabilities should be finite"
 
     # Symmetrize the joint probability distribution using sparse operations
-    P = csr_matrix((conditional_P.ravel(), neighbors.ravel(),
-                    range(0, n_samples * k + 1, k)),
+    P = csr_matrix((conditional_P.ravel(), distances.indices,
+                    distances.indptr),
                    shape=(n_samples, n_samples))
     P = P + P.T
 
@@ -392,8 +390,7 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5,
-                    precomputed=False, metric='euclidean'):
+def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -427,13 +424,6 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     n_neighbors : int, optional (default: 5)
         Number of neighbors k that will be considered.
 
-    precomputed : bool, optional (default: False)
-        Set this flag if X is a precomputed square distance matrix.
-
-        ..deprecated:: 0.20
-            ``precomputed`` has been deprecated in version 0.20 and will be
-            removed in version 0.22. Use ``metric`` instead.
-
     metric : string, or callable, optional, default 'euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
@@ -446,11 +436,6 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
-    if precomputed:
-        warnings.warn("The flag 'precomputed' has been deprecated in version "
-                      "0.20 and will be removed in 0.22. See 'metric' "
-                      "parameter instead.", DeprecationWarning)
-        metric = 'precomputed'
     dist_X = pairwise_distances(X, metric=metric)
     if metric == 'precomputed':
         dist_X = dist_X.copy()
@@ -592,6 +577,16 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search. This parameter
+        has no impact when ``metric="precomputed"`` or
+        (``metric="euclidean"`` and ``method="exact"``).
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -636,7 +631,8 @@ class TSNE(BaseEstimator):
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5):
+                 random_state=None, method='barnes_hut', angle=0.5,
+                 n_jobs=None):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -650,56 +646,37 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
+        self.n_jobs = n_jobs
 
     def _fit(self, X, skip_num_points=0):
-        """Fit the model using X as training data.
+        """Private function to fit the model using X as training data."""
 
-        Note that sparse arrays can only be handled by method='exact'.
-        It is recommended that you convert your sparse array to dense
-        (e.g. `X.toarray()`) if it fits in memory, or otherwise using a
-        dimensionality reduction technique (e.g. TruncatedSVD).
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row. Note that this
-            when method='barnes_hut', X cannot be a sparse array and if need be
-            will be converted to a 32 bit float array. Method='exact' allows
-            sparse arrays and 64bit floating point inputs.
-
-        skip_num_points : int (optional, default:0)
-            This does not compute the gradient for points with indices below
-            `skip_num_points`. This is useful when computing transforms of new
-            data where you'd like to keep the old data fixed.
-        """
         if self.method not in ['barnes_hut', 'exact']:
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.method == 'barnes_hut':
+            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if np.any(X < 0):
-                raise ValueError("All distances should be positive, the "
-                                 "precomputed distances given as X is not "
-                                 "correct")
-        if self.method == 'barnes_hut' and sp.issparse(X):
-            raise TypeError('A sparse matrix was passed, but dense '
-                            'data is required for method="barnes_hut". Use '
-                            'X.toarray() to convert to a dense numpy array if '
-                            'the array is small enough for it to fit in '
-                            'memory. Otherwise consider dimensionality '
-                            'reduction techniques (e.g. TruncatedSVD)')
-        if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+
+            check_non_negative(X, "TSNE.fit(). With metric='precomputed', X "
+                                  "should contain positive distances.")
+
+            if self.method == "exact" and issparse(X):
+                raise TypeError(
+                    'TSNE with method="exact" does not accept sparse '
+                    'precomputed distance matrix. Use method="barnes_hut" '
+                    'or provide the dense distance matrix.')
+
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
@@ -729,7 +706,8 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
-                    distances = pairwise_distances(X, metric=self.metric)
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   n_jobs=self.n_jobs)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -743,17 +721,20 @@ class TSNE(BaseEstimator):
                                     "or then equal to one")
 
         else:
-            # Cpmpute the number of nearest neighbors to find.
+            # Compute the number of nearest neighbors to find.
             # LvdM uses 3 * perplexity as the number of neighbors.
             # In the event that we have very small # of points
             # set the neighbors to n - 1.
-            k = min(n_samples - 1, int(3. * self.perplexity + 1))
+            n_neighbors = min(n_samples - 1, int(3. * self.perplexity + 1))
 
             if self.verbose:
-                print("[t-SNE] Computing {} nearest neighbors...".format(k))
+                print("[t-SNE] Computing {} nearest neighbors..."
+                      .format(n_neighbors))
 
             # Find the nearest neighbors for every point
-            knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
+            knn = NearestNeighbors(algorithm='auto',
+                                   n_jobs=self.n_jobs,
+                                   n_neighbors=n_neighbors,
                                    metric=self.metric)
             t0 = time()
             knn.fit(X)
@@ -763,12 +744,11 @@ class TSNE(BaseEstimator):
                     n_samples, duration))
 
             t0 = time()
-            distances_nn, neighbors_nn = knn.kneighbors(
-                None, n_neighbors=k)
+            distances_nn = knn.kneighbors_graph(mode='distance')
             duration = time() - t0
             if self.verbose:
-                print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
-                      .format(n_samples, duration))
+                print("[t-SNE] Computed neighbors for {} samples "
+                      "in {:.3f}s...".format(n_samples, duration))
 
             # Free the memory used by the ball_tree
             del knn
@@ -779,11 +759,11 @@ class TSNE(BaseEstimator):
                 # the method was derived using the euclidean method as in the
                 # input space. Not sure of the implication of using a different
                 # metric.
-                distances_nn **= 2
+                distances_nn.data **= 2
 
             # compute the joint probability distribution for the input space
-            P = _joint_probabilities_nn(distances_nn, neighbors_nn,
-                                        self.perplexity, self.verbose)
+            P = _joint_probabilities_nn(distances_nn, self.perplexity,
+                                        self.verbose)
 
         if isinstance(self.init, np.ndarray):
             X_embedded = self.init
@@ -882,7 +862,10 @@ class TSNE(BaseEstimator):
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
-            matrix. Otherwise it contains a sample per row.
+            matrix. Otherwise it contains a sample per row. If the method
+            is 'exact', X may be a sparse matrix of type 'csr', 'csc'
+            or 'coo'. If the method is 'barnes_hut' and the metric is
+            'precomputed', X may be a precomputed sparse graph.
 
         y : Ignored
 
@@ -904,7 +887,8 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
-            or 'coo'.
+            or 'coo'. If the method is 'barnes_hut' and the metric is
+            'precomputed', X may be a precomputed sparse graph.
 
         y : Ignored
         """

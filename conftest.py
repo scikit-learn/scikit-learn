@@ -11,6 +11,10 @@ from distutils.version import LooseVersion
 import pytest
 from _pytest.doctest import DoctestItem
 
+from sklearn import set_config
+from sklearn.utils import _IS_32BIT
+from sklearn.externals import _pilutil
+
 PYTEST_MIN_VERSION = '3.3.0'
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
@@ -50,16 +54,27 @@ def pytest_collection_modifyitems(config, items):
     try:
         import numpy as np
         if LooseVersion(np.__version__) < LooseVersion('1.14'):
+            reason = 'doctests are only run for numpy >= 1.14'
+            skip_doctests = True
+        elif _IS_32BIT:
+            reason = ('doctest are only run when the default numpy int is '
+                      '64 bits.')
             skip_doctests = True
     except ImportError:
         pass
 
     if skip_doctests:
-        skip_marker = pytest.mark.skip(
-            reason='doctests are only run for numpy >= 1.14 and python >= 3')
+        skip_marker = pytest.mark.skip(reason=reason)
 
         for item in items:
             if isinstance(item, DoctestItem):
+                item.add_marker(skip_marker)
+    elif not _pilutil.pillow_installed:
+        skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
+        for item in items:
+            if item.name in [
+                    "sklearn.feature_extraction.image.PatchExtractor",
+                    "sklearn.feature_extraction.image.extract_patches_2d"]:
                 item.add_marker(skip_marker)
 
 
@@ -71,3 +86,13 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
+
+
+def pytest_runtest_setup(item):
+    if isinstance(item, DoctestItem):
+        set_config(print_changed_only=True)
+
+
+def pytest_runtest_teardown(item, nextitem):
+    if isinstance(item, DoctestItem):
+        set_config(print_changed_only=False)

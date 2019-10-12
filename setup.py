@@ -13,21 +13,18 @@ from pkg_resources import parse_version
 import traceback
 try:
     import builtins
-    # This is a bit (!) hackish: we are setting a global variable so that the
-    # main sklearn __init__ can detect if it is being loaded by the setup
-    # routine, to avoid attempting to load components that aren't built yet:
-    # the numpy distutils extensions that are used by scikit-learn to
-    # recursively build the compiled extensions in sub-packages is based on the
-    # Python import machinery.
-    builtins.__SKLEARN_SETUP__ = True
 except ImportError:
-    # Python 2 is not support but we will raise an explicit error message next.
-    pass
+    # Python 2 compat: just to be able to declare that Python >=3.5 is needed.
+    import __builtin__ as builtins
 
-if sys.version_info < (3, 5):
-    raise RuntimeError("Scikit-learn requires Python 3.5 or later. The current"
-                       " Python version is %s installed in %s."
-                       % (platform.python_version(), sys.executable))
+# This is a bit (!) hackish: we are setting a global variable so that the
+# main sklearn __init__ can detect if it is being loaded by the setup
+# routine, to avoid attempting to load components that aren't built yet:
+# the numpy distutils extensions that are used by scikit-learn to
+# recursively build the compiled extensions in sub-packages is based on the
+# Python import machinery.
+builtins.__SKLEARN_SETUP__ = True
+
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
@@ -116,27 +113,33 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
+cmdclass = {'clean': CleanCommand}
+
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
-from numpy.distutils.command.build_ext import build_ext  # noqa
+try:
+    from numpy.distutils.command.build_ext import build_ext  # noqa
 
+    class build_ext_subclass(build_ext):
+        def build_extensions(self):
+            from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
-class build_ext_subclass(build_ext):
-    def build_extensions(self):
-        from sklearn._build_utils.openmp_helpers import get_openmp_flag
+            if not os.getenv('SKLEARN_NO_OPENMP'):
+                openmp_flag = get_openmp_flag(self.compiler)
 
-        if not os.getenv('SKLEARN_NO_OPENMP'):
-            openmp_flag = get_openmp_flag(self.compiler)
+                for e in self.extensions:
+                    e.extra_compile_args += openmp_flag
+                    e.extra_link_args += openmp_flag
 
-            for e in self.extensions:
-                e.extra_compile_args += openmp_flag
-                e.extra_link_args += openmp_flag
+            build_ext.build_extensions(self)
 
-        build_ext.build_extensions(self)
+    cmdclass['build_ext'] = build_ext_subclass
 
-
-cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
+except ImportError:
+    # Numpy should not be a dependency just to be able to introspect
+    # that python 3.5 is required.
+    pass
 
 
 # Optional wheelhouse-uploader features
@@ -225,6 +228,7 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
+                    python_requires=">=3.5",
                     install_requires=[
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
@@ -250,6 +254,12 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
+        if sys.version_info < (3, 5):
+            raise RuntimeError(
+                "Scikit-learn requires Python 3.5 or later. The current"
+                " Python version is %s installed in %s."
+                % (platform.python_version(), sys.executable))
+
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
             NUMPY_MIN_VERSION)

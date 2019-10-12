@@ -17,6 +17,11 @@ def get_config():
     -------
     config : dict
         Keys are parameter names that can be passed to :func:`set_config`.
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    set_config: Set global scikit-learn configuration
     """
     return _global_config.copy()
 
@@ -53,6 +58,11 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -80,6 +90,13 @@ def config_context(**new_config):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
+    print_changed_only : bool, optional
+        If True, only the parameters that were set to non-default
+        values will be printed when printing an estimator. For example,
+        ``print(SVC())`` while True will only print 'SVC()' while the default
+        behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
+        all the non-changed parameters.
+
     Notes
     -----
     All settings, not just those presently modified, will be returned to
@@ -95,10 +112,14 @@ def config_context(**new_config):
     >>> with sklearn.config_context(assume_finite=True):
     ...     with sklearn.config_context(assume_finite=False):
     ...         assert_all_finite([float('nan')])
-    ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...
+
+    See Also
+    --------
+    set_config: Set global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     old_config = get_config().copy()
     set_config(**new_config)

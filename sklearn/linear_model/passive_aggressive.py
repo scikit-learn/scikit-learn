@@ -24,7 +24,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -124,6 +124,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
@@ -132,12 +139,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0,
     ... tol=1e-3)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
-                  early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=1000, n_iter_no_change=5, n_jobs=None,
-                  random_state=0, shuffle=True, tol=0.001,
-                  validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.fit(X, y)
+    PassiveAggressiveClassifier(random_state=0)
     >>> print(clf.coef_)
     [[0.26642044 0.45070924 0.67251877 0.64185414]]
     >>> print(clf.intercept_)
@@ -188,7 +191,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of the training data
 
         y : numpy array of shape [n_samples]
@@ -228,7 +231,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]
@@ -269,7 +272,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -353,6 +356,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Examples
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
@@ -361,12 +368,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0,
     ... tol=1e-3)
-    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
-                  epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=100, n_iter_no_change=5, random_state=0,
-                  shuffle=True, tol=0.001, validation_fraction=0.1,
-                  verbose=0, warm_start=False)
+    >>> regr.fit(X, y)
+    PassiveAggressiveRegressor(max_iter=100, random_state=0)
     >>> print(regr.coef_)
     [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
@@ -416,7 +419,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of training data
 
         y : numpy array of shape [n_samples]
@@ -439,7 +442,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]

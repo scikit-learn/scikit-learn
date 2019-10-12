@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 import numbers
-import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -25,7 +24,7 @@ def _iteritems(d):
     return d.iteritems() if hasattr(d, "iteritems") else d.items()
 
 
-class FeatureHasher(BaseEstimator, TransformerMixin):
+class FeatureHasher(TransformerMixin, BaseEstimator):
     """Implements feature hashing, aka the hashing trick.
 
     This class turns sequences of symbolic feature names (strings) into
@@ -97,7 +96,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     def _validate_params(n_features, input_type):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
-        if not isinstance(n_features, (numbers.Integral, np.integer)):
+        if not isinstance(n_features, numbers.Integral):
             raise TypeError("n_features must be integral, got %r (%s)."
                             % (n_features, type(n_features)))
         elif n_features < 1 or n_features >= 2 ** 31:
@@ -140,7 +139,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Feature matrix, for use with estimators or further transformers.
 
         """
@@ -151,7 +150,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
             _hashing_transform(raw_X, self.n_features, self.dtype,
-                               self.alternate_sign)
+                               self.alternate_sign, seed=0)
         n_samples = indptr.shape[0] - 1
 
         if n_samples == 0:

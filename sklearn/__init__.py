@@ -45,7 +45,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.21.dev0'
+__version__ = '0.22.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -58,6 +58,9 @@ __version__ = '0.21.dev0'
 # the outer OpenMP parallel section.
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
+# Workaround issue discovered in intel-openmp 2019.5:
+# https://github.com/ContinuumIO/anaconda-issues/issues/11294
+os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -80,14 +83,14 @@ else:
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'externals', 'feature_extraction', 'feature_selection',
-               'gaussian_process', 'inspection', 'isotonic',
-               'kernel_approximation', 'kernel_ridge', 'linear_model',
-               'manifold', 'metrics', 'mixture', 'model_selection',
-               'multiclass', 'multioutput', 'naive_bayes', 'neighbors',
-               'neural_network', 'pipeline', 'preprocessing',
-               'random_projection', 'semi_supervised', 'svm', 'tree',
-               'discriminant_analysis', 'impute', 'compose',
+               'experimental', 'externals', 'feature_extraction',
+               'feature_selection', 'gaussian_process', 'inspection',
+               'isotonic', 'kernel_approximation', 'kernel_ridge',
+               'linear_model', 'manifold', 'metrics', 'mixture',
+               'model_selection', 'multiclass', 'multioutput',
+               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
+               'preprocessing', 'random_projection', 'semi_supervised',
+               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']

@@ -13,7 +13,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
 from ..metrics.pairwise import pairwise_kernels
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from .k_means_ import k_means
 
@@ -173,7 +173,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
+    ----------
     affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
@@ -240,7 +240,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
-    ------
+    -----
     The graph should contain only one connect component, elsewhere
     the results make little sense.
 
@@ -272,7 +272,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     return labels
 
 
-class SpectralClustering(BaseEstimator, ClusterMixin):
+class SpectralClustering(ClusterMixin, BaseEstimator):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -298,7 +298,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     Read more in the :ref:`User Guide <spectral_clustering>`.
 
     Parameters
-    -----------
+    ----------
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
@@ -306,6 +306,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
+
+    n_components : integer, optional, default=n_clusters
+        Number of eigen vectors to use for the spectral embedding
 
     random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
@@ -323,10 +326,18 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
         Ignored for ``affinity='nearest_neighbors'``.
 
-    affinity : string, array-like or callable, default 'rbf'
-        If a string, this may be one of 'nearest_neighbors', 'precomputed',
-        'rbf' or one of the kernels supported by
-        `sklearn.metrics.pairwise_kernels`.
+    affinity : string or callable, default 'rbf'
+        How to construct the affinity matrix.
+         - 'nearest_neighbors' : construct the affinity matrix by computing a
+           graph of nearest neighbors.
+         - 'rbf' : construct the affinity matrix using a radial basis function
+           (RBF) kernel.
+         - 'precomputed' : interpret ``X`` as a precomputed affinity matrix.
+         - 'precomputed_nearest_neighbors' : interpret ``X`` as a sparse graph
+           of precomputed nearest neighbors, and constructs the affinity matrix
+           by selecting the ``n_neighbors`` nearest neighbors.
+         - one of the kernels supported by
+           :func:`~sklearn.metrics.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
@@ -370,7 +381,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    labels_ :
+    labels_ : array, shape (n_samples,)
         Labels of each point
 
     Examples
@@ -384,11 +395,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     ...         random_state=0).fit(X)
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    SpectralClustering(affinity='rbf', assign_labels='discretize', coef0=1,
-              degree=3, eigen_solver=None, eigen_tol=0.0, gamma=1.0,
-              kernel_params=None, n_clusters=2, n_init=10, n_jobs=None,
-              n_neighbors=10, random_state=0)
+    >>> clustering
+    SpectralClustering(assign_labels='discretize', n_clusters=2,
+        random_state=0)
 
     Notes
     -----
@@ -425,12 +434,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
-    def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
-                 n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
-                 eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None, n_jobs=None):
+    def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
+                 random_state=None, n_init=10, gamma=1., affinity='rbf',
+                 n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
+                 degree=3, coef0=1, kernel_params=None, n_jobs=None):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
+        self.n_components = n_components
         self.random_state = random_state
         self.n_init = n_init
         self.gamma = gamma
@@ -444,21 +454,31 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Creates an affinity matrix for X using the selected affinity,
-        then applies spectral clustering to this affinity matrix.
+        """Perform spectral clustering from features, or affinity matrix.
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
-            OR, if affinity==`precomputed`, a precomputed affinity
-            matrix of shape (n_samples, n_samples)
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse matrix is
+            provided in a format other than ``csr_matrix``, ``csc_matrix``,
+            or ``coo_matrix``, it will be converted into a sparse
+            ``csr_matrix``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self
 
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64, ensure_min_samples=2)
-        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+        allow_squared = self.affinity in ["precomputed",
+                                          "precomputed_nearest_neighbors"]
+        if X.shape[0] == X.shape[1] and not allow_squared:
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
                           " a custom affinity matrix, "
@@ -468,6 +488,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
                                             include_self=True,
                                             n_jobs=self.n_jobs)
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        elif self.affinity == 'precomputed_nearest_neighbors':
+            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                         n_jobs=self.n_jobs,
+                                         metric="precomputed").fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X
@@ -486,6 +512,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
+                                           n_components=self.n_components,
                                            eigen_solver=self.eigen_solver,
                                            random_state=random_state,
                                            n_init=self.n_init,
@@ -493,6 +520,31 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                                            assign_labels=self.assign_labels)
         return self
 
+    def fit_predict(self, X, y=None):
+        """Perform spectral clustering from features, or affinity matrix,
+        and return cluster labels.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features), or \
+            array-like, shape (n_samples, n_samples)
+            Training instances to cluster, or similarities / affinities between
+            instances if ``affinity='precomputed'``. If a sparse matrix is
+            provided in a format other than ``csr_matrix``, ``csc_matrix``,
+            or ``coo_matrix``, it will be converted into a sparse
+            ``csr_matrix``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)
+
     @property
     def _pairwise(self):
-        return self.affinity == "precomputed"
+        return self.affinity in ["precomputed",
+                                 "precomputed_nearest_neighbors"]

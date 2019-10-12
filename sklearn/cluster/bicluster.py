@@ -1,9 +1,7 @@
-"""Spectral biclustering algorithms.
+"""Spectral biclustering algorithms."""
+# Authors : Kemal Eren
+# License: BSD 3 clause
 
-Authors : Kemal Eren
-License: BSD 3 clause
-
-"""
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -84,7 +82,7 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
+class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
 
     @abstractmethod
@@ -265,10 +263,8 @@ class SpectralCoclustering(BaseSpectral):
     array([0, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
     array([0, 0], dtype=int32)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    SpectralCoclustering(init='k-means++', mini_batch=False, n_clusters=2,
-               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
-               svd_method='randomized')
+    >>> clustering
+    SpectralCoclustering(n_clusters=2, random_state=0)
 
     References
     ----------
@@ -345,7 +341,7 @@ class SpectralBiclustering(BaseSpectral):
     svd_method : string, optional, default: 'randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
-        `sklearn.utils.extmath.randomized_svd`, which may be faster
+        :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
         `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
@@ -411,11 +407,8 @@ class SpectralBiclustering(BaseSpectral):
     array([1, 1, 1, 0, 0, 0], dtype=int32)
     >>> clustering.column_labels_
     array([0, 1], dtype=int32)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    SpectralBiclustering(init='k-means++', method='bistochastic',
-               mini_batch=False, n_best=3, n_clusters=2, n_components=6,
-               n_init=10, n_jobs=None, n_svd_vecs=None, random_state=0,
-               svd_method='randomized')
+    >>> clustering
+    SpectralBiclustering(n_clusters=2, random_state=0)
 
     References
     ----------

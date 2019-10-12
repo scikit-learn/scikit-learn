@@ -21,7 +21,7 @@ def _tosequence(X):
         return tosequence(X)
 
 
-class DictVectorizer(BaseEstimator, TransformerMixin):
+class DictVectorizer(TransformerMixin, BaseEstimator):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
@@ -240,7 +240,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Sample matrix.
         dict_type : callable, optional
             Constructor for feature mappings. Must conform to the
@@ -342,10 +342,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         >>> support = SelectKBest(chi2, k=2).fit(X, [0, 1])
         >>> v.get_feature_names()
         ['bar', 'baz', 'foo']
-        >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
-        ...                                   # doctest: +NORMALIZE_WHITESPACE
-        DictVectorizer(dtype=..., separator='=', sort=True,
-                sparse=True)
+        >>> v.restrict(support.get_support())
+        DictVectorizer()
         >>> v.get_feature_names()
         ['bar', 'foo']
         """

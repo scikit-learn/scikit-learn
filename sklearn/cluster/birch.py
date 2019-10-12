@@ -13,7 +13,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError, ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
 
@@ -319,7 +319,7 @@ class _CFSubcluster:
             self.sq_norm_)
 
 
-class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
+class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     """Implements the Birch clustering algorithm.
 
     It is a memory-efficient, online-learning algorithm provided as an
@@ -352,9 +352,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         - `None` : the final clustering step is not performed and the
           subclusters are returned as they are.
 
-        - `sklearn.cluster` Estimator : If a model is provided, the model is
-          fit treating the subclusters as new samples and the initial data is
-          mapped to the label of the closest subcluster.
+        - :mod:`sklearn.cluster` Estimator : If a model is provided, the model
+          is fit treating the subclusters as new samples and the initial data
+          is mapped to the label of the closest subcluster.
 
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
@@ -390,11 +390,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     --------
     >>> from sklearn.cluster import Birch
     >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(branching_factor=50, n_clusters=None, threshold=0.5,
-    ... compute_labels=True)
-    >>> brc.fit(X) # doctest: +NORMALIZE_WHITESPACE
-    Birch(branching_factor=50, compute_labels=True, copy=True, n_clusters=None,
-       threshold=0.5)
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
     >>> brc.predict(X)
     array([0, 0, 0, 1, 1, 1])
 
@@ -536,16 +534,10 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        is_fitted = hasattr(self, 'subcluster_centers_')
+        check_is_fitted(self)
 
-        # Called by partial_fit, before fitting.
-        has_partial_fit = hasattr(self, 'partial_fit_')
-
-        # Should raise an error if one does not fit before predicting.
-        if not (is_fitted or has_partial_fit):
-            raise NotFittedError("Fit training data before predicting")
-
-        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
+        if (hasattr(self, 'subcluster_centers_') and
+                X.shape[1] != self.subcluster_centers_.shape[1]):
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
@@ -590,7 +582,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
             Transformed data.
         """
-        check_is_fitted(self, 'subcluster_centers_')
+        check_is_fitted(self)
         return euclidean_distances(X, self.subcluster_centers_)
 
     def _global_clustering(self, X=None):

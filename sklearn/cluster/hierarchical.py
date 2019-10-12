@@ -148,7 +148,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
-        feature matrix  representing n_samples samples to be clustered
+        feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix (optional).
         connectivity matrix. Defines for each sample the neighboring samples
@@ -219,7 +219,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     n_samples, n_features = X.shape
 
     if connectivity is None:
-        from scipy.cluster import hierarchy     # imports PIL
+        from scipy.cluster import hierarchy  # imports PIL
 
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
@@ -432,8 +432,12 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
+    if affinity == 'cosine' and np.any(~np.any(X, axis=1)):
+        raise ValueError(
+            'Cosine affinity cannot be used when X contains zero vectors')
+
     if connectivity is None:
-        from scipy.cluster import hierarchy     # imports PIL
+        from scipy.cluster import hierarchy  # imports PIL
 
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
@@ -597,7 +601,7 @@ _TREE_BUILDERS = dict(
 
 
 ###############################################################################
-# Functions for cutting  hierarchical clustering tree
+# Functions for cutting hierarchical clustering tree
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
@@ -648,7 +652,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 ###############################################################################
 
-class AgglomerativeClustering(BaseEstimator, ClusterMixin):
+class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     """
     Agglomerative Clustering
 
@@ -659,8 +663,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    n_clusters : int, default=2
-        The number of clusters to find.
+    n_clusters : int or None, optional (default=2)
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -688,7 +693,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         not small compared to the number of samples. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional \
             (default="ward")
@@ -704,15 +710,20 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    pooling_func : callable, default='deprecated'
-        Ignored.
+    distance_threshold : float, optional (default=None)
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
 
-        .. deprecated:: 0.20
-            ``pooling_func`` has been deprecated in 0.20 and will be removed
-            in 0.22.
+        .. versionadded:: 0.21
 
     Attributes
     ----------
+    n_clusters_ : int
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``.
+
     labels_ : array [n_samples]
         cluster labels for each point
 
@@ -737,10 +748,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
     ...               [4, 2], [4, 4], [4, 0]])
     >>> clustering = AgglomerativeClustering().fit(X)
-    >>> clustering # doctest: +NORMALIZE_WHITESPACE
-    AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                connectivity=None, linkage='ward', memory=None, n_clusters=2,
-                pooling_func='deprecated')
+    >>> clustering
+    AgglomerativeClustering()
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -749,14 +758,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func='deprecated'):
+                 linkage='ward', distance_threshold=None):
         self.n_clusters = n_clusters
+        self.distance_threshold = distance_threshold
         self.memory = memory
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.pooling_func = pooling_func
 
     @deprecated("The ``n_components_`` attribute was deprecated "
                 "in favor of ``n_connected_components_`` in 0.21 "
@@ -766,31 +775,37 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         return self.n_connected_components_
 
     def fit(self, X, y=None):
-        """Fit the hierarchical clustering on the data
+        """Fit the hierarchical clustering from features, or distance matrix.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training data. Shape [n_samples, n_features], or [n_samples,
-            n_samples] if affinity=='precomputed'.
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
         Returns
         -------
         self
         """
-        if (self.pooling_func != 'deprecated' and
-                not isinstance(self, AgglomerationTransform)):
-            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
-                          ' It has been deprecated in version 0.20 and will be'
-                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
-        if self.n_clusters <= 0:
+        if self.n_clusters is not None and self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
                              " %s was provided." % str(self.n_clusters))
+
+        if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
+            raise ValueError("Exactly one of n_clusters and "
+                             "distance_threshold has to be set, and the other "
+                             "needs to be None.")
+
+        if (self.distance_threshold is not None
+                and not self.compute_full_tree):
+            raise ValueError("compute_full_tree must be True if "
+                             "distance_threshold is set.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
@@ -815,10 +830,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.connectivity is None:
             compute_full_tree = True
         if compute_full_tree == 'auto':
-            # Early stopping is likely to give a speed up only for
-            # a large number of clusters. The actual threshold
-            # implemented here is heuristic
-            compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
+            if self.distance_threshold is not None:
+                compute_full_tree = True
+            else:
+                # Early stopping is likely to give a speed up only for
+                # a large number of clusters. The actual threshold
+                # implemented here is heuristic
+                compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
         n_clusters = self.n_clusters
         if compute_full_tree:
             n_clusters = None
@@ -828,14 +846,29 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
-        (self.children_, self.n_connected_components_, self.n_leaves_,
-            parents) = memory.cache(tree_builder)(X, connectivity,
-                                                  n_clusters=n_clusters,
-                                                  **kwargs)
+
+        distance_threshold = self.distance_threshold
+
+        return_distance = distance_threshold is not None
+        out = memory.cache(tree_builder)(X, connectivity,
+                                         n_clusters=n_clusters,
+                                         return_distance=return_distance,
+                                         **kwargs)
+        (self.children_,
+         self.n_connected_components_,
+         self.n_leaves_,
+         parents) = out[:4]
+
+        if return_distance:
+            self.distances_ = out[-1]
+            self.n_clusters_ = np.count_nonzero(
+                self.distances_ >= distance_threshold) + 1
+        else:
+            self.n_clusters_ = self.n_clusters
 
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            self.labels_ = _hc_cut(self.n_clusters_, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
@@ -844,6 +877,26 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
         return self
+
+    def fit_predict(self, X, y=None):
+        """Fit the hierarchical clustering from features or distance matrix,
+        and return cluster labels.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
+            Training instances to cluster, or distances between instances if
+            ``affinity='precomputed'``.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        labels : ndarray, shape (n_samples,)
+            Cluster labels.
+        """
+        return super().fit_predict(X, y)
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
@@ -856,8 +909,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Parameters
     ----------
-    n_clusters : int, default 2
-        The number of clusters to find.
+    n_clusters : int or None, optional (default=2)
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -883,7 +937,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         not small compared to the number of features. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
@@ -904,8 +959,20 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
+    distance_threshold : float, optional (default=None)
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
+    n_clusters_ : int
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``.
+
     labels_ : array-like, (n_features,)
         cluster labels for each feature.
 
@@ -923,6 +990,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
 
+    distances_ : array-like, shape (n_nodes-1,)
+        Distances between nodes in the corresponding place in `children_`.
+        Only computed if distance_threshold is not None.
+
     Examples
     --------
     >>> import numpy as np
@@ -931,10 +1002,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-               connectivity=None, linkage='ward', memory=None, n_clusters=32,
-               pooling_func=...)
+    >>> agglo.fit(X)
+    FeatureAgglomeration(n_clusters=32)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
@@ -943,11 +1012,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func=np.mean,
+                 distance_threshold=None):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity)
+            affinity=affinity, distance_threshold=distance_threshold)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
@@ -955,7 +1025,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data
 
         y : Ignored

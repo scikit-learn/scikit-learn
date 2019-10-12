@@ -26,7 +26,7 @@ class Perceptron(BaseSGDClassifier):
     max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
-        `partial_fit`.
+        :meth:`partial_fit` method.
 
         .. versionadded:: 0.19
 
@@ -36,10 +36,10 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    shuffle : bool, optional, default True
+    shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    verbose : integer, optional
+    verbose : integer, default=0
         The verbosity level
 
     eta0 : double
@@ -90,7 +90,7 @@ class Perceptron(BaseSGDClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-    warm_start : bool, optional
+    warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution. See
         :term:`the Glossary <warm_start>`.
@@ -108,6 +108,13 @@ class Perceptron(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
+
+    t_ : int
+        Number of weight updates performed during training.
+        Same as ``(n_iter_ * n_samples)``.
+
     Notes
     -----
 
@@ -122,12 +129,9 @@ class Perceptron(BaseSGDClassifier):
     >>> from sklearn.linear_model import Perceptron
     >>> X, y = load_digits(return_X_y=True)
     >>> clf = Perceptron(tol=1e-3, random_state=0)
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
-          fit_intercept=True, max_iter=1000, n_iter_no_change=5, n_jobs=None,
-          penalty=None, random_state=0, shuffle=True, tol=0.001,
-          validation_fraction=0.1, verbose=0, warm_start=False)
-    >>> clf.score(X, y) # doctest: +ELLIPSIS
+    >>> clf.fit(X, y)
+    Perceptron()
+    >>> clf.score(X, y)
     0.939...
 
     See also

@@ -4,7 +4,7 @@ from ..base import _UnstableArchMixin
 __all__ = ['CCA']
 
 
-class CCA(_PLS, _UnstableArchMixin):
+class CCA(_UnstableArchMixin, _PLS):
     """CCA Canonical Correlation Analysis.
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".
@@ -79,8 +79,7 @@ class CCA(_PLS, _UnstableArchMixin):
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
     >>> cca.fit(X, Y)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
+    CCA(n_components=1)
     >>> X_c, Y_c = cca.transform(X, Y)
 
     References

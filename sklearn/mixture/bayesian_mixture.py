@@ -140,7 +140,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
-        Controls the extend to where means can be placed. Smaller
+        Controls the extend to where means can be placed. Larger
         values concentrate the means of each clusters around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, it's set to 1.
@@ -260,7 +260,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_prior : float
         The precision prior on the mean distribution (Gaussian).
         Controls the extend to where means can be placed.
-        Smaller values concentrate the means of each clusters around
+        Larger values concentrate the means of each clusters around
         `mean_prior`.
 
     mean_precision_ : array-like, shape (n_components,)
@@ -645,12 +645,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
-
-    def _check_is_fitted(self):
-        check_is_fitted(self, ['weight_concentration_', 'mean_precision_',
-                               'means_', 'degrees_of_freedom_',
-                               'covariances_', 'precisions_',
-                               'precisions_cholesky_'])
 
     def _m_step(self, X, log_resp):
         """M step.
