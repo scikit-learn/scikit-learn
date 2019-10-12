@@ -326,12 +326,12 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     --------
     >>> import numpy as np
     >>> from sklearn.datasets import make_classification
-    >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
 
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = MultiOutputClassifier(RandomForestClassifier(random_state=1),
-                                    n_jobs=2).fit(X, np.array([y, y]).T)
+    >>> y_multi = np.array([y, y]).T
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y_multi)
     >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
     array([[1, 1]])
     """
