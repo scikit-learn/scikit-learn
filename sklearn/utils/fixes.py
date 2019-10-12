@@ -164,6 +164,7 @@ def parallel_helper(obj, methodname, *args, **kwargs):
     return _parallel_helper(obj, methodname, *args, **kwargs)
 
 
+# TODO: remove in 0.24. It isn't used anywhere
 def _parallel_helper(obj, methodname, *args, **kwargs):
     """Workaround for Python 2 limitations of pickling instance methods
 
