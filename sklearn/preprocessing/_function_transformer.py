@@ -76,8 +76,8 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)  # doctest: +ELLIPSIS
-    array([[0.        , 0.6931...],
-           [1.0986... , 1.3862...]])
+    array([[0.       , 0.6931...],
+           [1.0986..., 1.3862...]])
     """
     def __init__(self, func=None, inverse_func=None, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
