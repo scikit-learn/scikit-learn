@@ -325,23 +325,14 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.datasets import make_classification
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.multioutput import MultiOutputClassifier
 
-    >>> iris = load_iris()
-    >>> X_train = iris.data
-    >>> print(X_train.shape)
-    (150, 4)
-
-    >>> y_train = np.array([iris.target, iris.target]).T
-    >>> print(y_train.shape)
-    (150, 2)
-
-    >>> clf = MultiOutputClassifier(RandomForestClassifier(), n_jobs=2)
-    >>> clf.fit(X=X_train, y=y_train)
-    >>> clf.predict_proba(np.array([5, 2, 4, 1]).reshape(1, -1))
-    [array([[0., 1., 0.]]), array([[0., 1., 0.]])]
+    >>> X, y = make_classification(n_features=4)
+    >>> clf = MultiOutputClassifier(RandomForestClassifier()).fit(X, np.array([y, y]).T)
+    >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
+    array([[1, 1]])
     """
 
     def __init__(self, estimator, n_jobs=None):
