@@ -546,14 +546,14 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> from sklearn.svm import SVC
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    >>> X, y = make_classification(n_samples=100, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
+    >>> clf = BaggingClassifier(n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
     >>> clf = BaggingClassifier(base_estimator=SVC(),
-    ...                         n_estimators=100, random_state=0).fit(X, y)
+    ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
 
