@@ -149,14 +149,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     >>> import numpy as np
     >>> from sklearn import neighbors
     >>> from sklearn.datasets import load_iris
-    >>> # Add an artificial outlier to iris data
+    >>> # Add an artificial outlier to iris data.
     >>> iris = load_iris()
     >>> X = iris.data
     >>> X = np.vstack((X, np.array([10, 10, 10, 10])))
     >>> clf = neighbors.LocalOutlierFactor(n_neighbors=5)
     >>> score = clf.fit(X).negative_outlier_factor_
-    >>> score[-4:]
-    array([ -1.00049121,  -1.2295268 ,  -0.93832609, -14.36182091])
+    >>> score[-4:]  # doctest: +ELLIPSIS
+    array([ -1.0004...,  -1.2295... ,  -0.9383..., -14.3618...])
 
     References
     ----------
