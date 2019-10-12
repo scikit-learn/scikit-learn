@@ -2086,6 +2086,21 @@ class RandomTreesEmbedding(BaseForest):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomTreesEmbedding
+    >>> X = [[0,0], [1,0], [0,1], [-1,0], [0,-1]]
+    >>> random_trees = RandomTreesEmbedding(n_estimators=5,
+    ...                                     random_state=1, max_depth=1)
+    >>> random_trees.fit(X)
+    >>> X_sparse_embedding = random_trees.transform(X)
+    >>> print(X_sparse_embedding.todense())
+    [[0. 1. 1. 0. 1. 0. 0. 1. 1. 0.]
+     [0. 1. 0. 1. 1. 0. 0. 1. 0. 1.]
+     [0. 1. 1. 0. 0. 1. 0. 1. 1. 0.]
+     [0. 1. 1. 0. 1. 0. 1. 0. 1. 0.]
+     [1. 0. 1. 0. 1. 0. 0. 1. 1. 0.]]
+
     References
     ----------
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
