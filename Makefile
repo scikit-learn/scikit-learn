@@ -2,9 +2,9 @@
 
 # caution: testing won't work on windows, see README
 
-PYTHON ?= python3
-CYTHON ?= cython3
-PYTEST ?= pytest-3
+PYTHON ?= python
+CYTHON ?= cython
+PYTEST ?= pytest
 CTAGS ?= ctags
 
 # skip doctests on 32bit python
