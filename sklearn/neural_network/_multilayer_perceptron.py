@@ -881,8 +881,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     >>> from sklearn.neural_network import MLPClassifier
     >>> from sklearn.datasets import make_classification
 
-    >>> X, y = make_classification(n_samples=1000, n_features=5, n_informative=2,
-    ... n_redundant=3, random_state=1, shuffle=True)
+    >>> X, y = make_classification(n_samples=1000, n_features=5,
+    ... n_informative=2, n_redundant=3, random_state=1, shuffle=True)
 
     >>> clf = MLPClassifier(random_state=1).fit(X, y)
     >>> # Predict probabilities
