@@ -135,24 +135,22 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     --------
     >>> from sklearn.feature_selection import SelectFromModel
     >>> from sklearn.linear_model import LogisticRegression
-    >>> X = [[ 0.86932251, -1.3881055 ,  0.3130677 ],
-    ...      [-2.78932917, -0.0173031 , -0.85409574],
-    ...      [-1.33571281, -0.48083568, -2.55298982],
-    ...      [ 1.92112024,  1.48353395,  0.6536186 ]]
-    ...
+    >>> X = [[ 0.87, -1.34,  0.31 ],
+    ...      [-2.79, -0.02, -0.85 ],
+    ...      [-1.34, -0.48, -2.55 ],
+    ...      [ 1.92,  1.48,  0.65 ]]
     >>> y = [0, 1, 0, 1]
     >>> selector = SelectFromModel(estimator=LogisticRegression(),
     ...                            threshold='mean',
     ...                            prefit=False)
-    ...
     >>> selector.fit(X=X, y=y)
     >>> selector.get_support()
     array([False,  True, False])
     >>> selector.transform(X=X)
-    array([[-1.3881055 ],
-           [-0.0173031 ],
-           [-0.48083568],
-           [ 1.48353395]])
+    array([[-1.34],
+           [-0.02],
+           [-0.48],
+           [ 1.48]])
     """
     def __init__(self, estimator, threshold=None, prefit=False,
                  norm_order=1, max_features=None):
