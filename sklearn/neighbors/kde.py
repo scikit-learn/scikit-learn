@@ -79,8 +79,9 @@ class KernelDensity(BaseEstimator):
     >>> data = [[0.0], [0.1], [4.0]]
     >>> samples = [[0.0], [1.0], [2.0], [4.0]]
     >>> kde.fit(data)
+    KernelDensity(...)
     >>> np.exp(kde.score_samples(samples))*2*bandwidth*len(data)
-    array([0.33333333, 0.16666667, 0.        , 0.16666667])
+    array([2., 1., 0., 1.])
     """
     def __init__(self, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
