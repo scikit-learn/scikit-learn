@@ -1439,11 +1439,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.tree import ExtraTreeRegressor
-    >>> boston = load_boston()
+    >>> X, y = load_boston(return_X_y=True)
     >>> regressor = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
-    >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
-    array([ 0.7009...,  0.1119..., -0.2973...,  0.7197...,  0.5509...,
-            0.2426...,  0.2440...,  0.4475..., -2.6897...,  0.3797...])
+    >>> cross_val_score(regressor, X, y, cv=5)
+    array([-0.3316...,  0.5417...,  0.4175...,  0.2529..., -2.6084...])
+
     """
     def __init__(self,
                  criterion="gini",
