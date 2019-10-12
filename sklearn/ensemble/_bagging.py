@@ -935,6 +935,22 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         `oob_prediction_` might contain NaN. This attribute exists only
         when ``oob_score`` is True.
 
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=100, n_features=4,
+    ...                        n_informative=2, n_targets=1,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = BaggingRegressor(n_estimators=10, random_state=0).fit(X, y)
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([2.36503199])
+    >>> regr = BaggingRegressor(base_estimator=SVR(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([-2.87202411])
+
     References
     ----------
 
