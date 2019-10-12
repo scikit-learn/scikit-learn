@@ -950,6 +950,19 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.tree import DecisionTreeRegressor
+
+    >>> X, y = make_regression(n_samples=20, n_features=10, random_state=42)
+
+    >>> clf = BaggingRegressor(DecisionTreeRegressor(), n_estimators=10, bootstrap=True, random_state=42).fit(X, y)  # doctest: +ELLIPSIS
+
+    >>> clf.predict([X[0]])
+    array([-158.28094724])
     """
 
     def __init__(self,
