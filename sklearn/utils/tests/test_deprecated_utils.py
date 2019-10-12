@@ -11,6 +11,7 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.optimize import newton_cg
 from sklearn.utils.random import random_choice_csc
 from sklearn.utils import safe_indexing
+from sklearn.utils.fixes import parallel_helper
 
 
 # This file tests the utils that are deprecated
@@ -85,3 +86,9 @@ def test_random_choice_csc():
 def test_safe_indexing():
     with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
         safe_indexing([1, 2], 0)
+
+
+# TODO: remove in 0.24
+def test_parallel_helper():
+    with pytest.warns(DeprecationWarning, match="removed in version 0.24"):
+        parallel_helper(list(), 'append', 2)

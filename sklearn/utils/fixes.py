@@ -18,6 +18,8 @@ import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
+from . import deprecated
+
 
 def _parse_version(version_string):
     version = []
@@ -155,7 +157,14 @@ else:
             return arr_or_matrix.argmax(axis=axis)
 
 
+# TODO: remove in 0.24
+@deprecated("parallel_helper is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def parallel_helper(obj, methodname, *args, **kwargs):
+    return _parallel_helper(obj, methodname, *args, **kwargs)
+
+
+def _parallel_helper(obj, methodname, *args, **kwargs):
     """Workaround for Python 2 limitations of pickling instance methods
 
     Parameters
