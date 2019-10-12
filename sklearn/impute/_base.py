@@ -416,7 +416,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
             missing_mask = _get_mask(X_, self.missing_values)
             try:
                 mask = missing_mask[:, valid_statistics_indexes]
-            except:
+            except UnboundLocalError:
                 mask = missing_mask
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
