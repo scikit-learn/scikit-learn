@@ -259,9 +259,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                                    missing_values=self.missing_values,
-                                    error_on_new=False,
-                                    precomputed=True)
+                missing_values=self.missing_values,
+                error_on_new=False, precomputed=True)
             self.indicator_.fit(missing_mask)
         else:
             self.indicator_ = None
