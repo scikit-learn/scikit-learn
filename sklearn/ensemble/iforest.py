@@ -9,12 +9,7 @@ from scipy.sparse import issparse
 from warnings import warn
 
 from ..tree import ExtraTreeRegressor
-from ..utils import (
-    check_random_state,
-    check_array,
-    gen_batches,
-    get_chunk_n_rows,
-)
+from ..utils import check_random_state, check_array, gen_batches, get_chunk_n_rows
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
@@ -144,6 +139,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
+    Example
+    -------
+    import numpy as np
+    from sklearn.ensemble import IsolationForest
+
+    rng = np.random.RandomState(42)
+    n_samples, n_outliers = 10, 1
+    norms = rng.uniform(low=-6, high=-5, size=(n_samples-n_outliers, 2))
+    outlier = rng.uniform(low=8, high=10, size=(n_outliers, 2))
+    X = np.concatenate([norms, outlier], axis=0)
+    clf = IsolationForest(behaviour='new', max_samples=n_samples,
+                        random_state=rng, contamination=n_outliers/n_samples)
+    clf.fit(X)
+    print(clf.predict(norms))
+    print(clf.predict(outlier))
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
@@ -161,22 +172,23 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     """
 
-    def __init__(self,
-                 n_estimators=100,
-                 max_samples="auto",
-                 contamination="auto",
-                 max_features=1.,
-                 bootstrap=False,
-                 n_jobs=None,
-                 behaviour='deprecated',
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False):
+    def __init__(
+        self,
+        n_estimators=100,
+        max_samples="auto",
+        contamination="auto",
+        max_features=1.0,
+        bootstrap=False,
+        n_jobs=None,
+        behaviour="deprecated",
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+    ):
         super().__init__(
             base_estimator=ExtraTreeRegressor(
-                max_features=1,
-                splitter='random',
-                random_state=random_state),
+                max_features=1, splitter="random", random_state=random_state
+            ),
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -186,7 +198,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
             warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose,
+        )
 
         self.behaviour = behaviour
         self.contamination = contamination
@@ -199,7 +212,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # a thread-based backend rather than a process-based backend so as
         # to avoid suffering from communication overhead and extra memory
         # copies.
-        return _joblib_parallel_args(prefer='threads')
+        return _joblib_parallel_args(prefer="threads")
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit estimator.
@@ -221,12 +234,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         -------
         self : object
         """
-        if self.behaviour != 'deprecated':
-            if self.behaviour == 'new':
+        if self.behaviour != "deprecated":
+            if self.behaviour == "new":
                 warn(
                     "'behaviour' is deprecated in 0.22 and will be removed "
                     "in 0.24. You should not pass or set this parameter.",
-                    DeprecationWarning
+                    DeprecationWarning,
                 )
             else:
                 raise NotImplementedError(
@@ -234,7 +247,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                     "anymore. Remove the 'behaviour' parameter."
                 )
 
-        X = check_array(X, accept_sparse=['csc'])
+        X = check_array(X, accept_sparse=["csc"])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -247,33 +260,38 @@ class IsolationForest(OutlierMixin, BaseBagging):
         n_samples = X.shape[0]
 
         if isinstance(self.max_samples, str):
-            if self.max_samples == 'auto':
+            if self.max_samples == "auto":
                 max_samples = min(256, n_samples)
             else:
-                raise ValueError('max_samples (%s) is not supported.'
-                                 'Valid choices are: "auto", int or'
-                                 'float' % self.max_samples)
+                raise ValueError(
+                    "max_samples (%s) is not supported."
+                    'Valid choices are: "auto", int or'
+                    "float" % self.max_samples
+                )
 
         elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
-                warn("max_samples (%s) is greater than the "
-                     "total number of samples (%s). max_samples "
-                     "will be set to n_samples for estimation."
-                     % (self.max_samples, n_samples))
+                warn(
+                    "max_samples (%s) is greater than the "
+                    "total number of samples (%s). max_samples "
+                    "will be set to n_samples for estimation."
+                    % (self.max_samples, n_samples)
+                )
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
         else:  # float
-            if not (0. < self.max_samples <= 1.):
-                raise ValueError("max_samples must be in (0, 1], got %r"
-                                 % self.max_samples)
+            if not (0.0 < self.max_samples <= 1.0):
+                raise ValueError(
+                    "max_samples must be in (0, 1], got %r" % self.max_samples
+                )
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super()._fit(X, y, max_samples,
-                     max_depth=max_depth,
-                     sample_weight=sample_weight)
+        super()._fit(
+            X, y, max_samples, max_depth=max_depth, sample_weight=sample_weight
+        )
 
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
@@ -282,8 +300,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             return self
 
         # else, define offset_ wrt contamination parameter
-        self.offset_ = np.percentile(self.score_samples(X),
-                                     100. * self.contamination)
+        self.offset_ = np.percentile(self.score_samples(X), 100.0 * self.contamination)
 
         return self
 
@@ -304,7 +321,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             be considered as an inlier according to the fitted model.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
         is_inlier = np.ones(X.shape[0], dtype=int)
         is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
@@ -368,12 +385,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
         if self.n_features_ != X.shape[1]:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {0} and "
-                             "input n_features is {1}."
-                             "".format(self.n_features_, X.shape[1]))
+            raise ValueError(
+                "Number of features of the model must "
+                "match the input. Model n_features is {0} and "
+                "input n_features is {1}."
+                "".format(self.n_features_, X.shape[1])
+            )
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
@@ -399,8 +418,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
         #    the data needed to compute the scores -- the returned scores
         #    themselves are 1D.
 
-        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self._max_features,
-                                        max_n_rows=n_samples)
+        chunk_n_rows = get_chunk_n_rows(
+            row_bytes=16 * self._max_features, max_n_rows=n_samples
+        )
         slices = gen_batches(n_samples, chunk_n_rows)
 
         scores = np.zeros(n_samples, order="f")
@@ -440,8 +460,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         scores = 2 ** (
             -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
+            / (len(self.estimators_) * _average_path_length([self.max_samples_]))
         )
         return scores
 
@@ -472,8 +491,8 @@ def _average_path_length(n_samples_leaf):
     mask_2 = n_samples_leaf == 2
     not_mask = ~np.logical_or(mask_1, mask_2)
 
-    average_path_length[mask_1] = 0.
-    average_path_length[mask_2] = 1.
+    average_path_length[mask_1] = 0.0
+    average_path_length[mask_2] = 1.0
     average_path_length[not_mask] = (
         2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
         - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
