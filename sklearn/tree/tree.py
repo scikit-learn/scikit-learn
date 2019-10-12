@@ -1636,7 +1636,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> from sklearn.ensemble import BaggingRegressor
     >>> from sklearn.tree import ExtraTreeRegressor
     >>> X, y = load_boston(return_X_y=True)
-    >>> extra_tree = ExtraTreeRegressor(random_state=0)  # doctest: +ELLIPSIS
+    >>> extra_tree = ExtraTreeRegressor()  # doctest: +ELLIPSIS
     >>> reg = BaggingRegressor(extra_tree, n_estimators=10, bootstrap=True, random_state=0)
     >>> cross_val_score(reg, X, y, cv=5)
     array([0.7265..., 0.7969..., 0.8320..., 0.4814..., 0.0300...])
