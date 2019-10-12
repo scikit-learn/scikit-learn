@@ -285,6 +285,18 @@ class BayesianGaussianMixture(BaseMixture):
             (n_features)             if 'diag',
             float                    if 'spherical'
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.mixture import BayesianGaussianMixture
+    >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
+    >>> BGM = BayesianGaussianMixture(n_components=2, random_state=0).fit(X)
+    >>> BGM.means_
+    array([[5.50000048, 2.        ],
+           [5.49999668, 2.        ]])
+    >>> BGM.predict([[0, 0], [12, 3]])
+    array([0, 0])
+
     See Also
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
