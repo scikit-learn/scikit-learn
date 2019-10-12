@@ -505,6 +505,18 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     .. math::
        D(x, y) = max_i (|x_i - y_i|)
+
+    Example:
+    
+    >>> from sklearn.neighbors.dist_metrics import DistanceMetric
+    ... dist = DistanceMetric.get_metric('euclidean')
+    ... X = [[0, 1, 2],
+    ... 	[3, 4, 5]]
+    >>> Y = [[-1,0,1],
+    ...      [3, 4, 5]]
+    >>> dist.pairwise(X, Y)
+    array([[1.73205081, 5.19615242],
+           [6.92820323, 0.        ]])
     """
     def __init__(self):
         self.p = INF
