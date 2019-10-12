@@ -2043,8 +2043,8 @@ shape (n_estimators, ``loss_.K``)
 
     Examples
     --------
-    >>> from sklearn.ensemble.gradient_boosting (
-    >>> import GradientBoostingClassifier)
+    >>> from sklearn.ensemble.gradient_boosting\
+ import GradientBoostingClassifier
     >>> gradient_boosting_classifier = GradientBoostingClassifier()
     >>> X = [[3.1415,1.4142], [2.7182, 0.57721]]
     >>> y =  [1, 2]
