@@ -1341,6 +1341,35 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
+        
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfTransformer
+    >>> import numpy as np
+    >>> corpus = np.array([['this', 'is', 'the', 'first', 'document'],
+    ...                    ['this', 'document', 'is', 'the', 'second',
+    ...                     'document'],
+    ...                    ['and', 'this', 'is', 'the', 'third', 'one'],
+    ...                    ['is', 'this', 'the', 'first', 'document']])
+    >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
+    ...               'and', 'one']
+    >>> count_matrix = np.array([[(np.array(doc)==word).sum()
+    ...                          for word in vocabulary]
+    ...                          for doc in corpus])
+    >>> count_matrix
+    array([[1, 1, 1, 1, 0, 1, 0, 0],
+           [1, 2, 0, 1, 1, 1, 0, 0],
+           [1, 0, 0, 1, 0, 1, 1, 1],
+           [1, 1, 1, 1, 0, 1, 0, 0]])
+    >>> tfidftransformer = TfidfTransformer(use_idf=True,
+    ...                                     smooth_idf=False).fit(count_matrix)
+    >>> tfidftransformer.idf_
+    array([1.        , 1.28768207, 1.69314718, 1.        , 2.38629436,
+           1.        , 2.38629436, 2.38629436])
+    >>> sparse_tfidf_matrix = tfidftransformer.transform(count_matrix)
+    >>> sparse_tfidf_matrix.shape
+    (4, 8)
+
 
     References
     ----------
