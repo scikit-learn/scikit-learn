@@ -548,6 +548,23 @@ class OAS(EmpiricalCovariance):
     where mu = trace(cov) / n_features
     and shrinkage is given by the OAS formula (see References)
 
+    Examples
+    --------
+    >>> from sklearn.covariance import OAS
+    >>> import numpy as np
+    >>> np.random.seed(42)
+    >>> real_cov = np.array([[.4, .2],
+    ...                      [.2, .8]])
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                        cov=real_cov,
+    ...                                        size=50)
+    >>> cov = OAS(store_precision=True, assume_centered=False).fit(X)
+    >>> cov.covariance_
+    array([[0.40833806, 0.05471143],
+        [0.05471143, 0.49496884]])
+    >>> cov.location_
+    array([-0.08625521, -0.10225575])
+
     References
     ----------
     "Shrinkage Algorithms for MMSE Covariance Estimation"
