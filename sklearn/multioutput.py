@@ -593,12 +593,12 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> chain = ClassifierChain(base_lr, order='random').fit(X_train, Y_train)
     >>> chain.predict(X_test)
     array([[1., 1., 0.],
-    ...    [1., 0., 0.],
-    ...    [0., 1., 0.]])
+           [1., 0., 0.],
+           [0., 1., 0.]])
     >>> chain.predict_proba(X_test)
     array([[0.84792065, 0.94376467, 0.46183232],
-    ...    [0.89855195, 0.37184955, 0.26892408],
-    ...    [0.03297832, 0.99344605, 0.06030195]])
+           [0.89855195, 0.37184955, 0.26892408],
+           [0.03297832, 0.99344605, 0.06030195]])
 
     See also
     --------
