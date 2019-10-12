@@ -1341,7 +1341,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
-        
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1367,7 +1367,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
            1.        , 1.91629073, 1.91629073])
     >>> pipe.transform(corpus).shape
     (4, 8)
-    
+
     References
     ----------
 
