@@ -875,6 +875,28 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+
+    Examples
+    ----------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.datasets import make_classification
+
+    >>> X, y = make_classification(n_samples=1000, n_features=5, n_informative=2,
+    ... n_redundant=3, random_state=1, shuffle=True)
+
+    >>> clf = MLPClassifier(random_state=1).fit(X, y)
+    >>> # Predict probabilities
+    >>> print(clf.predict_proba([[0.1,0.4,0.54,0.1,0.27]]))
+    [[0.64113804 0.35886196]]
+
+    >>> # Predict class
+    >>> print(clf.predict([[0.1,0.69,0.54,0.1,0.27]]))
+    [0]
+
+    >>> # Calculate accuracy
+    >>> print(clf.score(X,y))
+    0.877
+
     Notes
     -----
     MLPClassifier trains iteratively since at each time step
@@ -1262,6 +1284,23 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : string
         Name of the output activation function.
+
+    Examples
+    ----------
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> from sklearn.datasets import make_regression
+
+    >>> X, y = make_regression(n_samples=20, n_features=5, random_state=1)
+
+    >>> clf = MLPRegressor(random_state=1).fit(X, y)
+    >>> # Predict values
+    >>> print(clf.predict([[0.1,0.69,0.54,0.1,0.27]]))
+    [12.61233323]
+
+
+    >>> # Calculate coefficient of determination R^2
+    >>> print(clf.score(X,y))
+    0.1518637968870592
 
     Notes
     -----
