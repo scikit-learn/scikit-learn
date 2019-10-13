@@ -492,13 +492,13 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True,
 
     @_retry_with_clean_cache(url, data_home)
     def _arff_load():
-        with closing(_open_openml_url(url, data_home, md5_checksum)) as response:
+        with closing(_open_openml_url(url, data_home, md5_checksum)) as resp:
             if sparse is True:
                 return_type = _arff.COO
             else:
                 return_type = _arff.DENSE_GEN
 
-            arff_file = _arff.loads(response.read().decode('utf-8'),
+            arff_file = _arff.loads(resp.read().decode('utf-8'),
                                     encode_nominal=encode_nominal,
                                     return_type=return_type)
         return arff_file
@@ -768,7 +768,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         shape = None
 
     # obtain the data
-    md5_checksum = data_description['md5_checksum'] if verify_checksum else None
+    if verify_checksum:
+        md5_checksum = data_description['md5_checksum']
+    else:
+        md5_checksum = None
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home, encode_nominal=not as_frame,
                                md5_checksum=md5_checksum)
