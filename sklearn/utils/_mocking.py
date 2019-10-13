@@ -55,12 +55,28 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     This allows testing whether pipelines / cross-validation or metaestimators
     changed the input.
 
+    Can also be used to check if fit_params are passed correctly, and
+    to force a certain score to be returned.
+
     Parameters
     ----------
-    check_y
-    check_X
-    foo_param
-    expected_fit_params
+    check_y: callable or None (default=None)
+      If not None, call this on y. Raises an AssertionError if the
+      callable returns a falsy value.
+
+    check_X: callable or None (default=None)
+      If not None, call this on X. Raises an AssertionError if the
+      callable returns a falsy value.
+
+    foo_param: int (default=0)
+      If strictly larger than 1, the score method will return 1., else
+      0.
+
+    expected_fit_params: dict or None (default=None)
+      If a dict, checks that passed keys correspond to the fit_params
+      passed to the fit call. Also checks that the values have the
+      correct length. Raises an AssertionError if a check fails.
+
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):
