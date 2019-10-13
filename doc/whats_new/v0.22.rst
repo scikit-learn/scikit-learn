@@ -402,6 +402,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added a new parameter ``zero_division`` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. This allows to set returned value for
+  ill-defined metrics.
+  :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
+
 - |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
