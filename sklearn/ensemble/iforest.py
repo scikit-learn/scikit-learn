@@ -146,21 +146,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.ensemble import IsolationForest
-    >>> rng = np.random.RandomState(42)
-    >>> n_samples, n_outliers = 10, 1
-    >>> norms = rng.uniform(low=-6, high=-5, size=(n_samples-n_outliers, 2))
-    >>> outlier = rng.uniform(low=8, high=10, size=(n_outliers, 2))
-    >>> X = np.concatenate([norms, outlier], axis=0)
-    >>> clf = IsolationForest(contamination=n_outliers/n_samples,
-    ...                       max_samples=n_samples,
-    ...                       random_state=rng
-    ...                       ).fit(X)
-    >>> print(clf.predict(norms))
-    [1 1 1 1 1 1 1 1 1]
-    >>> print(clf.predict(outlier))
-    [-1]
+    >>> X = [[-1.1], [0.2], [0.5], [100]]
+    >>> clf = IsolationForest(random_state=0).fit(X)
+    >>> clf.predict([[0.1], [0], [90]])
+    array([ 1,  1, -1])
 
     Notes
     -----
