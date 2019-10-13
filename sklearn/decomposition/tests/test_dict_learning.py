@@ -476,9 +476,28 @@ def test_sparse_coder_estimator():
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
-                       transform_alpha=0.001).transform(X)
+                       transform_alpha=0.001).fit(X).transform(X)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+
+
+def test_sparse_coder_set_params_works():
+    # checks for a bug in SparseCoder that made set_params not
+    # actually work
+    n_components = 12
+    rng = np.random.RandomState(0)
+    correct_V = rng.randn(n_components, n_features)  # random init
+    correct_V /= np.sum(correct_V ** 2, axis=1)[:, np.newaxis]
+    wrong_V = 1 / correct_V
+
+    # temporarily set wrong V and then set_params the correct one to
+    # check if set_params actually has an effect
+    coder = SparseCoder(dictionary=wrong_V, transform_algorithm='lasso_lars',
+                        transform_alpha=0.001)
+    coder.set_params(dictionary=correct_V)
+    code = coder.fit(X).transform(X)
+    assert not np.all(code == 0)
+    assert np.sqrt(np.sum((np.dot(code, correct_V) - X) ** 2)) < 0.1
 
 
 def test_sparse_coder_parallel_mmap():
