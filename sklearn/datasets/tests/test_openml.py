@@ -1173,3 +1173,13 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset['data'].shape == (101, 16)
     assert 'animal' not in dataset['feature_names']
+
+
+def test(monkeypatch):
+    """Test the openml loader with MD5 checksums.
+
+    Clearly this is only a proof of concept, and must be replaced
+    with the, somewhat convoluted, existing "monkey-mocking-patching"
+    testsuite...
+    """
+    fetch_openml('iris', version=1, verify_checksum=True)
