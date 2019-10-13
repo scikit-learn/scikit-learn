@@ -6,7 +6,6 @@ from sklearn.utils._mocking import CheckingClassifier
 X, y = make_classification(n_samples=20, random_state=42)
 
 
-@pytest.mark.foobar
 def test_check_X_on_predict_proba_success():
     def fail(X):
         return True
@@ -15,7 +14,6 @@ def test_check_X_on_predict_proba_success():
     clf.predict_proba(X)  # does not raise
 
 
-@pytest.mark.foobar
 def test_check_X_on_predict_proba_fail():
     def fail(X):
         return False
