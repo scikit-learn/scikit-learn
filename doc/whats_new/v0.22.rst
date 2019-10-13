@@ -399,6 +399,12 @@ Changelog
   :issue:`13393` by :user:`Andrew Knyazev <lobpcg>`
   :pr:`13707` by :user:`Scott White <whitews>`
 
+- |Enhancement| add ``metric_params`` parameter to
+  :class:`manifold.TSNE` constructor for additional parameters of distance
+  metric to use in optimization. :issue:`12387`
+  by :user:`Dario Cannone <darioka>` and
+  :user:`Federico Pisanu <federicopisanu>`.
+
 :mod:`sklearn.metrics`
 ......................
 
