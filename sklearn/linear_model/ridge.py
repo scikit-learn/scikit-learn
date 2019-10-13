@@ -1091,6 +1091,10 @@ class _RidgeGCV(LinearModel):
 
     looe = y - loov = c / diag(G^-1)
 
+    The best score (negative mean squared error or user-provided scoring) is
+    stored in the `best_score_` attribute, and the selected hyperparameter in
+    `alpha_`.
+
     References
     ----------
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
