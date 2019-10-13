@@ -1631,6 +1631,19 @@ class ExtraTreesClassifier(ForestClassifier):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import ExtraTreesClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = ExtraTreesClassifier(n_estimators=100, random_state=0)
+    >>> clf.fit(X, y)
+    ExtraTreesClassifier(random_state=0)
+    >>> clf.feature_importances_
+    array([0.09408348, 0.27497025, 0.45581085, 0.17513543])
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
+
     References
     ----------
 
