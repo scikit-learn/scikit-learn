@@ -889,35 +889,38 @@ def test_tsne_with_mahalanobis_distance():
     assert_array_equal(ref, now)
 
 
-def test_tsne_metric_params():
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_metric_params(method):
     """Make sure that tha mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
     random_state = check_random_state(0)
     n_features = 10
     n_embedding = 3
-    n_samples = 500
+    n_samples = 100
     X = random_state.randn(n_samples, n_features)
 
     # 1. check case metric='minkowski', p=2
     precomputed_X = squareform(pdist(X, metric='minkowski', p=2), checks=True)
     ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0,
-               metric='precomputed').fit_transform(precomputed_X)
+               metric='precomputed', method=method
+               ).fit_transform(precomputed_X)
 
     now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0, metric='minkowski',
-               metric_params={'p': 2}).fit_transform(X)
+               metric_params={'p': 2}, method=method).fit_transform(X)
     assert_array_equal(ref, now)
 
     # 2. check case metric='euclidean', p=2
     precomputed_X = squareform(pdist(X, metric='euclidean'), checks=True)**2
     ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0,
-               metric='precomputed').fit_transform(precomputed_X)
+               metric='precomputed', method=method
+               ).fit_transform(precomputed_X)
 
     now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
-               n_components=n_embedding, random_state=0, metric='euclidean'
-               ).fit_transform(X)
+               n_components=n_embedding, random_state=0, metric='euclidean',
+               method=method).fit_transform(X)
     assert_array_equal(ref, now)
 
     # 3. check case metric='wminkowsi', p=2, and w=np.ones(n_features)
@@ -926,10 +929,11 @@ def test_tsne_metric_params():
                                checks=True)
     ref = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0,
-               metric='precomputed').fit_transform(precomputed_X)
+               metric='precomputed', method=method
+               ).fit_transform(precomputed_X)
 
     now = TSNE(verbose=1, perplexity=40, n_iter=250, learning_rate=50,
                n_components=n_embedding, random_state=0, metric='wminkowski',
-               metric_params={'p': 2, 'w': np.ones(n_features)}
+               metric_params={'p': 2, 'w': np.ones(n_features)}, method=method
                ).fit_transform(X)
     assert_array_equal(ref, now)
