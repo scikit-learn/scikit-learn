@@ -1289,6 +1289,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     ----------
     >>> from sklearn.neural_network import MLPRegressor
     >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import cross_val_score
 
     >>> X, y = make_regression(n_samples=20, n_features=5, random_state=1)
 
@@ -1299,8 +1300,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
 
     >>> # Calculate coefficient of determination R^2
-    >>> print(clf.score(X,y))
-    0.1518637968870592
+    >>> cross_val_score(clf, X, y, cv=5)
+    array([0.00564205, 0.06643087, 0.05193686, 0.11202796, 0.02789272])
 
     Notes
     -----
