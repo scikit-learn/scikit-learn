@@ -470,13 +470,13 @@ It is defined as:
 Kernel operators
 ----------------
 Kernel operators take one or two base kernels and combine them into a new
-kernel. The :class:`Sum` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{sum}(X, Y) = k1(X, Y) + k2(X, Y)`.
-The  :class:`Product` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{product}(X, Y) = k1(X, Y) * k2(X, Y)`.
+kernel. The :class:`Sum` kernel takes two kernels :math:`k_1` and :math:`k_2`
+and combines them via :math:`k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)`.
+The  :class:`Product` kernel takes two kernels :math:`k_1` and :math:`k_2`
+and combines them via :math:`k_{product}(X, Y) = k_1(X, Y) \cdot k_2(X, Y)`.
 The :class:`Exponentiation` kernel takes one base kernel and a scalar parameter
-:math:`exponent` and combines them via
-:math:`k_{exp}(X, Y) = k(X, Y)^\text{exponent}`.
+:math:`p` and combines them via
+:math:`k_{exp}(X, Y) = k(X, Y)^p`.
 
 Radial-basis function (RBF) kernel
 ----------------------------------
@@ -570,7 +570,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi \|x_i - x_j\| / p}{ l^ 2} \right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi |x_i - x_j| / p}{ l^ 2} \right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:

@@ -142,10 +142,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
     >>> kernel = DotProduct() + WhiteKernel()
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y)
-    0.3680293861017355
-    >>> gpr.predict(X[:2,:], return_std=True)
-    (array([653.08792288, 592.16905327]), array([316.68016218, 316.65121679]))
+    >>> gpr.score(X, y) # doctest: +ELLIPSIS
+    0.3680...
+    >>> gpr.predict(X[:2,:], return_std=True) # doctest: +ELLIPSIS
+    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
 
     """
     def __init__(self, kernel=None, alpha=1e-10,
