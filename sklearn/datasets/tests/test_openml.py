@@ -1175,7 +1175,7 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     assert 'animal' not in dataset['feature_names']
 
 
-def test(monkeypatch):
+def test_fetch_openml_with_verified_checksum(monkeypatch):
     """Test the openml loader with MD5 checksums.
 
     Clearly this is only a proof of concept, and must be replaced
@@ -1183,3 +1183,13 @@ def test(monkeypatch):
     testsuite...
     """
     fetch_openml('iris', version=1, verify_checksum=True)
+
+
+def test_fetch_openml_without_verified_checksum(monkeypatch):
+    """Test the openml loader without MD5 checksums.
+
+    Clearly this is only a proof of concept, and must be replaced
+    with the, somewhat convoluted, existing "monkey-mocking-patching"
+    testsuite...
+    """
+    fetch_openml('iris', version=1, verify_checksum=False)
