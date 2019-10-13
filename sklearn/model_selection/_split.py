@@ -40,6 +40,7 @@ __all__ = ['BaseCrossValidator',
            'GroupShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'StratifiedGroupShuffleSplit',
            'PredefinedSplit',
            'train_test_split',
            'check_cv']
