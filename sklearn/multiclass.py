@@ -194,8 +194,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     ... ])
     >>> y = np.array([0, 0, 1, 1, 2, 2])
     >>> clf = OneVsRestClassifier(SVC()).fit(X, y)
-    >>> clf.predict([[-19, -20], [-5, 5], [9, 9]])
-    array([2, 1, 0])
+    >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
+    array([2, 0, 1])
 
     """
     def __init__(self, estimator, n_jobs=None):
