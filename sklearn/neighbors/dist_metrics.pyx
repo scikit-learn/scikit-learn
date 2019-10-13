@@ -510,7 +510,7 @@ cdef class ChebyshevDistance(DistanceMetric):
 
     >>> from sklearn.neighbors.dist_metrics import DistanceMetric
     >>> dist = DistanceMetric.get_metric('chebyshev')
-    ... X = [[0, 1, 2],
+    >>> X = [[0, 1, 2],
     ... 	[3, 4, 5]]
     >>> Y = [[-1,0,1],
     ...      [3, 4, 5]]
