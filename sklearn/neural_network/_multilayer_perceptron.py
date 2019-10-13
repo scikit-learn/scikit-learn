@@ -877,7 +877,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
 
     Examples
-    ----------
+    --------
     >>> from sklearn.neural_network import MLPClassifier
     >>> from sklearn.datasets import make_classification
 
@@ -885,16 +885,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     ... n_informative=2, n_redundant=3, random_state=1, shuffle=True)
 
     >>> clf = MLPClassifier(random_state=1).fit(X, y)
-    >>> # Predict probabilities
-    >>> print(clf.predict_proba([[0.1,0.4,0.54,0.1,0.27]]))
-    [[0.64113804 0.35886196]]
+    >>> clf.predict_proba([[0.1,0.4,0.54,0.1,0.27]])
+    array([[0.64113804, 0.35886196]])
 
-    >>> # Predict class
-    >>> print(clf.predict([[0.1,0.69,0.54,0.1,0.27]]))
-    [0]
+    >>> clf.predict([[0.1,0.69,0.54,0.1,0.27]])
+    array([0])
 
-    >>> # Calculate accuracy
-    >>> print(clf.score(X,y))
+    >>> clf.score(X,y)
     0.877
 
     Notes
@@ -1286,22 +1283,18 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Name of the output activation function.
 
     Examples
-    ----------
+    --------
     >>> from sklearn.neural_network import MLPRegressor
     >>> from sklearn.datasets import make_regression
-    >>> from sklearn.model_selection import cross_val_score
 
     >>> X, y = make_regression(n_samples=20, n_features=5, random_state=1)
 
     >>> clf = MLPRegressor(random_state=1).fit(X, y)
-    >>> # Predict values
-    >>> print(clf.predict([[0.1,0.69,0.54,0.1,0.27]]))
-    [12.61233323]
+    >>> clf.predict([[0.1,0.69,0.54,0.1,0.27]])
+    array([12.61233323])
 
-
-    >>> # Calculate coefficient of determination R^2
-    >>> cross_val_score(clf, X, y, cv=5)
-    array([0.00564205, 0.06643087, 0.05193686, 0.11202796, 0.02789272])
+    >>> clf.score(X,y)
+    0.1518...
 
     Notes
     -----
