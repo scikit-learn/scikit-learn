@@ -177,7 +177,6 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check,
         getattr(clf, predict_method)(X)
 
 
-@pytest.mark.foobar
 def test_check_X_on_predict_proba_success(iris):
     def fail(X):
         return True
@@ -187,7 +186,6 @@ def test_check_X_on_predict_proba_success(iris):
     clf.predict_proba(X)  # does not raise
 
 
-@pytest.mark.foobar
 def test_check_X_on_predict_proba_fail(iris):
     def fail(X):
         return False
