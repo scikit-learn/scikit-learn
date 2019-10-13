@@ -522,7 +522,7 @@ The preferred workflow for claiming and working on issues is:
   * Check the conversation to see if anyone has said that they're working on it 
   * Check for linked PRs 
 
-* When a contributor comments on a issue to say they are working on it,
+* When a contributor comments on an issue to say they are working on it,
   a PR is expected within 2 weeks (new contributor) or 4 weeks 
   (contributor or core dev), unless an larger time frame is explicitly given.
   Beyond that time, another contributor can take the issue without 
