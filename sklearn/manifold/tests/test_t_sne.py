@@ -860,8 +860,9 @@ def test_tsne_n_jobs(method):
 
     assert_allclose(X_tr_ref, X_tr)
 
+
 def test_tsne_with_mahalanobis_distance():
-    """Make sure that tha mahalanobis distance works with metric_params 
+    """Make sure that tha mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
     random_state = check_random_state(0)
     n_features = 10
@@ -886,9 +887,10 @@ def test_tsne_with_mahalanobis_distance():
                n_components=n_embedding, random_state=0, metric='mahalanobis',
                metric_params={'V': np.cov(X.T)}).fit_transform(X)
     assert_array_equal(ref, now)
-    
+
+
 def test_tsne_metric_params():
-    """Make sure that tha mahalanobis distance works with metric_params 
+    """Make sure that tha mahalanobis distance works with metric_params
        properly set and it doesn't otherwise"""
     random_state = check_random_state(0)
     n_features = 10
