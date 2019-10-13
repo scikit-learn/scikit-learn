@@ -178,9 +178,9 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
     IterativeImputer(random_state=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> imp_mean.transform(X)
-    array([[ 6.9584... ,  2.        ,  3.        ],
-           [ 4.        ,  2.6000... ,  6.        ],
-           [10.        ,  4.9999... ,  9.        ]])
+    array([[ 6.9584...,  2.       ,  3.        ],
+           [ 4.       ,  2.6000...,  6.        ],
+           [10.       ,  4.9999...,  9.        ]])
 
     Notes
     -----
