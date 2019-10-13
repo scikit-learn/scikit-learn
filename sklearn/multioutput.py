@@ -238,7 +238,8 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
 
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> y_multi = np.array([y, y]).T
-    >>> clf = MultiOutputRegressor(RandomForestRegressor(max_depth=30, n_estimators=100, random_state=0)).fit(X, y_multi)
+    >>> clf = MultiOutputRegressor(RandomForestRegressor(
+    ...     max_depth=30, n_estimators=100, random_state=0)).fit(X, y_multi)
     >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
     array([[21.27273213, 21.27273213]])
     """
