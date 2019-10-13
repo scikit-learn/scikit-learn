@@ -697,7 +697,16 @@ def _test_ridge_classifiers(filter_):
     y_pred = reg.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
-    # if cv is not set, _RidgeGCV is used for cv (looe)
+
+def _test_ridgeClassifier_w_scoring(filter_):
+    # when scoring!=None
+    cv = KFold(5)
+    reg = RidgeClassifierCV(cv=cv, scoring='accuracy')
+    reg.fit(filter_(X_iris), y_iris)
+    y_pred = reg.predict(filter_(X_iris))
+    assert np.mean(y_iris == y_pred) >= 0.8
+
+    # cv==None ( leave one out; _BaseRidgeCV is used)
     cv_looe = RidgeClassifierCV(scoring='accuracy')
     cv_looe.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
@@ -731,7 +740,8 @@ def check_dense_sparse(test_func):
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
          _test_ridge_diabetes, _test_multi_ridge_diabetes,
-         _test_ridge_classifiers, _test_tolerance))
+         _test_ridge_classifiers, _test_tolerance,
+         _test_ridgeClassifier_w_scoring))
 def test_dense_sparse(test_func):
     check_dense_sparse(test_func)
 

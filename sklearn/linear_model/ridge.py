@@ -1401,7 +1401,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, is_clf=False):
         """Fit Ridge regression model
 
         Parameters
@@ -1415,6 +1415,9 @@ class _RidgeGCV(LinearModel):
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
 
+        is_clf : bool, optional (default=False)
+            Whether it is a classification problem
+
         Returns
         -------
         self : object
@@ -1423,10 +1426,6 @@ class _RidgeGCV(LinearModel):
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
                          dtype=[np.float64],
                          multi_output=True, y_numeric=True)
-
-        # if classification, LabelBinarizer applied first in RidgeClassifierCV
-        # then output of labelBinarizer (y) would be -1 or 1 only
-        is_clf = ((y == -1) | (y == 1)).all()
 
         if np.any(self.alphas <= 0):
             raise ValueError(
@@ -1543,6 +1542,7 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.is_clf_ = False
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -1579,7 +1579,8 @@ class _BaseRidgeCV(LinearModel):
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
-            estimator.fit(X, y, sample_weight=sample_weight)
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          is_clf=self.is_clf_)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
@@ -1589,7 +1590,8 @@ class _BaseRidgeCV(LinearModel):
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+            model = RidgeClassifier if self.is_clf_ else Ridge
+            gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
                                     normalize=self.normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
@@ -1834,6 +1836,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
+        self.is_clf_ = True
 
     def fit(self, X, y, sample_weight=None):
         """Fit the ridge classifier.
@@ -1870,7 +1873,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
 
-        _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
+        target = Y if self.cv is None else y
+        _BaseRidgeCV.fit(self, X, target, sample_weight=sample_weight)
         return self
 
     @property
