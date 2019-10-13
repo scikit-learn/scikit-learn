@@ -540,6 +540,9 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
+    metric_params : dictionary, optional (default: None)
+        Additional keyword arguments for the distance metric function.
+
     init : string or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
@@ -566,9 +569,6 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.17
            Approximate optimization *method* via the Barnes-Hut.
-
-    metric_params : dictionary, optional (default: None)
-        Additional keyword arguments for the distance metric function.
 
     angle : float (default: 0.5)
         Only used if method='barnes_hut'
