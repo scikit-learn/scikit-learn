@@ -39,7 +39,6 @@ import joblib
 
 from .base import get_data_home
 from .base import load_files
-from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
@@ -227,7 +226,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    cache_path = _pkl_filepath(data_home, CACHE_NAME)
+    cache_path = join(data_home, CACHE_NAME)
     twenty_home = os.path.join(data_home, "20news_home")
     cache = None
     if os.path.exists(cache_path):
@@ -389,7 +388,7 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     filebase = '20newsgroup_vectorized'
     if remove:
         filebase += 'remove-' + ('-'.join(remove))
-    target_file = _pkl_filepath(data_home, filebase + ".pkl")
+    target_file = join(data_home, filebase + ".pkl")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,

@@ -39,7 +39,7 @@ For an example of using this dataset, see
 
 from io import BytesIO
 from os import makedirs, remove
-from os.path import exists
+from os.path import exists, join
 
 import logging
 import numpy as np
@@ -50,7 +50,6 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from .base import _pkl_filepath
 from .base import _refresh_cache
 
 # The original data can be found at:
@@ -225,7 +224,7 @@ def fetch_species_distributions(data_home=None,
                         grid_size=0.05)
     dtype = np.int16
 
-    archive_path = _pkl_filepath(data_home, DATA_ARCHIVE_NAME)
+    archive_path = join(data_home, DATA_ARCHIVE_NAME)
 
     if not exists(archive_path):
         if not download_if_missing:

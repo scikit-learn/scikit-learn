@@ -32,7 +32,6 @@ import joblib
 
 from .base import get_data_home
 from .base import _fetch_remote
-from .base import _pkl_filepath
 from .base import RemoteFileMetadata
 from .base import _refresh_cache
 from ..utils import Bunch
@@ -107,7 +106,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     if not exists(data_home):
         makedirs(data_home)
 
-    filepath = _pkl_filepath(data_home, 'cal_housing.pkz')
+    filepath = join(data_home, 'cal_housing.pkz')
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")

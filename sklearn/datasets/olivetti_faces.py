@@ -23,7 +23,6 @@ import joblib
 from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from .base import _pkl_filepath
 from .base import _refresh_cache
 from ..utils import check_random_state, Bunch
 
@@ -94,7 +93,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    filepath = _pkl_filepath(data_home, 'olivetti.pkz')
+    filepath = join(data_home, 'olivetti.pkz')
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")

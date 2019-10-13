@@ -19,7 +19,6 @@ import scipy.sparse as sp
 import joblib
 
 from .base import get_data_home
-from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _refresh_cache
@@ -161,10 +160,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         if not exists(rcv1_dir):
             makedirs(rcv1_dir)
 
-    samples_path = _pkl_filepath(rcv1_dir, "samples.pkl")
-    sample_id_path = _pkl_filepath(rcv1_dir, "sample_id.pkl")
-    sample_topics_path = _pkl_filepath(rcv1_dir, "sample_topics.pkl")
-    topics_path = _pkl_filepath(rcv1_dir, "topics_names.pkl")
+    samples_path = join(rcv1_dir, "samples.pkl")
+    sample_id_path = join(rcv1_dir, "sample_id.pkl")
+    sample_topics_path = join(rcv1_dir, "sample_topics.pkl")
+    topics_path = join(rcv1_dir, "topics_names.pkl")
 
     # load data (X) and sample_id
     if download_if_missing and (not exists(samples_path) or
