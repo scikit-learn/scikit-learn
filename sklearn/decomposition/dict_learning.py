@@ -1013,7 +1013,9 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     ...             [10, 10, 10, 10],
     ...             [5, 5, 5, 5]
     ... ])
-    >>> coder = SparseCoder(dictionary=dictionary, transform_algorithm='threshold', transform_alpha=5)
+    >>> coder = SparseCoder(dictionary=dictionary,
+    ...                     transform_algorithm='threshold',
+    ...                     transform_alpha=5)
     >>> coder.transform(X)
     array([[35, 15]])
 
