@@ -9,6 +9,9 @@ _DEPRECATED_MODULES = {
     # TODO: Remove in 0.24
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
+    ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
+    ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
+
     ('_affinity_propagation', 'sklearn.cluster.affinity_propagation_',
      'sklearn.cluster'),
     ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster'),

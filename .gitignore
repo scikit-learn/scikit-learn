@@ -73,13 +73,15 @@ _configtest.o.d
 .mypy_cache/
 
 # files generated from a template
-sklearn/utils/seq_dataset.pyx
-sklearn/utils/seq_dataset.pxd
+sklearn/utils/_seq_dataset.pyx
+sklearn/utils/_seq_dataset.pxd
 sklearn/linear_model/sag_fast.pyx
 
 # deprecated paths
 # TODO: Remove in 0.24
 sklearn/utils/mocking.py
+sklearn/utils/weight_vector.py
+sklearn/utils/seq_dataset.py
 
 sklearn/cluster/affinity_propagation_.py
 sklearn/cluster/bicluster.py
@@ -90,4 +92,3 @@ sklearn/cluster/k_means_.py
 sklearn/cluster/mean_shift_.py
 sklearn/cluster/optics_.py
 sklearn/cluster/spectral.py
-

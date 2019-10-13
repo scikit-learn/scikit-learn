@@ -15,6 +15,8 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
 
     ('sklearn.utils.mocking', 'MockDataFrame'),
+    ('sklearn.utils.weight_vector', 'WeightVector'),
+    ('sklearn.utils.seq_dataset', 'ArrayDataset32'),
 
     ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
     ('sklearn.cluster.bicluster', 'SpectralBiclustering'),
