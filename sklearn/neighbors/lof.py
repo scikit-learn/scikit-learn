@@ -144,19 +144,16 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
-    Examples
-    --------
+    Example
+    -------
     >>> import numpy as np
-    >>> from sklearn import neighbors
-    >>> from sklearn.datasets import load_iris
-    >>> # Add an artificial outlier to iris data.
-    >>> iris = load_iris()
-    >>> X = iris.data
-    >>> X = np.vstack((X, np.array([10, 10, 10, 10])))
-    >>> clf = neighbors.LocalOutlierFactor(n_neighbors=5)
-    >>> score = clf.fit(X).negative_outlier_factor_
-    >>> score[-4:]  # doctest: +ELLIPSIS
-    array([ -1.0004...,  -1.2295... ,  -0.9383..., -14.3618...])
+    >>> from sklearn.neighbors import LocalOutlierFactor
+    >>> X = [[-1.1], [0.2], [101.1], [0.3]]
+    >>> clf = LocalOutlierFactor(n_neighbors=2)
+    >>> clf.fit_predict(X)
+    array([ 1,  1, -1,  1])
+    >>> clf.negative_outlier_factor_  # doctest: +ELLIPSIS
+    array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
 
     References
     ----------
