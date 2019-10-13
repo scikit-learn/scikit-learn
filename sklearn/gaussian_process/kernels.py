@@ -1096,12 +1096,12 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
     >>> from sklearn.gaussian_process.kernels import RBF, ConstantKernel
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
     >>> kernel = RBF() + ConstantKernel(constant_value=2)
-    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y)
-    1.0
+    >>> gpr.score(X, y) # doctest: +ELLIPSIS
+    0.3696...
     >>> gpr.predict(X[:1,:], return_std=True) # doctest: +ELLIPSIS
-    (array([781.9...]), array([9.991...e-06]))
+    (array([606.1...]), array([0.2475...]))
 
     """
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
