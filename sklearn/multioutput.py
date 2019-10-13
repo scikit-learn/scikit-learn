@@ -231,7 +231,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
 
     Examples
     --------
-    import numpy as np
+    >>> import numpy as np
     >>> from sklearn.datasets import make_regression
     >>> from sklearn.multioutput import MultiOutputRegressor
     >>> from sklearn.ensemble import RandomForestRegressor
