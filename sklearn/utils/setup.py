@@ -42,8 +42,8 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     # generate files from a template
-    pyx_templates = ['sklearn/utils/seq_dataset.pyx.tp',
-                     'sklearn/utils/seq_dataset.pxd.tp']
+    pyx_templates = ['sklearn/utils/_seq_dataset.pyx.tp',
+                     'sklearn/utils/_seq_dataset.pxd.tp']
 
     for pyxfiles in pyx_templates:
         outfile = pyxfiles.replace('.tp', '')
@@ -59,12 +59,12 @@ def configuration(parent_package='', top_path=None):
         with open(outfile, "w") as f:
             f.write(pyxcontent)
 
-    config.add_extension('seq_dataset',
-                         sources=['seq_dataset.pyx'],
+    config.add_extension('_seq_dataset',
+                         sources=['_seq_dataset.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension('weight_vector',
-                         sources=['weight_vector.pyx'],
+    config.add_extension('_weight_vector',
+                         sources=['_weight_vector.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
