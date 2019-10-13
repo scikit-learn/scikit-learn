@@ -567,6 +567,9 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.17
            Approximate optimization *method* via the Barnes-Hut.
 
+    metric_params : dictionary, optional (default: None)
+        Additional keyword arguments for the distance metric function.
+
     angle : float (default: 0.5)
         Only used if method='barnes_hut'
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
