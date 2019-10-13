@@ -175,3 +175,28 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check,
             getattr(clf, predict_method)(X)
     else:
         getattr(clf, predict_method)(X)
+
+
+@pytest.mark.foobar
+def test_check_X_on_predict_proba_success(iris):
+    def fail(X):
+        return True
+
+    X, y = iris
+    clf = CheckingClassifier(check_X=fail).fit(X, y)
+    clf.predict_proba(X)  # does not raise
+
+
+@pytest.mark.foobar
+def test_check_X_on_predict_proba_fail(iris):
+    def fail(X):
+        return False
+
+    X, y = iris
+    clf = CheckingClassifier().fit(X, y)
+
+    # need to add check_X after fit, otherwise the error is already
+    # raised on fit call
+    clf.check_X = fail
+    with pytest.raises(AssertionError):
+        clf.predict_proba(X)
