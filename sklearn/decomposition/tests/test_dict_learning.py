@@ -500,6 +500,17 @@ def test_sparse_coder_set_params_works():
     assert np.sqrt(np.sum((np.dot(code, correct_V) - X) ** 2)) < 0.1
 
 
+@pytest.mark.parametrize('dictionary, n_components', [
+    (np.zeros((1, 1)), 1),
+    (np.zeros((1, 3)), 1),
+    (np.zeros((3, 1)), 3),
+    (np.zeros((5, 4)), 5),
+])
+def test_sparse_coder_n_components(dictionary, n_components):
+    coder = SparseCoder(dictionary=dictionary)
+    assert coder.n_components == n_components
+
+
 def test_sparse_coder_parallel_mmap():
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/5956
