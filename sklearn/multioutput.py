@@ -590,7 +590,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
     ...                                                     random_state=0)
     >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
-    >>> chain = ClassifierChain(base_lr, order='random', random_state=0).fit(X_train, Y_train)
+    >>> chain = ClassifierChain(base_lr, order='random', random_state=0) \
+    ...    .fit(X_train, Y_train)
     >>> chain.predict(X_test)
     array([[1., 1., 0.],
            [1., 0., 0.],
