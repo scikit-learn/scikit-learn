@@ -7,10 +7,10 @@ X, y = make_classification(n_samples=20, random_state=42)
 
 
 def test_check_X_on_predict_proba_success():
-    def fail(X):
+    def success(X):
         return True
 
-    clf = CheckingClassifier(check_X=fail).fit(X, y)
+    clf = CheckingClassifier(check_X=success).fit(X, y)
     clf.predict_proba(X)  # does not raise
 
 
