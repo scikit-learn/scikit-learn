@@ -1656,7 +1656,6 @@ class ExtraTreesClassifier(ForestClassifier):
     sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
-
     """
     def __init__(self,
                  n_estimators=100,
