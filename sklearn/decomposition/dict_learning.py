@@ -1004,6 +1004,19 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     components_ : array, [n_components, n_features]
         The unchanged dictionary atoms
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import SparseCoder
+    >>> X = np.array([[1, 1, 1, 1]])
+    >>> dictionary = np.array([
+    ...             [10, 10, 10, 10],
+    ...             [5, 5, 5, 5]
+    ... ])
+    >>> coder = SparseCoder(dictionary=dictionary, transform_algorithm='threshold', transform_alpha=5)
+    >>> coder.transform(X)
+    array([[35, 15]])
+
     See also
     --------
     DictionaryLearning
