@@ -241,7 +241,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     >>> clf = MultiOutputRegressor(RandomForestRegressor(
     ...     max_depth=30, n_estimators=100, random_state=0)).fit(X, y_multi)
     >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
-    array([[21.27273213, 21.27273213]])
+    array([[20.88778272, 20.88778272]])
     """
 
     def __init__(self, estimator, n_jobs=None):
