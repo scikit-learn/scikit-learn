@@ -140,7 +140,17 @@ Then you need to set the following environment variables::
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
-Finally you can build the package using the standard command.
+Finally, in the source folder, clean any previously built files of
+scikit-learn::
+
+    python setup.py clean
+
+And build scikit-learn in verbose mode::
+
+    pip install --verbose --editable .
+
+The compiled extensions should be built with the clang and clang++ compilers
+with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
