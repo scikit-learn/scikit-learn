@@ -1,6 +1,3 @@
 def _openmp_supported():
-    """
-    Return True if OpenMP is not supported and OpenMP support has not been
-    explicitly disabled during the build
-    """
+    """Determines if scikit-learn has been built with OpenMP support"""
     return SKLEARN_OPENMP_SUPPORTED
