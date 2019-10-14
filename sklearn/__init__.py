@@ -80,6 +80,7 @@ else:
     from .base import clone
     from .utils._show_versions import show_versions
     from .utils._openmp_helpers import _openmp_supported  # noqa
+    from .exceptions import EfficiencyWarning
 
     __check_build  # avoid flakes unused variable error
 
@@ -97,9 +98,6 @@ else:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
 
-    class PerformanceWarning(Warning):
-        pass
-
     if not _openmp_supported():  # noqa
         base_url = "dev" if __version__.endswith(".dev0") else "stable"
         message = textwrap.dedent(
@@ -112,7 +110,7 @@ else:
 
                 https://scikit-learn.org/{}/developers/advanced_installation.html
             """)
-        warnings.warn(message.format(base_url), PerformanceWarning)
+        warnings.warn(message.format(base_url), EfficiencyWarning)
 
 
 def setup_module(module):
