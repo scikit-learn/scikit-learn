@@ -15,6 +15,7 @@ from .optics_ import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .optimal_nclusters_search import OptimalNClusterSearch
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -39,4 +40,5 @@ __all__ = ['AffinityPropagation',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
-           'SpectralCoclustering']
+           'SpectralCoclustering',
+           'OptimalNClusterSearch']
