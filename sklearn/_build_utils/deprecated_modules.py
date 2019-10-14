@@ -3,15 +3,27 @@ blame."""
 from pathlib import Path
 from contextlib import suppress
 
+# TODO: Remove the whole file in 0.24
+
 # This is a set of 3-tuples consisting of
 # (new_module_name, deprecated_path, correct_import_path)
 _DEPRECATED_MODULES = {
-    # TODO: Remove in 0.24
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
     ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
     ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils'),
+
+    ('_affinity_propagation', 'sklearn.cluster.affinity_propagation_',
+     'sklearn.cluster'),
+    ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster'),
+    ('_birch', 'sklearn.cluster.birch', 'sklearn.cluster'),
+    ('_dbscan', 'sklearn.cluster.dbscan_', 'sklearn.cluster'),
+    ('_hierarchical', 'sklearn.cluster.hierarchical', 'sklearn.cluster'),
+    ('_k_means', 'sklearn.cluster.k_means_', 'sklearn.cluster'),
+    ('_mean_shift', 'sklearn.cluster.mean_shift_', 'sklearn.cluster'),
+    ('_optics', 'sklearn.cluster.optics_', 'sklearn.cluster'),
+    ('_spectral', 'sklearn.cluster.spectral', 'sklearn.cluster'),
 }
 
 _FILE_CONTENT_TEMPLATE = """
