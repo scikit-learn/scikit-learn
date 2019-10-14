@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.utils.mocking', 'MockDataFrame'),
     ('sklearn.utils.weight_vector', 'WeightVector'),
     ('sklearn.utils.seq_dataset', 'ArrayDataset32'),
+    ('sklearn.utils.fast_dict', 'IntFloatDict'),
 
     ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
     ('sklearn.cluster.bicluster', 'SpectralBiclustering'),

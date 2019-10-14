@@ -79,9 +79,11 @@ sklearn/linear_model/sag_fast.pyx
 
 # deprecated paths
 # TODO: Remove in 0.24
+# All of these files should have a match in _build_utils/deprecated_modules.py
 sklearn/utils/mocking.py
 sklearn/utils/weight_vector.py
 sklearn/utils/seq_dataset.py
+sklearn/utils/fast_dict.py
 
 sklearn/cluster/affinity_propagation_.py
 sklearn/cluster/bicluster.py
