@@ -559,9 +559,8 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                                missing_values=self.missing_values,
+                                missing_values=True,
                                 error_on_new=False,
-                                precomputed=True,
                                 )
             X_trans_indicator = self.indicator_.fit_transform(missing_mask)
         else:

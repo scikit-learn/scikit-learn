@@ -259,8 +259,8 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values,
-                error_on_new=False, precomputed=True)
+                missing_values=True,
+                error_on_new=False)
             self.indicator_.fit(missing_mask)
         else:
             self.indicator_ = None
@@ -500,12 +500,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, missing_values=np.nan, features="missing-only",
-                 sparse="auto", error_on_new=True, precomputed=False):
+                 sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features
         self.sparse = sparse
         self.error_on_new = error_on_new
-        self.precomputed = precomputed
 
     def _get_missing_features_info(self, X):
         """Compute the imputer mask and the indices of the features
@@ -611,6 +610,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
+        if X.dtype == 'bool' and self.missing_values:
+            self.precomputed = True
+        else:
+            self.precomputed = False
+
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self.precomputed:
