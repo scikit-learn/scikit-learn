@@ -20,6 +20,10 @@ from ..utils.extmath import (make_nonnegative, randomized_svd,
 from ..utils.validation import assert_all_finite, check_array
 
 
+__all__ = ['SpectralCoclustering',
+           'SpectralBiclustering']
+
+
 def _scale_normalize(X):
     """Normalize ``X`` by scaling rows and columns independently.
 
