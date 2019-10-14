@@ -62,10 +62,6 @@ strong {
   font-weight: bold;
 }
 
-div.line-block {
-  height: 0;
-}
-
 a code {
   color: inherit;
 }
@@ -154,6 +150,21 @@ div.clearer {
 .sk-btn-primary:active {
   background-color: #3499cd;
   border-color: #3499cd;
+}
+
+/* Quote */
+
+.quote {
+  text-align: right;
+  line-height: 1.5em;
+  font-style: italic;
+  margin: 2em 3em 1em 3em;
+}
+
+.line-block {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 /* Search */
@@ -319,6 +330,10 @@ div#carouselExampleSlidesOnly {
   min-height: 200px;
 }
 
+ul.sk-landing-call-list li {
+  margin-bottom: 0.25rem;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
@@ -326,10 +341,9 @@ img.sk-footer-funding-logo {
   margin-bottom: 8px;
 }
 
-ul.sk-landing-call-list li {
-  margin-bottom: 0.25rem;
+a.sk-footer-funding-link:hover {
+  text-decoration: none;
 }
-
 /* DOCS STYLE */
 
 .navbar > .sk-docs-container {
@@ -1048,7 +1062,7 @@ div.sk-page-content img.map {
 
 /* sponsors and testimonials */
 
-div.sk-sponsor-div div.sk-testimonial-div {
+div.sk-sponsor-div, div.sk-testimonial-div {
   display: flex;
   flex-wrap: wrap;
   -webkit-flex-align: center;
@@ -1057,12 +1071,12 @@ div.sk-sponsor-div div.sk-testimonial-div {
   align-items: center;
 }
 
-div.sk-sponsor-div-box div.sk-testimonial-div-box {
+div.sk-sponsor-div-box, div.sk-testimonial-div-box {
   width: 100%;
 }
 
 @media screen and (min-width: 500px) {
-  div.sk-sponsor-div-box div.sk-testimonial-div-box {
+  div.sk-sponsor-div-box, div.sk-testimonial-div-box {
     width: 50%;
   }
 }
@@ -1072,6 +1086,10 @@ table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
   background-color: white;
   vertical-align: middle;
   text-align: center;
+}
+
+table.sk-sponsor-table td {
+  padding: 0.30rem;
 }
 
 /* pygments - highlightning */

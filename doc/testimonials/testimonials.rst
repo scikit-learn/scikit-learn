@@ -1038,7 +1038,7 @@ Christian Rammig, Head of Data Science, Otto Group
 .. raw:: html
 
    <div class="sk-testimonial-div">
-   <div class="sk-testimonial-div-box">
+   <div class="sk-testimonial-div-box"-->
 
 At Zopa, the first ever Peer-to-Peer lending platform, we extensively use scikit-learn
 to run the business and optimize our users' experience. It powers our
@@ -1058,7 +1058,7 @@ Vlasios Vasileiou, Head of Data Science, Zopa
 
    </span>
    </div>
-   <div class="sk-testimonial-div-box">
+   <div class="sk-testimonial-div-box"-->
 
 .. image:: images/zopa.png
     :width: 120pt
