@@ -527,7 +527,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         if sparse.issparse(X):
-            if not self.precomputed:
+            if not self._precomputed:
                 mask = _get_mask(X.data, self.missing_values)
 
                 # The imputer mask will be constructed with the same
@@ -550,7 +550,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             elif imputer_mask.format == 'csr':
                 imputer_mask = imputer_mask.tocsc()
         else:
-            if not self.precomputed:
+            if not self._precomputed:
                 imputer_mask = _get_mask(X, self.missing_values)
             else:
                 imputer_mask = X
@@ -610,14 +610,15 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
+        print(X.dtype)
         if X.dtype == 'bool' and self.missing_values:
-            self.precomputed = True
+            self._precomputed = True
         else:
-            self.precomputed = False
+            self._precomputed = False
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
-        if not self.precomputed:
+        if not self._precomputed:
             X = self._validate_input(X)
         self._n_features = X.shape[1]
 
@@ -630,7 +631,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        if self.precomputed and isinstance(X, type(None)):
+        if self._precomputed and isinstance(X, type(None)):
             raise ValueError("Mask cannot be none when "
                              "precomputed is True")
 
@@ -674,7 +675,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         check_is_fitted(self)
-        if not self.precomputed:
+        if not self._precomputed:
             X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
