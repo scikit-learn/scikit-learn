@@ -18,6 +18,7 @@ import warnings
 import sys
 import functools
 import tempfile
+import textwrap
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 
@@ -859,7 +860,8 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60, ignore_warnings=True):
+def assert_run_python_script(source_code, timeout=60,
+                             ignore_init_warnings=True):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and not print
@@ -874,15 +876,22 @@ def assert_run_python_script(source_code, timeout=60, ignore_warnings=True):
     timeout : int
         Time in seconds before timeout.
     ignore_warnings : bool
-        Whether warnings should be ignored in the output or not.
+        Whether warnings coming from ``sklearn.__init__`` should be ignored in
+        the output or not.
     """
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
     os.close(fd)
     try:
         with open(source_file, 'wb') as f:
-            if ignore_warnings:
-                f.write(("import warnings; warnings.filterwarnings('ignore');")
-                        .encode('utf-8'))
+            if ignore_init_warnings:
+                f.write(textwrap.dedent(
+                    """
+                    import warnings
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings('ignore')
+                        import sklearn
+                    """
+                    ).encode('utf-8'))
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
