@@ -631,10 +631,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        if self._precomputed and isinstance(X, type(None)):
-            raise ValueError("Mask cannot be none when "
-                             "precomputed is True")
-
         missing_features_info = self._get_missing_features_info(X)
         self.features_ = missing_features_info[1]
 
