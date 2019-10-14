@@ -610,10 +610,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
-        if X.dtype == 'bool' and self.missing_values:
-            self._precomputed = True
-        else:
-            self._precomputed = False
+        if isinstance(X, np.ndarray):
+            if X.dtype == 'bool' and self.missing_values:
+                self._precomputed = True
+            else:
+                self._precomputed = False
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
