@@ -87,24 +87,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
             Computed deviance
         """
 
-    def unit_deviance_derivative(self, y, y_pred):
-        r"""Compute the derivative of the unit deviance w.r.t. y_pred.
-
-        The derivative of the unit deviance is given by
-        :math:`\frac{\partial}{\partialy_\textrm{pred}}d(y,y_\textrm{pred})
-             = -2\frac{y-y_\textrm{pred}}{v(y_\textrm{pred})}`
-        with unit variance :math:`v(y_\textrm{pred})`.
-
-        Parameters
-        ----------
-        y : array of shape (n_samples,)
-            Target values.
-
-        y_pred : array of shape (n_samples,)
-            Predicted mean.
-        """
-        return -2 * (y - y_pred) / self.unit_variance(y_pred)
-
     def deviance(self, y, y_pred, weights=1):
         r"""Compute the deviance.
 
