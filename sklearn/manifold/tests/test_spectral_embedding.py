@@ -343,3 +343,24 @@ def test_spectral_embedding_first_eigen_vector():
 
         assert np.std(embedding[:, 0]) == pytest.approx(0)
         assert np.std(embedding[:, 1]) > 1e-3
+
+
+def test_spectral_embedding_copy_variable(seed=36):
+    # Test that when "copy" input variable is set to False
+    # spectral_embedding returns the correct value
+    random_state = np.random.RandomState(36)
+    data = random_state.randn(10, 30)
+    sims = rbf_kernel(data)
+    n_components = 8
+    embedding_1 = spectral_embedding(sims,
+                                     n_components=n_components,
+                                     drop_first=False,
+                                     copy=False)
+
+    # Verify with copy True or False
+    embedding_2 = spectral_embedding(sims,
+                                     n_components=n_components,
+                                     drop_first=False,
+                                     copy=True)
+
+    assert_array_almost_equal(embedding_1, embedding_2)

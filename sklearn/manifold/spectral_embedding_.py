@@ -134,7 +134,7 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True, copy=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -189,6 +189,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
 
+    copy : bool, optional, default: True
+        Parameter to opt whether memory optimization needs to be done in
+        the graph_laplacian function. If False, the values in affinity
+        matrix will be changed, saving memory.
+
     Returns
     -------
     embedding : array, shape=(n_samples, n_components)
@@ -235,9 +240,15 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
+    if copy:
+        laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                          return_diag=True)
+    else:
+        adjacency, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                          return_diag=True)
+        laplacian = adjacency
+        adjacency = None
 
-    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                      return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -405,6 +416,11 @@ class SpectralEmbedding(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    copy : bool, optional, default: True
+        Parameter to opt whether memory optimization needs to be done in
+        the graph_laplacian function. If False, the values in affinity
+        matrix will be changed, saving memory.
+
     Attributes
     ----------
 
@@ -447,7 +463,7 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None, n_jobs=None):
+                 n_neighbors=None, n_jobs=None, copy=True):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
@@ -455,6 +471,7 @@ class SpectralEmbedding(BaseEstimator):
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
+        self.copy = copy
 
     @property
     def _pairwise(self):
