@@ -4,7 +4,7 @@ set -e
 
 UNAMESTR=`uname`
 
-make_conda() {
+setup_libomp() {
     TO_INSTALL="$@"
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$INSTALL_LIBOMP" == "conda-forge" ]]; then
@@ -24,6 +24,11 @@ make_conda() {
             export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
         fi
     fi
+}
+
+make_conda() {
+    TO_INSTALL="$@"
+    setup_libomp $TO_INSTALL
 
     conda create -n $VIRTUALENV -q --yes $TO_INSTALL
     source activate $VIRTUALENV

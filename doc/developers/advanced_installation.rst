@@ -154,14 +154,6 @@ Using conda
 
         conda install conda-forge::compilers
 
-    You then need to set the following environment variables::
-
-        export CFLAGS="$CFLAGS -I$CONDA_PREFIX/include"
-        export LDFLAGS="$LDFLAGS -L$CONDA_PREFIX/lib -Wl,-rpath,$CONDA_PREFIX/lib"
-
-    If ``$CONDA_PREFIX`` is not set, replace it by the path to the desired
-    conda environment.
-
 Using homebrew
 ~~~~~~~~~~~~~~
 
@@ -182,19 +174,29 @@ Using homebrew
         export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
         export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
-Finally you can build the package using the standard command.
+Finally, in the source folder, clean any previously built files of
+scikit-learn::
+
+    python setup.py clean
+
+And build scikit-learn in verbose mode::
+
+    pip install --verbose --editable .
+
+The compiled extensions should be built with the clang and clang++ compilers
+with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
 
-The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not 
-include OpenMP support. You need to install the `openmp` library from packages 
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
+include OpenMP support. You need to install the `openmp` library from packages
 (or ports)::
 
     sudo pkg install openmp
-    
-This will install header files in ``/usr/local/include`` and libs in 
-``/usr/local/lib``. Since these directories are not searched by default, you 
+
+This will install header files in ``/usr/local/include`` and libs in
+``/usr/local/lib``. Since these directories are not searched by default, you
 can set the environment variables to these locations::
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
@@ -204,7 +206,7 @@ can set the environment variables to these locations::
 
 Finally you can build the package using the standard command.
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in 
+For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 
@@ -220,7 +222,7 @@ C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-pip
-    
+
 and then::
 
     pip3 install numpy scipy cython
@@ -243,7 +245,7 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
 .. note::
 
-    To use a high performance BLAS library (e.g. OpenBlas) see 
+    To use a high performance BLAS library (e.g. OpenBlas) see
     `scipy installation instructions
     <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
@@ -266,16 +268,16 @@ You will need `Build Tools for Visual Studio 2017
 <https://visualstudio.microsoft.com/downloads/>`_.
 
 .. warning::
-	You DO NOT need to install Visual Studio 2019. 
-	You only need the "Build Tools for Visual Studio 2019", 
-	under "All downloads" -> "Tools for Visual Studio 2019". 
+    You DO NOT need to install Visual Studio 2019.
+    You only need the "Build Tools for Visual Studio 2019",
+    under "All downloads" -> "Tools for Visual Studio 2019".
 
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
     "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-Please be aware that the path above might be different from user to user. 
+Please be aware that the path above might be different from user to user.
 The aim is to point to the "vcvarsall.bat" file.
 
 And build scikit-learn from this environment::
