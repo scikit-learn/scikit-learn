@@ -3,17 +3,19 @@
 Tweedie regression on insurance claims
 ======================================
 
-This example illustrates the use of Poisson, Gamma and Tweedie regression
-on the French Motor Third-Party Liability Claims dataset, and is inspired
-by an R tutorial [1].
+This example illustrates the use of Poisson, Gamma and Tweedie regression on
+the French Motor Third-Party Liability Claims dataset, and is inspired by an R
+tutorial [1].
 
 Insurance claims data consist of the number of claims and the total claim
 amount. Often, the final goal is to predict the expected value, i.e. the mean,
-of the total claim amount. There are several possibilities to do that, two of
-which are:
+of the total claim amount per exposure unit also referred to as the pure
+premium.
 
-1. Model the number of claims with a Poisson distribution, the average
-   claim amount per claim, also known as severity, as a Gamma distribution and
+There are several possibilities to do that, two of which are:
+
+1. Model the number of claims with a Poisson distribution, the average claim
+   amount per claim, also known as severity, as a Gamma distribution and
    multiply the predictions of both in order to get the total claim amount.
 2. Model total claim amount directly, typically with a Tweedie distribution of
    Tweedie power :math:`p \\in (1, 2)`.
@@ -21,16 +23,16 @@ which are:
 In this example we will illustrate both approaches. We start by defining a few
 helper functions for loading the data and visualizing results.
 
-
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
-    Third-Party Liability Claims (November 8, 2018).
-    `doi:10.2139/ssrn.3164764 <http://dx.doi.org/10.2139/ssrn.3164764>`_
+    Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
+    <http://dx.doi.org/10.2139/ssrn.3164764>`_
 
 """
 print(__doc__)
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
+#          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 from functools import partial
 
@@ -128,6 +130,64 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
     )
 
 
+def score_estimator(
+    estimator, X_train, X_test, df_train, df_test, target, weights,
+    tweedie_powers=None,
+):
+    """Evaluate an estimator on train and test sets with different metrics"""
+    if isinstance(estimator, tuple):
+        model_name = " * ".join(e.__class__.__name__ for e in estimator)
+    else:
+        model_name = estimator.__class__.__name__
+    print("\nEvaluation of {} of target {} ".format(model_name, target))
+
+    metrics = [
+        ("D² explained", None),
+        ("mean abs. error", mean_absolute_error),
+        ("mean squared error", mean_squared_error),
+    ]
+    if tweedie_powers:
+        metrics += [(
+            "mean Tweedie deviance (p={:.4f})".format(power),
+            partial(mean_tweedie_deviance, power=power)
+        ) for power in tweedie_powers]
+
+    res = []
+    for subset_label, X, df in [
+        ("train", X_train, df_train),
+        ("test", X_test, df_test),
+    ]:
+        y, _weights = df[target], df[weights]
+        for score_label, metric in metrics:
+            if isinstance(estimator, tuple) and len(estimator) == 2:
+                # Score the model consisting of the product of frequency and
+                # severity models.
+                est_freq, est_sev = estimator
+                y_pred = est_freq.predict(X) * est_sev.predict(X)
+            else:
+                y_pred = estimator.predict(X)
+
+            if metric is None:
+                if not hasattr(estimator, "score"):
+                    continue
+                score = estimator.score(X, y, _weights)
+            else:
+                score = metric(y, y_pred, _weights)
+
+            res.append(
+                {"subset": subset_label, "metric": score_label, "score": score}
+            )
+
+    res = (
+        pd.DataFrame(res)
+        .set_index(["metric", "subset"])
+        .score.unstack(-1)
+        .round(2)
+        .loc[:, ['train', 'test']]
+    )
+    return res
+
+
 ##############################################################################
 #
 # Loading datasets, basic feature extraction and target definitions
@@ -202,65 +262,6 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 glm_freq = PoissonRegressor(alpha=1e-3)
 glm_freq.fit(X_train, df_train["Frequency"],
              sample_weight=df_train["Exposure"])
-
-
-def score_estimator(
-    estimator, X_train, X_test, df_train, df_test, target, weights,
-    tweedie_powers=None,
-):
-    """Evaluate an estimator on train and test sets with different metrics"""
-    if isinstance(estimator, tuple):
-        model_name = " * ".join(e.__class__.__name__ for e in estimator)
-    else:
-        model_name = estimator.__class__.__name__
-    print("\nEvaluation of {} of target {} ".format(model_name, target))
-
-    metrics = [
-        ("D² explained", None),
-        ("mean abs. error", mean_absolute_error),
-        ("mean squared error", mean_squared_error),
-    ]
-    if tweedie_powers:
-        metrics += [(
-            "mean Tweedie deviance (p={:.4f})".format(power),
-            partial(mean_tweedie_deviance, power=power)
-        ) for power in tweedie_powers]
-
-    res = []
-    for subset_label, X, df in [
-        ("train", X_train, df_train),
-        ("test", X_test, df_test),
-    ]:
-        y, _weights = df[target], df[weights]
-        for score_label, metric in metrics:
-            if isinstance(estimator, tuple) and len(estimator) == 2:
-                # Score the model consisting of the product of frequency and
-                # severity models.
-                est_freq, est_sev = estimator
-                y_pred = est_freq.predict(X) * est_sev.predict(X)
-            else:
-                y_pred = estimator.predict(X)
-
-            if metric is None:
-                if not hasattr(estimator, "score"):
-                    continue
-                score = estimator.score(X, y, _weights)
-            else:
-                score = metric(y, y_pred, _weights)
-
-            res.append(
-                {"subset": subset_label, "metric": score_label, "score": score}
-            )
-
-    res = (
-        pd.DataFrame(res)
-        .set_index(["metric", "subset"])
-        .score.unstack(-1)
-        .round(2)
-        .loc[:, ['train', 'test']]
-    )
-    return res
-
 
 scores = score_estimator(
     glm_freq,
@@ -425,20 +426,21 @@ plt.tight_layout()
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
-# Pure Premium Modeling via a Product of Frequency and Severity Models
-# --------------------------------------------------------------------
+# Pure Premium Modeling via a Product of Frequency and Severity
+# -------------------------------------------------------------
 # As mentioned in the introduction, the total claim amount per unit of
-# exposure can be modeled either as the product of the frequency model by the
-# severity model.
+# exposure can be modeled either as the product of the prediction of the
+# frequency model by the prediction of the severity model.
 #
 # To quantify the aggregate performance of this product model, one can compute
-# the deviance of Tweedie distribution which is equivalent to a com.
-# In the following code sample, the ``score_estimator`` is extended to score
-# such a model.
+# the mean deviance of the train and test data assuming a Compound
+# Poisson-Gamma distribution of the total claim amount. This is equivalent to
+# a Tweedie distribution with "power" parameter between 1 and 2.
 #
-# The mean deviance is computed assuming a Tweedie distribution with a fixed
-# grid of values for the power parameter to be comparable with the model from
-# the following section:
+# As we do not know the true value of the "power" parameter, we compute the
+# mean deviances for a grid of possible values of the "power" parameter,
+# hoping that a good model for one value of "power" will stay a good model for
+# another:
 
 tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
 scores = score_estimator(
@@ -487,9 +489,8 @@ print(scores)
 
 ##############################################################################
 #
-# In this example, the mean absolute error is lower for the Compound Poisson
-# Gamma model than when using the product of the predictions of separate
-# models for frequency and severity.
+# In this example, both modeling approaches yield comparable performance
+# metrics.
 #
 # We can additionally validate these models by comparing observed and
 # predicted total claim amount over the test and train subsets. We see that,
