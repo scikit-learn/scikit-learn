@@ -630,6 +630,11 @@ Changelog
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
   - ``safe_indexing``
+  - ``utils.mocking``
+  - ``utils.fast_dict``
+  - ``utils.seq_dataset``
+  - ``utils.weight_vector``
+  - ``utils.fixes.parallel_helper`` (removed)
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
