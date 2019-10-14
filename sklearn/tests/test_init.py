@@ -25,8 +25,14 @@ def test_import_skl():
 def test_import_openmp_warning():
     # Check that a warning is printed when sklearn has been built without
     # OpenMP
-    try:
+    if _openmp_supported():
+        # OpenMP is supported, expecting no warning
         assert_run_python_script("import sklearn", ignore_warnings=False)
-    except AssertionError as err:
-        match = "Scikit-learn has been built without OpenMP support"
-        assert not _openmp_supported() and match in str(err)
+    else:
+        try:
+            # OpenMP not supported, expecting an error
+            assert_run_python_script("import sklearn", ignore_warnings=False)
+        except AssertionError as err:
+            # check that the error comes from the OpenMP warning
+            match = "Scikit-learn has been built without OpenMP support"
+            assert match in str(err)
