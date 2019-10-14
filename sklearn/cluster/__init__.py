@@ -14,6 +14,7 @@ from .dbscan_ import dbscan, DBSCAN
 from .optics_ import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)
 from .bicluster import SpectralBiclustering, SpectralCoclustering
+from .fabia import FabiaBiclustering
 from .birch import Birch
 
 __all__ = ['AffinityPropagation',
@@ -39,4 +40,5 @@ __all__ = ['AffinityPropagation',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
-           'SpectralCoclustering']
+           'SpectralCoclustering',
+           'FabiaBiclustering']
