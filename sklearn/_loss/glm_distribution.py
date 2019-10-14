@@ -34,13 +34,8 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     Methods
     -------
-    deviance
-    deviance_derivative
     in_y_range
     unit_deviance
-    unit_deviance_derivative
-    unit_variance
-    unit_variance_derivative
 
     References
     ----------
@@ -65,40 +60,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
             return np.greater_equal(y, self._lower_bound.value)
         else:
             return np.greater(y, self._lower_bound.value)
-
-    @abstractmethod
-    def unit_variance(self, y_pred):
-        r"""Compute the unit variance function.
-
-        The unit variance :math:`v(y_\textrm{pred})` determines the variance as
-        a function of the mean :math:`y_\textrm{pred}` by
-        :math:`\mathrm{Var}[Y_i] = \phi/s_i*v(y_\textrm{pred}_i)`.
-        It can also be derived from the unit deviance
-        :math:`d(y,y_\textrm{pred})` as
-
-        .. math:: v(y_\textrm{pred}) = \frac{2}{
-            \frac{\partial^2 d(y,y_\textrm{pred})}{
-            \partialy_\textrm{pred}^2}}\big|_{y=y_\textrm{pred}}
-
-        See also :func:`variance`.
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Predicted mean.
-        """
-
-    @abstractmethod
-    def unit_variance_derivative(self, y_pred):
-        r"""Compute the derivative of the unit variance w.r.t. y_pred.
-
-        Return :math:`v'(y_\textrm{pred})`.
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Target values.
-        """
 
     @abstractmethod
     def unit_deviance(self, y, y_pred, check_input=False):
@@ -168,25 +129,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         """
         return np.sum(weights * self.unit_deviance(y, y_pred))
 
-    def deviance_derivative(self, y, y_pred, weights=1):
-        r"""Compute the derivative of the deviance w.r.t. y_pred.
-
-        It gives :math:`\frac{\partial}{\partial y_\textrm{pred}}
-        D(y, \y_\textrm{pred}; weights)`.
-
-        Parameters
-        ----------
-        y : array, shape (n_samples,)
-            Target values.
-
-        y_pred : array, shape (n_samples,)
-            Predicted mean.
-
-        weights : {int, array of shape (n_samples,)}, default=1
-            Weights or exposure to which variance is inverse proportional.
-        """
-        return weights * self.unit_deviance_derivative(y, y_pred)
-
 
 class TweedieDistribution(ExponentialDispersionModel):
     r"""A class for the Tweedie distribution.
@@ -246,28 +188,6 @@ class TweedieDistribution(ExponentialDispersionModel):
             raise ValueError
 
         self._power = power
-
-    def unit_variance(self, y_pred):
-        """Compute the unit variance of a Tweedie distribution
-        v(y_\textrm{pred})=y_\textrm{pred}**power.
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Predicted mean.
-        """
-        return np.power(y_pred, self.power)
-
-    def unit_variance_derivative(self, y_pred):
-        """Compute the derivative of the unit variance of a Tweedie
-        distribution v(y_pred)=power*y_pred**(power-1).
-
-        Parameters
-        ----------
-        y_pred : array of shape (n_samples,)
-            Predicted mean.
-        """
-        return self.power * np.power(y_pred, self.power - 1)
 
     def unit_deviance(self, y, y_pred, check_input=False):
         r"""Compute the unit deviance.
@@ -365,15 +285,8 @@ class GammaDistribution(TweedieDistribution):
         super().__init__(power=2)
 
 
-class InverseGaussianDistribution(TweedieDistribution):
-    """Class for the scaled InverseGaussianDistribution distribution"""
-    def __init__(self):
-        super().__init__(power=3)
-
-
 EDM_DISTRIBUTIONS = {
     'normal': NormalDistribution,
     'poisson': PoissonDistribution,
     'gamma': GammaDistribution,
-    'inverse-gaussian': InverseGaussianDistribution,
 }
