@@ -187,10 +187,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 this_estimator = clone(base_estimator)
 
                 fit_params_train = {}
-                if fit_params:
-                    for k, v in fit_params.items():
-                        check_consistent_length(y, v)
-                        fit_params_train[k] = v[train]
+                for k, v in fit_params.items():
+                    check_consistent_length(y, v)
+                    fit_params_train[k] = v[train]
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(
                         X[train], y[train],
