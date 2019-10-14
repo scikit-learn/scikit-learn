@@ -79,7 +79,7 @@ else:
     from . import __check_build
     from .base import clone
     from .utils._show_versions import show_versions
-    from .utils._openmp_helpers import _openmp_supported  # noqa
+    from .utils._openmp_helpers import _openmp_supported
     from .exceptions import EfficiencyWarning
 
     __check_build  # avoid flakes unused variable error
@@ -98,7 +98,7 @@ else:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
 
-    if not _openmp_supported():  # noqa
+    if not _openmp_supported():
         base_url = "dev" if __version__.endswith(".dev0") else "stable"
         message = textwrap.dedent(
             """
