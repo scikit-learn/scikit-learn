@@ -67,7 +67,7 @@ jobs:
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
         INSTALL_LIBOMP: 'homebrew'
-      pylatest_conda_forge:
+      pylatest_conda_compilers:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
         INSTALL_MKL: 'false'
@@ -78,7 +78,7 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
-        INSTALL_LIBOMP: 'conda-forge'
+        INSTALL_LIBOMP: 'compilers'
       
 
 - template: build_tools/azure/windows.yml
