@@ -86,7 +86,7 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
-        NO_OPENMP: 'true'
+        SKLEARN_TEST_NO_OPENMP: 'true'
 
 - template: build_tools/azure/windows.yml
   parameters:

@@ -4,7 +4,7 @@ set -e
 
 UNAMESTR=`uname`
 
-if [[ "$UNAMESTR" == "Darwin" && -z "$NO_OPENMP" ]]; then
+if [[ "$UNAMESTR" == "Darwin" && -z "$SKLEARN_TEST_NO_OPENMP" ]]; then
     # install OpenMP not present by default on osx
     HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
 
