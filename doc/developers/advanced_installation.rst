@@ -149,8 +149,8 @@ And build scikit-learn in verbose mode::
 
     pip install --verbose --editable .
 
-The compiled extensions should be built with the clang and clang++ compilers
-with the ``-fopenmp`` command line flag.
+You should see in the logs that the compiled extensions are built with the
+clang and clang++ compilers with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
