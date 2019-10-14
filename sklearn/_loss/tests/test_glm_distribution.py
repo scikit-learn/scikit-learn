@@ -1,12 +1,10 @@
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #
 # License: BSD 3 clause
-import numpy as np
 from numpy.testing import (
     assert_allclose,
     assert_array_equal,
 )
-from scipy.optimize import check_grad
 import pytest
 
 from sklearn._loss.glm_distribution import (
