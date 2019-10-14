@@ -47,6 +47,7 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
                                       extra_postargs=extra_postargs)
 
             # Run test program
+            # will raise a CalledProcessError if return code was non-zero
             output = subprocess.check_output('./test_program')
             output = output.decode(sys.stdout.encoding or 'utf-8').splitlines()
         except Exception:
