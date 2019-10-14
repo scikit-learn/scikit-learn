@@ -75,7 +75,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p)
     >>> X = np.array([[0, 1], [2, 3]])
-    >>> transformer.transform(X)  # doctest: +ELLIPSIS
+    >>> transformer.transform(X)
     array([[0.       , 0.6931...],
            [1.0986..., 1.3862...]])
     """
