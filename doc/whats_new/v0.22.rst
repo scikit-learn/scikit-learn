@@ -625,11 +625,11 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
-  - ``choose_check_classifiers_labels``
-  - ``enforce_estimator_tags_y``
-  - ``optimize.newton_cg`
-  - ``random.random_choice_csc``
-  - ``safe_indexing``
+  - ``utils.choose_check_classifiers_labels``
+  - ``utils.enforce_estimator_tags_y``
+  - ``utils.optimize.newton_cg`
+  - ``utils.random.random_choice_csc``
+  - ``utils.safe_indexing``
   - ``utils.mocking``
   - ``utils.fast_dict``
   - ``utils.seq_dataset``
