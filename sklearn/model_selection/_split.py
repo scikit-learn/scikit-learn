@@ -3,10 +3,11 @@ The :mod:`sklearn.model_selection._split` module includes classes and
 functions to split the data based on a preset strategy.
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
-#         Gael Varoquaux <gael.varoquaux@normalesup.org>,
+# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Raghav RV <rvraghav93@gmail.com>
+#         Leandro Hermida <hermidal@cs.umd.edu>
 # License: BSD 3 clause
 
 from collections.abc import Iterable
@@ -1755,7 +1756,7 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
         of groups to include in the test split (rounded up). If int,
         represents the absolute number of test groups. If None, the value is
         set to the complement of the train size. By default, the value is set
-        to 0.2.
+        to 0.1.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1771,6 +1772,34 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import StratifiedGroupShuffleSplit
+    >>> X = np.ones(shape=(15, 2))
+    >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0])
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6])
+    >>> print(groups.shape)
+    (15,)
+    >>> sgss = StratifiedGroupShuffleSplit(n_splits=3, train_size=.7,
+    ...                                    random_state=43)
+    >>> sgss.get_n_splits()
+    3
+    >>> for train_idx, test_idx in sgss.split(X, y, groups):
+    ...     print("TRAIN:", groups[train_idx])
+    ...     print("      ", y[train_idx])
+    ...     print(" TEST:", groups[test_idx])
+    ...     print("      ", y[test_idx])
+    TRAIN: [2 2 2 4 5 5 5 5 6 6]
+           [1 1 1 0 1 1 1 1 0 0]
+     TEST: [1 1 3 3 3]
+           [0 0 1 1 1]
+    TRAIN: [1 1 2 2 2 3 3 3 4]
+           [0 0 1 1 1 1 1 1 0]
+     TEST: [5 5 5 5 6 6]
+           [1 1 1 1 0 0]
+    TRAIN: [1 1 2 2 2 3 3 3 6 6]
+           [0 0 1 1 1 1 1 1 0 0]
+     TEST: [4 5 5 5 5]
+           [0 1 1 1 1]
     """
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
@@ -1780,7 +1809,7 @@ class StratifiedGroupShuffleSplit(StratifiedShuffleSplit):
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
-        self._default_test_size = 0.2
+        self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups):
         y = check_array(y, ensure_2d=False, dtype=None)
