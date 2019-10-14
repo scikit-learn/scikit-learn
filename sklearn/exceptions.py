@@ -100,8 +100,9 @@ class DataDimensionalityWarning(UserWarning):
     ...     SparseRandomProjection(n_components=n_features + 1).fit(data_coo)
     ...     print(w[-1].message)
     SparseRandomProjection(n_components=1001)
-    The number of components is higher than the number of features: n_features < n_components \
-            (1000 < 1001).The dimensionality of the problem will not be reduced.
+    The number of components is higher than the number of features: \
+            n_features < n_components (1000 < 1001).The dimensionality \
+            of the problem will not be reduced.
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.
