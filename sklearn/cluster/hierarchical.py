@@ -21,7 +21,7 @@ from ..utils.validation import check_memory
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from ..utils.fast_dict import IntFloatDict
+from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
 from ..utils import deprecated
 
