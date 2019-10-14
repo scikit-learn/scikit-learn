@@ -130,8 +130,8 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
 
 ##############################################################################
 #
-# 1. Loading datasets and pre-processing
-# --------------------------------------
+# Loading datasets, basic feature extraction and target definitions
+# -----------------------------------------------------------------
 #
 # We construct the freMTPL2 dataset by joining the freMTPL2freq table,
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
@@ -170,7 +170,13 @@ column_trans = ColumnTransformer(
 )
 X = column_trans.fit_transform(df)
 
+# Insurances companies are interested in modeling the Pure Premium, that is
+# the expected total claim amount per unit of exposure for each policyholder
+# in their portfolio:
+df["PurePremium"] = df["ClaimAmount"] / df["Exposure"]
 
+# This can be inderectly approximated by a 2-step modeling the product of the
+# Frequency times the average claim amount per claim:
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 
@@ -178,8 +184,8 @@ print(df[df.ClaimAmount > 0].head())
 
 ##############################################################################
 #
-# 2. Frequency model -- Poisson distribution
-# -------------------------------------------
+# Frequency model -- Poisson distribution
+# ---------------------------------------
 #
 # The number of claims (``ClaimNb``) is a positive integer that can be modeled
 # as a Poisson distribution. It is then assumed to be the number of discrete
@@ -190,47 +196,50 @@ print(df[df.ClaimAmount > 0].head())
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
-# Some of the features are colinear, we use a weak penalization to avoid
-# numerical issues.
-glm_freq = PoissonRegressor(alpha=1e-2)
-glm_freq.fit(X_train, df_train.Frequency, sample_weight=df_train.Exposure)
+# The parameters of the model are estimated by minimizing the Poisson deviance
+# on the training set via a quasi-Newton solver: l-BFGS. Some of the features
+# are colinear, we use a weak penalization to avoid numerical issues.
+glm_freq = PoissonRegressor(alpha=1e-3)
+glm_freq.fit(X_train, df_train["Frequency"],
+             sample_weight=df_train["Exposure"])
 
 
 def score_estimator(
     estimator, X_train, X_test, df_train, df_test, target, weights,
-    power=None,
+    tweedie_powers=None,
 ):
     """Evaluate an estimator on train and test sets with different metrics"""
-    res = []
+    if isinstance(estimator, tuple):
+        model_name = " * ".join(e.__class__.__name__ for e in estimator)
+    else:
+        model_name = estimator.__class__.__name__
+    print("\nEvaluation of {} of target {} ".format(model_name, target))
 
+    metrics = [
+        ("D² explained", None),
+        ("mean abs. error", mean_absolute_error),
+        ("mean squared error", mean_squared_error),
+    ]
+    if tweedie_powers:
+        metrics += [(
+            "mean Tweedie deviance (p={:.4f})".format(power),
+            partial(mean_tweedie_deviance, power=power)
+        ) for power in tweedie_powers]
+
+    res = []
     for subset_label, X, df in [
         ("train", X_train, df_train),
         ("test", X_test, df_test),
     ]:
         y, _weights = df[target], df[weights]
-
-        for score_label, metric in [
-            ("D² explained", None),
-            ("mean deviance", mean_tweedie_deviance),
-            ("mean abs. error", mean_absolute_error),
-            ("mean squared error", mean_squared_error),
-        ]:
+        for score_label, metric in metrics:
             if isinstance(estimator, tuple) and len(estimator) == 2:
                 # Score the model consisting of the product of frequency and
-                # severity models, denormalized by the exposure values.
+                # severity models.
                 est_freq, est_sev = estimator
-                y_pred = (df.Exposure.values * est_freq.predict(X) *
-                          est_sev.predict(X))
+                y_pred = est_freq.predict(X) * est_sev.predict(X)
             else:
                 y_pred = estimator.predict(X)
-                if power is None:
-                    power = getattr(getattr(estimator, "_family_instance"),
-                                    "power")
-
-            if score_label == "mean deviance":
-                if power is None:
-                    continue
-                metric = partial(mean_tweedie_deviance, power=power)
 
             if metric is None:
                 if not hasattr(estimator, "score"):
@@ -266,8 +275,8 @@ print(scores)
 
 ##############################################################################
 #
-# We can visually compare observed and predicted values, aggregated by
-# the drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
+# We can visually compare observed and predicted values, aggregated by the
+# drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
 
 fig, ax = plt.subplots(ncols=2, nrows=2, figsize=(16, 8))
@@ -325,11 +334,11 @@ plot_obs_pred(
 #
 # According to the observed data, the frequency of accidents is higher for
 # drivers younger than 30 years old, and it positively correlated with the
-# `BonusMalus` variable. Our model is able to mostly correctly model
-# this behaviour.
+# `BonusMalus` variable. Our model is able to mostly correctly model this
+# behaviour.
 #
-# 3. Severity model -  Gamma distribution
-# ---------------------------------------
+# Severity Model -  Gamma distribution
+# ------------------------------------
 # The mean claim amount or severity (`AvgClaimAmount`) can be empirically
 # shown to follow approximately a Gamma distribution. We fit a GLM model for
 # the severity with the same features as the frequency model.
@@ -343,14 +352,13 @@ plot_obs_pred(
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GammaRegressor()
+glm_sev = GammaRegressor(alpha=10., max_iter=10000)
 
 glm_sev.fit(
     X_train[mask_train.values],
     df_train.loc[mask_train, "AvgClaimAmount"],
     sample_weight=df_train.loc[mask_train, "ClaimNb"],
 )
-
 
 scores = score_estimator(
     glm_sev,
@@ -365,11 +373,13 @@ print(scores)
 
 ##############################################################################
 #
-# Here, the scores for the test data call for caution as they are significantly
-# worse than for the training data indicating an overfit.
-# Note that the resulting model is the average claim amount per claim. As such,
-# it is conditional on having at least one claim, and cannot be used to predict
-# the average claim amount per policy in general.
+# Here, the scores for the test data call for caution as they are
+# significantly worse than for the training data indicating an overfit despite
+# the strong regularization.
+#
+# Note that the resulting model is the average claim amount per claim. As
+# such, it is conditional on having at least one claim, and cannot be used to
+# predict the average claim amount per policy in general.
 
 print("Mean AvgClaim Amount per policy:              %.2f "
       % df_train["AvgClaimAmount"].mean())
@@ -386,7 +396,6 @@ print("Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
 
 fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(16, 6))
 
-# plot DivAge
 plot_obs_pred(
     df=df_train.loc[mask_train],
     feature="DrivAge",
@@ -416,79 +425,63 @@ plt.tight_layout()
 # Overall, the drivers age (``DrivAge``) has a weak impact on the claim
 # severity, both in observed and predicted data.
 #
-# 4. Total claim amount -- Compound Poisson Gamma distribution
-# ------------------------------------------------------------
+# Pure Premium Modeling via a Product of Frequency and Severity Models
+# --------------------------------------------------------------------
+# As mentioned in the introduction, the total claim amount per unit of
+# exposure can be modeled either as the product of the frequency model by the
+# severity model.
 #
-# As mentioned in the introduction, the total claim amount can be modeled
-# either as the product of the frequency model by the severity model,
-# denormalized by exposure. In the following code sample, the
-# ``score_estimator`` is extended to score such a model. The mean deviance is
-# computed assuming a Tweedie distribution with ``power=2`` to be comparable
-# with the model from the following section:
+# To quantify the aggregate performance of this product model, one can compute
+# the deviance of Tweedie distribution which is equivalent to a com.
+# In the following code sample, the ``score_estimator`` is extended to score
+# such a model.
+#
+# The mean deviance is computed assuming a Tweedie distribution with a fixed
+# grid of values for the power parameter to be comparable with the model from
+# the following section:
 
-eps = 1e-4
+tweedie_powers = [1.5, 1.7, 1.8, 1.9, 1.99, 1.999, 1.9999]
 scores = score_estimator(
     (glm_freq, glm_sev),
     X_train,
     X_test,
     df_train,
     df_test,
-    target="ClaimAmount",
+    target="PurePremium",
     weights="Exposure",
-    power=2-eps,
+    tweedie_powers=tweedie_powers,
 )
 print(scores)
 
 
 ##############################################################################
 #
+# Pure Premium Modeling Using a Single Compound Poisson Gamma Model
+# -----------------------------------------------------------------
 # Instead of taking the product of two independently fit models for frequency
 # and severity one can directly model the total loss is with a unique Compound
 # Poisson Gamma generalized linear model (with a log link function). This
-# model is a special case of the Tweedie model with a power parameter :math:`p
+# model is a special case of the Tweedie GLM with a "power" parameter :math:`p
 # \in (1, 2)`.
 #
-# We determine the optimal hyperparameter ``p`` with a grid search so as to
-# minimize the deviance:
+# Here we fix apriori the "power" parameter of the Tweedie model to some
+# arbitrary value in the valid range. Ideally one would select this value via
+# grid-search by minimizing the negative log-likelihood of the Tweedie model
+# but unfortunately the current implementation does not allow for this (yet).
 
-from sklearn.model_selection import GridSearchCV
-
-# exclude upper bound as power>=2 as p=2 would lead to an undefined unit
-# deviance on data points with y=0.
-params = {"power": np.linspace(1 + eps, 2 - eps, 5)}
-
-X_train_small, _, df_train_small, _ = train_test_split(
-    X_train, df_train, train_size=5000)
-
-# This can takes a while on the full training set, therefore we do the
-# hyper-parameter search on a random subset, hoping that the best value of
-# power does not depend too much on the dataset size. We use a bit
-# penalization to avoid numerical issues with colinear features and speed-up
-# convergence.
-glm_total = TweedieRegressor(max_iter=10000, alpha=1e-2)
-search = GridSearchCV(
-    glm_total, cv=3,
-    param_grid=params, n_jobs=-1, verbose=10,
-    refit=False,
-)
-search.fit(
-    X_train_small, df_train_small["ClaimAmount"],
-    sample_weight=df_train_small["Exposure"]
-)
-print("Best hyper-parameters: %s" % search.best_params_)
-
-glm_total.set_params(**search.best_params_)
-glm_total.fit(X_train, df_train["ClaimAmount"],
-              sample_weight=df_train["Exposure"])
+glm_pure_premium = TweedieRegressor(power=1.999, alpha=.1, max_iter=10000)
+glm_pure_premium.fit(X_train, df_train["PurePremium"],
+                     sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
-    glm_total,
+    glm_pure_premium,
     X_train,
     X_test,
     df_train,
     df_test,
-    target="ClaimAmount",
+    target="PurePremium",
     weights="Exposure",
+    tweedie_powers=tweedie_powers
 )
 print(scores)
 
@@ -500,23 +493,25 @@ print(scores)
 #
 # We can additionally validate these models by comparing observed and
 # predicted total claim amount over the test and train subsets. We see that,
-# on average, the frequency-severity model underestimates the total claim
-# amount, whereas the Tweedie model overestimates.
+# on average, both model tend to underestimate the total claim (but this
+# behavior depends on the amount of regularization).
 
 res = []
 for subset_label, X, df in [
     ("train", X_train, df_train),
     ("test", X_test, df_test),
 ]:
+    exposure = df["Exposure"].values
     res.append(
         {
             "subset": subset_label,
             "observed": df["ClaimAmount"].values.sum(),
             "predicted, frequency*severity model": np.sum(
-                df["Exposure"].values*glm_freq.predict(X)*glm_sev.predict(X)
+                exposure * glm_freq.predict(X) * glm_sev.predict(X)
             ),
             "predicted, tweedie, power=%.2f"
-            % glm_total.power: np.sum(glm_total.predict(X)),
+            % glm_pure_premium.power: np.sum(
+                exposure * glm_pure_premium.predict(X)),
         }
     )
 
@@ -525,62 +520,73 @@ print(pd.DataFrame(res).set_index("subset").T)
 ##############################################################################
 #
 # Finally, we can compare the two models using a plot of cumulated claims: for
-# each model, the policyholders are ranked from riskiest to safest and the
-# actual cumulated claims are plotted against the cumulated exposure.
+# each model, the policyholders are ranked from safest to riskiest and the
+# fraction of observed total cumulated claims is plotted on the y axis. This
+# plot is often called the ordered Lorenz curve of the model.
 #
-# The area under the curve can be used as a model selection metric to quantify
-# the ability of the model to rank policyholders. Note that this metric does
-# not reflect the ability of the models to make accurate predictions in terms
-# of absolute value of total claim amounts but only in terms of relative
-# amounts as a ranking metric.
+# The Gini coefficient (based on the area under the curve) can be used as a
+# model selection metric to quantify the ability of the model to rank
+# policyholders. Note that this metric does not reflect the ability of the
+# models to make accurate predictions in terms of absolute value of total
+# claim amounts but only in terms of relative amounts as a ranking metric.
 #
 # Both models are able to rank policyholders by risky-ness significantly
 # better than chance although they are also both far from perfect due to the
 # natural difficulty of the prediction problem from few features.
+#
+# Note that the Gini index only characterize the ranking performance of the
+# model but not its calibration: any monotonic transformation of the
+# predictions leaves the Gini index of the model unchanged.
+#
+# Finally on should highlight that the Compound Poisson Gamma model that
+# is directly fit on the pure premium is operationally simpler to develop and
+# maintain as it consists in a single scikit-learn estimator instead of a
+# pair of models.
 
 
-def _cumulated_claim_amount(y_true, y_pred, exposure):
-    ranking = np.argsort(y_pred)[::-1]  # from riskiest to safest
+def ordered_lorenz_curve(y_true, y_pred, exposure):
+    y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
+    exposure = np.asarray(exposure)
+
+    # order samples by increasing predicted risk:
+    ranking = np.argsort(y_pred)
     ranked_exposure = exposure[ranking]
-    ranked_claim_amount = y_true[ranking]
-    cumulated_exposure = np.cumsum(ranked_exposure)
-    cumulated_exposure /= cumulated_exposure[-1]
-    cumulated_claim_amount = np.cumsum(ranked_claim_amount)
+    ranked_pure_premium = y_true[ranking]
+    cumulated_claim_amount = np.cumsum(ranked_pure_premium * ranked_exposure)
     cumulated_claim_amount /= cumulated_claim_amount[-1]
-    return cumulated_exposure, cumulated_claim_amount
+    cumulated_samples = np.linspace(0, 1, len(cumulated_claim_amount))
+    return cumulated_samples, cumulated_claim_amount
 
 
 fig, ax = plt.subplots(figsize=(8, 8))
 
 y_pred_product = glm_freq.predict(X_test) * glm_sev.predict(X_test)
-y_pred_total = glm_total.predict(X_test)
+y_pred_total = glm_pure_premium.predict(X_test)
 
 for label, y_pred in [("Frequency * Severity model", y_pred_product),
                       ("Compound Poisson Gamma", y_pred_total)]:
-    cum_exposure, cum_claims = _cumulated_claim_amount(
-        df_test["ClaimAmount"].values,
-        y_pred,
-        df_test["Exposure"].values)
-    area = auc(cum_exposure, cum_claims)
-    label += " (area under curve: {:.3f})".format(area)
-    ax.plot(cum_exposure, cum_claims, linestyle="-", label=label)
+    ordered_samples, cum_claims = ordered_lorenz_curve(
+        df_test["PurePremium"], y_pred, df_test["Exposure"])
+    gini = 1 - 2 * auc(ordered_samples, cum_claims)
+    label += " (Gini index: {:.3f})".format(gini)
+    ax.plot(ordered_samples, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-cum_exposure, cum_claims = _cumulated_claim_amount(
-    df_test["ClaimAmount"].values,
-    df_test["ClaimAmount"].values,
-    df_test["Exposure"].values)
-area = auc(cum_exposure, cum_claims)
-label = "Oracle (area under curve: {:.3f})".format(area)
-ax.plot(cum_exposure, cum_claims, linestyle="-.", color="gray", label=label)
+ordered_samples, cum_claims = ordered_lorenz_curve(
+    df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"])
+gini = 1 - 2 * auc(ordered_samples, cum_claims)
+label = "Oracle (Gini index: {:.3f})".format(gini)
+ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray",
+        label=label)
 
-# Random Baseline
+# Random baseline
 ax.plot([0, 1], [0, 1], linestyle="--", color="black",
         label="Random baseline")
 ax.set(
-    title="Cumulated claim amount by model",
-    xlabel='Fraction of exposure (from riskiest to safest)',
+    title="Ordered Lorenz Curves",
+    xlabel=('Fraction of policyholds\n'
+            '(ordered by model from safest to riskiest)'),
     ylabel='Fraction of total claim amount'
 )
-ax.legend(loc="lower right")
+ax.legend(loc="upper left")
 plt.plot()
