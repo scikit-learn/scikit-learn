@@ -87,7 +87,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         y_pred : array of shape (n_samples,)
             Predicted mean.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def unit_variance_derivative(self, y_pred):
@@ -100,7 +99,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         y_pred : array of shape (n_samples,)
             Target values.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def unit_deviance(self, y, y_pred, check_input=False):
@@ -127,7 +125,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         deviance: array of shape (n_samples,)
             Computed deviance
         """
-        pass  # pragma: no cover
 
     def unit_deviance_derivative(self, y, y_pred):
         r"""Compute the derivative of the unit deviance w.r.t. y_pred.

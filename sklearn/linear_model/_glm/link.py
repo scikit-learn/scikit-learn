@@ -26,7 +26,6 @@ class BaseLink(metaclass=ABCMeta):
         y_pred : array of shape (n_samples,)
             Usually the (predicted) mean.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def derivative(self, y_pred):
@@ -37,7 +36,6 @@ class BaseLink(metaclass=ABCMeta):
         y_pred : array of shape (n_samples,)
             Usually the (predicted) mean.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def inverse(self, lin_pred):
@@ -51,7 +49,6 @@ class BaseLink(metaclass=ABCMeta):
         lin_pred : array of shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def inverse_derivative(self, lin_pred):
@@ -62,7 +59,6 @@ class BaseLink(metaclass=ABCMeta):
         lin_pred : array of shape (n_samples,)
             Usually the (fitted) linear predictor.
         """
-        pass  # pragma: no cover
 
 
 class IdentityLink(BaseLink):
