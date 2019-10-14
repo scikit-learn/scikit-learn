@@ -1,31 +1,9 @@
 
 .. _advanced-installation:
 
-===================================
-Advanced installation instructions
-===================================
-
-There are different ways to get scikit-learn installed:
-
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version
-    and pre-build packages are available for most platforms.
-
-  * Install the version of scikit-learn provided by your
-    :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is a quick option for those who have operating systems
-    that distribute scikit-learn. It might not provide the latest release
-    version.
-
-  * :ref:`Building the package from source
-    <install_bleeding_edge>`. This is best for users who want the
-    latest-and-greatest features and aren't afraid of running
-    brand-new code. This document describes how to build from source.
-
-.. note::
-
-    If you wish to contribute to the project, you need to
-    :ref:`install the latest development version<install_bleeding_edge>`.
+==================================================================
+Installing the development version of scikit-learn (master branch)
+==================================================================
 
 .. _install_nightly_builds:
 
@@ -242,12 +220,20 @@ The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
 You will need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/de/downloads/>`_.
+<https://visualstudio.microsoft.com/downloads/>`_.
+
+.. warning::
+	You DO NOT need to install Visual Studio 2019. 
+	You only need the "Build Tools for Visual Studio 2019", 
+	under "All downloads" -> "Tools for Visual Studio 2019". 
 
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+Please be aware that the path above might be different from user to user. 
+The aim is to point to the "vcvarsall.bat" file.
 
 And build scikit-learn from this environment::
 

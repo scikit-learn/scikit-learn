@@ -1,11 +1,15 @@
 """Nearest Neighbors graph functions"""
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
+#         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-
 from .base import KNeighborsMixin, RadiusNeighborsMixin
+from .base import NeighborsBase
+from .base import UnsupervisedMixin
 from .unsupervised import NearestNeighbors
+from ..base import TransformerMixin
+from ..utils.validation import check_is_fitted
 
 
 def _check_params(X, metric, p, metric_params):
@@ -21,14 +25,16 @@ def _check_params(X, metric, p, metric_params):
                     func_param, param_name, est_params[param_name]))
 
 
-def _query_include_self(X, include_self):
+def _query_include_self(X, include_self, mode):
     """Return the query based on include_self param"""
-    if include_self:
-        query = X._fit_X
-    else:
-        query = None
+    if include_self == 'auto':
+        include_self = mode == 'connectivity'
 
-    return query
+    # it does not include each sample as its own neighbors
+    if not include_self:
+        X = None
+
+    return X
 
 
 def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
@@ -39,7 +45,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     Parameters
     ----------
-    X : array-like or BallTree, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features) or BallTree
         Sample data, in the form of a numpy array or a precomputed
         :class:`BallTree`.
 
@@ -65,10 +71,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     metric_params : dict, optional
         additional keyword arguments for the metric function.
 
-    include_self : bool, default=False.
+    include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibility.
+        itself. If 'auto', then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -78,7 +84,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+    A : sparse graph in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
@@ -101,7 +107,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     else:
         _check_params(X, metric, p, metric_params)
 
-    query = _query_include_self(X, include_self)
+    query = _query_include_self(X._fit_X, include_self, mode)
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
@@ -117,7 +123,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Parameters
     ----------
-    X : array-like or BallTree, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features) or BallTree
         Sample data, in the form of a numpy array or a precomputed
         :class:`BallTree`.
 
@@ -143,10 +149,10 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     metric_params : dict, optional
         additional keyword arguments for the metric function.
 
-    include_self : bool, default=False
+    include_self : bool or 'auto', default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If `None`, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibility.
+        itself. If 'auto', then True is used for mode='connectivity' and False
+        for mode='distance'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -156,7 +162,7 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     Returns
     -------
-    A : sparse matrix in CSR format, shape = [n_samples, n_samples]
+    A : sparse graph in CSR format, shape = [n_samples, n_samples]
         A[i, j] is assigned the weight of edge that connects i to j.
 
     Examples
@@ -180,5 +186,284 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     else:
         _check_params(X, metric, p, metric_params)
 
-    query = _query_include_self(X, include_self)
+    query = _query_include_self(X._fit_X, include_self, mode)
     return X.radius_neighbors_graph(query, radius, mode)
+
+
+class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
+                            UnsupervisedMixin, TransformerMixin):
+    """Transform X into a (weighted) graph of k nearest neighbors
+
+    The transformed data is a sparse graph as returned by kneighbors_graph.
+
+    Read more in the :ref:`User Guide <neighbors_transformer>`.
+
+    .. versionadded:: 0.22
+
+    Parameters
+    ----------
+    mode : {'distance', 'connectivity'}, default='distance'
+        Type of returned matrix: 'connectivity' will return the connectivity
+        matrix with ones and zeros, and 'distance' will return the distances
+        between neighbors according to the given metric.
+
+    n_neighbors : int, default=5
+        Number of neighbors for each sample in the transformed sparse graph.
+        For compatibility reasons, as each sample is considered as its own
+        neighbor, one extra neighbor will be computed when mode == 'distance'.
+        In this case, the sparse graph contains (n_neighbors + 1) neighbors.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, default=30
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+
+    metric : string or callable, default='minkowski'
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : int, default=2
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, default=None
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, default=1
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    Examples
+    --------
+    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.neighbors import KNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
+    ...     Isomap(neighbors_algorithm='precomputed'))
+    """
+    def __init__(self, mode='distance', n_neighbors=5, algorithm='auto',
+                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
+                 n_jobs=1):
+        super(KNeighborsTransformer, self).__init__(
+            n_neighbors=n_neighbors, radius=None, algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params, n_jobs=n_jobs)
+        self.mode = mode
+
+    def transform(self, X):
+        """Computes the (weighted) graph of Neighbors for points in X
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples_transform, n_features)
+            Sample data
+
+        Returns
+        -------
+        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is always explicit.
+        """
+        check_is_fitted(self)
+        add_one = self.mode == 'distance'
+        return self.kneighbors_graph(X, mode=self.mode,
+                                     n_neighbors=self.n_neighbors + add_one)
+
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training set.
+
+        y : ignored
+
+        Returns
+        -------
+        Xt : CSR sparse graph of shape (n_samples, n_samples)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is always explicit.
+        """
+        return self.fit(X).transform(X)
+
+
+class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
+                                 UnsupervisedMixin, TransformerMixin):
+    """Transform X into a (weighted) graph of neighbors nearer than a radius
+
+    The transformed data is a sparse graph as returned by
+    radius_neighbors_graph.
+
+    Read more in the :ref:`User Guide <neighbors_transformer>`.
+
+    .. versionadded:: 0.22
+
+    Parameters
+    ----------
+    mode : {'distance', 'connectivity'}, default='distance'
+        Type of returned matrix: 'connectivity' will return the connectivity
+        matrix with ones and zeros, and 'distance' will return the distances
+        between neighbors according to the given metric.
+
+    radius : float, default=1.
+        Radius of neighborhood in the transformed sparse graph.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, default='auto'
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, default=30
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+
+    metric : string or callable, default='minkowski'
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : int, default=2
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, default=None
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int, default=1
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> from sklearn.neighbors import RadiusNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+    ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
+    ...     DBSCAN(min_samples=30, metric='precomputed'))
+    """
+    def __init__(self, mode='distance', radius=1., algorithm='auto',
+                 leaf_size=30, metric='minkowski', p=2, metric_params=None,
+                 n_jobs=1):
+        super(RadiusNeighborsTransformer, self).__init__(
+            n_neighbors=None, radius=radius, algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params, n_jobs=n_jobs)
+        self.mode = mode
+
+    def transform(self, X):
+        """Computes the (weighted) graph of Neighbors for points in X
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples_transform, n_features)
+            Sample data
+
+        Returns
+        -------
+        Xt : CSR sparse graph of shape (n_samples_transform, n_samples_fit)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is always explicit.
+        """
+        check_is_fitted(self)
+        return self.radius_neighbors_graph(X, mode=self.mode,
+                                           sort_results=True)
+
+    def fit_transform(self, X, y=None):
+        """Fit to data, then transform it.
+
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training set.
+
+        y : ignored
+
+        Returns
+        -------
+        Xt : CSR sparse graph, shape (n_samples, n_samples)
+            Xt[i, j] is assigned the weight of edge that connects i to j.
+            Only the neighbors have an explicit value.
+            The diagonal is always explicit.
+        """
+        return self.fit(X).transform(X)

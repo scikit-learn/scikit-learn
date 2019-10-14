@@ -761,7 +761,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
+class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -1358,6 +1358,9 @@ class LarsCV(Lars):
                          n_nonzero_coefs=500,
                          eps=eps, copy_X=copy_X, fit_path=True)
 
+    def _more_tags(self):
+        return {'multioutput': False}
+
     def fit(self, X, y):
         """Fit the model using X, y as training data.
 
@@ -1728,6 +1731,9 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+
+    def _more_tags(self):
+        return {'multioutput': False}
 
     def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.

@@ -145,6 +145,7 @@
 cimport cython
 cimport numpy as np
 from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
+from libc.math cimport fmin, fmax
 from libc.stdlib cimport calloc, malloc, free
 from libc.string cimport memcpy
 
@@ -265,7 +266,7 @@ CLASS_DOC = \
 
 Parameters
 ----------
-X : array-like, shape = [n_samples, n_features]
+X : array-like of shape (n_samples, n_features)
     n_samples is the number of points in the data set, and
     n_features is the dimension of the parameter space.
     Note: if X is a C-contiguous array of doubles then data will
@@ -1276,7 +1277,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query
         k : integer  (default = 1)
             The number of nearest neighbors to return
@@ -1386,7 +1387,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query
         r : distance within which neighbors are returned
             r can be a single value, or an array of values of shape
@@ -1583,7 +1584,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data.
         h : float
@@ -1716,7 +1717,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data.
         r : array_like
@@ -2610,12 +2611,6 @@ def nodeheap_sort(DTYPE_t[::1] vals):
 
     return np.asarray(vals_sorted), np.asarray(indices)
 
-# Reimplementation for MSVC support
-cdef inline double fmin(double a, double b):
-    return min(a, b)
-
-cdef inline double fmax(double a, double b) nogil:
-    return max(a, b)
 
 cdef inline DTYPE_t _total_node_weight(NodeData_t* node_data,
                                        DTYPE_t* sample_weight,

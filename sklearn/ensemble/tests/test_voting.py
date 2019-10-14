@@ -37,9 +37,9 @@ X_r, y_r = datasets.load_boston(return_X_y=True)
 
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
-    msg = ('Invalid `estimators` attribute, `estimators` should be'
-           ' a list of (string, estimator) tuples')
-    assert_raise_message(AttributeError, msg, eclf.fit, X, y)
+    msg = ("Invalid 'estimators' attribute, 'estimators' should be"
+           " a list of (string, estimator) tuples.")
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
     clf = LogisticRegression(random_state=1)
 
@@ -328,12 +328,12 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         eclf3.fit(X, y, sample_weight)
 
     # check that _parallel_fit_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
-    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
+    class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
         def fit(self, X, y, sample_weight):
             raise TypeError('Error unrelated to sample_weight.')
     clf = ClassifierErrorFit()
@@ -343,7 +343,7 @@ def test_sample_weight():
 
 def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
-    class MockClassifier(BaseEstimator, ClassifierMixin):
+    class MockClassifier(ClassifierMixin, BaseEstimator):
         """Mock Classifier to check that sample_weight is received as kwargs"""
         def fit(self, X, y, *args, **sample_weight):
             assert 'sample_weight' in sample_weight
@@ -417,7 +417,7 @@ def test_set_estimator_none(drop):
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    msg = 'All estimators are None or "drop". At least one is required!'
+    msg = 'All estimators are dropped. At least one is required'
     assert_raise_message(
         ValueError, msg, eclf2.set_params(lr=drop, rf=drop, nb=drop).fit, X, y)
 
@@ -524,7 +524,7 @@ def test_none_estimator_with_weights(X, y, voter, drop):
     ids=['VotingRegressor', 'VotingClassifier']
 )
 def test_check_estimators_voting_estimator(estimator):
-    # FIXME: to be removed when meta-estimators can be specified themselves
+    # FIXME: to be removed when meta-estimators can specified themselves
     # their testing parameters (for required parameters).
     check_estimator(estimator)
     check_no_attributes_set_in_init(estimator.__class__.__name__, estimator)
