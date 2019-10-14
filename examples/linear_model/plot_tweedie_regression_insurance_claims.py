@@ -538,13 +538,13 @@ print(pd.DataFrame(res).set_index("subset").T)
 # model but not its calibration: any monotonic transformation of the
 # predictions leaves the Gini index of the model unchanged.
 #
-# Finally on should highlight that the Compound Poisson Gamma model that
+# Finally one should highlight that the Compound Poisson Gamma model that
 # is directly fit on the pure premium is operationally simpler to develop and
 # maintain as it consists in a single scikit-learn estimator instead of a
-# pair of models.
+# pair of models, each with its own set of hyperparameters.
 
 
-def ordered_lorenz_curve(y_true, y_pred, exposure):
+def lorenz_curve(y_true, y_pred, exposure):
     y_true, y_pred = np.asarray(y_true), np.asarray(y_pred)
     exposure = np.asarray(exposure)
 
@@ -565,14 +565,14 @@ y_pred_total = glm_pure_premium.predict(X_test)
 
 for label, y_pred in [("Frequency * Severity model", y_pred_product),
                       ("Compound Poisson Gamma", y_pred_total)]:
-    ordered_samples, cum_claims = ordered_lorenz_curve(
+    ordered_samples, cum_claims = lorenz_curve(
         df_test["PurePremium"], y_pred, df_test["Exposure"])
     gini = 1 - 2 * auc(ordered_samples, cum_claims)
     label += " (Gini index: {:.3f})".format(gini)
     ax.plot(ordered_samples, cum_claims, linestyle="-", label=label)
 
 # Oracle model: y_pred == y_test
-ordered_samples, cum_claims = ordered_lorenz_curve(
+ordered_samples, cum_claims = lorenz_curve(
     df_test["PurePremium"], df_test["PurePremium"], df_test["Exposure"])
 gini = 1 - 2 * auc(ordered_samples, cum_claims)
 label = "Oracle (Gini index: {:.3f})".format(gini)
@@ -583,8 +583,8 @@ ax.plot(ordered_samples, cum_claims, linestyle="-.", color="gray",
 ax.plot([0, 1], [0, 1], linestyle="--", color="black",
         label="Random baseline")
 ax.set(
-    title="Ordered Lorenz Curves",
-    xlabel=('Fraction of policyholds\n'
+    title="Lorenz Curves",
+    xlabel=('Fraction of policyholders\n'
             '(ordered by model from safest to riskiest)'),
     ylabel='Fraction of total claim amount'
 )
