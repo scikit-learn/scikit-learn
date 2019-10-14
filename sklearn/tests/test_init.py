@@ -5,6 +5,8 @@ __author__ = 'Yaroslav Halchenko'
 __license__ = 'BSD'
 
 
+import pytest
+
 try:
     from sklearn import *  # noqa
     _top_import_error = None
@@ -26,13 +28,9 @@ def test_import_openmp_warning():
     # Check that a warning is printed when sklearn has been built without
     # OpenMP
     if _openmp_supported():
-        # OpenMP is supported, expecting no warning
         assert_run_python_script("import sklearn", ignore_warnings=False)
     else:
-        try:
-            # OpenMP not supported, expecting an error
+        with pytest.raises(AssertionError,
+                           match="Scikit-learn has been built"
+                                 " without OpenMP support"):
             assert_run_python_script("import sklearn", ignore_warnings=False)
-        except AssertionError as err:
-            # check that the error comes from the OpenMP warning
-            match = "Scikit-learn has been built without OpenMP support"
-            assert match in str(err)
