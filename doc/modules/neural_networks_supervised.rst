@@ -89,15 +89,9 @@ training samples::
     >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(5, 2), random_state=1)
     ...
-    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
-    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
-                  beta_1=0.9, beta_2=0.999, early_stopping=False,
-                  epsilon=1e-08, hidden_layer_sizes=(5, 2),
-                  learning_rate='constant', learning_rate_init=0.001,
-                  max_iter=200, momentum=0.9, n_iter_no_change=10,
-                  nesterovs_momentum=True, power_t=0.5, random_state=1,
-                  shuffle=True, solver='lbfgs', tol=0.0001,
-                  validation_fraction=0.1, verbose=False, warm_start=False)
+    >>> clf.fit(X, y)
+    MLPClassifier(alpha=1e-05, hidden_layer_sizes=(5, 2), random_state=1,
+                  solver='lbfgs')
 
 After fitting (training), the model can predict labels for new samples::
 
@@ -119,7 +113,7 @@ gradient descent and the gradients are calculated using Backpropagation. For
 classification, it minimizes the Cross-Entropy loss function, giving a vector
 of probability estimates :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf.predict_proba([[2., 2.], [1., 2.]])  # doctest: +ELLIPSIS
+    >>> clf.predict_proba([[2., 2.], [1., 2.]])
     array([[1.967...e-04, 9.998...-01],
            [1.967...e-04, 9.998...-01]])
 
@@ -138,21 +132,15 @@ indices where the value is `1` represents the assigned classes of that sample::
     >>> clf = MLPClassifier(solver='lbfgs', alpha=1e-5,
     ...                     hidden_layer_sizes=(15,), random_state=1)
     ...
-    >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
-    MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
-                  beta_1=0.9, beta_2=0.999, early_stopping=False,
-                  epsilon=1e-08, hidden_layer_sizes=(15,),
-                  learning_rate='constant', learning_rate_init=0.001,
-                  max_iter=200, momentum=0.9, n_iter_no_change=10,
-                  nesterovs_momentum=True, power_t=0.5,  random_state=1,
-                  shuffle=True, solver='lbfgs', tol=0.0001,
-                  validation_fraction=0.1, verbose=False, warm_start=False)
+    >>> clf.fit(X, y)
+    MLPClassifier(alpha=1e-05, hidden_layer_sizes=(15,), random_state=1,
+                  solver='lbfgs')
     >>> clf.predict([[1., 2.]])
     array([[1, 1]])
     >>> clf.predict([[0., 0.]])
     array([[0, 1]])
 
-See the examples below and the doc string of
+See the examples below and the docstring of
 :meth:`MLPClassifier.fit` for further information.
 
 .. topic:: Examples:
@@ -362,7 +350,7 @@ or want to do additional monitoring, using ``warm_start=True`` and
     >>> clf = MLPClassifier(hidden_layer_sizes=(15,), random_state=1, max_iter=1, warm_start=True)
     >>> for i in range(10):
     ...     clf.fit(X, y)
-    ...     # additional monitoring / inspection # doctest: +ELLIPSIS
+    ...     # additional monitoring / inspection
     MLPClassifier(...
 
 .. topic:: References:

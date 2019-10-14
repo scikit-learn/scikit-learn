@@ -5,18 +5,39 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
-import numpy as np
+from abc import ABCMeta, abstractmethod
 import numbers
 
+import numpy as np
+
+from joblib import effective_n_jobs
+
 from ..base import clone
+from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..utils import Bunch
 from ..utils import check_random_state
-from ..externals import six
-from ..externals.joblib import effective_n_jobs
-from abc import ABCMeta, abstractmethod
+from ..utils.metaestimators import _BaseComposition
 
 MAX_RAND_SEED = np.iinfo(np.int32).max
+
+
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise TypeError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
+    else:
+        estimator.fit(X, y)
+    return estimator
 
 
 def _set_random_states(estimator, random_state=None):
@@ -58,8 +79,7 @@ def _set_random_states(estimator, random_state=None):
         estimator.set_params(**to_set)
 
 
-class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      MetaEstimatorMixin)):
+class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for all ensemble classes.
 
     Warning: This class should not be used directly. Use derived classes
@@ -85,6 +105,8 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+    # overwrite _required_parameters from MetaEstimatorMixin
+    _required_parameters = []
 
     @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
@@ -101,7 +123,7 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
-        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+        if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
 
@@ -124,8 +146,8 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**dict((p, getattr(self, p))
-                                    for p in self.estimator_params))
+        estimator.set_params(**{p: getattr(self, p)
+                                for p in self.estimator_params})
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -160,3 +182,92 @@ def _partition_estimators(n_estimators, n_jobs):
     starts = np.cumsum(n_estimators_per_job)
 
     return n_jobs, n_estimators_per_job.tolist(), [0] + starts.tolist()
+
+
+class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
+                                 metaclass=ABCMeta):
+    """Base class for heterogeneous ensemble of learners.
+
+    Parameters
+    ----------
+    estimators : list of (str, estimator) tuples
+        The ensemble of estimators to use in the ensemble. Each element of the
+        list is defined as a tuple of string (i.e. name of the estimator) and
+        an estimator instance. An estimator can be set to `'drop'` using
+        `set_params`.
+
+    Attributes
+    ----------
+    estimators_ : list of estimators
+        The elements of the estimators parameter, having been fitted on the
+        training data. If an estimator has been set to `'drop'`, it will not
+        appear in `estimators_`.
+    """
+    _required_parameters = ['estimators']
+
+    @property
+    def named_estimators(self):
+        return Bunch(**dict(self.estimators))
+
+    @abstractmethod
+    def __init__(self, estimators):
+        self.estimators = estimators
+
+    def _validate_estimators(self):
+        if self.estimators is None or len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        # defined by MetaEstimatorMixin
+        self._validate_names(names)
+
+        has_estimator = any(est not in (None, 'drop') for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        is_estimator_type = (is_classifier if is_classifier(self)
+                             else is_regressor)
+
+        for est in estimators:
+            if est not in (None, 'drop') and not is_estimator_type(est):
+                raise ValueError(
+                    "The estimator {} should be a {}."
+                    .format(
+                        est.__class__.__name__, is_estimator_type.__name__[3:]
+                    )
+                )
+
+        return names, estimators
+
+    def set_params(self, **params):
+        """Set the parameters of an estimator from the ensemble.
+
+        Valid parameter keys can be listed with `get_params()`.
+
+        Parameters
+        ----------
+        **params : keyword arguments
+            Specific parameters using e.g.
+            `set_params(parameter_name=new_value)`. In addition, to setting the
+            parameters of the stacking estimator, the individual estimator of
+            the stacking estimators can also be set, or can be removed by
+            setting them to 'drop'.
+        """
+        super()._set_params('estimators', **params)
+        return self
+
+    def get_params(self, deep=True):
+        """Get the parameters of an estimator from the ensemble.
+
+        Parameters
+        ----------
+        deep : bool
+            Setting it to True gets the various classifiers and the parameters
+            of the classifiers as well.
+        """
+        return super()._get_params('estimators', deep=deep)

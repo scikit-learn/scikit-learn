@@ -6,12 +6,11 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-from __future__ import print_function
-
 import os
 import csv
 import sys
 import shutil
+import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -22,7 +21,7 @@ from ..utils import check_random_state
 
 import numpy as np
 
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -96,14 +95,14 @@ def load_files(container_path, description=None, categories=None,
     load the files in memory.
 
     To use text files in a scikit-learn classification or clustering algorithm,
-    you will need to use the `sklearn.feature_extraction.text` module to build
-    a feature extraction transformer that suits your problem.
+    you will need to use the :mod`~sklearn.feature_extraction.text` module to
+    build a feature extraction transformer that suits your problem.
 
     If you set load_content=True, you should also specify the encoding of the
     text using the 'encoding' parameter. For many modern text files, 'utf-8'
     will be the correct encoding. If you leave encoding equal to None, then the
     content will be made of bytes instead of Unicode, and you will not be able
-    to use most functions in `sklearn.feature_extraction.text`.
+    to use most functions in :mod:`~sklearn.feature_extraction.text`.
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
@@ -547,7 +546,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int)
+    target = data[:, -1].astype(np.int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -570,12 +569,12 @@ def load_digits(n_class=10, return_X_y=False):
 def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
-    ==============      ==================
-    Samples total       442
-    Dimensionality      10
-    Features            real, -.2 < x < .2
-    Targets             integer 25 - 346
-    ==============      ==================
+    ==============   ==================
+    Samples total    442
+    Dimensionality   10
+    Features         real, -.2 < x < .2
+    Targets          integer 25 - 346
+    ==============   ==================
 
     Read more in the :ref:`User Guide <diabetes_dataset>`.
 
@@ -623,12 +622,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    ==============    ============================
-    Samples total     20
-    Dimensionality    3 (for both data and target)
-    Features          integer
-    Targets           integer
-    ==============    ============================
+    ==============   ============================
+    Samples total    20
+    Dimensionality   3 (for both data and target)
+    Features         integer
+    Targets          integer
+    ==============   ============================
 
     Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
@@ -644,8 +643,8 @@ def load_linnerud(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: 'data' and
-        'targets', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'targets' corresponding to the physiological
+        'target', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'target' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
         In addition, you will also have access to 'data_filename',
         the physical location of linnerud data csv dataset, and
@@ -687,12 +686,12 @@ def load_linnerud(return_X_y=False):
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
-    ==============     ==============
-    Samples total                 506
-    Dimensionality                 13
-    Features           real, positive
-    Targets             real 5. - 50.
-    ==============     ==============
+    ==============   ==============
+    Samples total               506
+    Dimensionality               13
+    Features         real, positive
+    Targets           real 5. - 50.
+    ==============   ==============
 
     Read more in the :ref:`User Guide <boston_dataset>`.
 
@@ -725,8 +724,8 @@ def load_boston(return_X_y=False):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> boston = load_boston()
-    >>> print(boston.data.shape)
+    >>> X, y = load_boston(return_X_y=True)
+    >>> print(X.shape)
     (506, 13)
     """
     module_path = dirname(__file__)
@@ -796,7 +795,7 @@ def load_sample_images():
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
+                 for filename in sorted(os.listdir(module_path))
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]
@@ -812,7 +811,7 @@ def load_sample_image(image_name):
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
-    -----------
+    ----------
     image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
@@ -822,7 +821,7 @@ def load_sample_image(image_name):
         The image as a numpy array: height x width x color
 
     Examples
-    ---------
+    --------
 
     >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
@@ -897,7 +896,7 @@ def _fetch_remote(remote, dirname=None):
     downloaded file.
 
     Parameters
-    -----------
+    ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
         and checksum
@@ -921,3 +920,31 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
+
+
+def _refresh_cache(files, compress):
+    # TODO: REMOVE in v0.23
+    import joblib
+    msg = "sklearn.externals.joblib is deprecated in 0.21"
+    with warnings.catch_warnings(record=True) as warns:
+        data = tuple([joblib.load(f) for f in files])
+
+    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
+
+    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
+    for w in other_warns:
+        warnings.warn(message=w.message, category=w.category)
+
+    if refresh_needed:
+        try:
+            for value, path in zip(data, files):
+                joblib.dump(value, path, compress=compress)
+        except IOError:
+            message = ("This dataset will stop being loadable in scikit-learn "
+                       "version 0.23 because it references a deprecated "
+                       "import path. Consider removing the following files "
+                       "and allowing it to be cached anew:\n%s"
+                       % ("\n".join(files)))
+            warnings.warn(message=message, category=DeprecationWarning)
+
+    return data[0] if len(data) == 1 else data

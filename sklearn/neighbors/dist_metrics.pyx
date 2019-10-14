@@ -48,8 +48,8 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
+from .typedefs import DTYPE, ITYPE
 
 
 ######################################################################
@@ -108,7 +108,7 @@ cdef class DistanceMetric:
     """DistanceMetric class
 
     This class provides a uniform interface to fast distance metric
-    functions.  The various metrics can be accessed via the `get_metric`
+    functions.  The various metrics can be accessed via the :meth:`get_metric`
     class method and the metric string identifier (see below).
     For example, to use the Euclidean distance:
 
@@ -120,6 +120,7 @@ cdef class DistanceMetric:
            [ 5.19615242,  0.        ]])
 
     Available Metrics
+
     The following lists the string metric identifiers and the associated
     distance metric classes:
 
@@ -788,6 +789,11 @@ cdef class JaccardDistance(DistanceMetric):
             tf2 = x2[j] != 0
             nnz += (tf1 or tf2)
             n_eq += (tf1 and tf2)
+        # Based on https://github.com/scipy/scipy/pull/7373
+        # When comparing two all-zero vectors, scipy>=1.2.0 jaccard metric
+        # was changed to return 0, instead of nan.
+        if nnz == 0:
+            return 0
         return (nnz - n_eq) * 1.0 / nnz
 
 
@@ -975,8 +981,8 @@ cdef class HaversineDistance(DistanceMetric):
     The dimension of the points must be 2:
 
     .. math::
-       D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
-                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
     """
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:

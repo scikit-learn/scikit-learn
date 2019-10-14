@@ -2,15 +2,247 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_4:
+
+Version 0.20.4
+==============
+
+**July 30, 2019**
+
+This is a bug-fix release with some bug fixes applied to version 0.20.3.
+
+Changelog
+---------
+
+The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
+
+:mod:`sklearn.cluster`
+..............................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
+:mod:`sklearn.compose`
+.......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
+
+ .. _changes_0_20_3:
+
+Version 0.20.3
+==============
+
+**March 1, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
+  negative indexes in the columns list of the transformers.
+  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
+  the case `n_features=2` is handled correctly. :issue:`13276` by
+  :user:`Aurélien Bellet <bellet>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.datasets`
+............................
+
+- |Efficiency| :func:`sklearn.datasets.fetch_openml` now loads data by
+  streaming, avoiding high memory usage.  :issue:`13312` by `Joris Van den
+  Bossche`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+  would result in the sparse feature matrix having conflicting `indptr` and
+  `indices` precisions under very large vocabularies. :issue:`11295` by
+  :user:`Gabriel Vacaliuc <gvacaliuc>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| add support for non-numeric data in
+  :class:`sklearn.impute.MissingIndicator` which was not supported while
+  :class:`sklearn.impute.SimpleImputer` was supporting this for some
+  imputation strategies.
+  :issue:`13046` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
+  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
+  deprecation of ``categorical_features`` was handled incorrectly in
+  combination with ``handle_unknown='ignore'``.
+  :issue:`12881` by `Joris Van den Bossche`_.
+
+- |Fix| Bins whose width are too small (i.e., <= 1e-8) are removed
+  with a warning in :class:`preprocessing.KBinsDiscretizer`.
+  :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |FIX| Fixed a bug in :class:`svm.SVC`, :class:`svm.NuSVC`, :class:`svm.SVR`,
+  :class:`svm.NuSVR` and :class:`svm.OneClassSVM` where the ``scale`` option
+  of parameter ``gamma`` is erroneously defined as
+  ``1 / (n_features * X.std())``. It's now defined as
+  ``1 / (n_features * X.var())``.
+  :issue:`13221` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+Adrin Jalali, Agamemnon Krasoulis, Albert Thomas, Andreas Mueller, Aurélien
+Bellet, bertrandhaut, Bharat Raghunathan, Dowon, Emmanuel Arias, Fibinse
+Xavier, Finn O'Shea, Gabriel Vacaliuc, Gael Varoquaux, Guillaume Lemaitre,
+Hanmin Qin, joaak, Joel Nothman, Joris Van den Bossche, Jérémie Méhault, kms15,
+Kossori Aruku, Lakshya KD, maikia, Manuel López-Ibáñez, Marco Gorelli,
+MarcoGorelli, mferrari3, Mickaël Schoentgen, Nicolas Hug, pavlos kallis, Pierre
+Glaser, pierretallotte, Prabakaran Kumaresshan, Reshama Shaikh, Rohit Kapoor,
+Roman Yurchak, SandroCasagrande, Tashay Green, Thomas Fan, Vishaal Kapoor,
+Zhuyi Xue, Zijie (ZJ) Poh
+
+.. _changes_0_20_2:
+
+Version 0.20.2
+==============
+
+**December 20, 2018**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+- use of ``'seuclidean'`` or ``'mahalanobis'`` metrics in some cases (bug fix)
+
+Changelog
+---------
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :func:`compose.make_column_transformer` which raises
+  unexpected error when columns is pandas Index or pandas Series.
+  :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.pairwise_distances` and
+  :func:`metrics.pairwise_distances_chunked` where parameters ``V`` of
+  ``"seuclidean"`` and ``VI`` of ``"mahalanobis"`` metrics were computed after
+  the data was split into chunks instead of being pre-computed on whole data.
+  :issue:`12701` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed :class:`sklearn.neighbors.DistanceMetric` jaccard distance
+  function to return 0 when two all-zero vectors are compared.
+  :issue:`12685` by :user:`Thomas Fan <thomasjpfan>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series` with categorical
+  data, which raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12699` by `Joris Van den Bossche`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+
+adanhawth, Adrin Jalali, Albert Thomas, Andreas Mueller, Dan Stine, Feda Curic,
+Hanmin Qin, Jan S, jeremiedbb, Joel Nothman, Joris Van den Bossche,
+josephsalmon, Katrin Leinweber, Loic Esteve, Muhammad Hassaan Rafique, Nicolas
+Hug, Olivier Grisel, Paul Paczuski, Reshama Shaikh, Sam Waterbury, Shivam
+Kotwalia, Thomas Fan
+
 .. _changes_0_20_1:
 
 Version 0.20.1
 ==============
 
-**October XX, 2018**
+**November 21, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
-enhancements to features released in 0.20.0.
+enhancements to features released in 0.20.0. Note that we also include some
+API changes in this release, so you might get some extra warnings after
+updating from 0.20.0 to 0.20.1.
 
 Changed models
 --------------
@@ -48,6 +280,11 @@ Changelog
   even if all transformation results are sparse. :issue:`12304` by `Andreas
   Müller`_.
 
+- |API| :func:`compose.make_column_transformer` now expects
+  ``(transformer, columns)`` instead of ``(columns, transformer)`` to keep
+  consistent with :class:`compose.ColumnTransformer`.
+  :issue:`12339` by :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.datasets`
 ............................
 
@@ -64,6 +301,9 @@ Changelog
 - |Fix| Fixed olivetti faces dataset ``DESCR`` attribute to point to the right
   location in :func:`datasets.fetch_olivetti_faces`. :issue:`12441` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
+
+- |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
+  from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -86,7 +326,7 @@ Changelog
   :issue:`12388` by :user:`Connor Tann <Connossor>`.
 
 :mod:`sklearn.feature_extraction`
-...........................
+..................................
 
 - |Fix| Fixed a regression in v0.20.0 where
   :func:`feature_extraction.text.CountVectorizer` and other text vectorizers
@@ -117,6 +357,10 @@ Changelog
   set to "euclidean". :issue:`12481` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :func:`metrics.pairwise.pairwise_distances_chunked`
+  which didn't ensure the diagonal is zero for euclidean distances.
+  :issue:`12612` by :user:`Andreas Müller <amueller>`.
+
 - |API| The :func:`metrics.calinski_harabaz_score` has been renamed to
   :func:`metrics.calinski_harabasz_score` and will be removed in version 0.23.
   :issue:`12211` by :user:`Lisa Thomas <LisaThomas9>`,
@@ -140,7 +384,7 @@ Changelog
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
 :mod:`sklearn.preprocessing`
-........................
+.............................
 
 - |Fix| Fixed bug in :class:`preprocessing.OrdinalEncoder` when passing
   manually specified categories. :issue:`12365` by `Joris Van den Bossche`_.
@@ -150,16 +394,19 @@ Changelog
   method is now thread safe. :issue:`12514` by
   :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
+  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
+  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
+  failed when set to ignore unknown numpy strings of different lengths 
+  :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
+
 - |API| The default value of the :code:`method` argument in
   :func:`preprocessing.power_transform` will be changed from :code:`box-cox`
   to :code:`yeo-johnson` to match :class:`preprocessing.PowerTransformer`
   in version 0.23. A FutureWarning is raised when the default value is used.
   :issue:`12317` by :user:`Eric Chang <chang>`.
-  
-
-- |Fix| Fixed a bug in :class:`preprocessing.PowerTransformer` where the
-  Yeo-Johnson transform was incorrect for lambda parameters outside of `[0, 2]`
-  :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.utils`
 ........................
@@ -168,6 +415,10 @@ Changelog
   precision issues in :class:`preprocessing.StandardScaler` and
   :class:`decomposition.IncrementalPCA` when using float32 datasets.
   :issue:`12338` by :user:`bauks <bauks>`.
+
+- |Fix| Calling :func:`utils.check_array` on `pandas.Series`, which
+  raised an error in 0.20.0, now returns the expected output again.
+  :issue:`12625` by `Andreas Müller`_
   
 Miscellaneous
 .............
@@ -176,20 +427,52 @@ Miscellaneous
   `SKLEARN_SITE_JOBLIB`, added compatibility with joblib 0.11 in addition
   to 0.12+. :issue:`12350` by `Joel Nothman`_ and `Roman Yurchak`_.
 
-Miscellaneous
-.............
-
 - |Fix| Make sure to avoid raising ``FutureWarning`` when calling
   ``np.vstack`` with numpy 1.16 and later (use list comprehensions
   instead of generator expressions in many locations of the scikit-learn
   code base). :issue:`12467` by :user:`Olivier Grisel <ogrisel>`.
+
+- |API| Removed all mentions of ``sklearn.externals.joblib``, and deprecated
+  joblib methods exposed in ``sklearn.utils``, except for
+  :func:`utils.parallel_backend` and :func:`utils.register_parallel_backend`,
+  which allow users to configure parallel computation in scikit-learn.
+  Other functionalities are part of `joblib <https://joblib.readthedocs.io/>`_.
+  package and should be used directly, by installing it.
+  The goal of this change is to prepare for
+  unvendoring joblib in future version of scikit-learn.
+  :issue:`12345` by :user:`Thomas Moreau <tomMoral>`
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+^__^, Adrin Jalali, Andrea Navarrete, Andreas Mueller,
+bauks, BenjaStudio, Cheuk Ting Ho, Connossor,
+Corey Levinson, Dan Stine, daten-kieker, Denis Kataev,
+Dillon Gardner, Dmitry Vukolov, Dougal J. Sutherland, Edward J Brown,
+Eric Chang, Federico Caselli, Gabriel Marzinotto, Gael Varoquaux,
+GauravAhlawat, Gustavo De Mari Pereira, Hanmin Qin, haroldfox,
+JackLangerman, Jacopo Notarstefano, janvanrijn, jdethurens,
+jeremiedbb, Joel Nothman, Joris Van den Bossche, Koen,
+Kushal Chauhan, Lee Yi Jie Joel, Lily Xiong, mail-liam,
+Mark Hannel, melsyt, Ming Li, Nicholas Smith,
+Nicolas Hug, Nikolay Shebanov, Oleksandr Pavlyk, Olivier Grisel,
+Peter Hausamann, Pierre Glaser, Pulkit Maloo, Quentin Batista,
+Radostin Stoyanov, Ramil Nugmanov, Rebekah Kim, Reshama Shaikh,
+Rohan Singh, Roman Feldbauer, Roman Yurchak, Roopam Sharma,
+Sam Waterbury, Scott Lowe, Sebastian Raschka, Stephen Tierney,
+SylvainLan, TakingItCasual, Thomas Fan, Thomas Moreau,
+Tom Dupré la Tour, Tulio Casagrande, Utkarsh Upadhyay, Xing Han Lu,
+Yaroslav Halchenko, Zach Miller
+
 
 .. _changes_0_20:
 
 Version 0.20.0
 ==============
 
-**September, 2018**
+**September 25, 2018**
 
 This release packs in a mountain of bug fixes, features and enhancements for
 the Scikit-learn library, and improvements to the documentation and examples.

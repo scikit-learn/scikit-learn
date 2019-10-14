@@ -6,14 +6,14 @@
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin
+from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -27,7 +27,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     squared error loss while support vector regression uses epsilon-insensitive
     loss, both combined with l2 regularization. In contrast to SVR, fitting a
     KRR model can be done in closed-form and is typically faster for
-    medium-sized datasets. On the other  hand, the learned model is non-sparse
+    medium-sized datasets. On the other hand, the learned model is non-sparse
     and thus slower than SVR, which learns a sparse model for epsilon > 0, at
     prediction-time.
 
@@ -74,7 +74,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
         Representation of weight vector(s) in kernel space
 
-    X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X_fit_ : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training data, which is also required for prediction. If
         kernel == "precomputed" this is instead the precomputed
         training matrix, shape = [n_samples, n_samples].
@@ -101,9 +101,8 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidge(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
-                kernel_params=None)
+    >>> clf.fit(X, y)
+    KernelRidge(alpha=1.0)
     """
     def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
@@ -133,12 +132,12 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data. If kernel == "precomputed" this is instead
             a precomputed kernel matrix, shape = [n_samples,
             n_samples].
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
@@ -178,7 +177,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Samples. If kernel == "precomputed" this is instead a
             precomputed kernel matrix, shape = [n_samples,
             n_samples_fitted], where n_samples_fitted is the number of
@@ -186,9 +185,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples] or [n_samples, n_targets]
+        C : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Returns predicted values.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        check_is_fitted(self)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

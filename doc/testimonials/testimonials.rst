@@ -76,7 +76,7 @@ Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spoti
    </span>
 
 `Inria <https://www.inria.fr/>`_
--------------------------------
+--------------------------------
 
 .. raw:: html
 
@@ -255,7 +255,7 @@ Alexandre Gramfort, Assistant Professor
 
 
 `Booking.com <https://www.booking.com>`_
--------------------------------------
+-----------------------------------------
 .. raw:: html
 
   <div class="logo">
@@ -728,7 +728,7 @@ Guillaume Lebourgeois & Samuel Charron - Data Scientists at Data Publica
 
 
 `Machinalis <https://www.machinalis.com/>`_
------------------------------------------
+-------------------------------------------
 
 .. raw:: html
 
@@ -937,7 +937,7 @@ Vlasios Vasileiou, Head of Data Science, Zopa
   </span>
 
 `MARS <https://www.mars.com/global>`_
-------------------------------------
+--------------------------------------
 
 .. raw:: html
 

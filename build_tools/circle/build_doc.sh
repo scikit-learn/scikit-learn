@@ -57,7 +57,7 @@ get_build_type() {
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
-    changed_examples=$(echo "$filenames" | grep -e ^examples/)
+    changed_examples=$(echo "$filenames" | grep -E "^examples/(.*/)*plot_")
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
@@ -98,10 +98,10 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 # notation in the HTML documentation
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
-sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk
+    texlive-latex-recommended texlive-fonts-recommended \
+    latexmk gsfonts ccache
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -112,22 +112,35 @@ fi
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-export PATH="$MINICONDA_PATH/bin:$PATH"
-conda update --yes --quiet conda
+export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 
-# Configure the conda environment and put it in the path using the
-# provided versions
+ccache -M 512M
+export CCACHE_COMPRESS=1
+
+# Old packages coming from the 'free' conda channel have been removed but we
+# are using them for our min-dependencies doc generation. See
+# https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/ for
+# more details.
+if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
+    conda config --set restore_free_channel true
+fi
+
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}"
+  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
+  cython="${CYTHON_VERSION:-*}" pytest coverage \
+  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
+  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
+  joblib memory_profiler
 
 source activate testenv
-pip install sphinx-gallery
-pip install numpydoc==0.8
+pip install sphinx-gallery==0.3.1
+pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
+python setup.py build_ext --inplace -j 3
 python setup.py develop
+
+export OMP_NUM_THREADS=1
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
 then
@@ -137,6 +150,10 @@ fi
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
+
+# Insert the version warning for deployment
+find _build/html/stable -name "*.html" | xargs sed -i '/<\/body>/ i \
+\    <script src="https://scikit-learn.org/versionwarning.js"></script>'
 
 cd -
 set +o pipefail
@@ -159,7 +176,7 @@ then
     echo "$affected"
     (
     echo '<html><body><ul>'
-    echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
+    echo "$affected" | sed 's|.*|<li><a href="&">&</a> [<a href="https://scikit-learn.org/dev/&">dev</a>, <a href="https://scikit-learn.org/stable/&">stable</a>]</li>|'
     echo '</ul><p>General: <a href="index.html">Home</a> | <a href="modules/classes.html">API Reference</a> | <a href="auto_examples/index.html">Examples</a></p></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 fi

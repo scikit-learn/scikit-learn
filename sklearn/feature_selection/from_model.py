@@ -6,7 +6,6 @@ import numbers
 
 from .base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..externals import six
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
@@ -48,7 +47,7 @@ def _calculate_threshold(estimator, importances, threshold):
         else:
             threshold = "mean"
 
-    if isinstance(threshold, six.string_types):
+    if isinstance(threshold, str):
         if "*" in threshold:
             scale, reference = threshold.split("*")
             scale = float(scale.strip())
@@ -79,7 +78,7 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
+class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17
@@ -131,6 +130,28 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
 
     threshold_ : float
         The threshold value used for feature selection.
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X = [[ 0.87, -1.34,  0.31 ],
+    ...      [-2.79, -0.02, -0.85 ],
+    ...      [-1.34, -0.48, -2.55 ],
+    ...      [ 1.92,  1.48,  0.65 ]]
+    >>> y = [0, 1, 0, 1]
+    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
+    >>> selector.estimator_.coef_
+    array([[-0.3252302 ,  0.83462377,  0.49750423]])
+    >>> selector.threshold_
+    0.55245...
+    >>> selector.get_support()
+    array([False,  True, False])
+    >>> selector.transform(X)
+    array([[-1.34],
+           [-0.02],
+           [-0.48],
+           [ 1.48]])
     """
     def __init__(self, estimator, threshold=None, prefit=False,
                  norm_order=1, max_features=None):

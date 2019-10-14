@@ -1,19 +1,27 @@
 # Author: Hamzeh Alsalhi <ha258@cornell.edu>
 #
 # License: BSD 3 clause
-from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 import array
 
-from sklearn.utils import check_random_state
+from . import check_random_state
 from ._random import sample_without_replacement
+from . import deprecated
 
 __all__ = ['sample_without_replacement']
 
 
+@deprecated("random_choice_csc is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def random_choice_csc(n_samples, classes, class_probability=None,
                       random_state=None):
+    return _random_choice_csc(n_samples, classes, class_probability,
+                              random_state)
+
+
+def _random_choice_csc(n_samples, classes, class_probability=None,
+                       random_state=None):
     """Generate a sparse random matrix given column class distributions
 
     Parameters

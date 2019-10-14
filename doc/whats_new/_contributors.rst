@@ -12,12 +12,12 @@
 .. role:: raw-latex(raw)
    :format: latex
 
-.. |MajorFeature| replace:: :raw-html:`<span class="label label-success">Major Feature</span>` :raw-latex:`{\small\sc [Major Feature]}`
-.. |Feature| replace:: :raw-html:`<span class="label label-success">Feature</span>` :raw-latex:`{\small\sc [Feature]}`
-.. |Efficiency| replace:: :raw-html:`<span class="label label-info">Efficiency</span>` :raw-latex:`{\small\sc [Efficiency]}`
-.. |Enhancement| replace:: :raw-html:`<span class="label label-info">Enhancement</span>` :raw-latex:`{\small\sc [Enhancement]}`
-.. |Fix| replace:: :raw-html:`<span class="label label-danger">Fix</span>` :raw-latex:`{\small\sc [Fix]}`
-.. |API| replace:: :raw-html:`<span class="label label-warning">API Change</span>` :raw-latex:`{\small\sc [API Change]}`
+.. |MajorFeature| replace:: :raw-html:`<span class="badge badge-success">Major Feature</span>` :raw-latex:`{\small\sc [Major Feature]}`
+.. |Feature| replace:: :raw-html:`<span class="badge badge-success">Feature</span>` :raw-latex:`{\small\sc [Feature]}`
+.. |Efficiency| replace:: :raw-html:`<span class="badge badge-info">Efficiency</span>` :raw-latex:`{\small\sc [Efficiency]}`
+.. |Enhancement| replace:: :raw-html:`<span class="badge badge-info">Enhancement</span>` :raw-latex:`{\small\sc [Enhancement]}`
+.. |Fix| replace:: :raw-html:`<span class="badge badge-danger">Fix</span>` :raw-latex:`{\small\sc [Fix]}`
+.. |API| replace:: :raw-html:`<span class="badge badge-warning">API Change</span>` :raw-latex:`{\small\sc [API Change]}`
 
 
 .. _Olivier Grisel: https://twitter.com/ogrisel
@@ -48,7 +48,7 @@
 
 .. _Bertrand Thirion: https://team.inria.fr/parietal/bertrand-thirions-page
 
-.. _Andreas Müller: https://peekaboo-vision.blogspot.com/
+.. _Andreas Müller: https://amueller.github.io/
 
 .. _Matthieu Perrot: http://brainvisa.info/biblio/lnao/en/Author/PERROT-M.html
 
@@ -169,3 +169,9 @@
 .. _Roman Yurchak: https://github.com/rth
 
 .. _Hanmin Qin: https://github.com/qinhanmin2014
+
+.. _Adrin Jalali: https://github.com/adrinjalali
+
+.. _Thomas Fan: https://github.com/thomasjpfan
+
+.. _Nicolas Hug: https://github.com/NicolasHug

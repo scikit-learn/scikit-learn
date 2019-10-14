@@ -35,7 +35,6 @@ on the parameters epsilon and C of the SVR.
 # License: BSD 3 clause
 
 
-from __future__ import division
 import time
 
 import numpy as np
@@ -61,11 +60,11 @@ X_plot = np.linspace(0, 5, 100000)[:, None]
 # #############################################################################
 # Fit regression model
 train_size = 100
-svr = GridSearchCV(SVR(kernel='rbf', gamma=0.1), cv=5,
+svr = GridSearchCV(SVR(kernel='rbf', gamma=0.1),
                    param_grid={"C": [1e0, 1e1, 1e2, 1e3],
                                "gamma": np.logspace(-2, 2, 5)})
 
-kr = GridSearchCV(KernelRidge(kernel='rbf', gamma=0.1), cv=5,
+kr = GridSearchCV(KernelRidge(kernel='rbf', gamma=0.1),
                   param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3],
                               "gamma": np.logspace(-2, 2, 5)})
 

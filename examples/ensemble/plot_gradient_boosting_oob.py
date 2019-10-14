@@ -36,6 +36,7 @@ from sklearn import ensemble
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 
+from scipy.special import expit
 
 # Generate data (adapted from G. Ridgeway's gbm example)
 n_samples = 1000
@@ -44,7 +45,7 @@ x1 = random_state.uniform(size=n_samples)
 x2 = random_state.uniform(size=n_samples)
 x3 = random_state.randint(0, 4, size=n_samples)
 
-p = 1 / (1.0 + np.exp(-(np.sin(3 * x1) - 4 * x2 + x3)))
+p = expit(np.sin(3 * x1) - 4 * x2 + x3)
 y = random_state.binomial(1, p, size=n_samples)
 
 X = np.c_[x1, x2, x3]

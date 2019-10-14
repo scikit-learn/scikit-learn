@@ -5,15 +5,20 @@ Hungarian algorithm (also known as Munkres algorithm).
 """
 # Based on original code by Brain Clapper, adapted to NumPy by Gael Varoquaux.
 # Heavily refactored by Lars Buitinck.
-#
-# TODO: a version of this algorithm has been incorporated in SciPy; use that
-# when SciPy 0.17 is released.
 
 # Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, Gael Varoquaux
 # Author: Brian M. Clapper, Gael Varoquaux
 # LICENSE: BSD
 
 import numpy as np
+import warnings
+
+# Deprecation warning for module
+warnings.warn(
+    "The linear_assignment_ module is deprecated in 0.21 "
+    "and will be removed from 0.23. Use "
+    "scipy.optimize.linear_sum_assignment instead.",
+    DeprecationWarning)
 
 
 def linear_assignment(X):
@@ -60,7 +65,7 @@ def linear_assignment(X):
     return indices
 
 
-class _HungarianState(object):
+class _HungarianState:
     """State of one execution of the Hungarian algorithm.
 
     Parameters
@@ -115,6 +120,12 @@ def _hungarian(cost_matrix):
         The pairs of (row, col) indices in the original array giving
         the original ordering.
     """
+    warnings.warn(
+        "The linear_assignment function is deprecated in 0.21 "
+        "and will be removed from 0.23. Use "
+        "scipy.optimize.linear_sum_assignment instead.",
+        DeprecationWarning)
+
     state = _HungarianState(cost_matrix)
 
     # No need to bother with assignments if one of the dimensions

@@ -7,7 +7,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function, absolute_import
 
 import warnings
 from itertools import combinations
@@ -16,13 +15,12 @@ import numpy as np
 from scipy import linalg
 from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y, effective_n_jobs
-from ..utils import Parallel, delayed
-from ..externals.six.moves import xrange as range
+from ..utils import check_X_y
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -37,7 +35,7 @@ def _modified_weiszfeld_step(X, x_old):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -86,7 +84,7 @@ def _spatial_median(X, max_iter=300, tol=1.e-3):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -159,7 +157,7 @@ def _lstsq(X, y, indices, fit_intercept):
 
     Parameters
     ----------
-    X : array, shape = [n_samples, n_features]
+    X : array-like of shape (n_samples, n_features)
         Design matrix, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -195,7 +193,7 @@ def _lstsq(X, y, indices, fit_intercept):
     return weights
 
 
-class TheilSenRegressor(LinearModel, RegressorMixin):
+class TheilSenRegressor(RegressorMixin, LinearModel):
     """Theil-Sen Estimator: robust multivariate regression model.
 
     The algorithm calculates least square solutions on subsets with size
@@ -283,7 +281,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     >>> X, y = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
     >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
-    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    >>> reg.score(X, y)
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])
