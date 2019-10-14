@@ -194,7 +194,7 @@ include OpenMP support. You need to install the `openmp` library from packages
 (or ports)::
 
     sudo pkg install openmp
-
+    
 This will install header files in ``/usr/local/include`` and libs in 
 ``/usr/local/lib``. Since these directories are not searched by default, you 
 can set the environment variables to these locations::
@@ -222,7 +222,7 @@ C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-pip
-
+    
 and then::
 
     pip3 install numpy scipy cython
@@ -268,9 +268,9 @@ You will need `Build Tools for Visual Studio 2017
 <https://visualstudio.microsoft.com/downloads/>`_.
 
 .. warning::
-    You DO NOT need to install Visual Studio 2019. 
-    You only need the "Build Tools for Visual Studio 2019", 
-    under "All downloads" -> "Tools for Visual Studio 2019". 
+	You DO NOT need to install Visual Studio 2019. 
+	You only need the "Build Tools for Visual Studio 2019", 
+	under "All downloads" -> "Tools for Visual Studio 2019". 
 
 For 64-bit Python, configure the build environment with::
 
