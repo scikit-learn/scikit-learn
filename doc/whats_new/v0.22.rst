@@ -449,10 +449,6 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
-- |Enhancement| :func:`metrics.median_absolute_error` now supports
-  ``multioutput`` parameter.
-  :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
-
 - |API| ``scoring="neg_brier_score"`` should be used instead of
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
@@ -461,6 +457,9 @@ Changelog
   :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
   :pr:`15049` by `Paolo Toccaceli <ptocca>`.
 
+- |Enhancement| :func:`metrics.median_absolute_error` now supports
+  ``multioutput`` parameter.
+  :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -576,6 +575,20 @@ Changelog
 - |Enhancement| SVM estimators now throw a more specific error when
   `kernel='precomputed'` and fit on non-square data.
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+- |Fix| :class:`svm.SVC`, :class:`svm.SVR`, :class:`svm.NuSVR` and
+  :class:`svm.OneClassSVM` when received values negative or zero
+  for parameter ``sample_weight`` in method fit(), generated an
+  invalid model. This behavior occured only in some border scenarios.
+  Now in these cases, fit() will fail with an Exception.
+  :pr:`14286` by :user:`Alex Shacked <alexshacked>`.
+
+- |Fix| The `n_support_` attribute of :class:`svm.SVR` and
+  :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
+  has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
+
+- |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
+  ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
 :mod:`sklearn.tree`
 ...................
