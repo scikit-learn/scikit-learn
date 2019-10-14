@@ -27,8 +27,13 @@ make_conda() {
             export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
         fi
     fi
+
     conda create -n $VIRTUALENV -q --yes $TO_INSTALL
     source activate $VIRTUALENV
+
+    echo $PREFIX
+    echo $CFLAGS
+    echo $LDFLAGS
 }
 
 version_ge() {
