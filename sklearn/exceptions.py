@@ -85,6 +85,7 @@ class DataDimensionalityWarning(UserWarning):
     ---------
     >>> import numpy as np
     >>> from scipy.sparse import coo_matrix
+    >>> import warnings
     >>> from sklearn.exceptions import DataDimensionalityWarning
     >>> from sklearn.random_projection import SparseRandomProjection
     >>> n_samples, n_features = 10, 1000
@@ -95,10 +96,12 @@ class DataDimensionalityWarning(UserWarning):
     ...         (rng.randint(n_samples, size=n_nonzeros),
     ...         rng.randint(n_features, size=n_nonzeros))),
     ...         shape=(n_samples, n_features)).toarray()
-    >>> SparseRandomProjection(n_components=n_features + 1).fit(data_coo)
-    DataDimensionalityWarning: The number of components is higher than the number of features: n_features < n_components (1000 < 1001).The dimensionality of the problem will not be reduced.
-    DataDimensionalityWarning)
+    >>> with warnings.catch_warnings(record=True) as w:
+    ...     SparseRandomProjection(n_components=n_features + 1).fit(data_coo)
+    ...     print(w[-1].message)
     SparseRandomProjection(n_components=1001)
+    The number of components is higher than the number of features: n_features < n_components \
+            (1000 < 1001).The dimensionality of the problem will not be reduced.
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.
