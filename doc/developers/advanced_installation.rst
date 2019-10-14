@@ -59,7 +59,7 @@ Building Scikit-learn also requires
    If OpenMP is not supported by the compiler, the build will be done with
    OpenMP functionalities disabled. This is not recommended since it will force
    some estimators to run in sequential mode instead of leveraging thread-based
-   parallelism. setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
    (before cythonization) will force the build to fail if OpenMP is not
    supported.
 
