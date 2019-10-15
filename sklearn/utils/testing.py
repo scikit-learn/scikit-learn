@@ -875,7 +875,7 @@ def assert_run_python_script(source_code, timeout=60,
         The Python source code to execute.
     timeout : int
         Time in seconds before timeout.
-    ignore_warnings : bool
+    ignore_init_warnings : bool
         Whether warnings coming from ``sklearn.__init__`` should be ignored in
         the output or not.
     """
