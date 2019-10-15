@@ -18,7 +18,6 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .exceptions import SklearnDeprecationWarning
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
@@ -850,7 +849,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 warnings.warn("Using None as a transformer is deprecated "
                               "in version 0.22 and will be removed in "
                               "version 0.24. Please use 'drop' instead.",
-                              SklearnDeprecationWarning)
+                              FutureWarning)
                 continue
             if t == 'drop':
                 continue

@@ -28,7 +28,6 @@ from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
-from sklearn.exceptions import SklearnDeprecationWarning
 
 # toy array
 X_toy = np.arange(9).reshape((3, 3))
@@ -68,7 +67,7 @@ def test_deprecated():
         assert spam == "spam"     # function must remain usable
 
         assert len(w) == 1
-        assert issubclass(w[0].category, SklearnDeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
@@ -84,7 +83,7 @@ def test_deprecated():
         assert hasattr(ham, "SPAM")
 
         assert len(w) == 1
-        assert issubclass(w[0].category, SklearnDeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
 
@@ -640,7 +639,7 @@ def dummy_func():
 def test_deprecation_joblib_api(tmpdir):
     def check_warning(*args, **kw):
         return assert_warns_message(
-            SklearnDeprecationWarning, "deprecated in version 0.20.1",
+            FutureWarning, "deprecated in version 0.20.1",
             *args, **kw)
 
     # Ensure that the joblib API is deprecated in sklearn.util

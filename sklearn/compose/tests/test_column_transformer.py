@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
@@ -501,7 +500,7 @@ def test_column_transformer_invalid_columns(remainder):
     X_array_more = np.array([[0, 1, 2], [2, 4, 6], [3, 6, 9]]).T
     msg = ("Given feature/column names or counts do not match the ones for "
            "the data given during fit.")
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         ct.transform(X_array_more)  # Should accept added columns, for now
     X_array_fewer = np.array([[0, 1, 2], ]).T
     err_msg = 'Number of features'
@@ -1109,7 +1108,7 @@ def test_column_transformer_reordered_column_names_remainder(explicit_colname):
     # No error for added columns if ordering is identical
     X_extended_df = X_fit_df.copy()
     X_extended_df['third'] = [3, 6, 9]
-    with pytest.warns(SklearnDeprecationWarning, match=warn_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         tf.transform(X_extended_df)  # No error should be raised, for now
 
     # No 'columns' AttributeError when transform input is a numpy array
@@ -1134,13 +1133,13 @@ def test_feature_name_validation():
 
     msg = ("Given feature/column names or counts do not match the ones for "
            "the data given during fit.")
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), [0])])
     tf.fit(df)
 
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tf.transform(X_extra)
 
     with warnings.catch_warnings(record=True) as warns:
@@ -1150,7 +1149,7 @@ def test_feature_name_validation():
     tf = ColumnTransformer([('bycol', Trans(), ['a'])],
                            remainder=Trans())
     tf.fit(df)
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tf.transform(df_extra)
 
     tf = ColumnTransformer([('bycol', Trans(), [0, -1])])

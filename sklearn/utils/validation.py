@@ -25,7 +25,6 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
-from ..exceptions import SklearnDeprecationWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -436,7 +435,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            SklearnDeprecationWarning, stacklevel=2)
+            FutureWarning, stacklevel=2)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -928,11 +927,11 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     if attributes != 'deprecated':
         warnings.warn("Passing attributes to check_is_fitted is deprecated"
                       " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", SklearnDeprecationWarning)
+                      "argument is ignored.", FutureWarning)
     if all_or_any != 'deprecated':
         warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
                       " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", SklearnDeprecationWarning)
+                      "argument is ignored.", FutureWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
@@ -1142,7 +1141,7 @@ def _deprecate_positional_args(f):
             warnings.warn("Pass {} as keyword args. From version 0.24 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
-                          SklearnDeprecationWarning)
+                          FutureWarning)
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f

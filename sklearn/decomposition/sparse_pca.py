@@ -11,7 +11,6 @@ from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
-from ..exceptions import SklearnDeprecationWarning
 
 
 # FIXME: remove in 0.24
@@ -21,7 +20,7 @@ def _check_normalize_components(normalize_components, estimator_name):
             warnings.warn(
                 "'normalize_components' has been deprecated in 0.22 and "
                 "will be removed in 0.24. Remove the parameter from the "
-                " constructor.", SklearnDeprecationWarning
+                " constructor.", FutureWarning
             )
         else:
             raise NotImplementedError(

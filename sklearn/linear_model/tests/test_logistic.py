@@ -29,7 +29,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils.testing import skip_if_no_parallel
 
-from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model.logistic import (
@@ -1730,7 +1729,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 def test_logistic_regression_path_deprecation():
 
-    assert_warns_message(SklearnDeprecationWarning,
+    assert_warns_message(FutureWarning,
                          "logistic_regression_path was deprecated",
                          logistic_regression_path, X, Y1)
 

@@ -35,7 +35,6 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..exceptions import SklearnDeprecationWarning
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -299,7 +298,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                           "Its default value will change from 1e-7 to 0 in "
                           "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
-                          SklearnDeprecationWarning)
+                          FutureWarning)
             min_impurity_split = self.min_impurity_split
         else:
             min_impurity_split = 1e-7
@@ -317,7 +316,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
                           "to the 'presort' parameter.",
-                          SklearnDeprecationWarning)
+                          FutureWarning)
 
         # Build tree
         criterion = self.criterion
@@ -1230,7 +1229,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         # TODO: Remove method in 0.24
         msg = ("the classes_ attribute is to be deprecated from version "
                "0.22 and will be removed in 0.24.")
-        warnings.warn(msg, SklearnDeprecationWarning)
+        warnings.warn(msg, FutureWarning)
         return np.array([None] * self.n_outputs_)
 
     @property
@@ -1238,7 +1237,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         # TODO: Remove method in 0.24
         msg = ("the n_classes_ attribute is to be deprecated from version "
                "0.22 and will be removed in 0.24.")
-        warnings.warn(msg, SklearnDeprecationWarning)
+        warnings.warn(msg, FutureWarning)
         return np.array([1] * self.n_outputs_, dtype=np.intp)
 
 

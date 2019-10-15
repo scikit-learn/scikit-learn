@@ -38,7 +38,6 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
 from sklearn.svm import NuSVR
-from sklearn.exceptions import SklearnDeprecationWarning
 
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
@@ -1087,7 +1086,7 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(SklearnDeprecationWarning,
+    est = assert_warns_message(FutureWarning,
                                "min_impurity_decrease",
                                est.fit, X, y)
     for tree in est.estimators_.flat:
@@ -1415,6 +1414,6 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     gb = Cls(presort=presort)
-    with pytest.warns(SklearnDeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)

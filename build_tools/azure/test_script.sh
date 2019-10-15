@@ -29,7 +29,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::sklearn.exceptions.SklearnDeprecationWarning -Werror::FutureWarning"
+    TEST_CMD="$TEST_CMD -Werror::FutureWarning"
 fi
 
 if [[ "$PYTHON_VERSION" == "*" ]]; then

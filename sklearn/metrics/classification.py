@@ -39,7 +39,6 @@ from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..exceptions import SklearnDeprecationWarning
 
 
 def _check_zero_division(zero_division):
@@ -643,7 +642,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
                   'with jaccard_score. It will be removed in version 0.23. '
                   'This implementation has surprising behavior for binary '
                   'and multiclass classification tasks.',
-                  SklearnDeprecationWarning)
+                  FutureWarning)
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2134,7 +2133,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         warnings.warn("The labels parameter is unused. It was"
                       " deprecated in version 0.21 and"
                       " will be removed in version 0.23",
-                      SklearnDeprecationWarning)
+                      FutureWarning)
 
     if sample_weight is None:
         weight_average = 1.

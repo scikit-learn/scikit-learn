@@ -103,9 +103,9 @@ Other `pytest` options that may become useful include:
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
 
 Since our continuous integration tests will error if
-``SklearnDeprecationWarning`` or ``FutureWarning`` aren't properly caught,
+``FutureWarning`` or ``FutureWarning`` aren't properly caught,
 it is also recommended to run ``pytest`` along with the
-``-Werror::sklearn.exceptions.SklearnDeprecationWarning`` and
+``-Werror::sklearn.exceptions.FutureWarning`` and
 ``-Werror::FutureWarning`` flags.
 
 .. _saved_replies:

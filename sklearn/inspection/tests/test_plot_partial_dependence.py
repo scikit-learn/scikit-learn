@@ -11,7 +11,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.inspection import plot_partial_dependence
-from sklearn.exceptions import SklearnDeprecationWarning
 
 
 @pytest.fixture(scope="module")
@@ -370,7 +369,7 @@ def test_plot_partial_dependence_fig_deprecated(pyplot):
 
     msg = ("The fig parameter is deprecated in version 0.22 and will be "
            "removed in version 0.24")
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         plot_partial_dependence(
             clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 

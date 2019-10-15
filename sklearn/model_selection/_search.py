@@ -37,7 +37,6 @@ from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
-from ..exceptions import SklearnDeprecationWarning
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -819,7 +818,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if self.iid != 'deprecated':
             warnings.warn(
                 "The parameter 'iid' is deprecated in 0.22 and will be "
-                "removed in 0.24.", SklearnDeprecationWarning
+                "removed in 0.24.", FutureWarning
             )
             iid = self.iid
         else:

@@ -10,7 +10,7 @@ mkdir %TMP_FOLDER%
 cd %TMP_FOLDER%
 
 if "%CHECK_WARNINGS%" == "true" (
-    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::sklearn.exceptions.SklearnDeprecationWarning -Werror::FutureWarning
+    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::FutureWarning
 )
 
 if "%COVERAGE%" == "true" (

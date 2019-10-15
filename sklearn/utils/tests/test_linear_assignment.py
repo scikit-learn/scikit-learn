@@ -9,7 +9,7 @@ import pytest
 
 
 @pytest.mark.filterwarnings(
-  "ignore::sklearn.exceptions.SklearnDeprecationWarning")
+  "ignore::sklearn.exceptions.FutureWarning")
 def test_hungarian():
     from sklearn.utils.linear_assignment_ import _hungarian
     matrices = [

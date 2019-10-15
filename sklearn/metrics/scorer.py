@@ -44,7 +44,6 @@ from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
 from ..base import is_regressor
-from ..exceptions import SklearnDeprecationWarning
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -164,7 +163,7 @@ class _BaseScorer:
         """
         if self._deprecation_msg is not None:
             warnings.warn(self._deprecation_msg,
-                          category=SklearnDeprecationWarning,
+                          category=FutureWarning,
                           stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)

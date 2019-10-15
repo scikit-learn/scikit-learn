@@ -33,7 +33,6 @@ from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array
-from sklearn.exceptions import SklearnDeprecationWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -453,7 +452,7 @@ def test_check_estimator_clones():
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
         with ignore_warnings(category=(FutureWarning,
-                                       SklearnDeprecationWarning)):
+                                       FutureWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)
@@ -464,7 +463,7 @@ def test_check_estimator_clones():
         assert old_hash == joblib.hash(est)
 
         with ignore_warnings(category=(FutureWarning,
-                                       SklearnDeprecationWarning)):
+                                       FutureWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)

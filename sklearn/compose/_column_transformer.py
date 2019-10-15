@@ -23,7 +23,6 @@ from ..utils import _get_column_indices
 from ..utils import _determine_key_type
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
-from ..exceptions import SklearnDeprecationWarning
 
 
 __all__ = ['ColumnTransformer', 'make_column_transformer']
@@ -423,7 +422,7 @@ boolean mask array or callable
             warnings.warn("Given feature/column names or counts do not match "
                           "the ones for the data given during fit. This will "
                           "fail from v0.24.",
-                          SklearnDeprecationWarning)
+                          FutureWarning)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:

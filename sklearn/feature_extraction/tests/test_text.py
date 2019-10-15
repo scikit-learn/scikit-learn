@@ -30,7 +30,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.utils.testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
@@ -543,7 +542,7 @@ def test_tfidf_vectorizer_deprecationwarning():
     msg = ("'copy' param is unused and has been deprecated since "
            "version 0.22. Backward compatibility for 'copy' will "
            "be removed in 0.24.")
-    with pytest.warns(SklearnDeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tv = TfidfVectorizer()
         train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)

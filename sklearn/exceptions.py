@@ -171,9 +171,3 @@ class UndefinedMetricWarning(UserWarning):
     .. versionchanged:: 0.18
        Moved from sklearn.base.
     """
-
-
-class SklearnDeprecationWarning(UserWarning):
-    """Warning class used to notify the user of a deprecation."""
-    # Python's built-in DeprecationWarning is filtered out by default so we
-    # create our own.

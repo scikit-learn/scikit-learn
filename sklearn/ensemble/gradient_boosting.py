@@ -59,7 +59,6 @@ from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
-from ..exceptions import SklearnDeprecationWarning
 
 
 # FIXME: 0.23
@@ -1340,7 +1339,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                           "suppress this warning by not passing any value "
                           "to the 'presort' parameter. We also recommend "
                           "using HistGradientBoosting models instead.",
-                          SklearnDeprecationWarning)
+                          FutureWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """

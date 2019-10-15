@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
-from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -1422,7 +1421,7 @@ def test_group_kfold():
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", SklearnDeprecationWarning)
+        warnings.simplefilter("ignore", FutureWarning)
         for group in np.unique(groups):
             assert len(np.unique(folds[groups == group])) == 1
 

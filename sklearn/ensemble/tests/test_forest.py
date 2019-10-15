@@ -35,7 +35,6 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn.exceptions import NotFittedError
-from sklearn.exceptions import SklearnDeprecationWarning
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -1238,7 +1237,7 @@ def test_min_impurity_split():
 
     for Estimator in all_estimators:
         est = Estimator(min_impurity_split=0.1)
-        est = assert_warns_message(SklearnDeprecationWarning,
+        est = assert_warns_message(FutureWarning,
                                    "min_impurity_decrease",
                                    est.fit, X, y)
         for tree in est.estimators_:

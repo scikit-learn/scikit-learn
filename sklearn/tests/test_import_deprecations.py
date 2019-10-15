@@ -48,9 +48,8 @@ def test_import_is_deprecated(deprecated_path, importee):
 
     script = """
     import pytest
-    from sklearn.exceptions import SklearnDeprecationWarning
 
-    with pytest.warns(SklearnDeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="{expected_message}"):
         from {deprecated_path} import {importee}
     """.format(

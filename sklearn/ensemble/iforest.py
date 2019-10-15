@@ -18,7 +18,6 @@ from ..utils import (
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
-from ..exceptions import SklearnDeprecationWarning
 
 from .bagging import BaseBagging
 
@@ -227,7 +226,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 warn(
                     "'behaviour' is deprecated in 0.22 and will be removed "
                     "in 0.24. You should not pass or set this parameter.",
-                    SklearnDeprecationWarning
+                    FutureWarning
                 )
             else:
                 raise NotImplementedError(
