@@ -133,7 +133,13 @@ print(titanic.data.head()[['pclass', 'embarked']])
 from sklearn.neighbors import KNeighborsTransformer
 from sklearn.manifold import Isomap
 from sklearn.pipeline import make_pipeline
+
 estimator = make_pipeline(
-    KNeighborsTransformer(n_neighbors=5, mode='distance'),
-    Isomap(neighbors_algorithm='precomputed'),
-    memory='/path/to/cache')
+    KNeighborsTransformer(n_neighbors=10, mode='distance'),
+    Isomap(n_neighbors=10, metric='precomputed'),
+    memory='.')
+estimator.fit(X)
+
+# We can change the number of neighbors and the graph will not be recomputed
+estimator.set_params(isomap__n_neighbors=5)
+estimator.fit(X)
