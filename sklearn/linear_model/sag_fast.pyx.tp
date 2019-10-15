@@ -54,7 +54,7 @@ from libc.time cimport time, time_t
 from .sgd_fast cimport LossFunction
 from .sgd_fast cimport Log, SquaredLoss
 
-from ..utils.seq_dataset cimport SequentialDataset32, SequentialDataset64
+from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
 

@@ -59,7 +59,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import parallel_helper, _joblib_parallel_args
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 
@@ -218,7 +218,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            **_joblib_parallel_args(prefer="threads"))(
-            delayed(parallel_helper)(tree, 'apply', X, check_input=False)
+            delayed(tree.apply)(X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
@@ -249,7 +249,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               **_joblib_parallel_args(prefer='threads'))(
-            delayed(parallel_helper)(tree, 'decision_path', X,
+            delayed(tree.decision_path)(X,
                                      check_input=False)
             for tree in self.estimators_)
 
@@ -989,10 +989,11 @@ class RandomForestClassifier(ForestClassifier):
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-            - If None (default), then draw `X.shape[0]` samples.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-              `max_samples` should be in the interval `(0, 1)`.
+
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
 
@@ -1277,10 +1278,11 @@ class RandomForestRegressor(ForestRegressor):
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-            - If None (default), then draw `X.shape[0]` samples.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-              `max_samples` should be in the interval `(0, 1)`.
+
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
 
@@ -1576,10 +1578,11 @@ class ExtraTreesClassifier(ForestClassifier):
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-            - If None (default), then draw `X.shape[0]` samples.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-              `max_samples` should be in the interval `(0, 1)`.
+
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
 
@@ -1841,10 +1844,11 @@ class ExtraTreesRegressor(ForestRegressor):
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-            - If None (default), then draw `X.shape[0]` samples.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-              `max_samples` should be in the interval `(0, 1)`.
+
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
 
@@ -2069,10 +2073,11 @@ class RandomTreesEmbedding(BaseForest):
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
-            - If None (default), then draw `X.shape[0]` samples.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-              `max_samples` should be in the interval `(0, 1)`.
+
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
         .. versionadded:: 0.22
 
