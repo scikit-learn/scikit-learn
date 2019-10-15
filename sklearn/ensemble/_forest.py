@@ -1639,7 +1639,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> clf = ExtraTreesClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)
     ExtraTreesClassifier(random_state=0)
-    >>> clf.feature_importances_ # doctest: +ELLIPSIS
+    >>> clf.feature_importances_
     array([0.0940..., 0.2749..., 0.4558..., 0.1751...])
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
