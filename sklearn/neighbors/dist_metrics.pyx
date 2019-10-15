@@ -512,7 +512,7 @@ cdef class ChebyshevDistance(DistanceMetric):
     >>> dist = DistanceMetric.get_metric('chebyshev')
     >>> X = [[0, 1, 2],
     ... 	[3, 4, 5]]
-    >>> Y = [[-1,0,1],
+    >>> Y = [[-1, 0, 1],
     ...      [3, 4, 5]]
     >>> dist.pairwise(X, Y)
     array([[1.73205081, 5.19615242],
