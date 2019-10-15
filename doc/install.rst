@@ -64,6 +64,19 @@ Installing the latest release
           <span class="sk-expandable" data-packager="conda">conda install scikit-learn </span>
        </code>
        </pre></div>
+
+In order to check your installation you can use
+
+.. raw:: html
+
+   <div><pre>
+     <code>
+       <span class="sk-expandable" data-packager="pip">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+       <span class="sk-expandable" data-packager="pip">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+       <span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span>
+       <span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span>
+      </code>
+    </pre></div>
   </div>
 
 If you already have a working installation of numpy and scipy,
@@ -77,7 +90,17 @@ strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 If you choose to use ``conda`` please check the `instructions for downloading
 conda <https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
 and `how to use conda environments
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
+
+Using an isolated environment (virtualenv or conda environment) makes it
+possible to install a specific version of scikit-learn and its dependencies
+independently of any previously installed Python packages.
+In particular under Linux is it discouraged to install pip packages alongside
+the packages managed by the package manager of the distribution
+(apt, dnf, pacman...).
+
+Note that you should always remember to activate the environment of your choice
+prior to running any Python command whenever you start a new terminal session.
 
 If you have not installed NumPy or SciPy yet, you can also install these using
 conda or pip. When using pip, please ensure that *binary wheels* are used,
