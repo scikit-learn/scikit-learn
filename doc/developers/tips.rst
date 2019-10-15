@@ -105,8 +105,7 @@ Other `pytest` options that may become useful include:
 Since our continuous integration tests will error if
 ``FutureWarning`` or ``FutureWarning`` aren't properly caught,
 it is also recommended to run ``pytest`` along with the
-``-Werror::sklearn.exceptions.FutureWarning`` and
-``-Werror::FutureWarning`` flags.
+``-Werror::FutureWarning`` flag.
 
 .. _saved_replies:
 

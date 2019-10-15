@@ -130,7 +130,7 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
     # Useful because we are now deprecating # anything that isn't explicitly
     # in an __init__ file.
     # We don't want to raise a dep warning if we are in a pytest session else
-    # the CIs with -Werror::sklearn.exceptions.FutureWarning would
+    # the CIs with -Werror::FutureWarning would
     # fail. The deprecations are still properly tested in
     # sklearn/tests/test_import_deprecations.py
 
