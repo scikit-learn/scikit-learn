@@ -34,38 +34,37 @@ Quickstart
 .. raw:: html
 
   <div class="install">
-       <p><strong>System</strong></p>
-          <input type="radio" name="os" id="quickstart-mac" checked>
-          <label for="quickstart-mac">macOS / OSX</label>
-          <input type="radio" name="os" id="quickstart-win">
+       <h4>Operating System</h4>
+          <input type="radio" name="os" id="quickstart-win" checked>
           <label for="quickstart-win">Windows</label>
+          <input type="radio" name="os" id="quickstart-mac">
+          <label for="quickstart-mac">macOS</label>
           <input type="radio" name="os" id="quickstart-lin">
           <label for="quickstart-lin">Linux</label>
-       <p><strong>Packager</strong></p>
+       <h4>Packager</h4>
           <input type="radio" name="packager" id="quickstart-pip" checked>
           <label for="quickstart-pip">pip</label>
           <input type="radio" name="packager" id="quickstart-conda">
           <label for="quickstart-conda">conda</label>
-          <input type="radio" name="packager" id="quickstart-source">
-          <label for="quickstart-source">source</label>
-       <p><strong>Pip Virtual Environment</strong></p>
+       <h4>Use virtualenv / conda environment</h4>
           <input type="checkbox" name="config" id="quickstart-venv">
-          <label for="quickstart-venv">Virtual environment</label>
-
+          <label for="quickstart-venv">pip venv/conda env</label>
+       </span>
        <div><pre>
        <code>
-          <span class="sk-expandable linux-venv">python3 -m venv .env</span>
-          <span class="sk-expandable venv">python -m venv .env</span>
-          <span class="sk-expandable venv">source .env/bin/activate</span>
-          <span class="sk-expandable win-venv">.env\Scripts\activate</span>
-          <span class="sk-expandable pip">pip install -U scikit-learn</span>
-          <span class="sk-expandable conda">conda install scikit-learn </span>
-          <span class="sk-expandable source">git clone https://github.com/scikit-learn/scikit-learn</span>
-          <span class="sk-expandable source">cd scikit-learn</span>
-          <span class="sk-expandable linux-source">export PYTHONPATH=`pwd`</span>
-          <span class="sk-expandable win-source">set PYTHONPATH=/path/to/scikit-learn</span>
-          <span class="sk-expandable source">pip install -r requirements.txt</span>
-          <span class="sk-expandable source">python install --editable .</span>
+          <span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">python3 -m venv sklearn-venv</span>
+          <span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">python -m venv sklearn-venv</span>
+          <span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">python -m venv sklearn-venv</span>
+          <span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">source sklearn-venv/bin/activate</span>
+          <span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="">source sklearn-venv/bin/activate</span>
+          <span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">sklearn-venv\Scripts\activate</span>
+          <span class="sk-expandable" data-packager="pip" data-venv="">pip install -U scikit-learn</span>
+          <span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span>
+          <span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span>
+          <span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span>
+          <span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span>
+          <span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span>
+          <span class="sk-expandable" data-packager="conda">conda install scikit-learn </span>
        </code>
        </pre></div>
   </div>

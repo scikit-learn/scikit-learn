@@ -1067,32 +1067,31 @@ div.testimonial p {
 }
 
 /* Show hidden content when the checkbox is checked */
-#quickstart-mac:checked ~ * .mac {
+/* for conda */
+#quickstart-conda:checked  ~* [data-packager="conda"] {
   display: block;
 }
 
-#quickstart-win:checked ~ * .win {
+/* for pip */
+#quickstart-pip:checked ~* [data-packager="pip"] {
   display: block;
 }
-
-#quickstart-lin:checked ~ * .lin {
-  display: block;
+#quickstart-win:not(:checked) ~* [data-os="windows"] {
+  display: none;
+}
+#quickstart-lin:not(:checked) ~* [data-os="linux"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
 }
 
-#quickstart-venv:checked ~ * .venv {
-  display: block;
+#quickstart-venv:not(:checked) ~* [data-venv=""] {
+  display: none;
 }
 
-#quickstart-pip:checked ~ * .pip {
-  display: block;
-}
-
-#quickstart-conda:checked ~ * .conda {
-  display: block;
-}
-
-#quickstart-source:checked ~ * .source {
-  display: block;
+#quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
 }
 
 /* Algorithm cheet-sheet */
