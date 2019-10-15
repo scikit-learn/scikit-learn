@@ -24,7 +24,7 @@ def test_import_skl():
     assert _top_import_error is None
 
 
-def test_import_openmp_warning():
+def test_init_openmp_warning():
     # Check that a warning is printed when sklearn has been built without
     # OpenMP
     if _openmp_supported():
