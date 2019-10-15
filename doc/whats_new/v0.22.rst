@@ -9,6 +9,10 @@ Version 0.22.0
 
 **In Development**
 
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
+
 Changed models
 --------------
 
@@ -398,6 +402,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added a new parameter ``zero_division`` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. This allows to set returned value for
+  ill-defined metrics.
+  :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
+
 - |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
@@ -416,10 +427,10 @@ Changelog
   :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
 
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
-  Tweedie deviance for a power parameter ``p``. Also add mean Poisson deviance
-  :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
+  Tweedie deviance for a given ``power`` parameter. Also add mean Poisson
+  deviance :class:`metrics.mean_poisson_deviance` and mean Gamma deviance
   :class:`metrics.mean_gamma_deviance` that are special cases of the Tweedie
-  deviance for `p=1` and `p=2` respectively.
+  deviance for ``power=1`` and ``power=2`` respectively.
   :pr:`13938` by :user:`Christian Lorentzen <lorentzenchr>` and
   `Roman Yurchak`_.
 
@@ -572,6 +583,9 @@ Changelog
   :class:`svm.OneClassSVM` was previously non-initialized, and had size 2. It
   has now size 1 with the correct value. :pr:`15099` by `Nicolas Hug`_.
 
+- |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
+  ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -611,11 +625,16 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
-  - ``choose_check_classifiers_labels``
-  - ``enforce_estimator_tags_y``
-  - ``optimize.newton_cg`
-  - ``random.random_choice_csc``
-  - ``safe_indexing``
+  - ``utils.choose_check_classifiers_labels``
+  - ``utils.enforce_estimator_tags_y``
+  - ``utils.optimize.newton_cg`
+  - ``utils.random.random_choice_csc``
+  - ``utils.safe_indexing``
+  - ``utils.mocking``
+  - ``utils.fast_dict``
+  - ``utils.seq_dataset``
+  - ``utils.weight_vector``
+  - ``utils.fixes.parallel_helper`` (removed)
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -638,6 +657,10 @@ Changelog
   NaN to integer.
   :pr:`14872` by `Roman Yurchak`_.
 
+- |Fix| :func:`utils.check_array` will now correctly detect numeric dtypes in
+  pandas dataframes, fixing a bug where ``float32`` was upcast to ``float64``
+  unnecessarily. :pre:`15094` by `Andreas Müller`_.
+  
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
