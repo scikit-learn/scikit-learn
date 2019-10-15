@@ -3,6 +3,8 @@
 Release Highlights for scikit-learn 0.22
 ========================================
 
+.. currentmodule:: sklearn
+
 We are pleased to announce the release of scikit-learn 0.22, which comes
 with many bug fixes and new features! We detail below a few of the major
 features of this release. For an exhaustive list of all the changes, please
@@ -21,7 +23,7 @@ or with conda::
 # Permutation-based feature importance
 # ------------------------------------
 #
-# The :func:`~sklearn.inspection.permutation_importance` can be used to get an
+# The :func:`~inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
 from sklearn.ensemble import RandomForestClassifier
@@ -47,8 +49,8 @@ plt.show()
 # Native support for missing values for gradient boosting
 # -------------------------------------------------------
 #
-# The :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
-# and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now have native
+# The :class:`~ensemble.HistGradientBoostingClassifier`
+# and :class:`~ensemble.HistGradientBoostingRegressor` now have native
 # support for missing values (NaNs). This means that there is no need for
 # imputing data when training or predicting.
 
@@ -110,7 +112,7 @@ print("Average number of nodes with pruning {:.1f}".format(
 ############################################################################
 # Retrieve dataframes from OpenML
 # -------------------------------
-# :func:`datasets.fetch_openml` can now return pandas dataframe and thus
+# :func:`~datasets.fetch_openml` can now return pandas dataframe and thus
 # properly handle datasets with heterogeneous data:
 
 from sklearn.datasets import fetch_openml
