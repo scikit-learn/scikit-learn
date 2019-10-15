@@ -907,99 +907,74 @@ Generalized Linear Models (GLM) extend linear models in two ways
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
-.. math::    \hat{y}(w, X) = h(x^\top w) = h(w_0 + w_1 X_1 + ... + w_p X_p).
+.. math::    \hat{y}(w, X) = h(Xw).
 
-Secondly, the squared loss function is replaced by the unit deviance :math:`d`
-of a reproductive exponential dispersion model (EDM) [11]_. The minimization
-problem becomes
+Secondly, the squared loss function is replaced by the unit deviance
+:math:`d` of a distribution in the exponential family (or more precisely, a
+reproductive exponential dispersion model (EDM) [11]_).
 
-.. math::    \min_{w} \frac{1}{2 \sum_i s_i} \sum_i s_i \cdot d(y_i, \hat{y}(w, X_i)) + \frac{\alpha}{2} ||w||_2
+The minimization problem becomes:
 
-with sample weights :math:`s_i`, and L2 regularization penalty :math:`\alpha`.
-The unit deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
-likelihood as
+.. math::    \min_{w} \frac{1}{2 \cdot n\text{_samples}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
 
-.. math::     d(y, \mu) = -2\phi\cdot
-              \left( \log p(y|\mu,\phi)
-              - \log p(y|y,\phi)\right).
+where :math:`\alpha` is the L2 regularization penalty. When sample weights are
+provided, the average becomes a weighted average.
 
-The following table lists some specific EDM distributions—all are instances of Tweedie
-distributions—and some of their properties.
+The following table lists some specific EDMs and their unit deviance (all of
+these are instances of the Tweedie family):
 
-================= ===============================  ====================================== ============================================
-Distribution       Target Domain                    Unit Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
-================= ===============================  ====================================== ============================================
-Normal            :math:`y \in (-\infty, \infty)`  :math:`1`                              :math:`(y-\mu)^2`
-Poisson           :math:`y \in [0, \infty)`        :math:`\mu`                            :math:`2(y\log\frac{y}{\mu}-y+\mu)`
-Gamma             :math:`y \in (0, \infty)`        :math:`\mu^2`                          :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
-Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\mu^3`                          :math:`\frac{(y-\mu)^2}{y\mu^2}`
-================= ===============================  ====================================== ============================================
+================= ===============================  ============================================
+Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
+================= ===============================  ============================================
+Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
+Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
+Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+================= ===============================  ============================================
 
+The choice of the distribution depends on the problem at hand:
+
+* If the target values :math:`y` are counts (non-negative integer valued) or
+  relative frequencies (non-negative), you might use a Poisson deviance
+  with log-link.
+* If the target values are positive valued and skewed, you might try a
+  Gamma deviance with log-link.
+* If the target values seem to be heavier tailed than a Gamma distribution,
+  you might try an Inverse Gaussian deviance (or even higher variance powers
+  of the Tweedie family).
+
+
+.. topic:: References:
+
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
+       and analysis of deviance. Monografias de matemática, no. 51.  See also
+       `Exponential dispersion model.
+       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
 
 Usage
 -----
 
-A GLM loss different from the classical squared loss might be appropriate in
-the following cases:
+:class:`TweedieRegressor` implements a generalized linear model for the
+Tweedie distribution, that allows to model any of the above mentioned
+distributions using the appropriate ``power`` parameter. In particular:
 
-  * If the target values :math:`y` are counts (non-negative integer valued) or
-    frequencies (non-negative), you might use a Poisson deviance with log-link.
+- ``power = 0``: Normal distribution. Specific estimators such as
+  :class:`Ridge`, :class:`ElasticNet` are generally more appropriate in
+  this case.
+- ``power = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed
+  for convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=1, link='log')`.
+- ``power = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
+  convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=2, link='log')`.
+- ``power = 3``: Inverse Gaussian distribution.
 
-  * If the target values are positive valued and skewed, you might try a
-    Gamma deviance with log-link.
+The link function is determined by the `link` parameter.
 
-  * If the target values seem to be heavier tailed than a Gamma distribution,
-    you might try an Inverse Gaussian deviance (or even higher variance powers
-    of the Tweedie family).
-
-Since the linear predictor :math:`x^\top w` can be negative and
-Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
-it is convenient to apply a link function different from the identity link
-:math:`h(x^\top w)=x^\top w` that guarantees the non-negativeness, e.g. the
-log-link `link='log'` with :math:`h(x^\top w)=\exp(x^\top w)`.
-
-:class:`TweedieRegressor` implements a generalized linear model
-for the Tweedie distribution, that allows to model any of the above mentioned
-distributions using the appropriate ``power`` parameter, i.e. the exponent
-of the unit variance function:
-
- - ``power = 0``: Normal distribution. Specialized solvers such as
-   :class:`Ridge`, :class:`ElasticNet` are generally
-   more appropriate in this case.
-
- - ``power = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed for
-   convenience. However, it is strictly equivalent to
-   `TweedieRegressor(power=1)`.
-
- - ``power = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
-   convenience. However, it is strictly equivalent to
-   `TweedieRegressor(power=2)`.
-
- - ``power = 3``: Inverse Gamma distribution.
-
-
-.. note::
-
-   * The feature matrix `X` should be standardized before fitting. This
-     ensures that the penalty treats features equally.
-   * If you want to model a relative frequency, i.e. counts per exposure (time,
-     volume, ...) you can do so by a Poisson distribution and passing
-     :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
-     together with :math:`s=\mathrm{exposure}` as sample weights.
-
-     As an example, consider Poisson distributed counts z (integers) and
-     weights s=exposure (time, money, persons years, ...). Then you fit
-     y = z/s, i.e. ``PoissonRegressor.fit(X, y, sample_weight=s)``.
-     The weights are necessary for the right (finite sample) mean.
-     Considering :math:`\bar{y} = \frac{\sum_i s_i y_i}{\sum_i s_i}`,
-     in this case one might say that y has a 'scaled' Poisson distribution.
-     The same holds for other distributions.
-
-   * The fit itself does not need Y to be from an EDM, but only assumes
-     the first two moments to be :math:`E[Y_i]=\mu_i=h((Xw)_i)` and
-     :math:`Var[Y_i]=\frac{\phi}{s_i} v(\mu_i)`.
-
-The estimator can be used as follows::
+Usage example::
 
     >>> from sklearn.linear_model import TweedieRegressor
     >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
@@ -1016,49 +991,25 @@ The estimator can be used as follows::
   * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
 
-Mathematical formulation
+Practical considerations
 ------------------------
 
-In the unpenalized case, the assumptions are the following:
+The feature matrix `X` should be standardized before fitting. This ensures
+that the penalty treats features equally.
 
-    * The target values :math:`y_i` are realizations of random variables
-      :math:`Y_i \overset{i.i.d}{\sim} \mathrm{EDM}(\mu_i, \frac{\phi}{s_i})`
-      with expectation :math:`\mu_i=\mathrm{E}[Y]`, dispersion parameter
-      :math:`\phi` and sample weights :math:`s_i`.
-    * The aim is to predict the expectation :math:`\mu_i` with
-      :math:`\hat{y}_i = h(\eta_i)`, linear predictor
-      :math:`\eta_i=(Xw)_i` and inverse link function :math:`h`.
+Since the linear predictor :math:`Xw` can be negative and Poisson,
+Gamma and Inverse Gaussian distributions don't support negative values, it
+is necessary to apply an inverse link function that guarantees the
+non-negativeness. For example with `link='log'`, the inverse link function
+becomes :math:`h(Xw)=\exp(Xw)`.
 
-Note that the first assumption implies
-:math:`\mathrm{Var}[Y_i]=\frac{\phi}{s_i} v(\mu_i)` with unit variance
-function :math:`v(\mu)`. Specifying a particular distribution of an EDM is the
-same as specifying a unit variance function (they are one-to-one).
+If you want to model a relative frequency, i.e. counts per exposure (time,
+volume, ...) you can do so by using a Poisson distribution and passing
+:math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
+together with :math:`s=\mathrm{exposure}` as sample weights. For a concrete
+example see e.g.
+:ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`.
 
-A few remarks:
-
-* The deviance is independent of :math:`\phi`. Therefore, also the estimation
-  of the coefficients :math:`w` is independent of the dispersion parameter of
-  the EDM.
-* The minimization is equivalent to (penalized) maximum likelihood estimation.
-* The deviances for at least Normal, Poisson and Gamma distributions are
-  strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
-  (19)-(20) in [12]_. This means that, given an appropriate feature matrix `X`,
-  you get good (asymptotic) estimators for the expectation when using these
-  deviances.
-
-
-.. topic:: References:
-
-    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
-       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
-
-    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
-       and analysis of deviance. Monografias de matemática, no. 51.  See also
-       `Exponential dispersion model.
-       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
-
-    .. [12] Gneiting, T. (2010). `Making and Evaluating Point Forecasts.
-       <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================

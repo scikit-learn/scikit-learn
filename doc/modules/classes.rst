@@ -857,9 +857,8 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
 Generalized linear models (GLM) for regression
 ----------------------------------------------
 
-A generalization of linear models that allows for response variables to
-have error distribution other than a normal distribution is implemented
-in the following models,
+These models allow for response variables to have error distribution other
+than a normal distribution:
 
 .. autosummary::
    :toctree: generated/

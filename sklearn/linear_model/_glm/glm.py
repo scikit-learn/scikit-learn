@@ -67,9 +67,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty terms and thus determines the
-        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix X must have full column rank
+        Constant that multiplies the penalty term and thus determines the
+        regularization strength. ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
     fit_intercept : bool, default=True
@@ -81,15 +81,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         The distributional assumption of the GLM, i.e. which distribution from
         the EDM, specifies the loss function to be minimized.
 
-    link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
-            default='auto'
+    link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
-        (X*coef) to expectation (y_pred). Option 'auto' sets the link
-        depending on the chosen family as follows:
+        `Xw` to prediction `y_pred`. Option 'auto' sets the link depending
+        on the chosen family as follows:
 
-        - 'identity' for family 'normal'
-
-        - 'log' for families 'poisson', 'gamma', 'inverse-gaussian'
+        - 'identity' for Normal distribution
+        - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
 
     solver : 'lbfgs', default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -155,12 +153,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
-            Individual weights w_i for each sample. Note that for an
-            Exponential Dispersion Model (EDM), one has
-            Var[Y_i]=phi/w_i * v(y_pred).
-            If Y_i ~ EDM(y_pred, phi/w_i), then
-            sum(w*Y)/sum(w) ~ EDM(y_pred, phi/sum(w)), i.e. the mean of y is a
-            weighted average with weights=sample_weight.
+            Sample weights.
 
         Returns
         -------
@@ -400,25 +393,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
 
 class PoissonRegressor(GeneralizedLinearRegressor):
-    """Regression with the response variable y following a Poisson distribution
-
-    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as y_pred=h(X*w).
-    The fit minimizes the following objective function with L2 regularization::
-
-            1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
-
-    with inverse link function h and s=sample_weight. Note that for
-    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
+    """Generalized Linear Model with a Poisson distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty terms and thus determines the
-        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix X must have full column rank
+        Constant that multiplies the penalty term and thus determines the
+        regularization strength. ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
     fit_intercept : bool, default=True
@@ -479,25 +463,16 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
 
 class GammaRegressor(GeneralizedLinearRegressor):
-    """Regression with the response variable y following a Gamma distribution
-
-    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as y_pred=h(X*w).
-    The fit minimizes the following objective function with L2 regularization::
-
-            1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
-
-    with inverse link function h and s=sample_weight. Note that for
-    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
+    """Generalized Linear Model with a Gamma distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty terms and thus determines the
-        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix X must have full column rank
+        Constant that multiplies the penalty term and thus determines the
+        regularization strength. ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
     fit_intercept : bool, default=True
@@ -558,30 +533,18 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
 
 class TweedieRegressor(GeneralizedLinearRegressor):
-    r"""Regression with the response variable y following a Tweedie distribution
+    """Generalized Linear Model with a Tweedie distribution.
 
-    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
-    fitting and predicting the mean of the target y as y_pred=h(X*w).
-    The fit minimizes the following objective function with L2 regularization::
-
-            1/(2*sum(s)) * deviance(y, h(X*w); s) + 1/2 * alpha * ||w||_2^2
-
-    with inverse link function h and s=sample_weight. Note that for
-    ``sample_weight=None``, one has s_i=1 and sum(s)=n_samples).
+    This estimator can be used to model different GLMs depending on the
+    ``power`` parameter, which determines the underlying distribution.
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
     Parameters
     ----------
     power : float, default=0
-            The power determines the underlying target distribution. By
-            definition it links distribution variance (:math:`v`) and
-            mean (:math:`\y_\textrm{pred}`):
-            :math:`v(\y_\textrm{pred}) = \y_\textrm{pred}^{power}`.
-
-            For ``0 < power < 1``, no distribution exists.
-
-            Special cases are:
+            The power determines the underlying target distribution according
+            to the following table:
 
             +-------+------------------------+
             | Power | Distribution           |
@@ -597,20 +560,21 @@ class TweedieRegressor(GeneralizedLinearRegressor):
             | 3     | Inverse Gaussian       |
             +-------+------------------------+
 
+            For ``0 < power < 1``, no distribution exists.
+
     alpha : float, default=1
-        Constant that multiplies the penalty terms and thus determines the
-        regularization strength.  ``alpha = 0`` is equivalent to unpenalized
-        GLMs. In this case, the design matrix X must have full column rank
+        Constant that multiplies the penalty term and thus determines the
+        regularization strength. ``alpha = 0`` is equivalent to unpenalized
+        GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
 
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
-        (X*coef) to expectation (y_pred). Option 'auto' sets the link
-        depending on the chosen family as follows:
+        `Xw` to prediction `y_pred`. Option 'auto' sets the link depending
+        on the chosen family as follows:
 
         - 'identity' for Normal distribution
-
-        - 'log' for Poisson,  Gamma or Inverse Gaussian distributions
+        - 'log' for Poisson,  Gamma and Inverse Gaussian distributions
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
