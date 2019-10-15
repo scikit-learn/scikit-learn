@@ -176,9 +176,7 @@ def _special_sparse_dot(W, H, X):
         rank = W.shape[1]
         batch_size = math.floor(n_vals / rank)
         while i < n_vals:
-            s = i + batch_size
-            if s > n_vals:
-                i = n_vals
+            s = i + batch_size if i + batch_size <= n_vals else n_vals
             dot_vals[i:s] = np.multiply(W[ii[i:s], :],
                                         H.T[jj[i:s], :]).sum(axis=1)
             i = s
