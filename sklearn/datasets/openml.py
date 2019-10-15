@@ -594,6 +594,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             The names of the dataset columns
         target_names: list
             The names of the target columns
+
+        .. versionadded:: 0.22
+
         categories : dict or None
             Maps each categorical feature name to a list of values, such
             that the value encoded as i is ith in the list. If ``as_frame``

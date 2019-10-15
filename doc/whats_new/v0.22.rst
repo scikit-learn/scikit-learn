@@ -124,6 +124,9 @@ Changelog
 - |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using
   pandas by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
+- |Feature| :func:`datasets.fetch_openml` now includes the `target_names` in
+  the returned Bunch. :pr:`15160` by `Thomas Fan`_.
+
 - |Enhancement| The parameter `return_X_y` was added to
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
