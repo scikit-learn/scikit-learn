@@ -874,6 +874,43 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     out_activation_ : string
         Name of the output activation function.
+    
+    Examples
+    ---------
+    >>> from sklearn.datasets import fetch_openml
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+    >>> X = X / 255.
+    >>> X_train, X_test = X[:60000], X[60000:]
+    >>> y_train, y_test = y[:60000], y[60000:]
+
+    >>> mlp_clf = MLPClassifier(hidden_layer_sizes=(50,), max_iter=10,
+        alpha=1e-4,solver='sgd', verbose=10, tol=1e-4, random_state=1,
+        learning_rate_init=.1)
+    
+    >>> mlp_clf.fit(X_train, y_train)
+    Iteration 1, loss = 0.32009978
+    Iteration 2, loss = 0.15347534
+    Iteration 3, loss = 0.11544755
+    Iteration 4, loss = 0.09279764
+    Iteration 5, loss = 0.07889367
+    Iteration 6, loss = 0.07170497
+    Iteration 7, loss = 0.06282111
+    Iteration 8, loss = 0.05530788
+    Iteration 9, loss = 0.04960484
+    Iteration 10, loss = 0.04645355
+
+    MLPClassifier(activation='relu', alpha=0.0001, batch_size='auto', beta_1=0.9,
+                beta_2=0.999, early_stopping=False, epsilon=1e-08,
+                hidden_layer_sizes=(50,), learning_rate='constant',
+                learning_rate_init=0.1, max_fun=15000, max_iter=10, momentum=0.9,
+                n_iter_no_change=10, nesterovs_momentum=True, power_t=0.5,
+                random_state=1, shuffle=True, solver='sgd', tol=0.0001,
+                validation_fraction=0.1, verbose=10, warm_start=False)
+    >>> print("Training set score: %f" % mlp_clf.score(X_train, y_train))
+    Training set score: 0.986800
+    >>> print("Test set score: %f" % mlp_clf.score(X_test, y_test))
+    Test set score: 0.970000
 
     Notes
     -----
@@ -1262,6 +1299,30 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : string
         Name of the output activation function.
+
+    Examples
+    --------
+    >>> from sklearn.datasets.california_housing import fetch_california_housing
+    >>> from sklearn.neural_network import MLPRegressor
+
+    >>> cal_housing = fetch_california_housing()
+    Downloading Cal. housing from https://ndownloader.figshare.com/files/5976036 to 
+    >>> X, y = cal_housing.data, cal_housing.target
+
+    >>> y -= y.mean()
+
+    >>> mlp_reg = MLPRegressor(activation='logistic')
+
+    >>> mlp_reg.fit(X,y)
+    MLPRegressor(activation='logistic', alpha=0.0001, batch_size='auto', beta_1=0.9,
+                beta_2=0.999, early_stopping=False, epsilon=1e-08,
+                hidden_layer_sizes=(100,), learning_rate='constant',
+                learning_rate_init=0.001, max_fun=15000, max_iter=200,
+                momentum=0.9, n_iter_no_change=10, nesterovs_momentum=True,
+                power_t=0.5, random_state=None, shuffle=True, solver='adam',
+                tol=0.0001, validation_fraction=0.1, verbose=False,
+                warm_start=False)
+
 
     Notes
     -----
