@@ -17,7 +17,7 @@ _DEPRECATED_MODULES = {
     ('_iforest', 'sklearn.ensemble.iforest', 'sklearn.ensemble'),
     ('_voting', 'sklearn.ensemble.voting', 'sklearn.ensemble'),
     ('_weight_boosting', 'sklearn.ensemble.weight_boosting', 'sklearn.ensemble'),
-    ('_base', 'sklearn.tree.tree', 'sklearn.tree'),
+    ('_classes', 'sklearn.tree.tree', 'sklearn.tree'),
     ('_export', 'sklearn.tree.export', 'sklearn.tree'),
 
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
