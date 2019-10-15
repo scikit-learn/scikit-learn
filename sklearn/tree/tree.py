@@ -655,6 +655,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+        Note: The source of randomness is exlained in the notes.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -762,12 +764,18 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
-    The features are always randomly permuted at each split. Therefore,
-    the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
-    identical for several splits enumerated during the search of the best
-    split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
+    The features are always randomly permuted at each split, even if 
+    ``splitter`` is set to ``"best"``. Especially if 
+    ``max_features < n_features``, the algorithm will select ``max_features`` 
+    at random at each split. But the best found split may vary accross different 
+    runs, even if ``max_features=n_features``. That is the case, if the 
+    improvement of the criterion is identical for several splits and one split
+    has to be selected at random. 
+    To obtain a deterministic behaviour during fitting, ``random_state`` has to 
+    be fixed. To fix ``random_state`` it has to be set to an arbitrary integer.  
+    The specific value does not matter here. The integer is just the seed for the 
+    random number generator. It ensures that the results will be reproducible 
+    (deterministic).
 
     See also
     --------
@@ -1036,6 +1044,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+        Note: The source of randomness is exlained in the notes.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1114,12 +1124,18 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
-    The features are always randomly permuted at each split. Therefore,
-    the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
-    identical for several splits enumerated during the search of the best
-    split. To obtain a deterministic behaviour during fitting,
-    ``random_state`` has to be fixed.
+    The features are always randomly permuted at each split, even if 
+    ``splitter`` is set to ``"best"``. Especially if 
+    ``max_features < n_features``, the algorithm will select ``max_features`` 
+    at random at each split. But the best found split may vary accross different 
+    runs, even if ``max_features=n_features``. That is the case, if the 
+    improvement of the criterion is identical for several splits and one split
+    has to be selected at random. 
+    To obtain a deterministic behaviour during fitting, ``random_state`` has to 
+    be fixed. To fix ``random_state`` it has to be set to an arbitrary integer.  
+    The specific value does not matter here. The integer is just the seed for the 
+    random number generator. It ensures that the results will be reproducible 
+    (deterministic).
 
     See also
     --------
