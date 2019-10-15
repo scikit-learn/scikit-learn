@@ -1650,7 +1650,7 @@ class ExtraTreesClassifier(ForestClassifier):
     >>> from sklearn.ensemble import ExtraTreesRegressor
     >>> boston=load_boston()
     >>> etr=ExtraTreesRegressor(random_state=0)  # doctest: +ELLIPSIS
-    >>> b_x, b_y=load_boston(return_X_y=True)
+    >>> X, y = load_boston(return_X_y=True)
     >>> etr.fit(b_x, b_y)
     ExtraTreesRegressor(random_state=0)
     >>> etr.feature_importances_
