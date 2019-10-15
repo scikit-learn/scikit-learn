@@ -364,7 +364,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                                                 laplacian=laplacian,
                                                 n_nodes=n_nodes,
                                                 n_components=n_components)
-            # Revert the laplacian to its opposite to have lobpcg work
+            # Revert the laplacian to undo the inversion done inside do_embedding_arpack()
             laplacian *= -1
             embedding = solver_fn[chosen_solver](laplacian)
         else:
