@@ -28,27 +28,24 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
-Quickstart
-----------
-
 .. raw:: html
 
   <div class="install">
-       <h4>Operating System</h4>
+       <strong>Operating System</strong>
           <input type="radio" name="os" id="quickstart-win" checked>
           <label for="quickstart-win">Windows</label>
           <input type="radio" name="os" id="quickstart-mac">
           <label for="quickstart-mac">macOS</label>
           <input type="radio" name="os" id="quickstart-lin">
-          <label for="quickstart-lin">Linux</label>
-       <h4>Packager</h4>
+          <label for="quickstart-lin">Linux</label><br />
+       <strong>Packager</strong>
           <input type="radio" name="packager" id="quickstart-pip" checked>
           <label for="quickstart-pip">pip</label>
           <input type="radio" name="packager" id="quickstart-conda">
-          <label for="quickstart-conda">conda</label>
-       <h4>Use virtualenv / conda environment</h4>
+          <label for="quickstart-conda">conda</label><br />
+       <strong>Use virtualenv / conda environment</strong>
           <input type="checkbox" name="config" id="quickstart-venv">
-          <label for="quickstart-venv">pip venv/conda env</label>
+          <label for="quickstart-venv">Yes / No</label>
        </span>
        <div><pre>
        <code>
@@ -69,27 +66,18 @@ Quickstart
        </pre></div>
   </div>
 
-Read more
----------
-
 If you already have a working installation of numpy and scipy,
 the easiest way to install scikit-learn is using ``pip`` or ``conda``.
-
-With ``pip``::
-
-    pip install -U scikit-learn
 
 Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 (see `python3 virtualenv documentation
 <https://docs.python.org/3/tutorial/venv.html>`_).
 
-If you choose to use ``conda`` (see the `instructions for downloading conda
-<https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
+If you choose to use ``conda`` please check the `instructions for downloading
+conda <https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
 and `how to use conda environments
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)::
-
-    conda install scikit-learn
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_)
 
 If you have not installed NumPy or SciPy yet, you can also install these using
 conda or pip. When using pip, please ensure that *binary wheels* are used,

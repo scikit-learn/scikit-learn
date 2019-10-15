@@ -1060,6 +1060,32 @@ div.testimonial p {
 
 /* Installation quickstart */
 
+/* style input radio and checkbox */
+
+div.install > input {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0;
+}
+
+/* Style the button */
+div.install > label {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 5px 11px;
+  background-color: #fff3cd;
+  border: none;
+  border-radius: 3px;
+  color: black;
+}
+
+/* Style the button when the checkbox is checked */
+div.install > input:checked + label {
+  background-color: #ff9c34;
+  color: white;
+}
+
 /* Hide expandable content by default */
 .sk-expandable {
   display: none;
