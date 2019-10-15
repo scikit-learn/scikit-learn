@@ -24,6 +24,7 @@ from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
+JITTER = 10e-4
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
@@ -809,9 +810,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    jitter : float, default=0.0001
-        Uniform noise parameter, added to the y values, to satisfy \
-        the model's assumption of one-at-a-time computations \
+    jitter : float, default=0.001
+        Uniform noise parameter, added to the y values, to satisfy
+        the model's assumption of one-at-a-time computations
         (Efron et al. 2004).
 
     Attributes
@@ -861,7 +862,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 jitter=10e-5):
+                 jitter=JITTER):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -970,7 +971,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
-        noise = np.random.uniform(high=self.jitter, size=len(y))
+        noise = np.random.RandomState(0).uniform(high=self.jitter, size=len(y))
 
         if y.ndim == 2:
             noise = noise.reshape(-1, 1)
@@ -1044,7 +1045,7 @@ class LassoLars(Lars):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    jitter : float, default=0.0001
+    jitter : float, default=0.001
         Uniform noise parameter, added to the y values, to satisfy \
         the model's assumption of one-at-a-time computations \
         (Efron et al. 2004).
@@ -1111,7 +1112,7 @@ class LassoLars(Lars):
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False, jitter=10e-5):
+                 positive=False, jitter=JITTER):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
