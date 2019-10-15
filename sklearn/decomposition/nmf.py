@@ -8,6 +8,7 @@
 
 from math import sqrt
 import warnings
+import math
 import numbers
 import time
 
@@ -170,7 +171,16 @@ def _special_sparse_dot(W, H, X):
     """Computes np.dot(W, H), only where X is non zero."""
     if sp.issparse(X):
         ii, jj = X.nonzero()
-        dot_vals = np.multiply(W[ii, :], H.T[jj, :]).sum(axis=1)
+        n_vals = ii.shape[0]
+        dot_vals = np.empty(n_vals)
+        index = 0
+        rank = W.shape[1]
+        batch_size = math.floor(n_vals / rank)
+        while index < n_vals:
+            selector = index + batch_size if index + batch_size <= n_vals else n_vals
+            dot_vals[index:selector] = np.multiply(W[ii[index:selector], :], H.T[jj[index:selector], :]).sum(axis=1)
+            index = selector
+
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
     else:
