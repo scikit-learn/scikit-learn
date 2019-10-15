@@ -325,15 +325,14 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.datasets import make_multilabel_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
 
-    >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> y_multi = np.array([y, y]).T
-    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y_multi)
-    >>> clf.predict(np.array([0.2, 0.5, -0.4, 0.3]).reshape(1, -1))
-    array([[1, 1]])
+    >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X[:-2], y[:-2])
+    >>> clf.predict(X[-2:])
+    array([[1, 1, 0], [1, 1, 1]])
     """
 
     def __init__(self, estimator, n_jobs=None):
