@@ -24,7 +24,7 @@ from sklearn.exceptions import SklearnDeprecationWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.base import RegressorMixin, BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression

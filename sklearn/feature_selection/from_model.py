@@ -130,6 +130,28 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold_ : float
         The threshold value used for feature selection.
+
+    Examples
+    --------
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X = [[ 0.87, -1.34,  0.31 ],
+    ...      [-2.79, -0.02, -0.85 ],
+    ...      [-1.34, -0.48, -2.55 ],
+    ...      [ 1.92,  1.48,  0.65 ]]
+    >>> y = [0, 1, 0, 1]
+    >>> selector = SelectFromModel(estimator=LogisticRegression()).fit(X, y)
+    >>> selector.estimator_.coef_
+    array([[-0.3252302 ,  0.83462377,  0.49750423]])
+    >>> selector.threshold_
+    0.55245...
+    >>> selector.get_support()
+    array([False,  True, False])
+    >>> selector.transform(X)
+    array([[-1.34],
+           [-0.02],
+           [-0.48],
+           [ 1.48]])
     """
     def __init__(self, estimator, threshold=None, prefit=False,
                  norm_order=1, max_features=None):
