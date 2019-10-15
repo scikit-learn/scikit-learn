@@ -1534,7 +1534,7 @@ class _BaseRidgeCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 store_cv_values=False, is_clf=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1542,7 +1542,7 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
-        self.is_clf_ = False
+        self.is_clf = is_clf
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -1580,7 +1580,7 @@ class _BaseRidgeCV(LinearModel):
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight,
-                          is_clf=self.is_clf_)
+                          is_clf=self.is_clf)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
@@ -1590,7 +1590,7 @@ class _BaseRidgeCV(LinearModel):
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
-            model = RidgeClassifier if self.is_clf_ else Ridge
+            model = RidgeClassifier if self.is_clf else Ridge
             gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
                                     normalize=self.normalize,
                                     solver=solver),
@@ -1715,7 +1715,13 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifier : Ridge classifier
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
-    pass
+    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+                normalize=False, scoring=None, cv=None,
+                store_cv_values=False):
+        super().__init__(
+            alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
+
 
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
@@ -1834,9 +1840,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
                  store_cv_values=False):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
+            scoring=scoring, cv=cv, store_cv_values=store_cv_values, is_clf = True)
         self.class_weight = class_weight
-        self.is_clf_ = True
+
 
     def fit(self, X, y, sample_weight=None):
         """Fit the ridge classifier.
@@ -1858,6 +1864,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
+        
         check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                   multi_output=True)
 
