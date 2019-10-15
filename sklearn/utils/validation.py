@@ -1142,7 +1142,7 @@ def _deprecate_positional_args(f):
             warnings.warn("Pass {} as keyword args. From version 0.24 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
-                          DeprecationWarning)
+                          SklearnDeprecationWarning)
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
