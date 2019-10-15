@@ -81,7 +81,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         The distributional assumption of the GLM, i.e. which distribution from
         the EDM, specifies the loss function to be minimized.
 
-    link : {'auto', 'identity', 'log'}, default='auto'
+    link : {'auto', 'identity', 'log'} or an instance of class BaseLink, \
+            default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
         `Xw` to prediction `y_pred`. Option 'auto' sets the link depending
         on the chosen family as follows:
