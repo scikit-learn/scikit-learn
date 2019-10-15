@@ -1715,13 +1715,13 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifier : Ridge classifier
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
-
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None,
-                 store_cv_values=False):
+                 gcv_mode=None, store_cv_values=False):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            scoring=scoring, cv=cv, store_cv_values=store_cv_values)
+            scoring=scoring, cv=cv, gcv_mode=gcv_mode,
+            store_cv_values=store_cv_values)
 
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
