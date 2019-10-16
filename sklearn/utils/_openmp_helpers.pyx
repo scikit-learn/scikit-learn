@@ -1,4 +1,5 @@
 IF SKLEARN_OPENMP_SUPPORTED:
+    import os
     cimport openmp
     from . import cpu_count
 
