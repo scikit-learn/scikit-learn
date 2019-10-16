@@ -698,8 +698,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
     >>> clf = OutputCodeClassifier(
-    ...                            estimator=RandomForestClassifier(),
-    ...                            random_state=0).fit(X, y)
+    ...     estimator=RandomForestClassifier(),
+    ...     random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
 
