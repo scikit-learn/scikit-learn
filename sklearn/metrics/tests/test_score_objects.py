@@ -676,9 +676,7 @@ def test_multiclass_threshold_scorer(scorer_name, metric):
     scorer = get_scorer(scorer_name)
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
-    lr = LogisticRegression(multi_class="multinomial")
-    lr.fit(X, y)
-
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
     y_proba = lr.predict_proba(X)
     expected_score = metric(y, y_proba)
 
@@ -693,8 +691,7 @@ def test_multiclass_thresshold_no_predict_proba(scorer_name):
     scorer = get_scorer(scorer_name)
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
-    est = Perceptron()
-    est.fit(X, y)
+    est = Perceptron().fit(X, y)
 
     msg = ("estimator must defined predict_proba for multiclass "
            "threshold evaluation")
