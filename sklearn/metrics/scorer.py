@@ -296,12 +296,12 @@ class _ThresholdScorer(_BaseScorer):
         """
 
         y_type = type_of_target(y)
-        if y_type not in ("binary", "multilabel-indicator"):
+        if y_type not in ("binary", "multilabel-indicator", "multiclass"):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
             y_pred = method_caller(clf, "predict", X)
-        else:
+        elif y_type in ("binary", "multilabel-indicator"):
             try:
                 y_pred = method_caller(clf, "decision_function", X)
 
@@ -323,6 +323,12 @@ class _ThresholdScorer(_BaseScorer):
                                              self._score_func.__name__))
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+        else:  # multiclass
+            try:
+                y_pred = method_caller(clf, "predict_proba", X)
+            except (NotImplementedError, AttributeError):
+                raise ValueError("estimator must defined predict_proba for "
+                                 "multiclass threshold evaluation")
 
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,

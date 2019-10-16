@@ -4,6 +4,7 @@ import shutil
 import os
 import numbers
 from unittest.mock import Mock
+from functools import partial
 
 import numpy as np
 import pytest
@@ -28,7 +29,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
@@ -381,13 +382,6 @@ def test_thresholded_scorers():
     score2 = roc_auc_score(y_test, reg.predict(X_test))
     assert_almost_equal(score1, score2)
 
-    # Test that an exception is raised on more than two classes
-    X, y = make_blobs(random_state=0, centers=3)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf.fit(X_train, y_train)
-    with pytest.raises(ValueError, match="multiclass format is not supported"):
-        get_scorer('roc_auc')(clf, X_test, y_test)
-
     # test error is raised with a single class present in model
     # (predict_proba shape is not suitable for binary auc)
     X, y = make_blobs(random_state=0, centers=2)
@@ -669,3 +663,40 @@ def test_multimetric_scorer_sanity_check():
     for key, value in result.items():
         score_name = scorers[key]
         assert_allclose(value, seperate_scores[score_name])
+
+
+@pytest.mark.parametrize('scorer_name, metric', [
+    ('roc_auc_ovr', partial(roc_auc_score, multi_class='ovr')),
+    ('roc_auc_ovo', partial(roc_auc_score, multi_class='ovo')),
+    ('roc_auc_ovr_weighted', partial(roc_auc_score, multi_class='ovr',
+                                     average='weighted')),
+    ('roc_auc_ovo_weighted', partial(roc_auc_score, multi_class='ovo',
+                                     average='weighted'))])
+def test_multiclass_threshold_scorer(scorer_name, metric):
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = LogisticRegression(multi_class="multinomial")
+    lr.fit(X, y)
+
+    y_proba = lr.predict_proba(X)
+    expected_score = metric(y, y_proba)
+
+    assert scorer(lr, X, y) == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize('scorer_name, ', ['roc_auc_ovr', 'roc_auc_ovo',
+                                           'roc_auc_ovr_weighted',
+                                           'roc_auc_ovo_weighted'])
+def test_multiclass_thresshold_no_predict_proba(scorer_name):
+    # estimator without predict_proba will fail
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    est = Perceptron()
+    est.fit(X, y)
+
+    msg = ("estimator must defined predict_proba for multiclass "
+           "threshold evaluation")
+    with pytest.raises(ValueError, match=msg):
+        scorer(est, X, y)
