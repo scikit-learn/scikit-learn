@@ -10,6 +10,16 @@ from contextlib import suppress
 _DEPRECATED_MODULES = {
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
+    ('_bagging', 'sklearn.ensemble.bagging', 'sklearn.ensemble'),
+    ('_base', 'sklearn.ensemble.base', 'sklearn.ensemble'),
+    ('_forest', 'sklearn.ensemble.forest', 'sklearn.ensemble'),
+    ('_gb', 'sklearn.ensemble.gradient_boosting', 'sklearn.ensemble'),
+    ('_iforest', 'sklearn.ensemble.iforest', 'sklearn.ensemble'),
+    ('_voting', 'sklearn.ensemble.voting', 'sklearn.ensemble'),
+    ('_weight_boosting', 'sklearn.ensemble.weight_boosting', 'sklearn.ensemble'),
+    ('_classes', 'sklearn.tree.tree', 'sklearn.tree'),
+    ('_export', 'sklearn.tree.export', 'sklearn.tree'),
+
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
     ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
     ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils'),

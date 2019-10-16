@@ -12,10 +12,9 @@ from joblib import Parallel, delayed
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
-from ..base import MetaEstimatorMixin
 
-from .base import _parallel_fit_estimator
-from .base import _BaseHeterogeneousEnsemble
+from ._base import _parallel_fit_estimator
+from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
@@ -26,7 +25,6 @@ from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
-from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
