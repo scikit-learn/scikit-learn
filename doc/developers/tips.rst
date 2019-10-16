@@ -103,7 +103,7 @@ Other `pytest` options that may become useful include:
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
 
 Since our continuous integration tests will error if
-``FutureWarning`` or ``FutureWarning`` aren't properly caught,
+``FutureWarning`` isn't properly caught,
 it is also recommended to run ``pytest`` along with the
 ``-Werror::FutureWarning`` flag.
 
