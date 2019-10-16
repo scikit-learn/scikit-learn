@@ -1083,7 +1083,6 @@ div.install > input:checked + label {
 /* Hide expandable content by default */
 .sk-expandable {
   display: none;
-  background: #ddd;
 }
 
 /* Show hidden content when the checkbox is checked */
