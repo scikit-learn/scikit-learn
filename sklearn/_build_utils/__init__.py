@@ -48,6 +48,8 @@ def maybe_cythonize_extensions(top_path, config):
 
     # check simple compilation with OpenMP. If it fails scikit-learn will be
     # built without OpenMP.
+    # sklearn._OPENMP_SUPPORTED will be used during build_ext to set the
+    # OpenMP flags accordingly.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
