@@ -47,6 +47,20 @@ Installing the latest release
           <input type="checkbox" name="config" id="quickstart-venv">
           <label for="quickstart-venv">Yes / No</label>
        </span>
+
+.. raw:: html
+
+       <div>
+         <span class="sk-expandable" data-packager="pip" data-os="windows">Install the 64bit version of Python 3, for instance from <a href="https://www.python.org/">https://www.python.org</a>.</span
+         ><span class="sk-expandable" data-packager="pip" data-os="mac">Install Python 3 using <a href="https://brew.sh/">homebrew</a> (<code>brew install python</code>) or by manually installing the package from <a href="https://www.python.org">https://www.python.org</a>.</span
+         ><span class="sk-expandable" data-packager="pip" data-os="linux">Install python3 and python3-pip using the package manager of the Linux Distribution.</span
+         ><span class="sk-expandable" data-packager="conda"><a href="https://docs.conda.io/projects/conda/en/latest/user-guide/install/">Install conda</a> (no administrator permission required).</span>
+       </div>
+
+Then run:
+
+.. raw:: html
+
        <div class="highlight"><pre><code
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="">python3 -m venv sklearn-venv</span
         ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="">python -m venv sklearn-venv</span
@@ -70,33 +84,31 @@ In order to check your installation you can use
    <div class="highlight"><pre><code
       ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
       ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -c "import sklearn; sklearn.show_versions()"</span
       ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
       ><span class="sk-expandable" data-packager="pip" data-venv="">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-venv="">python -c "import sklearn; sklearn.show_versions()"</span
       ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
       ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
       ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span
       ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span
+      ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
       ><span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span
       ><span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span
      ></code></pre></div>
   </div>
 
-If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip`` or ``conda``.
 
 Note that in order to avoid potential conflicts with other packages it is
 strongly recommended to use a virtual environment, e.g. python3 ``virtualenv``
 (see `python3 virtualenv documentation
-<https://docs.python.org/3/tutorial/venv.html>`_).
+<https://docs.python.org/3/tutorial/venv.html>`_) or `conda environments
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_.
 
-If you choose to use ``conda`` please check the `instructions for downloading
-conda <https://docs.conda.io/projects/conda/en/latest/user-guide/install/download.html>`_,
-and `how to use conda environments
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-
-Using an isolated environment (virtualenv or conda environment) makes it
-possible to install a specific version of scikit-learn and its dependencies
-independently of any previously installed Python packages.
+Using an isolated environment makes possible to install a specific version of
+scikit-learn and its dependencies independently of any previously installed
+Python packages.
 In particular under Linux is it discouraged to install pip packages alongside
 the packages managed by the package manager of the distribution
 (apt, dnf, pacman...).
