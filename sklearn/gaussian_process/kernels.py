@@ -661,9 +661,9 @@ class Sum(KernelOperator):
 
     is the same as::
 
-        Sum( RBF(), RBF() )
+        Sum(RBF(), RBF())
 
-    As a reference on how to best combine different kernels, we refer to [1]_.
+    As a reference on how to best combine different kernels, please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -689,7 +689,7 @@ class Sum(KernelOperator):
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import RBF, Sum, ConstantKernel
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
-    >>> kernel = Sum( ConstantKernel(2), RBF() )
+    >>> kernel = Sum(ConstantKernel(2), RBF())
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
@@ -767,9 +767,9 @@ class Product(KernelOperator):
 
     is the same as::
 
-        Product( RBF(), RBF() )
+        Product(RBF(), RBF())
 
-    As a reference on how to best combine different kernels, we refer to [1]_.
+    As a reference on how to best combine different kernels, please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
