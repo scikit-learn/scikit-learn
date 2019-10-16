@@ -23,7 +23,7 @@ or with conda::
 # Permutation-based feature importance
 # ------------------------------------
 #
-# The :func:`~inspection.permutation_importance` can be used to get an
+# The :func:`inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
 from sklearn.ensemble import RandomForestClassifier
@@ -49,8 +49,8 @@ plt.show()
 # Native support for missing values for gradient boosting
 # -------------------------------------------------------
 #
-# The :class:`~ensemble.HistGradientBoostingClassifier`
-# and :class:`~ensemble.HistGradientBoostingRegressor` now have native
+# The :class:`ensemble.HistGradientBoostingClassifier`
+# and :class:`ensemble.HistGradientBoostingRegressor` now have native
 # support for missing values (NaNs). This means that there is no need for
 # imputing data when training or predicting.
 
@@ -112,7 +112,7 @@ print("Average number of nodes with pruning {:.1f}".format(
 ############################################################################
 # Retrieve dataframes from OpenML
 # -------------------------------
-# :func:`~datasets.fetch_openml` can now return pandas dataframe and thus
+# :func:`datasets.fetch_openml` can now return pandas dataframe and thus
 # properly handle datasets with heterogeneous data:
 
 from sklearn.datasets import fetch_openml
@@ -127,8 +127,8 @@ print(titanic.data.head()[['pclass', 'embarked']])
 # sparse graphs as input, to reuse the same graph for multiple estimator fits.
 # To use this feature in a pipeline, one can use the `memory` parameter, along
 # with one of the two new transformers,
-# :class:`~sklearn.neighbors.KNeighborsTransformer` and
-# :class:`~sklearn.neighbors.RadiusNeighborsTransformer`. The precomputation
+# :class:`neighbors.KNeighborsTransformer` and
+# :class:`neighbors.RadiusNeighborsTransformer`. The precomputation
 # can also be performed by custom estimators to use alternative
 # implementations, such as approximate nearest neighbors methods.
 # See more details in the :ref:`User Guide <neighbors_transformer>`.
