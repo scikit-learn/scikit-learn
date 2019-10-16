@@ -149,10 +149,42 @@ Using conda
 ~~~~~~~~~~~
 
     One solution is to install another compiler which supports OpenMP. If you
-    use the conda package manager, you can install C compilers from the
-    conda-forge channel::
+    use the conda package manager, you can install the ``compilers``
+    meta-package from the conda-forge channel, which provides OpenMP-enabled C
+    compilers.
 
-        conda install conda-forge::compilers
+    It is recommended to use a dedicated conda environment to build
+    scikit-learn from source::
+
+        conda create -n sklearn-dev python numpy scipy cython joblib pytest \
+            conda-forge::compilers conda-forge::llvm-openmp
+        conda activate sklearn-dev
+        pip install --editable .
+
+Troubleshooting
++++++++++++++++
+
+    If you get any conflicting dependency error message, try commenting out any
+    custom conda configuration in the ``$HOME/.condarc`` file. In particular
+    the ``channel_priority: strict`` directive is known to cause problems for
+    this setup.
+
+    You can check that the custom compilers are properly installed from conda
+    forge using the following command::
+
+        conda list compilers llvm-openmp
+
+    The compilers meta-package will automatically set custom environment
+    variables::
+
+        echo $CC
+        echo $CXX
+        echo $CFLAGS
+        echo $CXXFLAGS
+        echo $LDFLAGS
+
+    They point to files and folders from your sklearn-dev conda environment
+    (in particular in the bin/, include/ and lib/ subfolders).
 
 Using homebrew
 ~~~~~~~~~~~~~~
@@ -174,17 +206,17 @@ Using homebrew
         export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
         export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
-Finally, in the source folder, clean any previously built files of
-scikit-learn::
+    Finally, in the source folder, clean any previously built files of
+    scikit-learn::
 
-    python setup.py clean
+        python setup.py clean
 
-And build scikit-learn in verbose mode::
+    And build scikit-learn in verbose mode::
 
-    pip install --verbose --editable .
+        pip install --verbose --editable .
 
-The compiled extensions should be built with the clang and clang++ compilers
-with the ``-fopenmp`` command line flag.
+    The compiled extensions should be built with the clang and clang++
+    compilers with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
