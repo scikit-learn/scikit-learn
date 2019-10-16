@@ -2011,6 +2011,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
+        Only available if ``subsample < 1.0``
 
     train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -2029,7 +2030,7 @@ shape (n_estimators, ``loss_.K``)
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
-    classes_ : array of shape = [n_classes]
+    classes_ : array of shape (n_classes,)
         The classes labels.
 
     Notes
@@ -2480,6 +2481,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
+        Only available if ``subsample < 1.0``
 
     train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
