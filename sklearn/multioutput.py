@@ -330,7 +330,7 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     >>> from sklearn.neighbors import KNeighborsClassifier
 
     >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
-    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X[:-2], y[:-2])
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
