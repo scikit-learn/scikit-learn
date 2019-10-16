@@ -60,19 +60,19 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    check_y: callable or None (default=None)
+    check_y : callable or None (default=None)
       If not None, call this on y. Raises an AssertionError if the
       callable returns a falsy value.
 
-    check_X: callable or None (default=None)
+    check_X : callable or None (default=None)
       If not None, call this on X. Raises an AssertionError if the
       callable returns a falsy value.
 
-    foo_param: int (default=0)
+    foo_param : int (default=0)
       If strictly larger than 1, the score method will return 1., else
       0.
 
-    expected_fit_params: dict or None (default=None)
+    expected_fit_params : dict or None (default=None)
       If a dict, checks that passed keys correspond to the fit_params
       passed to the fit call. Also checks that the values have the
       correct length. Raises an AssertionError if a check fails.
