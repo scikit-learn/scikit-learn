@@ -124,6 +124,9 @@ Changelog
 - |Feature| :func:`datasets.fetch_openml` now supports heterogeneous data using
   pandas by setting `as_frame=True`. :pr:`13902` by `Thomas Fan`_.
 
+- |Feature| :func:`datasets.fetch_openml` now includes the `target_names` in
+  the returned Bunch. :pr:`15160` by `Thomas Fan`_.
+
 - |Enhancement| The parameter `return_X_y` was added to
   :func:`datasets.fetch_20newsgroups` and :func:`datasets.fetch_olivetti_faces`
   . :pr:`14259` by :user:`Sourav Singh <souravsingh>`.
@@ -402,6 +405,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added a new parameter ``zero_division`` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. This allows to set returned value for
+  ill-defined metrics.
+  :pr:`14900` by :user:`Marc Torrellas Socastro <marctorrellas>`.
+
 - |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
@@ -618,11 +628,16 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
-  - ``choose_check_classifiers_labels``
-  - ``enforce_estimator_tags_y``
-  - ``optimize.newton_cg`
-  - ``random.random_choice_csc``
-  - ``safe_indexing``
+  - ``utils.choose_check_classifiers_labels``
+  - ``utils.enforce_estimator_tags_y``
+  - ``utils.optimize.newton_cg`
+  - ``utils.random.random_choice_csc``
+  - ``utils.safe_indexing``
+  - ``utils.mocking``
+  - ``utils.fast_dict``
+  - ``utils.seq_dataset``
+  - ``utils.weight_vector``
+  - ``utils.fixes.parallel_helper`` (removed)
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -647,7 +662,7 @@ Changelog
 
 - |Fix| :func:`utils.check_array` will now correctly detect numeric dtypes in
   pandas dataframes, fixing a bug where ``float32`` was upcast to ``float64``
-  unnecessarily. :pre:`15094` by `Andreas Müller`_.
+  unnecessarily. :pr:`15094` by `Andreas Müller`_.
   
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``

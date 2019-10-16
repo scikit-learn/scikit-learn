@@ -7,13 +7,13 @@ import math
 import numpy as np
 from scipy.special import betaln, digamma, gammaln
 
-from .base import BaseMixture, _check_shape
-from .gaussian_mixture import _check_precision_matrix
-from .gaussian_mixture import _check_precision_positivity
-from .gaussian_mixture import _compute_log_det_cholesky
-from .gaussian_mixture import _compute_precision_cholesky
-from .gaussian_mixture import _estimate_gaussian_parameters
-from .gaussian_mixture import _estimate_log_gaussian_prob
+from ._base import BaseMixture, _check_shape
+from ._gaussian_mixture import _check_precision_matrix
+from ._gaussian_mixture import _check_precision_positivity
+from ._gaussian_mixture import _compute_log_det_cholesky
+from ._gaussian_mixture import _compute_precision_cholesky
+from ._gaussian_mixture import _estimate_gaussian_parameters
+from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 

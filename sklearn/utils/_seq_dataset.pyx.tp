@@ -8,7 +8,7 @@ Dataset abstractions for sequential data access.
 Template file for easily generate fused types consistent code using Tempita
 (https://github.com/cython/cython/blob/master/Cython/Tempita/_tempita.py).
 
-Generated file: seq_dataset.pyx
+Generated file: _seq_dataset.pyx
 
 Each class is duplicated for all dtypes (float and double). The keywords
 between double braces are substituted in setup.py.

@@ -8,7 +8,7 @@ import numpy as np
 
 from scipy import linalg
 
-from .base import BaseMixture, _check_shape
+from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
