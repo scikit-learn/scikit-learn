@@ -30,10 +30,6 @@ make_conda() {
     TO_INSTALL="$@"
     setup_compiler $TO_INSTALL
 
-    echo '#########'
-    conda --version
-    cat ~/.condarc
-    echo '#########'
     conda create -n $VIRTUALENV -q --yes $TO_INSTALL
     source activate $VIRTUALENV
 }
