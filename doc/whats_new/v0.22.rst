@@ -662,7 +662,7 @@ Changelog
 
 - |Fix| :func:`utils.check_array` will now correctly detect numeric dtypes in
   pandas dataframes, fixing a bug where ``float32`` was upcast to ``float64``
-  unnecessarily. :pre:`15094` by `Andreas Müller`_.
+  unnecessarily. :pr:`15094` by `Andreas Müller`_.
   
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
