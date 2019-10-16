@@ -30,7 +30,7 @@ from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import FLOAT_DTYPES
 from ..exceptions import ConvergenceWarning
-from . import _k_means
+from . import _k_means_fast as _k_means
 from ._k_means_elkan import k_means_elkan
 
 
