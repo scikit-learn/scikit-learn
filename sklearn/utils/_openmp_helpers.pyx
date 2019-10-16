@@ -1,23 +1,28 @@
 IF SKLEARN_OPENMP_SUPPORTED:
     import os
     cimport openmp
-    from . import cpu_count
+    from joblib import cpu_count
 
 
 cpdef _openmp_effective_n_threads(n_threads=None):
     """Determine the effective number of threads to be used for OpenMP calls
 
-    - For ``n_threads = None``, returns the minimum between
-      ``openmp.omp_get_max_threads()`` and the number of cpus, taking cgroups
-      quotas into account.
-      Cgroups quotas can typically be set by tools such as Docker.
+    - For ``n_threads = None``,
+      - if the ``OMP_NUM_THREADS`` environment variable is set, return
+        ``openmp.omp_get_max_threads()``
+      - otherwise, return the minimum between ``openmp.omp_get_max_threads()``
+        and the number of cpus, taking cgroups quotas into account. Cgroups 
+        quotas can typically be set by tools such as Docker.
       The result of ``omp_get_max_threads`` can be influenced by environment
       variable ``OMP_NUM_THREADS`` or at runtime by ``omp_set_num_threads``.
-    - For ``n_threads > 0``, use this as the maximal number of threads for
+
+    - For ``n_threads > 0``, return this as the maximal number of threads for
       parallel OpenMP calls.
-    - For ``n_threads < 0``, use the maximal number of threads minus
+
+    - For ``n_threads < 0``, return the maximal number of threads minus
       ``|n_threads + 1|``. In particular ``n_threads = -1`` will use as many
       threads as there are available cores on the machine.
+
     - Raise a ValueError for ``n_threads = 0``.
 
     If scikit-learn is built without OpenMP support, always return 1.
