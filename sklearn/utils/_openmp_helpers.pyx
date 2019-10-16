@@ -29,8 +29,6 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         if os.getenv("OMP_NUM_THREADS"):
             # Fall back to user provided number of threads making it possible
             # to exceed the number of cpus.
-            # It's however inconsistent with `omp_set_num_threads` which can't
-            # be used this purpose.
             max_n_threads = openmp.omp_get_max_threads()
         else:
             max_n_threads = min(openmp.omp_get_max_threads(), cpu_count())
@@ -42,7 +40,7 @@ cpdef _openmp_effective_n_threads(n_threads=None):
 
         return n_threads
     ELSE:
-        # OpenMP not supported => sequential mode
+        # OpenMP disabled at build-time => sequential mode
         return 1
 
     
