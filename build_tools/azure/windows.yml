@@ -3,9 +3,11 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  dependsOn: []
 
 jobs:
 - job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
