@@ -106,3 +106,7 @@ sklearn/cluster/k_means_.py
 sklearn/cluster/mean_shift_.py
 sklearn/cluster/optics_.py
 sklearn/cluster/spectral.py
+
+sklearn/mixture/base.py
+sklearn/mixture/gaussian_mixture.py
+sklearn/mixture/bayesian_mixture.py

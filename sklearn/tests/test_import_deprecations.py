@@ -39,6 +39,10 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.cluster.mean_shift_', 'MeanShift'),
     ('sklearn.cluster.optics_', 'OPTICS'),
     ('sklearn.cluster.spectral', 'SpectralClustering'),
+
+    ('sklearn.mixture.base', 'BaseMixture'),
+    ('sklearn.mixture.bayesian_mixture', 'BayesianGaussianMixture'),
+    ('sklearn.mixture.gaussian_mixture', 'GaussianMixture'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible

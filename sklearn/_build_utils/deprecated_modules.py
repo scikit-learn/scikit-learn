@@ -34,6 +34,12 @@ _DEPRECATED_MODULES = {
     ('_mean_shift', 'sklearn.cluster.mean_shift_', 'sklearn.cluster'),
     ('_optics', 'sklearn.cluster.optics_', 'sklearn.cluster'),
     ('_spectral', 'sklearn.cluster.spectral', 'sklearn.cluster'),
+
+    ('_base', 'sklearn.mixture.base', 'sklearn.mixture'),
+    ('_gaussian_mixture', 'sklearn.mixture.gaussian_mixture',
+     'sklearn.mixture'),
+    ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
+     'sklearn.mixture'),
 }
 
 _FILE_CONTENT_TEMPLATE = """
