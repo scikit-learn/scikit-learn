@@ -139,13 +139,12 @@ Using conda
         conda activate sklearn-dev
         pip install --editable .
 
-Troubleshooting
-+++++++++++++++
+    .. note::
 
-    If you get any conflicting dependency error message, try commenting out any
-    custom conda configuration in the ``$HOME/.condarc`` file. In particular
-    the ``channel_priority: strict`` directive is known to cause problems for
-    this setup.
+        If you get any conflicting dependency error message, try commenting out
+        any custom conda configuration in the ``$HOME/.condarc`` file. In
+        particular the ``channel_priority: strict`` directive is known to cause
+        problems for this setup.
 
     You can check that the custom compilers are properly installed from conda
     forge using the following command::
