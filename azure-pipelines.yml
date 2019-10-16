@@ -77,7 +77,6 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
-      
 
 - template: build_tools/azure/windows.yml
   parameters:
