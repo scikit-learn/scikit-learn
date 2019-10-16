@@ -25,14 +25,14 @@ cpdef _openmp_effective_n_threads(n_threads=None):
         raise ValueError("n_threads = 0 is invalid")
 
     IF SKLEARN_OPENMP_SUPPORTED:
-        if os.environ.get("OMP_NUM_THREADS"):
+        if os.getenv("OMP_NUM_THREADS"):
             # Fall back to user provided number of threads making it possible
             # to exceed the number of cpus.
             # It's however inconsistent with `omp_set_num_threads` which can't
             # be used this purpose.
-	        max_n_threads = openmp.omp_get_max_threads()
+            max_n_threads = openmp.omp_get_max_threads()
         else:
-	        max_n_threads = min(openmp.omp_get_max_threads(), cpu_count())
+            max_n_threads = min(openmp.omp_get_max_threads(), cpu_count())
 
         if n_threads is None:
             return max_n_threads
