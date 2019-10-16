@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-
 import numbers
 import numpy as np
 from scipy.sparse import issparse
@@ -19,7 +18,7 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
-from .bagging import BaseBagging
+from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
@@ -211,7 +210,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         y : Ignored

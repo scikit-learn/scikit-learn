@@ -19,9 +19,9 @@ from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
 
-from . import _hierarchical
+from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from ..utils.fast_dict import IntFloatDict
+from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
 from ..utils import deprecated
 
@@ -1025,7 +1025,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data
 
         y : Ignored
