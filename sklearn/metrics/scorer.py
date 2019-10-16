@@ -113,9 +113,6 @@ class _MultimetricScorer:
             return True
 
         if counter[_ThresholdScorer]:
-
-
-
             if is_regressor(estimator) and counter[_PredictScorer]:
                 return True
             elif (counter[_ProbaScorer] and
@@ -313,7 +310,7 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
+                y_pred = method_caller(clf, "predict_proba", X        )
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:
