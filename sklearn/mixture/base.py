@@ -9,6 +9,7 @@ from abc import ABCMeta, abstractmethod
 from time import time
 
 import numpy as np
+from scipy.stats import multivariate_normal
 
 from .. import cluster
 from ..base import BaseEstimator
@@ -439,6 +440,104 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                            for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)
+
+    def sample_conditional(self, xb, indices, n_samples=1):
+        """Generate conditional samples from the fitted Gaussian distribution.
+
+        Return samples from the conditional distribution p(xa | xb), where
+        len(xa) + len(xb) = n_features.
+
+        Parameters
+        ----------
+        xb : array, shape (n_conditionals,)
+            Condition the distribution on these values, where
+            0 < n_conditionals < n_features.
+        indices : array, shape (n_conditionals,)
+            The indices of the full variable x that are conditioned
+            with the values of xb
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+
+        Returns
+        -------
+        X : array, shape (n_samples, n_features - n_conditionals)
+            Randomly generated samples
+
+        y : array, shape (n_samples,)
+            Component labels
+
+        """
+        self._check_is_fitted()
+
+        n_components, n_features = self.means_.shape
+
+        # Input checking
+        if len(xb.shape) > 1:
+            raise ValueError('xb is only allowed to be 1-d array')
+        if not 0 < xb.shape[0] < n_features:
+            raise ValueError('Conditioned number of dimensions must be at ' +
+                             'least zero, and strictly less than n_features')
+        if len(indices) != xb.shape[0]:
+            raise ValueError('Indices must have same length as number of ' +
+                             'conditioned dimensions')
+        if min(indices) < 0 or max(indices) > n_features - 1:
+            raise ValueError('Indices are not in range [0, n_features - 1]')
+
+        # Notation in code follows the following page:
+        # http://pypr.sourceforge.net/mog.html
+
+        # Calculate conditional mixture weights
+        # (This might be an interesting separate function in the future?)
+        # pxbs[k] = p(xb | mu_kb, Sigma_kbb)
+        pxbs = np.zeros(n_components)
+        if self.covariance_type == "tied":
+            Sigma_kbb = self.covariances_[indices][:, indices]
+        for k in range(n_components):
+            if self.covariance_type == 'full':
+                Sigma_kbb = self.covariances_[k, indices][:, indices]
+            elif self.covariance_type == 'spherical':
+                Sigma_kbb = self.covariances_[k]
+            elif self.covariance_type == 'diag':
+                Sigma_kbb = self.covariances_[k][indices]
+            mu_kb = self.means_[k][indices]
+            pxb = multivariate_normal.pdf(xb, mean=mu_kb, cov=Sigma_kbb)
+            pxbs[k] = pxb
+
+        pi_conditional = self.weights_ * pxbs / sum(self.weights_ * pxbs)
+
+        # Sample components and compute conditional distribution in
+        # those components
+        components = np.random.multinomial(1,
+                                           pi_conditional,
+                                           size=n_samples).argmax(axis=1)
+        mus = dict()
+        Sigmas = dict()
+        for k in set(components):
+            if self.covariance_type == "tied":
+                Lambda_k = self.precisions_
+            elif self.covariance_type == 'full':
+                Lambda_k = self.precisions_[k]
+            elif self.covariance_type == 'spherical':
+                Lambda_k = np.eye(n_features) * self.precisions_[k]
+            elif self.covariance_type == 'diag':
+                Lambda_k = np.diag(self.precisions_[k])
+            Lambda_kaa = np.delete(np.delete(Lambda_k, indices, axis=0),
+                                   indices,
+                                   axis=1)
+            Lambda_kaa_inv = np.linalg.inv(Lambda_kaa)
+            Lambda_kab = np.delete(Lambda_k[:, indices], indices, axis=0)
+            mu_ka = np.delete(self.means_[k], indices)
+            mu_kb = self.means_[k][indices]
+            mu_kab = mu_ka - np.dot(np.dot(Lambda_kaa_inv, Lambda_kab),
+                                    (xb - mu_kb))
+            mus[k] = mu_kab
+            Sigmas[k] = Lambda_kaa_inv
+
+        # Sample n_samples in the sampled components
+        res = np.zeros((n_samples, n_features - xb.shape[0]))
+        for i, k in zip(range(n_samples), components):
+            res[i] = multivariate_normal.rvs(mus[k], Sigmas[k])
+        return res, components
 
     def _estimate_weighted_log_prob(self, X):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
