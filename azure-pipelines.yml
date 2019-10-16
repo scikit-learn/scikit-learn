@@ -77,19 +77,6 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
-        INSTALL_LIBOMP: 'homebrew'
-      pylatest_conda_compilers:
-        DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
-        INSTALL_MKL: 'false'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PILLOW_VERSION: '*'
-        PYTEST_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        COVERAGE: 'true'
-        INSTALL_LIBOMP: 'compilers'
       
 
 - template: build_tools/azure/windows.yml

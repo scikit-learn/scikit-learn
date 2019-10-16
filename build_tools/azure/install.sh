@@ -4,31 +4,12 @@ set -e
 
 UNAMESTR=`uname`
 
-setup_compiler() {
-    TO_INSTALL="$@"
-    if [[ "$UNAMESTR" == "Darwin" ]]; then
-        if [[ "$INSTALL_LIBOMP" == "compilers" ]]; then
-            # install an OpenMP-enabled clang/llvm from conda-forge
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
-
-        elif [[ "$INSTALL_LIBOMP" == "homebrew" ]]; then
-            # install OpenMP
-            HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
-
-            # enable OpenMP support for Apple-clang
-            export CC=/usr/bin/clang
-            export CXX=/usr/bin/clang++
-            export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-            export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-            export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-            export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
-        fi
-    fi
-}
-
 make_conda() {
     TO_INSTALL="$@"
-    setup_compiler $TO_INSTALL
+    if [[ "$UNAMESTR" == "Darwin" ]]; then
+        # install an OpenMP-enabled clang/llvm from conda-forge
+        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
+    fi
 
     conda create -n $VIRTUALENV -q --yes $TO_INSTALL
     source activate $VIRTUALENV
