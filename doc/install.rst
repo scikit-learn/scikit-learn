@@ -71,8 +71,14 @@ In order to check your installation you can use
 
    <div><pre>
      <code>
-       <span class="sk-expandable" data-packager="pip">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
-       <span class="sk-expandable" data-packager="pip">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+       <span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+       <span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">python3 -m pip freeze  # to see all packages installed in the active virtualenv</span>
+       <span class="sk-expandable" data-packager="pip" data-venv="">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+       <span class="sk-expandable" data-packager="pip" data-venv="">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+       <span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+       <span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
+       <span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip show scikit-learn  # to see which version and where scikit-learn is installed</span>
+       <span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -m pip freeze  # to see all packages installed in the active virtualenv</span>
        <span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span>
        <span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span>
       </code>
