@@ -634,14 +634,14 @@ thus mitigating the oversubscription issue.
 
 Note that:
 
- - Manually setting one of the environment variables (``OMP_NUM_THREADS``,
-   ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, or ``BLIS_NUM_THREADS``)
-   will take precedence over what joblib tries to do. The total number of
-   threads will be ``n_jobs * <LIB>_NUM_THREADS``. Note that setting this
-   limit will also impact your computations in the main process, which will
-   only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
-   finer control over the number of threads in its workers (see joblib docs
-   linked below).
+- Manually setting one of the environment variables (``OMP_NUM_THREADS``,
+  ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, or ``BLIS_NUM_THREADS``)
+  will take precedence over what joblib tries to do. The total number of
+  threads will be ``n_jobs * <LIB>_NUM_THREADS``. Note that setting this
+  limit will also impact your computations in the main process, which will
+  only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
+  finer control over the number of threads in its workers (see joblib docs
+  linked below).
 - Joblib is currently unable to avoid oversubscription in a
   multi-threading context. It can only do so with the ``loky`` backend
   (which spawns processes).
