@@ -28,6 +28,9 @@ There are different ways to install scikit-learn:
 Installing the latest release
 =============================
 
+.. This quickstart installation is a hack of the awesome
+   https://spacy.io/usage/#quickstart page.
+
 .. raw:: html
 
   <div class="install">
