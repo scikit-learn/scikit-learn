@@ -32,7 +32,7 @@ make_conda() {
 
     echo '#########'
     conda --version
-    find / -name .condarc
+    cat ~/.condarc
     echo '#########'
     conda create -n $VIRTUALENV -q --yes $TO_INSTALL
     source activate $VIRTUALENV
