@@ -47,9 +47,16 @@ def maybe_cythonize_extensions(top_path, config):
     basic_check_build()
 
     # check simple compilation with OpenMP. If it fails scikit-learn will be
-    # built without OpenMP.
-    # sklearn._OPENMP_SUPPORTED will be used during build_ext to set the
-    # OpenMP flags accordingly.
+    # built without OpenMP and scikit-learn will warn the user when imported.
+    # `check_openmp_support` compiles a small test program to see if the
+    # compilers are properly configured to build with OpenMP. This is expensive
+    # and we only want to call this function once.
+    # The result of this check is cached as a private attribute on the sklearn
+    # module (only at build-time) to be used twice:
+    # - First to set the value of SKLEARN_OPENMP_SUPPORTED, the cython
+    #   build-time passed to the cythonize call.
+    # - Then in the build_ext subclass defined in the top-level setup.py file
+    #   to actually build the compiled extensions with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
