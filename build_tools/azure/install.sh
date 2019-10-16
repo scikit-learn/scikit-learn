@@ -9,7 +9,7 @@ setup_compiler() {
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$INSTALL_LIBOMP" == "compilers" ]]; then
             # install an OpenMP-enabled clang/llvm from conda-forge
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers"
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
 
         elif [[ "$INSTALL_LIBOMP" == "homebrew" ]]; then
             # install OpenMP
