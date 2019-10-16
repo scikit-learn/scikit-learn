@@ -54,7 +54,7 @@ def maybe_cythonize_extensions(top_path, config):
     # The result of this check is cached as a private attribute on the sklearn
     # module (only at build-time) to be used twice:
     # - First to set the value of SKLEARN_OPENMP_SUPPORTED, the cython
-    #   build-time passed to the cythonize call.
+    #   build-time variable passed to the cythonize() call.
     # - Then in the build_ext subclass defined in the top-level setup.py file
     #   to actually build the compiled extensions with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
