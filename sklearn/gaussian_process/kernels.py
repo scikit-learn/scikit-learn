@@ -663,7 +663,8 @@ class Sum(KernelOperator):
 
         Sum(RBF(), RBF())
 
-    As a reference on how to best combine different kernels, please refer to [1]_.
+    As a reference on how to best combine different kernels,
+    please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -769,7 +770,8 @@ class Product(KernelOperator):
 
         Product(RBF(), RBF())
 
-    As a reference on how to best combine different kernels, please refer to [1]_.
+    As a reference on how to best combine different kernels,
+    please refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
