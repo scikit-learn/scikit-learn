@@ -6,9 +6,8 @@ import numpy as np
 import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics_ import (OPTICS,
-                                     _extend_region,
-                                     _extract_xi_labels)
+from sklearn.cluster import OPTICS
+from sklearn.cluster._optics import _extend_region, _extract_xi_labels
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN

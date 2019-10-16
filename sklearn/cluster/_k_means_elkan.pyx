@@ -14,7 +14,7 @@ from cython cimport floating
 from libc.math cimport sqrt
 
 from ..metrics import euclidean_distances
-from ._k_means import _centers_dense
+from ._k_means_fast import _centers_dense
 
 
 cdef floating euclidean_dist(floating* a, floating* b, int n_features) nogil:
