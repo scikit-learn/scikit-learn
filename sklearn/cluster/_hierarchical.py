@@ -19,7 +19,7 @@ from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
 
-from . import _hierarchical
+from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false

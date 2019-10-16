@@ -12,11 +12,11 @@ from sklearn.utils.testing import (
     assert_array_equal, assert_warns,
     assert_warns_message, assert_no_warnings)
 
-from sklearn.cluster.affinity_propagation_ import AffinityPropagation
-from sklearn.cluster.affinity_propagation_ import (
+from sklearn.cluster import AffinityPropagation
+from sklearn.cluster._affinity_propagation import (
     _equal_similarities_and_preferences
 )
-from sklearn.cluster.affinity_propagation_ import affinity_propagation
+from sklearn.cluster import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics import euclidean_distances
 
