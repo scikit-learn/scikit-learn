@@ -6,12 +6,7 @@ UNAMESTR=`uname`
 
 make_conda() {
     TO_INSTALL="$@"
-    if [[ "$UNAMESTR" == "Darwin" ]]; then
-        # install an OpenMP-enabled clang/llvm from conda-forge
-        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
-    fi
-
-    conda create -n $VIRTUALENV -q --yes $TO_INSTALL
+    conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV
 }
 
@@ -49,6 +44,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ -n "$MATPLOTLIB_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
+    fi
+
+    if [[ "$UNAMESTR" == "Darwin" ]]; then
+        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
+        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
