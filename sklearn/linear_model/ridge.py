@@ -1091,7 +1091,8 @@ class _RidgeGCV(LinearModel):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
-                 gcv_mode=None, store_cv_values=False):
+                 gcv_mode=None, store_cv_values=False,
+                 is_clf=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1099,6 +1100,7 @@ class _RidgeGCV(LinearModel):
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.is_clf = is_clf
 
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
@@ -1401,7 +1403,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None, is_clf=False):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -1414,9 +1416,6 @@ class _RidgeGCV(LinearModel):
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
-
-        is_clf : bool, optional (default=False)
-            Whether it is a classification problem
 
         Returns
         -------
@@ -1482,7 +1481,7 @@ class _RidgeGCV(LinearModel):
             best = cv_values.mean(axis=0).argmin()
         else:
 
-            if not is_clf:
+            if not self.is_clf:
                 # The scorer want an object that will make the predictions but
                 # they are already computed efficiently by _RidgeGCV. This
                 # identity_estimator will just return them
@@ -1578,9 +1577,9 @@ class _BaseRidgeCV(LinearModel):
                                   normalize=self.normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
-                                  store_cv_values=self.store_cv_values)
-            estimator.fit(X, y, sample_weight=sample_weight,
-                          is_clf=self.is_clf)
+                                  store_cv_values=self.store_cv_values,
+                                  is_clf=self.is_clf)
+            estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
@@ -1715,6 +1714,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     RidgeClassifier : Ridge classifier
     RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
+
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None,
                  gcv_mode=None, store_cv_values=False):
