@@ -12,28 +12,15 @@ from sklearn.utils.testing import assert_run_python_script
 
 @pytest.mark.parametrize('deprecated_path, importee', (
     ('sklearn.tree.tree', 'DecisionTreeClassifier'),
-    ('sklearn.tree.tree', 'DecisionTreeRegressor'),
-    ('sklearn.tree.tree', 'ExtraTreeClassifier'),
-    ('sklearn.tree.tree', 'ExtraTreeRegressor'),
     ('sklearn.tree.export', 'export_graphviz'),
-    ('sklearn.tree.export', 'plot_tree'),
-    ('sklearn.tree.export', 'export_text'),
 
     ('sklearn.ensemble.base', 'BaseEnsemble'),
     ('sklearn.ensemble.forest', 'RandomForestClassifier'),
-    ('sklearn.ensemble.forest', 'RandomForestRegressor'),
-    ('sklearn.ensemble.forest', 'RandomTreesEmbedding'),
-    ('sklearn.ensemble.forest', 'ExtraTreesClassifier'),
-    ('sklearn.ensemble.forest', 'ExtraTreesRegressor'),
     ('sklearn.ensemble.bagging', 'BaggingClassifier'),
-    ('sklearn.ensemble.bagging', 'BaggingRegressor'),
     ('sklearn.ensemble.iforest', 'IsolationForest'),
     ('sklearn.ensemble.weight_boosting', 'AdaBoostClassifier'),
-    ('sklearn.ensemble.weight_boosting', 'AdaBoostRegressor'),
     ('sklearn.ensemble.gradient_boosting', 'GradientBoostingClassifier'),
-    ('sklearn.ensemble.gradient_boosting', 'GradientBoostingRegressor'),
     ('sklearn.ensemble.voting', 'VotingClassifier'),
-    ('sklearn.ensemble.voting', 'VotingRegressor'),
 
     ('sklearn.neural_network.rbm', 'BernoulliRBM'),
     ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
