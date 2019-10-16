@@ -6,13 +6,12 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-import math
 import numbers
 import numpy as np
 import scipy.sparse as sp
 import time
 import warnings
-from math import sqrt
+from math import sqrt, floor
 
 from .cdnmf_fast import _update_cdnmf_fast
 from ..base import BaseEstimator, TransformerMixin
@@ -174,9 +173,11 @@ def _special_sparse_dot(W, H, X):
         dot_vals = np.empty(n_vals)
         i = 0
         rank = W.shape[1]
-        batch_size = math.floor(n_vals / rank)
+        batch_size = floor(n_vals / rank)
         while i < n_vals:
-            s = i + batch_size if i + batch_size <= n_vals else n_vals
+            s = i + batch_size
+            if s > n_vals:
+                s = n_vals
             dot_vals[i:s] = np.multiply(W[ii[i:s], :],
                                         H.T[jj[i:s], :]).sum(axis=1)
             i = s
