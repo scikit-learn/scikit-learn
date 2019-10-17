@@ -80,10 +80,10 @@ df["Exposure"] = df["Exposure"].clip(upper=1)
 #
 # The remaining columns can be used to predict the frequency of claim events.
 # Those columns are very heterogeneous with a mix of categorical and numeric
-# variables with different scales, possibly with heavy tails.
+# variables with different scales, possibly very uneven distributed.
 #
 # In order to fit linear models with those predictors it is therefore
-# necessary to perform standard feature transformation as follows:
+# necessary to perform standard feature transformations as follows:
 
 log_scale_transformer = make_pipeline(
     FunctionTransformer(np.log, validate=False),
@@ -128,8 +128,8 @@ print("Percentage of zero claims = {0:%}"
 
 ##############################################################################
 #
-# It worth noting that 92 % of policyholders have zero claims, and if we were
-# to convert this problem into a binary classification task, it would be
+# It is worth noting that 92 % of policyholders have zero claims, and if we
+# were to convert this problem into a binary classification task, it would be
 # significantly imbalanced.
 #
 # To evaluate the pertinence of the used metrics, we will consider as a

@@ -915,7 +915,7 @@ reproductive exponential dispersion model (EDM) [11]_).
 
 The minimization problem becomes:
 
-.. math::    \min_{w} \frac{1}{2 \cdot n\text{_samples}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
 
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
@@ -988,8 +988,8 @@ Usage example::
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
   * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
 
 Practical considerations
 ------------------------
