@@ -20,6 +20,10 @@ _DEPRECATED_MODULES = {
     ('_classes', 'sklearn.tree.tree', 'sklearn.tree'),
     ('_export', 'sklearn.tree.export', 'sklearn.tree'),
 
+    ('_rbm', 'sklearn.neural_network.rbm', 'sklearn.neural_network'),
+    ('_multilayer_perceptron',
+     'sklearn.neural_network.multilayer_perceptron', 'sklearn.neural_network'),
+
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
     ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
     ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils'),
