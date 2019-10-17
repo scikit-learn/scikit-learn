@@ -175,16 +175,20 @@ def test_glm_identity_regression():
     assert_allclose(glm.coef_, coef, rtol=1e-6)
 
 
-def test_glm_sample_weight_consistentcy():
+@pytest.mark.parametrize('fit_intercept', [False, True])
+@pytest.mark.parametrize('alpha', [0.0, 1.0])
+@pytest.mark.parametrize('family', ['normal', 'poisson', 'gamma'])
+def test_glm_sample_weight_consistentcy(fit_intercept, alpha, family):
     """Test that the impact of sample_weight is consistent"""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
-    glm = GeneralizedLinearRegressor(alpha=0, family='normal', link='identity',
-                                     fit_intercept=False)
-    glm.fit(X, y)
+    glm_params = dict(alpha=alpha, family=family, link='auto',
+                      fit_intercept=fit_intercept)
+
+    glm = GeneralizedLinearRegressor(**glm_params).fit(X, y)
     coef = glm.coef_.copy()
 
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
@@ -205,6 +209,22 @@ def test_glm_sample_weight_consistentcy():
     coef1 = glm.coef_.copy()
     glm.fit(X[:-1], y[:-1])
     assert_allclose(glm.coef_, coef1, rtol=1e-6)
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating correspoding samples twice
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+
+    glm1 = GeneralizedLinearRegressor(**glm_params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    glm2 = GeneralizedLinearRegressor(**glm_params).fit(
+            X2, y2, sample_weight=None
+    )
+    assert_allclose(glm1.coef_, glm2.coef_)
 
 
 @pytest.mark.parametrize(
