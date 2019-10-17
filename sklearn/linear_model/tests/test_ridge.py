@@ -701,15 +701,15 @@ def _test_ridge_classifiers(filter_):
 def _test_ridgeClassifier_w_scoring(filter_):
     # when scoring!=None
     cv = KFold(5)
-    reg = RidgeClassifierCV(cv=cv, scoring='accuracy')
-    reg.fit(filter_(X_iris), y_iris)
-    y_pred = reg.predict(filter_(X_iris))
+    clf_cv = RidgeClassifierCV(cv=cv, scoring='accuracy')
+    clf_cv.fit(filter_(X_iris), y_iris)
+    y_pred = clf_cv.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
     # cv==None ( leave one out; _BaseRidgeCV is used)
-    cv_looe = RidgeClassifierCV(scoring='accuracy')
-    cv_looe.fit(filter_(X_iris), y_iris)
-    y_pred = reg.predict(filter_(X_iris))
+    clf_cv_looe = RidgeClassifierCV(scoring='accuracy')
+    clf_cv_looe.fit(filter_(X_iris), y_iris)
+    y_pred = clf_cv_looe.predict(filter_(X_iris))
     assert np.mean(y_iris == y_pred) >= 0.8
 
 
