@@ -471,7 +471,7 @@ print(scores)
 # grid-search by minimizing the negative log-likelihood of the Tweedie model,
 # but unfortunately the current implementation does not allow for this (yet).
 
-glm_pure_premium = TweedieRegressor(power=1.999, alpha=.1, max_iter=10000)
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=.1, max_iter=10000)
 glm_pure_premium.fit(X_train, df_train["PurePremium"],
                      sample_weight=df_train["Exposure"])
 
