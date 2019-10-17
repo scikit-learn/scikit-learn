@@ -121,7 +121,7 @@ which the trees were trained.
 
 .. topic:: References
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
+    T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
     Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 

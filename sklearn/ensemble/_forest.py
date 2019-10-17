@@ -58,8 +58,8 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
-from .base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import parallel_helper, _joblib_parallel_args
+from ._base import BaseEnsemble, _partition_estimators
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 
@@ -218,7 +218,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = self._validate_X_predict(X)
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            **_joblib_parallel_args(prefer="threads"))(
-            delayed(parallel_helper)(tree, 'apply', X, check_input=False)
+            delayed(tree.apply)(X, check_input=False)
             for tree in self.estimators_)
 
         return np.array(results).T
@@ -249,7 +249,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               **_joblib_parallel_args(prefer='threads'))(
-            delayed(parallel_helper)(tree, 'decision_path', X,
+            delayed(tree.decision_path)(X,
                                      check_input=False)
             for tree in self.estimators_)
 

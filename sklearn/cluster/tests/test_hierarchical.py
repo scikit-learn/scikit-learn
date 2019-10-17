@@ -22,15 +22,16 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
-from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                          linkage_tree, _fix_connectivity)
+from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
+                                           _fix_connectivity)
+from sklearn.cluster.hierarchical import linkage_tree
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.neighbors.graph import kneighbors_graph
-from sklearn.cluster._hierarchical import average_merge, max_merge
-from sklearn.utils.fast_dict import IntFloatDict
+from sklearn.cluster._hierarchical_fast import average_merge, max_merge
+from sklearn.utils._fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.datasets import make_moons, make_circles

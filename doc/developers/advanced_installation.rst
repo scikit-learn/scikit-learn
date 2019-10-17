@@ -136,8 +136,7 @@ Then you need to set the following environment variables::
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
 Finally you can build the package using the standard command.
 
@@ -156,8 +155,7 @@ can set the environment variables to these locations::
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/lib
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
 
 Finally you can build the package using the standard command.
 

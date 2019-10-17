@@ -12,7 +12,7 @@ from warnings import warn
 
 from joblib import Parallel, delayed
 
-from .base import BaseEnsemble, _partition_estimators
+from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -559,6 +559,22 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
+    >>> clf = BaggingClassifier(base_estimator=SVC(),
+    ...                         n_estimators=100, random_state=0).fit(X, y)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
 
     References
     ----------
