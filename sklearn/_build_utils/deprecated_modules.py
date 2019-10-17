@@ -40,6 +40,11 @@ _DEPRECATED_MODULES = {
      'sklearn.mixture'),
     ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
      'sklearn.mixture'),
+
+    ('_cca_', 'sklearn.cross_decomposition.cca_',
+     'sklearn.cross_decomposition'),
+    ('_pls_', 'sklearn.cross_decomposition.pls_',
+     'sklearn.cross_decomposition'),
 }
 
 _FILE_CONTENT_TEMPLATE = """

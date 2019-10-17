@@ -43,6 +43,9 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.mixture.base', 'BaseMixture'),
     ('sklearn.mixture.bayesian_mixture', 'BayesianGaussianMixture'),
     ('sklearn.mixture.gaussian_mixture', 'GaussianMixture'),
+
+    ('sklearn.cross_decomposition.pls_', 'PLSSVD'),
+    ('sklearn.cross_decomposition.cca_', 'CCA'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible

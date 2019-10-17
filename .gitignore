@@ -110,3 +110,6 @@ sklearn/cluster/spectral.py
 sklearn/mixture/base.py
 sklearn/mixture/gaussian_mixture.py
 sklearn/mixture/bayesian_mixture.py
+
+sklearn/cross_decomposition/cca_.py
+sklearn/cross_decomposition/pls_.py
