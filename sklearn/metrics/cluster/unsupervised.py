@@ -5,7 +5,6 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import functools
 
@@ -13,10 +12,11 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils import safe_indexing
+from ...utils import _safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
+from ...utils import deprecated
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -185,7 +185,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
-        the distance array itself, use "precomputed" as the metric.
+        the distance array itself, use "precomputed" as the metric. Precomputed
+        distance matrices must have 0 along the diagonal.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -210,6 +211,16 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     """
     X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
+
+    # Check for non-zero diagonal entries in precomputed distance matrix
+    if metric == 'precomputed':
+        atol = np.finfo(X.dtype).eps * 100
+        if np.any(np.abs(np.diagonal(X)) > atol):
+            raise ValueError(
+                'The precomputed distance matrix contains non-zero '
+                'elements on the diagonal. Use np.fill_diagonal(X, 0).'
+            )
+
     le = LabelEncoder()
     labels = le.fit_transform(labels)
     n_samples = len(labels)
@@ -236,15 +247,15 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     return np.nan_to_num(sil_samples)
 
 
-def calinski_harabaz_score(X, labels):
-    """Compute the Calinski and Harabaz score.
+def calinski_harabasz_score(X, labels):
+    """Compute the Calinski and Harabasz score.
 
     It is also known as the Variance Ratio Criterion.
 
     The score is defined as ratio between the within-cluster dispersion and
     the between-cluster dispersion.
 
-    Read more in the :ref:`User Guide <calinski_harabaz_index>`.
+    Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 
     Parameters
     ----------
@@ -258,7 +269,7 @@ def calinski_harabaz_score(X, labels):
     Returns
     -------
     score : float
-        The resulting Calinski-Harabaz score.
+        The resulting Calinski-Harabasz score.
 
     References
     ----------
@@ -288,11 +299,22 @@ def calinski_harabaz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
+@deprecated("Function 'calinski_harabaz_score' has been renamed to "
+            "'calinski_harabasz_score' "
+            "and will be removed in version 0.23.")
+def calinski_harabaz_score(X, labels):
+    return calinski_harabasz_score(X, labels)
+
+
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
 
-    The score is defined as the ratio of within-cluster distances to
-    between-cluster distances.
+    The score is defined as the average similarity measure of each cluster with
+    its most similar cluster, where similarity is the ratio of within-cluster
+    distances to between-cluster distances. Thus, clusters which are farther
+    apart and less dispersed will result in a better score.
+
+    The minimum score is zero, with lower values indicating better clustering.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
 
@@ -328,7 +350,7 @@ def davies_bouldin_score(X, labels):
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
     for k in range(n_labels):
-        cluster_k = safe_indexing(X, labels == k)
+        cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
         centroids[k] = centroid
         intra_dists[k] = np.average(pairwise_distances(
@@ -339,6 +361,7 @@ def davies_bouldin_score(X, labels):
     if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
         return 0.0
 
-    score = (intra_dists[:, None] + intra_dists) / centroid_distances
-    score[score == np.inf] = np.nan
-    return np.mean(np.nanmax(score, axis=1))
+    centroid_distances[centroid_distances == 0] = np.inf
+    combined_intra_dists = intra_dists[:, None] + intra_dists
+    scores = np.max(combined_intra_dists / centroid_distances, axis=1)
+    return np.mean(scores)

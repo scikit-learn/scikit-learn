@@ -6,7 +6,6 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 import sys
 import warnings
@@ -14,6 +13,7 @@ import numbers
 
 import numpy as np
 import matplotlib.pyplot as plt
+from joblib import Memory
 import pandas
 
 from sklearn.utils.testing import ignore_warnings
@@ -21,8 +21,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition.nmf import NMF
 from sklearn.decomposition.nmf import _initialize_nmf
 from sklearn.decomposition.nmf import _beta_divergence
-from sklearn.decomposition.nmf import INTEGER_TYPES, _check_init
-from sklearn.utils import Memory
+from sklearn.decomposition.nmf import _check_init
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array
@@ -203,7 +202,7 @@ class _PGNMF(NMF):
     def __init__(self, n_components=None, solver='pg', init=None,
                  tol=1e-4, max_iter=200, random_state=None,
                  alpha=0., l1_ratio=0., nls_max_iter=10):
-        super(_PGNMF, self).__init__(
+        super().__init__(
             n_components=n_components, init=init, solver=solver, tol=tol,
             max_iter=max_iter, random_state=random_state, alpha=alpha,
             l1_ratio=l1_ratio)
@@ -214,13 +213,13 @@ class _PGNMF(NMF):
         return self
 
     def transform(self, X):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         H = self.components_
         W, _, self.n_iter_ = self._fit_transform(X, H=H, update_H=False)
         return W
 
     def inverse_transform(self, W):
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
         return np.dot(W, self.components_)
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -237,11 +236,12 @@ class _PGNMF(NMF):
         if n_components is None:
             n_components = n_features
 
-        if (not isinstance(n_components, INTEGER_TYPES) or
+        if (not isinstance(n_components, numbers.Integral) or
                 n_components <= 0):
             raise ValueError("Number of components must be a positive integer;"
                              " got (n_components=%r)" % n_components)
-        if not isinstance(self.max_iter, INTEGER_TYPES) or self.max_iter < 0:
+        if (not isinstance(self.max_iter, numbers.Integral) or
+                self.max_iter < 0):
             raise ValueError("Maximum number of iterations must be a positive "
                              "integer; got (max_iter=%r)" % self.max_iter)
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:

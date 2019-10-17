@@ -1,5 +1,5 @@
-"""Helper to load LossFunction from sgd_fast.pyx to sag_fast.pyx"""
 # License: BSD 3 clause
+"""Helper to load LossFunction from sgd_fast.pyx to sag_fast.pyx"""
 
 cdef class LossFunction:
     cdef double loss(self, double p, double y) nogil

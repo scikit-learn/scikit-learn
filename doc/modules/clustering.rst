@@ -73,13 +73,13 @@ Overview of clustering methods
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
-     - number of clusters
+     - number of clusters or distance threshold
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
-     - number of clusters, linkage type, distance
+     - number of clusters or distance threshold, linkage type, distance
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints, non Euclidean
        distances
@@ -94,9 +94,9 @@ Overview of clustering methods
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density 
+     - Non-flat geometry, uneven cluster sizes, variable cluster density
      - Distances between points
-   
+
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
@@ -124,26 +124,24 @@ model with equal covariance per component.
 K-means
 =======
 
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>`_ or within-cluster sum-of-squares.
-This algorithm requires the number of clusters to be specified.
-It scales well to large number of samples and has been used
-across a large range of application areas in many different fields.
+The :class:`KMeans` algorithm clusters data by trying to separate samples in n
+groups of equal variance, minimizing a criterion known as the *inertia* or
+within-cluster sum-of-squares (see below). This algorithm requires the number
+of clusters to be specified. It scales well to large number of samples and has
+been used across a large range of application areas in many different fields.
 
-The k-means algorithm divides a set of :math:`N` samples :math:`X`
-into :math:`K` disjoint clusters :math:`C`,
-each described by the mean :math:`\mu_j` of the samples in the cluster.
-The means are commonly called the cluster "centroids";
-note that they are not, in general, points from :math:`X`,
+The k-means algorithm divides a set of :math:`N` samples :math:`X` into
+:math:`K` disjoint clusters :math:`C`, each described by the mean :math:`\mu_j`
+of the samples in the cluster. The means are commonly called the cluster
+"centroids"; note that they are not, in general, points from :math:`X`,
 although they live in the same space.
-The K-means algorithm aims to choose centroids
-that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+The K-means algorithm aims to choose centroids that minimise the **inertia**,
+or **within-cluster sum-of-squares criterion**:
 
 .. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
-Inertia, or the within-cluster sum of squares criterion,
-can be recognized as a measure of how internally coherent clusters are.
+Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
 
 - Inertia makes the assumption that clusters are convex and isotropic,
@@ -154,9 +152,9 @@ It suffers from various drawbacks:
   better and zero is optimal. But in very high-dimensional spaces, Euclidean
   distances tend to become inflated
   (this is an instance of the so-called "curse of dimensionality").
-  Running a dimensionality reduction algorithm such as `PCA <PCA>`_
-  prior to k-means clustering can alleviate this problem
-  and speed up the computations.
+  Running a dimensionality reduction algorithm such as :ref:`PCA` prior to
+  k-means clustering can alleviate this problem and speed up the
+  computations.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
@@ -387,7 +385,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
@@ -436,21 +434,24 @@ given sample.
 Spectral clustering
 ===================
 
-:class:`SpectralClustering` does a low-dimension embedding of the
-affinity matrix between samples, followed by a KMeans in the low
-dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
-SpectralClustering requires the number of clusters to be specified. It
-works well for a small number of clusters but is not advised when using
-many clusters.
+:class:`SpectralClustering` performs a low-dimension embedding of the
+affinity matrix between samples, followed by clustering, e.g., by KMeans,
+of the components of the eigenvectors in the low dimensional space.
+It is especially computationally efficient if the affinity matrix is sparse
+and the `amg` solver is used for the eigenvalue problem (Note, the `amg` solver
+requires that the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.)
 
-For two clusters, it solves a convex relaxation of the `normalised
-cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
-the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights of the edges inside each
-cluster. This criteria is especially interesting when working on images:
-graph vertices are pixels, and edges of the similarity graph are a
-function of the gradient of the image.
+The present version of SpectralClustering requires the number of clusters
+to be specified in advance. It works well for a small number of clusters,
+but is not advised for many clusters.
+
+For two clusters, SpectralClustering solves a convex relaxation of the
+`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+problem on the similarity graph: cutting the graph in two so that the weight of
+the edges cut is small compared to the weights of the edges inside each
+cluster. This criteria is especially interesting when working on images, where
+graph vertices are pixels, and weights of the edges of the similarity graph are
+computed using a function of a gradient of the image.
 
 
 .. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
@@ -497,12 +498,11 @@ Different label assignment strategies
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
-The ``"kmeans"`` strategy can match finer details of the data, but it can be
-more unstable. In particular, unless you control the ``random_state``, it
-may not be reproducible from run-to-run, as it depends on a random
-initialization. On the other hand, the ``"discretize"`` strategy is 100%
-reproducible, but it tends to create parcels of fairly even and
-geometrical shape.
+``"kmeans"`` strategy can match finer details, but can be unstable.
+In particular, unless you control the ``random_state``, it may not be
+reproducible from run-to-run, as it depends on random initialization.
+The alternative ``"discretize"`` strategy is 100% reproducible, but tends
+to create parcels of fairly even and geometrical shape.
 
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
@@ -513,7 +513,7 @@ geometrical shape.
 Spectral Clustering Graphs
 --------------------------
 
-Spectral Clustering can also be used to cluster graphs by their spectral
+Spectral Clustering can also be used to partition graphs via their spectral
 embeddings.  In this case, the affinity matrix is the adjacency matrix of the
 graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
@@ -540,6 +540,10 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
+ * `"Preconditioned Spectral Clustering for Stochastic
+   Block Partition Streaming Graph Challenge"
+   <https://arxiv.org/abs/1708.07481>`_
+   David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
 
@@ -604,6 +608,18 @@ Single linkage can also perform well on non-globular data.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
+
+Visualization of cluster hierarchy
+----------------------------------
+
+It's possible to visualize the tree representing the hierarchical merging of clusters
+as a dendrogram. Visual inspection can often be useful for understanding the structure
+of the data, though more so in the case of small sample sizes.
+
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_dendrogram_001.png
+    :target: ../auto_examples/cluster/plot_agglomerative_dendrogram.html
+    :scale: 42
+
 
 
 Adding connectivity constraints
@@ -758,6 +774,18 @@ Any core sample is part of a cluster, by definition. Any sample that is not a
 core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
+While the parameter ``min_samples`` primarily controls how tolerant the
+algorithm is towards noise (on noisy and large data sets it may be desiable
+to increase this parameter), the parameter ``eps`` is *crucial to choose
+appropriately* for the data set and distance function and usually cannot be
+left at the default value. It controls the local neighborhood of the points.
+When chosen too small, most data will not be clustered at all (and labeled
+as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+be merged into one cluster, and eventually the entire data set to be returned
+as a single cluster. Some heuristics for choosing this parameter have been
+discussed in the literature, for example based on a knee in the nearest neighbor
+distances plot (as discussed in the references below).
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -799,7 +827,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
     - Use :ref:`OPTICS <optics>` clustering in conjunction with the
@@ -825,24 +853,28 @@ by black points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+ * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+   In ACM Transactions on Database Systems (TODS), 42(3), 19.
+
 .. _optics:
 
 OPTICS
 ======
 
-The :class:`OPTICS` algorithm shares many similarities with the
-:class:`DBSCAN` algorithm, and can be considered a generalization of
-DBSCAN that relaxes the ``eps`` requirement from a single value to a value
-range. The key difference between DBSCAN and OPTICS is that the OPTICS
-algorithm builds a *reachability* graph, which assigns each sample both a
-``reachability_`` distance, and a spot within the cluster ``ordering_``
-attribute; these two attributes are assigned when the model is fitted, and are
-used to determine cluster membership. If OPTICS is run with the default value
-of *inf* set for ``max_eps``, then DBSCAN style cluster extraction can be
-performed in linear time for any given ``eps`` value using the
-``extract_dbscan`` method. Setting ``max_eps`` to a lower value will result
-in shorter run times, and can be thought of as the maximum cluster object size
-(in diameter) that OPTICS will be able to extract.
+The :class:`OPTICS` algorithm shares many similarities with the :class:`DBSCAN`
+algorithm, and can be considered a generalization of DBSCAN that relaxes the
+``eps`` requirement from a single value to a value range. The key difference
+between DBSCAN and OPTICS is that the OPTICS algorithm builds a *reachability*
+graph, which assigns each sample both a ``reachability_`` distance, and a spot
+within the cluster ``ordering_`` attribute; these two attributes are assigned
+when the model is fitted, and are used to determine cluster membership. If
+OPTICS is run with the default value of *inf* set for ``max_eps``, then DBSCAN
+style cluster extraction can be performed repeatedly in linear time for any
+given ``eps`` value using the ``cluster_optics_dbscan`` method. Setting
+``max_eps`` to a lower value will result in shorter run times, and can be
+thought of as the maximum neighborhood radius from each point to find other
+potential reachable points.
 
 .. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
         :target: ../auto_examples/cluster/plot_optics.html
@@ -858,14 +890,16 @@ points are ordered such that nearby points are adjacent. 'Cutting' the
 reachability plot at a single value produces DBSCAN like results; all points
 above the 'cut' are classified as noise, and each time that there is a break
 when reading from left to right signifies a new cluster. The default cluster
-extraction with OPTICS looks at changes in slope within the graph to guess at
-natural clusters. There are also other possibilities for analysis on the graph
+extraction with OPTICS looks at the steep slopes within the graph to find
+clusters, and the user can define what counts as a steep slope using the
+parameter ``xi``. There are also other possibilities for analysis on the graph
 itself, such as generating hierarchical representations of the data through
-reachability-plot dendrograms. The plot above has been color-coded so that
-cluster colors in planar space match the linear segment clusters of the
-reachability plot-- note that the blue and red clusters are adjacent in the
-reachability plot, and can be hierarchically represented as children of a
-larger parent cluster.
+reachability-plot dendrograms, and the hierarchy of clusters detected by the
+algorithm can be accessed through the ``cluster_hierarchy_`` parameter. The
+plot above has been color-coded so that cluster colors in planar space match
+the linear segment clusters of the reachability plot. Note that the blue and
+red clusters are adjacent in the reachability plot, and can be hierarchically
+represented as children of a larger parent cluster.
 
 .. topic:: Examples:
 
@@ -873,43 +907,33 @@ larger parent cluster.
 
 
 .. topic:: Comparison with DBSCAN
-    
-    The results from OPTICS ``extract_dbscan`` method and DBSCAN are not quite
-    identical. Specifically, while *core_samples* returned from both OPTICS
-    and DBSCAN are guaranteed to be identical, labeling of periphery and noise
-    points is not. This is in part because the first sample processed by
-    OPTICS will always have a reachability distance that is set to ``inf``,
-    and will thus generally be marked as noise rather than periphery. This
-    affects adjacent points when they are considered as candidates for being
-    marked as either periphery or noise. While this effect is quite local to
-    the starting point of the dataset and is unlikely to be noticed on even
-    moderately large datasets, it is worth also noting that non-core boundry
-    points may switch cluster labels on the rare occasion that they are
-    equidistant to a competeing cluster due to how the graph is read from left
-    to right when assigning labels. 
+
+    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are
+    very similar, but not always identical; specifically, labeling of periphery
+    and noise points. This is in part because the first samples of each dense
+    area processed by OPTICS have a large reachability value while being close
+    to other points in their area, and will thus sometimes be marked as noise
+    rather than periphery. This affects adjacent points when they are
+    considered as candidates for being marked as either periphery or noise.
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
     values, a single run of OPTICS may require less cumulative runtime than
-    DBSCAN. It is also important to note that OPTICS output can be unstable at
-    ``eps`` values very close to the initial ``max_eps`` value. OPTICS seems
-    to produce near identical results to DBSCAN provided that ``eps`` passed to
-    ``extract_dbscan`` is a half order of magnitude less than the inital
-    ``max_eps`` that was used to fit; using a value close to ``max_eps``
-    will throw a warning, and using a value larger will result in an exception. 
+    DBSCAN. It is also important to note that OPTICS' output is close to
+    DBSCAN's only if ``eps`` and ``max_eps`` are close.
 
 .. topic:: Computational Complexity
 
     Spatial indexing trees are used to avoid calculating the full distance
     matrix, and allow for efficient memory usage on large sets of samples.
     Different distance metrics can be supplied via the ``metric`` keyword.
-    
+
     For large datasets, similar (but not identical) results can be obtained via
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
-    multithreaded, and has better algorithmic runtime complexity than OPTICS--
+    multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2* memory scaling); however, tuning of the ``max_eps`` parameter
+    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -919,21 +943,15 @@ larger parent cluster.
     Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
     In ACM Sigmod Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
 
- *  "Automatic extraction of clusters from hierarchical clustering
-    representations."
-    Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-    In Advances in knowledge discovery and data mining,
-    pp. 75-87. Springer Berlin Heidelberg, 2003. 
-
 .. _birch:
 
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
 for the given data. The data is essentially lossy compressed to a set of
-Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
-subclusters called Characteristic Feature subclusters (CF Subclusters)
+Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Clustering Feature subclusters (CF Subclusters)
 and these CF Subclusters located in the non-terminal CF Nodes
 can have CF Nodes as children.
 
@@ -1026,7 +1044,7 @@ classification algorithm. In particular any evaluation metric should not
 take the absolute values of the cluster labels into account but rather
 if this clustering define separations of the data similar to some ground
 truth set of classes or satisfying some assumption such that members
-belong to the same class are more similar that members of different
+belong to the same class are more similar than members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
@@ -1046,21 +1064,21 @@ chance normalization**::
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   0.24...
 
 Furthermore, :func:`adjusted_rand_score` is **symmetric**: swapping the argument
 does not change the score. It can thus be used as a **consensus
 measure**::
 
-  >>> metrics.adjusted_rand_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_pred, labels_true)
   0.24...
 
 Perfect labeling is scored 1.0::
@@ -1073,7 +1091,7 @@ Bad (e.g. independent labelings) have negative or close to 0.0 scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.adjusted_rand_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_rand_score(labels_true, labels_pred)
   -0.12...
 
 
@@ -1311,24 +1329,24 @@ more broadly common names.
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
-
- * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
    
- * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+ .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+   ISBN 9781605585161.
+
+ .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   
+ .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
@@ -1360,17 +1378,33 @@ We can turn those concept as scores :func:`homogeneity_score` and
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.homogeneity_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.homogeneity_score(labels_true, labels_pred)
   0.66...
 
-  >>> metrics.completeness_score(labels_true, labels_pred) # doctest: +ELLIPSIS
+  >>> metrics.completeness_score(labels_true, labels_pred)
   0.42...
 
 Their harmonic mean called **V-measure** is computed by
 :func:`v_measure_score`::
 
-  >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
+  >>> metrics.v_measure_score(labels_true, labels_pred)
   0.51...
+
+This function's formula is as follows:
+
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+
+`beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)
+  0.54...
+
+more weight will be attributed to homogeneity, and using a value greater than 1::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)
+  0.48...
+
+more weight will be attributed to completeness.
 
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above, with the aggregation function being the arithmetic mean [B2011]_.
@@ -1379,7 +1413,6 @@ Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  ...                                                      # doctest: +ELLIPSIS
   (0.66..., 0.42..., 0.51...)
 
 The following clustering assignment is slightly better, since it is
@@ -1387,7 +1420,6 @@ homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
-  ...                                                      # doctest: +ELLIPSIS
   (1.0, 0.68..., 0.81...)
 
 .. note::
@@ -1517,7 +1549,7 @@ between two clusters.
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.47140...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
@@ -1525,20 +1557,20 @@ the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
 
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.47140...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   1.0
 
 Bad (e.g. independent labelings) have zero scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)
   0.0
 
 Advantages
@@ -1551,7 +1583,7 @@ Advantages
 - **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  **purely** independent label assignments and a FMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
 
 - **No assumption is made on the cluster structure**: can be used
@@ -1607,9 +1639,7 @@ Silhouette Coefficient for each sample.
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
 In normal usage, the Silhouette Coefficient is applied to the results of a
 cluster analysis.
@@ -1619,7 +1649,6 @@ cluster analysis.
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')
-  ...                                                      # doctest: +ELLIPSIS
   0.55...
 
 .. topic:: References
@@ -1652,53 +1681,35 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
-.. _calinski_harabaz_index:
 
-Calinski-Harabaz Index
-----------------------
+.. _calinski_harabasz_index:
 
-If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+Calinski-Harabasz Index
+-----------------------
+
+If the ground truth labels are not known, the Calinski-Harabasz index
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
-Calinski-Harabaz score relates to a model with better defined clusters.
+Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
-ratio of the between-clusters dispersion mean and the within-cluster
-dispersion:
-
-.. math::
-  s(k) = \frac{\mathrm{Tr}(B_k)}{\mathrm{Tr}(W_k)} \times \frac{N - k}{k - 1}
-
-where :math:`B_K` is the between group dispersion matrix and :math:`W_K`
-is the within-cluster dispersion matrix defined by:
-
-.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
-
-.. math:: B_k = \sum_q n_q (c_q - c) (c_q - c)^T
-
-with :math:`N` be the number of points in our data, :math:`C_q` be the set of
-points in cluster :math:`q`, :math:`c_q` be the center of cluster
-:math:`q`, :math:`c` be the center of :math:`E`, :math:`n_q` be the number of
-points in cluster :math:`q`.
-
+The index is the ratio of the sum of between-clusters dispersion and of
+inter-cluster dispersion for all clusters (where dispersion is defined as the
+sum of distances squared):
 
   >>> from sklearn import metrics
   >>> from sklearn.metrics import pairwise_distances
   >>> from sklearn import datasets
-  >>> dataset = datasets.load_iris()
-  >>> X = dataset.data
-  >>> y = dataset.target
+  >>> X, y = datasets.load_iris(return_X_y=True)
 
-In normal usage, the Calinski-Harabaz index is applied to the results of a
-cluster analysis.
+In normal usage, the Calinski-Harabasz index is applied to the results of a
+cluster analysis:
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)
   561.62...
-
 
 Advantages
 ~~~~~~~~~~
@@ -1706,21 +1717,45 @@ Advantages
 - The score is higher when clusters are dense and well separated, which relates
   to a standard concept of a cluster.
 
-- The score is fast to compute
+- The score is fast to compute.
 
 
 Drawbacks
 ~~~~~~~~~
 
-- The Calinski-Harabaz index is generally higher for convex clusters than other
+- The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a set of data :math:`E` of size :math:`n_E` which has been clustered into
+:math:`k` clusters, the Calinski-Harabasz score :math:`s` is defined as the
+ratio of the between-clusters dispersion mean and the within-cluster dispersion:
+
+.. math::
+  s = \frac{\mathrm{tr}(B_k)}{\mathrm{tr}(W_k)} \times \frac{n_E - k}{k - 1}
+
+where :math:`\mathrm{tr}(B_k)` is trace of the between group dispersion matrix
+and :math:`\mathrm{tr}(W_k)` is the trace of the within-cluster dispersion
+matrix defined by:
+
+.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+
+.. math:: B_k = \sum_{q=1}^k n_q (c_q - c_E) (c_q - c_E)^T
+
+with :math:`C_q` the set of points in cluster :math:`q`, :math:`c_q` the center
+of cluster :math:`q`, :math:`c_E` the center of :math:`E`, and :math:`n_q` the
+number of points in cluster :math:`q`.
+
 .. topic:: References
 
- *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
-    analysis". Communications in Statistics-theory and Methods 3: 1-27.
-    `doi:10.1080/03610926.2011.560741 <https://doi.org/10.1080/03610926.2011.560741>`_.
+ * Caliński, T., & Harabasz, J. (1974).
+   `"A Dendrite Method for Cluster Analysis"
+   <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
+   Communications in Statistics-theory and Methods 3: 1-27.
+   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
 
 
 .. _davies-bouldin_index:
@@ -1732,6 +1767,44 @@ If the ground truth labels are not known, the Davies-Bouldin index
 (:func:`sklearn.metrics.davies_bouldin_score`) can be used to evaluate the
 model, where a lower Davies-Bouldin index relates to a model with better
 separation between the clusters.
+
+This index signifies the average 'similarity' between clusters, where the
+similarity is a measure that compares the distance between clusters with the
+size of the clusters themselves.
+
+Zero is the lowest possible score. Values closer to zero indicate a better
+partition.
+
+In normal usage, the Davies-Bouldin index is applied to the results of a
+cluster analysis as follows:
+
+  >>> from sklearn import datasets
+  >>> iris = datasets.load_iris()
+  >>> X = iris.data
+  >>> from sklearn.cluster import KMeans
+  >>> from sklearn.metrics import davies_bouldin_score
+  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans.labels_
+  >>> davies_bouldin_score(X, labels)
+  0.6619...
+
+
+Advantages
+~~~~~~~~~~
+
+- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
+- The index is computed only quantities and features inherent to the dataset.
+
+Drawbacks
+~~~~~~~~~
+
+- The Davies-Boulding index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained from
+  DBSCAN.
+- The usage of centroid distance limits the distance metric to Euclidean space.
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The index is defined as the average similarity between each cluster :math:`C_i`
 for :math:`i=1, ..., k` and its most similar one :math:`C_j`. In the context of
@@ -1750,40 +1823,8 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
-Zero is the lowest possible score. Values closer to zero indicate a better
-partition.
-
-In normal usage, the Davies-Bouldin index is applied to the results of a
-cluster analysis as follows:
-
-  >>> from sklearn import datasets
-  >>> iris = datasets.load_iris()
-  >>> X = iris.data
-  >>> from sklearn.cluster import KMeans
-  >>> from sklearn.metrics import davies_bouldin_score
-  >>> kmeans = KMeans(n_clusters=3, random_state=1).fit(X)
-  >>> labels = kmeans.labels_
-  >>> davies_bouldin_score(X, labels)  # doctest: +ELLIPSIS
-  0.6619...
-
-
-Advantages
-~~~~~~~~~~
-
-- The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is computed only quantities and features inherent to the dataset.
-
-Drawbacks
-~~~~~~~~~
-
-- The Davies-Boulding index is generally higher for convex clusters than other
-  concepts of clusters, such as density based clusters like those obtained from
-  DBSCAN.
-
-- The usage of centroid distance limits the distance metric to Euclidean space.
-- A good value reported by this method does not imply the best information retrieval.
 
 .. topic:: References
 
@@ -1791,12 +1832,12 @@ Drawbacks
    "A Cluster Separation Measure"
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
    "On Clustering Validation Techniques"
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.

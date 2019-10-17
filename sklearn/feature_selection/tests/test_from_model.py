@@ -1,15 +1,9 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
@@ -25,22 +19,24 @@ data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                         random_state=None, tol=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        with pytest.raises(ValueError):
+            model.transform(data)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
-    assert_true(transformer.estimator is est)
+    assert transformer.estimator is est
 
 
 @pytest.mark.parametrize(
@@ -167,18 +163,16 @@ def test_feature_importances():
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
         transformer = SelectFromModel(estimator=est, threshold=threshold)
         transformer.fit(X, y)
-        assert_true(hasattr(transformer.estimator_, 'feature_importances_'))
+        assert hasattr(transformer.estimator_, 'feature_importances_')
 
         X_new = transformer.transform(X)
-        assert_less(X_new.shape[1], X.shape[1])
+        assert X_new.shape[1] < X.shape[1]
         importances = transformer.estimator_.feature_importances_
 
         feature_mask = np.abs(importances) > func(importances)
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
     X, y = datasets.make_classification(
@@ -215,8 +209,6 @@ def test_coef_default_threshold():
     assert_array_almost_equal(X_new, X[:, mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
     X, y = datasets.make_classification(
@@ -231,9 +223,9 @@ def test_2d_coef():
                                           threshold=threshold,
                                           norm_order=order)
             transformer.fit(X, y)
-            assert_true(hasattr(transformer.estimator_, 'coef_'))
+            assert hasattr(transformer.estimator_, 'coef_')
             X_new = transformer.transform(X)
-            assert_less(X_new.shape[1], X.shape[1])
+            assert X_new.shape[1] < X.shape[1]
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
@@ -242,7 +234,8 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
@@ -253,7 +246,7 @@ def test_partial_fit():
     transformer.partial_fit(data, y,
                             classes=np.unique(y))
     new_model = transformer.estimator_
-    assert_true(old_model is new_model)
+    assert old_model is new_model
 
     X_transform = transformer.transform(data)
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
@@ -261,7 +254,7 @@ def test_partial_fit():
 
     # check that if est doesn't have partial_fit, neither does SelectFromModel
     transformer = SelectFromModel(estimator=RandomForestClassifier())
-    assert_false(hasattr(transformer, "partial_fit"))
+    assert not hasattr(transformer, "partial_fit")
 
 
 def test_calling_fit_reinitializes():
@@ -270,9 +263,11 @@ def test_calling_fit_reinitializes():
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
     transformer.fit(data, y)
-    assert_equal(transformer.estimator_.C, 100)
+    assert transformer.estimator_.C == 100
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_prefit():
     # Test all possible combinations of the prefit parameter.
 
@@ -295,7 +290,8 @@ def test_prefit():
 
     # Check that prefit=True and calling fit raises a ValueError
     model = SelectFromModel(clf, prefit=True)
-    assert_raises(ValueError, model.fit, data, y)
+    with pytest.raises(ValueError):
+        model.fit(data, y)
 
 
 def test_threshold_string():
@@ -311,6 +307,8 @@ def test_threshold_string():
     assert_array_almost_equal(X_transform, data[:, mask])
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
@@ -321,4 +319,4 @@ def test_threshold_without_refitting():
 
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
-    assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+    assert X_transform.shape[1] > model.transform(data).shape[1]

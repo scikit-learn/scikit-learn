@@ -4,8 +4,6 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
@@ -19,7 +17,7 @@ from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_sparse_coded_signal
 
-n_samples, n_features, n_nonzero_coefs, n_targets = 20, 30, 5, 3
+n_samples, n_features, n_nonzero_coefs, n_targets = 25, 35, 5, 3
 y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
                                        n_nonzero_coefs, random_state=0)
 # Make X not of norm 1 for testing
@@ -31,32 +29,32 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 
 
 def test_correct_shapes():
-    assert_equal(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape,
+    assert (orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5).shape ==
                  (n_features,))
-    assert_equal(orthogonal_mp(X, y, n_nonzero_coefs=5).shape,
+    assert (orthogonal_mp(X, y, n_nonzero_coefs=5).shape ==
                  (n_features, 3))
 
 
 def test_correct_shapes_gram():
-    assert_equal(orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape,
+    assert (orthogonal_mp_gram(G, Xy[:, 0], n_nonzero_coefs=5).shape ==
                  (n_features,))
-    assert_equal(orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape,
+    assert (orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5).shape ==
                  (n_features, 3))
 
 
 def test_n_nonzero_coefs():
-    assert_true(np.count_nonzero(orthogonal_mp(X, y[:, 0],
-                                 n_nonzero_coefs=5)) <= 5)
-    assert_true(np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                               precompute=True)) <= 5)
+    assert np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)) <= 5
+    assert np.count_nonzero(orthogonal_mp(X, y[:, 0],
+                                          n_nonzero_coefs=5,
+                                          precompute=True)) <= 5
 
 
 def test_tol():
     tol = 0.5
     gamma = orthogonal_mp(X, y[:, 0], tol=tol)
     gamma_gram = orthogonal_mp(X, y[:, 0], tol=tol, precompute=True)
-    assert_true(np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= tol)
-    assert_true(np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= tol)
+    assert np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= tol
+    assert np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= tol
 
 
 def test_with_without_gram():
@@ -121,14 +119,14 @@ def test_orthogonal_mp_gram_readonly():
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
-    assert_equal(omp.coef_.shape, (n_features,))
-    assert_equal(omp.intercept_.shape, ())
-    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
+    assert omp.coef_.shape == (n_features,)
+    assert omp.intercept_.shape == ()
+    assert np.count_nonzero(omp.coef_) <= n_nonzero_coefs
 
     omp.fit(X, y)
-    assert_equal(omp.coef_.shape, (n_targets, n_features))
-    assert_equal(omp.intercept_.shape, (n_targets,))
-    assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
+    assert omp.coef_.shape == (n_targets, n_features)
+    assert omp.intercept_.shape == (n_targets,)
+    assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
 
     coef_normalized = omp.coef_[0].copy()
     omp.set_params(fit_intercept=True, normalize=False)
@@ -137,14 +135,14 @@ def test_estimator():
 
     omp.set_params(fit_intercept=False, normalize=False)
     omp.fit(X, y[:, 0])
-    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
-    assert_equal(omp.coef_.shape, (n_features,))
-    assert_equal(omp.intercept_, 0)
+    assert np.count_nonzero(omp.coef_) <= n_nonzero_coefs
+    assert omp.coef_.shape == (n_features,)
+    assert omp.intercept_ == 0
 
     omp.fit(X, y)
-    assert_equal(omp.coef_.shape, (n_targets, n_features))
-    assert_equal(omp.intercept_, 0)
-    assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
+    assert omp.coef_.shape == (n_targets, n_features)
+    assert omp.intercept_ == 0
+    assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
 
 
 def test_identical_regressors():
@@ -176,18 +174,18 @@ def test_no_atoms():
     Xy_empty = np.dot(X.T, y_empty)
     gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty, 1)
     gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty, 1)
-    assert_equal(np.all(gamma_empty == 0), True)
-    assert_equal(np.all(gamma_empty_gram == 0), True)
+    assert np.all(gamma_empty == 0)
+    assert np.all(gamma_empty_gram == 0)
 
 
 def test_omp_path():
     path = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=True)
     last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False)
-    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert path.shape == (n_features, n_targets, 5)
     assert_array_almost_equal(path[:, :, -1], last)
     path = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=True)
     last = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=False)
-    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert path.shape == (n_features, n_targets, 5)
     assert_array_almost_equal(path[:, :, -1], last)
 
 
@@ -196,7 +194,7 @@ def test_omp_return_path_prop_with_gram():
                          precompute=True)
     last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False,
                          precompute=True)
-    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert path.shape == (n_features, n_targets, 5)
     assert_array_almost_equal(path[:, :, -1], last)
 
 
@@ -204,9 +202,9 @@ def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
-                                        max_iter=10, cv=5)
+                                        max_iter=10)
     ompcv.fit(X, y_)
-    assert_equal(ompcv.n_nonzero_coefs_, n_nonzero_coefs)
+    assert ompcv.n_nonzero_coefs_ == n_nonzero_coefs
     assert_array_almost_equal(ompcv.coef_, gamma_)
     omp = OrthogonalMatchingPursuit(normalize=True, fit_intercept=False,
                                     n_nonzero_coefs=ompcv.n_nonzero_coefs_)

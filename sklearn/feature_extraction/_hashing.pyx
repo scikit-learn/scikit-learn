@@ -1,5 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
+#
+# cython: boundscheck=False, cdivision=True
 
 import sys
 import array
@@ -9,15 +11,14 @@ from libc.stdlib cimport abs
 cimport numpy as np
 import numpy as np
 
-from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
-from sklearn.utils.fixes import sp_version
+from ..utils.murmurhash cimport murmurhash3_bytes_s32
+from ..utils.fixes import sp_version
 
 np.import_array()
 
 
-@cython.boundscheck(False)
-@cython.cdivision(True)
-def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
+def transform(raw_X, Py_ssize_t n_features, dtype,
+              bint alternate_sign=1, unsigned int seed=0):
     """Guts of FeatureHasher.transform.
 
     Returns
@@ -35,13 +36,9 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     cdef array.array indices
     cdef array.array indptr
     indices = array.array("i")
-    if sys.version_info >= (3, 3):
-        indices_array_dtype = "q"
-        indices_np_dtype = np.longlong
-    else:
-        # On Windows with PY2.7 long int would still correspond to 32 bit. 
-        indices_array_dtype = "l"
-        indices_np_dtype = np.int_
+    indices_array_dtype = "q"
+    indices_np_dtype = np.longlong
+
 
     indptr = array.array(indices_array_dtype, [0])
 
@@ -69,7 +66,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
             elif not isinstance(f, bytes):
                 raise TypeError("feature names must be strings")
 
-            h = murmurhash3_bytes_s32(<bytes>f, 0)
+            h = murmurhash3_bytes_s32(<bytes>f, seed)
 
             array.resize_smart(indices, len(indices) + 1)
             indices[len(indices) - 1] = abs(h) % n_features
@@ -99,8 +96,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
                               'Please upgrade to scipy >=0.14')
                              .format(indptr[-1], '.'.join(sp_version)))
         # both indices and indptr have the same dtype in CSR arrays
-        indices_a = indices_a.astype(np.int64)
+        indices_a = indices_a.astype(np.int64, copy=False)
     else:
-        indptr_a = indptr_a.astype(np.int32)
+        indptr_a = indptr_a.astype(np.int32, copy=False)
 
     return (indices_a, indptr_a, values[:size])

@@ -60,8 +60,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         metric used for the distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
-        If 'precomputed', the training input X is expected to be a distance
-        matrix.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square. X may be a sparse matrix, in which case only "nonzero"
+        elements may be considered neighbors.
 
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -93,15 +94,18 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : 'auto' or float, optional (default='auto')
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. When fitting this is used to define the
-        threshold on the decision function. If "auto", the decision function
-        threshold is determined as in the original paper.
+        threshold on the scores of the samples.
 
-        .. versionchanged:: 0.20
-           The default value of ``contamination`` will change from 0.1 in 0.20
-           to ``'auto'`` in 0.22.
+        - if 'auto', the threshold is determined as in the
+          original paper,
+        - if a float, the contamination should be in the range [0, 0.5].
+
+        .. versionchanged:: 0.22
+           The default value of ``contamination`` changed from 0.1
+           to ``'auto'``.
 
     novelty : boolean, default False
         By default, LocalOutlierFactor is only meant to be used for outlier
@@ -115,8 +119,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
-
 
     Attributes
     ----------
@@ -149,8 +151,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     """
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
-                 contamination="legacy", novelty=False, n_jobs=None):
-        super(LocalOutlierFactor, self).__init__(
+                 contamination="auto", novelty=False, n_jobs=None):
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -229,23 +231,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         -------
         self : object
         """
-        if self.contamination == "legacy":
-            warnings.warn('default contamination parameter 0.1 will change '
-                          'in version 0.22 to "auto". This will change the '
-                          'predict method behavior.',
-                          FutureWarning)
-            self._contamination = 0.1
-        else:
-            self._contamination = self.contamination
-
-        if self._contamination != 'auto':
-            if not(0. < self._contamination <= .5):
+        if self.contamination != 'auto':
+            if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
-                                 "got: %f" % self._contamination)
+                                 "got: %f" % self.contamination)
 
-        super(LocalOutlierFactor, self).fit(X)
+        super().fit(X)
 
-        n_samples = self._fit_X.shape[0]
+        n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:
             warnings.warn("n_neighbors (%s) is greater than the "
                           "total number of samples (%s). n_neighbors "
@@ -253,8 +246,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                           % (self.n_neighbors, n_samples))
         self.n_neighbors_ = max(1, min(self.n_neighbors, n_samples - 1))
 
-        self._distances_fit_X_, _neighbors_indices_fit_X_ = (
-            self.kneighbors(None, n_neighbors=self.n_neighbors_))
+        self._distances_fit_X_, _neighbors_indices_fit_X_ = self.kneighbors(
+            n_neighbors=self.n_neighbors_)
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_)
@@ -265,12 +258,12 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         self.negative_outlier_factor_ = -np.mean(lrd_ratios_array, axis=1)
 
-        if self._contamination == "auto":
+        if self.contamination == "auto":
             # inliers score around -1 (the higher, the less abnormal).
             self.offset_ = -1.5
         else:
             self.offset_ = np.percentile(self.negative_outlier_factor_,
-                                         100. * self._contamination)
+                                         100. * self.contamination)
 
         return self
 
@@ -319,15 +312,14 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
-                               "n_neighbors_", "_distances_fit_X_"])
+        check_is_fitted(self)
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
             is_inlier = np.ones(X.shape[0], dtype=int)
             is_inlier[self.decision_function(X) < 0] = -1
         else:
-            is_inlier = np.ones(self._fit_X.shape[0], dtype=int)
+            is_inlier = np.ones(self.n_samples_fit_, dtype=int)
             is_inlier[self.negative_outlier_factor_ < self.offset_] = -1
 
         return is_inlier
@@ -401,7 +393,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def score_samples(self):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -437,7 +429,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -460,8 +452,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
-                               "_distances_fit_X_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         distances_X, neighbors_indices_X = (
@@ -483,22 +474,22 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         Parameters
         ----------
-        distances_X : array, shape (n_query, self.n_neighbors)
+        distances_X : array, shape (n_queries, self.n_neighbors)
             Distances to the neighbors (in the training samples `self._fit_X`)
             of each query point to compute the LRD.
 
-        neighbors_indices : array, shape (n_query, self.n_neighbors)
+        neighbors_indices : array, shape (n_queries, self.n_neighbors)
             Neighbors indices (of each query point) among training samples
             self._fit_X.
 
         Returns
         -------
-        local_reachability_density : array, shape (n_samples,)
+        local_reachability_density : array, shape (n_queries,)
             The local reachability density of each sample.
         """
         dist_k = self._distances_fit_X_[neighbors_indices,
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
+        # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)

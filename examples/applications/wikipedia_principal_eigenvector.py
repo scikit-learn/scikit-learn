@@ -32,8 +32,6 @@ of the latent structured data of the Wikipedia content.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 from bz2 import BZ2File
 import os
 from datetime import datetime
@@ -44,10 +42,10 @@ import numpy as np
 
 from scipy import sparse
 
+from joblib import Memory
+
 from sklearn.decomposition import randomized_svd
-from sklearn.utils import Memory
-from sklearn.externals.six.moves.urllib.request import urlopen
-from sklearn.externals.six import iteritems
+from urllib.request import urlopen
 
 
 print(__doc__)
@@ -112,7 +110,7 @@ def get_redirects(redirects_filename):
     for l, source in enumerate(redirects.keys()):
         transitive_target = None
         target = redirects[source]
-        seen = set([source])
+        seen = {source}
         while True:
             transitive_target = target
             target = redirects.get(target)
@@ -172,7 +170,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
-names = dict((i, name) for name, i in iteritems(index_map))
+names = {i: name for name, i in index_map.items()}
 
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
@@ -226,6 +224,6 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
 
 print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
-scores = centrality_scores(X, max_iter=100, tol=1e-10)
+scores = centrality_scores(X, max_iter=100)
 print("done in %0.3fs" % (time() - t0))
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])

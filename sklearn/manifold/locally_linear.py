@@ -9,7 +9,7 @@ from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -99,7 +99,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """
     knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
-    n_samples = X.shape[0]
+    n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X[ind], reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
@@ -273,17 +273,17 @@ def locally_linear_embedding(
     References
     ----------
 
-    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
-        by locally linear embedding.  Science 290:2323 (2000).`
-    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).
+    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
-        Proc Natl Acad Sci U S A.  100:5591 (2003).`
-    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
-        Embedding Using Multiple Weights.`
+        Proc Natl Acad Sci U S A.  100:5591 (2003).
+    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.
         http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
-        Journal of Shanghai Univ.  8:406 (2004)`
+        Journal of Shanghai Univ.  8:406 (2004)
     """
     if eigen_solver not in ('auto', 'arpack', 'dense'):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
@@ -518,7 +518,8 @@ def locally_linear_embedding(
                       tol=tol, max_iter=max_iter, random_state=random_state)
 
 
-class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
+class LocallyLinearEmbedding(TransformerMixin,
+                             _UnstableArchMixin, BaseEstimator):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -619,17 +620,17 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    .. [1] `Roweis, S. & Saul, L. Nonlinear dimensionality reduction
-        by locally linear embedding.  Science 290:2323 (2000).`
-    .. [2] `Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
+    .. [1] Roweis, S. & Saul, L. Nonlinear dimensionality reduction
+        by locally linear embedding.  Science 290:2323 (2000).
+    .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
-        Proc Natl Acad Sci U S A.  100:5591 (2003).`
-    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
-        Embedding Using Multiple Weights.`
+        Proc Natl Acad Sci U S A.  100:5591 (2003).
+    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+        Embedding Using Multiple Weights.
         http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
-    .. [4] `Zhang, Z. & Zha, H. Principal manifolds and nonlinear
+    .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
-        Journal of Shanghai Univ.  8:406 (2004)`
+        Journal of Shanghai Univ.  8:406 (2004)
     """
 
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
@@ -705,7 +706,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -716,7 +717,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        check_is_fitted(self, "nbrs_")
+        check_is_fitted(self)
 
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,

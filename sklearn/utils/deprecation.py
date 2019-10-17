@@ -1,11 +1,11 @@
-import sys
 import warnings
 import functools
+import sys
 
 __all__ = ["deprecated"]
 
 
-class deprecated(object):
+class deprecated:
     """Decorator to mark a function or class as deprecated.
 
     Issue a warning when the function is called/the class is instantiated and
@@ -16,7 +16,7 @@ class deprecated(object):
     in an empty of parentheses:
 
     >>> from sklearn.utils import deprecated
-    >>> deprecated() # doctest: +ELLIPSIS
+    >>> deprecated()
     <sklearn.utils.deprecation.deprecated object at ...>
 
     >>> @deprecated()
@@ -43,6 +43,15 @@ class deprecated(object):
         """
         if isinstance(obj, type):
             return self._decorate_class(obj)
+        elif isinstance(obj, property):
+            # Note that this is only triggered properly if the `property`
+            # decorator comes before the `deprecated` decorator, like so:
+            #
+            # @deprecated(msg)
+            # @property
+            # def deprecated_attribute_(self):
+            #     ...
+            return self._decorate_property(obj)
         else:
             return self._decorate_fun(obj)
 
@@ -84,6 +93,16 @@ class deprecated(object):
 
         return wrapped
 
+    def _decorate_property(self, prop):
+        msg = self.extra
+
+        @property
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return prop.fget(*args, **kwargs)
+
+        return wrapped
+
     def _update_doc(self, olddoc):
         newdoc = "DEPRECATED"
         if self.extra:
@@ -95,9 +114,6 @@ class deprecated(object):
 
 def _is_deprecated(func):
     """Helper to check if func is wraped by our deprecated decorator"""
-    if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 "
-                                  "or above")
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
@@ -105,3 +121,27 @@ def _is_deprecated(func):
                                               for c in closures
                      if isinstance(c.cell_contents, str)]))
     return is_deprecated
+
+
+def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
+
+    # Raise a deprecation warning with standardized deprecation message.
+    # Useful because we are now deprecating # anything that isn't explicitly
+    # in an __init__ file.
+    # We don't want to raise a dep warning if we are in a pytest session else
+    # the CIs with -Werror::DeprecationWarning would fail. The deprecations are
+    # still properly tested in sklearn/tests/test_import_deprecations.py
+
+    # TODO: remove in 0.24 since this shouldn't be needed anymore.
+
+    message = (
+        "The {deprecated_path} module is  deprecated in version "
+        "0.22 and will be removed in version 0.24. "
+        "The corresponding classes / functions "
+        "should instead be imported from {correct_path}. "
+        "Anything that cannot be imported from {correct_path} is now "
+        "part of the private API."
+    ).format(deprecated_path=deprecated_path, correct_path=correct_path)
+
+    if not getattr(sys, '_is_pytest_session', False):
+        warnings.warn(message, DeprecationWarning)

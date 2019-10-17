@@ -40,7 +40,6 @@ Examples
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
-... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
 LabelPropagation(...)
 
 Notes
@@ -64,7 +63,6 @@ from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..externals import six
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
@@ -73,8 +71,7 @@ from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
-class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              ClassifierMixin)):
+class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for label propagation module.
 
     Parameters
@@ -160,7 +157,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array_like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -179,7 +176,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array_like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -187,17 +184,15 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             Normalized probability distributions across
             class labels
         """
-        check_is_fitted(self, 'X_')
+        check_is_fitted(self)
 
         X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
                                              'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
-            probabilities = []
-            for weight_matrix in weight_matrices:
-                ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
-                probabilities.append(ine)
-            probabilities = np.array(probabilities)
+            probabilities = np.array([
+                np.sum(self.label_distributions_[weight_matrix], axis=0)
+                for weight_matrix in weight_matrices])
         else:
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
@@ -214,7 +209,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             A {n_samples by n_samples} size matrix will be created from this
 
         y : array_like, shape = [n_samples]
@@ -364,7 +359,6 @@ class LabelPropagation(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelPropagation(...)
 
     References
@@ -382,9 +376,9 @@ class LabelPropagation(BaseLabelPropagation):
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  max_iter=1000, tol=1e-3, n_jobs=None):
-        super(LabelPropagation, self).__init__(
-            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors,
-            max_iter=max_iter, tol=tol, n_jobs=n_jobs, alpha=None)
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, max_iter=max_iter,
+                         tol=tol, n_jobs=n_jobs, alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -403,7 +397,7 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        return super(LabelPropagation, self).fit(X, y)
+        return super().fit(X, y)
 
 
 class LabelSpreading(BaseLabelPropagation):
@@ -430,7 +424,7 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
 
     alpha : float
-      Clamping factor. A value in [0, 1] that specifies the relative amount
+      Clamping factor. A value in (0, 1) that specifies the relative amount
       that an instance should adopt the information from its neighbors as
       opposed to its initial label.
       alpha=0 means keeping the initial label information; alpha=1 means
@@ -478,7 +472,6 @@ class LabelSpreading(BaseLabelPropagation):
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
-    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     LabelSpreading(...)
 
     References
@@ -498,11 +491,9 @@ class LabelSpreading(BaseLabelPropagation):
                  max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
-        super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
-                                             n_neighbors=n_neighbors,
-                                             alpha=alpha, max_iter=max_iter,
-                                             tol=tol,
-                                             n_jobs=n_jobs)
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, alpha=alpha,
+                         max_iter=max_iter, tol=tol, n_jobs=n_jobs)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

@@ -19,6 +19,15 @@ Note that the word "experiment" is not intended
 to denote academic use only,
 because even in commercial settings
 machine learning usually starts out experimentally.
+Here is a flowchart of typical cross validation workflow in model training.
+The best parameters can be determined by
+:ref:`grid search <grid_search>` techniques.
+
+.. image:: ../images/grid_search_workflow.png
+   :width: 400px
+   :height: 240px
+   :alt: Grid Search Workflow
+   :align: center
 
 In scikit-learn a random split into training and test sets
 can be quickly computed with the :func:`train_test_split` helper function.
@@ -29,15 +38,15 @@ Let's load the iris data set to fit a linear support vector machine on it::
   >>> from sklearn import datasets
   >>> from sklearn import svm
 
-  >>> iris = datasets.load_iris()
-  >>> iris.data.shape, iris.target.shape
+  >>> X, y = datasets.load_iris(return_X_y=True)
+  >>> X.shape, y.shape
   ((150, 4), (150,))
 
 We can now quickly sample a training set while holding out 40% of the
 data for testing (evaluating) our classifier::
 
   >>> X_train, X_test, y_train, y_test = train_test_split(
-  ...     iris.data, iris.target, test_size=0.4, random_state=0)
+  ...     X, y, test_size=0.4, random_state=0)
 
   >>> X_train.shape, y_train.shape
   ((90, 4), (90,))
@@ -45,7 +54,7 @@ data for testing (evaluating) our classifier::
   ((60, 4), (60,))
 
   >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
+  >>> clf.score(X_test, y_test)
   0.96...
 
 When evaluating different settings ("hyperparameters") for estimators,
@@ -90,6 +99,10 @@ but does not waste too much data
 which is a major advantage in problems such as inverse inference
 where the number of samples is very small.
 
+.. image:: ../images/grid_search_cross_validation.png
+   :width: 500px
+   :height: 300px
+   :align: center
 
 Computing cross-validated metrics
 =================================
@@ -104,8 +117,8 @@ time)::
 
   >>> from sklearn.model_selection import cross_val_score
   >>> clf = svm.SVC(kernel='linear', C=1)
-  >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
-  >>> scores                                              # doctest: +ELLIPSIS
+  >>> scores = cross_val_score(clf, X, y, cv=5)
+  >>> scores
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 The mean score and the 95\% confidence interval of the score estimate are hence
@@ -120,8 +133,8 @@ scoring parameter::
 
   >>> from sklearn import metrics
   >>> scores = cross_val_score(
-  ...     clf, iris.data, iris.target, cv=5, scoring='f1_macro')
-  >>> scores                                              # doctest: +ELLIPSIS
+  ...     clf, X, y, cv=5, scoring='f1_macro')
+  >>> scores
   array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 See :ref:`scoring_parameter` for details.
@@ -137,10 +150,25 @@ It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> from sklearn.model_selection import ShuffleSplit
-  >>> n_samples = iris.data.shape[0]
+  >>> n_samples = X.shape[0]
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
-  >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
+  >>> cross_val_score(clf, X, y, cv=cv)
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
+
+Another option is to use an iterable yielding (train, test) splits as arrays of
+indices, for example::
+
+  >>> def custom_cv_2folds(X):
+  ...     n = X.shape[0]
+  ...     i = 1
+  ...     while i <= 2:
+  ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
+  ...         yield idx, idx
+  ...         i += 1
+  ...
+  >>> custom_cv = custom_cv_2folds(X)
+  >>> cross_val_score(clf, X, y, cv=custom_cv)
+  array([1.        , 0.973...])
 
 .. topic:: Data transformation with held out data
 
@@ -151,12 +179,12 @@ validation iterator instead, for instance::
 
       >>> from sklearn import preprocessing
       >>> X_train, X_test, y_train, y_test = train_test_split(
-      ...     iris.data, iris.target, test_size=0.4, random_state=0)
+      ...     X, y, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
       >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
       >>> X_test_transformed = scaler.transform(X_test)
-      >>> clf.score(X_test_transformed, y_test)  # doctest: +ELLIPSIS
+      >>> clf.score(X_test_transformed, y_test)
       0.9333...
 
     A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to compose
@@ -164,8 +192,7 @@ validation iterator instead, for instance::
 
       >>> from sklearn.pipeline import make_pipeline
       >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
-      >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
-      ...                                                 # doctest: +ELLIPSIS
+      >>> cross_val_score(clf, X, y, cv=cv)
       array([0.977..., 0.933..., 0.955..., 0.933..., 0.977...])
 
     See :ref:`combining_estimators`.
@@ -176,7 +203,8 @@ validation iterator instead, for instance::
 The cross_validate function and multiple metric evaluation
 ----------------------------------------------------------
 
-The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
+The :func:`cross_validate` function differs from :func:`cross_val_score` in
+two ways:
 
 - It allows specifying multiple metrics for evaluation.
 
@@ -205,29 +233,28 @@ predefined scorer names::
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5)
+    >>> scores = cross_validate(clf, X, y, scoring=scoring)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
-    >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
+    >>> scores['test_recall_macro']
     array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
     >>> from sklearn.metrics.scorer import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
-    ...            'rec_micro': make_scorer(recall_score, average='macro')}
-    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
+    ...            'rec_macro': make_scorer(recall_score, average='macro')}
+    >>> scores = cross_validate(clf, X, y, scoring=scoring,
     ...                         cv=5, return_train_score=True)
-    >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
-    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
-     'train_prec_macro', 'train_rec_micro']
-    >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
+    >>> sorted(scores.keys())
+    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
+     'train_prec_macro', 'train_rec_macro']
+    >>> scores['train_rec_macro']
     array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
 Here is an example of ``cross_validate`` using a single metric::
 
-    >>> scores = cross_validate(clf, iris.data, iris.target,
+    >>> scores = cross_validate(clf, X, y,
     ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
@@ -469,8 +496,7 @@ Here is a usage example::
 
   >>> from sklearn.model_selection import ShuffleSplit
   >>> X = np.arange(10)
-  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25,
-  ...     random_state=0)
+  >>> ss = ShuffleSplit(n_splits=5, test_size=0.25, random_state=0)
   >>> for train_index, test_index in ss.split(X):
   ...     print("%s %s" % (train_index, test_index))
   [9 1 6 7 3 0 5] [2 8 4]
@@ -744,7 +770,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
-  >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+  >>> print(tscv)
   TimeSeriesSplit(max_train_size=None, n_splits=3)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))

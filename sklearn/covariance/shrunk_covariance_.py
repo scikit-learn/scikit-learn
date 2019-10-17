@@ -13,12 +13,10 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
-from ..externals.six.moves import xrange
 from ..utils import check_array
 
 
@@ -73,10 +71,10 @@ class ShrunkCovariance(EmpiricalCovariance):
         Specify if the estimated precision is stored
 
     assume_centered : boolean, default False
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False, data are centered before computation.
+        If False, data will be centered before computation.
 
     shrinkage : float, 0 <= shrinkage <= 1, default 0.1
         Coefficient in the convex combination used for the computation
@@ -94,10 +92,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    shrinkage : float, 0 <= shrinkage <= 1
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
     Examples
     --------
     >>> import numpy as np
@@ -105,12 +99,12 @@ class ShrunkCovariance(EmpiricalCovariance):
     >>> from sklearn.datasets import make_gaussian_quantiles
     >>> real_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
-    >>> np.random.seed(0)
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = ShrunkCovariance().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.7387..., 0.2536...],
            [0.2536..., 0.4110...]])
     >>> cov.location_
@@ -127,8 +121,8 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
-                                               assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
@@ -137,7 +131,7 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
@@ -177,10 +171,10 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
 
     assume_centered : bool
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
-        If False, data are centered before computation.
+        If False, data will be centered before computation.
 
     block_size : int
         Size of the blocks into which the covariance matrix will be split.
@@ -227,8 +221,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     beta_ = 0.  # sum of the coefficients of <X2.T, X2>
     delta_ = 0.  # sum of the *squared* coefficients of <X.T, X>
     # starting block computation
-    for i in xrange(n_splits):
-        for j in xrange(n_splits):
+    for i in range(n_splits):
+        for j in range(n_splits):
             rows = slice(block_size * i, block_size * (i + 1))
             cols = slice(block_size * j, block_size * (j + 1))
             beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
@@ -237,7 +231,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits:]))
         delta_ += np.sum(
             np.dot(X.T[rows], X[:, block_size * n_splits:]) ** 2)
-    for j in xrange(n_splits):
+    for j in range(n_splits):
         cols = slice(block_size * j, block_size * (j + 1))
         beta_ += np.sum(np.dot(X2.T[block_size * n_splits:], X2[:, cols]))
         delta_ += np.sum(
@@ -272,10 +266,10 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         Data from which to compute the covariance estimate
 
     assume_centered : boolean, default=False
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
-        If False, data are centered before computation.
+        If False, data will be centered before computation.
 
     block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split.
@@ -309,10 +303,9 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
-        n_samples = 1
         n_features = X.size
     else:
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
@@ -342,10 +335,10 @@ class LedoitWolf(EmpiricalCovariance):
         Specify if the estimated precision is stored.
 
     assume_centered : bool, default=False
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False (default), data are centered before computation.
+        If False (default), data will be centered before computation.
 
     block_size : int, default=1000
         Size of the blocks into which the covariance matrix will be split
@@ -379,7 +372,7 @@ class LedoitWolf(EmpiricalCovariance):
     ...                                   cov=real_cov,
     ...                                   size=50)
     >>> cov = LedoitWolf().fit(X)
-    >>> cov.covariance_ # doctest: +ELLIPSIS
+    >>> cov.covariance_
     array([[0.4406..., 0.1616...],
            [0.1616..., 0.8022...]])
     >>> cov.location_
@@ -403,8 +396,8 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        super(LedoitWolf, self).__init__(store_precision=store_precision,
-                                         assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):
@@ -413,7 +406,7 @@ class LedoitWolf(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
         y
@@ -451,10 +444,10 @@ def oas(X, assume_centered=False):
         Data from which to compute the covariance estimate.
 
     assume_centered : boolean
-      If True, data are not centered before computation.
+      If True, data will not be centered before computation.
       Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
-      If False, data are centered before computation.
+      If False, data will be centered before computation.
 
     Returns
     -------
@@ -528,10 +521,10 @@ class OAS(EmpiricalCovariance):
         Specify if the estimated precision is stored.
 
     assume_centered : bool, default=False
-        If True, data are not centered before computation.
+        If True, data will not be centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
-        If False (default), data are centered before computation.
+        If False (default), data will be centered before computation.
 
     Attributes
     ----------
@@ -568,7 +561,7 @@ class OAS(EmpiricalCovariance):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
         y
