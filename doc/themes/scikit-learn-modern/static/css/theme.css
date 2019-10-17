@@ -1053,7 +1053,9 @@ div.testimonial p {
 
 /* Installation quickstart */
 /* This quickstart installation is a hack of the awesome
-   https://spacy.io/usage/#quickstart page. */
+   https://spacy.io/usage/#quickstart page.
+   See the original javascript implementation
+   https://github.com/ines/quickstart */
 
 /* style input radio and checkbox */
 
@@ -1100,10 +1102,19 @@ div.highlight span.sk-expandable:before {
   display: block;
 }
 
+#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
+  content: "Use conda environment";
+}
+
 /* for pip */
 #quickstart-pip:checked ~* [data-packager="pip"] {
   display: block;
 }
+
+#quickstart-pip:checked ~ label[for="quickstart-venv"]:before  {
+  content: "Use pip virtualenv";
+}
+
 #quickstart-win:not(:checked) ~* [data-os="windows"] {
   display: none;
 }

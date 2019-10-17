@@ -30,6 +30,9 @@ Installing the latest release
 
 .. This quickstart installation is a hack of the awesome
    https://spacy.io/usage/#quickstart page.
+   See the original javascript implementation
+   https://github.com/ines/quickstart
+
 
 .. raw:: html
 
@@ -47,7 +50,7 @@ Installing the latest release
           <input type="radio" name="packager" id="quickstart-conda">
           <label for="quickstart-conda">conda</label><br />
           <input type="checkbox" name="config" id="quickstart-venv">
-          <label for="quickstart-venv"><strong>Use virtualenv / conda environment</strong></label>
+          <label for="quickstart-venv"></label>
        </span>
 
 .. raw:: html
