@@ -58,7 +58,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
-from .base import BaseEnsemble, _partition_estimators
+from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted

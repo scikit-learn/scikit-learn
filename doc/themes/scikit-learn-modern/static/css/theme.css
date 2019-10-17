@@ -942,8 +942,7 @@ div.sphx-glr-thumbcontainer {
 }
 
 .sphx-glr-script-out .highlight pre {
-  padding-top: 1ex;
-  padding-right: 1ex;
+  padding: 1ex;
 }
 
 .sphx-glr-script-out div.highlight {
