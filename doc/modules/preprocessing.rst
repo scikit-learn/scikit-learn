@@ -559,8 +559,8 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible.
-When this paramenter is not None, ``handle_unknown`` must be set to
+since co-linearity would cause the covariance matrix to be non-invertible. 
+When this paramenter is not None, ``handle_unknown`` must be set to 
 ``error``::
 
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
