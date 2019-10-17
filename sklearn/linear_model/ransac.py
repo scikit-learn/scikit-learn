@@ -58,11 +58,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
-    from a subset of inliers from the complete data set. More information can
-    be found in the general documentation of linear models.
-
-    A detailed description of the algorithm can be found in the documentation
-    of the ``linear_model`` sub-package.
+    from a subset of inliers from the complete data set.
 
     Read more in the :ref:`User Guide <ransac_regression>`.
 

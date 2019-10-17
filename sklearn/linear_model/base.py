@@ -32,8 +32,8 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
-from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
+from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
+from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
 from ..preprocessing.data import normalize as f_normalize
 
