@@ -43,6 +43,12 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.mixture.base', 'BaseMixture'),
     ('sklearn.mixture.bayesian_mixture', 'BayesianGaussianMixture'),
     ('sklearn.mixture.gaussian_mixture', 'GaussianMixture'),
+
+    ('sklearn.covariance.empirical_covariance_', 'EmpiricalCovariance'),
+    ('sklearn.covariance.shrunk_covariance_', 'ShrunkCovariance'),
+    ('sklearn.covariance.robust_covariance', 'MinCovDet'),
+    ('sklearn.covariance.graph_lasso_', 'GraphicalLasso'),
+    ('sklearn.covariance.elliptic_envelope', 'EllipticEnvelope'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible

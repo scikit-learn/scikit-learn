@@ -40,6 +40,12 @@ _DEPRECATED_MODULES = {
      'sklearn.mixture'),
     ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
      'sklearn.mixture'),
+
+    ('_empirical_covariance_', 'sklearn.covariance.empirical_covariance_', 'sklearn.covariance'),
+    ('_shrunk_covariance_', 'sklearn.covariance.shrunk_covariance_', 'sklearn.covariance'),
+    ('_robust_covariance', 'sklearn.covariance.robust_covariance', 'sklearn.covariance'),
+    ('_graph_lasso_', 'sklearn.covariance.graph_lasso_', 'sklearn.covariance'),
+    ('_elliptic_envelope', 'sklearn.covariance.elliptic_envelope', 'sklearn.covariance'),
 }
 
 _FILE_CONTENT_TEMPLATE = """

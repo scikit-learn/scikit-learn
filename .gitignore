@@ -110,3 +110,9 @@ sklearn/cluster/spectral.py
 sklearn/mixture/base.py
 sklearn/mixture/gaussian_mixture.py
 sklearn/mixture/bayesian_mixture.py
+
+sklearn/covariance/elliptic_envelope.py
+sklearn/covariance/empirical_covariance_.py
+sklearn/covariance/graph_lasso_.py
+sklearn/covariance/robust_covariance.py
+sklearn/covariance/shrunk_covariance_.py
