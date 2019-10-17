@@ -7,6 +7,8 @@
 
 import platform
 from distutils.version import LooseVersion
+import os
+from pathlib import Path
 
 import pytest
 from _pytest.doctest import DoctestItem
@@ -96,3 +98,8 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
+
+
+with open('.gitignore', 'r') as file:
+    collect_ignore_glob = [line.strip("\n") for line in file
+                           if not line.startswith("#")]

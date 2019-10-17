@@ -143,5 +143,4 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
         "part of the private API."
     ).format(deprecated_path=deprecated_path, correct_path=correct_path)
 
-    if not getattr(sys, '_is_pytest_session', False):
-        warnings.warn(message, DeprecationWarning)
+    warnings.warn(message, DeprecationWarning)
