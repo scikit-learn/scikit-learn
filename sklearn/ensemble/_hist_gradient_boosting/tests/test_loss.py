@@ -261,3 +261,27 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
 
     assert np.allclose(gradients * sample_weight, gradients_sw)
     assert np.allclose(hessians * sample_weight, hessians_sw)
+
+
+def test_init_gradient_and_hessians_sample_weight():
+    # Make sure that passing sample_weight to a loss correctly influences the
+    # hessians_are_constant attribute, and consequently the shape of the
+    # hessians array.
+
+    loss = _LOSSES['least_squares']()
+    assert loss.hessians_are_constant
+
+    prediction_dim = 2
+    n_samples = 5
+
+    _, hessians = loss.init_gradients_and_hessians(
+        n_samples=n_samples, prediction_dim=prediction_dim,
+        sample_weight=None)
+    assert loss.hessians_are_constant
+    assert hessians.shape == (1, 1)
+
+    _, hessians = loss.init_gradients_and_hessians(
+        n_samples=n_samples, prediction_dim=prediction_dim,
+        sample_weight=np.ones(100))
+    assert not loss.hessians_are_constant
+    assert hessians.shape == (prediction_dim, n_samples)

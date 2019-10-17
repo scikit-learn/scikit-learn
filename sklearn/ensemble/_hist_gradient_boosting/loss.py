@@ -82,11 +82,13 @@ class BaseLoss(ABC):
         """
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
+
         if sample_weight is not None:
             # If sample weights are provided, the hessians and gradients
             # are multiplied by sample_weight, which means the hessians are
             # equal to sample weights.
             self.hessians_are_constant = False
+
         if self.hessians_are_constant:
             # If the hessians are constant, we consider they are equal to 1.
             # - This is correct for the half LS loss
