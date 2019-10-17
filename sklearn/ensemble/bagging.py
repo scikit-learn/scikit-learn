@@ -959,7 +959,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     >>> X, y = make_regression(n_samples=20, n_features=10, random_state=42)
 
-    >>> clf = BaggingRegressor(DecisionTreeRegressor(), n_estimators=10, bootstrap=True, random_state=42).fit(X, y)  # doctest: +ELLIPSIS
+    >>> clf = BaggingRegressor(DecisionTreeRegressor(random_state=42), n_estimators=10, bootstrap=True, random_state=42).fit(X, y)  # doctest: +ELLIPSIS
 
     >>> clf.predict([X[0]])
     array([-158.28094724])
