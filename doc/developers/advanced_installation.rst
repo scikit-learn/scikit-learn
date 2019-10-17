@@ -123,6 +123,13 @@ The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. We present two solutions to enable OpenMP support (you need to do only
 one).
 
+.. note::
+
+    First, clean any previously built files in the source folder of
+    scikit-learn::
+
+        make clean
+
 Using conda
 ~~~~~~~~~~~
 
@@ -137,7 +144,6 @@ Using conda
         conda create -n sklearn-dev python numpy scipy cython joblib pytest \
             conda-forge::compilers conda-forge::llvm-openmp
         conda activate sklearn-dev
-        pip install --editable .
 
     .. note::
 
@@ -180,20 +186,14 @@ Using homebrew
         export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
         export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-        export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
         export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
-    Finally, in the source folder, clean any previously built files of
-    scikit-learn::
+Finally, build scikit-learn in verbose mode::
 
-        python setup.py clean
+    pip install --verbose --editable .
 
-    And build scikit-learn in verbose mode::
-
-        pip install --verbose --editable .
-
-    The compiled extensions should be built with the clang and clang++
-    compilers with the ``-fopenmp`` command line flag.
+The compiled extensions should be built with the clang and clang++ compilers
+with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
