@@ -12,7 +12,7 @@ from warnings import warn
 
 from joblib import Parallel, delayed
 
-from .base import BaseEnsemble, _partition_estimators
+from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor

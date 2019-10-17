@@ -210,7 +210,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest flake8
+       $ pip install cython pytest pytest-cov flake8
 
 5. Install scikit-learn in editable mode::
 
@@ -319,7 +319,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
      specific to the file
    - `pytest sklearn/linear_model` to test the whole
      :mod:`~sklearn.linear_model` module
-   - `pytest sklearn/doc/linear_model.rst` to make sure the user guide
+   - `pytest doc/modules/linear_model.rst` to make sure the user guide
      examples are correct.
    - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
      estimator checks (specifically for `LogisticRegression`, if that's the
