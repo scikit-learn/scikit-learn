@@ -26,7 +26,7 @@ from ..utils.validation import check_array, check_is_fitted
 
 
 __all__ = [
-    'ColumnTransformer', 'make_column_transformer', 'make_select_columns'
+    'ColumnTransformer', 'make_column_transformer', 'make_column_selector'
 ]
 
 
@@ -763,6 +763,29 @@ def _is_negative_indexing(key):
     return False
 
 
+class _ColumnSelector:
+    """Callable to select columns. Returned by `make_column_selector`"""
+
+    def __init__(self, pattern, dtype_include, dtype_exclude):
+        self.pattern = pattern
+        self.dtype_include = dtype_include
+        self.dtype_exclude = dtype_exclude
+
+    def __call__(self, df):
+        if not hasattr(df, 'iloc'):
+            raise ValueError("make_column_selector can only be applied to "
+                             "pandas dataframes")
+        if self.dtype_include is not None or self.dtype_exclude is not None:
+            cols = (df.iloc[:1].select_dtypes(include=self.dtype_include,
+                                              exclude=self.dtype_exclude)
+                    .columns)
+        else:
+            cols = df.columns
+        if self.pattern is not None:
+            return cols[cols.str.contains(self.pattern)]
+        return cols
+
+
 def make_column_selector(pattern=None, dtype_include=None, dtype_exclude=None):
     """Create a callable to select columns to be used with
     :func:`make_column_transformer` or :class:`ColumnTransformer`.
@@ -787,17 +810,5 @@ def make_column_selector(pattern=None, dtype_include=None, dtype_exclude=None):
     selector : callable
         Callable for column selection.
     """
-    def selector(df):
-        if not hasattr(df, 'iloc'):
-            raise ValueError("make_column_selector can only be applied to "
-                             "pandas dataframes")
-        if dtype_include is not None or dtype_exclude is not None:
-            cols = (df.iloc[:1].select_dtypes(include=dtype_include,
-                                              exclude=dtype_exclude)
-                    .columns)
-        else:
-            cols = df.columns
-        if pattern is not None:
-            return cols[cols.str.contains(pattern)]
-        return cols
-    return selector
+    return _ColumnSelector(pattern=pattern, dtype_include=dtype_include,
+                           dtype_exclude=dtype_exclude)

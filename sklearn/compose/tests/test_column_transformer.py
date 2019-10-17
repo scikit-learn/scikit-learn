@@ -2,6 +2,7 @@
 Test the ColumnTransformer.
 """
 import re
+import pickle
 
 import warnings
 import numpy as np
@@ -1247,3 +1248,18 @@ def test_make_column_selector_error():
     msg = ("make_column_selector can only be applied to pandas dataframes")
     with pytest.raises(ValueError, match=msg):
         selector(X)
+
+
+def test_make_column_selector_pickle():
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_str': ["one", "two", "three"],
+    })
+
+    selector = make_column_selector(dtype_include=[object])
+    selector_picked = pickle.loads(pickle.dumps(selector))
+
+    assert_array_equal(selector(X_df), selector_picked(X_df))
