@@ -111,7 +111,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # Do not create unit sample weights by default to later skip some
         # computation
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
         rng = check_random_state(self.random_state)
 

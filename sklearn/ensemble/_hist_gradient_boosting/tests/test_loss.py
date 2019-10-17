@@ -217,43 +217,47 @@ def test_baseline_categorical_crossentropy():
     ('binary_crossentropy', 'classification'),
     ('categorical_crossentropy', 'classification')
     ])
-def test_sample_weight(loss, problem):
+@pytest.mark.parametrize('sample_weight', ['ones', 'random'])
+def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
+    # Make sure that passing sample weights to the gradient and hessians
+    # computation methods is equivalent to multiplying by the weights.
+
     rng = np.random.RandomState(42)
-    n_samples = 100
-    n_classes = 3
-    prediction_dim = n_classes if loss == "categorical_crossentropy" else 1
+    n_samples = 1000
+
+    if loss == 'categorical_crossentropy':
+        n_classes = prediction_dim = 3
+    else:
+        n_classes = prediction_dim = 1
+
     if problem == 'regression':
         y_true = rng.normal(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
-    raw_predictions = rng.normal(
-        size=(prediction_dim, n_samples)
-    ).astype(Y_DTYPE)
 
-    sample_weight = rng.random(size=(n_samples,))
-    ones = np.ones(shape=(n_samples,))
+    if sample_weight == 'ones':
+        sample_weight = np.ones(shape=n_samples, dtype=Y_DTYPE)
+    else:
+        sample_weight = rng.random(size=n_samples).astype(Y_DTYPE)
 
     loss_ = _LOSSES[loss]()
-    gradients0, hessians0 = loss_.init_gradients_and_hessians(
-        n_samples, prediction_dim, None)
-    loss_.update_gradients_and_hessians(gradients0, hessians0, y_true,
+
+    baseline_prediction = loss_.get_baseline_prediction(
+        y_true, None, prediction_dim
+    )
+    raw_predictions = np.zeros(shape=(prediction_dim, n_samples),
+                               dtype=baseline_prediction.dtype)
+    raw_predictions += baseline_prediction
+
+    gradients = np.empty(shape=(prediction_dim, n_samples), dtype=G_H_DTYPE)
+    hessians = np.ones(shape=(prediction_dim, n_samples), dtype=G_H_DTYPE)
+    loss_.update_gradients_and_hessians(gradients, hessians, y_true,
                                         raw_predictions, None)
 
-    loss_ = _LOSSES[loss]()
-    gradients1, hessians1 = loss_.init_gradients_and_hessians(
-        n_samples, prediction_dim, ones)
-    loss_.update_gradients_and_hessians(gradients1, hessians1, y_true,
-                                        raw_predictions, ones)
-
-    # passing ones as sample weights shouldn't change the values
-    assert np.allclose(gradients0, gradients1)
-    assert np.allclose(hessians0, hessians1)
-
-    loss_ = _LOSSES[loss]()
-    gradients2, hessians2 = loss_.init_gradients_and_hessians(
-        n_samples, prediction_dim, ones)
-    loss_.update_gradients_and_hessians(gradients2, hessians2, y_true,
+    gradients_sw = np.empty(shape=(prediction_dim, n_samples), dtype=G_H_DTYPE)
+    hessians_sw = np.ones(shape=(prediction_dim, n_samples), dtype=G_H_DTYPE)
+    loss_.update_gradients_and_hessians(gradients_sw, hessians_sw, y_true,
                                         raw_predictions, sample_weight)
 
-    assert np.allclose(gradients1 * sample_weight, gradients2)
-    assert np.allclose(hessians1 * sample_weight, hessians2)
+    assert np.allclose(gradients * sample_weight, gradients_sw)
+    assert np.allclose(hessians * sample_weight, hessians_sw)
