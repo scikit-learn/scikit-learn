@@ -267,7 +267,7 @@ def test_warm_start(fit_intercept):
 
 @pytest.mark.parametrize('n_samples, n_features', [(100, 10), (10, 100)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('sample_weight', [None, pytest.mark.xfail('rand')])
+@pytest.mark.parametrize('sample_weight', [None, True])
 def test_normal_ridge_comparison(n_samples, n_features, fit_intercept,
                                  sample_weight, request):
     """Compare with Ridge regression for Normal distributions."""
@@ -280,33 +280,31 @@ def test_normal_ridge_comparison(n_samples, n_features, fit_intercept,
     if n_samples > n_features:
         ridge_params = {"solver": "svd"}
     else:
-        ridge_params = {"solver": "saga", "max_iter": 1000000, "tol": 1e-9}
+        ridge_params = {"solver": "saga", "max_iter": 1000000, "tol": 1e-7}
 
     X_train, X_test, y_train, y_test, = train_test_split(
         X, y, test_size=test_size, random_state=0
     )
 
+    alpha = 1.0
     if sample_weight is None:
-        alpha = 1.0
         sw_train = None
+        alpha_ridge = alpha * n_samples
     else:
         sw_train = np.random.RandomState(0).rand(len(y_train))
-        alpha = 0.0
-        sw_train /= sw_train.sum()
-        request.applymarker(pytest.mark.xfail(
-            run=False, reason=('TODO: GLM / Ridge comparison with '
-                               'sample_weight should be fixed')))
+        alpha_ridge = alpha * sw_train.sum()
 
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-    ridge = Ridge(alpha=alpha*n_samples, normalize=False,
+    ridge = Ridge(alpha=alpha_ridge, normalize=False,
                   random_state=42, fit_intercept=fit_intercept,
                   **ridge_params)
     ridge.fit(X_train, y_train, sample_weight=sw_train)
 
-    glm = GeneralizedLinearRegressor(alpha=1.0, family='normal',
+    glm = GeneralizedLinearRegressor(alpha=alpha, family='normal',
                                      link='identity',
                                      fit_intercept=fit_intercept,
-                                     max_iter=300)
+                                     max_iter=300,
+                                     tol=1e-5)
     glm.fit(X_train, y_train, sample_weight=sw_train)
     assert glm.coef_.shape == (X.shape[1], )
     assert_allclose(glm.coef_, ridge.coef_, atol=5e-5)
