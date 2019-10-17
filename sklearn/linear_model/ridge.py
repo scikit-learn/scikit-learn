@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from ..base import RegressorMixin, MultiOutputMixin
+from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -1721,7 +1721,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, gcv_mode=gcv_mode,
-            store_cv_values=store_cv_values)
+            store_cv_values=store_cv_values,
+            is_clf=is_classifier(self))
 
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
@@ -1841,7 +1842,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values,
-            is_clf=True)
+            is_clf=is_classifier(self))
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
