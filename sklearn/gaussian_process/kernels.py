@@ -873,7 +873,7 @@ class Exponentiation(Kernel):
     .. math::
         k_{exp}(X, Y) = k(X, Y) ^p
 
-    As a reference on how to best combine different kernels, we refer
+    As a reference on how to best combine different kernels, please refer
     to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
@@ -1070,7 +1070,8 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
             kernel = RBF() + 2
 
-    As a reference on how to best combine different kernels, we refer to [1]_.
+    As a reference on how to best combine different kernels, please
+    refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -1194,7 +1195,8 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     .. math::
         k(x_1, x_2) = noise\\_level \\text{ if } x_i == x_j \\text{ else } 0
 
-    As a reference on how to best combine different kernels, we refer to [1]_.
+    As a reference on how to best combine different kernels, please
+    refer to [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
@@ -1318,8 +1320,9 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     .. math::
         k(x_i, x_j) = \\exp\\left(- \\frac{d(x_i, x_j)^2}{2l^2} \\right)
 
-    where :math:`l` is the length scale of the kernel. For advice on how to
-    set the length scale parameter, see e.g. [1]_.
+    where :math:`l` is the length scale of the kernel and
+    :math:`d(\\cdot,\\cdot)` is the Euclidean distance.
+    For advice on how to set the length scale parameter, see e.g. [1]_.
 
     This kernel is infinitely differentiable, which implies that GPs with this
     kernel as covariance function have mean square derivatives of all orders,
@@ -1470,13 +1473,16 @@ class Matern(RBF):
     The kernel is given by:
 
     .. math::
-         k(x_i, x_j) = \\sigma^2 \\frac{1}{\\Gamma(\\nu)2^{\\nu-1}}\\Bigg(
-         \\gamma\\sqrt{2\\nu} d(x_i / l, x_j / l)
+         k(x_i, x_j) =  \\frac{1}{\\Gamma(\\nu)2^{\\nu-1}}\\Bigg(
+         \\sqrt{2\\nu} d(x_i / l, x_j / l)
          \\Bigg)^\\nu K_\\nu\\Bigg(
-         \\gamma\\sqrt{2\\nu} d(x_i / l, x_j / l)\\Bigg)
+         \\sqrt{2\\nu} d(x_i / l, x_j / l)\\Bigg)
 
 
 
+    where :math:`d(\\cdot,\\cdot)` is the Euclidean distance,
+    :math:`K_{\\nu}(\\cdot)` is a modified Bessel function and
+    :math:`\\Gamma(\\cdot)` is the gamma function.
     See [1]_, Chapter 4, Section 4.2, for details regarding the different
     variants of the Matern kernel.
 
@@ -1656,8 +1662,9 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         k(x_i, x_j) = \\left(
         1 + \\frac{d(x_i, x_j)^2 }{ 2\\alpha  l^2}\\right)^{-\\alpha}
 
-    where :math:`\\alpha` is the scale mixture parameter and :math:`l` is
-    the length scale of the kernel.
+    where :math:`\\alpha` is the scale mixture parameter, :math:`l` is
+    the length scale of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    Euclidean distance.
     For advice on how to set the parameters, see e.g. [1]_.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
@@ -1802,7 +1809,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     .. math::
         k(x_i, x_j) = \text{exp}\left(-
-        \frac{ 2\sin^2(\pi |x_i - x_j|/p}{ l^ 2} \right)
+        \frac{ 2\sin^2(\pi |x_i - x_j|/p) }{ l^ 2} \right)
 
     where :math:`l` is the length scale of the kernel and :math:`p` is the
     periodicity of the kernel.

@@ -507,24 +507,25 @@ the smoothness of the resulting function. It is parameterized by a length-scale 
 
 .. math::
 
-    k(x_i, x_j) = \sigma^2\frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg)^\nu K_\nu\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg),
+    k(x_i, x_j) = \frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg)^\nu K_\nu\Bigg(\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg),
 
+where :math:`d(\cdot,\cdot)` is the Euclidean distance, :math:`K_\nu(\cdot)` is a modified Bessel function and :math:`\Gamma(\cdot)` is the gamma function.
 As :math:`\nu\rightarrow\infty`, the Matérn kernel converges to the RBF kernel.
 When :math:`\nu = 1/2`, the Matérn kernel becomes identical to the absolute
 exponential kernel, i.e.,
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \exp \Bigg(-\gamma d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{1}{2}
+    k(x_i, x_j) = \exp \Bigg(- d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{1}{2}
 
 In particular, :math:`\nu = 3/2`:
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{3} d(x_i / l, x_j / l)\Bigg) \exp \Bigg(-\gamma \sqrt{3}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{3}{2}
+    k(x_i, x_j) =  \Bigg(1 + \sqrt{3} d(x_i / l, x_j / l)\Bigg) \exp \Bigg(-\sqrt{3}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{3}{2}
 
 and :math:`\nu = 5/2`:
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{5}d(x_i / l, x_j / l) +\frac{5}{3} \gamma^2d(x_i / l, x_j / l)^2 \Bigg) \exp \Bigg(-\gamma \sqrt{5}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{5}{2}
+    k(x_i, x_j) = \Bigg(1 + \sqrt{5}d(x_i / l, x_j / l) +\frac{5}{3} d(x_i / l, x_j / l)^2 \Bigg) \exp \Bigg(-\sqrt{5}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{5}{2}
 
 are popular choices for learning functions that are not infinitely
 differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =
@@ -570,7 +571,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi |x_i - x_j| / p}{ l^ 2} \right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi |x_i - x_j| / p) }{ l^ 2} \right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:
