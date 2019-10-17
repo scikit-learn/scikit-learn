@@ -47,6 +47,9 @@ from sklearn.utils.testing import assert_run_python_script
     ('sklearn.svm.base', 'BaseLibSVM'),
     ('sklearn.svm.classes', 'SVR'),
     ('sklearn.svm.bounds', 'l1_min_c'),
+    ('sklearn.svm.libsvm', 'fit'),
+    ('sklearn.svm.libsvm_sparse', 'set_verbosity_wrap'),
+    ('sklearn.svm.liblinear', 'train_wrap'),
 ))
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible

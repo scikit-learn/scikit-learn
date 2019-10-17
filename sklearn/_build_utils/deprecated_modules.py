@@ -45,6 +45,9 @@ _DEPRECATED_MODULES = {
     ('_base', 'sklearn.svm.base', 'sklearn.svm'),
     ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm'),
     ('_classes', 'sklearn.svm.classes', 'sklearn.svm'),
+    ('_libsvm', 'sklearn.svm.libsvm', 'sklearn.svm'),
+    ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm'),
+    ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm'),
 }
 
 _FILE_CONTENT_TEMPLATE = """
