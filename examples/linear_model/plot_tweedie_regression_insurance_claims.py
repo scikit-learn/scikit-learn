@@ -235,7 +235,7 @@ X = column_trans.fit_transform(df)
 # in their portfolio:
 df["PurePremium"] = df["ClaimAmount"] / df["Exposure"]
 
-# This can be inderectly approximated by a 2-step modeling the product of the
+# This can be indirectly approximated by a 2-step modeling: the product of the
 # Frequency times the average claim amount per claim:
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
@@ -258,7 +258,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
 # The parameters of the model are estimated by minimizing the Poisson deviance
 # on the training set via a quasi-Newton solver: l-BFGS. Some of the features
-# are colinear, we use a weak penalization to avoid numerical issues.
+# are collinear, we use a weak penalization to avoid numerical issues.
 glm_freq = PoissonRegressor(alpha=1e-3)
 glm_freq.fit(X_train, df_train["Frequency"],
              sample_weight=df_train["Exposure"])
@@ -461,14 +461,14 @@ print(scores)
 # Pure Premium Modeling Using a Single Compound Poisson Gamma Model
 # -----------------------------------------------------------------
 # Instead of taking the product of two independently fit models for frequency
-# and severity one can directly model the total loss is with a unique Compound
+# and severity one can directly model the total loss with a unique Compound
 # Poisson Gamma generalized linear model (with a log link function). This
 # model is a special case of the Tweedie GLM with a "power" parameter :math:`p
 # \in (1, 2)`.
 #
 # Here we fix apriori the "power" parameter of the Tweedie model to some
 # arbitrary value in the valid range. Ideally one would select this value via
-# grid-search by minimizing the negative log-likelihood of the Tweedie model
+# grid-search by minimizing the negative log-likelihood of the Tweedie model,
 # but unfortunately the current implementation does not allow for this (yet).
 
 glm_pure_premium = TweedieRegressor(power=1.999, alpha=.1, max_iter=10000)
