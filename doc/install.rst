@@ -201,7 +201,7 @@ NetBSD
 scikit-learn is available via `pkgsrc-wip
 <http://pkgsrc-wip.sourceforge.net/>`_:
 
-    http://pkgsrc.se/wip/py-scikit_learn
+    http://pkgsrc.se/math/py-scikit-learn
 
 
 MacPorts for Mac OSX
