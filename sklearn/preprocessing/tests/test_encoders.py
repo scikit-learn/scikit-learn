@@ -679,8 +679,22 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-def test_ordinal_encoder_deprecated_categories_auto_with_string_labels():
+@pytest.mark.parametrize('as_data_frame', ['True', 'False'])
+def test_ordinal_encoder_deprecated_categories_auto_with_string_labels(
+        as_data_frame):
+    x = [['Male', 1], ['Female', 3], ['Female', 2]]
+
+    if as_data_frame:
+        pd = pytest.importorskip('pandas')
+        X_possibilities = [pd.DataFrame(x)]
+    else:
+        X_possibilities = [x, tuple(x), np.array(x), np.array(x, np.object)]
+
     enc = OrdinalEncoder()
-    X = [['Male', 1], ['Female', 3], ['Female', 2]]
-    with pytest.warns(DeprecationWarning, match="From version 0.24"):
-        enc.fit(X)
+    for X in X_possibilities:
+        with pytest.warns(DeprecationWarning, match="From version 0.24"):
+            Xt = enc.fit_transform(X)
+
+        # checking the output is correct when `categories==sort`
+        assert_array_equal(Xt, OrdinalEncoder(categories='sort')
+                           .fit_transform(X))
