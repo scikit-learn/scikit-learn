@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 import pytest
 
+from numpy.testing import assert_allclose
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose_dense_sparse
@@ -15,7 +16,7 @@ from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.compose import (
-    ColumnTransformer, make_column_transformer, make_select_columns
+    ColumnTransformer, make_column_transformer, make_column_selector
 )
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
@@ -1185,33 +1186,64 @@ def test_column_transformer_mask_indexing(array_type):
 
 
 @pytest.mark.parametrize('cols,include,exclude,pattern', [
-    (['first', 'second'], [np.number], None, None),
-    (['first', 'second'], None, [np.object], None),
-    (['first', 'second'], [np.int, np.float], None, None),
-    (['third'], [np.object], None, None),
-    (['second'], [np.float], None, None),
-    (['second'], [np.number], None, 'nd$'),
-    (['first'], [np.int], None, None),
-    (['first'], [np.number], None, '^f'),
-    (['second', 'third'], None, None, 'd$'),
-    (['third'], None, [np.int], '^t'),
-    (['first', 'second', 'third'], [np.number, np.object], None, None),
+    (['col_int', 'col_float'], np.number, None, None),
+    (['col_int', 'col_float'], None, object, None),
+    (['col_int', 'col_float'], [np.int, np.float], None, None),
+    (['col_str'], [np.object], None, None),
+    (['col_float'], float, None, None),
+    (['col_float'], [np.number], None, 'at$'),
+    (['col_int'], [np.int], None, None),
+    (['col_int'], [np.number], None, '^col_int'),
+    (['col_float', 'col_str'], None, None, 'float|str'),
+    (['col_str'], None, [np.int], '^col_s'),
+    (['col_int', 'col_float', 'col_str'], [np.number, np.object], None, None),
 ])
-def test_column_transformer_with_select_dtypes(
-    cols, include, exclude, pattern
-):
+def test_make_column_selector_with_select_dtypes(cols, include,
+                                                 exclude, pattern):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
-        'first': np.array([0, 1, 2], dtype=np.int),
-        'second': np.array([0.0, 1.0, 2.0], dtype=np.float),
-        'third': ["one", "two", "three"],
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_str': ["one", "two", "three"],
     })
 
-    # select numbers
-    X_numbers = X_df[cols].values
-    ct = ColumnTransformer([(
-        'trans1', Trans(), make_select_columns(
-            dtype_include=include, dtype_exclude=exclude, pattern=pattern))])
-    assert_array_equal(ct.fit_transform(X_df), X_numbers)
-    assert_array_equal(ct.fit(X_df).transform(X_df), X_numbers)
+    selector = make_column_selector(
+            dtype_include=include, dtype_exclude=exclude, pattern=pattern)
+
+    assert_array_equal(selector(X_df), cols)
+
+
+def test_column_transformer_mixed_dtypes():
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame({
+        'col_int': np.array([0, 1, 2], dtype=np.int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_cat': ["one", "two", "one"],
+        'col_str': ["low", "middle", "high"]
+    })
+    X_df['col_str'] = X_df['col_str'].astype('category')
+
+    cat_selector = make_column_selector(dtype_include=['category', object])
+    num_selector = make_column_selector(dtype_include=np.number)
+
+    ohe = OneHotEncoder()
+    scaler = StandardScaler()
+
+    ct_selector = make_column_transformer((ohe, cat_selector),
+                                          (scaler, num_selector))
+    ct_direct = make_column_transformer((ohe, ['col_cat', 'col_str']),
+                                        (scaler, ['col_int', 'col_float']))
+
+    X_selector = ct_selector.fit_transform(X_df)
+    X_direct = ct_direct.fit_transform(X_df)
+
+    assert_allclose(X_selector, X_direct)
+
+
+def test_make_column_selector_error():
+    selector = make_column_selector(dtype_include=np.number)
+    X = np.array([[0.1, 0.2]])
+    msg = ("make_column_selector can only be applied to pandas dataframes")
+    with pytest.raises(ValueError, match=msg):
+        selector(X)

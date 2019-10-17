@@ -171,6 +171,7 @@ details.
    :template: function.rst
 
    compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
