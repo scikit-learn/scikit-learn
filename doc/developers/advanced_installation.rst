@@ -133,67 +133,67 @@ one).
 Using conda
 ~~~~~~~~~~~
 
-    One solution is to install another compiler which supports OpenMP. If you
-    use the conda package manager, you can install the ``compilers``
-    meta-package from the conda-forge channel, which provides OpenMP-enabled C
-    compilers.
+One solution is to install another compiler which supports OpenMP. If you use
+the conda package manager, you can install the ``compilers`` meta-package from
+the conda-forge channel, which provides OpenMP-enabled C compilers.
 
-    It is recommended to use a dedicated conda environment to build
-    scikit-learn from source::
+It is recommended to use a dedicated conda environment to build scikit-learn
+from source::
 
-        conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-            conda-forge::compilers conda-forge::llvm-openmp
-        conda activate sklearn-dev
+    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
+        conda-forge::compilers conda-forge::llvm-openmp
+    conda activate sklearn-dev
+    pip install --verbose --editable .
 
-    .. note::
+.. note::
 
-        If you get any conflicting dependency error message, try commenting out
-        any custom conda configuration in the ``$HOME/.condarc`` file. In
-        particular the ``channel_priority: strict`` directive is known to cause
-        problems for this setup.
+    If you get any conflicting dependency error message, try commenting out
+    any custom conda configuration in the ``$HOME/.condarc`` file. In
+    particular the ``channel_priority: strict`` directive is known to cause
+    problems for this setup.
 
-    You can check that the custom compilers are properly installed from conda
-    forge using the following command::
+You can check that the custom compilers are properly installed from conda
+forge using the following command::
 
-        conda list compilers llvm-openmp
+    conda list compilers llvm-openmp
 
-    The compilers meta-package will automatically set custom environment
-    variables::
+The compilers meta-package will automatically set custom environment
+variables::
 
-        echo $CC
-        echo $CXX
-        echo $CFLAGS
-        echo $CXXFLAGS
-        echo $LDFLAGS
+    echo $CC
+    echo $CXX
+    echo $CFLAGS
+    echo $CXXFLAGS
+    echo $LDFLAGS
 
-    They point to files and folders from your sklearn-dev conda environment
-    (in particular in the bin/, include/ and lib/ subfolders).
+They point to files and folders from your sklearn-dev conda environment
+(in particular in the bin/, include/ and lib/ subfolders).
+
+The compiled extensions should be built with the clang and clang++ compilers
+with the ``-fopenmp`` command line flag.
 
 Using homebrew
 ~~~~~~~~~~~~~~
 
-    Another solution is to enable OpenMP support for the clang compiler shipped
-    by default on macOS.
+Another solution is to enable OpenMP support for the clang compiler shipped
+by default on macOS.
 
-    You first need to install the OpenMP library::
+You first need to install the OpenMP library::
 
-        brew install libomp
+    brew install libomp
 
-    Then you need to set the following environment variables::
+Then you need to set the following environment variables::
 
-        export CC=/usr/bin/clang
-        export CXX=/usr/bin/clang++
-        export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-        export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-        export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
 Finally, build scikit-learn in verbose mode::
 
     pip install --verbose --editable .
-
-The compiled extensions should be built with the clang and clang++ compilers
-with the ``-fopenmp`` command line flag.
 
 FreeBSD
 -------
