@@ -4,20 +4,6 @@ set -e
 
 UNAMESTR=`uname`
 
-if [[ "$UNAMESTR" == "Darwin" ]]; then
-    # install OpenMP not present by default on osx
-    HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
-
-    # enable OpenMP support for Apple-clang
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-fi
-
 make_conda() {
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
@@ -58,6 +44,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ -n "$MATPLOTLIB_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
+    fi
+
+    if [[ "$UNAMESTR" == "Darwin" ]]; then
+        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
+        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
