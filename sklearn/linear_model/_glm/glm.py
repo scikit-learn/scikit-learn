@@ -109,9 +109,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_``.
 
-    copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
@@ -130,7 +127,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, *, alpha=1.0,
                  fit_intercept=True, family='normal', link='auto',
                  solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
-                 copy_X=True, verbose=0):
+                 verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.family = family
@@ -139,7 +136,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.warm_start = warm_start
-        self.copy_X = copy_X
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
@@ -219,16 +215,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.warm_start, bool):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
-        if not isinstance(self.copy_X, bool):
-            raise ValueError("The argument copy_X must be bool;"
-                             " got {0}".format(self.copy_X))
 
         family = self._family_instance
         link = self._link_instance
 
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
                          dtype=[np.float64, np.float32],
-                         y_numeric=True, multi_output=False, copy=self.copy_X)
+                         y_numeric=True, multi_output=False)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -423,9 +416,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
@@ -442,12 +432,11 @@ class PoissonRegressor(GeneralizedLinearRegressor):
         Actual number of iterations used in the solver.
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
-                 tol=1e-4, warm_start=False, copy_X=True, verbose=0):
+                 tol=1e-4, warm_start=False, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="poisson", link='log', max_iter=max_iter,
-                         tol=tol, warm_start=warm_start, copy_X=copy_X,
-                         verbose=verbose)
+                         tol=tol, warm_start=warm_start, verbose=verbose)
 
     @property
     def family(self):
@@ -493,9 +482,6 @@ class GammaRegressor(GeneralizedLinearRegressor):
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
@@ -512,12 +498,11 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Actual number of iterations used in the solver.
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
-                 tol=1e-4, warm_start=False, copy_X=True, verbose=0):
+                 tol=1e-4, warm_start=False, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family="gamma", link='log', max_iter=max_iter,
-                         tol=tol, warm_start=warm_start, copy_X=copy_X,
-                         verbose=verbose)
+                         tol=tol, warm_start=warm_start, verbose=verbose)
 
     @property
     def family(self):
@@ -594,9 +579,6 @@ class TweedieRegressor(GeneralizedLinearRegressor):
         If set to ``True``, reuse the solution of the previous call to ``fit``
         as initialization for ``coef_`` and ``intercept_`` .
 
-    copy_X : bool, default=True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
 
@@ -614,12 +596,12 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     """
     def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,
-                 warm_start=False, copy_X=True, verbose=0):
+                 warm_start=False, verbose=0):
 
         super().__init__(alpha=alpha, fit_intercept=fit_intercept,
                          family=TweedieDistribution(power=power), link=link,
                          max_iter=max_iter, tol=tol,
-                         warm_start=warm_start, copy_X=copy_X, verbose=verbose)
+                         warm_start=warm_start, verbose=verbose)
 
     @property
     def family(self):

@@ -154,16 +154,6 @@ def test_glm_warm_start_argument(warm_start):
         glm.fit(X, y)
 
 
-@pytest.mark.parametrize('copy_X', ['not bool', 1, 0, [True]])
-def test_glm_copy_X_argument(copy_X):
-    """Test GLM for invalid copy_X arguments."""
-    y = np.array([1, 2])
-    X = np.array([[1], [1]])
-    glm = GeneralizedLinearRegressor(copy_X=copy_X)
-    with pytest.raises(ValueError, match="copy_X must be bool"):
-        glm.fit(X, y)
-
-
 def test_glm_identity_regression():
     """Test GLM regression with identity link on a simple dataset."""
     coef = [1., 2.]
