@@ -282,6 +282,6 @@ def test_init_gradient_and_hessians_sample_weight():
 
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
-        sample_weight=np.ones(100))
+        sample_weight=np.ones(n_samples))
     assert not loss.hessians_are_constant
     assert hessians.shape == (prediction_dim, n_samples)
