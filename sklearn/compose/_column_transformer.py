@@ -763,30 +763,7 @@ def _is_negative_indexing(key):
     return False
 
 
-class _ColumnSelector:
-    """Callable to select columns. Returned by `make_column_selector`"""
-
-    def __init__(self, pattern, dtype_include, dtype_exclude):
-        self.pattern = pattern
-        self.dtype_include = dtype_include
-        self.dtype_exclude = dtype_exclude
-
-    def __call__(self, df):
-        if not hasattr(df, 'iloc'):
-            raise ValueError("make_column_selector can only be applied to "
-                             "pandas dataframes")
-        if self.dtype_include is not None or self.dtype_exclude is not None:
-            cols = (df.iloc[:1].select_dtypes(include=self.dtype_include,
-                                              exclude=self.dtype_exclude)
-                    .columns)
-        else:
-            cols = df.columns
-        if self.pattern is not None:
-            return cols[cols.str.contains(self.pattern)]
-        return cols
-
-
-def make_column_selector(pattern=None, dtype_include=None, dtype_exclude=None):
+class make_column_selector:
     """Create a callable to select columns to be used with
     :func:`make_column_transformer` or :class:`ColumnTransformer`.
 
@@ -810,5 +787,22 @@ def make_column_selector(pattern=None, dtype_include=None, dtype_exclude=None):
     selector : callable
         Callable for column selection.
     """
-    return _ColumnSelector(pattern=pattern, dtype_include=dtype_include,
-                           dtype_exclude=dtype_exclude)
+
+    def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
+        self.pattern = pattern
+        self.dtype_include = dtype_include
+        self.dtype_exclude = dtype_exclude
+
+    def __call__(self, df):
+        if not hasattr(df, 'iloc'):
+            raise ValueError("make_column_selector can only be applied to "
+                             "pandas dataframes")
+        if self.dtype_include is not None or self.dtype_exclude is not None:
+            cols = (df.iloc[:1].select_dtypes(include=self.dtype_include,
+                                              exclude=self.dtype_exclude)
+                    .columns)
+        else:
+            cols = df.columns
+        if self.pattern is not None:
+            return cols[cols.str.contains(self.pattern)]
+        return cols
