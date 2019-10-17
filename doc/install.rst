@@ -46,9 +46,8 @@ Installing the latest release
           <label for="quickstart-pip">pip</label>
           <input type="radio" name="packager" id="quickstart-conda">
           <label for="quickstart-conda">conda</label><br />
-       <strong>Use virtualenv / conda environment</strong>
           <input type="checkbox" name="config" id="quickstart-venv">
-          <label for="quickstart-venv">Yes / No</label>
+          <label for="quickstart-venv"><strong>Use virtualenv / conda environment</strong></label>
        </span>
 
 .. raw:: html
@@ -99,7 +98,8 @@ In order to check your installation you can use
       ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">python -c "import sklearn; sklearn.show_versions()"</span
       ><span class="sk-expandable" data-packager="conda">conda list scikit-learn  # to see which scikit-learn version is installed</span
       ><span class="sk-expandable" data-packager="conda">conda list  # to see all packages installed in the active conda environment</span
-     ></code></pre></div>
+      ><span class="sk-expandable" data-packager="conda">python -c "import sklearn; sklearn.show_versions()"</span
+      ></code></pre></div>
   </div>
 
 
@@ -169,7 +169,7 @@ It can be installed by typing the following command:
 
 .. code-block:: none
 
-     # pacman -S python-scikit-learn
+   $ sudo pacman -S python-scikit-learn
 
 
 Debian/Ubuntu
@@ -182,8 +182,7 @@ Only the Python 3 version is available in the Debian Buster (the more recent
 Debian distribution).
 Packages can be installed using ``apt-get``::
 
-    $ sudo apt-get install python3-sklearn python3-sklearn-lib
-          python3-sklearn-doc
+    $ sudo apt-get install python3-sklearn python3-sklearn-lib python3-sklearn-doc
 
 
 Fedora
@@ -213,11 +212,7 @@ where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command::
 
-    sudo port install py27-scikit-learn
-
-or::
-
-    sudo port install py36-scikit-learn
+    $ sudo port install py36-scikit-learn
 
 
 Canopy and Anaconda for all supported platforms

@@ -1075,6 +1075,10 @@ div.install > label {
   color: black;
 }
 
+div.install > label:hover {
+  cursor: pointer;
+}
+
 /* Style the button when the checkbox is checked */
 div.install > input:checked + label {
   background-color: #ff9c34;
@@ -1084,6 +1088,10 @@ div.install > input:checked + label {
 /* Hide expandable content by default */
 .sk-expandable {
   display: none;
+}
+
+div.highlight span.sk-expandable:before {
+  content: "$ ";
 }
 
 /* Show hidden content when the checkbox is checked */
