@@ -96,3 +96,43 @@ def pytest_runtest_setup(item):
 def pytest_runtest_teardown(item, nextitem):
     if isinstance(item, DoctestItem):
         set_config(print_changed_only=False)
+
+
+# We don't want pytest to run these files during test discovery since they
+# immediately raise a DeprecationWarning.
+# TODO: remove all of these in 0.24
+collect_ignore_glob = [
+    "sklearn/utils/mocking.py", # 0.24
+
+    "sklearn/ensemble/bagging.py", # 0.24
+    "sklearn/ensemble/base.py", # 0.24
+    "sklearn/ensemble/forest.py", # 0.24
+    "sklearn/ensemble/gradient_boosting.py", # 0.24
+    "sklearn/ensemble/iforest.py", # 0.24
+    "sklearn/ensemble/stacking.py", # 0.24
+    "sklearn/ensemble/voting.py", # 0.24
+    "sklearn/ensemble/weight_boosting.py", # 0.24
+    "sklearn/tree/export.py", # 0.24
+    "sklearn/tree/tree.py", # 0.24
+
+    "sklearn/neural_network/rbm.py", # 0.24
+    "sklearn/neural_network/multilayer_perceptron.py", # 0.24
+
+    "sklearn/utils/weight_vector.py", # 0.24
+    "sklearn/utils/seq_dataset.py", # 0.24
+    "sklearn/utils/fast_dict.py", # 0.24
+
+    "sklearn/cluster/affinity_propagation_.py", # 0.24
+    "sklearn/cluster/bicluster.py", # 0.24
+    "sklearn/cluster/birch.py", # 0.24
+    "sklearn/cluster/dbscan_.py", # 0.24
+    "sklearn/cluster/hierarchical.py", # 0.24
+    "sklearn/cluster/k_means_.py", # 0.24
+    "sklearn/cluster/mean_shift_.py", # 0.24
+    "sklearn/cluster/optics_.py", # 0.24
+    "sklearn/cluster/spectral.py", # 0.24
+
+    "sklearn/mixture/base.py", # 0.24
+    "sklearn/mixture/gaussian_mixture.py", # 0.24
+    "sklearn/mixture/bayesian_mixture.py", # 0.24
+]
