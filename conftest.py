@@ -104,4 +104,4 @@ def pytest_runtest_teardown(item, nextitem):
 # Configures pytest to ignore deprecated modules.
 collect_ignore_glob = [
     os.path.join(*deprecated_path.split(".")) + ".py"
-    for _, deprecated_path, _ in _DEPRECATED_MODULES]
+    for _, deprecated_path, _, _ in _DEPRECATED_MODULES]
