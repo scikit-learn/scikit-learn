@@ -11,6 +11,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.utils import shuffle
 
@@ -522,3 +524,47 @@ def test_sample_weight_effect(model, X, y):
     no_dup_sw = model.fit(X, y, sample_weight=sample_weight)
     assert np.all(dup_no_sw[n_samples // 2:, ] == no_dup_sw)
     assert not np.all(no_dup_no_sw, dup_no_sw[n_samples // 2:, ])
+
+
+@pytest.mark.parametrize('loss_name', ('least_squares',
+                                       'least_absolute_deviation'))
+def test_sum_hessians_are_sample_weight(loss_name):
+    # For losses with constant hessians, the sum_hessians field of the
+    # histograms must be equal to the sum of the sample weight of samples at
+    # the corresponding bin.
+
+    rng = np.random.RandomState(0)
+    n_samples = 1000
+    n_features = 2
+    X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=rng)
+    bin_mapper = _BinMapper()
+    X_binned = bin_mapper.fit_transform(X)
+
+    sample_weight = rng.normal(size=n_samples)
+
+    loss = _LOSSES[loss_name]()
+    gradients, hessians = loss.init_gradients_and_hessians(
+        n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight)
+    raw_predictions = rng.normal(size=(1, n_samples))
+    loss.update_gradients_and_hessians(gradients, hessians, y,
+                                       raw_predictions, sample_weight)
+
+    # build sum_sample_weight which contains the sum of the sample weights at
+    # each bin (for each feature). This must be equal to the sum_hessians
+    # field of the corresponding histogram
+    sum_sw = np.zeros(shape=(n_features, bin_mapper.n_bins))
+    for feature_idx in range(n_features):
+        for sample_idx in range(n_samples):
+            sum_sw[feature_idx, X_binned[sample_idx, feature_idx]] += (
+                sample_weight[sample_idx])
+
+    # Build histogram
+    grower = TreeGrower(X_binned, gradients[0], hessians[0],
+                        n_bins=bin_mapper.n_bins)
+    histograms = grower.histogram_builder.compute_histograms_brute(
+        grower.root.sample_indices)
+
+    for feature_idx in range(n_features):
+        for bin_idx in range(bin_mapper.n_bins):
+                assert histograms[feature_idx][bin_idx]['sum_hessians'] == (
+                    pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
