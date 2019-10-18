@@ -610,7 +610,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
-        print(X)
         self._precomputed = False
         if sparse.issparse(X):
             if self.missing_values and X.data.dtype == 'bool':
