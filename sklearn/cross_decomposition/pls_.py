@@ -443,7 +443,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X_original *= self.x_std_
         X_original += self.x_mean_
         return X_original
-    
+
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
 
