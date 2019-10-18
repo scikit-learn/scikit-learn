@@ -100,6 +100,8 @@ def pytest_runtest_teardown(item, nextitem):
         set_config(print_changed_only=False)
 
 
+# TODO: Remove when modules are deprecated in 0.24
+# Configures pytest to ignore deprecated modules.
 collect_ignore_glob = [
     os.path.join(*deprecated_path.split(".")) + ".py"
     for _, deprecated_path, _ in _DEPRECATED_MODULES]
