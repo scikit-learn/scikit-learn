@@ -610,10 +610,15 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             The imputer mask of the original data.
 
         """
-        if self.missing_values and X.dtype == 'bool':
-            self._precomputed = True
+        print(X)
+        self._precomputed = False
+        if sparse.issparse(X):
+            if self.missing_values and X.data.dtype == 'bool':
+                self._precomputed = True
         else:
-            self._precomputed = False
+            if self.missing_values and X.dtype == 'bool':
+                self._precomputed = True
+
 
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
