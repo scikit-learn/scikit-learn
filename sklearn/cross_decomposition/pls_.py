@@ -420,7 +420,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self,X,copy=True):
+    def inverse_transform(self, X, copy=True):
         """Transform data back to its original space.
         Parameters
         ----------
@@ -436,13 +436,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         """
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
-        #From pls space to original space
+        # From pls space to original space
         X_original = np.matmul(X, self.x_loadings_.T)
 
         # Denormalize
         X_original *= self.x_std_
         X_original += self.x_mean_
-        
         return X_original
     
     def predict(self, X, copy=True):
