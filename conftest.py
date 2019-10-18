@@ -8,7 +8,6 @@
 import platform
 from distutils.version import LooseVersion
 import os
-from pathlib import Path
 
 import pytest
 from _pytest.doctest import DoctestItem
@@ -16,6 +15,7 @@ from _pytest.doctest import DoctestItem
 from sklearn import set_config
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
+from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -100,6 +100,6 @@ def pytest_runtest_teardown(item, nextitem):
         set_config(print_changed_only=False)
 
 
-with open('.gitignore', 'r') as file:
-    collect_ignore_glob = [line.strip("\n") for line in file
-                           if not line.startswith("#")]
+collect_ignore_glob = [
+    os.path.join(*deprecated_path.split("."))
+    for _, deprecated_path, _ in _DEPRECATED_MODULES]
