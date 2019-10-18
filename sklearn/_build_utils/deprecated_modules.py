@@ -61,6 +61,14 @@ _DEPRECATED_MODULES = [
      'sklearn.mixture', 'GaussianMixture'),
     ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
      'sklearn.mixture', 'BayesianGaussianMixture'),
+
+    ('_base', 'sklearn.svm.base', 'sklearn.svm', 'BaseLibSVM'),
+    ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm', 'l1_min_c'),
+    ('_classes', 'sklearn.svm.classes', 'sklearn.svm', 'SVR'),
+    ('_libsvm', 'sklearn.svm.libsvm', 'sklearn.svm', 'fit'),
+    ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
+     'set_verbosity_wrap'),
+    ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 ]
 
 _FILE_CONTENT_TEMPLATE = """
