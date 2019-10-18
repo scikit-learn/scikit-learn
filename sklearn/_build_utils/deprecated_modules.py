@@ -8,7 +8,6 @@ from contextlib import suppress
 # This is a set of 3-tuples consisting of
 # (new_module_name, deprecated_path, correct_import_path)
 _DEPRECATED_MODULES = {
-    # TODO: Remove in 0.24
     ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
 
     ('_bagging', 'sklearn.ensemble.bagging', 'sklearn.ensemble'),
