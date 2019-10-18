@@ -427,9 +427,14 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X : array-like, shape (n_samples, n_components)
             New data, where n_samples is the number of samples
             and n_components is the number of pls components.
+
+        copy : boolean, default True
+            Whether to copy X, or perform in-place normalization.
+
         Returns
         -------
         X_original array-like, shape (n_samples, n_features)
+        
         Notes
         This transformation will only be exact if n_components=n_features
         -----
