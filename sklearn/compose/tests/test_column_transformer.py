@@ -1212,7 +1212,7 @@ def test_make_column_selector_with_select_dtypes(cols, include,
     selector = make_column_selector(
             dtype_include=include, dtype_exclude=exclude, pattern=pattern)
 
-    assert_array_equal(selector(X_df), cols)
+    assert_array_equal(selector(X_df), sorted(cols))
 
 
 def test_column_transformer_mixed_dtypes():
@@ -1234,7 +1234,7 @@ def test_column_transformer_mixed_dtypes():
     ct_selector = make_column_transformer((ohe, cat_selector),
                                           (scaler, num_selector))
     ct_direct = make_column_transformer((ohe, ['col_cat', 'col_str']),
-                                        (scaler, ['col_int', 'col_float']))
+                                        (scaler, ['col_float', 'col_int']))
 
     X_selector = ct_selector.fit_transform(X_df)
     X_direct = ct_direct.fit_transform(X_df)

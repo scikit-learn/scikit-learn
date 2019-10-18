@@ -768,19 +768,22 @@ class make_column_selector:
     :func:`make_column_transformer` or :class:`ColumnTransformer`.
 
     :func:`make_column_selector` can select columsn based on a columns datatype
-    or a regex pattern.
+    or a regex pattern. When using multiple selection criteria, **all**
+    criteria must match for a column to be selected.
 
     Parameters
     ----------
     pattern : str, default=None
-        Regular expression used to select columns. If None, column selection
-        will not be selected based on pattern.
+        Columns containing this regex pattern will be included. If None, column
+        selection will not be selected based on pattern.
 
     dtype_include : column dtype or list of column dtypes, default=None
-        A selection of dtypes to include.
+        A selection of dtypes to include. For more details, see
+        :meth:`pandas.DataFrame.select_dtypes`.
 
     dtype_exclude : column dtype or list of column dtypes, default=None
-        A selection of dtypes to include.
+        A selection of dtypes to exclude. For more details, see
+        :meth:`pandas.DataFrame.select_dtypes`.
 
     Returns
     -------
@@ -804,5 +807,5 @@ class make_column_selector:
         else:
             cols = df.columns
         if self.pattern is not None:
-            return cols[cols.str.contains(self.pattern)]
-        return cols
+            cols = cols[cols.str.contains(self.pattern)]
+        return sorted(cols)
