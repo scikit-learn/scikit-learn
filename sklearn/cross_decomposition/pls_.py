@@ -422,6 +422,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
     def inverse_transform(self, X, copy=True):
         """Transform data back to its original space.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_components)
@@ -434,7 +435,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         Returns
         -------
         X_original array-like, shape (n_samples, n_features)
-        
+
         Notes
         This transformation will only be exact if n_components=n_features
         -----
