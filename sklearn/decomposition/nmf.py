@@ -11,7 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 import time
 import warnings
-from math import sqrt, floor
+from math import sqrt
 
 from .cdnmf_fast import _update_cdnmf_fast
 from ..base import BaseEstimator, TransformerMixin
@@ -171,16 +171,12 @@ def _special_sparse_dot(W, H, X):
         ii, jj = X.nonzero()
         n_vals = ii.shape[0]
         dot_vals = np.empty(n_vals)
-        i = 0
-        rank = W.shape[1]
-        batch_size = floor(n_vals / rank)
-        while i < n_vals:
-            s = i + batch_size
-            if s > n_vals:
-                s = n_vals
-            dot_vals[i:s] = np.multiply(W[ii[i:s], :],
-                                        H.T[jj[i:s], :]).sum(axis=1)
-            i = s
+        n_components = W.shape[1]
+
+        batch_size = max(n_components, n_vals // n_components)
+        for start in range(0, n_vals, batch_size):
+            batch = slice(start, start + batch_size)
+            dot_vals[batch] = np.multiply(W[ii[batch], :], H.T[jj[batch], :]).sum(axis=1)
 
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
