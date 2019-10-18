@@ -1396,6 +1396,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
            - recall: when there are no positive labels
            - precision: when there are no positive predictions
            - f-score: both
+
         If set to "warn", this acts as 0, but warnings are also raised.
 
     Returns
