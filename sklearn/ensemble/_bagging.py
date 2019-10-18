@@ -549,9 +549,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> X, y = make_classification(n_samples=100, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(n_estimators=10, random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
     >>> clf = BaggingClassifier(base_estimator=SVC(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
@@ -943,13 +940,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     >>> X, y = make_regression(n_samples=100, n_features=4,
     ...                        n_informative=2, n_targets=1,
     ...                        random_state=0, shuffle=False)
-    >>> regr = BaggingRegressor(n_estimators=10, random_state=0).fit(X, y)
-    >>> regr.predict([[0, 0, 0, 0]])
-    array([2.36503199])
     >>> regr = BaggingRegressor(base_estimator=SVR(),
     ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> regr.predict([[0, 0, 0, 0]])
-    array([-2.87202411])
+    array([-2.8720...])
 
     References
     ----------
