@@ -160,6 +160,10 @@ Changelog
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
+- |Fix| :func:`decomposition.nmf._special_sparse_dot()` now uses batching to avoid
+  briefly allocating an array with size (#non-zero elements, n_components).
+  :issue:`15242` by `Mart Willocx <Maocx>`_.
+
 :mod:`sklearn.dummy`
 ....................
 
