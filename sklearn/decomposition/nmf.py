@@ -176,7 +176,8 @@ def _special_sparse_dot(W, H, X):
         batch_size = max(n_components, n_vals // n_components)
         for start in range(0, n_vals, batch_size):
             batch = slice(start, start + batch_size)
-            dot_vals[batch] = np.multiply(W[ii[batch], :], H.T[jj[batch], :]).sum(axis=1)
+            dot_vals[batch] = np.multiply(W[ii[batch], :],
+                                          H.T[jj[batch], :]).sum(axis=1)
 
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
