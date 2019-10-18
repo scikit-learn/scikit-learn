@@ -505,25 +505,47 @@ def test_non_uniform_weights_toy_edge_case_clf():
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
 
-@pytest.mark.parametrize(
-    "model, X, y",
-    [(HistGradientBoostingClassifier(),
-      *make_classification(n_classes=2)),
-     (HistGradientBoostingClassifier(),
-      *make_classification(n_classes=4, n_informative=16)),
-     (HistGradientBoostingRegressor(), *make_regression())])
-def test_sample_weight_effect(model, X, y):
-    n_samples = X.shape[0]
-    X_ = np.r_[X, X[:n_samples // 2, :]]
-    y_ = np.r_[y, y[:n_samples // 2, ]]
-    sample_weight = np.ones(shape=(n_samples))
-    sample_weight[:n_samples // 2] = 2
+@pytest.mark.parametrize('problem', (
+    'regression',
+    'binary_classification',
+    'multiclass_classification'
+))
+@pytest.mark.parametrize('duplication', ('half', 'all'))
+@pytest.mark.parametrize('seed', range(1))
+def test_sample_weight_effect(problem, duplication, seed):
+    # High level test to make sure that duplicating a sample is equivalent to
+    # giving it weight of 2.
 
-    no_dup_no_sw = model.fit(X, y).predict(X_)
-    dup_no_sw = model.fit(X_, y_).predict(X_)
-    no_dup_sw = model.fit(X, y, sample_weight=sample_weight)
-    assert np.all(dup_no_sw[n_samples // 2:, ] == no_dup_sw)
-    assert not np.all(no_dup_no_sw, dup_no_sw[n_samples // 2:, ])
+    n_samples = 255  # fails for n_samples > 256
+    n_features = 2
+    if problem == 'regression':
+        X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                            n_informative=n_features, random_state=seed)
+        Klass = HistGradientBoostingRegressor
+    else:
+        n_classes = 2 if problem == 'binary_classification' else 3
+        X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                                   n_informative=n_features, n_redundant=0,
+                                   n_clusters_per_class=1,
+                                   n_classes=n_classes, random_state=seed)
+        Klass = HistGradientBoostingClassifier
+
+    est = Klass(min_samples_leaf=1)  # fails if min_samples_leaf > 1
+
+    # Create dataset with duplicate and corresponding sample weights
+    if duplication == 'half':
+        lim = n_samples // 2
+    else:
+        lim = n_samples
+    X_dup = np.r_[X, X[:lim]]
+    y_dup = np.r_[y, y[:lim]]
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[:lim] = 2
+
+    no_dup_sw = est.fit(X, y, sample_weight=sample_weight).predict(X_dup)
+    dup_no_sw = est.fit(X_dup, y_dup).predict(X_dup)
+
+    assert np.allclose(dup_no_sw, no_dup_sw)
 
 
 @pytest.mark.parametrize('loss_name', ('least_squares',
