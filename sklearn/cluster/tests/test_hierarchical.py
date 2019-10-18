@@ -23,7 +23,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                           _fix_connectivity, linkage_tree)
+                                           linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
