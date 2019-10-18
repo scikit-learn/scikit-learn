@@ -618,7 +618,6 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             if self.missing_values and X.dtype == 'bool':
                 self._precomputed = True
 
-
         # Need not validate X again as it would have already been validated
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
