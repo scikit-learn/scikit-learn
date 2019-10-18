@@ -611,11 +611,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         self._precomputed = False
-        if sparse.issparse(X):
-            if self.missing_values and X.dtype == 'bool':
-                self._precomputed = True
-
-        elif isinstance(X, np.ndarray):
+        if sparse.issparse(X) or isinstance(X, np.ndarray):
             if self.missing_values and X.dtype == 'bool':
                 self._precomputed = True
 
