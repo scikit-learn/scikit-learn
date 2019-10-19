@@ -2248,15 +2248,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Score of self.predict(X) wrt. y.
 
         """
-
-        if self.scoring is not None:
-            warnings.warn("The long-standing behavior to use the "
-                          "accuracy score has changed. The scoring "
-                          "parameter is now used. "
-                          "This warning will disappear in version 0.22.",
-                          ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
