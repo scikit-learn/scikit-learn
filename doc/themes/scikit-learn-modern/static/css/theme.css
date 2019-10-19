@@ -173,6 +173,10 @@ div.clearer {
   margin-top: 1rem;
 }
 
+#searchbox {
+  padding-top: 0.1rem;
+}
+
 .sk-search-text-input {
   width: 12rem;
 }
@@ -405,10 +409,11 @@ nav.sk-docs-navbar {
   position: fixed;
   max-height: 100vh;
   overflow-y: auto;
+  align-items: initial;
 }
 
 div.sk-navbar-collapse {
-  padding-bottom: 9rem;
+  padding-bottom: 4rem;
 }
 
 @media screen and (min-width: 768px) {
