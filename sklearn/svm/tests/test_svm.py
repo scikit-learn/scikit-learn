@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.svm import _libsvm
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -61,28 +62,28 @@ def test_libsvm_iris():
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
-    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
-    pred = svm.libsvm.predict(iris.data, *model)
+    model = _libsvm.fit(iris.data, iris.target.astype(np.float64))
+    pred = _libsvm.predict(iris.data, *model)
     assert np.mean(pred == iris.target) > .95
 
-    model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64),
-                           kernel='linear')
-    pred = svm.libsvm.predict(iris.data, *model, kernel='linear')
+    model = _libsvm.fit(iris.data, iris.target.astype(np.float64),
+                        kernel='linear')
+    pred = _libsvm.predict(iris.data, *model, kernel='linear')
     assert np.mean(pred == iris.target) > .95
 
-    pred = svm.libsvm.cross_validation(iris.data,
-                                       iris.target.astype(np.float64), 5,
-                                       kernel='linear',
-                                       random_seed=0)
+    pred = _libsvm.cross_validation(iris.data,
+                                    iris.target.astype(np.float64), 5,
+                                    kernel='linear',
+                                    random_seed=0)
     assert np.mean(pred == iris.target) > .95
 
     # If random_seed >= 0, the libsvm rng is seeded (by calling `srand`), hence
     # we should get deterministic results (assuming that there is no other
     # thread calling this wrapper calling `srand` concurrently).
-    pred2 = svm.libsvm.cross_validation(iris.data,
-                                        iris.target.astype(np.float64), 5,
-                                        kernel='linear',
-                                        random_seed=0)
+    pred2 = _libsvm.cross_validation(iris.data,
+                                     iris.target.astype(np.float64), 5,
+                                     kernel='linear',
+                                     random_seed=0)
     assert_array_equal(pred, pred2)
 
 
@@ -674,7 +675,7 @@ def test_unicode_kernel():
     clf = svm.SVC(kernel='linear', probability=True)
     clf.fit(X, Y)
     clf.predict_proba(T)
-    svm.libsvm.cross_validation(iris.data,
+    _libsvm.cross_validation(iris.data,
                                 iris.target.astype(np.float64), 5,
                                 kernel='linear',
                                 random_seed=0)

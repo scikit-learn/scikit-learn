@@ -93,6 +93,9 @@ sklearn/ensemble/weight_boosting.py
 sklearn/tree/export.py
 sklearn/tree/tree.py
 
+sklearn/neural_network/rbm.py
+sklearn/neural_network/multilayer_perceptron.py
+
 sklearn/utils/weight_vector.py
 sklearn/utils/seq_dataset.py
 sklearn/utils/fast_dict.py
@@ -110,3 +113,10 @@ sklearn/cluster/spectral.py
 sklearn/mixture/base.py
 sklearn/mixture/gaussian_mixture.py
 sklearn/mixture/bayesian_mixture.py
+
+sklearn/svm/base.py
+sklearn/svm/classes.py
+sklearn/svm/bounds.py
+sklearn/svm/libsvm.py
+sklearn/svm/libsvm_sparse.py
+sklearn/svm/liblinear.py
