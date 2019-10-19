@@ -174,11 +174,12 @@ div.clearer {
 }
 
 .sk-search-text-input {
-  width: 11rem;
+  width: 12rem;
 }
 
 .sk-search-text-btn {
-  padding: 0;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
 }
 
 /* navbar */
