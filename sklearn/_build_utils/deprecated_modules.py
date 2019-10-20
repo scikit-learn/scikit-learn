@@ -66,6 +66,14 @@ _DEPRECATED_MODULES = [
      'sklearn.cross_decomposition', 'CCA'),
     ('_pls_', 'sklearn.cross_decomposition.pls_',
      'sklearn.cross_decomposition', 'PLSSVD'),
+
+    ('_base', 'sklearn.svm.base', 'sklearn.svm', 'BaseLibSVM'),
+    ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm', 'l1_min_c'),
+    ('_classes', 'sklearn.svm.classes', 'sklearn.svm', 'SVR'),
+    ('_libsvm', 'sklearn.svm.libsvm', 'sklearn.svm', 'fit'),
+    ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
+     'set_verbosity_wrap'),
+    ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 ]
 
 _FILE_CONTENT_TEMPLATE = """
