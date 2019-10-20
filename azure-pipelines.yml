@@ -13,12 +13,8 @@ jobs:
       displayName: Install flake8
     - bash: |
         source activate flake8_env
-        ./build_tools/circle/flake8_diff.sh
-      displayName: Run flake8
-    - bash: |
-        source activate flake8_env
-        ./build_tools/circle/check_deprecated_properties.sh
-      displayName: Run deprecation properties checks
+        ./build_tools/circle/linting.sh
+      displayName: Run linting
 
 
 # Will run all the time regardless of linting outcome.
