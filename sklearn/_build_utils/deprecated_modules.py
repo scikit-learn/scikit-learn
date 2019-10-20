@@ -73,6 +73,11 @@ _DEPRECATED_MODULES = [
     ('_elliptic_envelope', 'sklearn.covariance.elliptic_envelope',
      'sklearn.covariance', 'EllipticEnvelope'),
 
+    ('_cca_', 'sklearn.cross_decomposition.cca_',
+     'sklearn.cross_decomposition', 'CCA'),
+    ('_pls_', 'sklearn.cross_decomposition.pls_',
+     'sklearn.cross_decomposition', 'PLSSVD'),
+
     ('_base', 'sklearn.svm.base', 'sklearn.svm', 'BaseLibSVM'),
     ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm', 'l1_min_c'),
     ('_classes', 'sklearn.svm.classes', 'sklearn.svm', 'SVR'),
