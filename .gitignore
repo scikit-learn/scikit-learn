@@ -119,3 +119,10 @@ sklearn/covariance/empirical_covariance_.py
 sklearn/covariance/graph_lasso_.py
 sklearn/covariance/robust_covariance.py
 sklearn/covariance/shrunk_covariance_.py
+
+sklearn/svm/base.py
+sklearn/svm/classes.py
+sklearn/svm/bounds.py
+sklearn/svm/libsvm.py
+sklearn/svm/libsvm_sparse.py
+sklearn/svm/liblinear.py

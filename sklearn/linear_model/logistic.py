@@ -21,7 +21,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm.base import _fit_liblinear
+from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
