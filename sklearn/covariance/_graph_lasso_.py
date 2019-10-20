@@ -15,8 +15,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, delayed
 
-from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
-                                    log_likelihood)
+from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
