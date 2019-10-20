@@ -571,7 +571,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi |x_i - x_j| / p) }{ l^ 2} \right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi d(x_i, x_j) / p) }{ l^ 2} \right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:

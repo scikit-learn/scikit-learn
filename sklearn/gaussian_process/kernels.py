@@ -798,7 +798,7 @@ class Product(KernelOperator):
     >>> from sklearn.gaussian_process.kernels import RBF, Product, \
                 ConstantKernel
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
-    >>> kernel = Product( ConstantKernel(2), RBF() )
+    >>> kernel = Product(ConstantKernel(2), RBF())
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
@@ -901,7 +901,7 @@ class Exponentiation(Kernel):
     >>> from sklearn.gaussian_process.kernels import RationalQuadratic, \
                 Exponentiation
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
-    >>> kernel = Exponentiation( RationalQuadratic(), exponent=2 )
+    >>> kernel = Exponentiation(RationalQuadratic(), exponent=2)
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
@@ -1809,10 +1809,11 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     .. math::
         k(x_i, x_j) = \text{exp}\left(-
-        \frac{ 2\sin^2(\pi |x_i - x_j|/p) }{ l^ 2} \right)
+        \frac{ 2\sin^2(\pi d(x_i, x_j)/p) }{ l^ 2} \right)
 
-    where :math:`l` is the length scale of the kernel and :math:`p` is the
-    periodicity of the kernel.
+    where :math:`l` is the length scale of the kernel, :math:`p` the
+    periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    Euclidean distance.
 
     Read more in the :ref:`User Guide <gaussian_process>`.
 
