@@ -13,8 +13,8 @@ import numpy as np
 from ...utils import check_random_state
 from ...utils import check_X_y
 from ...utils import _safe_indexing
-from ..pairwise import pairwise_distances_chunked
-from ..pairwise import pairwise_distances
+from .._pairwise import pairwise_distances_chunked
+from .._pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 from ...utils import deprecated
 
