@@ -74,6 +74,16 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_bicluster', 'sklearn.metrics.cluster.bicluster',
+     'sklearn.metric.cluster', 'consensus_score'),
+    ('_supervised', 'sklearn.metrics.cluster.supervised',
+     'sklearn.metric.cluster', 'entropy'),
+    ('_unsupervised', 'sklearn.metrics.cluster.unsupervised',
+     'sklearn.metric.cluster', 'silhouette_score'),
+    ('_expected_mutual_info_fast',
+     'sklearn.metrics.cluster.expected_mutual_info_fast',
+     'sklearn.metric.cluster', 'expected_mutual_information'),
 ]
 
 _FILE_CONTENT_TEMPLATE = """

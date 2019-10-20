@@ -123,3 +123,8 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/metrics/cluster/bicluster.py
+sklearn/metrics/cluster/supervised.py
+sklearn/metrics/cluster/unsupervised.py
+sklearn/metrics/cluster/expected_mutual_info_fast.py
