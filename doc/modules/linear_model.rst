@@ -1010,10 +1010,10 @@ together with :math:`s=\mathrm{exposure}` as sample weights. For a concrete
 example see e.g.
 :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`.
 
-The `power` parameter of `TweedieRegressor` does not qualify to be optimized
-by cross-validation, because it defines the very scoring criteria itself, i.e.
-:meth:`TweedieRegressor.score`. Without the full likelihood of Tweedie
-distributions at hand, it is suggested to choose it's value a priori.
+When performing cross-validation for the `power` parameter of
+`TweedieRegressor`, it is advisable to specify an explicit `scoring` function,
+because the default scorer :meth:`TweedieRegressor.score` is a function of
+`power` itself.
 
 Stochastic Gradient Descent - SGD
 =================================
