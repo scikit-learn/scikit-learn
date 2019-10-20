@@ -129,3 +129,14 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/datasets/base.py
+sklearn/datasets/california_housing.py
+sklearn/datasets/covtype.py
+sklearn/datasets/kddcup99.py
+sklearn/datasets/lfw.py
+sklearn/datasets/olivetti_faces.py
+sklearn/datasets/openml.py
+sklearn/datasets/rcv1.py
+sklearn/datasets/samples_generator.py
+sklearn/datasets/svmlight_format.py

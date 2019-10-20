@@ -17,10 +17,10 @@ from os.path import dirname, exists, join
 import numpy as np
 import joblib
 
-from .base import _fetch_remote
-from .base import get_data_home
-from .base import RemoteFileMetadata
-from .base import _refresh_cache
+from ._base import _fetch_remote
+from . import get_data_home
+from ._base import RemoteFileMetadata
+from ._base import _refresh_cache
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method

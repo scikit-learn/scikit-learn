@@ -45,7 +45,7 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.datasets.base import Bunch
+from sklearn.utils import Bunch
 from sklearn.datasets import fetch_species_distributions
 from sklearn.datasets.species_distributions import construct_grids
 from sklearn import svm, metrics

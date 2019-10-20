@@ -16,7 +16,7 @@ import numpy as np
 import scipy.sparse
 
 from ..externals import _arff
-from .base import get_data_home
+from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
 from ..utils import get_chunk_n_rows

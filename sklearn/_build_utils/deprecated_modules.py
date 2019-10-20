@@ -85,6 +85,24 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_base', 'sklearn.datasets.base', 'sklearn.datasets', 'get_data_home'),
+    ('_california_housing', 'sklearn.datasets.california_housing',
+     'sklearn.datasets', 'fetch_california_housing'),
+    ('_covtype', 'sklearn.datasets.covtype', 'sklearn.datasets',
+     'fetch_covtype'),
+    ('_kddcup99', 'sklearn.datasets.kddcup99', 'sklearn.datasets',
+     'fetch_kddcup99'),
+    ('_lfw', 'sklearn.datasets.lfw', 'sklearn.datasets',
+     'fetch_lfw_people'),
+    ('_olivetti_faces', 'sklearn.datasets.olivetti_faces', 'sklearn.datasets',
+     'fetch_olivetti_faces'),
+    ('_openml', 'sklearn.datasets.openml', 'sklearn.datasets', 'fetch_openml'),
+    ('_rcv1', 'sklearn.datasets.rcv1', 'sklearn.datasets', 'fetch_rcv1'),
+    ('_samples_generator', 'sklearn.datasets.samples_generator',
+     'sklearn.datasets', 'make_classification'),
+    ('_svmlight_format', 'sklearn.datasets.svmlight_format',
+     'sklearn.datasets', 'load_svmlight_file')
 ]
 
 
