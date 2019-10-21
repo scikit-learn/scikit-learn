@@ -2570,7 +2570,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
             The default value of parameter `copy` will be changed from False
             to True in 0.23. The current default of False is being changed to
             make it more consistent with the default `copy` values of other
-            functions in :mod:`sklearn.preprocessing.data`. Furthermore, the
+            functions in :mod:`sklearn.preprocessing._data`. Furthermore, the
             current default of False may have unexpected side effects by
             modifying the value of `X` inplace
 
@@ -2613,7 +2613,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         warnings.warn("The default value of `copy` will change from False to "
                       "True in 0.23 in order to make it more consistent with "
                       "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      ":mod:`sklearn.preprocessing._data` and prevent "
                       "unexpected side effects by modifying the value of `X` "
                       "inplace. To avoid inplace modifications of `X`, it is "
                       "recommended to explicitly set `copy=True`",
