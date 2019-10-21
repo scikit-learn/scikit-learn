@@ -420,24 +420,27 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self, X, copy=True):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
+
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
+        X : array-like of shape (n_samples, n_components)
             New data, where n_samples is the number of samples
             and n_components is the number of pls components.
-        copy : boolean, default True
+        copy : bool, default=True
             Whether to copy X, or perform in-place normalization.
+
         Returns
         -------
-        X_original array-like, shape (n_samples, n_features)
+        X_original array-like of shape (n_samples, n_features)
+
         Notes
         This transformation will only be exact if n_components=n_features
         -----
         """
         check_is_fitted(self)
-        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=False, dtype=FLOAT_DTYPES)
         # From pls space to original space
         X_original = np.matmul(X, self.x_loadings_.T)
 
