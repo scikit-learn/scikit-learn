@@ -227,7 +227,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         self._validate_names(names)
 
         # FIXME: deprecate the usage of None to drop an estimator from the
-        # ensemble
+        # ensemble. Remove in 0.24
         if any(est is None for est in estimators):
             warnings.warn(
                 "Using 'None' to drop an estimator from the ensemble is "
