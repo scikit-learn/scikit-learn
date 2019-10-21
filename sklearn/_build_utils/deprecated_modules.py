@@ -85,6 +85,11 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_partial_dependence', 'sklearn.inspection.partial_dependence',
+     'sklearn.inspection', 'partial_dependence'),
+    ('_permutation_importance', 'sklearn.inspection.permutation_importance',
+     'sklearn.inspection', 'permutation_importance'),
 ]
 
 
