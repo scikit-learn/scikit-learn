@@ -58,7 +58,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
 from ..exceptions import DataConversionWarning
-from .base import BaseEnsemble, _partition_estimators
+from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -1630,6 +1630,17 @@ class ExtraTreesClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import ExtraTreesClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = ExtraTreesClassifier(n_estimators=100, random_state=0)
+    >>> clf.fit(X, y)
+    ExtraTreesClassifier(random_state=0)
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
 
     References
     ----------

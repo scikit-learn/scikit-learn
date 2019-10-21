@@ -210,7 +210,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest flake8
+       $ pip install cython pytest pytest-cov flake8
 
 5. Install scikit-learn in editable mode::
 

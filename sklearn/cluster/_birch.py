@@ -14,7 +14,7 @@ from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
-from .hierarchical import AgglomerativeClustering
+from . import AgglomerativeClustering
 
 
 def _iterate_sparse_X(X):
