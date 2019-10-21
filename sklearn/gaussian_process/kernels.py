@@ -795,8 +795,8 @@ class Product(KernelOperator):
     --------
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
-    >>> from sklearn.gaussian_process.kernels import RBF, Product, \
-                ConstantKernel
+    >>> from sklearn.gaussian_process.kernels import (RBF, Product,
+    ...            ConstantKernel)
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
     >>> kernel = Product(ConstantKernel(2), RBF())
     >>> gpr = GaussianProcessRegressor(kernel=kernel,
@@ -898,8 +898,8 @@ class Exponentiation(Kernel):
     --------
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
-    >>> from sklearn.gaussian_process.kernels import RationalQuadratic, \
-                Exponentiation
+    >>> from sklearn.gaussian_process.kernels import (RationalQuadratic,
+    ...            Exponentiation)
     >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
     >>> kernel = Exponentiation(RationalQuadratic(), exponent=2)
     >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
