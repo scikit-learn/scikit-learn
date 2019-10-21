@@ -248,8 +248,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         for est in estimators:
             if est not in (None, 'drop') and not is_estimator_type(est):
                 raise ValueError(
-                    "The estimator {} should be a {}."
-                    .format(
+                    "The estimator {} should be a {}.".format(
                         est.__class__.__name__, is_estimator_type.__name__[3:]
                     )
                 )
