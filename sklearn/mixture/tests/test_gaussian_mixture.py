@@ -14,14 +14,15 @@ from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
 from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.mixture.gaussian_mixture import GaussianMixture
-from sklearn.mixture.gaussian_mixture import (
+from sklearn.mixture import GaussianMixture
+from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_full,
     _estimate_gaussian_covariances_tied,
     _estimate_gaussian_covariances_diag,
-    _estimate_gaussian_covariances_spherical)
-from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
-from sklearn.mixture.gaussian_mixture import _compute_log_det_cholesky
+    _estimate_gaussian_covariances_spherical,
+    _compute_precision_cholesky,
+    _compute_log_det_cholesky,
+    )
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils.testing import assert_allclose
@@ -172,7 +173,7 @@ def test_gaussian_mixture_attributes():
 
 
 def test_check_X():
-    from sklearn.mixture.base import _check_X
+    from sklearn.mixture._base import _check_X
     rng = np.random.RandomState(0)
 
     n_samples, n_components, n_features = 10, 2, 2
@@ -469,7 +470,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 
 
 def test_gaussian_mixture_log_probabilities():
-    from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
+    from sklearn.mixture._gaussian_mixture import _estimate_log_gaussian_prob
 
     # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)

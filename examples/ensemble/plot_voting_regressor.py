@@ -3,11 +3,15 @@
 Plot individual and voting regression predictions
 =================================================
 
+.. currentmodule:: sklearn
+
 Plot individual and averaged regression predictions for Boston dataset.
 
-First, three exemplary regressors are initialized (`GradientBoostingRegressor`,
-`RandomForestRegressor`, and `LinearRegression`) and used to initialize a
-`VotingRegressor`.
+First, three exemplary regressors are initialized
+(:class:`~ensemble.GradientBoostingRegressor`,
+:class:`~ensemble.RandomForestRegressor`, and
+:class:`~linear_model.LinearRegression`) and used to initialize a
+:class:`~ensemble.VotingRegressor`.
 
 The red starred dots are the averaged predictions.
 

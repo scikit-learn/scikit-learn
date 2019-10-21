@@ -51,7 +51,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
         Will be ignored when ``y_true`` is binary.
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     binary_metric : callable, returns shape [n_classes]
@@ -149,10 +149,10 @@ def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
                 Scores corresponding to the probability estimates
                 of a sample belonging to the designated positive class label
 
-    y_true : array-like, shape = (n_samples, )
+    y_true : array-like of shape (n_samples,)
         True multiclass labels.
 
-    y_score : array-like, shape = (n_samples, n_classes)
+    y_score : array-like of shape (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
