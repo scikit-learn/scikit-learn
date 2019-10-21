@@ -41,5 +41,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn.inspection -x test_recursion_decision_function
+$TEST_CMD --pyargs sklearn.inspection -x -k test_recursion_decision_function
 set +x
