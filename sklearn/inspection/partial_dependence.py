@@ -21,7 +21,7 @@ from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
-from ..utils import safe_indexing
+from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
@@ -79,14 +79,14 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
     values = []
     for feature in range(X.shape[1]):
-        uniques = np.unique(safe_indexing(X, feature, axis=1))
+        uniques = np.unique(_safe_indexing(X, feature, axis=1))
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
             emp_percentiles = mquantiles(
-                safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
             )
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
@@ -383,7 +383,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     ).ravel()
 
     grid, values = _grid_from_X(
-        safe_indexing(X, features_indices, axis=1), percentiles,
+        _safe_indexing(X, features_indices, axis=1), percentiles,
         grid_resolution
     )
 
