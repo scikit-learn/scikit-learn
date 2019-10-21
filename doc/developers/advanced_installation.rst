@@ -181,7 +181,7 @@ aim is to point to the "vcvarsall.bat" file.
 
 And build scikit-learn from this environment::
 
-    python setup.py install
+    pip install -e .
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
@@ -196,7 +196,7 @@ libraries typically not installed on end-users environment.
 To force the use of a particular compiler, pass the ``--compiler`` flag to the
 build step::
 
-    python setup.py build --compiler=my_compiler install
+    python setup.py build --compiler=my_compiler develop
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
 
@@ -311,9 +311,10 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
 .. note::
 
-    To use a high performance BLAS library (e.g. OpenBlas) see `scipy
-    installation instructions
-    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
+    Scikit-learn will automatically detect the BLAS library (e.g. OpenBlas or
+    MKL) used by SciPy at runtime. See `scipy installation instructions
+    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_ for
+    more details.
 
 
 FreeBSD
