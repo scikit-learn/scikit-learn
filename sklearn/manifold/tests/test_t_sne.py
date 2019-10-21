@@ -829,8 +829,8 @@ def test_bh_match_exact():
 
 
 def test_parallel_gradient_bh_match_iterative():
-    # check that the ``barnes_hut`` method match the exact one when
-    # ``angle = 0`` and ``perplexity > n_samples / 3``
+    # check that the bh gradient with different num_threads gives the same
+    # results
 
     n_features = 10
     n_samples = 30
