@@ -298,7 +298,10 @@ def partial_dependence(estimator, X, features, response_method='auto',
         )
 
     if isinstance(estimator, Pipeline):
+        # assuming Pipeline si the only estimator that does not store a new
+        # attribute
         for est in estimator:
+            # FIXME: remove the None option when it will be deprecated
             if est not in (None, 'drop'):
                 check_is_fitted(est)
     else:
@@ -310,6 +313,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
             'Multiclass-multioutput estimators are not supported'
         )
 
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
@@ -363,18 +368,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
             )
 
     if _determine_key_type(features) == 'int':
-        raise_err = False
         if (isinstance(features, Iterable) or
                 isinstance(features, numbers.Integral)):
             # _get_column_indices() support negative indexing. Here, we limit
             # the indexing to be positive. The upper bound will be checked
             # by _get_column_indices()
-            raise_err = np.all(np.less(features, 0))
-
-        if raise_err:
-            raise ValueError(
-                'all features must be in [0, {}]'.format(X.shape[1] - 1)
-            )
+            if np.any(np.less(features, 0)):
+                raise ValueError(
+                    'all features must be in [0, {}]'.format(X.shape[1] - 1)
+                )
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order='C'

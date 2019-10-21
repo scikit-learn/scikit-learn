@@ -474,7 +474,8 @@ def test_partial_dependence_pipeline():
     ids=['features-integer', 'features-string']
 )
 def test_partial_dependence_dataframe(estimator, preprocessor, features):
-    # check that the partial dependence support dataframe
+    # check that the partial dependence support dataframe and pipeline
+    # including a column transformer
     pd = pytest.importorskip("pandas")
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
 
