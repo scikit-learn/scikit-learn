@@ -5,7 +5,6 @@ from os.path import join
 def configuration(parent_package='', top_path=None):
     import numpy
     from numpy.distutils.misc_util import Configuration
-    from Cython import Tempita
 
     config = Configuration('utils', parent_package, top_path)
 
@@ -58,6 +57,7 @@ def configuration(parent_package='', top_path=None):
 
         with open(pyxfiles, "r") as f:
             tmpl = f.read()
+        from Cython import Tempita  # noqa
         pyxcontent = Tempita.sub(tmpl)
 
         with open(outfile, "w") as f:
