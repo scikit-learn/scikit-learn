@@ -380,7 +380,7 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     0.85
 
     """
-    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
+    _, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, multioutput)
     output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
