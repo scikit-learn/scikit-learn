@@ -181,6 +181,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     multilabel_ : boolean
         Whether a OneVsRestClassifier is a multilabel classifier.
 
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.multiclass import OneVsRestClassifier
     >>> from sklearn.svm import SVC
