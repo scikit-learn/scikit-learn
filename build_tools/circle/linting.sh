@@ -147,9 +147,10 @@ echo -e "No problem detected by flake8\n"
 # For docstrings and warnings of deprecated attributes to be rendered
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)
-bad_deprecation_property_order=`git grep -A 10 "@property" | awk '/@property/,/def /' | grep -B1 "@deprecated"`
-# exclude this file from the matches
-bad_deprecation_property_order=`echo $bad_deprecation_property_order | grep -v linting`
+
+# do not error when grep -B1 "@deprecated" finds nothing
+set +e
+bad_deprecation_property_order=`git grep -A 10 "@property" -- '*.py' | awk '/@property/,/def /' | grep -B1 "@deprecated"`
 
 if [ ! -z "$bad_deprecation_property_order" ]
 then
