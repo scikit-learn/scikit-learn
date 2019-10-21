@@ -106,6 +106,11 @@ Building Scikit-learn also requires:
    not recommended since it will force some estimators to run in sequential
    mode.
 
+Since version 0.21, scikit-learn automatically detects and use the
+linear algebrea library used by SciPy **at runtime**. Scikit-learn has
+therefore no build dependency on BLAS/LAPACK implementations such as OpenBlas,
+Atlas or MKL.
+
 Test dependencies
 ~~~~~~~~~~~~~~~~~
 
@@ -150,25 +155,13 @@ folder. Have a look at the ``Makefile`` for additional utilities.
 Platform-specific instructions
 ==============================
 
+Here are instructions to install a working C/C++ compiler with OpenMP support
+to build scikit-learn Cython extensions for each supported platform.
+
 Windows
 -------
 
-Using the official Microsoft compilers (recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-To build scikit-learn on Windows you need a working C/C++ compiler to build
-the Cython extensions.
-
-The building command depends on the architecture of the Python interpreter,
-32-bit or 64-bit. You can check the architecture by running the following in
-``cmd`` or ``powershell`` console::
-
-    python -c "import struct; print(struct.calcsize('P') * 8)"
-
-The above commands assume that you have the Python installation folder in your
-PATH environment variable.
-
-You will need `Build Tools for Visual Studio 2017
+First, install `Build Tools for Visual Studio 2019
 <https://visualstudio.microsoft.com/downloads/>`_.
 
 .. warning::
@@ -177,55 +170,45 @@ You will need `Build Tools for Visual Studio 2017
     Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
     Studio 2019".
 
+Secondly, find out if you are running 64-bit or 32-bit Python. The building
+command depends on the architecture of the Python interpreter. You can check
+the architecture by running the following in ``cmd`` or ``powershell``
+console::
+
+    python -c "import struct; print(struct.calcsize('P') * 8)"
+
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
     "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
-Please be aware that the path above might be different from user to user. The
-aim is to point to the "vcvarsall.bat" file.
-
-And build scikit-learn from this environment::
-
-    pip install -e .
-
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
-Using the MinGW compiler
-~~~~~~~~~~~~~~~~~~~~~~~~
+Please be aware that the path above might be different from user to user. The
+aim is to point to the "vcvarsall.bat" file that will set the necessary
+environment variables in the current command prompt.
 
-It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
-OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
-mingw32 can be redistributed as reusable packages as they depend on GCC runtime
-libraries typically not installed on end-users environment.
+Finally, build scikit-learn from this command prompt::
 
-To force the use of a particular compiler, pass the ``--compiler`` flag to the
-build step::
-
-    python setup.py build --compiler=my_compiler develop
-
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+    pip install --editable .
 
 macOS
 -----
 
-The default C compiler, Apple-clang, on Mac OSX does not directly support
-OpenMP. We present two solutions to enable OpenMP support (you need to do only
-one).
+The default C compiler on macOS, Apple clang (confusingly aliased as
+`/usr/bin/gcc`), does not directly support OpenMP. We present two alternatives
+to enable OpenMP support:
 
-.. note::
+- either install `conda-forge::compilers` with conda;
 
-    First, clean any previously built files in the source folder of
-    scikit-learn::
+- or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-        make clean
+macOS compilers from conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using conda
-~~~~~~~~~~~
-
-One solution is to install another compiler which supports OpenMP. If you use
-the conda package manager, you can install the ``compilers`` meta-package from
-the conda-forge channel, which provides OpenMP-enabled C compilers.
+If you use the conda package manager, you can install the ``compilers``
+meta-package from the conda-forge channel, which provides OpenMP-enabled C/C++
+compilers based on the llvm toolchain.
 
 It is recommended to use a dedicated conda environment to build scikit-learn
 from source::
@@ -233,6 +216,7 @@ from source::
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
         conda-forge::compilers conda-forge::llvm-openmp
     conda activate sklearn-dev
+    make clean
     pip install --verbose --editable .
 
 .. note::
@@ -256,19 +240,20 @@ variables::
     echo $CXXFLAGS
     echo $LDFLAGS
 
-They point to files and folders from your sklearn-dev conda environment
+They point to files and folders from your ``sklearn-dev`` conda environment
 (in particular in the bin/, include/ and lib/ subfolders).
 
 The compiled extensions should be built with the clang and clang++ compilers
-with the ``-fopenmp`` command line flag.
+installed by conda with the ``-fopenmp`` command line flag.
 
-Using homebrew
-~~~~~~~~~~~~~~
+macOS compilers from Homebrew
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Another solution is to enable OpenMP support for the clang compiler shipped
 by default on macOS.
 
-You first need to install the OpenMP library::
+You first need to install the OpenMP library using `Homebrew
+<https://brew.sh>`_::
 
     brew install libomp
 
@@ -281,46 +266,50 @@ Then you need to set the following environment variables::
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
-Finally, build scikit-learn in verbose mode::
+Finally, build scikit-learn in verbose mode (to check for the presence of the
+``-fopenmp`` flag in the compiler commands)::
 
+    make clean
     pip install --verbose --editable .
 
 Linux
 -----
 
-Installing from source without conda requires you to have installed the
-scikit-learn runtime dependencies, Python development headers and a working
-C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
+Linux compilers from the system
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    sudo apt-get install build-essential python3-dev python3-setuptools \
-                     python3-pip
+Installing scikit-learn from source without using conda requires you to have
+installed the scikit-learn Python development headers and a working C/C++
+compiler with OpenMP support (typically the GCC toolchain).
 
-and then::
+Install build dependencies for Debian-based operating systems, which include
+Ubuntu::
 
-    pip3 install numpy scipy cython
+    sudo apt-get install build-essential python3-dev python3-pip
 
-.. note::
+then proceed as usual::
 
-    In order to build the documentation and run the example code contains in
-    this documentation you will need matplotlib::
+    pip3 install cython
+    pip3 install --editable .
 
-        pip3 install matplotlib
+When precompiled wheels of the runtime dependencies are not avalaible for your
+architecture (e.g. ARM), you can install the system versions::
 
-When precompiled wheels are not avalaible for your architecture, you can
-install the system versions::
-
-    sudo apt-get install cython3 python3-numpy python3-scipy python3-matplotlib
+    sudo apt-get install cython3 python3-numpy python3-scipy
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
     sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
-.. note::
+Linux compilers from conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    Scikit-learn will automatically detect the BLAS library (e.g. OpenBlas or
-    MKL) used by SciPy at runtime. See `scipy installation instructions
-    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_ for
-    more details.
+Alternatively, install a recent version of the GNU C Compiler toolchain (GCC)
+in the user folder using conda::
+
+    conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
+    conda activate sklearn-dev
+    pip install --editable .
 
 
 FreeBSD
@@ -340,7 +329,9 @@ can set the environment variables to these locations::
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
 
-Finally you can build the package using the standard command.
+Finally, build the package using the standard command::
+
+    pip install --editable .
 
 For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
