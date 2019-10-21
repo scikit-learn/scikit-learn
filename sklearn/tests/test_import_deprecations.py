@@ -3,6 +3,7 @@ import textwrap
 import pytest
 
 from sklearn.utils.testing import assert_run_python_script
+from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 
 # We are deprecating importing anything that isn't in an __init__ file and
@@ -10,18 +11,16 @@ from sklearn.utils.testing import assert_run_python_script
 # This test makes sure imports are still possible but deprecated, with the
 # appropriate error message.
 
-@pytest.mark.parametrize('deprecated_path, importee', (
-    ('sklearn.neural_network.rbm', 'BernoulliRBM'),
-    ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
 
-    ('sklearn.utils.mocking', 'MockDataFrame'),
-    ('sklearn.utils.weight_vector', 'WeightVector'),
-    ('sklearn.utils.seq_dataset', 'ArrayDataset32'),
-    ('sklearn.utils.fast_dict', 'IntFloatDict'),
-))
+@pytest.mark.parametrize('deprecated_path, importee', [
+    (deprecated_path, importee)
+    for _, deprecated_path, _, importee in _DEPRECATED_MODULES
+])
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning
+    # We only need one entry per file, no need to check multiple imports from
+    # the same file.
 
     # TODO: remove in 0.24
 

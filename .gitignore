@@ -79,7 +79,53 @@ sklearn/linear_model/sag_fast.pyx
 
 # deprecated paths
 # TODO: Remove in 0.24
+# All of these files should have a match in _build_utils/deprecated_modules.py
 sklearn/utils/mocking.py
+
+sklearn/ensemble/bagging.py
+sklearn/ensemble/base.py
+sklearn/ensemble/forest.py
+sklearn/ensemble/gradient_boosting.py
+sklearn/ensemble/iforest.py
+sklearn/ensemble/stacking.py
+sklearn/ensemble/voting.py
+sklearn/ensemble/weight_boosting.py
+sklearn/tree/export.py
+sklearn/tree/tree.py
+
+sklearn/neural_network/rbm.py
+sklearn/neural_network/multilayer_perceptron.py
+
 sklearn/utils/weight_vector.py
 sklearn/utils/seq_dataset.py
 sklearn/utils/fast_dict.py
+
+sklearn/cluster/affinity_propagation_.py
+sklearn/cluster/bicluster.py
+sklearn/cluster/birch.py
+sklearn/cluster/dbscan_.py
+sklearn/cluster/hierarchical.py
+sklearn/cluster/k_means_.py
+sklearn/cluster/mean_shift_.py
+sklearn/cluster/optics_.py
+sklearn/cluster/spectral.py
+
+sklearn/mixture/base.py
+sklearn/mixture/gaussian_mixture.py
+sklearn/mixture/bayesian_mixture.py
+
+sklearn/covariance/elliptic_envelope.py
+sklearn/covariance/empirical_covariance_.py
+sklearn/covariance/graph_lasso_.py
+sklearn/covariance/robust_covariance.py
+sklearn/covariance/shrunk_covariance_.py
+
+sklearn/cross_decomposition/cca_.py
+sklearn/cross_decomposition/pls_.py
+
+sklearn/svm/base.py
+sklearn/svm/classes.py
+sklearn/svm/bounds.py
+sklearn/svm/libsvm.py
+sklearn/svm/libsvm_sparse.py
+sklearn/svm/liblinear.py
