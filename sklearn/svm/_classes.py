@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 
-from .base import _fit_liblinear, BaseSVC, BaseLibSVM
+from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel

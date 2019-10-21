@@ -3,8 +3,9 @@ import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from . import libsvm, liblinear
-from . import libsvm_sparse
+from . import _libsvm as libsvm
+from .import _liblinear as liblinear
+from . import _libsvm_sparse as libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
