@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-
 import numbers
 import numpy as np
 from scipy.sparse import issparse
@@ -19,7 +18,7 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
-from .bagging import BaseBagging
+from ._bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
 
@@ -143,6 +142,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         contamination parameter different than "auto" is provided, the offset
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import IsolationForest
+    >>> X = [[-1.1], [0.3], [0.5], [100]]
+    >>> clf = IsolationForest(random_state=0).fit(X)
+    >>> clf.predict([[0.1], [0], [90]])
+    array([ 1,  1, -1])
 
     Notes
     -----

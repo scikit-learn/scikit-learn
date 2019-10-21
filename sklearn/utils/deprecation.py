@@ -129,10 +129,6 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
     # Raise a deprecation warning with standardized deprecation message.
     # Useful because we are now deprecating # anything that isn't explicitly
     # in an __init__ file.
-    # We don't want to raise a dep warning if we are in a pytest session else
-    # the CIs with -Werror::FutureWarning would
-    # fail. The deprecations are still properly tested in
-    # sklearn/tests/test_import_deprecations.py
 
     # TODO: remove in 0.24 since this shouldn't be needed anymore.
 
@@ -145,5 +141,4 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
         "part of the private API."
     ).format(deprecated_path=deprecated_path, correct_path=correct_path)
 
-    if not getattr(sys, '_is_pytest_session', False):
-        warnings.warn(message, FutureWarning)
+    warnings.warn(message, DeprecationWarning)

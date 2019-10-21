@@ -85,7 +85,8 @@ Functions
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`clustering` section for further details.
+**User guide:** See the :ref:`clustering` and :ref:`biclustering` sections for
+further details.
 
 Classes
 -------
@@ -105,6 +106,8 @@ Classes
    cluster.MeanShift
    cluster.OPTICS
    cluster.SpectralClustering
+   cluster.SpectralBiclustering
+   cluster.SpectralCoclustering
 
 Functions
 ---------
@@ -122,28 +125,6 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
-
-.. _bicluster_ref:
-
-:mod:`sklearn.cluster.bicluster`: Biclustering
-==============================================
-
-.. automodule:: sklearn.cluster.bicluster
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`biclustering` section for further details.
-
-Classes
--------
-.. currentmodule:: sklearn.cluster.bicluster
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   SpectralBiclustering
-   SpectralCoclustering
 
 .. _compose_ref:
 

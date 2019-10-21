@@ -12,7 +12,6 @@ This module defines export functions for decision trees.
 #          Giuseppe Vettigli <vettigli@gmail.com>
 # License: BSD 3 clause
 from io import StringIO
-
 from numbers import Integral
 
 import numpy as np
@@ -833,7 +832,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
 
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>> from sklearn.tree.export import export_text
+    >>> from sklearn.tree import export_text
     >>> iris = load_iris()
     >>> X = iris['data']
     >>> y = iris['target']

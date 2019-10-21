@@ -49,7 +49,7 @@ from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
 
-from sklearn.tree.tree import SPARSE_SPLITTERS
+from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
 # toy sample
