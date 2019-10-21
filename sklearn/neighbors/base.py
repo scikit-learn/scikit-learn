@@ -323,7 +323,9 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.algorithm == 'kd_tree':
                 # callable metric is only valid for brute force and ball_tree
                 raise ValueError(
-                    "kd_tree algorithm does not support callable metric '%s'"
+                    "kd_tree does not support callable metric '%s'"
+                    "Function call overhead will result"
+                    "in very poor performance."
                     % self.metric)
         elif self.metric not in VALID_METRICS[alg_check]:
             raise ValueError("Metric '%s' not valid. Use "
@@ -1011,7 +1013,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape = [n_queries, n_features], optional
+        X : array-like of shape (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.

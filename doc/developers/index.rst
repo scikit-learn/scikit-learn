@@ -1,3 +1,7 @@
+.. Places global toc into the sidebar
+
+:globalsidebartoc: True
+
 .. _developers_guide:
 
 =================

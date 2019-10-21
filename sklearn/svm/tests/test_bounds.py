@@ -3,7 +3,7 @@ from scipy import sparse as sp
 
 import pytest
 
-from sklearn.svm.bounds import l1_min_c
+from sklearn.svm._bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
 

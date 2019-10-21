@@ -27,7 +27,7 @@ from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
-from ..ensemble.gradient_boosting import BaseGradientBoosting
+from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
 
@@ -711,11 +711,13 @@ class PartialDependenceDisplay:
         Feature names corrsponding to the indicies in ``features``.
 
     target_idx : int
+
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed.
+
         Ignored in binary classification or classical regression settings.
 
     pdp_lim : dict

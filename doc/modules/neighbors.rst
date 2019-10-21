@@ -802,10 +802,10 @@ added space complexity in the operation.
 
 .. topic:: References:
 
-    .. [1] `"Neighbourhood Components Analysis". Advances in Neural Information"
+    .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-      J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
+      J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
       Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    .. [2] `Wikipedia entry on Neighborhood Components Analysis
-      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+    `Wikipedia entry on Neighborhood Components Analysis
+    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

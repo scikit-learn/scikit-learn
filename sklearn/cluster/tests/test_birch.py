@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 
 from sklearn.cluster.tests.common import generate_clustered_data
-from sklearn.cluster.birch import Birch
-from sklearn.cluster.hierarchical import AgglomerativeClustering
+from sklearn.cluster import Birch
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import ElasticNet

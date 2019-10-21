@@ -21,14 +21,14 @@ from joblib import Parallel, delayed, effective_n_jobs
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm.base import _fit_liblinear
+from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
-from ..utils.optimize import newton_cg, _check_optimize_result
+from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
@@ -933,8 +933,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
-            w0, n_iter_i = newton_cg(hess, func, grad, w0, args=args,
-                                     maxiter=max_iter, tol=tol)
+            w0, n_iter_i = _newton_cg(hess, func, grad, w0, args=args,
+                                      maxiter=max_iter, tol=tol)
         elif solver == 'liblinear':
             coef_, intercept_, n_iter_i, = _fit_liblinear(
                 X, target, C, fit_intercept, intercept_scaling, None,
@@ -1619,11 +1619,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
@@ -1652,11 +1652,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        T : array-like, shape = [n_samples, n_classes]
+        T : array-like of shape (n_samples, n_classes)
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in ``self.classes_``.
         """
@@ -2201,14 +2201,29 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # if elasticnet was used, add the l1_ratios dimension to some
         # attributes
         if self.l1_ratios is not None:
+            # with n_cs=2 and n_l1_ratios=3
+            # the layout of scores is
+            # [c1, c2, c1, c2, c1, c2]
+            #   l1_1 ,  l1_2 ,  l1_3
+            # To get a 2d array with the following layout
+            #      l1_1, l1_2, l1_3
+            # c1 [[ .  ,  .  ,  .  ],
+            # c2  [ .  ,  .  ,  .  ]]
+            # We need to first reshape and then transpose.
+            # The same goes for the other arrays
             for cls, coefs_path in self.coefs_paths_.items():
                 self.coefs_paths_[cls] = coefs_path.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size, -1))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size, -1))
+                self.coefs_paths_[cls] = np.transpose(self.coefs_paths_[cls],
+                                                      (0, 2, 1, 3))
             for cls, score in self.scores_.items():
                 self.scores_[cls] = score.reshape(
-                    (len(folds), self.Cs_.size, self.l1_ratios_.size))
+                    (len(folds), self.l1_ratios_.size, self.Cs_.size))
+                self.scores_[cls] = np.transpose(self.scores_[cls], (0, 2, 1))
+
             self.n_iter_ = self.n_iter_.reshape(
-                (-1, len(folds), self.Cs_.size, self.l1_ratios_.size))
+                (-1, len(folds), self.l1_ratios_.size, self.Cs_.size))
+            self.n_iter_ = np.transpose(self.n_iter_, (0, 1, 3, 2))
 
         return self
 
@@ -2218,13 +2233,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like of shape (n_samples,)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -2233,15 +2248,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Score of self.predict(X) wrt. y.
 
         """
-
-        if self.scoring is not None:
-            warnings.warn("The long-standing behavior to use the "
-                          "accuracy score has changed. The scoring "
-                          "parameter is now used. "
-                          "This warning will disappear in version 0.22.",
-                          ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)

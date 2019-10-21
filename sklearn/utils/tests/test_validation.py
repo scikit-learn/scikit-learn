@@ -24,8 +24,8 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
-from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.estimator_checks import NotAnArray
+from sklearn.utils._mocking import MockDataFrame
+from sklearn.utils.estimator_checks import _NotAnArray
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
@@ -41,8 +41,10 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
+    _deprecate_positional_args,
     _check_sample_weight,
-    _allclose_dense_sparse)
+    _allclose_dense_sparse,
+    FLOAT_DTYPES)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -321,7 +323,7 @@ def test_check_array():
     assert_raises(ValueError, check_array, X_ndim.tolist())
     check_array(X_ndim.tolist(), allow_nd=True)  # doesn't raise
     # convert weird stuff to arrays
-    X_no_array = NotAnArray(X_dense)
+    X_no_array = _NotAnArray(X_dense)
     result = check_array(X_no_array)
     assert isinstance(result, np.ndarray)
 
@@ -349,6 +351,45 @@ def test_check_array_pandas_dtype_object_conversion():
     # smoke-test against dataframes with column named "dtype"
     X_df.dtype = "Hans"
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
+
+
+def test_check_array_pandas_dtype_casting():
+    # test that data-frames with homogeneous dtype are not upcast
+    pd = pytest.importorskip('pandas')
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
+    X_df = pd.DataFrame(X)
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df.iloc[:, 0] = X_df.iloc[:, 0].astype(np.float16)
+    assert_array_equal(X_df.dtypes,
+                       (np.float16, np.float32, np.float32))
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df.iloc[:, 1] = X_df.iloc[:, 1].astype(np.int16)
+    # float16, int16, float32 casts to float32
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df.iloc[:, 2] = X_df.iloc[:, 2].astype(np.float16)
+    # float16, int16, float16 casts to float32
+    assert check_array(X_df).dtype == np.float32
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float32
+
+    X_df = X_df.astype(np.int16)
+    assert check_array(X_df).dtype == np.int16
+    # we're not using upcasting rules for determining
+    # the target type yet, so we cast to the default of float64
+    assert check_array(X_df, dtype=FLOAT_DTYPES).dtype == np.float64
+
+    # check that we handle pandas dtypes in a semi-reasonable way
+    # this is actually tricky because we can't really know that this
+    # should be integer ahead of converting it.
+    cat_df = pd.DataFrame([pd.Categorical([1, 2, 3])])
+    assert (check_array(cat_df).dtype == np.int64)
+    assert (check_array(cat_df, dtype=FLOAT_DTYPES).dtype
+            == np.float64)
 
 
 def test_check_array_on_mock_dataframe():
@@ -958,3 +999,55 @@ def test_allclose_dense_sparse_raise(toarray):
            "and an array")
     with pytest.raises(ValueError, match=msg):
         _allclose_dense_sparse(x, y)
+
+
+def test_deprecate_positional_args_warns_for_function():
+
+    @_deprecate_positional_args
+    def f1(a, b, *, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        f1(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        f1(1, 2, 3, 4)
+
+    @_deprecate_positional_args
+    def f2(a=1, *, b=1, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass b=2 as keyword args"):
+        f2(1, 2)
+
+
+def test_deprecate_positional_args_warns_for_class():
+
+    class A1:
+        @_deprecate_positional_args
+        def __init__(self, a, b, *, c=1, d=1):
+            pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        A1(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        A1(1, 2, 3, 4)
+
+    class A2:
+        @_deprecate_positional_args
+        def __init__(self, a=1, b=1, *, c=1, d=1):
+            pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3 as keyword args"):
+        A2(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Pass c=3, d=4 as keyword args"):
+        A2(1, 2, 3, 4)
