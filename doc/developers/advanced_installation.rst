@@ -6,9 +6,15 @@ Installing the development version of scikit-learn
 ==================================================
 
 This section introduces how to install the **master branch** of scikit-learn.
-This is useful to give an early try to a feature that will be shipped in the
-next release, to check whether a bug your encountered has been fixed since the
-last release or to work on a contribution of your own.
+This is required:
+
+- to test a feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the master branch);
+
+- to check whether a bug you encountered has been fixed since the last
+  release;
+
+- or to work on a contribution of your own.
 
 .. _install_nightly_builds:
 
