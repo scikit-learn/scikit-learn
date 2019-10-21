@@ -1215,4 +1215,4 @@ def test_warm_start_new_api():
     X, y = make_classification()
     pipe.fit(X, y)
     pipe.fit(X, y, warm_start_with={'gbdt__max_iter': 150})
-    # assert pipe.named_steps['gbdt'].n_iter_ == 150
+    assert pipe.named_steps['gbdt'].n_iter_ == 150
