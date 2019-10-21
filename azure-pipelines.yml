@@ -14,20 +14,20 @@ jobs:
         JOBLIB_VERSION: '0.11'
         SKLEARN_NO_OPENMP: 'True'
       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
-#       py35_conda_openblas:
-#         DISTRIB: 'conda'
-#         PYTHON_VERSION: '3.5'
-#         INSTALL_MKL: 'false'
-#         NUMPY_VERSION: '1.11.0'
-#         SCIPY_VERSION: '0.17.0'
-#         PANDAS_VERSION: '*'
-#         CYTHON_VERSION: '*'
-#         PYTEST_VERSION: '*'
-#         PILLOW_VERSION: '4.0.0'
-#         MATPLOTLIB_VERSION: '1.5.1'
-#         # later version of joblib are not packaged in conda for Python 3.5
-#         JOBLIB_VERSION: '0.12.3'
-#         COVERAGE: 'true'
+      py35_conda_openblas:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '3.5'
+        INSTALL_MKL: 'false'
+        NUMPY_VERSION: '1.11.0'
+        SCIPY_VERSION: '0.17.0'
+        PANDAS_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PYTEST_VERSION: '*'
+        PILLOW_VERSION: '4.0.0'
+        MATPLOTLIB_VERSION: '1.5.1'
+        # later version of joblib are not packaged in conda for Python 3.5
+        JOBLIB_VERSION: '0.12.3'
+        COVERAGE: 'true'
 #       # Linux environment to test the latest available dependencies and MKL.
 #       # It runs tests requiring pandas and PyAMG.
 #       pylatest_pip_openblas_pandas:
