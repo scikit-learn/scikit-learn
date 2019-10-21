@@ -85,6 +85,27 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_base', 'sklearn.decomposition.base', 'sklearn.decomposition',
+     'BaseEstimator'),
+    ('_dict_learning', 'sklearn.decomposition.dict_learning',
+     'sklearn.decomposition', 'MiniBatchDictionaryLearning'),
+    ('_factor_analysis', 'sklearn.decomposition.factor_analysis',
+     'sklearn.decomposition', 'FactorAnalysis'),
+    ('_fastica_', 'sklearn.decomposition.fastica_', 'sklearn.decomposition',
+     'FastICA'),
+    ('_incremental_pca', 'sklearn.decomposition.incremental_pca',
+     'sklearn.decomposition', 'IncrementalPCA'),
+    ('_kernel_pca', 'sklearn.decomposition.kernel_pca',
+     'sklearn.decomposition', 'KernelPCA'),
+    ('_nmf', 'sklearn.decomposition.nmf', 'sklearn.decomposition', 'NMF'),
+    ('_online_lda', 'sklearn.decomposition.online_lda',
+     'sklearn.decomposition', 'LatentDirichletAllocation'),
+    ('_pca', 'sklearn.decomposition.pca', 'sklearn.decomposition', 'PCA'),
+    ('_sparse_pca', 'sklearn.decomposition.sparse_pca',
+     'sklearn.decomposition', 'SparsePCA'),
+    ('_truncated_svd', 'sklearn.decomposition.truncated_svd',
+     'sklearn.decomposition', 'TruncatedSVD'),
 ]
 
 
