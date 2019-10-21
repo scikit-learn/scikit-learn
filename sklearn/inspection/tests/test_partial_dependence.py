@@ -34,6 +34,8 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 
 
+
+print(partial_dependence)
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
@@ -214,6 +216,8 @@ def test_recursion_decision_function(est, target_feature):
     assert np.mean(y) == .5  # make sure the init estimator predicts 0 anyway
 
     est.fit(X, y)
+
+    print(partial_dependence)
 
     preds_1, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
