@@ -6,7 +6,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 
 @pytest.fixture(scope="module")
@@ -93,3 +93,13 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.line_.get_label() == expected_label
     assert viz.ax_.get_ylabel() == "True Positive Rate"
     assert viz.ax_.get_xlabel() == "False Positive Rate"
+
+
+def test_plot_roc_curve_pos_laebl(data_binary):
+    X, y = data_binary
+    y = np.array(["neg", "pos"])[y]
+    lr = LogisticRegression()
+    lr.fit(X, y)
+    viz = plot_roc_curve(lr, X, y)
+    y_pred = lr.predict_proba(X)[:, 1]
+    assert_allclose(viz.roc_auc, 1 + roc_auc_score(y, y_pred))
