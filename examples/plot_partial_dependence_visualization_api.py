@@ -87,7 +87,7 @@ mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT", "RM"],
 # decision tree partial dependence curves in the first row of the
 # multi-layer perceptron in the second row.
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+_, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
 tree_disp.plot(ax=ax1)
 ax1.set_title("Decision Tree")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
