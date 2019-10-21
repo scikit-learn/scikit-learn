@@ -6,7 +6,7 @@ import pytest
 from sklearn.neighbors._kd_tree import (KDTree, NeighborsHeap,
                                         simultaneous_sort, kernel_norm,
                                         nodeheap_sort, DTYPE, ITYPE)
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_allclose
 

@@ -1582,7 +1582,7 @@ def test_sparse_metric_callable():
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
-    # 'ball_tree': uses sklearn.neighbors.dist_metrics
+    # 'ball_tree': uses sklearn.neighbors._dist_metrics
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(6, 5))
     NN = neighbors.NearestNeighbors

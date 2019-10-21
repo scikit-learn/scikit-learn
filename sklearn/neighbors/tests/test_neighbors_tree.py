@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import pytest
 
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors._ball_tree import BallTree
 from sklearn.neighbors._kd_tree import KDTree
 
