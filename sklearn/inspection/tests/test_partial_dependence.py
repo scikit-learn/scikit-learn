@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 
 import sklearn
-from sklearn.inspection import partial_dependence
 from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
 )
+from sklearn.inspection import partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
