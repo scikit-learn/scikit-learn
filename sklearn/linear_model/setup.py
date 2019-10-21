@@ -22,7 +22,7 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     # generate sag_fast from template
-    sag_cython_file = 'sklearn/linear_model/sag_fast.pyx.tp'
+    sag_cython_file = 'sklearn/linear_model/_sag_fast.pyx.tp'
     sag_file = sag_cython_file.replace('.tp', '')
 
     if not (os.path.exists(sag_file) and

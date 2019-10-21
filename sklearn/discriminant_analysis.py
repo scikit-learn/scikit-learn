@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .linear_model.base import LinearClassifierMixin
+from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
