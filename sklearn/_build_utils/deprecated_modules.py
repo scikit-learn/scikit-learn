@@ -85,6 +85,9 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_label_propagation', 'sklearn.semi_supervised.label_propagation',
+     'sklearn.semi_supervised', 'LabelPropagation'),
 ]
 
 
