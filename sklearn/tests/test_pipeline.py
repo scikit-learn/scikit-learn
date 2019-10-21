@@ -35,6 +35,11 @@ from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.datasets import make_classification
+
+
 iris = load_iris()
 
 JUNK_FOOD_DOCS = (
@@ -1195,3 +1200,19 @@ def test_feature_union_warns_with_none():
 
     with pytest.warns(DeprecationWarning, match=msg):
         union.fit_transform(X)
+
+
+def test_warm_start_new_api():
+    # simple test to illustrate warm-starting on a pipeline
+
+    pipe = Pipeline([
+        ('preprocessor', StandardScaler()),
+        ('gbdt', HistGradientBoostingClassifier())
+    ])
+
+    assert pipe._warmstartable_parameters == ['+gbdt__max_iter']
+
+    X, y = make_classification()
+    pipe.fit(X, y)
+    pipe.fit(X, y, warm_start_with={'gbdt__max_iter': 150})
+    # assert pipe.named_steps['gbdt'].n_iter_ == 150

@@ -132,6 +132,18 @@ class Pipeline(_BaseComposition):
         self.verbose = verbose
         self._validate_steps()
 
+    @property
+    def _warmstartable_parameters(self):
+        # The last step may be an estimator that supports warm-start.
+        # The other steps can only be transformers and do not support
+        # warm-start.
+        out = []
+        step_name, est = self.steps[-1]
+        for param in getattr(est, '_warmstartable_parameters', []):
+            sign, param_name = param[0], param[1:]
+            out.append(sign + step_name + '__' + param_name)
+        return out
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -318,7 +330,7 @@ class Pipeline(_BaseComposition):
             return X, {}
         return X, fit_params_steps[self.steps[-1][0]]
 
-    def fit(self, X, y=None, **fit_params):
+    def fit(self, X, y=None, warm_start_with=None, **fit_params):
         """Fit the model
 
         Fit all the transforms one after the other and transform the
@@ -348,7 +360,19 @@ class Pipeline(_BaseComposition):
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):
             if self._final_estimator != 'passthrough':
-                self._final_estimator.fit(Xt, y, **fit_params)
+                if self._check_warm_start_with(warm_start_with):
+                    # convert {laststep__param: val} into just {param: val}
+                    warm_start_with_final = {
+                        name.split('__')[1]: val
+                        for name, val in warm_start_with.items()
+                    }
+
+                    self._final_estimator.fit(
+                        Xt, y, warm_start_with=warm_start_with_final,
+                        **fit_params)
+                else:
+                    self._final_estimator.fit(Xt, y, **fit_params)
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
