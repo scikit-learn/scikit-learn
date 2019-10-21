@@ -129,3 +129,9 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/manifold/isomap.py
+sklearn/manifold/locally_linear.py
+sklearn/manifold/mds.py
+sklearn/manifold/spectral_embedding_.py
+sklearn/manifold/t_sne.py
