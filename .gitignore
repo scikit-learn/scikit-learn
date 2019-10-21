@@ -129,3 +129,5 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/semi_supervised/label_propagation.py
