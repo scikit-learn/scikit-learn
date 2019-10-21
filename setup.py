@@ -113,6 +113,8 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
+cmdclass = {'clean': CleanCommand}
+
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
