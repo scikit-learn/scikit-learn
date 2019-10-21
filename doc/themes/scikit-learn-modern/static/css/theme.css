@@ -62,10 +62,6 @@ strong {
   font-weight: bold;
 }
 
-div.line-block {
-  height: 0;
-}
-
 a code {
   color: inherit;
 }
@@ -154,6 +150,21 @@ div.clearer {
 .sk-btn-primary:active {
   background-color: #3499cd;
   border-color: #3499cd;
+}
+
+/* Quote */
+
+.quote {
+  text-align: right;
+  line-height: 1.5em;
+  font-style: italic;
+  margin: 2em 3em 1em 3em;
+}
+
+.line-block {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 /* Search */
@@ -319,6 +330,10 @@ div#carouselExampleSlidesOnly {
   min-height: 200px;
 }
 
+ul.sk-landing-call-list li {
+  margin-bottom: 0.25rem;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
@@ -326,10 +341,9 @@ img.sk-footer-funding-logo {
   margin-bottom: 8px;
 }
 
-ul.sk-landing-call-list li {
-  margin-bottom: 0.25rem;
+a.sk-footer-funding-link:hover {
+  text-decoration: none;
 }
-
 /* DOCS STYLE */
 
 .navbar > .sk-docs-container {
@@ -696,7 +710,7 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.5em;
+  margin: 0.3em;
   content: ":";
 }
 
@@ -929,8 +943,7 @@ div.sphx-glr-thumbcontainer {
 }
 
 .sphx-glr-script-out .highlight pre {
-  padding-top: 1ex;
-  padding-right: 1ex;
+  padding: 1ex;
 }
 
 .sphx-glr-script-out div.highlight {
@@ -998,36 +1011,41 @@ div.sphx-glr-thumbcontainer {
   word-wrap: break-word;
 }
 
+/* authors */
+.sk-authors-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sk-authors-container > div {
+  width: 100px;
+  margin: 5px;
+  font-size: 0.9rem;
+}
+
+
 /* testimonial */
 
 div.testimonial h2 {
   background-color: transparent;
   color: #008EB2;
+  padding: 0;
   height: 26px;
   line-height: 1.1em;
   font-size: 22px;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
   color: #1c1c1c;
-  padding-left: 230px;
 }
 
 div.testimonial span.testimonial-author p {
   font-size: 0.8em;
   font-style: italic;
   color: #808080;
-}
-
-div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
-  color: #1c1c1c;
-  padding-left: 230px;
 }
 
 /* Algorithm cheet-sheet */
@@ -1039,6 +1057,38 @@ div.sk-page-content img.map {
   -webkit-transform: scale(0.5);
       -ms-transform: scale(0.5);
           transform: scale(0.5);
+}
+
+/* sponsors and testimonials */
+
+div.sk-sponsor-div, div.sk-testimonial-div {
+  display: flex;
+  flex-wrap: wrap;
+  -webkit-flex-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+  width: 100%;
+}
+
+@media screen and (min-width: 500px) {
+  div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+    width: 50%;
+  }
+}
+
+table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
+  border-style: none;
+  background-color: white;
+  vertical-align: middle;
+  text-align: center;
+}
+
+table.sk-sponsor-table td {
+  padding: 0.30rem;
 }
 
 /* pygments - highlightning */

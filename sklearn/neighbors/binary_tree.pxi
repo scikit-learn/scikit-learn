@@ -266,7 +266,7 @@ CLASS_DOC = \
 
 Parameters
 ----------
-X : array-like, shape = [n_samples, n_features]
+X : array-like of shape (n_samples, n_features)
     n_samples is the number of points in the data set, and
     n_features is the dimension of the parameter space.
     Note: if X is a C-contiguous array of doubles then data will
@@ -290,6 +290,8 @@ metric : string or DistanceMetric object
     are valid for {BinaryTree}.
 
 Additional keywords are passed to the distance metric class.
+Note: Callable functions in the metric parameter are NOT supported for KDTree
+and Ball Tree. Function call overhead will result in very poor performance.
 
 Attributes
 ----------
@@ -1277,7 +1279,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query
         k : integer  (default = 1)
             The number of nearest neighbors to return
@@ -1387,7 +1389,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query
         r : distance within which neighbors are returned
             r can be a single value, or an array of values of shape
@@ -1584,7 +1586,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data.
         h : float
@@ -1717,7 +1719,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data.
         r : array_like
