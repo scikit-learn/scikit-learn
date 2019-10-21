@@ -1537,7 +1537,7 @@ def test_deprecated_quantile_transform_copy():
     future_message = ("The default value of `copy` will change from False to "
                       "True in 0.23 in order to make it more consistent with "
                       "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing._data` and prevent "
+                      ":mod:`sklearn.preprocessing` and prevent "
                       "unexpected side effects by modifying the value of `X` "
                       "inplace. To avoid inplace modifications of `X`, it is "
                       "recommended to explicitly set `copy=True`")
