@@ -111,7 +111,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # For backward compat (for now)
         if self.warm_start:
-            warnings.warn("warm_start parameter is deprecated", DeprecationWarning)
+            warnings.warn("warm_start parameter is deprecated",
+                          DeprecationWarning)
             warm_start_with = {'max_iter': self.max_iter}
 
         # When warm starting, we want to re-use the same seed that was used
@@ -264,14 +265,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # warm start: this is not the first time fit was called
         else:
-            # Check that the maximum number of iterations is not smaller
-            # than the number of iterations from the previous fit
-            if self.max_iter < self.n_iter_:
-                raise ValueError(
-                    'max_iter=%d must be larger than or equal to '
-                    'n_iter_=%d when warm_start==True'
-                    % (self.max_iter, self.n_iter_)
-                )
 
             # Convert array attributes to lists
             self.train_score_ = self.train_score_.tolist()
