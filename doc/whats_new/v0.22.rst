@@ -388,8 +388,8 @@ Changelog
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
 
-- |Efficiency| Parallelize t-SNE using OpenMP prange to compute the
-  gradients.
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
   :issue:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in

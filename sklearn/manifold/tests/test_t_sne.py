@@ -849,19 +849,18 @@ def test_parallel_gradient_bh_match_iterative():
     n_neighbors = n_samples - 1
     distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
         n_neighbors=n_neighbors, mode='distance')
+    P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
     for num_threads in [1, 2, 4]:
-        P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
         kl_and_grad[num_threads] = _kl_divergence_bh(
             params, P_bh, degrees_of_freedom, n_samples, n_components,
             angle=angle, skip_num_points=0, verbose=0, num_threads=num_threads)
 
         if num_threads != 1:
 
-            assert_almost_equal(kl_and_grad[1][0], kl_and_grad[num_threads][0],
-                                decimal=5)
-            assert_array_almost_equal(kl_and_grad[1][1],
-                                      kl_and_grad[num_threads][1],
-                                      decimal=5)
+            assert_allclose(kl_and_grad[1][0], kl_and_grad[num_threads][0],
+                            rtol=1e-5)
+            assert_allclose(kl_and_grad[1][1], kl_and_grad[num_threads][1],
+                            rtol=1e-5)
 
 
 def test_tsne_with_different_distance_metrics():

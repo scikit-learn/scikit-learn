@@ -713,7 +713,8 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
-                    distances = pairwise_distances(X, metric=self.metric)
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   n_jobs=self.n_jobs)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
