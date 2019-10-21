@@ -11,7 +11,6 @@ from sklearn.exceptions import EfficiencyWarning
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
@@ -829,25 +828,40 @@ def test_bh_match_exact():
     assert_allclose(X_embeddeds['exact'], X_embeddeds['barnes_hut'], rtol=1e-4)
 
 
-def test_parallel_match_iterative():
+def test_parallel_gradient_bh_match_iterative():
     # check that the ``barnes_hut`` method match the exact one when
     # ``angle = 0`` and ``perplexity > n_samples / 3``
-    random_state = check_random_state(0)
-    n_features = 10
-    X = random_state.randn(30, n_features).astype(np.float32)
-    X_embeddeds = {}
-    n_iter = {}
-    for n_jobs in [1, 4]:
-        tsne = TSNE(n_components=2, method='barnes_hut', learning_rate=1.0,
-                    init="random", random_state=0, n_iter=251,
-                    perplexity=30.0, angle=0, n_jobs=n_jobs)
-        # Kill the early_exaggeration
-        tsne._EXPLORATION_N_ITER = 0
-        X_embeddeds[n_jobs] = tsne.fit_transform(X)
-        n_iter[n_jobs] = tsne.n_iter_
 
-    assert n_iter[1] == n_iter[4]
-    assert_allclose(X_embeddeds[1], X_embeddeds[4])
+    n_features = 10
+    n_samples = 30
+    n_components = 2
+    degrees_of_freedom = 1
+
+    kl_and_grad = {}
+
+    angle = 3
+    perplexity = 5
+
+    random_state = check_random_state(0)
+    data = random_state.randn(n_samples, n_features).astype(np.float32)
+    params = random_state.randn(n_samples, n_components)
+
+    n_neighbors = n_samples - 1
+    distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
+        n_neighbors=n_neighbors, mode='distance')
+    for num_threads in [1, 2, 4]:
+        P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
+        kl_and_grad[num_threads] = _kl_divergence_bh(
+            params, P_bh, degrees_of_freedom, n_samples, n_components,
+            angle=angle, skip_num_points=0, verbose=0, num_threads=num_threads)
+
+        if num_threads != 1:
+
+            assert_almost_equal(kl_and_grad[1][0], kl_and_grad[num_threads][0],
+                                decimal=5)
+            assert_array_almost_equal(kl_and_grad[1][1],
+                                      kl_and_grad[num_threads][1],
+                                      decimal=5)
 
 
 def test_tsne_with_different_distance_metrics():

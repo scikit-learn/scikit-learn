@@ -56,7 +56,7 @@ cdef float compute_gradient(float[:] val_P,
                             long start,
                             long stop,
                             bint compute_error,
-                            int n_jobs) nogil:
+                            int num_threads) nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -78,7 +78,7 @@ cdef float compute_gradient(float[:] val_P,
     if take_timing:
         t1 = clock()
     sQ = compute_gradient_negative(pos_reference, neg_f, qt, dof, theta, start,
-                                   stop, n_jobs)
+                                   stop, num_threads)
     if take_timing:
         t2 = clock()
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -87,11 +87,12 @@ cdef float compute_gradient(float[:] val_P,
         t1 = clock()
     error = compute_gradient_positive(val_P, pos_reference, neighbors, indptr,
                                       pos_f, n_dimensions, dof, sQ, start,
-                                      qt.verbose, compute_error, n_jobs)
+                                      qt.verbose, compute_error, num_threads)
     if take_timing:
         t2 = clock()
-        printf("[t-SNE] Computing positive gradient: %e ticks\n", ((float) (t2 - t1)))
-    for i in prange(start, n_samples, nogil=True, num_threads=n_jobs):
+        printf("[t-SNE] Computing positive gradient: %e ticks\n",
+               ((float) (t2 - t1)))
+    for i in prange(start, n_samples, nogil=True, num_threads=num_threads):
         for ax in range(n_dimensions):
             coord = i * n_dimensions + ax
             tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sQ)
@@ -112,7 +113,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      np.int64_t start,
                                      int verbose,
                                      bint compute_error,
-                                     int n_jobs) nogil:
+                                     int num_threads) nogil:
     # Sum over the following expression for i not equal to j
     # grad_i = p_ij (1 + ||y_i - y_j||^2)^-1 (y_i - y_j)
     # This is equivalent to compute_edge_forces in the authors' code
@@ -133,7 +134,7 @@ cdef float compute_gradient_positive(float[:] val_P,
     if verbose > 10:
         t1 = clock()
 
-    with nogil, parallel(num_threads=n_jobs):
+    with nogil, parallel(num_threads=num_threads):
         # Define private buffer variables
         buff = <float *> malloc(sizeof(float) * n_dimensions)
 
@@ -173,12 +174,11 @@ cdef float compute_gradient_positive(float[:] val_P,
 cdef double compute_gradient_negative(float[:, :] pos_reference,
                                     float* neg_f,
                                     _QuadTree qt,
-                                    double* sum_Q,
                                     int dof,
                                     float theta,
                                     long start,
                                     long stop,
-                                    int n_jobs) nogil:
+                                    int num_threads) nogil:
     if stop == -1:
         stop = pos_reference.shape[0]
     cdef:
@@ -200,7 +200,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         int take_timing = 1 if qt.verbose > 20 else 0
 
 
-    with nogil, parallel(num_threads=n_jobs):
+    with nogil, parallel(num_threads=num_threads):
         # Define thread-local buffers
         summary = <float*> malloc(sizeof(float) * n * offset)
         pos = <float *> malloc(sizeof(float) * n_dimensions)
@@ -268,7 +268,7 @@ def gradient(float[:] val_P,
              int dof=1,
              long skip_num_points=0,
              bint compute_error=1,
-             int n_jobs=1):
+             int num_threads=1):
     # This function is designed to be called from external Python
     # it passes the 'forces' array by reference and fills thats array
     # up in-place
@@ -296,7 +296,7 @@ def gradient(float[:] val_P,
 
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
                          qt, theta, dof, skip_num_points, -1, compute_error,
-                         n_jobs)
+                         num_threads)
 
     if verbose > 10:
         # XXX: format hack to workaround lack of `const char *` type

@@ -18,6 +18,7 @@ from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
@@ -189,7 +190,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
                       angle=0.5, skip_num_points=0, verbose=False,
-                      compute_error=True, n_jobs=1):
+                      compute_error=True, num_threads=1):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -233,8 +234,9 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     compute_error: bool (optional, default:True)
         If False, the kl_divergence is not computed and returns NaN.
 
-    n_jobs : int (optional, default:1)
-        Number of threads used to compute the gradient.
+    num_threads : int (optional, default:1)
+        Number of threads used to compute the gradient. This is set here to
+        avoid calling _openmp_effective_n_threads for each gradient step.
 
     Returns
     -------
@@ -257,7 +259,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
                                       grad, angle, n_components, verbose,
                                       dof=degrees_of_freedom,
                                       compute_error=compute_error,
-                                      n_jobs=n_jobs)
+                                      num_threads=num_threads)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
     if c != 1:
@@ -340,7 +342,6 @@ def _gradient_descent(objective, p0, it, n_iter,
         args = []
     if kwargs is None:
         kwargs = {}
-
 
     p = p0.copy().ravel()
     update = np.zeros_like(p)
@@ -823,7 +824,7 @@ class TSNE(BaseEstimator):
             opt_args['kwargs']['angle'] = self.angle
             # Repeat verbose argument for _kl_divergence_bh
             opt_args['kwargs']['verbose'] = self.verbose
-            opt_args['kwargs']['n_jobs'] = effective_n_jobs(self.n_jobs)
+            opt_args['kwargs']['num_threads'] = _openmp_effective_n_threads()
         else:
             obj_func = _kl_divergence
 
