@@ -129,3 +129,15 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/decomposition/base.py
+sklearn/decomposition/dict_learning.py
+sklearn/decomposition/factor_analysis.py
+sklearn/decomposition/fastica_.py
+sklearn/decomposition/incremental_pca.py
+sklearn/decomposition/kernel_pca.py
+sklearn/decomposition/nmf.py
+sklearn/decomposition/online_lda.py
+sklearn/decomposition/pca.py
+sklearn/decomposition/sparse_pca.py
+sklearn/decomposition/truncated_svd.py
