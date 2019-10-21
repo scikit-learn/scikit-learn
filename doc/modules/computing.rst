@@ -319,7 +319,7 @@ Latency and throughput should (asymptotically) grow linearly with the number
 of support vectors in a SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
-:class:`sklearn.svm.classes.NuSVR` was used to influence the number of
+:class:`sklearn.svm.NuSVR` was used to influence the number of
 support vectors.
 
 .. |nusvr_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_002.png
@@ -634,14 +634,14 @@ thus mitigating the oversubscription issue.
 
 Note that:
 
- - Manually setting one of the environment variables (``OMP_NUM_THREADS``,
-   ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, or ``BLIS_NUM_THREADS``)
-   will take precedence over what joblib tries to do. The total number of
-   threads will be ``n_jobs * <LIB>_NUM_THREADS``. Note that setting this
-   limit will also impact your computations in the main process, which will
-   only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
-   finer control over the number of threads in its workers (see joblib docs
-   linked below).
+- Manually setting one of the environment variables (``OMP_NUM_THREADS``,
+  ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, or ``BLIS_NUM_THREADS``)
+  will take precedence over what joblib tries to do. The total number of
+  threads will be ``n_jobs * <LIB>_NUM_THREADS``. Note that setting this
+  limit will also impact your computations in the main process, which will
+  only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
+  finer control over the number of threads in its workers (see joblib docs
+  linked below).
 - Joblib is currently unable to avoid oversubscription in a
   multi-threading context. It can only do so with the ``loky`` backend
   (which spawns processes).
