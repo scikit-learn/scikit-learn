@@ -35,7 +35,6 @@ from sklearn.utils.testing import assert_array_equal
 
 
 
-print(partial_dependence)
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
@@ -218,6 +217,7 @@ def test_recursion_decision_function(est, target_feature):
     est.fit(X, y)
 
     print(partial_dependence)
+    assert False
 
     preds_1, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
