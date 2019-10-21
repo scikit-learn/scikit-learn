@@ -3,9 +3,9 @@ import itertools
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
-                                         simultaneous_sort, kernel_norm,
-                                         nodeheap_sort, DTYPE, ITYPE)
+from sklearn.neighbors._ball_tree import (BallTree, NeighborsHeap,
+                                          simultaneous_sort, kernel_norm,
+                                          nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_allclose

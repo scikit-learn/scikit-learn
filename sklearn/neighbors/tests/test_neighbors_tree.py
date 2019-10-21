@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from sklearn.neighbors.ball_tree import BallTree
-from sklearn.neighbors.kd_tree import KDTree
+from sklearn.neighbors._ball_tree import BallTree
+from sklearn.neighbors._kd_tree import KDTree
 
 from sklearn.utils import check_random_state
 from numpy.testing import assert_array_almost_equal

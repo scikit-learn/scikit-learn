@@ -129,3 +129,16 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/neighbors/ball_tree.py
+sklearn/neighbors/base.py
+sklearn/neighbors/classification.py
+sklearn/neighbors/dist_metrics.py
+sklearn/neighbors/graph.py
+sklearn/neighbors/kd_tree.py
+sklearn/neighbors/kde.py
+sklearn/neighbors/lof.py
+sklearn/neighbors/nca.py
+sklearn/neighbors/nearest_centroid.py
+sklearn/neighbors/regression.py
+sklearn/neighbors/unsupervised.py

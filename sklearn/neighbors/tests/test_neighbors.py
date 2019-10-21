@@ -14,8 +14,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
-from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
+from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal

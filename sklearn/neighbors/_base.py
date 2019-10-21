@@ -18,8 +18,8 @@ from scipy.sparse import csr_matrix, issparse
 import joblib
 from joblib import Parallel, delayed, effective_n_jobs
 
-from .ball_tree import BallTree
-from .kd_tree import KDTree
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
