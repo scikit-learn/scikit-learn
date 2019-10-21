@@ -129,3 +129,7 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/feature_extraction/dict_vectorizer.py
+sklearn/feature_extraction/hashing.py
+sklearn/feature_extraction/stop_words.py

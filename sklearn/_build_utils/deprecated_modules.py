@@ -85,6 +85,13 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_dict_vectorizer', 'sklearn.feature_extraction.dict_vectorizer',
+     'sklearn.feature_extraction', 'DictVectorizer'),
+    ('_hashing', 'sklearn.feature_extraction.hashing',
+     'sklearn.feature_extraction', 'FeatureHasher'),
+    ('_stop_words', 'sklearn.feature_extraction.stop_words',
+     'sklearn.feature_extraction.text', 'ENGLISH_STOP_WORDS')
 ]
 
 
