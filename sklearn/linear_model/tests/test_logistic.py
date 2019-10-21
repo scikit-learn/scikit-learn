@@ -129,8 +129,7 @@ def test_logistic_cv_mock_scorer():
 
     # reset mock_scorer
     mock_scorer.calls = 0
-    with pytest.warns(ChangedBehaviorWarning):
-        custom_score = lr.score(X, lr.predict(X))
+    custom_score = lr.score(X, lr.predict(X))
 
     assert custom_score == mock_scorer.scores[0]
     assert mock_scorer.calls == 1

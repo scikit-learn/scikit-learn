@@ -24,7 +24,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import warnings
 
-from .base import BaseEnsemble
+from ._base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
@@ -44,7 +44,7 @@ from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
-from ..tree.tree import DecisionTreeRegressor
+from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
@@ -2011,6 +2011,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
+        Only available if ``subsample < 1.0``
 
     train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -2480,6 +2481,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
+        Only available if ``subsample < 1.0``
 
     train_score_ : array, shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the

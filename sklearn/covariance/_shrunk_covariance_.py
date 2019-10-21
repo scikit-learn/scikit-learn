@@ -16,7 +16,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 import warnings
 import numpy as np
 
-from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
+from . import empirical_covariance, EmpiricalCovariance
 from ..utils import check_array
 
 

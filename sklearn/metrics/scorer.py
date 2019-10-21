@@ -336,7 +336,9 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
-    """Get a scorer from string
+    """Get a scorer from string.
+
+    Read more in the :ref:`User Guide <scoring_parameter>`.
 
     Parameters
     ----------

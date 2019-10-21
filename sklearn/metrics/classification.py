@@ -41,6 +41,15 @@ from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
 
+def _check_zero_division(zero_division):
+    if isinstance(zero_division, str) and zero_division == "warn":
+        return
+    elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
+        return
+    raise ValueError('Got zero_division={0}.'
+                     ' Must be one of ["warn", 0, 1]'.format(zero_division))
+
+
 def _check_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
 
@@ -947,7 +956,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-             sample_weight=None):
+             sample_weight=None, zero_division="warn"):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
     The F1 score can be interpreted as a weighted average of the precision and
@@ -1017,6 +1026,11 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -1046,20 +1060,27 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
+    >>> y_true = [0, 0, 0, 0, 0, 0]
+    >>> y_pred = [0, 0, 0, 0, 0, 0]
+    >>> f1_score(y_true, y_pred, zero_division=1)
+    1.0...
 
     Notes
     -----
-    When ``true positive + false positive == 0`` or
-    ``true positive + false negative == 0``, f-score returns 0 and raises
-    ``UndefinedMetricWarning``.
+    When ``true positive + false positive == 0``, precision is undefined;
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
-                       sample_weight=sample_weight)
+                       sample_weight=sample_weight,
+                       zero_division=zero_division)
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
-                average='binary', sample_weight=None):
+                average='binary', sample_weight=None, zero_division="warn"):
     """Compute the F-beta score
 
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -1129,6 +1150,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
+
     Returns
     -------
     fbeta_score : float (if average is not None) or array of float, shape =\
@@ -1166,23 +1192,28 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     -----
     When ``true positive + false positive == 0`` or
     ``true positive + false negative == 0``, f-score returns 0 and raises
-    ``UndefinedMetricWarning``.
+    ``UndefinedMetricWarning``. This behavior can be
+    modified with ``zero_division``.
     """
+
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
                                                  labels=labels,
                                                  pos_label=pos_label,
                                                  average=average,
                                                  warn_for=('f-score',),
-                                                 sample_weight=sample_weight)
+                                                 sample_weight=sample_weight,
+                                                 zero_division=zero_division)
     return f
 
 
-def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
+def _prf_divide(numerator, denominator, metric,
+                modifier, average, warn_for, zero_division="warn"):
     """Performs division and handles divide-by-zero.
 
-    On zero-division, sets the corresponding result elements to zero
-    and raises a warning.
+    On zero-division, sets the corresponding result elements equal to
+    0 or 1 (according to ``zero_division``). Plus, if
+    ``zero_division != "warn"`` raises a warning.
 
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
@@ -1191,16 +1222,23 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     denominator = denominator.copy()
     denominator[mask] = 1  # avoid infs/nans
     result = numerator / denominator
+
     if not np.any(mask):
+        return result
+
+    # if ``zero_division=1``, set those with denominator == 0 equal to 1
+    result[mask] = 0.0 if zero_division in ["warn", 0] else 1.0
+
+    # the user will be removing warnings if zero_division is set to something
+    # different than its default value. If we are computing only f-score
+    # the warning will be raised only if precision and recall are ill-defined
+    if zero_division != "warn" or metric not in warn_for:
         return result
 
     # build appropriate warning
     # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
-    # labels with no predicted samples"
-    axis0 = 'sample'
-    axis1 = 'label'
-    if average == 'samples':
-        axis0, axis1 = axis1, axis0
+    # labels with no predicted samples. Use ``zero_division`` parameter to
+    # control this behavior."
 
     if metric in warn_for and 'f-score' in warn_for:
         msg_start = '{0} and F-score are'.format(metric.title())
@@ -1211,14 +1249,23 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     else:
         return result
 
+    _warn_prf(average, modifier, msg_start, len(result))
+
+    return result
+
+
+def _warn_prf(average, modifier, msg_start, result_size):
+    axis0, axis1 = 'sample', 'label'
+    if average == 'samples':
+        axis0, axis1 = axis1, axis0
     msg = ('{0} ill-defined and being set to 0.0 {{0}} '
-           'no {1} {2}s.'.format(msg_start, modifier, axis0))
-    if len(mask) == 1:
+           'no {1} {2}s. Use `zero_division` parameter to control'
+           ' this behavior.'.format(msg_start, modifier, axis0))
+    if result_size == 1:
         msg = msg.format('due to')
     else:
         msg = msg.format('in {0}s with'.format(axis1))
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-    return result
 
 
 def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
@@ -1259,7 +1306,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
-                                    sample_weight=None):
+                                    sample_weight=None,
+                                    zero_division="warn"):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1343,6 +1391,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division:
+           - recall: when there are no positive labels
+           - precision: when there are no positive predictions
+           - f-score: both
+
+        If set to "warn", this acts as 0, but warnings are also raised.
+
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
@@ -1397,9 +1453,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     -----
     When ``true positive + false positive == 0``, precision is undefined;
     When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, the metric will be set to 0, as will f-score, and
-    ``UndefinedMetricWarning`` will be raised.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
     """
+    _check_zero_division(zero_division)
     if beta < 0:
         raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
@@ -1422,18 +1480,28 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     # Finally, we have all our sufficient statistics. Divide! #
     beta2 = beta ** 2
 
-    # Divide, and on zero-division, set scores to 0 and warn:
+    # Divide, and on zero-division, set scores and/or warn according to
+    # zero_division:
+    precision = _prf_divide(tp_sum, pred_sum, 'precision',
+                            'predicted', average, warn_for, zero_division)
+    recall = _prf_divide(tp_sum, true_sum, 'recall',
+                         'true', average, warn_for, zero_division)
 
-    precision = _prf_divide(tp_sum, pred_sum,
-                            'precision', 'predicted', average, warn_for)
-    recall = _prf_divide(tp_sum, true_sum,
-                         'recall', 'true', average, warn_for)
+    # warn for f-score only if zero_division is warn, it is in warn_for
+    # and BOTH prec and rec are ill-defined
+    if zero_division == "warn" and ("f-score",) == warn_for:
+        if (pred_sum[true_sum == 0] == 0).any():
+            _warn_prf(
+                average, "true nor predicted", 'F-score is', len(true_sum)
+            )
+
+    # if tp == 0 F will be 1 only if all predictions are zero, all labels are
+    # zero, and zero_division=1. In all other case, 0
     if np.isposinf(beta):
         f_score = recall
     else:
-        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-        # and true are nonzero, in which case, F is well-defined and zero
         denom = beta2 * precision + recall
+
         denom[denom == 0.] = 1  # avoid division by 0
         f_score = (1 + beta2) * precision * recall / denom
 
@@ -1441,7 +1509,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
-            return 0, 0, 0, None
+            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            # precision is zero_division if there are no positive predictions
+            # recall is zero_division if there are no positive labels
+            # fscore is zero_division if all labels AND predictions are
+            # negative
+            return (zero_division_value if pred_sum.sum() == 0 else 0,
+                    zero_division_value,
+                    zero_division_value if pred_sum.sum() == 0 else 0,
+                    None)
+
     elif average == 'samples':
         weights = sample_weight
     else:
@@ -1458,7 +1535,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
-                    average='binary', sample_weight=None):
+                    average='binary', sample_weight=None,
+                    zero_division="warn"):
     """Compute the precision
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1524,6 +1602,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
+
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
@@ -1548,23 +1630,31 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     0.22...
     >>> precision_score(y_true, y_pred, average=None)
     array([0.66..., 0.        , 0.        ])
+    >>> y_pred = [0, 0, 0, 0, 0, 0]
+    >>> precision_score(y_true, y_pred, average=None)
+    array([0.33..., 0.        , 0.        ])
+    >>> precision_score(y_true, y_pred, average=None, zero_division=1)
+    array([0.33..., 1.        , 1.        ])
 
     Notes
     -----
     When ``true positive + false positive == 0``, precision returns 0 and
-    raises ``UndefinedMetricWarning``.
+    raises ``UndefinedMetricWarning``. This behavior can be
+    modified with ``zero_division``.
+
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
                                                  average=average,
                                                  warn_for=('precision',),
-                                                 sample_weight=sample_weight)
+                                                 sample_weight=sample_weight,
+                                                 zero_division=zero_division)
     return p
 
 
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-                 sample_weight=None):
+                 sample_weight=None, zero_division="warn"):
     """Compute the recall
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
@@ -1629,6 +1719,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
+
     Returns
     -------
     recall : float (if average is not None) or array of float, shape =\
@@ -1654,18 +1748,25 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
+    >>> y_true = [0, 0, 0, 0, 0, 0]
+    >>> recall_score(y_true, y_pred, average=None)
+    array([0.5, 0. , 0. ])
+    >>> recall_score(y_true, y_pred, average=None, zero_division=1)
+    array([0.5, 1. , 1. ])
 
     Notes
     -----
     When ``true positive + false negative == 0``, recall returns 0 and raises
-    ``UndefinedMetricWarning``.
+    ``UndefinedMetricWarning``. This behavior can be modified with
+    ``zero_division``.
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
                                                  average=average,
                                                  warn_for=('recall',),
-                                                 sample_weight=sample_weight)
+                                                 sample_weight=sample_weight,
+                                                 zero_division=zero_division)
     return r
 
 
@@ -1747,7 +1848,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2, output_dict=False):
+                          sample_weight=None, digits=2, output_dict=False,
+                          zero_division="warn"):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1776,6 +1878,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     output_dict : bool (default = False)
         If True, return output as dict
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1876,7 +1982,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
-                                                  sample_weight=sample_weight)
+                                                  sample_weight=sample_weight,
+                                                  zero_division=zero_division)
     rows = zip(target_names, p, r, f1, s)
 
     if y_type.startswith('multilabel'):

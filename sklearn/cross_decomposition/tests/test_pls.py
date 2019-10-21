@@ -6,7 +6,8 @@ from sklearn.utils.testing import (assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
                                    assert_warns)
 from sklearn.datasets import load_linnerud
-from sklearn.cross_decomposition import pls_, CCA
+from sklearn.cross_decomposition import _pls_ as pls_
+from sklearn.cross_decomposition import CCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
