@@ -102,4 +102,4 @@ def test_plot_roc_curve_pos_laebl(data_binary):
     lr.fit(X, y)
     viz = plot_roc_curve(lr, X, y)
     y_pred = lr.predict_proba(X)[:, 1]
-    assert_allclose(viz.roc_auc, 1 + roc_auc_score(y, y_pred))
+    assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
