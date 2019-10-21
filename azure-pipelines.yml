@@ -20,7 +20,7 @@ jobs:
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
-    name: Linux_Always_Runs
+    name: Linux_Runs
     vmImage: ubuntu-16.04
     matrix:
       pylatest_conda_mkl:
