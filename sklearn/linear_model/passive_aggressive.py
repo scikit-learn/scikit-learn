@@ -124,7 +124,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
-    classes_ : array of shape = (n_classes,)
+    classes_ : array of shape (n_classes,)
         The unique classes labels.
 
     t_ : int
@@ -191,7 +191,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of the training data
 
         y : numpy array of shape [n_samples]
@@ -231,7 +231,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]
@@ -419,7 +419,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Subset of training data
 
         y : numpy array of shape [n_samples]
@@ -442,7 +442,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
         y : numpy array of shape [n_samples]

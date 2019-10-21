@@ -132,4 +132,4 @@ X_test, y_test = fetch_20newsgroups(random_state=1,
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
-print(classification_report(y_pred, y_test))
+print(classification_report(y_test, y_pred))

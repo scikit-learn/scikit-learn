@@ -265,9 +265,9 @@ def test_optimization_minimizes_kl_divergence():
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_fit_csr_matrix(method):
     # X can be a sparse matrix.
-    random_state = check_random_state(0)
-    X = random_state.randn(50, 2)
-    X[(np.random.randint(0, 50, 25), np.random.randint(0, 2, 25))] = 0.0
+    rng = check_random_state(0)
+    X = rng.randn(50, 2)
+    X[(rng.randint(0, 50, 25), rng.randint(0, 2, 25))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 random_state=0, method=method, n_iter=750)
