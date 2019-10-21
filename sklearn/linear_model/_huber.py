@@ -6,7 +6,7 @@ import numpy as np
 from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
-from .base import LinearModel
+from ._base import LinearModel
 from ..utils import check_X_y
 from ..utils import axis0_safe_slice
 from ..utils.validation import _check_sample_weight

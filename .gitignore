@@ -129,3 +129,17 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/linear_model/base.py
+sklearn/linear_model/bayes.py
+sklearn/linear_model/cd_fast.py
+sklearn/linear_model/coor.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
+sklearn/linear_model/base.py
