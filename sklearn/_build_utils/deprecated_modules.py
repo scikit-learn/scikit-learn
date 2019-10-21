@@ -76,14 +76,24 @@ _DEPRECATED_MODULES = [
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 
     ('_bicluster', 'sklearn.metrics.cluster.bicluster',
-     'sklearn.metric.cluster', 'consensus_score'),
+     'sklearn.metrics.cluster', 'consensus_score'),
     ('_supervised', 'sklearn.metrics.cluster.supervised',
-     'sklearn.metric.cluster', 'entropy'),
+     'sklearn.metrics.cluster', 'entropy'),
     ('_unsupervised', 'sklearn.metrics.cluster.unsupervised',
-     'sklearn.metric.cluster', 'silhouette_score'),
+     'sklearn.metrics.cluster', 'silhouette_score'),
     ('_expected_mutual_info_fast',
      'sklearn.metrics.cluster.expected_mutual_info_fast',
-     'sklearn.metric.cluster', 'expected_mutual_information'),
+     'sklearn.metrics.cluster', 'expected_mutual_information'),
+
+    ('_base', 'sklearn.metrics.base', 'sklearn.metrics', 'combinations'),
+    ('_classification', 'sklearn.metrics.classification', 'sklearn.metrics',
+     'accuracy_score'),
+    ('_regression', 'sklearn.metrics.regression', 'sklearn.metrics',
+     'max_error'),
+    ('_ranking', 'sklearn.metrics.ranking', 'sklearn.metrics', 'roc_curve'),
+    ('_pairwise_fast', 'sklearn.metrics.pairwise_fast', 'sklearn.metrics',
+     'np'),
+    ('_scorer', 'sklearn.metrics.scorer', 'sklearn.metrics', 'get_scorer'),
 ]
 
 _FILE_CONTENT_TEMPLATE = """

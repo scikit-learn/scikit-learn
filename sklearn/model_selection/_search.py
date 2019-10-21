@@ -35,8 +35,8 @@ from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..metrics.scorer import _check_multimetric_scoring
-from ..metrics.scorer import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring
+from ..metrics import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',

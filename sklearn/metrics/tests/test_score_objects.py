@@ -19,10 +19,11 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer, _MultimetricScorer)
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
+                                     _MultimetricScorer,
+                                     _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
@@ -234,6 +235,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                     ('accuracy', 'precision'), ['precision', 'accuracy'],
                     {'accuracy': make_scorer(accuracy_score),
                      'precision': make_scorer(precision_score)}):
+        print(scoring)
         estimator = LinearSVC(random_state=0)
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 

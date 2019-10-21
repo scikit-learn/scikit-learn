@@ -22,7 +22,7 @@ from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
-from ..metrics._pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted

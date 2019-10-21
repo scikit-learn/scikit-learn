@@ -52,13 +52,13 @@ from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
 
-from ._pairwise import euclidean_distances
-from ._pairwise import nan_euclidean_distances
-from ._pairwise import pairwise_distances
-from ._pairwise import pairwise_distances_argmin
-from ._pairwise import pairwise_distances_argmin_min
-from ._pairwise import pairwise_kernels
-from ._pairwise import pairwise_distances_chunked
+from .pairwise import euclidean_distances
+from .pairwise import nan_euclidean_distances
+from .pairwise import pairwise_distances
+from .pairwise import pairwise_distances_argmin
+from .pairwise import pairwise_distances_argmin_min
+from .pairwise import pairwise_kernels
+from .pairwise import pairwise_distances_chunked
 
 from ._regression import explained_variance_score
 from ._regression import max_error

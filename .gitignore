@@ -128,3 +128,10 @@ sklearn/metrics/cluster/bicluster.py
 sklearn/metrics/cluster/supervised.py
 sklearn/metrics/cluster/unsupervised.py
 sklearn/metrics/cluster/expected_mutual_info_fast.py
+
+sklearn/metrics/base.py
+sklearn/metrics/classification.py
+sklearn/metrics/regression.py
+sklearn/metrics/ranking.py
+sklearn/metrics/pairwise_fast.py
+sklearn/metrics/scorer.py
