@@ -29,7 +29,7 @@ import numpy as np
 
 from scipy.special import xlogy
 
-from .base import BaseEnsemble
+from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
 
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor

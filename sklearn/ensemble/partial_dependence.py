@@ -20,7 +20,7 @@ from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..utils import deprecated
 
-from .gradient_boosting import BaseGradientBoosting
+from ._gb import BaseGradientBoosting
 
 
 __all__ = [
