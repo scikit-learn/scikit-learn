@@ -1,7 +1,7 @@
 import os
 from os.path import join
 
-from .._build_utils import gen_from_templates
+from sklearn._build_utils import gen_from_templates
 
 
 def configuration(parent_package='', top_path=None):
