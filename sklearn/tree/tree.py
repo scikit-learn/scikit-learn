@@ -650,12 +650,15 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         effectively inspect more than ``max_features`` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        Note: The source of randomness is exlained in the notes.
+        Controls the randomness of the estimator. The features are always randomly 
+        permuted at each split, even if ``splitter`` is set to ``"best"``. 
+        Especially if ``max_features < n_features``, the algorithm will select 
+        ``max_features`` at random at each split before finding the best split 
+        among them. But the best found split may vary across different runs, even 
+        if ``max_features=n_features``. That is the case, if the improvement of the 
+        criterion is identical for several splits and one split has to be selected 
+        at random. To obtain a deterministic behaviour during fitting, ``random_state`` 
+        has to be fixed to an int. See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -763,19 +766,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    The features are always randomly permuted at each split, even if 
-    ``splitter`` is set to ``"best"``. Especially if 
-    ``max_features < n_features``, the algorithm will select ``max_features`` 
-    at random at each split. But the best found split may vary accross different 
-    runs, even if ``max_features=n_features``. That is the case, if the 
-    improvement of the criterion is identical for several splits and one split
-    has to be selected at random. 
-    To obtain a deterministic behaviour during fitting, ``random_state`` has to 
-    be fixed. To fix ``random_state`` it has to be set to an arbitrary integer.  
-    The specific value does not matter here. The integer is just the seed for the 
-    random number generator. It ensures that the results will be reproducible 
-    (deterministic).
 
     See also
     --------
@@ -1039,12 +1029,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         effectively inspect more than ``max_features`` features.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        Note: The source of randomness is exlained in the notes.
+        Controls the randomness of the estimator. The features are always randomly 
+        permuted at each split, even if ``splitter`` is set to ``"best"``. 
+        Especially if ``max_features < n_features``, the algorithm will select 
+        ``max_features`` at random at each split before finding the best split 
+        among them. But the best found split may vary across different runs, even 
+        if ``max_features=n_features``. That is the case, if the improvement of the 
+        criterion is identical for several splits and one split has to be selected 
+        at random. To obtain a deterministic behaviour during fitting, ``random_state`` 
+        has to be fixed to an int. See :term:`Glossary <random_state>` for details.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1123,20 +1116,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    The features are always randomly permuted at each split, even if 
-    ``splitter`` is set to ``"best"``. Especially if 
-    ``max_features < n_features``, the algorithm will select ``max_features`` 
-    at random at each split. But the best found split may vary accross different 
-    runs, even if ``max_features=n_features``. That is the case, if the 
-    improvement of the criterion is identical for several splits and one split
-    has to be selected at random. 
-    To obtain a deterministic behaviour during fitting, ``random_state`` has to 
-    be fixed. To fix ``random_state`` it has to be set to an arbitrary integer.  
-    The specific value does not matter here. The integer is just the seed for the 
-    random number generator. It ensures that the results will be reproducible 
-    (deterministic).
-
+    
     See also
     --------
     DecisionTreeClassifier
