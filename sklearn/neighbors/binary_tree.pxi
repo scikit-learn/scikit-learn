@@ -164,6 +164,9 @@ cdef extern from "numpy/arrayobject.h":
 
 np.import_array()
 
+# set to True to activate query stats (decreases perf)
+DEF COMPUTE_TREE_STATS = False
+
 # some handy constants
 cdef DTYPE_t INF = np.inf
 cdef DTYPE_t NEG_INF = -np.inf
@@ -1031,6 +1034,8 @@ cdef class BinaryTree:
     cdef int euclidean
 
     # variables to keep track of building & querying stats
+    # Deprecated as they decrease multihreaded perf
+    # but kept for pickling retro-compatibility
     cdef int n_trims
     cdef int n_leaves
     cdef int n_splits
@@ -1180,12 +1185,24 @@ cdef class BinaryTree:
         self._update_memviews()
 
     def get_tree_stats(self):
+        """
+        statistics not updated anymore (only useful for debugging 
+        and decrease parallelism perfs too much)
+        Set COMPUTE_TREE_STATS at True in setup.py and recompile
+        to reactivate
+        """
         return (self.n_trims, self.n_leaves, self.n_splits)
 
     def reset_n_calls(self):
         self.n_calls = 0
 
     def get_n_calls(self):
+        """
+        statistic not updated anymore (only useful for debugging 
+        and decrease parallelism perfs too much)
+        Set COMPUTE_TREE_STATS at True in setup.py and recompile
+        to reactivate
+        """
         return self.n_calls
 
     def get_arrays(self):
@@ -1195,7 +1212,8 @@ cdef class BinaryTree:
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
         """Compute the distance between arrays x1 and x2"""
-        self.n_calls += 1
+        IF COMPUTE_TREE_STATS == True:
+            self.n_calls += 1
         if self.euclidean:
             return euclidean_dist(x1, x2, size)
         else:
@@ -1210,7 +1228,8 @@ cdef class BinaryTree:
         relative rankings of the true distance.  For example, the reduced
         distance for the Euclidean metric is the squared-euclidean distance.
         """
-        self.n_calls += 1
+        IF COMPUTE_TREE_STATS == True:
+            self.n_calls += 1
         if self.euclidean:
             return euclidean_rdist(x1, x2, size)
         else:
@@ -1792,12 +1811,16 @@ cdef class BinaryTree:
         # Case 1: query point is outside node radius:
         #         trim it from the query
         if reduced_dist_LB > heap.largest(i_pt):
-            self.n_trims += 1
+            IF COMPUTE_TREE_STATS == True:
+                self.n_trims += 1
+            ELSE:
+                pass
 
         #------------------------------------------------------------
         # Case 2: this is a leaf node.  Update set of nearby points
         elif node_info.is_leaf:
-            self.n_leaves += 1
+            IF COMPUTE_TREE_STATS == True:
+                self.n_leaves += 1
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt,
                                      &self.data[self.idx_array[i], 0],
@@ -1809,7 +1832,8 @@ cdef class BinaryTree:
         # Case 3: Node is not a leaf.  Recursively query subnodes
         #         starting with the closest
         else:
-            self.n_splits += 1
+            IF COMPUTE_TREE_STATS == True:
+                self.n_splits += 1
             i1 = 2 * i_node + 1
             i2 = i1 + 1
             reduced_dist_LB_1 = min_rdist(self, i1, pt)
@@ -1854,12 +1878,14 @@ cdef class BinaryTree:
             # Case 1: query point is outside node radius:
             #         trim it from the query
             if reduced_dist_LB > heap.largest(i_pt):
-                self.n_trims += 1
+                IF COMPUTE_TREE_STATS == True:
+                    self.n_trims += 1
 
             #------------------------------------------------------------
             # Case 2: this is a leaf node.  Update set of nearby points
             elif node_data[i_node].is_leaf:
-                self.n_leaves += 1
+                IF COMPUTE_TREE_STATS == True:
+                    self.n_leaves += 1
                 for i in range(node_data[i_node].idx_start,
                                node_data[i_node].idx_end):
                     dist_pt = self.rdist(pt,
@@ -1871,7 +1897,8 @@ cdef class BinaryTree:
             #------------------------------------------------------------
             # Case 3: Node is not a leaf.  Add subnodes to the node heap
             else:
-                self.n_splits += 1
+                IF COMPUTE_TREE_STATS == True:
+                    self.n_splits += 1
                 for i in range(2 * i_node + 1, 2 * i_node + 3):
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist(self, i, pt)
