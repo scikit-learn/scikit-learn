@@ -1196,7 +1196,7 @@ def test_column_transformer_mask_indexing(array_type):
     (['col_float'], 'at$', [np.number], None),
     (['col_int'], None, [np.int], None),
     (['col_int'], '^col_int', [np.number], None),
-    (['col_float', 'float|str', 'col_str'], None, None),
+    (['col_float', 'col_str'], 'float|str', None, None),
     (['col_str'], '^col_s', None, [np.int]),
     (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
 ])
