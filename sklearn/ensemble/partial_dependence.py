@@ -20,7 +20,7 @@ from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..utils import deprecated
 
-from .gradient_boosting import BaseGradientBoosting
+from ._gb import BaseGradientBoosting
 
 
 __all__ = [
@@ -211,6 +211,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ----------
     gbrt : BaseGradientBoosting
         A fitted gradient boosting model.
+
     X : array-like of shape (n_samples, n_features)
         The data on which ``gbrt`` was trained.
 

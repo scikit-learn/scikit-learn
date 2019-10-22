@@ -129,10 +129,13 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    normalized = unicodedata.normalize('NFKD', s)
-    if normalized == s:
+    try:
+        # If `s` is ASCII-compatible, then it does not contain any accented
+        # characters and we can avoid an expensive list comprehension
+        s.encode("ASCII", errors="strict")
         return s
-    else:
+    except UnicodeEncodeError:
+        normalized = unicodedata.normalize('NFKD', s)
         return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
@@ -1338,6 +1341,31 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfTransformer
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.pipeline import Pipeline
+    >>> import numpy as np
+    >>> corpus = ['this is the first document',
+    ...           'this document is the second document',
+    ...           'and this is the third one',
+    ...           'is this the first document']
+    >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
+    ...               'and', 'one']
+    >>> pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
+    ...                  ('tfid', TfidfTransformer())]).fit(corpus)
+    >>> pipe['count'].transform(corpus).toarray()
+    array([[1, 1, 1, 1, 0, 1, 0, 0],
+           [1, 2, 0, 1, 1, 1, 0, 0],
+           [1, 0, 0, 1, 0, 1, 1, 1],
+           [1, 1, 1, 1, 0, 1, 0, 0]])
+    >>> pipe['tfid'].idf_
+    array([1.        , 1.22314355, 1.51082562, 1.        , 1.91629073,
+           1.        , 1.91629073, 1.91629073])
+    >>> pipe.transform(corpus).shape
+    (4, 8)
 
     References
     ----------

@@ -21,7 +21,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm.base import _fit_liblinear
+from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
@@ -32,7 +32,6 @@ from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
-from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
@@ -2248,15 +2247,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Score of self.predict(X) wrt. y.
 
         """
-
-        if self.scoring is not None:
-            warnings.warn("The long-standing behavior to use the "
-                          "accuracy score has changed. The scoring "
-                          "parameter is now used. "
-                          "This warning will disappear in version 0.22.",
-                          ChangedBehaviorWarning)
         scoring = self.scoring or 'accuracy'
-
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
