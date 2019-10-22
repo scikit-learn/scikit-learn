@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .label import _encode, _encode_check_unknown
+from ._label import _encode, _encode_check_unknown
 
 
 __all__ = [

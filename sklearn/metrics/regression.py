@@ -330,23 +330,38 @@ def mean_squared_log_error(y_true, y_pred,
                               sample_weight, multioutput)
 
 
-def median_absolute_error(y_true, y_pred):
+def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     """Median absolute error regression loss
 
-    Read more in the :ref:`User Guide <median_absolute_error>`.
+    Median absolute error output is non-negative floating point. The best value
+    is 0.0. Read more in the :ref:`User Guide <median_absolute_error>`.
 
     Parameters
     ----------
-    y_true : array-like of shape (n_samples,)
+    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape (n_samples,)
+    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
+
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape
+        (n_outputs,)
+        Defines aggregating of multiple output values. Array-like value defines
+        weights used to average errors.
+
+        'raw_values' :
+            Returns a full set of errors in case of multioutput input.
+
+        'uniform_average' :
+            Errors of all outputs are averaged with uniform weight.
 
     Returns
     -------
-    loss : float
-        A positive floating point value (the best value is 0.0).
+    loss : float or ndarray of floats
+        If multioutput is 'raw_values', then mean absolute error is returned
+        for each output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average of all output errors is returned.
 
     Examples
     --------
@@ -355,12 +370,27 @@ def median_absolute_error(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> median_absolute_error(y_true, y_pred)
     0.5
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> median_absolute_error(y_true, y_pred)
+    0.75
+    >>> median_absolute_error(y_true, y_pred, multioutput='raw_values')
+    array([0.5, 1. ])
+    >>> median_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
+    0.85
 
     """
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
-    if y_type == 'continuous-multioutput':
-        raise ValueError("Multioutput not supported in median_absolute_error")
-    return np.median(np.abs(y_pred - y_true))
+    y_type, y_true, y_pred, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput)
+    output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    if isinstance(multioutput, str):
+        if multioutput == 'raw_values':
+            return output_errors
+        elif multioutput == 'uniform_average':
+            # pass None as weights to np.average: uniform mean
+            multioutput = None
+
+    return np.average(output_errors, weights=multioutput)
 
 
 def explained_variance_score(y_true, y_pred,

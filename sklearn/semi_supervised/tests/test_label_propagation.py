@@ -5,7 +5,7 @@ import pytest
 
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.semi_supervised import label_propagation
+from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
