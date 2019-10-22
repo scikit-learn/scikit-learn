@@ -14,7 +14,12 @@ IF "%PYTHON_ARCH%"=="64" (
     conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython matplotlib wheel pillow joblib
 
     call activate %VIRTUALENV%
-    pip install pytest==%PYTEST_VERSION%
+
+    IF "%PYTEST_VERSION%"=="*" (
+        pip install pytest
+    ) else (
+        pip install pytest==%PYTEST_VERSION%
+    )
     pip install pytest-xdist
 ) else (
     pip install numpy scipy cython pytest wheel pillow joblib
