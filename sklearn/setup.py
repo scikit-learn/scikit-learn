@@ -1,3 +1,4 @@
+import sys
 import os
 
 from sklearn._build_utils import maybe_cythonize_extensions
@@ -78,7 +79,8 @@ def configuration(parent_package='', top_path=None):
     # add the test directory
     config.add_subpackage('tests')
 
-    maybe_cythonize_extensions(top_path, config)
+    if 'sdist' not in sys.argv:
+        generate_cythonize_extensions(top_path, config)
 
     return config
 

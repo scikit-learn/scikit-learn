@@ -42,36 +42,31 @@ def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
     with_openmp = check_openmp_support()
 
-    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
+    message = ('Please install cython with a version >= {0} in order '
+                'to build a scikit-learn development version.').format(
+                    CYTHON_MIN_VERSION)
+    try:
+        import Cython
+        if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
+            message += ' Your version of Cython was {0}.'.format(
+                Cython.__version__)
+            raise ValueError(message)
+        from Cython.Build import cythonize
+    except ImportError as exc:
+        exc.args += (message,)
+        raise
 
-    if is_release:
-        build_from_c_and_cpp_files(config.ext_modules)
-    else:
-        message = ('Please install cython with a version >= {0} in order '
-                   'to build a scikit-learn development version.').format(
-                       CYTHON_MIN_VERSION)
-        try:
-            import Cython
-            if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-                message += ' Your version of Cython was {0}.'.format(
-                    Cython.__version__)
-                raise ValueError(message)
-            from Cython.Build import cythonize
-        except ImportError as exc:
-            exc.args += (message,)
-            raise
+    n_jobs = 1
+    with contextlib.suppress(ImportError):
+        import joblib
+        if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
+            # earlier joblib versions don't account for CPU affinity
+            # constraints, and may over-estimate the number of available
+            # CPU particularly in CI (cf loky#114)
+            n_jobs = joblib.effective_n_jobs()
 
-        n_jobs = 1
-        with contextlib.suppress(ImportError):
-            import joblib
-            if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
-                # earlier joblib versions don't account for CPU affinity
-                # constraints, and may over-estimate the number of available
-                # CPU particularly in CI (cf loky#114)
-                n_jobs = joblib.effective_n_jobs()
-
-        config.ext_modules = cythonize(
-            config.ext_modules,
-            nthreads=n_jobs,
-            compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
-            compiler_directives={'language_level': 3})
+    config.ext_modules = cythonize(
+        config.ext_modules,
+        nthreads=n_jobs,
+        compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
+        compiler_directives={'language_level': 3})

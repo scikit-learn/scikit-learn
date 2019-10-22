@@ -55,6 +55,7 @@ else:
     NUMPY_MIN_VERSION = '1.11.0'
 
 JOBLIB_MIN_VERSION = '0.11'
+CYTHON_MIN_VERSION = '0.28.5'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -233,6 +234,12 @@ def setup_package():
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
                         'joblib>={}'.format(JOBLIB_MIN_VERSION)
+                    ],
+                    setup_requires=[
+                        'numpy>={}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={}'.format(SCIPY_MIN_VERSION),
+                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
+                        'cython>={}'.format(CYTHON_MIN_VERSION)
                     ],
                     **extra_setuptools_args)
 
