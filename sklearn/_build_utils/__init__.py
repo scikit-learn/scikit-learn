@@ -75,3 +75,26 @@ def maybe_cythonize_extensions(top_path, config):
             nthreads=n_jobs,
             compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
             compiler_directives={'language_level': 3})
+
+
+def gen_from_templates(templates):
+    """Generate cython files from templates"""
+    if not isinstance(templates, list):
+        templates = [templates]
+
+    for template in templates:
+        pyxfile = template.replace('.tp', '')
+
+        if not (os.path.exists(pyxfile) and
+                os.stat(template).st_mtime < os.stat(pyxfile).st_mtime):
+
+            with open(template, "r") as f:
+                tmpl = f.read()
+
+            # Lazy import because cython is not a dependency when building from
+            # source distribution.
+            from Cython import Tempita # noqa
+            tmpl_ = Tempita.sub(tmpl)
+
+            with open(pyxfile, "w") as f:
+                f.write(tmpl_)

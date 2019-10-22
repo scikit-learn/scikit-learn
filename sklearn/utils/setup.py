@@ -1,6 +1,8 @@
 import os
 from os.path import join
 
+from .._build_utils import gen_from_templates
+
 
 def configuration(parent_package='', top_path=None):
     import numpy
@@ -44,24 +46,10 @@ def configuration(parent_package='', top_path=None):
                          sources=['_openmp_helpers.pyx'],
                          libraries=libraries)
 
-    # generate files from a template
-    pyx_templates = ['sklearn/utils/_seq_dataset.pyx.tp',
-                     'sklearn/utils/_seq_dataset.pxd.tp']
-
-    for pyxfiles in pyx_templates:
-        outfile = pyxfiles.replace('.tp', '')
-        # if .pyx.tp is not updated, no need to output .pyx
-        if (os.path.exists(outfile) and
-                os.stat(pyxfiles).st_mtime < os.stat(outfile).st_mtime):
-            continue
-
-        with open(pyxfiles, "r") as f:
-            tmpl = f.read()
-        from Cython import Tempita  # noqa
-        pyxcontent = Tempita.sub(tmpl)
-
-        with open(outfile, "w") as f:
-            f.write(pyxcontent)
+    # generate _seq_dataset from template
+    templates = ['sklearn/utils/_seq_dataset.pyx.tp',
+                 'sklearn/utils/_seq_dataset.pxd.tp']
+    gen_from_templates(templates)
 
     config.add_extension('_seq_dataset',
                          sources=['_seq_dataset.pyx'],
