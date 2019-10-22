@@ -6,7 +6,7 @@ from scipy import linalg
 import pytest
 
 from sklearn import neighbors, manifold
-from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
+from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 

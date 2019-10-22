@@ -32,7 +32,6 @@ from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
-from ..exceptions import ChangedBehaviorWarning
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
 from ..model_selection import check_cv
