@@ -106,8 +106,12 @@ _DEPRECATED_MODULES = [
      'NeighborhoodComponentsAnalysis'),
     ('_nearest_centroid', 'sklearn.neighbors.nearest_centroid',
      'sklearn.neighbors', 'NearestCentroid'),
+    ('_quad_tree', 'sklearn.neighbors.quad_tree', 'sklearn.neighbors',
+     'CELL_DTYPE'),
     ('_regression', 'sklearn.neighbors.regression', 'sklearn.neighbors',
      'KNeighborsRegressor'),
+    ('_typedefs', 'sklearn.neighbors.typedefs', 'sklearn.neighbors',
+     'DTYPE'),
     ('_unsupervised', 'sklearn.neighbors.unsupervised', 'sklearn.neighbors',
      'NearestNeighbors'),
 ]

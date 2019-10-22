@@ -140,5 +140,7 @@ sklearn/neighbors/kde.py
 sklearn/neighbors/lof.py
 sklearn/neighbors/nca.py
 sklearn/neighbors/nearest_centroid.py
+sklearn/neighbors/quad_tree.py
 sklearn/neighbors/regression.py
+sklearn/neighbors/typedefs.py
 sklearn/neighbors/unsupervised.py
