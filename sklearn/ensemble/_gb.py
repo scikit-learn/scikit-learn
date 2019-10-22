@@ -24,7 +24,7 @@ from abc import ABCMeta
 from abc import abstractmethod
 import warnings
 
-from .base import BaseEnsemble
+from ._base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
@@ -44,7 +44,7 @@ from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
-from ..tree.tree import DecisionTreeRegressor
+from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
