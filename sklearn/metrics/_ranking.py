@@ -33,7 +33,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing.label import _encode
+from ..preprocessing._label import _encode
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
