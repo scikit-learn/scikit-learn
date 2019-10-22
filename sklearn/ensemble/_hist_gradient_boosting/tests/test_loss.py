@@ -238,7 +238,7 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
     if sample_weight == 'ones':
         sample_weight = np.ones(shape=n_samples, dtype=Y_DTYPE)
     else:
-        sample_weight = rng.random(size=n_samples).astype(Y_DTYPE)
+        sample_weight = rng.normal(size=n_samples).astype(Y_DTYPE)
 
     loss_ = _LOSSES[loss]()
 
