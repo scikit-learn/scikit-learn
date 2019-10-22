@@ -98,9 +98,11 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     with_mean : boolean, True by default
         If True, center the data before scaling.
 
-    with_std : boolean, True by default
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : boolean, 1 or 2, True by default
+        If 1 or True, scale the data to unit variance (or equivalently,
+        unit standard deviation). 
+        Otherwise 2, scale the data to using scaling factor 2
+        standard deviation. See [1] for `with_std=2`.
 
     copy : boolean, optional, default True
         set to False to perform inplace row normalization and avoid a
@@ -136,10 +138,19 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
                     estimator='the scale function', dtype=FLOAT_DTYPES,
                     force_all_finite='allow-nan')
+    if with_std not in (1, 2, True, False):
+        raise ValueError(
+            "Invalid value for `with_std`: {!r}".format(with_std)
+        )
+                        str(with_std)))
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -151,13 +162,13 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if with_std:
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
-            inplace_column_scale(X, 1 / np.sqrt(var))
+            inplace_column_scale(X, 1 / with_std * np.sqrt(var))
     else:
         X = np.asarray(X)
         if with_mean:
             mean_ = np.nanmean(X, axis)
         if with_std:
-            scale_ = np.nanstd(X, axis)
+            scale_ = with_std * np.nanstd(X, axis)
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -542,9 +553,11 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean, True by default
-        If True, scale the data to unit variance (or equivalently,
-        unit standard deviation).
+    with_std : boolean, 1 or 2, True by default
+        - If `1` or `True`, scale the data to unit variance (or equivalently,
+        unit standard deviation);
+        - otherwise `2`, scale the data to using scaling factor 2
+        standard deviation. See [1] for `with_std=2`
 
     Attributes
     ----------
@@ -606,8 +619,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-    """  # noqa
 
+    References
+    ----------
+    .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
+    Statistics in medicine, 27(15), 2865-2873.
+    """  # noqa
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -675,6 +692,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # if n_samples_seen_ is an integer (i.e. no missing values), we need to
         # transform it to a NumPy array of shape (n_features,) required by
         # incr_mean_variance_axis and _incremental_variance_axis
+        if self.with_std not in (1, 2, True, False):
+            raise ValueError("Invalid value for `with_std`: {}".format(
+                            str(self.with_std)))
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, numbers.Integral)):
             self.n_samples_seen_ = np.repeat(
@@ -740,7 +760,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
-            self.scale_ = _handle_zeros_in_scale(np.sqrt(self.var_))
+            self.scale_ = _handle_zeros_in_scale(
+                                self.with_std * np.sqrt(self.var_))
         else:
             self.scale_ = None
 

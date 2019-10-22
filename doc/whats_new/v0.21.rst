@@ -938,6 +938,10 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :pr:`12251` by `Tom Dupre la Tour`_.
 
+- |Feature| :class:`preprocessing.StandardScaler` can now scale using factor of 2
+  standard deviation as described in Gelman (2008). :issue:`10864` by 
+  :user:`Parth Sharma <parth1993>` and :user:`Tymoteusz Wołodźko <twolodzko>`
+
 - |Fix| Fixed the calculation overflow when using a float16 dtype with
   :class:`preprocessing.StandardScaler`.
   :pr:`13007` by :user:`Raffaello Baluyot <baluyotraf>`

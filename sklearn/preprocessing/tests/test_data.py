@@ -2325,6 +2325,41 @@ def test_power_transformer_lambda_zero():
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
 
 
+def test_standard_scaler_with_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=2)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
+
+
+def test_scale_with_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
+
+
+@pytest.mark.parametrize('with_std', [-10, -1, 3, 10])
+def test_scale_with_std_error(with_std):
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+
+    # Test for invalid cases
+    with pytest.raises(ValueError) as excinfo:
+        scale(X, with_std=with_std)
+    assert excinfo.type is ValueError
+
+
 def test_power_transformer_lambda_one():
     # Make sure lambda = 1 corresponds to the identity for yeo-johnson
     pt = PowerTransformer(method='yeo-johnson', standardize=False)

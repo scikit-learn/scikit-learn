@@ -25,7 +25,14 @@ Standardization, or mean removal and variance scaling
 **Standardization** of datasets is a **common requirement for many
 machine learning estimators** implemented in scikit-learn; they might behave
 badly if the individual features do not more or less look like standard
-normally distributed data: Gaussian with **zero mean and unit variance**.
+normally distributed data: Gaussian with **zero mean and unit/factor two standard**
+**deviation** [Gelman2008]_. 
+
+Reference
+---------
+
+    .. [Gelman2008] Gelman, A. (2008). Scaling regression inputs by 
+dividing by two standard deviations. Statistics in medicine, 27(15), 2865-2873
 
 In practice we often ignore the shape of the distribution and just
 transform the data to center it by removing the mean value of each
@@ -61,7 +68,10 @@ operation on a single array-like dataset::
         >>> print_options = np.get_printoptions()
         >>> np.set_printoptions(suppress=True)
 
-Scaled data has zero mean and unit variance::
+Scaled data has zero mean and unit or factor 2 standard deviation [Gelman2008]_.
+refernce to **Gelman, A. (2008). Scaling regression inputs by** 
+**dividing by two standard deviations. Statistics in medicine, 27(15)
+, 2865-2873**.::
 
   >>> X_scaled.mean(axis=0)
   array([0., 0., 0.])
