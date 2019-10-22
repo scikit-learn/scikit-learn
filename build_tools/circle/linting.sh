@@ -148,7 +148,7 @@ echo -e "No problem detected by flake8\n"
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)
 
-# do not error when grep -B1 "@deprecated" finds nothing
+# do not error when grep -B1 "@property" finds nothing
 set +e
 bad_deprecation_property_order=`git grep -A 10 "@property" -- '*.py' | awk '/@deprecated/,/def /' | grep -B1 "@property"`
 
