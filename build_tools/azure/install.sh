@@ -20,8 +20,8 @@ version_ge() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
-                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+    TO_INSTALL="python=$PYTHON_VERSION pip \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -60,6 +60,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
         conda config --set restore_free_channel true
     fi
 
+    pip install pytest=="$PYTEST_VERSION"
+
 	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
@@ -88,7 +90,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install coverage codecov
+    python -m pip install coverage codecov pytest-cov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
