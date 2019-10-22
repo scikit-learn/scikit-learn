@@ -93,6 +93,14 @@ _DEPRECATED_MODULES = [
     ('_spectral_embedding_', 'sklearn.manifold.spectral_embedding_',
      'sklearn.manifold', 'SpectralEmbedding'),
     ('_t_sne', 'sklearn.manifold.t_sne', 'sklearn.manifold', 'TSNE')
+
+    ('_label_propagation', 'sklearn.semi_supervised.label_propagation',
+     'sklearn.semi_supervised', 'LabelPropagation'),
+
+    ('_data', 'sklearn.preprocessing.data', 'sklearn.preprocessing',
+     'Binarizer'),
+    ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
+     'LabelEncoder'),
 ]
 
 

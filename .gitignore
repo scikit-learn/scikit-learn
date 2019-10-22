@@ -135,3 +135,8 @@ sklearn/manifold/locally_linear.py
 sklearn/manifold/mds.py
 sklearn/manifold/spectral_embedding_.py
 sklearn/manifold/t_sne.py
+
+sklearn/semi_supervised/label_propagation.py
+
+sklearn/preprocessing/data.py
+sklearn/preprocessing/label.py
