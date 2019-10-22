@@ -130,5 +130,7 @@ sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
 
+sklearn/semi_supervised/label_propagation.py
+
 sklearn/preprocessing/data.py
 sklearn/preprocessing/label.py
