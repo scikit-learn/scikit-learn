@@ -544,18 +544,17 @@ def test_check_estimators_voting_estimator(estimator):
 
 
 # TODO: Remove in 0.24 when None is removed in Voting*
-def test_deprecate_none_transformer():
-    ests = [
-        VotingRegressor(
-            estimators=[('lr', None),
-                        ('tree', DecisionTreeRegressor(random_state=0))]),
-        VotingClassifier(
-            estimators=[('lr', None),
-                        ('tree', DecisionTreeClassifier(random_state=0))])]
+@pytest.mark.parametrize(
+    "Voter, BaseEstimator",
+    [(VotingClassifier, DecisionTreeClassifier),
+     (VotingRegressor, DecisionTreeRegressor)]
+)
+def test_deprecate_none_transformer(Voter, BaseEstimator):
+    est = Voter(estimators=[('lr', None),
+                            ('tree', BaseEstimator(random_state=0))])
 
     msg = ("Using 'None' to drop an estimator from the ensemble is "
            "deprecated in 0.22 and support will be dropped in 0.24. "
            "Use the string 'drop' instead.")
-    for est in ests:
-        with pytest.warns(DeprecationWarning, match=msg):
-            est.fit(X, y)
+    with pytest.warns(DeprecationWarning, match=msg):
+        est.fit(X, y)

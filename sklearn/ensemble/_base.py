@@ -11,8 +11,6 @@ import warnings
 
 import numpy as np
 
-import numpy as np
-
 from joblib import effective_n_jobs
 
 from ..base import clone
