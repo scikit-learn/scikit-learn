@@ -23,12 +23,12 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model._ridge import ridge_regression
-from sklearn.linear_model._ridge import Ridge
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model import Ridge
 from sklearn.linear_model._ridge import _RidgeGCV
-from sklearn.linear_model._ridge import RidgeCV
-from sklearn.linear_model._ridge import RidgeClassifier
-from sklearn.linear_model._ridge import RidgeClassifierCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
 from sklearn.linear_model._ridge import _solve_cholesky
 from sklearn.linear_model._ridge import _solve_cholesky_kernel
 from sklearn.linear_model._ridge import _check_gcv_mode
