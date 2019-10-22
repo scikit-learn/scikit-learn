@@ -102,7 +102,23 @@ _DEPRECATED_MODULES = [
     ('_samples_generator', 'sklearn.datasets.samples_generator',
      'sklearn.datasets', 'make_classification'),
     ('_svmlight_format', 'sklearn.datasets.svmlight_format',
-     'sklearn.datasets', 'load_svmlight_file')
+     'sklearn.datasets', 'load_svmlight_file'),
+
+    ('_isomap', 'sklearn.manifold.isomap', 'sklearn.manifold', 'Isomap'),
+    ('_locally_linear', 'sklearn.manifold.locally_linear', 'sklearn.manifold',
+     'LocallyLinearEmbedding'),
+    ('_mds', 'sklearn.manifold.mds', 'sklearn.manifold', 'MDS'),
+    ('_spectral_embedding_', 'sklearn.manifold.spectral_embedding_',
+     'sklearn.manifold', 'SpectralEmbedding'),
+    ('_t_sne', 'sklearn.manifold.t_sne', 'sklearn.manifold', 'TSNE'),
+
+    ('_label_propagation', 'sklearn.semi_supervised.label_propagation',
+     'sklearn.semi_supervised', 'LabelPropagation'),
+
+    ('_data', 'sklearn.preprocessing.data', 'sklearn.preprocessing',
+     'Binarizer'),
+    ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
+     'LabelEncoder'),
 ]
 
 
