@@ -3,6 +3,7 @@ import textwrap
 import pytest
 
 from sklearn.utils.testing import assert_run_python_script
+from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 
 # We are deprecating importing anything that isn't in an __init__ file and
@@ -10,40 +11,11 @@ from sklearn.utils.testing import assert_run_python_script
 # This test makes sure imports are still possible but deprecated, with the
 # appropriate error message.
 
-@pytest.mark.parametrize('deprecated_path, importee', (
-    ('sklearn.tree.tree', 'DecisionTreeClassifier'),
-    ('sklearn.tree.export', 'export_graphviz'),
 
-    ('sklearn.ensemble.base', 'BaseEnsemble'),
-    ('sklearn.ensemble.forest', 'RandomForestClassifier'),
-    ('sklearn.ensemble.bagging', 'BaggingClassifier'),
-    ('sklearn.ensemble.iforest', 'IsolationForest'),
-    ('sklearn.ensemble.weight_boosting', 'AdaBoostClassifier'),
-    ('sklearn.ensemble.gradient_boosting', 'GradientBoostingClassifier'),
-    ('sklearn.ensemble.voting', 'VotingClassifier'),
-
-    ('sklearn.neural_network.rbm', 'BernoulliRBM'),
-    ('sklearn.neural_network.multilayer_perceptron', 'MLPClassifier'),
-
-    ('sklearn.utils.mocking', 'MockDataFrame'),
-    ('sklearn.utils.weight_vector', 'WeightVector'),
-    ('sklearn.utils.seq_dataset', 'ArrayDataset32'),
-    ('sklearn.utils.fast_dict', 'IntFloatDict'),
-
-    ('sklearn.cluster.affinity_propagation_', 'AffinityPropagation'),
-    ('sklearn.cluster.bicluster', 'SpectralBiclustering'),
-    ('sklearn.cluster.birch', 'Birch'),
-    ('sklearn.cluster.dbscan_', 'DBSCAN'),
-    ('sklearn.cluster.hierarchical', 'FeatureAgglomeration'),
-    ('sklearn.cluster.k_means_', 'KMeans'),
-    ('sklearn.cluster.mean_shift_', 'MeanShift'),
-    ('sklearn.cluster.optics_', 'OPTICS'),
-    ('sklearn.cluster.spectral', 'SpectralClustering'),
-
-    ('sklearn.mixture.base', 'BaseMixture'),
-    ('sklearn.mixture.bayesian_mixture', 'BayesianGaussianMixture'),
-    ('sklearn.mixture.gaussian_mixture', 'GaussianMixture'),
-))
+@pytest.mark.parametrize('deprecated_path, importee', [
+    (deprecated_path, importee)
+    for _, deprecated_path, _, importee in _DEPRECATED_MODULES
+])
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning

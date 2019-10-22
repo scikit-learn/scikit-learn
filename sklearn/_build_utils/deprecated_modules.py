@@ -5,42 +5,104 @@ from contextlib import suppress
 
 # TODO: Remove the whole file in 0.24
 
-# This is a set of 3-tuples consisting of
-# (new_module_name, deprecated_path, correct_import_path)
-_DEPRECATED_MODULES = {
-    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils'),
+# This is a set of 4-tuples consisting of
+# (new_module_name, deprecated_path, correct_import_path, importee)
+# importee is used by test_import_deprecations to check for DeprecationWarnings
+_DEPRECATED_MODULES = [
+    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils',
+     'MockDataFrame'),
 
-    ('_bagging', 'sklearn.ensemble.bagging', 'sklearn.ensemble'),
-    ('_base', 'sklearn.ensemble.base', 'sklearn.ensemble'),
-    ('_forest', 'sklearn.ensemble.forest', 'sklearn.ensemble'),
-    ('_gb', 'sklearn.ensemble.gradient_boosting', 'sklearn.ensemble'),
-    ('_iforest', 'sklearn.ensemble.iforest', 'sklearn.ensemble'),
-    ('_voting', 'sklearn.ensemble.voting', 'sklearn.ensemble'),
-    ('_weight_boosting', 'sklearn.ensemble.weight_boosting', 'sklearn.ensemble'),
-    ('_classes', 'sklearn.tree.tree', 'sklearn.tree'),
-    ('_export', 'sklearn.tree.export', 'sklearn.tree'),
+    ('_bagging', 'sklearn.ensemble.bagging', 'sklearn.ensemble',
+     'BaggingClassifier'),
+    ('_base', 'sklearn.ensemble.base', 'sklearn.ensemble',
+     'BaseEnsemble'),
+    ('_forest', 'sklearn.ensemble.forest', 'sklearn.ensemble',
+     'RandomForestClassifier'),
+    ('_gb', 'sklearn.ensemble.gradient_boosting', 'sklearn.ensemble',
+     'GradientBoostingClassifier'),
+    ('_iforest', 'sklearn.ensemble.iforest', 'sklearn.ensemble',
+     'IsolationForest'),
+    ('_voting', 'sklearn.ensemble.voting', 'sklearn.ensemble',
+     'VotingClassifier'),
+    ('_weight_boosting', 'sklearn.ensemble.weight_boosting',
+     'sklearn.ensemble', 'AdaBoostClassifier'),
+    ('_classes', 'sklearn.tree.tree', 'sklearn.tree',
+     'DecisionTreeClassifier'),
+    ('_export', 'sklearn.tree.export', 'sklearn.tree', 'export_graphviz'),
 
-    ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils'),
-    ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils'),
-    ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils'),
+    ('_rbm', 'sklearn.neural_network.rbm', 'sklearn.neural_network',
+     'BernoulliRBM'),
+    ('_multilayer_perceptron', 'sklearn.neural_network.multilayer_perceptron',
+     'sklearn.neural_network', 'MLPClassifier'),
+
+    ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils',
+     'WeightVector'),
+    ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils',
+     'ArrayDataset32'),
+    ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils', 'IntFloatDict'),
 
     ('_affinity_propagation', 'sklearn.cluster.affinity_propagation_',
-     'sklearn.cluster'),
-    ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster'),
-    ('_birch', 'sklearn.cluster.birch', 'sklearn.cluster'),
-    ('_dbscan', 'sklearn.cluster.dbscan_', 'sklearn.cluster'),
-    ('_hierarchical', 'sklearn.cluster.hierarchical', 'sklearn.cluster'),
-    ('_k_means', 'sklearn.cluster.k_means_', 'sklearn.cluster'),
-    ('_mean_shift', 'sklearn.cluster.mean_shift_', 'sklearn.cluster'),
-    ('_optics', 'sklearn.cluster.optics_', 'sklearn.cluster'),
-    ('_spectral', 'sklearn.cluster.spectral', 'sklearn.cluster'),
+     'sklearn.cluster', 'AffinityPropagation'),
+    ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster',
+     'SpectralBiclustering'),
+    ('_birch', 'sklearn.cluster.birch', 'sklearn.cluster', 'Birch'),
+    ('_dbscan', 'sklearn.cluster.dbscan_', 'sklearn.cluster', 'DBSCAN'),
+    ('_hierarchical', 'sklearn.cluster.hierarchical', 'sklearn.cluster',
+     'FeatureAgglomeration'),
+    ('_k_means', 'sklearn.cluster.k_means_', 'sklearn.cluster', 'KMeans'),
+    ('_mean_shift', 'sklearn.cluster.mean_shift_', 'sklearn.cluster',
+     'MeanShift'),
+    ('_optics', 'sklearn.cluster.optics_', 'sklearn.cluster', 'OPTICS'),
+    ('_spectral', 'sklearn.cluster.spectral', 'sklearn.cluster',
+     'SpectralClustering'),
 
-    ('_base', 'sklearn.mixture.base', 'sklearn.mixture'),
+    ('_base', 'sklearn.mixture.base', 'sklearn.mixture', 'BaseMixture'),
     ('_gaussian_mixture', 'sklearn.mixture.gaussian_mixture',
-     'sklearn.mixture'),
+     'sklearn.mixture', 'GaussianMixture'),
     ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
-     'sklearn.mixture'),
-}
+     'sklearn.mixture', 'BayesianGaussianMixture'),
+
+    ('_empirical_covariance_', 'sklearn.covariance.empirical_covariance_',
+     'sklearn.covariance', 'EmpiricalCovariance'),
+    ('_shrunk_covariance_', 'sklearn.covariance.shrunk_covariance_',
+     'sklearn.covariance', 'ShrunkCovariance'),
+    ('_robust_covariance', 'sklearn.covariance.robust_covariance',
+     'sklearn.covariance', 'MinCovDet'),
+    ('_graph_lasso_', 'sklearn.covariance.graph_lasso_',
+     'sklearn.covariance', 'GraphicalLasso'),
+    ('_elliptic_envelope', 'sklearn.covariance.elliptic_envelope',
+     'sklearn.covariance', 'EllipticEnvelope'),
+
+    ('_cca_', 'sklearn.cross_decomposition.cca_',
+     'sklearn.cross_decomposition', 'CCA'),
+    ('_pls_', 'sklearn.cross_decomposition.pls_',
+     'sklearn.cross_decomposition', 'PLSSVD'),
+
+    ('_base', 'sklearn.svm.base', 'sklearn.svm', 'BaseLibSVM'),
+    ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm', 'l1_min_c'),
+    ('_classes', 'sklearn.svm.classes', 'sklearn.svm', 'SVR'),
+    ('_libsvm', 'sklearn.svm.libsvm', 'sklearn.svm', 'fit'),
+    ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
+     'set_verbosity_wrap'),
+    ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
+
+    ('_isomap', 'sklearn.manifold.isomap', 'sklearn.manifold', 'Isomap'),
+    ('_locally_linear', 'sklearn.manifold.locally_linear', 'sklearn.manifold',
+     'LocallyLinearEmbedding'),
+    ('_mds', 'sklearn.manifold.mds', 'sklearn.manifold', 'MDS'),
+    ('_spectral_embedding_', 'sklearn.manifold.spectral_embedding_',
+     'sklearn.manifold', 'SpectralEmbedding'),
+    ('_t_sne', 'sklearn.manifold.t_sne', 'sklearn.manifold', 'TSNE'),
+
+    ('_label_propagation', 'sklearn.semi_supervised.label_propagation',
+     'sklearn.semi_supervised', 'LabelPropagation'),
+
+    ('_data', 'sklearn.preprocessing.data', 'sklearn.preprocessing',
+     'Binarizer'),
+    ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
+     'LabelEncoder'),
+]
+
 
 _FILE_CONTENT_TEMPLATE = """
 # THIS FILE WAS AUTOMATICALLY GENERATED BY deprecated_modules.py
@@ -67,7 +129,7 @@ def _create_deprecated_modules_files():
     deprecation warning will be raised.
     """
     for (new_module_name, deprecated_path,
-         correct_import_path) in _DEPRECATED_MODULES:
+         correct_import_path, _) in _DEPRECATED_MODULES:
         relative_dots = deprecated_path.count(".") * "."
         deprecated_content = _FILE_CONTENT_TEMPLATE.format(
             new_module_name=new_module_name,
@@ -81,7 +143,7 @@ def _create_deprecated_modules_files():
 
 def _clean_deprecated_modules_files():
     """Removes submodules created by _create_deprecated_modules_files."""
-    for (_, deprecated_path, _) in _DEPRECATED_MODULES:
+    for _, deprecated_path, _, _ in _DEPRECATED_MODULES:
         with suppress(FileNotFoundError):
             _get_deprecated_path(deprecated_path).unlink()
 
