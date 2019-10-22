@@ -1186,21 +1186,22 @@ def test_column_transformer_mask_indexing(array_type):
     assert X_trans.shape == (3, 2)
 
 
-@pytest.mark.parametrize('cols,include,exclude,pattern', [
-    (['col_int', 'col_float'], np.number, None, None),
-    (['col_int', 'col_float'], None, object, None),
-    (['col_int', 'col_float'], [np.int, np.float], None, None),
-    (['col_str'], [np.object], None, None),
-    (['col_float'], float, None, None),
-    (['col_float'], [np.number], None, 'at$'),
-    (['col_int'], [np.int], None, None),
-    (['col_int'], [np.number], None, '^col_int'),
-    (['col_float', 'col_str'], None, None, 'float|str'),
-    (['col_str'], None, [np.int], '^col_s'),
-    (['col_int', 'col_float', 'col_str'], [np.number, np.object], None, None),
+@pytest.mark.parametrize('cols,pattern,include,exclude', [
+    (['col_int', 'col_float'], None, np.number, None),
+    (['col_int', 'col_float'], None, None, object),
+    (['col_int', 'col_float'], None, [np.int, np.float], None),
+    (['col_str'], None, [np.object], None),
+    (['col_str'], None, np.object, None),
+    (['col_float'], None, float, None),
+    (['col_float'], 'at$', [np.number], None),
+    (['col_int'], None, [np.int], None),
+    (['col_int'], '^col_int', [np.number], None),
+    (['col_float', 'float|str', 'col_str'], None, None),
+    (['col_str'], '^col_s', None, [np.int]),
+    (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
 ])
-def test_make_column_selector_with_select_dtypes(cols, include,
-                                                 exclude, pattern):
+def test_make_column_selector_with_select_dtypes(cols, pattern, include,
+                                                 exclude):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({

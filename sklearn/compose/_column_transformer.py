@@ -767,15 +767,15 @@ class make_column_selector:
     """Create a callable to select columns to be used with
     :func:`make_column_transformer` or :class:`ColumnTransformer`.
 
-    :func:`make_column_selector` can select columsn based on a columns datatype
-    or a regex pattern. When using multiple selection criteria, **all**
+    :func:`make_column_selector` can select columns based on datatype or the
+    columns name with a regex. When using multiple selection criteria, **all**
     criteria must match for a column to be selected.
 
     Parameters
     ----------
     pattern : str, default=None
-        Columns containing this regex pattern will be included. If None, column
-        selection will not be selected based on pattern.
+        Name of columns containing this regex pattern will be included. If
+        None, column selection will not be selected based on pattern.
 
     dtype_include : column dtype or list of column dtypes, default=None
         A selection of dtypes to include. For more details, see
@@ -789,6 +789,29 @@ class make_column_selector:
     -------
     selector : callable
         Callable for column selection.
+
+    See also
+    --------
+    sklearn.compose.ColumnTransformer : Class that allows combining the
+        outputs of multiple transformer objects used on column subsets
+        of the data into a single feature space.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    >>> from sklearn.compose import make_column_transformer
+    >>> from sklearn.compose import make_column_selector
+    >>> import pandas as pd
+    >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
+    ...                   'expert_rating': [5, 3, 4, 5]})
+    >>> ct = make_column_transformer(
+    ...       (StandardScaler(), make_column_selector(dtype_include=object)),
+    ...       (OneHotEncoder(), make_column_selector(dtype_include=np.number)))
+    >>> ct.fit_transform(X)
+    array([[ 0.90..., 1. , 0. , 0.],
+           [-1.50..., 1. , 0. , 0.],
+           [-0.30..., 0. , 1. , 0.],
+           [ 0.90..., 0. , 0. , 1.]])
     """
 
     def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
@@ -800,12 +823,11 @@ class make_column_selector:
         if not hasattr(df, 'iloc'):
             raise ValueError("make_column_selector can only be applied to "
                              "pandas dataframes")
+        df_row = df.iloc[:1]
         if self.dtype_include is not None or self.dtype_exclude is not None:
-            cols = (df.iloc[:1].select_dtypes(include=self.dtype_include,
-                                              exclude=self.dtype_exclude)
-                    .columns)
-        else:
-            cols = df.columns
+            df_row = df_row.select_dtypes(include=self.dtype_include,
+                                          exclude=self.dtype_exclude)
+        cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern)]
         return sorted(cols)
