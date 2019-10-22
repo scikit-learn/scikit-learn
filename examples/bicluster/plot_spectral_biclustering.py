@@ -24,9 +24,18 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_checkerboard
-from sklearn.datasets import _samples_generator as sg
 from sklearn.cluster import SpectralBiclustering
 from sklearn.metrics import consensus_score
+
+
+def shuffle(data, random_state=None):
+    generator = np.random.RandomState(random_state)
+    n_rows, n_cols = data.shape
+    row_idx = generator.permutation(n_rows)
+    col_idx = generator.permutation(n_cols)
+    result = data[row_idx][:, col_idx]
+    return result, row_idx, col_idx
+
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
@@ -36,7 +45,7 @@ data, rows, columns = make_checkerboard(
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
 
-data, row_idx, col_idx = sg._shuffle(data, random_state=0)
+data, row_idx, col_idx = shuffle(data, random_state=0)
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Shuffled dataset")
 

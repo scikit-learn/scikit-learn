@@ -101,8 +101,12 @@ _DEPRECATED_MODULES = [
     ('_rcv1', 'sklearn.datasets.rcv1', 'sklearn.datasets', 'fetch_rcv1'),
     ('_samples_generator', 'sklearn.datasets.samples_generator',
      'sklearn.datasets', 'make_classification'),
+    ('_species_distributions', 'sklearn.datasets.species_distributions',
+     'sklearn.datasets', 'fetch_species_distributions'),
     ('_svmlight_format', 'sklearn.datasets.svmlight_format',
      'sklearn.datasets', 'load_svmlight_file'),
+    ('_twenty_newsgroups', 'sklearn.datasets.twenty_newsgroups',
+     'sklearn.datasets', 'strip_newsgroup_header'),
 
     ('_isomap', 'sklearn.manifold.isomap', 'sklearn.manifold', 'Isomap'),
     ('_locally_linear', 'sklearn.manifold.locally_linear', 'sklearn.manifold',

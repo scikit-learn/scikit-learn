@@ -139,7 +139,9 @@ sklearn/datasets/olivetti_faces.py
 sklearn/datasets/openml.py
 sklearn/datasets/rcv1.py
 sklearn/datasets/samples_generator.py
+sklearn/datasets/species_distributions.py
 sklearn/datasets/svmlight_format.py
+sklearn/datasets/twenty_newsgroups.py
 
 sklearn/manifold/isomap.py
 sklearn/manifold/locally_linear.py
