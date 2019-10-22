@@ -312,3 +312,39 @@ def test_infinite_values():
 
     expected_binned_X = np.array([0, 1, 2, 3]).reshape(-1, 1)
     assert_array_equal(bin_mapper.transform(X), expected_binned_X)
+
+
+def test_sample_weight_small_number_unique_values():
+    # Make sure that when the number of unique values is small, the thresholds
+    # are the same whether sample_weight are passed or not.
+    n_samples = 255
+    rng = np.random.RandomState(0)
+    X = rng.uniform(0, 1000, size=n_samples).reshape(-1, 1)
+    sample_weight = rng.uniform(0, 1000, size=n_samples)
+
+    with_sw = _BinMapper().fit(X, sample_weight=sample_weight)
+    without_sw = _BinMapper().fit(X)
+
+    np.testing.assert_allclose(with_sw.bin_thresholds_,
+                               without_sw.bin_thresholds_)
+
+def test_sample_weight_equiv_duplication():
+    from sklearn.ensemble._hist_gradient_boosting.binning import _weighted_quantile
+
+    n_samples = 500
+    n_quantiles = 100
+    rng = np.random.RandomState(0)
+
+    X = rng.uniform(0, 1000, size=n_samples)
+    lim = n_samples // 2
+    X_dup = np.r_[X, X[:lim]]
+
+    sample_weight = np.ones(n_samples)
+    sample_weight[:lim] = 2
+
+    quantiles = np.linspace(0, 1, n_quantiles)[1:-1]
+    no_dup_sw = _weighted_quantile(X, quantiles, sample_weight=sample_weight)
+    dup_no_sw = _weighted_quantile(X_dup, quantiles, sample_weight=None)
+    print(dup_no_sw - no_dup_sw)
+    np.testing.assert_allclose(dup_no_sw, no_dup_sw)  # fails
+

@@ -16,8 +16,8 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def weighted_quantile(values, quantiles, sample_weight=None,
-                      values_sorted=False, old_style=True):
+def _weighted_quantile(values, quantiles, sample_weight=None,
+                       values_sorted=False, old_style=True):
     """ Very close to numpy.percentile, but supports weights.
     NOTE: quantiles should be in [0, 1]!
     :param values: numpy.array with data
@@ -85,8 +85,11 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
         # TODO: depends on the weights and stratify maybe
+        # Question: should we subsample based on the weight if we also compute
+        # weight-based quantiles??
         subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
         data = data.take(subset, axis=0)
+        sample_weight = sample_weight.take(subset)
 
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
@@ -111,8 +114,8 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
             # midpoints = np.percentile(col_data, percentiles,
             #                          interpolation='midpoint').astype(X_DTYPE)
             # the utils.stat._weighted_percentile is not suitable here
-            midpoints = weighted_quantile(col_data, percentiles,
-                                          sample_weight=sample_weight).astype(X_DTYPE)
+            midpoints = _weighted_quantile(col_data, percentiles,
+                                           sample_weight=sample_weight).astype(X_DTYPE)
             assert midpoints.shape[0] == max_bins - 1
 
         # We avoid having +inf thresholds: +inf thresholds are only allowed in
