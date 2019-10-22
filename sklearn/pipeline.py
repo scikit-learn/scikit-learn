@@ -134,9 +134,10 @@ class Pipeline(_BaseComposition):
 
     @property
     def _warmstartable_parameters(self):
-        # The last step may be an estimator that supports warm-start.
-        # The other steps can only be transformers and do not support
-        # warm-start.
+        # This property exposes the _warmstartable_parameters attribute, e.g.
+        # ['+last_step_name__param']
+        # We consider that only the last step can be warm-started. The first
+        # steps are transformers that cannot be warm-started.
         out = []
         step_name, est = self.steps[-1]
         for param in getattr(est, '_warmstartable_parameters', []):
@@ -365,6 +366,7 @@ class Pipeline(_BaseComposition):
             if self._final_estimator != 'passthrough':
                 if self._check_warm_start_with(warm_start_with):
                     # convert {laststep__param: val} into just {param: val}
+                    # Could be a util in the base class
                     warm_start_with_final = {
                         name.split('__')[1]: val
                         for name, val in warm_start_with.items()

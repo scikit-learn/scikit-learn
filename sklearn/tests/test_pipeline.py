@@ -1207,12 +1207,12 @@ def test_warm_start_new_api():
 
     pipe = Pipeline([
         ('preprocessor', StandardScaler()),
-        ('gbdt', HistGradientBoostingClassifier())
+        ('gbdt', HistGradientBoostingClassifier(max_iter=10))
     ])
 
     assert pipe._warmstartable_parameters == ['+gbdt__max_iter']
 
     X, y = make_classification()
     pipe.fit(X, y)
-    pipe.fit(X, y, warm_start_with={'gbdt__max_iter': 150})
-    assert pipe.named_steps['gbdt'].n_iter_ == 150
+    pipe.fit(X, y, warm_start_with={'gbdt__max_iter': 20})
+    assert pipe.named_steps['gbdt'].n_iter_ == 20

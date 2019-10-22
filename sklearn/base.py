@@ -325,6 +325,9 @@ class BaseEstimator:
 
     def _check_warm_start_with(self, warm_start_with):
         # Return True if should warm start
+        # Also make sure that the parameters are warm-startable, and that
+        # their new value is either increasing or decreasing.
+        # If all goes well, use set_params to set the new parameter value.
 
         if not hasattr(self, '_warmstartable_parameters'):
             raise ValueError(
@@ -333,7 +336,7 @@ class BaseEstimator:
             )
 
         if not warm_start_with:  # None or empty dict
-            return False
+            return False  # no warm start needed
 
         def param_increases(param_name):
             # util to make sure the param is warm-startable, and to know
