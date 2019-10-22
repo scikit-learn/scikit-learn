@@ -351,6 +351,9 @@ class Pipeline(_BaseComposition):
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
 
+        warm_start_with : dict, default=None
+            Indicate which parameter to warm-start, with its new value.
+
         Returns
         -------
         self : Pipeline
