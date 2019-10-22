@@ -823,6 +823,11 @@ class PartialDependenceDisplay:
         else:  # array-like
             ax = check_array(ax, dtype=object, ensure_2d=False)
 
+            if ax.ndim == 2:
+                n_cols = ax.shape[1]
+            else:
+                n_cols = None
+
             if ax.ndim == 1 and ax.shape[0] != n_features:
                 raise ValueError("Expected len(ax) == len(features), "
                                  "got len(ax) = {}".format(len(ax)))
@@ -868,7 +873,8 @@ class PartialDependenceDisplay:
             axi.set_ylim(ylim)
 
             if len(values) == 1:
-                axi.set_ylabel('Partial dependence')
+                if n_cols is None or i % n_cols == 0:
+                    axi.set_ylabel('Partial dependence')
                 axi.set_ylim(self.pdp_lim[1])
             else:
                 # contour plot
