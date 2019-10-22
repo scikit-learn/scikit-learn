@@ -14,6 +14,8 @@ from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport fabs
 
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+
 np.import_array()
 
 
@@ -58,6 +60,8 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     cdef int X_indptr_end = 0
     cdef int Y_indptr_end = 0
 
+    cdef int num_threads = _openmp_effective_n_threads()
+
     # We scan the matrices row by row.
     # Given row px in X and row py in Y, we find the positions (i and j
     # respectively), in .indices where the indices for the two rows start.
@@ -72,7 +76,7 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
     # When prange is used, the inplace operator has a special meaning, i.e. it
     # signals a "reduction"
 
-    for px in prange(m, nogil=True):
+    for px in prange(m, nogil=True, num_threads=num_threads):
         X_indptr_end = X_indptr[px + 1]
         for py in range(n):
             Y_indptr_end = Y_indptr[py + 1]
