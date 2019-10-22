@@ -42,7 +42,7 @@ Use `Git <https://git-scm.com/>`_ to check out the latest source from the
     git clone git://github.com/scikit-learn/scikit-learn.git
     cd scikit-learn
 
-    pip install cython pytest flake8
+    pip install cython
     pip install --editable .
 
 Check that the installed scikit-learn with a version number ending with
@@ -50,8 +50,9 @@ Check that the installed scikit-learn with a version number ending with
 
     python -c "import sklearn; sklearn.show_versions()"
 
-Run the tests with::
+Run the tests with ``pytest``::
 
+    pip install pytest
     pytest sklearn
 
 Please read below for more details and :ref:`platform system specific
