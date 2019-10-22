@@ -21,7 +21,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
-from sklearn.ensemble import weight_boosting
 from sklearn.ensemble._weight_boosting import _samme_proba
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
