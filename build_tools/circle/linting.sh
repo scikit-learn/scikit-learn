@@ -150,7 +150,7 @@ echo -e "No problem detected by flake8\n"
 
 # do not error when grep -B1 "@property" finds nothing
 set +e
-bad_deprecation_property_order=`git grep -A 10 "@property" -- '*.py' | awk '/@deprecated/,/def /' | grep -B1 "@property"`
+bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@property/,/def /' | grep -B1 "@deprecated"`
 
 if [ ! -z "$bad_deprecation_property_order" ]
 then
