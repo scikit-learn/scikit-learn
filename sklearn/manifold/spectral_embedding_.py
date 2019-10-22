@@ -238,8 +238,21 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
                                       return_diag=True)
-    if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
-       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
+
+    def decide_which_solver(requested_solver, laplacian, n_nodes,
+                            n_components):
+        if requested_solver == 'arpack':
+            return 'arpack'
+        if requested_solver == 'amg':
+            if not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components:
+                return 'arpack'
+            return 'amg'
+        if requested_solver == 'lobpcg':
+            if n_nodes < 5 * n_components + 1:
+                return 'scipy_eigh'
+            return 'lobpcg'
+
+    def do_embedding_arpack(laplacian):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
@@ -262,25 +275,18 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # near 1.0 and leads to much faster convergence: potentially an
         # orders-of-magnitude speedup over simply using keyword which='LA'
         # in standard mode.
-        try:
-            # We are computing the opposite of the laplacian inplace so as
-            # to spare a memory allocation of a possibly very large array
-            laplacian *= -1
-            v0 = random_state.uniform(-1, 1, laplacian.shape[0])
-            _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which='LM',
-                tol=eigen_tol, v0=v0)
-            embedding = diffusion_map.T[n_components::-1]
-            if norm_laplacian:
-                embedding = embedding / dd
-        except RuntimeError:
-            # When submatrices are exactly singular, an LU decomposition
-            # in arpack fails. We fallback to lobpcg
-            eigen_solver = "lobpcg"
-            # Revert the laplacian to its opposite to have lobpcg work
-            laplacian *= -1
 
-    elif eigen_solver == 'amg':
+        # We are computing the opposite of the laplacian inplace so as
+        # to spare a memory allocation of a possibly very large array
+        laplacian *= -1
+        v0 = random_state.uniform(-1, 1, laplacian.shape[0])
+        _, diffusion_map = eigsh(
+            laplacian, k=n_components, sigma=1.0, which='LM',
+            tol=eigen_tol, v0=v0)
+        embedding = diffusion_map.T[n_components::-1]
+        return embedding
+
+    def do_embedding_amg(laplacian):
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
@@ -310,39 +316,62 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
                                   largest=False)
         embedding = diffusion_map.T
-        if norm_laplacian:
-            embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
+        return embedding
 
-    if eigen_solver == "lobpcg":
+    def do_embedding_lobpcg(laplacian):
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
-        if n_nodes < 5 * n_components + 1:
-            # see note above under arpack why lobpcg has problems with small
-            # number of nodes
-            # lobpcg will fallback to eigh, so we short circuit it
-            if sparse.isspmatrix(laplacian):
-                laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T[:n_components]
-            if norm_laplacian:
-                embedding = embedding / dd
-        else:
-            laplacian = _set_diag(laplacian, 1, norm_laplacian)
-            # We increase the number of eigenvectors requested, as lobpcg
-            # doesn't behave well in low dimension
-            X = random_state.rand(laplacian.shape[0], n_components + 1)
-            X[:, 0] = dd.ravel()
-            _, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
-                                      largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components]
-            if norm_laplacian:
-                embedding = embedding / dd
-            if embedding.shape[0] == 1:
-                raise ValueError
+        laplacian = _set_diag(laplacian, 1, norm_laplacian)
+        # We increase the number of eigenvectors requested, as lobpcg
+        # doesn't behave well in low dimension
+        X = random_state.rand(laplacian.shape[0], n_components + 1)
+        X[:, 0] = dd.ravel()
+        _, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
+                                  largest=False, maxiter=2000)
+        embedding = diffusion_map.T[:n_components]
+        if embedding.shape[0] == 1:
+            raise ValueError
+        return embedding
 
+    def do_embedding_scipy_eigh(laplacian):
+        # see note above under arpack why lobpcg has problems with small
+        # number of nodes
+        # lobpcg will fallback to eigh, so we short circuit it
+        if sparse.isspmatrix(laplacian):
+            laplacian = laplacian.toarray()
+        _, diffusion_map = eigh(laplacian)
+        embedding = diffusion_map.T[:n_components]
+        return embedding
+
+    solver_fn = {'arpack': do_embedding_arpack, 'amg': do_embedding_amg,
+                 'lobpcg': do_embedding_lobpcg,
+                 'scipy_eigh': do_embedding_scipy_eigh}
+
+    try:
+        chosen_solver = decide_which_solver(requested_solver=eigen_solver,
+                                            laplacian=laplacian,
+                                            n_nodes=n_nodes,
+                                            n_components=n_components)
+        embedding = solver_fn[chosen_solver](laplacian)
+    except RuntimeError:
+        if chosen_solver == 'arpack':
+            # When submatrices are exactly singular, an LU decomposition
+            # in arpack fails. We fallback to lobpcg
+            chosen_solver = decide_which_solver(requested_solver="lobpcg",
+                                                laplacian=laplacian,
+                                                n_nodes=n_nodes,
+                                                n_components=n_components)
+            # Revert laplacian to undo inversion done in do_embedding_arpack
+            laplacian *= -1
+            embedding = solver_fn[chosen_solver](laplacian)
+        else:
+            raise
+
+    if norm_laplacian:
+        embedding = embedding / dd
     embedding = _deterministic_vector_sign_flip(embedding)
     if drop_first:
         return embedding[1:n_components].T
