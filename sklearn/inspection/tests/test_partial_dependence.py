@@ -6,12 +6,12 @@ import numpy as np
 import pytest
 
 import sklearn
+from sklearn.inspection import partial_dependence
 from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
 )
-from sklearn.inspection import partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -218,9 +218,6 @@ def test_recursion_decision_function(est, target_feature):
     assert np.mean(y) == .5  # make sure the init estimator predicts 0 anyway
 
     est.fit(X, y)
-
-    print(partial_dependence)
-    assert False
 
     preds_1, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
