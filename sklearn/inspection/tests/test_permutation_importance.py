@@ -19,6 +19,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 
 
+def test_inspection_callable_permutation():
+    assert callable(permutation_importance)
+
+
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_permutation_importance_correlated_feature_regression(n_jobs):
     # Make sure that feature highly correlated to the target have a higher

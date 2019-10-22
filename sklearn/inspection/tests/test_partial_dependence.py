@@ -34,7 +34,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 
 
-def test_partial_dependence_callable():
+def test_inspection_callable_partial_dependence():
     assert callable(partial_dependence)
 
 

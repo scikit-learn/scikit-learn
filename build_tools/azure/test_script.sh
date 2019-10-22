@@ -41,5 +41,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn.inspection -x -k test_partial_dependence_callable
+$TEST_CMD --pyargs sklearn.inspection -k test_inspection_callable
 set +x
