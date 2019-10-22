@@ -132,6 +132,7 @@ sklearn/svm/liblinear.py
 
 sklearn/linear_model/base.py
 sklearn/linear_model/bayes.py
+sklearn/linear_model/cd_fast.py
 sklearn/linear_model/coordinate_descent.py
 sklearn/linear_model/huber.py
 sklearn/linear_model/least_angle.py
@@ -141,6 +142,8 @@ sklearn/linear_model/passive_aggressive.py
 sklearn/linear_model/perceptron.py
 sklearn/linear_model/ransac.py
 sklearn/linear_model/ridge.py
+sklearn/linear_model/sag.py
+sklearn/linear_model/sag_fast.py
 sklearn/linear_model/sgd_fast.py
 sklearn/linear_model/stochastic_gradient.py
 sklearn/linear_model/theil_sen.py
