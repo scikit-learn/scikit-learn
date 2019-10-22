@@ -8,11 +8,11 @@ jobs:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
       # i.e. numpy 1.11 and scipy 0.17
-      py35_ubuntu_atlas:
-        DISTRIB: 'ubuntu'
-        PYTHON_VERSION: '3.5'
-        JOBLIB_VERSION: '0.11'
-        SKLEARN_NO_OPENMP: 'True'
+      # py35_ubuntu_atlas:
+      #   DISTRIB: 'ubuntu'
+      #   PYTHON_VERSION: '3.5'
+      #   JOBLIB_VERSION: '0.11'
+      #   SKLEARN_NO_OPENMP: 'True'
       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
       py35_conda_openblas:
         DISTRIB: 'conda'
