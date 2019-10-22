@@ -95,7 +95,7 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.ax_.get_xlabel() == "False Positive Rate"
 
 
-def test_plot_roc_curve_pos_laebl(data_binary):
+def test_plot_roc_curve_pos_laebl(pyplot, data_binary):
     X, y = data_binary
     y = np.array(["neg", "pos"])[y]
     lr = LogisticRegression()
