@@ -835,6 +835,22 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+A generalization of linear models that allows for response variables to
+have error distribution other than a normal distribution is implemented
+in the following models,
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
 Miscellaneous
 -------------
 

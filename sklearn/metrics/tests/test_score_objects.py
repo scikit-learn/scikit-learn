@@ -47,7 +47,8 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
                       'max_error', 'neg_mean_poisson_deviance',
-                      'neg_mean_gamma_deviance']
+                      'neg_mean_gamma_deviance',
+                      'gini_score']
 
 CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
@@ -73,7 +74,8 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
                            'jaccard_samples']
 
 REQUIRE_POSITIVE_Y_SCORERS = ['neg_mean_poisson_deviance',
-                              'neg_mean_gamma_deviance']
+                              'neg_mean_gamma_deviance',
+                              'gini_score']
 
 
 def _require_positive_y(y):

@@ -993,7 +993,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
         all_at_reversed_rank = np.bincount(unique_inverse,
-                                        minlength=len(unique_scores))
+                                           minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of
@@ -1390,3 +1390,59 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
+
+
+def lorenz_curve(y_true, y_pred, sample_weight=None,
+                 ascending_predictions=True,
+                 normalize=True,
+                 return_gini=False):
+    y_true = check_array(y_true, ensure_2d=False,
+                         dtype=[np.float64, np.float32])
+    y_pred = check_array(y_pred, ensure_2d=False,
+                         dtype=[np.float64, np.float32])
+    check_consistent_length(y_true, y_pred)
+    y_true_min = y_true.min()
+    if y_true_min < 0:
+        raise ValueError("lorenz_curve is only defined for regression problems"
+                         " with non-negative target values. Observed minimum"
+                         " target value is %f" % y_true_min)
+    if sample_weight is None:
+        sample_weight = np.ones(len(y_true), dtype=np.float64)
+    else:
+        sample_weight = check_array(sample_weight, ensure_2d=False,
+                                    dtype=[np.float64, np.float32])
+        check_consistent_length(y_true, sample_weight)
+
+    # Rank the ranking base on y_pred
+    ranking = np.argsort(y_pred)
+    if not ascending_predictions:
+        ranking = ranking[::-1]
+
+    ranked_sample_weight = sample_weight[ranking]
+    ranked_target = y_true[ranking]
+
+    # Accumulate the sample weights and target values
+    cumulated_samples = np.cumsum(ranked_sample_weight)
+    cumulated_target = np.cumsum(ranked_target)
+
+    # Normalize to report fractions instead of absolute values.
+    # Normalization is necessary to compute the Gini index from
+    # the area under the Lorenz curve
+    if normalize:
+        cumulated_samples /= cumulated_samples[-1]
+        cumulated_target /= cumulated_target[-1]
+
+    if return_gini:
+        if not normalize or not ascending_predictions:
+            raise ValueError("Gini coefficient requires normalize=True"
+                             " and ascending_predictions=True")
+        gini = 1 - 2 * auc(cumulated_samples, cumulated_target)
+        return cumulated_samples, cumulated_target, gini
+    return cumulated_samples, cumulated_target
+
+
+def gini_score(y_true, y_pred, sample_weight=None):
+    cumulated_weights, cumulated_values = lorenz_curve(
+        y_true, y_pred, sample_weight=sample_weight,
+        ascending_predictions=True, normalize=True)
+    return 1 - 2 * auc(cumulated_weights, cumulated_values)

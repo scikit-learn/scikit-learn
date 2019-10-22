@@ -15,6 +15,8 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
                                  MultiTaskLassoCV)
+from ._glm import (PoissonRegressor,
+                   GammaRegressor, TweedieRegressor)
 from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
@@ -75,4 +77,7 @@ __all__ = ['ARDRegression',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',
-           'RANSACRegressor']
+           'RANSACRegressor',
+           'PoissonRegressor',
+           'GammaRegressor',
+           'TweedieRegressor']

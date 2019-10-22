@@ -22,11 +22,10 @@ the lower the better
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
-
 import numpy as np
-from scipy.special import xlogy
 import warnings
 
+from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
@@ -669,7 +668,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     y_pred : array-like of shape (n_samples,)
         Estimated target values.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     power : float, default=0
@@ -714,47 +713,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
         sample_weight = column_or_1d(sample_weight)
         sample_weight = sample_weight[:, np.newaxis]
 
-    message = ("Mean Tweedie deviance error with power={} can only be used on "
-               .format(power))
-    if power < 0:
-        # 'Extreme stable', y_true any realy number, y_pred > 0
-        if (y_pred <= 0).any():
-            raise ValueError(message + "strictly positive y_pred.")
-        dev = 2 * (np.power(np.maximum(y_true, 0), 2 - power)
-                   / ((1 - power) * (2 - power))
-                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
-                   + np.power(y_pred, 2 - power)/(2 - power))
-    elif power == 0:
-        # Normal distribution, y_true and y_pred any real number
-        dev = (y_true - y_pred)**2
-    elif power < 1:
-        raise ValueError("Tweedie deviance is only defined for power<=0 and "
-                         "power>=1.")
-    elif power == 1:
-        # Poisson distribution, y_true >= 0, y_pred > 0
-        if (y_true < 0).any() or (y_pred <= 0).any():
-            raise ValueError(message + "non-negative y_true and strictly "
-                             "positive y_pred.")
-        dev = 2 * (xlogy(y_true, y_true/y_pred) - y_true + y_pred)
-    elif power == 2:
-        # Gamma distribution, y_true and y_pred > 0
-        if (y_true <= 0).any() or (y_pred <= 0).any():
-            raise ValueError(message + "strictly positive y_true and y_pred.")
-        dev = 2 * (np.log(y_pred/y_true) + y_true/y_pred - 1)
-    else:
-        if power < 2:
-            # 1 < p < 2 is Compound Poisson, y_true >= 0, y_pred > 0
-            if (y_true < 0).any() or (y_pred <= 0).any():
-                raise ValueError(message + "non-negative y_true and strictly "
-                                           "positive y_pred.")
-        else:
-            if (y_true <= 0).any() or (y_pred <= 0).any():
-                raise ValueError(message + "strictly positive y_true and "
-                                           "y_pred.")
-
-        dev = 2 * (np.power(y_true, 2 - power)/((1 - power) * (2 - power))
-                   - y_true * np.power(y_pred, 1 - power)/(1 - power)
-                   + np.power(y_pred, 2 - power)/(2 - power))
+    dist = TweedieDistribution(power=power)
+    dev = dist.unit_deviance(y_true, y_pred, check_input=True)
 
     return np.average(dev, weights=sample_weight)
 
@@ -763,7 +723,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
     Poisson deviance is equivalent to the Tweedie deviance with
-    the power parameter `p=1`.
+    the power parameter `power=1`.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
 
@@ -775,7 +735,7 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape (n_samples,)
         Estimated target values. Requires y_pred > 0.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -800,7 +760,7 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
     Gamma deviance is equivalent to the Tweedie deviance with
-    the power parameter `p=2`. It is invariant to scaling of
+    the power parameter `power=2`. It is invariant to scaling of
     the target variable, and mesures relative errors.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -813,7 +773,7 @@ def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape (n_samples,)
         Estimated target values. Requires y_pred > 0.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
