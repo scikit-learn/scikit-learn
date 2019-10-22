@@ -41,5 +41,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn.inspection -k test_inspection_callable
+$TEST_CMD --pyargs sklearn
 set +x
