@@ -40,7 +40,7 @@ run_tests() {
     fi
 
     if [[ -n "$CHECK_WARNINGS" ]]; then
-        TEST_CMD="$TEST_CMD -Werror::FutureWarning"
+        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
     fi
 
     set -x  # print executed commands to the terminal
