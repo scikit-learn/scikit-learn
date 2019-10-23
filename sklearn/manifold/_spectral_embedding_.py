@@ -352,12 +352,10 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     
     
     '''
-    1. If there are only 0's in the eigenvalues, search for a sign change.
-    2. If there are numbers, try to find the greatest jump between them
-    3. If the numbers are uniform, and no jump is clear, find the first nonzero
-    Value
-    4. If none of the above use the original cluster number. 
-    
+    1. If there are only tiny numbers below a threshold of 1e-3 we search for a sign change within the eigenvalues. d
+    2. Otherwise, we look for the greatest change using int(argmax(numpy.diff(lambdas))+1.)
+    3. If the numbers are uniform, and no jump is clear, we can use the first nonzero value
+    4. Finally, if none of the above exists, we continue with the original cluster number. 
     '''
     
     if n_auto:
@@ -367,27 +365,22 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         if n_auto != True: threshold = 1e-3
         else:threshold = n_auto
 
-        if abs(sum(lambdas))<1e-4:
+        if abs(sum(lambdas))<threshold:
             n_auto = list(np.sign(1/np.array(lambdas))).index(1)
-            print ('zeros',n_auto)
         else: 
             n_auto = int(np.argmax(np.diff(lambdas))+1.)
         
         if n_auto > 1 :
             print('Updating the number of clusters to:', n_auto)
             n_components = n_auto
-            
+                        
         elif list(lambdas<threshold).index(-0) > 1 :
             n_auto = list(lambdasthreshold).index(-0)
             
-
     
     start = int(drop_first) #remove the need for if drop_first
-    
-    if n_auto:
-        return n_auto , embedding[start:n_components].T
-    else:
-        return embedding[start:n_components].T
+    if n_auto: return n_auto , embedding[start:n_components].T
+    else: return embedding[start:n_components].T
     
         
 
