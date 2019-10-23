@@ -134,7 +134,7 @@ def _set_diag(laplacian, value, norm_laplacian):
 
 def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+                       norm_laplacian=True, drop_first=True,n_auto=False):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -182,6 +182,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     norm_laplacian : bool, optional, default=True
         If True, then compute normalized Laplacian.
+        
+    n_auto : bool, optional, default=False
+        If not False (or zero), an eigenvalue evaluation is undergone to better fit/reduce the maximum number of clusters based on the work in `A Tutorial on Spectral Clustering, 2007 Ulrike von Luxburg http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323`. 
+        
+
 
     drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
@@ -267,7 +272,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # to spare a memory allocation of a possibly very large array
             laplacian *= -1
             v0 = random_state.uniform(-1, 1, laplacian.shape[0])
-            _, diffusion_map = eigsh(
+            lambdas, diffusion_map = eigsh(
                 laplacian, k=n_components, sigma=1.0, which='LM',
                 tol=eigen_tol, v0=v0)
             embedding = diffusion_map.T[n_components::-1]
@@ -307,7 +312,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
                                   largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -325,7 +330,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # lobpcg will fallback to eigh, so we short circuit it
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
-            _, diffusion_map = eigh(laplacian)
+            lambdas, diffusion_map = eigh(laplacian)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
                 embedding = embedding / dd
@@ -344,11 +349,47 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                 raise ValueError
 
     embedding = _deterministic_vector_sign_flip(embedding)
-    if drop_first:
-        return embedding[1:n_components].T
-    else:
-        return embedding[:n_components].T
+    
+    
+    '''
+    1. If there are only 0's in the eigenvalues, search for a sign change.
+    2. If there are numbers, try to find the greatest jump between them
+    3. If the numbers are uniform, and no jump is clear, find the first nonzero
+    Value
+    4. If none of the above use the original cluster number. 
+    
+    '''
+    
+    if n_auto:
+        
+        print ('eigenvalues: ',lambdas)
+        
+        if n_auto != True: threshold = 1e-3
+        else:threshold = n_auto
 
+        if abs(sum(lambdas))<1e-4:
+            n_auto = list(np.sign(1/np.array(lambdas))).index(1)
+            print ('zeros',n_auto)
+        else: 
+            n_auto = int(np.argmax(np.diff(lambdas))+1.)
+        
+        if n_auto > 1 :
+            print('Updating the number of clusters to:', n_auto)
+            n_components = n_auto
+            
+        elif list(lambdas<threshold).index(-0) > 1 :
+            n_auto = list(lambdasthreshold).index(-0)
+            
+
+    
+    start = int(drop_first) #remove the need for if drop_first
+    
+    if n_auto:
+        return n_auto , embedding[start:n_components].T
+    else:
+        return embedding[start:n_components].T
+    
+        
 
 class SpectralEmbedding(BaseEstimator):
     """Spectral embedding for non-linear dimensionality reduction.
@@ -405,6 +446,9 @@ class SpectralEmbedding(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    n_auto : bool, optional, default=False
+        If not False (or zero), an eigenvalue evaluation is undergone to better fit/reduce the maximum number of clusters based on the work in `A Tutorial on Spectral Clustering, 2007 Ulrike von Luxburg http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323`. 
+
     Attributes
     ----------
 
@@ -447,7 +491,7 @@ class SpectralEmbedding(BaseEstimator):
 
     def __init__(self, n_components=2, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None, n_jobs=None):
+                 n_neighbors=None, n_jobs=None, n_auto= False):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
@@ -455,6 +499,7 @@ class SpectralEmbedding(BaseEstimator):
         self.eigen_solver = eigen_solver
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
+        self.n_auto = n_auto
 
     @property
     def _pairwise(self):
@@ -550,10 +595,22 @@ class SpectralEmbedding(BaseEstimator):
                               "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(affinity_matrix,
+        
+        embedding = spectral_embedding( affinity_matrix,
                                              n_components=self.n_components,
                                              eigen_solver=self.eigen_solver,
-                                             random_state=random_state)
+                                             random_state=random_state,
+                                             n_auto=self.n_auto
+                                             )
+                                             
+        if not n_auto:
+            self.embedding_ = embedding
+        else:
+            #autoupdate the cluster numbers  
+            self.embedding_ = embedding[1]
+            self.n_cluster  = embedding[0]
+        
+                                             
         return self
 
     def fit_transform(self, X, y=None):

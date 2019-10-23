@@ -158,7 +158,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        eigen_tol=0.0, assign_labels='kmeans'):
+                        eigen_tol=0.0, assign_labels='kmeans',n_auto=False):
     """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -219,11 +219,15 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         the 'Multiclass spectral clustering' paper referenced below for
         more details on the discretization approach.
 
+    n_auto : bool, optional, default=False
+        If not False (or zero), an eigenvalue evaluation is undergone to better fit/reduce the maximum number of clusters based on the work in `A Tutorial on Spectral Clustering, 2007 Ulrike von Luxburg http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323`. 
+        
     Returns
     -------
     labels : array of integers, shape: n_samples
         The labels of the clusters.
 
+        
     References
     ----------
 
@@ -261,7 +265,11 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     maps = spectral_embedding(affinity, n_components=n_components,
                               eigen_solver=eigen_solver,
                               random_state=random_state,
-                              eigen_tol=eigen_tol, drop_first=False)
+                              eigen_tol=eigen_tol, drop_first=False,n_auto=n_auto)
+
+    if n_auto: 
+        n_clusters = int(maps[0])    
+        maps = maps[1]
 
     if assign_labels == 'kmeans':
         _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
@@ -374,6 +382,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+    
+    n_auto : bool, optional, default=False
+        If not False (or zero), an eigenvalue evaluation is undergone to better fit/reduce the maximum number of clusters based on the work in `A Tutorial on Spectral Clustering, 2007 Ulrike von Luxburg http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323`. 
 
     Attributes
     ----------
@@ -437,7 +448,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
-                 degree=3, coef0=1, kernel_params=None, n_jobs=None):
+                 degree=3, coef0=1, kernel_params=None, n_jobs=None,n_auto=False):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.n_components = n_components
@@ -452,6 +463,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self.coef0 = coef0
         self.kernel_params = kernel_params
         self.n_jobs = n_jobs
+        self.n_auto = n_auto
 
     def fit(self, X, y=None):
         """Perform spectral clustering from features, or affinity matrix.
@@ -517,7 +529,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                                            random_state=random_state,
                                            n_init=self.n_init,
                                            eigen_tol=self.eigen_tol,
-                                           assign_labels=self.assign_labels)
+                                           assign_labels=self.assign_labels,
+                                           n_auto = self.n_auto)
+                                           
+                                           
         return self
 
     def fit_predict(self, X, y=None):
