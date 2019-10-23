@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.utils.testing import assert_allclose, assert_raises
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
-from sklearn.neighbors.ball_tree import kernel_norm
+from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV

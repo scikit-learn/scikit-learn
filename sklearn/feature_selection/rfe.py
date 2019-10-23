@@ -19,7 +19,7 @@ from ..base import clone
 from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..metrics.scorer import check_scoring
+from ..metrics import check_scoring
 from .base import SelectorMixin
 
 
