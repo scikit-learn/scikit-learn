@@ -52,7 +52,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
