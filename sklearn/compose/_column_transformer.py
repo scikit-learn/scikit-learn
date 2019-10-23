@@ -697,7 +697,7 @@ boolean mask array or callable
         Xt : array-like or DataFrame of shape [n_samples, n_features]
 
         """
-        check_is_fitted(self, 'transformers_')
+        check_is_fitted(self)
 
         if self._inverse_error:
             raise ValueError("Unable to invert: {}".format(
