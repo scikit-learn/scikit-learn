@@ -86,9 +86,9 @@ def test_pls():
     assert_array_almost_equal(Xreconstructed, X,
                               err_msg="inverse_transform failed")
     # Check inplace usage
-    Xreconstructed = plsca.inverse_transform(Xr, copy=False)
+    plsca.inverse_transform(Xr, copy=False)
     assert_array_almost_equal(Xr, X,
-                              err_msg="inverse_transform failed")
+                              err_msg="inverse_transform with inplace failed")
 
 
     # "Non regression test" on canonical PLS
