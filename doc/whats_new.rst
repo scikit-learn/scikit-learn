@@ -5,18 +5,16 @@
 Release History
 ===============
 
-Release notes for current and recent releases are detailed on this page, with
-:ref:`previous releases <previous_releases_whats_new>` linked below.
+Release notes for current and recent releases are linked in this this page,
+together with :ref:`previous releases <previous_releases_whats_new>`.
 
 **Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
 on libraries.io to be notified when new versions are released.
 
-.. include:: changelog_legend.rst
-
 Latest Releases
 =================
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 1
 
     Version 0.22 <whats_new/v0.22.rst>
     Version 0.21 <whats_new/v0.21.rst>
