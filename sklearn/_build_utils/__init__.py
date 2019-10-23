@@ -83,10 +83,10 @@ def gen_from_templates(templates):
         templates = [templates]
 
     for template in templates:
-        pyxfile = template.replace('.tp', '')
+        outfile = template.replace('.tp', '')
 
-        if not (os.path.exists(pyxfile) and
-                os.stat(template).st_mtime < os.stat(pyxfile).st_mtime):
+        if not (os.path.exists(outfile) and
+                os.stat(template).st_mtime < os.stat(outfile).st_mtime):
 
             with open(template, "r") as f:
                 tmpl = f.read()
@@ -96,5 +96,5 @@ def gen_from_templates(templates):
             from Cython import Tempita # noqa
             tmpl_ = Tempita.sub(tmpl)
 
-            with open(pyxfile, "w") as f:
+            with open(outfile, "w") as f:
                 f.write(tmpl_)
