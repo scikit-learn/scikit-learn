@@ -464,6 +464,10 @@ Changelog
   :func:`metrics.pairwise.manhattan_distances` in the case of sparse matrices.
   :pr:`15049` by `Paolo Toccaceli <ptocca>`.
 
+- |Enhancement| :func:`metrics.median_absolute_error` now supports
+  ``multioutput`` parameter.
+  :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -667,7 +671,7 @@ Changelog
 - |Fix| :func:`utils.check_array` will now correctly detect numeric dtypes in
   pandas dataframes, fixing a bug where ``float32`` was upcast to ``float64``
   unnecessarily. :pr:`15094` by `Andreas Müller`_.
-  
+
 - |API| The following utils have been deprecated and are now private:
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
@@ -723,4 +727,3 @@ These changes mostly affect library developers.
   :pr:`13392` by :user:`Rok Mihevc <rok>`.
 
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
-
