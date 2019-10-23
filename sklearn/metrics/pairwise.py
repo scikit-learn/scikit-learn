@@ -897,8 +897,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     X = np.asarray(X, dtype=np.object)
 
-    cat_mask, num_mask = \
-        detect_categorical_features(X, categorical_features)
+    cat_mask = _detect_categorical_features(X, categorical_features)
+    num_mask = ~ cat_mask
 
     # Calculates the min and max values, and if requested, scale the
     # input values in order to obtain the distances between 0 and 1,
@@ -910,6 +910,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
             process_scale = scale
         else:
             if len(np.asarray(scale).flatten()) != X[:, num_mask].shape[1]:
+
+                print("len(scale):", len(np.asarray(scale).flatten()) ,"len(num_mask):", X[:, num_mask].shape[1])
                 raise ValueError("Length of scale parameter must be equal "
                                  "to the number of numerical columns.")
             process_scale = True
@@ -964,7 +966,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     return D
 
 
-def detect_categorical_features(X, categorical_features=None):
+def _detect_categorical_features(X, categorical_features=None):
     """Identifies the numerical and non-numerical (categorical) columns
     of an array.
 
@@ -984,24 +986,25 @@ def detect_categorical_features(X, categorical_features=None):
 
     Returns
     -------
-    categorical_features_mask, numerical_features_mask
-     : ndarray, shape (n_features)
+    categorical_features_mask : ndarray, shape (n_features)
+
     """
-    _, n_cols = np.shape(X)
     # Automatic detection of categorical features
     if categorical_features is None:
-        categorical_features = np.zeros(n_cols, dtype=bool)
-        for col in range(0, n_cols):
-            if not np.issubdtype(type(X[0][col]), np.number):
-                categorical_features[col] = True
+        categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
+        for col in range(np.shape(X)[1]):
+            f = lambda x: x != np.nan and not np.issubdtype(type(x), np.number) 
+            f_test = np.frompyfunc(f, 1, 1)
+            if np.any(f_test(X[:, col])):
+               categorical_features[col] = True
     else:
         categorical_features = np.asarray(categorical_features)
         if np.issubdtype(categorical_features.dtype, np.integer):
-            new_categorical_features = np.zeros(n_cols, dtype=bool)
+            new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
 
-    return categorical_features, ~categorical_features
+    return categorical_features
 
 
 def _precompute_gower_params(X, Y, scale, num_mask):
@@ -1629,7 +1632,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         if 'categorical_features' in kwds:
             categorical_features = kwds['categorical_features']
 
-        _, num_mask = detect_categorical_features(X, categorical_features)
+        num_mask = ~ _detect_categorical_features(X, categorical_features)
 
         scale = None
         if 'scale' in kwds:
