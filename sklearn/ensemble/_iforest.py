@@ -143,6 +143,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import IsolationForest
+    >>> X = [[-1.1], [0.3], [0.5], [100]]
+    >>> clf = IsolationForest(random_state=0).fit(X)
+    >>> clf.predict([[0.1], [0], [90]])
+    array([ 1,  1, -1])
+
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The

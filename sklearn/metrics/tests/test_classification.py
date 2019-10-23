@@ -45,7 +45,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
 
-from sklearn.metrics.classification import _check_targets
+from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming

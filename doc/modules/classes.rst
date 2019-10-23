@@ -882,7 +882,7 @@ Miscellaneous
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-    manifold.t_sne.trustworthiness
+    manifold.trustworthiness
 	
 
 .. _metrics_ref:

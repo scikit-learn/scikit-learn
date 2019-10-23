@@ -14,8 +14,8 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
-from sklearn.neighbors.base import _is_sorted_by_data, _check_precomputed
+from sklearn.neighbors import VALID_METRICS_SPARSE, VALID_METRICS
+from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1582,7 +1582,7 @@ def test_sparse_metric_callable():
 def test_pairwise_boolean_distance():
     # Non-regression test for #4523
     # 'brute': uses scipy.spatial.distance through pairwise_distances
-    # 'ball_tree': uses sklearn.neighbors.dist_metrics
+    # 'ball_tree': uses sklearn.neighbors._dist_metrics
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(6, 5))
     NN = neighbors.NearestNeighbors
