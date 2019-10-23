@@ -262,8 +262,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
                                       num_threads=num_threads)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
-    if c != 1:
-        grad *= c
+    grad *= c
 
     return error, grad
 

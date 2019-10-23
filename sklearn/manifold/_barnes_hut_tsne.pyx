@@ -92,7 +92,8 @@ cdef float compute_gradient(float[:] val_P,
         t2 = clock()
         printf("[t-SNE] Computing positive gradient: %e ticks\n",
                ((float) (t2 - t1)))
-    for i in prange(start, n_samples, nogil=True, num_threads=num_threads):
+    for i in prange(start, n_samples, nogil=True, num_threads=num_threads,
+                    schedule='static'):
         for ax in range(n_dimensions):
             coord = i * n_dimensions + ax
             tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sQ)
@@ -138,7 +139,7 @@ cdef float compute_gradient_positive(float[:] val_P,
         # Define private buffer variables
         buff = <float *> malloc(sizeof(float) * n_dimensions)
 
-        for i in prange(start, n_samples):
+        for i in prange(start, n_samples, schedule='static'):
             # Init the gradient vector
             for ax in range(n_dimensions):
                 pos_f[i * n_dimensions + ax] = 0.0
@@ -207,7 +208,7 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         force = <float *> malloc(sizeof(float) * n_dimensions)
         neg_force = <float *> malloc(sizeof(float) * n_dimensions)
 
-        for i in prange(start, stop):
+        for i in prange(start, stop, schedule='static'):
             # Clear the arrays
             for ax in range(n_dimensions):
                 force[ax] = 0.0
