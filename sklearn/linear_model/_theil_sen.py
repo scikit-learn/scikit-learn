@@ -17,7 +17,7 @@ from scipy.special import binom
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel, delayed, effective_n_jobs
 
-from .base import LinearModel
+from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils import check_X_y

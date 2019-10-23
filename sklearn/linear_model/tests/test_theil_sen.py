@@ -14,8 +14,8 @@ from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
-from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
+from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
+from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
 from sklearn.utils.testing import assert_almost_equal, assert_raises
 
 

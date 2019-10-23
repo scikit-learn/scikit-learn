@@ -17,8 +17,8 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
-from .base import LinearClassifierMixin, LinearModel, _rescale_data
-from .sag import sag_solver
+from ._base import LinearClassifierMixin, LinearModel, _rescale_data
+from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
