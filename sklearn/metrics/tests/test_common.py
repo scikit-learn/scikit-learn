@@ -426,8 +426,8 @@ MULTILABELS_METRICS = {
 
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
-    "mean_absolute_error", "mean_squared_error", "r2_score",
-    "explained_variance_score"
+    "mean_absolute_error", "median_absolute_error", "mean_squared_error",
+    "r2_score", "explained_variance_score"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred

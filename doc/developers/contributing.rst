@@ -210,7 +210,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest flake8
+       $ pip install cython pytest pytest-cov flake8
 
 5. Install scikit-learn in editable mode::
 
@@ -319,7 +319,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
      specific to the file
    - `pytest sklearn/linear_model` to test the whole
      :mod:`~sklearn.linear_model` module
-   - `pytest sklearn/doc/linear_model.rst` to make sure the user guide
+   - `pytest doc/modules/linear_model.rst` to make sure the user guide
      examples are correct.
    - `pytest sklearn/tests/test_common.py -k LogisticRegression` to run all our
      estimator checks (specifically for `LogisticRegression`, if that's the
@@ -1037,53 +1037,3 @@ make this task easier and faster (in no particular order).
     <https://git-scm.com/docs/git-grep#_examples>`_) is also extremely
     useful to see every occurrence of a pattern (e.g. a function call or a
     variable) in the code base.
-
-
-.. _plotting_api:
-
-Plotting API
-============
-
-Scikit-learn defines a simple API for creating visualizations for machine
-learning. The key features of this API is to run calculations once and to have
-the flexibility to adjust the visualizations after the fact. This logic is
-encapsulated into a display object where the computed data is stored and
-the plotting is done in a `plot` method. The display object's `__init__`
-method contains only the data needed to create the visualization. The `plot`
-method takes in parameters that only have to do with visualization, such as a
-matplotlib axes. The `plot` method will store the matplotlib artists as
-attributes allowing for style adjustments through the display object. A
-`plot_*` helper function accepts parameters to do the computation and the
-parameters used for plotting. After the helper function creates the display
-object with the computed values, it calls the display's plot method. Note
-that the `plot` method defines attributes related to matplotlib, such as the
-line artist. This allows for customizations after calling the `plot` method.
-
-For example, the `RocCurveDisplay` defines the following methods and
-attributes:
-
-.. code-block:: python
-
-   class RocCurveDisplay:
-       def __init__(self, fpr, tpr, roc_auc, estimator_name):
-           ...
-           self.fpr = fpr
-           self.tpr = tpr
-           self.roc_auc = roc_auc
-           self.estimator_name = estimator_name
-
-       def plot(self, ax=None, name=None, **kwargs):
-           ...
-           self.line_ = ...
-           self.ax_ = ax
-           self.figure_ = ax.figure_
-
-   def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
-                      drop_intermediate=True, response_method="auto",
-                      name=None, ax=None, **kwargs):
-       # do computation
-       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
-                                estimator.__class__.__name__)
-       return viz.plot(ax=ax, name=name, **kwargs)
-
-Read more in the :ref:`User Guide <visualizations>`.

@@ -16,7 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 from ..utils import check_array
 
@@ -182,9 +182,9 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                             force_all_finite=force_all_finite, copy=self.copy)
         except ValueError as ve:
             if "could not convert" in str(ve):
-                raise ValueError("Cannot use {0} strategy with non-numeric "
-                                 "data. Received datatype :{1}."
-                                 "".format(self.strategy, X.dtype.kind))
+                new_ve = ValueError("Cannot use {} strategy with non-numeric "
+                                    "data:\n{}".format(self.strategy, ve))
+                raise new_ve from None
             else:
                 raise ve
 

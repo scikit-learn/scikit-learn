@@ -392,7 +392,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Training vectors, where n_samples is the number of samples and
         n_features is the number of features.
 
@@ -418,7 +418,7 @@ def dump_svmlight_file(X, y, f,  zero_based=True, comment=None, query_id=None,
         the file as having been dumped by scikit-learn. Note that not all
         tools grok comments in SVMlight files.
 
-    query_id : array-like, shape = [n_samples]
+    query_id : array-like of shape (n_samples,)
         Array containing pairwise preference constraints (qid in svmlight
         format).
 
