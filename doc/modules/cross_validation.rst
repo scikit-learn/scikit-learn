@@ -241,7 +241,7 @@ predefined scorer names::
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
     ...            'rec_macro': make_scorer(recall_score, average='macro')}
     >>> scores = cross_validate(clf, X, y, scoring=scoring,
@@ -535,19 +535,30 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 3-fold cross-validation on a dataset with 10 samples from
-two slightly unbalanced classes::
+Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
+two unbalanced classes.  We show the number of samples in each class and compare with 
+:class:`KFold`.
 
-  >>> from sklearn.model_selection import StratifiedKFold
+  >>> from sklearn.model_selection import StratifiedKFold, KFold
+  >>> import numpy as np
+  >>> X, y = np.ones((50, 1)), np.hstack(([0] * 45, [1] * 5))
+  >>> skf = StratifiedKFold(n_splits=3) 
+  >>> for train, test in skf.split(X, y):  
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  4]   |   test -  [15  1]
+  >>> kf = KFold(n_splits=3)
+  >>> for train, test in kf.split(X, y):
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [28  5]   |   test -  [17]
+  train -  [28  5]   |   test -  [17]
+  train -  [34]   |   test -  [11  5]
 
-  >>> X = np.ones(10)
-  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
-  >>> skf = StratifiedKFold(n_splits=3)
-  >>> for train, test in skf.split(X, y):
-  ...     print("%s %s" % (train, test))
-  [2 3 6 7 8 9] [0 1 4 5]
-  [0 1 3 4 5 8 9] [2 6 7]
-  [0 1 2 4 5 6 7] [3 8 9]
+We can see that :class:`StratifiedKFold` preserves the class ratios 
+(approximately 1 / 10) in both train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
 

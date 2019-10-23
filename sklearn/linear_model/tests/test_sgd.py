@@ -20,7 +20,7 @@ from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
-from sklearn.linear_model import sgd_fast
+from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
 
