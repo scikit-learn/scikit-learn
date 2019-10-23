@@ -806,13 +806,14 @@ class make_column_selector:
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
     ...                   'expert_rating': [5, 3, 4, 5]})
     >>> ct = make_column_transformer(
-    ...       (StandardScaler(), make_column_selector(dtype_include=object)),
-    ...       (OneHotEncoder(), make_column_selector(dtype_include=np.number)))
+    ...       (StandardScaler(),
+    ...        make_column_selector(dtype_include=np.number)),
+    ...       (OneHotEncoder(), make_column_selector(dtype_include=object)))
     >>> ct.fit_transform(X)
-    array([[ 0.90..., 1. , 0. , 0.],
-           [-1.50..., 1. , 0. , 0.],
-           [-0.30..., 0. , 1. , 0.],
-           [ 0.90..., 0. , 0. , 1.]])
+    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
+           [-1.50755672,  1.        ,  0.        ,  0.        ],
+           [-0.30151134,  0.        ,  1.        ,  0.        ],
+           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
     """
 
     def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):

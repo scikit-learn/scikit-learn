@@ -102,8 +102,8 @@ Changelog
 ......................
 
 - |Feature|  Adds :func:`compose.make_column_selector` which is used with
-  :class:`compose.ColumnTransformer` to select columns based on data types.
-  :pr:`12303` by `Thomas Fan `_.
+  :class:`compose.ColumnTransformer` to select DataFrame columns on the basis
+  of name and dtype. :pr:`12303` by `Thomas Fan `_.
 
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
