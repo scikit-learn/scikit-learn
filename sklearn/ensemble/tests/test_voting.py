@@ -513,6 +513,8 @@ def test_transform():
 )
 @pytest.mark.parametrize("drop", [None, 'drop'])
 def test_none_estimator_with_weights(X, y, voter, drop):
+    # TODO: remove the parametrization on 'drop' when support for None is
+    # removed.
     # check that an estimator can be set to 'drop' and passing some weight
     # regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/13777
