@@ -71,7 +71,8 @@ boolean mask array or callable
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
-            above.
+            above. To select by name or dtype, use
+            :obj:`make_column_transformer`.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
