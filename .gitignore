@@ -142,6 +142,24 @@ sklearn/metrics/ranking.py
 sklearn/metrics/pairwise_fast.py
 sklearn/metrics/scorer.py
 
+sklearn/inspection/partial_dependence.py
+sklearn/inspection/permutation_importance.py
+
+sklearn/neighbors/ball_tree.py
+sklearn/neighbors/base.py
+sklearn/neighbors/classification.py
+sklearn/neighbors/dist_metrics.py
+sklearn/neighbors/graph.py
+sklearn/neighbors/kd_tree.py
+sklearn/neighbors/kde.py
+sklearn/neighbors/lof.py
+sklearn/neighbors/nca.py
+sklearn/neighbors/nearest_centroid.py
+sklearn/neighbors/quad_tree.py
+sklearn/neighbors/regression.py
+sklearn/neighbors/typedefs.py
+sklearn/neighbors/unsupervised.py
+
 sklearn/manifold/isomap.py
 sklearn/manifold/locally_linear.py
 sklearn/manifold/mds.py

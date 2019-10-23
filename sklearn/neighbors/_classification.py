@@ -14,7 +14,7 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from .base import \
+from ._base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
