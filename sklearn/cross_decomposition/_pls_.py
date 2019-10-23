@@ -446,7 +446,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         # Denormalize
         np.multiply(X, self.x_std_, out=X)
-        np.add(X,self.x_mean_, out=X)
+        np.add(X, self.x_mean_, out=X)
         return X
 
     def predict(self, X, copy=True):
