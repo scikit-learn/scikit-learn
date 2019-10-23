@@ -57,7 +57,7 @@ make referring to specific points easier. Please add new entries only at the
 bottom.
 
 
-#. Improved handling of Pandas DataFrames and SparseDataFrames
+#. Improved handling of Pandas DataFrames
 
    * document current handling
    * column reordering issue :issue:`7242`
@@ -115,7 +115,7 @@ bottom.
 
    * More flexible estimator checks that do not select by estimator name
      :issue:`6599` :issue:`6715`
-   * Example of how to develop a meta-estimator, :issue:`14582`
+   * Example of how to develop an estimator or a meta-estimator, :issue:`14582`
    * More self-sufficient running of scikit-learn-contrib or a similar resource
 
 #. Support resampling and sample reduction
@@ -125,7 +125,6 @@ bottom.
 
 #. Better interfaces for interactive development
 
-   * __repr__ and HTML visualisations of estimators
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
@@ -152,6 +151,7 @@ bottom.
    * Callbacks or a similar system would facilitate logging and early stopping
 
 #. Distributed parallelism
+
    * Accept data which complies with ``__array_function__``
 
 #. A way forward for more out of core
@@ -237,12 +237,6 @@ Subpackage-specific goals
 * Redundant computations in pipelines should be avoided (related to point
   above) cf `daskml
   <https://dask-ml.readthedocs.io/en/latest/hyper-parameter-search.html#avoid-repeated-work>`_
-
-:mod:`sklearn.neighbors`
-
-* Ability to substitute a custom/approximate/precomputed nearest neighbors
-  implementation for ours in all/most contexts that nearest neighbors are used
-  for learning. :issue:`10463`
 
 :mod:`sklearn.pipeline`
 
