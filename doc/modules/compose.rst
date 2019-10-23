@@ -524,8 +524,7 @@ is able to run `inverse_transform`::
   ...    ('min_max', MinMaxScaler(), ['expert_rating', 'user_rating'])],
   ...   remainder='passthrough')
   >>> X_trans = column_trans.fit_transform(X)
-  >>> column_trans.inverse_transform(X_trans).values
-  ... # doctest: +NORMALIZE_WHITESPACE
+  >>> column_trans.inverse_transform(X_trans).to_numpy()
   array([['London', 'His Last Bow', 5, 4],
          ['London', 'How Watson Learned the Trick', 3, 5],
          ['Paris', 'A Moveable Feast', 4, 4],
