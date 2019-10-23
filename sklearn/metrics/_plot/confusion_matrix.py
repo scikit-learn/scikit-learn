@@ -22,11 +22,8 @@ class ConfusionMatrixDisplay:
     confusion_matrix : ndarray of shape (n_classes, n_classes)
         Confusion matrix.
 
-    normalize : bool
-        Confusion matrix is normalized.
-
-    target_names : ndarray of shape (n_classes,)
-        Target names.
+    display_labels : ndarray of shape (n_classes,)
+        Display labels for plot.
 
     Attributes
     ----------
@@ -43,10 +40,9 @@ class ConfusionMatrixDisplay:
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
     """
-    def __init__(self, confusion_matrix, normalize, target_names):
+    def __init__(self, confusion_matrix, display_labels):
         self.confusion_matrix = confusion_matrix
-        self.normalize = normalize
-        self.target_names = target_names
+        self.display_labels = display_labels
 
     def plot(self, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None, ax=None):
@@ -86,6 +82,7 @@ class ConfusionMatrixDisplay:
             fig = ax.figure
 
         cm = self.confusion_matrix
+        normalized = np.issubdtype(cm.dtype, np.float_)
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
 
@@ -94,7 +91,7 @@ class ConfusionMatrixDisplay:
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
             if values_format is None:
-                values_format = '.2f' if self.normalize else 'd'
+                values_format = '.2f' if normalized else 'd'
             thresh = (cm.max() - cm.min()) / 2.
             for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
@@ -106,8 +103,8 @@ class ConfusionMatrixDisplay:
         fig.colorbar(self.im_, ax=ax)
         ax.set(xticks=np.arange(cm.shape[1]),
                yticks=np.arange(cm.shape[0]),
-               xticklabels=self.target_names,
-               yticklabels=self.target_names,
+               xticklabels=self.display_labels,
+               yticklabels=self.display_labels,
                ylabel="True label",
                xlabel="Predicted label")
 
@@ -119,7 +116,7 @@ class ConfusionMatrixDisplay:
 
 
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
-                          labels=None, target_names=None,
+                          labels=None, display_labels=None,
                           include_values=True, normalize=False,
                           xticks_rotation='horizontal',
                           values_format=None,
@@ -147,7 +144,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
         select a subset of labels. If `None` is given, those that appear at
         least once in `y_true` or `y_pred` are used in sorted order.
 
-    target_names : array-like of shape (n_classes,), default=None
+    display_labels : array-like of shape (n_classes,), default=None
         Target names used for plotting. By default, `labels` will be used if
         it is defined, otherwise the unique labels of `y_true` and `y_pred`
         will be used.
@@ -189,14 +186,13 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, None]
 
-    if target_names is None:
+    if display_labels is None:
         if labels is None:
-            target_names = unique_labels(y_true, y_pred)
+            display_labels = unique_labels(y_true, y_pred)
         else:
-            target_names = labels
+            display_labels = labels
 
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-                                  normalize=normalize,
-                                  target_names=target_names)
+                                  display_labels=display_labels)
     return disp.plot(include_values=include_values,
                      cmap=cmap, ax=ax, xticks_rotation=xticks_rotation)

@@ -47,11 +47,11 @@ def test_error_on_regressor(pyplot, data):
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("cmap", ['viridis', 'plasma'])
 @pytest.mark.parametrize("with_custom_axes", [True, False])
-@pytest.mark.parametrize("with_target_names", [True, False])
+@pytest.mark.parametrize("with_display_labels", [True, False])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
                                normalize, with_sample_weight, with_labels,
-                               cmap, with_custom_axes, with_target_names,
+                               cmap, with_custom_axes, with_display_labels,
                                include_values):
     X, y = data
 
@@ -64,7 +64,7 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     ax = pyplot.gca() if with_custom_axes else None
 
     labels = [2, 1, 0, 3, 4] if with_labels else None
-    target_names = ['b', 'd', 'a', 'e', 'f'] if with_target_names else None
+    display_labels = ['b', 'd', 'a', 'e', 'f'] if with_display_labels else None
 
     cm = confusion_matrix(y, y_pred, sample_weight=sample_weight,
                           labels=labels)
@@ -72,7 +72,8 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     disp = plot_confusion_matrix(fitted_clf, X, y,
                                  sample_weight=sample_weight,
                                  normalize=normalize, labels=labels,
-                                 cmap=cmap, ax=ax, target_names=target_names,
+                                 cmap=cmap, ax=ax,
+                                 display_labels=display_labels,
                                  include_values=include_values)
 
     if with_custom_axes:
@@ -94,18 +95,19 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
 
-    if with_target_names:
-        expected_target_names = target_names
+    if with_display_labels:
+        expected_display_labels = display_labels
     elif with_labels:
-        expected_target_names = labels
+        expected_display_labels = labels
     else:
-        expected_target_names = list(range(n_classes))
+        expected_display_labels = list(range(n_classes))
 
-    expected_target_names_str = [str(name) for name in expected_target_names]
+    expected_display_labels_str = [str(name)
+                                   for name in expected_display_labels]
 
-    assert_array_equal(disp.target_names, expected_target_names)
-    assert_array_equal(x_ticks, expected_target_names_str)
-    assert_array_equal(y_ticks, expected_target_names_str)
+    assert_array_equal(disp.display_labels, expected_display_labels)
+    assert_array_equal(x_ticks, expected_display_labels_str)
+    assert_array_equal(y_ticks, expected_display_labels_str)
 
     image_data = disp.im_.get_array().data
     assert_allclose(image_data, cm)
@@ -157,7 +159,7 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
 
 def test_confusion_matrix_contrast(pyplot):
     cm = np.eye(2) / 2
-    disp = ConfusionMatrixDisplay(cm, normalize=True, target_names=[0, 1])
+    disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
 
     disp.plot(cmap=pyplot.cm.gray)
     # diagonal text is black
