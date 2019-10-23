@@ -5,9 +5,9 @@
 import numpy as np
 import warnings
 
-from .base import NeighborsBase
-from .base import KNeighborsMixin
-from .base import UnsupervisedMixin
+from ._base import NeighborsBase
+from ._base import KNeighborsMixin
+from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted

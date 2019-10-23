@@ -14,8 +14,8 @@ import warnings
 
 import numpy as np
 
-from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from .base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
+from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 

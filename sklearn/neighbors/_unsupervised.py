@@ -1,8 +1,8 @@
 """Unsupervised nearest neighbors learner"""
-from .base import NeighborsBase
-from .base import KNeighborsMixin
-from .base import RadiusNeighborsMixin
-from .base import UnsupervisedMixin
+from ._base import NeighborsBase
+from ._base import KNeighborsMixin
+from ._base import RadiusNeighborsMixin
+from ._base import UnsupervisedMixin
 
 
 class NearestNeighbors(NeighborsBase, KNeighborsMixin,

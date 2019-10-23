@@ -22,7 +22,7 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'PyFuncDistance', 'HaversineDistance']
 
 
-include "binary_tree.pxi"
+include "_binary_tree.pxi"
 
 # Inherit BallTree from BinaryTree
 cdef class BallTree(BinaryTree):
