@@ -813,14 +813,19 @@ Some cross validation iterators, such as :class:`KFold`, have an inbuilt option
 to shuffle the data indices before splitting them. Note that:
 
 * This consumes less memory than shuffling the data directly.
-* By default no shuffling occurs, including for the (stratified) K fold cross-
-  validation performed by specifying ``cv=some_integer`` to
-  :func:`cross_val_score`, grid search, etc. Keep in mind that
-  :func:`train_test_split` still returns a random split.
+* The ``shuffle`` parameter of the splitters (:class:`KFold`
+  :class:`StratifiedKFold`, etc) is False by default, so no shuffling
+  happens by default. This means that :func:`cross_val_score`, and other
+  utilities aren't shuffled either by default, since they rely on these
+  splitters. Note however that ``shuffle`` is True by default for
+  :func:`train_test_split`.
 * The ``random_state`` parameter defaults to ``None``, meaning that different
-  instances of e.g. ``KFold(..., shuffle=True)``) will give different splits.
+  instances of e.g. ``KFold(..., shuffle=True)`` will give different splits.
+  This is also the case if you pass a `np.random.RandomState` instance. If you
+  pass an int, the instances will yield the same splits.
 * No matter what the ``random_state`` is, calling ``split()`` multiple times
-  on the same instance will always yield the same splits.
+  on the same splitter instance will always yield the same splits. This is true
+  for all splitters, and irrespective of the value of ``shuffle``.
 
 Cross validation and model selection
 ====================================
