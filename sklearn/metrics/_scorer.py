@@ -406,7 +406,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         module = getattr(scoring, '__module__', None)
         if hasattr(module, 'startswith') and \
            module.startswith('sklearn.metrics.') and \
-           not module.startswith('sklearn.metrics.scorer') and \
+           not module.startswith('sklearn.metrics._scorer') and \
            not module.startswith('sklearn.metrics.tests.'):
             raise ValueError('scoring value %r looks like it is a metric '
                              'function rather than a scorer. A scorer should '
