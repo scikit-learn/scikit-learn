@@ -130,6 +130,9 @@ sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
 
+sklearn/inspection/partial_dependence.py
+sklearn/inspection/permutation_importance.py
+
 sklearn/neighbors/ball_tree.py
 sklearn/neighbors/base.py
 sklearn/neighbors/classification.py

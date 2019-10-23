@@ -86,6 +86,11 @@ _DEPRECATED_MODULES = [
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 
+    ('_partial_dependence', 'sklearn.inspection.partial_dependence',
+     'sklearn.inspection', 'partial_dependence'),
+    ('_permutation_importance', 'sklearn.inspection.permutation_importance',
+     'sklearn.inspection', 'permutation_importance'),
+
     ('_ball_tree', 'sklearn.neighbors.ball_tree', 'sklearn.neighbors',
      'BallTree'),
     ('_base', 'sklearn.neighbors.base', 'sklearn.neighbors',
