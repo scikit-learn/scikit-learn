@@ -88,7 +88,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
+         ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
 
         .. deprecated:: 0.22
@@ -123,7 +123,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None` or 'drop'.
+        that are not 'drop'.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
