@@ -153,11 +153,11 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from .typedefs import DTYPE, ITYPE
+from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from ._typedefs import DTYPE, ITYPE
 
-from .dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                           euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
+                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)
@@ -1002,7 +1002,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from .dist_metrics import get_valid_metric_ids
+from ._dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
