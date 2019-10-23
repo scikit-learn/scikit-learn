@@ -370,7 +370,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if _determine_key_type(features) == 'int':
         if (isinstance(features, Iterable) or
                 isinstance(features, numbers.Integral)):
-            # _get_column_indices() support negative indexing. Here, we limit
+            # _get_column_indices() supports negative indexing. Here, we limit
             # the indexing to be positive. The upper bound will be checked
             # by _get_column_indices()
             if np.any(np.less(features, 0)):
