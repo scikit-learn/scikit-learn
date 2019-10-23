@@ -285,10 +285,13 @@ def safe_indexing(X, indices, axis=0):
     X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
         Data from which to sample rows, items or columns. `list` are only
         supported when `axis=0`.
+
     indices : bool, int, str, slice, array-like
+
         - If `axis=0`, boolean and integer array-like, integer slice,
           and scalar integer are supported.
         - If `axis=1`:
+
             - to select a single column, `indices` can be of `int` type for
               all `X` types and `str` only for dataframe. The selected subset
               will be 1D, unless `X` is a sparse matrix in which case it will
@@ -298,6 +301,7 @@ def safe_indexing(X, indices, axis=0):
               these containers can be one of the following: `int`, 'bool' and
               `str`. However, `str` is only supported when `X` is a dataframe.
               The selected subset will be 2D.
+
     axis : int, default=0
         The axis along which `X` will be subsampled. `axis=0` will select
         rows while `axis=1` will select columns.

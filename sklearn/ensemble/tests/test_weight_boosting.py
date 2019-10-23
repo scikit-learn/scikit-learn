@@ -16,12 +16,12 @@ from sklearn.utils.testing import assert_raises, assert_raises_regexp
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
-from sklearn.ensemble import weight_boosting
-from sklearn.linear_model import LinearRegression
+from sklearn.ensemble._weight_boosting import _samme_proba
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
@@ -69,7 +69,7 @@ def test_samme_proba():
             return probs
     mock = MockEstimator()
 
-    samme_proba = weight_boosting._samme_proba(mock, 3, np.ones_like(probs))
+    samme_proba = _samme_proba(mock, 3, np.ones_like(probs))
 
     assert_array_equal(samme_proba.shape, probs.shape)
     assert np.isfinite(samme_proba).all()

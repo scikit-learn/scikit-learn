@@ -31,7 +31,7 @@ from sklearn.utils.testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.linear_model.logistic import (
+from sklearn.linear_model._logistic import (
     LogisticRegression,
     logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
@@ -129,8 +129,7 @@ def test_logistic_cv_mock_scorer():
 
     # reset mock_scorer
     mock_scorer.calls = 0
-    with pytest.warns(ChangedBehaviorWarning):
-        custom_score = lr.score(X, lr.predict(X))
+    custom_score = lr.score(X, lr.predict(X))
 
     assert custom_score == mock_scorer.scores[0]
     assert mock_scorer.calls == 1
