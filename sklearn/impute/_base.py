@@ -94,20 +94,20 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
                 )
             return self.indicator_.transform(X)
 
-    def _concatenate_indicator(self, X_imputed, X_indicator=None):
+    def _concatenate_indicator(self, X_imputed, X_indicator):
         """Concatenate indicator mask with the imputed data."""
-        if self.add_indicator:
-            hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
-            if X_indicator is not None:
-                X_imputed = hstack((X_imputed, X_indicator))
-            else:
-                raise ValueError(
-                    "Impossible to concatenate data from the missing "
-                    "indicator because they are not provided. Make sure to "
-                    "call _fit_indicator and _transform_indicator in the "
-                    "imputer implementation."
-                )
-        return X_imputed
+        if not self.add_indicator:
+            return X_imputed
+
+        hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
+        if X_indicator is not None:
+            return hstack((X_imputed, X_indicator))
+
+        raise ValueError(
+            "Impossible to concatenate data from the missing indicator "
+            "because they are not provided. Make sure to call _fit_indicator "
+            "and _transform_indicator in the imputer implementation."
+        )
 
     def _more_tags(self):
         return {'allow_nan': is_scalar_nan(self.missing_values)}
