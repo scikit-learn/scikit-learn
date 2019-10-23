@@ -20,7 +20,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import TempMemmap
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
+from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
@@ -883,7 +883,7 @@ def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
             calls += 1
             assert self.precompute == inner_precompute
 
-    monkeypatch.setattr("sklearn.linear_model.coordinate_descent.Lasso",
+    monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso",
                         LassoMock)
     clf = LassoCV(precompute=precompute)
     clf.fit(X, y)

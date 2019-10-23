@@ -17,7 +17,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
-from sklearn.metrics.regression import _check_reg_targets
+from sklearn.metrics._regression import _check_reg_targets
 
 from ...exceptions import UndefinedMetricWarning
 
