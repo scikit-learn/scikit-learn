@@ -132,6 +132,7 @@ sklearn/svm/liblinear.py
 
 sklearn/feature_extraction/dict_vectorizer.py
 sklearn/feature_extraction/hashing.py
+sklearn/feature_extraction/hashing_fast.py
 sklearn/feature_extraction/stop_words.py
 
 sklearn/linear_model/base.py
