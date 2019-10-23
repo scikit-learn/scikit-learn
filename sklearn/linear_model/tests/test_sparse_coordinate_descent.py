@@ -8,8 +8,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
 from sklearn.exceptions import ConvergenceWarning
 
-from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
-                                                     LassoCV, ElasticNetCV)
+from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
 
 
 def test_sparse_coef():

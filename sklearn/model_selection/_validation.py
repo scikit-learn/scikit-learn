@@ -25,8 +25,8 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
-                              _MultimetricScorer)
+from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder

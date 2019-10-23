@@ -491,6 +491,13 @@ div.sk-navbar-collapse {
   text-align: center;
 }
 
+dl.citation > dd > ol > li {
+  display: inline;
+}
+
+dl.citation > dd > ol {
+  margin-bottom: 0;
+}
 
 /* docs index */
 
