@@ -7,6 +7,8 @@
 Version 0.21.3
 ==============
 
+.. include:: ../changelog_legend.rst
+
 **July 30, 2019**
 
 Changed models
