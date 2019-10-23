@@ -22,17 +22,17 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.ridge import ridge_regression
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.ridge import _RidgeGCV
-from sklearn.linear_model.ridge import RidgeCV
-from sklearn.linear_model.ridge import RidgeClassifier
-from sklearn.linear_model.ridge import RidgeClassifierCV
-from sklearn.linear_model.ridge import _solve_cholesky
-from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_CenterStackOp
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model._ridge import _solve_cholesky
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.linear_model._ridge import _check_gcv_mode
+from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV

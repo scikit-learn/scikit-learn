@@ -57,7 +57,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
 
-from sklearn.metrics.base import _average_binary_score
+from sklearn.metrics._base import _average_binary_score
 
 
 # Note toward developers about metric testing
