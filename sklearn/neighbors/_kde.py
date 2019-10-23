@@ -10,8 +10,8 @@ from ..base import BaseEstimator
 from ..utils import check_array, check_random_state, check_consistent_length
 
 from ..utils.extmath import row_norms
-from .ball_tree import BallTree, DTYPE
-from .kd_tree import KDTree
+from ._ball_tree import BallTree, DTYPE
+from ._kd_tree import KDTree
 
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',

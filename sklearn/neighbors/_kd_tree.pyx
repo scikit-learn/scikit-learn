@@ -15,7 +15,7 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-include "binary_tree.pxi"
+include "_binary_tree.pxi"
 
 # Inherit KDTree from BinaryTree
 cdef class KDTree(BinaryTree):
