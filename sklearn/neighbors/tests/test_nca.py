@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_raises,
                                    assert_raise_message, assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
-from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
 
 
