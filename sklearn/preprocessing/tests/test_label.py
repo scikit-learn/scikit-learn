@@ -15,14 +15,14 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.preprocessing.label import LabelBinarizer
-from sklearn.preprocessing.label import MultiLabelBinarizer
-from sklearn.preprocessing.label import LabelEncoder
-from sklearn.preprocessing.label import label_binarize
+from sklearn.preprocessing._label import LabelBinarizer
+from sklearn.preprocessing._label import MultiLabelBinarizer
+from sklearn.preprocessing._label import LabelEncoder
+from sklearn.preprocessing._label import label_binarize
 
-from sklearn.preprocessing.label import _inverse_binarize_thresholding
-from sklearn.preprocessing.label import _inverse_binarize_multiclass
-from sklearn.preprocessing.label import _encode
+from sklearn.preprocessing._label import _inverse_binarize_thresholding
+from sklearn.preprocessing._label import _inverse_binarize_multiclass
+from sklearn.preprocessing._label import _encode
 
 from sklearn import datasets
 

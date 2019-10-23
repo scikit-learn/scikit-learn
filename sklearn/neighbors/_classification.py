@@ -10,12 +10,11 @@
 
 import numpy as np
 from scipy import stats
-from six import string_types
 from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from .base import \
+from ._base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
@@ -423,7 +422,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         else:
             if (_is_arraylike(self.outlier_label) and
-               not isinstance(self.outlier_label, string_types)):
+               not isinstance(self.outlier_label, str)):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError("The length of outlier_label: {} is "
                                      "inconsistent with the output "
@@ -435,7 +434,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             for classes, label in zip(classes_, outlier_label_):
                 if (_is_arraylike(label) and
-                   not isinstance(label, string_types)):
+                   not isinstance(label, str)):
                     # ensure the outlier lable for each output is a scalar.
                     raise TypeError("The outlier_label of classes {} is "
                                     "supposed to be a scalar, got "
