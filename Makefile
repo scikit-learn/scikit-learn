@@ -18,6 +18,8 @@ clean-ctags:
 clean: clean-ctags
 	$(PYTHON) setup.py clean
 	rm -rf dist
+	# TODO: Remove in when all modules are removed.
+	$(PYTHON) sklearn/_build_utils/deprecated_modules.py
 
 in: inplace # just a shortcut
 inplace:
@@ -31,10 +33,15 @@ test-doc:
 ifeq ($(BITS),64)
 	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
+test-code-parallel: in
+	$(PYTEST) -n auto --showlocals -v sklearn --durations=20
 
 test-coverage:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
+test-coverage-parallel:
+	rm -rf coverage .coverage .coverage.*
+	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
@@ -60,4 +67,4 @@ code-analysis:
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
 
 flake8-diff:
-	./build_tools/travis/flake8_diff.sh
+	./build_tools/circle/flake8_diff.sh

@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+from collections.abc import Iterable
+
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -15,7 +17,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
 
 
@@ -90,7 +91,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_clusters_per_class : int, optional (default=2)
         The number of clusters per class.
 
-    weights : list of floats or None (default=None)
+    weights : array-like of shape (n_classes,) or (n_classes - 1,),\
+              (default=None)
         The proportions of samples assigned to each class. If None, then
         classes are balanced. Note that if ``len(weights) == n_classes - 1``,
         then the last class weight is automatically inferred.
@@ -159,27 +161,32 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                          " features")
     # Use log2 to avoid overflow errors
     if n_informative < np.log2(n_classes * n_clusters_per_class):
-        raise ValueError("n_classes * n_clusters_per_class must"
-                         " be smaller or equal 2 ** n_informative")
-    if weights and len(weights) not in [n_classes, n_classes - 1]:
-        raise ValueError("Weights specified but incompatible with number "
-                         "of classes.")
+        msg = "n_classes({}) * n_clusters_per_class({}) must be"
+        msg += " smaller or equal 2**n_informative({})={}"
+        raise ValueError(msg.format(n_classes, n_clusters_per_class,
+                                    n_informative, 2**n_informative))
+
+    if weights is not None:
+        if len(weights) not in [n_classes, n_classes - 1]:
+            raise ValueError("Weights specified but incompatible with number "
+                             "of classes.")
+        if len(weights) == n_classes - 1:
+            if isinstance(weights, list):
+                weights = weights + [1.0 - sum(weights)]
+            else:
+                weights = np.resize(weights, n_classes)
+                weights[-1] = 1.0 - sum(weights[:-1])
+    else:
+        weights = [1.0 / n_classes] * n_classes
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
 
-    if weights and len(weights) == (n_classes - 1):
-        weights = weights + [1.0 - sum(weights)]
-
-    if weights is None:
-        weights = [1.0 / n_classes] * n_classes
-        weights[-1] = 1.0 - sum(weights[:-1])
-
     # Distribute samples among clusters by weight
-    n_samples_per_cluster = []
-    for k in range(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
-                                     / n_clusters_per_class))
+    n_samples_per_cluster = [
+        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)]
+
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
@@ -189,7 +196,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Build the polytope whose vertices become cluster centroids
     centroids = _generate_hypercube(n_clusters, n_informative,
-                                    generator).astype(float)
+                                    generator).astype(float, copy=False)
     centroids *= 2 * class_sep
     centroids -= class_sep
     if not hypercube:
@@ -445,7 +452,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y

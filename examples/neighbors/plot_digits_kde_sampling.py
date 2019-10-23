@@ -27,7 +27,7 @@ data = pca.fit_transform(digits.data)
 
 # use grid search cross-validation to optimize the bandwidth
 params = {'bandwidth': np.logspace(-1, 1, 20)}
-grid = GridSearchCV(KernelDensity(), params, cv=5)
+grid = GridSearchCV(KernelDensity(), params)
 grid.fit(data)
 
 print("best bandwidth: {0}".format(grid.best_estimator_.bandwidth))

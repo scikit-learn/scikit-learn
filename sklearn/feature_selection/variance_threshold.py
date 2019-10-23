@@ -5,11 +5,11 @@ import numpy as np
 from ..base import BaseEstimator
 from .base import SelectorMixin
 from ..utils import check_array
-from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs import mean_variance_axis, min_max_axis
 from ..utils.validation import check_is_fitted
 
 
-class VarianceThreshold(BaseEstimator, SelectorMixin):
+class VarianceThreshold(SelectorMixin, BaseEstimator):
     """Feature selector that removes all low-variance features.
 
     This feature selection algorithm looks only at the features (X), not the
@@ -65,8 +65,18 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)
+            if self.threshold == 0:
+                mins, maxes = min_max_axis(X, axis=0)
+                peak_to_peaks = maxes - mins
         else:
             self.variances_ = np.var(X, axis=0)
+            if self.threshold == 0:
+                peak_to_peaks = np.ptp(X, axis=0)
+
+        if self.threshold == 0:
+            # Use peak-to-peak to avoid numeric precision issues
+            # for constant features
+            self.variances_ = np.minimum(self.variances_, peak_to_peaks)
 
         if np.all(self.variances_ <= self.threshold):
             msg = "No feature in X meets the variance threshold {0:.5f}"
@@ -77,6 +87,6 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         return self
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'variances_')
+        check_is_fitted(self)
 
         return self.variances_ > self.threshold
