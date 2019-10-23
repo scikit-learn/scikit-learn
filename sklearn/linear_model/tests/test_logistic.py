@@ -9,7 +9,7 @@ import pytest
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
-from sklearn.metrics.scorer import get_scorer
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
