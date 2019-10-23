@@ -235,7 +235,6 @@ def test_check_scoring_and_check_multimetric_scoring():
                     ('accuracy', 'precision'), ['precision', 'accuracy'],
                     {'accuracy': make_scorer(accuracy_score),
                      'precision': make_scorer(precision_score)}):
-        print(scoring)
         estimator = LinearSVC(random_state=0)
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 
