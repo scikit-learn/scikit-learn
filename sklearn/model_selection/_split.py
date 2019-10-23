@@ -296,7 +296,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state  # only here for repr to work
-        self.seed = _get_seed_from_random_state_param(random_state)
+        self._seed = _get_seed_from_random_state_param(random_state)
 
 
     def split(self, X, y=None, groups=None):
@@ -428,7 +428,7 @@ class KFold(_BaseKFold):
         n_samples = _num_samples(X)
         indices = np.arange(n_samples)
         if self.shuffle:
-            check_random_state(self.seed).shuffle(indices)
+            check_random_state(self._seed).shuffle(indices)
 
         n_splits = self.n_splits
         fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
@@ -629,7 +629,7 @@ class StratifiedKFold(_BaseKFold):
         super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
-        rng = check_random_state(self.seed)
+        rng = check_random_state(self._seed)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
@@ -1100,7 +1100,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         self.n_repeats = n_repeats
         self.cvargs = cvargs
         self.random_state = random_state  # only here for repr to work
-        self.seed = _get_seed_from_random_state_param(random_state)
+        self._seed = _get_seed_from_random_state_param(random_state)
 
     def split(self, X, y=None, groups=None):
         """Generates indices to split data into training and test set.
@@ -1127,7 +1127,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
             The testing set indices for that split.
         """
         n_repeats = self.n_repeats
-        rng = check_random_state(self.seed)
+        rng = check_random_state(self._seed)
 
         for _ in range(n_repeats):
             # the local rng object will be consumed exactly once in
@@ -1160,7 +1160,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         n_splits : int
             Returns the number of splitting iterations in the cross-validator.
         """
-        rng = check_random_state(self.seed)
+        rng = check_random_state(self._seed)
         cv = self.cv(random_state=rng, shuffle=True,
                      **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
@@ -1275,7 +1275,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         self.train_size = train_size
         self._default_test_size = 0.1
         self.random_state = random_state  # only here for repr to work
-        self.seed = _get_seed_from_random_state_param(random_state)
+        self._seed = _get_seed_from_random_state_param(random_state)
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1418,7 +1418,7 @@ class ShuffleSplit(BaseShuffleSplit):
             n_samples, self.test_size, self.train_size,
             default_test_size=self._default_test_size)
 
-        rng = check_random_state(self.seed)
+        rng = check_random_state(self._seed)
         for i in range(self.n_splits):
             # random partition
             permutation = rng.permutation(n_samples)
@@ -1657,7 +1657,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
                                  np.cumsum(class_counts)[:-1])
 
-        rng = check_random_state(self.seed)
+        rng = check_random_state(self._seed)
 
         for _ in range(self.n_splits):
             # if there are ties in the class-counts, we want
