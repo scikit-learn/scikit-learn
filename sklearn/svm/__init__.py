@@ -10,10 +10,9 @@ The :mod:`sklearn.svm` module includes Support Vector Machine algorithms.
 #         of their respective owners.
 # License: BSD 3 clause (C) INRIA 2010
 
-from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC, \
+from ._classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC, \
         LinearSVR
-from .bounds import l1_min_c
-from . import libsvm, liblinear, libsvm_sparse
+from ._bounds import l1_min_c
 
 __all__ = ['LinearSVC',
            'LinearSVR',
@@ -22,7 +21,4 @@ __all__ = ['LinearSVC',
            'OneClassSVM',
            'SVC',
            'SVR',
-           'l1_min_c',
-           'liblinear',
-           'libsvm',
-           'libsvm_sparse']
+           'l1_min_c']
