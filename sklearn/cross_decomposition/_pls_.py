@@ -420,7 +420,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         return x_scores
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=True):
         """Transform data back to its original space.
 
         Parameters
@@ -436,18 +436,18 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X_original array-like of shape (n_samples, n_features)
 
         Notes
-        This transformation will only be exact if n_components=n_features
         -----
+        This transformation will only be exact if n_components=n_features
         """
         check_is_fitted(self)
-        X = check_array(X, copy=False, dtype=FLOAT_DTYPES)
+        X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # From pls space to original space
-        X_original = np.matmul(X, self.x_loadings_.T)
+        np.matmul(X, self.x_loadings_.T, out=X)
 
         # Denormalize
-        X_original *= self.x_std_
-        X_original += self.x_mean_
-        return X_original
+        X *= self.x_std_
+        X += self.x_mean_
+        return X
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.
