@@ -1551,7 +1551,6 @@ Plotting
    :toctree: generated/
    :template: function.rst
 
-   utils.arrayfuncs.cholesky_delete
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
