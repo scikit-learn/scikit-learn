@@ -25,7 +25,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
-from sklearn.utils._mocking import _NoSampleWeightWrapper
+from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn import datasets
 
 
@@ -501,7 +501,7 @@ def test_multidimensional_X():
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
-    base_estimator = _NoSampleWeightWrapper(DummyClassifier())
+    base_estimator = NoSampleWeightWrapper(DummyClassifier())
     clf = AdaBoostClassifier(
         base_estimator=base_estimator, algorithm=algorithm
     )

@@ -24,7 +24,7 @@ from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
-from sklearn.utils._mocking import _NoSampleWeightWrapper
+from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -1317,7 +1317,7 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = _NoSampleWeightWrapper(init_estimator())
+    init_est = NoSampleWeightWrapper(init_estimator())
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):

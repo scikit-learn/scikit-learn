@@ -137,7 +137,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         return {'_skip_test': True, 'X_types': ['1dlabel']}
 
 
-class _NoSampleWeightWrapper(BaseEstimator):
+class NoSampleWeightWrapper(BaseEstimator):
     """Wrap estimator which will not expose `sample_weight`.
 
     Parameters
