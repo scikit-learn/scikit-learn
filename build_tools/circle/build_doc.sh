@@ -203,5 +203,13 @@ then
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
+
+    check = `echo $warnings | grep "no warnings"`
+    if [ -z "$check" ]
+    then
+        echo "There are Sphinx Warnings in the documentation!"
+        echo "Please check doc/_build/html/stable/_changed.html"
+        exit 1
+    fi
 fi
 
