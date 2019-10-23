@@ -197,7 +197,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
-    is equal to the number of observations known to be in group :math:`i` but
+    is equal to the number of observations known to be in group :math:`i` and
     predicted to be in group :math:`j`.
 
     Thus in binary classification, the count of true negatives is

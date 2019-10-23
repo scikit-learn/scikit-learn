@@ -4,10 +4,10 @@
 #         Tom Dupre la Tour
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-from .base import KNeighborsMixin, RadiusNeighborsMixin
-from .base import NeighborsBase
-from .base import UnsupervisedMixin
-from .unsupervised import NearestNeighbors
+from ._base import KNeighborsMixin, RadiusNeighborsMixin
+from ._base import NeighborsBase
+from ._base import UnsupervisedMixin
+from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted
 
