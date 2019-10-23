@@ -13,9 +13,9 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed, effective_n_jobs
 
-from .base import LinearModel, _pre_fit
+from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
-from .base import _preprocess_data
+from ._base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
@@ -24,7 +24,7 @@ from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
-from . import cd_fast
+from . import _cd_fast as cd_fast
 
 
 ###############################################################################

@@ -1,7 +1,7 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
 
-from .stochastic_gradient import BaseSGDClassifier
+from ._stochastic_gradient import BaseSGDClassifier
 
 
 class Perceptron(BaseSGDClassifier):

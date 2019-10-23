@@ -8,8 +8,8 @@ import warnings
 
 import numpy as np
 
-from .base import make_dataset
-from .sag_fast import sag32, sag64
+from ._base import make_dataset
+from ._sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.validation import _check_sample_weight
