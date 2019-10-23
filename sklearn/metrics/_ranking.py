@@ -35,7 +35,7 @@ from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
 
-from .base import _average_binary_score, _average_multiclass_ovo_score
+from ._base import _average_binary_score, _average_multiclass_ovo_score
 
 
 def auc(x, y):

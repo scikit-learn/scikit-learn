@@ -30,7 +30,7 @@ from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..metrics.scorer import check_scoring
+from ..metrics import check_scoring
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
