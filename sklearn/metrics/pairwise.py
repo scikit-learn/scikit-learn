@@ -918,8 +918,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
             process_scale = scale
         else:
             if len(np.asarray(scale).flatten()) != X[:, num_mask].shape[1]:
-
-                print("len(scale):", len(np.asarray(scale).flatten()) ,"len(num_mask):", X[:, num_mask].shape[1])
                 raise ValueError("Length of scale parameter must be equal "
                                  "to the number of numerical columns.")
             process_scale = True
@@ -1000,8 +998,11 @@ def _detect_categorical_features(X, categorical_features=None):
     # Automatic detection of categorical features
     if categorical_features is None:
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
+        def detect_cat(x):
+            return x != np.nan and not np.issubdtype(type(x), np.number)
+            
         for col in range(np.shape(X)[1]):
-            f = lambda x: x != np.nan and not np.issubdtype(type(x), np.number) 
+            f = lambda x: detect_cat(x)
             f_test = np.frompyfunc(f, 1, 1)
             if np.any(f_test(X[:, col])):
                categorical_features[col] = True
