@@ -474,7 +474,7 @@ boolean mask array or callable
                 continue
             trans_no_inverse.append(name)
         if trans_no_inverse:
-            self._invert_error = (
+            self._inverse_error = (
                 "Unable to invert: {} does not define "
                 "inverse_transform".format(",".join(trans_no_inverse))
             )
@@ -489,12 +489,12 @@ boolean mask array or callable
                 continue
             col_indices_set = set(col_indices)
             if not all_indices.isdisjoint(col_indices_set):
-                self._invert_error = (
+                self._inverse_error = (
                     "transformers contain overlapping columns")
                 return
             if trans == 'drop':
-                self._invert_error = ("dropping columns is not supported. "
-                                      "'{}' drops columns".format(name))
+                self._inverse_error = ("dropping columns is not supported. "
+                                       "'{}' drops columns".format(name))
                 return
             input_indices.append(col_indices)
             all_indices.update(col_indices_set)
@@ -505,17 +505,15 @@ boolean mask array or callable
         self._X_dtypes = getattr(X, 'dtypes', None)
         self._X_row_index = getattr(X, 'index', None)
         self._X_is_sparse = sparse.issparse(X)
-        self._invert_error = None
+        self._inverse_error = None
         self._output_indices = []
         cur_index = 0
 
         for X_transform in Xs:
-            X_features = X_transform.shape[-1]
+            X_features = X_transform.shape[1]
             self._output_indices.append(
                 list(range(cur_index, cur_index + X_features)))
             cur_index += X_features
-
-        assert len(self._output_indices) == len(self._input_indices)
 
     def fit(self, X, y=None):
         """Fit all transformers using X.
@@ -575,7 +573,7 @@ boolean mask array or callable
 
         if not result:
             self._update_fitted_transformers([])
-            self._invert_error = (
+            self._inverse_error = (
                 "dropping columns is not supported. "
                 "all columns were dropped"
             )
@@ -701,36 +699,36 @@ boolean mask array or callable
         """
         check_is_fitted(self, 'transformers_')
 
-        if self._invert_error:
-            raise ValueError("Unable to invert: {}".format(self._invert_error))
+        if self._inverse_error:
+            raise ValueError("Unable to invert: {}".format(
+                self._inverse_error))
 
-        X_subs = (_get_column_indices(X, key) for key in self._output_indices)
+        X_sels = (_safe_indexing(X, indicies, axis=1)
+                  for indicies in self._output_indices)
         inv_transformers = []
         get_weight = (self.transformer_weights or {}).get
 
-        for (name, trans, column), sub in zip(self.transformers_, X_subs):
+        for (name, trans, column), X_sel in zip(self.transformers_, X_sels):
             if trans == 'passthrough':
                 trans = FunctionTransformer(
                     validate=False, accept_sparse=True, check_inverse=False)
-
-            inv_transformers.append((trans, sub, get_weight(name)))
+            inv_transformers.append((trans, X_sel, get_weight(name)))
 
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_inverse_transform_one)(
-                trans, X_sel, weight)
+            delayed(_inverse_transform_one)(trans, X_sel, weight)
             for trans, X_sel, weight in inv_transformers)
 
         if hasattr(X, 'shape'):
-            X_length = X.shape[0]
+            n_samples = X.shape[0]
         else:
-            X_length = len(X)
+            n_samples = len(X)
 
         if not Xs:
             # All transformers are None
-            return np.zeros((X_length, 0))
+            return np.zeros((n_samples, 0))
 
         if self._X_is_sparse:
-            inverse_Xs = sparse.lil_matrix((X_length,
+            inverse_Xs = sparse.lil_matrix((n_samples,
                                             self._n_features_in))
             for indices, inverse_X in zip(self._input_indices, Xs):
                 inverse_Xs[:, indices] = inverse_X
@@ -738,7 +736,7 @@ boolean mask array or callable
 
         # numpy array
         if self._X_row_index is None:
-            inverse_Xs = np.empty((X_length, self._n_features_in))
+            inverse_Xs = np.empty((n_samples, self._n_features_in))
             for indices, inverse_X in zip(self._input_indices, Xs):
                 if sparse.issparse(inverse_X):
                     inverse_X = inverse_X.toarray()
