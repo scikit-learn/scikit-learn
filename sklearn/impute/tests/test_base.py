@@ -40,8 +40,8 @@ def test_base_imputer_not_fit(data):
 
 def test_base_imputer_not_transform(data):
     imputer = NoTransformIndicatorImputer(add_indicator=True)
-    err_msg = ("Make sure to call _fit_indicator and _transform_indicator in "
-               "the imputer implementation")
+    err_msg = ("Call _fit_indicator and _transform_indicator in the "
+               "imputer implementation")
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit(data).transform(data)
     with pytest.raises(ValueError, match=err_msg):

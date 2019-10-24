@@ -205,7 +205,7 @@ class KNNImputer(_BaseImputer):
             force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
-        X_indicator = self._transform_indicator(X)
+        X_indicator = super()._transform_indicator(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "

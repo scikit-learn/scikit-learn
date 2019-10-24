@@ -75,7 +75,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         self.add_indicator = add_indicator
 
     def _fit_indicator(self, X):
-        """Fit a MissingIndicator and trigger a copy of X as well."""
+        """Fit a MissingIndicator."""
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values, error_on_new=False
@@ -104,9 +104,9 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             return hstack((X_imputed, X_indicator))
 
         raise ValueError(
-            "Impossible to concatenate data from the missing indicator "
-            "because they are not provided. Make sure to call _fit_indicator "
-            "and _transform_indicator in the imputer implementation."
+            "Data from the missing indicator are not provided. Call "
+            "_fit_indicator and _transform_indicator in the imputer "
+            "implementation."
         )
 
     def _more_tags(self):
