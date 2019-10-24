@@ -34,6 +34,7 @@ def test_base_imputer_not_fit(data):
     err_msg = "Make sure to call _fit_indicator before _transform_indicator"
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit(data).transform(data)
+    with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(data)
 
 
@@ -43,4 +44,5 @@ def test_base_imputer_not_transform(data):
                "the imputer implementation")
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit(data).transform(data)
+    with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(data)
