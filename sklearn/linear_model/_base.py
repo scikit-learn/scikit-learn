@@ -120,6 +120,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
 
     if check_input:
         X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
@@ -181,8 +183,10 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
-    sample_weight = np.full(n_samples, sample_weight,
-                            dtype=np.array(sample_weight).dtype)
+    sample_weight = np.array(sample_weight)
+    if sample_weight.ndim == 0:
+        sample_weight = np.full(n_samples, sample_weight,
+                                dtype=sample_weight.dtype)
     sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0),
                                   shape=(n_samples, n_samples))
@@ -467,7 +471,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
+        if sample_weight is not None and np.asarray(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
