@@ -24,7 +24,8 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     # generate sag_fast from template
-    gen_from_templates('sklearn/linear_model/_sag_fast.pyx.tp')
+    templates = ['sklearn/linear_model/_sag_fast.pyx.tp']
+    gen_from_templates(templates, top_path)
 
     config.add_extension('_sag_fast',
                          sources=['_sag_fast.pyx'],

@@ -49,7 +49,7 @@ def configuration(parent_package='', top_path=None):
     # generate _seq_dataset from template
     templates = ['sklearn/utils/_seq_dataset.pyx.tp',
                  'sklearn/utils/_seq_dataset.pxd.tp']
-    gen_from_templates(templates)
+    gen_from_templates(templates, top_path)
 
     config.add_extension('_seq_dataset',
                          sources=['_seq_dataset.pyx'],

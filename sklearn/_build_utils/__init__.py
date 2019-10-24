@@ -77,23 +77,27 @@ def maybe_cythonize_extensions(top_path, config):
             compiler_directives={'language_level': 3})
 
 
-def gen_from_templates(templates):
-    """Generate cython files from templates"""
-    if not isinstance(templates, list):
-        templates = [templates]
+def gen_from_templates(templates, top_path):
+    """Generate cython files from a list of templates"""
+    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
+    # Files are already cythonized, nothing to do.
+    if is_release:
+        return
+
+    # Lazy import because cython is not a dependency when building from
+    # source distribution.
+    from Cython import Tempita # noqa
 
     for template in templates:
         outfile = template.replace('.tp', '')
 
+        # if the template is not updated, no need to output the cython file
         if not (os.path.exists(outfile) and
                 os.stat(template).st_mtime < os.stat(outfile).st_mtime):
 
             with open(template, "r") as f:
                 tmpl = f.read()
 
-            # Lazy import because cython is not a dependency when building from
-            # source distribution.
-            from Cython import Tempita # noqa
             tmpl_ = Tempita.sub(tmpl)
 
             with open(outfile, "w") as f:
