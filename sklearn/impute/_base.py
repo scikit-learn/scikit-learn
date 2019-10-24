@@ -65,7 +65,7 @@ def _most_frequent(array, extra_value, n_repeat):
 class _BaseImputer(TransformerMixin, BaseEstimator):
     """Base class for all imputers.
 
-    It add automatically support for `add_indicator`.
+    It adds automatically support for `add_indicator`.
     """
 
     def __init__(self, missing_values=np.nan, add_indicator=False):
