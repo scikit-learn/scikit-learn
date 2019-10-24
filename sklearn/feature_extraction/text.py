@@ -30,7 +30,7 @@ from ..preprocessing import normalize
 from ._hashing import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT
+from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
@@ -184,7 +184,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin:
+class _VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -500,7 +500,13 @@ class VectorizerMixin:
                               " since 'analyzer' != 'word'")
 
 
-class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
+@deprecated("VectorizerMixin is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class VectorizerMixin(_VectorizerMixin):
+    pass
+
+
+class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -790,7 +796,7 @@ def _document_frequency(X):
         return np.diff(X.indptr)
 
 
-class CountVectorizer(VectorizerMixin, BaseEstimator):
+class CountVectorizer(_VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
