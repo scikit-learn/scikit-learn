@@ -293,7 +293,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                 'Setting a random_state has no effect since shuffle is '
                 'False. This will raise an error in 0.24. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                DeprecationWarning
+                FutureWarning
             )
 
         self.n_splits = n_splits

@@ -1590,6 +1590,6 @@ def test_leave_p_out_empty_trainset():
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     # TODO 0.24: raise a ValueError instead of a warning
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)
