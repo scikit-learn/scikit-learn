@@ -442,11 +442,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         check_is_fitted(self)
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # From pls space to original space
-        np.matmul(X, self.x_loadings_.T, out=X)
+        np.matmul(X.copy(), self.x_loadings_.T, out=X)
 
         # Denormalize
-        np.multiply(X, self.x_std_, out=X)
-        np.add(X, self.x_mean_, out=X)
+        X *= self.x_std_
+        X += self.x_mean_
         return X
 
     def predict(self, X, copy=True):
