@@ -14,10 +14,10 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.base import _preprocess_data
-from sklearn.linear_model.base import _rescale_data
-from sklearn.linear_model.base import make_dataset
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model._base import _preprocess_data
+from sklearn.linear_model._base import _rescale_data
+from sklearn.linear_model._base import make_dataset
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
