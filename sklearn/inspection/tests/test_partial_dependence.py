@@ -35,7 +35,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
 
 
 # toy sample
