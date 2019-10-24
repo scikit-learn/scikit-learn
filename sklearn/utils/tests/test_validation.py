@@ -912,8 +912,8 @@ def test_retrieve_samples_from_non_standard_shape():
                          [(3, int, 2, 5),
                           (2.5, float, 2, 5)])
 def test_check_scalar_valid(x, target_type, min_val, max_val):
-    # Test that check_scalar returns no error/warning if valid inputs are
-    # provided
+    """ Test that check_scalar returns no error/warning if valid inputs are
+    provided """
     with pytest.warns(None) as record:
         check_scalar(x, "test_name", target_type, min_val, max_val)
     assert len(record) == 0
@@ -930,8 +930,8 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
                            ValueError('`test_name3`= 5, must be <= 4.'))])
 def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                               err_msg):
-    # Test that check_scalar returns the right error if a wrong input is
-    # given
+    """ Test that check_scalar returns the right error if a wrong input is
+     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(x, target_name, target_type=target_type,
                      min_val=min_val, max_val=max_val)
