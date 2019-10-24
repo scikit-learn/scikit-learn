@@ -542,17 +542,10 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
 
 
 @pytest.mark.parametrize(
-    "name, Estimator", all_estimators(type_filter=['classifier', 'regressor'])
+    "estimator", [LinearRegression(), LogisticRegression(),
+                  GradientBoostingRegressor(), GradientBoostingClassifier()]
 )
-def test_partial_dependence_unfitted(name, Estimator):
-    try:
-        estimator = Estimator()
-    except TypeError:
-        raise SkipTest(
-            'The {} estimator cannot be built with default parameters'
-            .format(name)
-        )
-
+def test_partial_dependence_unfitted(estimator):
     X = iris.data
     preprocessor = make_column_transformer(
         (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
