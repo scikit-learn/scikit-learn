@@ -80,6 +80,7 @@ def _yield_checks(name, estimator):
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_sample_weights_pandas_series
+    yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
@@ -538,10 +539,16 @@ class _NotAnArray:
     """
 
     def __init__(self, data):
-        self.data = data
+        self.data = np.asarray(data)
 
     def __array__(self, dtype=None):
         return self.data
+
+    def __array_function__(self, func, types, args, kwargs):
+        if func.__name__ == "may_share_memory":
+            return True
+        raise TypeError("Don't want to call array_function {}!".format(
+            func.__name__))
 
 
 @deprecated("NotAnArray is deprecated in version "
@@ -717,6 +724,23 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         except ImportError:
             raise SkipTest("pandas is not installed: not testing for "
                            "input of type pandas.Series to class weight.")
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_sample_weights_not_an_array(name, estimator_orig):
+    # check that estimators will accept a 'sample_weight' parameter of
+    # type _NotAnArray in the 'fit' function.
+    estimator = clone(estimator_orig)
+    if has_fit_parameter(estimator, "sample_weight"):
+        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                      [2, 1], [2, 2], [2, 3], [2, 4],
+                      [3, 1], [3, 2], [3, 3], [3, 4]])
+        X = _NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
+        y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
+        weights = _NotAnArray([1] * 12)
+        if _safe_tags(estimator, "multioutput_only"):
+            y = _NotAnArray(y.data.reshape(-1, 1))
+        estimator.fit(X, y, sample_weight=weights)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1162,8 +1186,10 @@ def _check_transformer(name, transformer_orig, X, y):
     # fit
 
     if name in CROSS_DECOMPOSITION:
-        y_ = np.c_[y, y]
+        y_ = np.c_[np.asarray(y), np.asarray(y)]
         y_[::2, 1] *= 2
+        if isinstance(X, _NotAnArray):
+            y_ = _NotAnArray(y_)
     else:
         y_ = y
 

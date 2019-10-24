@@ -25,7 +25,7 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 from sklearn.base import RegressorMixin, BiclusterMixin
 
-from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY

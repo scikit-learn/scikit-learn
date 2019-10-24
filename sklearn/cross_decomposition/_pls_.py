@@ -881,6 +881,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
+            Y = check_array(Y, ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Yr = (Y - self.y_mean_) / self.y_std_
