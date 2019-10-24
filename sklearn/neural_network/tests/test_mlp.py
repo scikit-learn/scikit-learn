@@ -19,15 +19,12 @@ from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from io import StringIO
 from sklearn.metrics import roc_auc_score
-from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
 from sklearn.utils.testing import ignore_warnings
-from sklearn.neural_network._base import squared_loss, binary_log_loss, log_loss
-from sklearn.preprocessing import OneHotEncoder
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
@@ -721,52 +718,3 @@ def test_early_stopping_stratified():
             match='The least populated class in y has only 1 member'):
         mlp.fit(X, y)
 
-
-# @pytest.mark.parametrize('loss_func', [squared_loss, binary_log_loss, log_loss])
-# def test_sample_weight_loss_functions(loss_func):
-#     # test loss functions return the same values with using uniform sample weights
-#
-#     # TODO: increase the coverage of this test by calling fit(..)
-#     y_true = np.asarray([[0, 1, 0]])
-#     y_pred = np.asarray([[0, 0, 0]])
-#     sample_weight = np.asarray([[1, 1, 1]])
-#
-#     loss = loss_func(y_true, y_pred)
-#     loss_sample_weight = loss_func(y_true, y_pred, sample_weight)
-#
-#     assert loss == loss_sample_weight
-#
-# def test_sample_class_weights():
-#     # test sample and class weights
-#     standard_weight = 1
-#     high_weight = 5
-#     weighted_class = 0
-#
-#     # data preprocess
-#     X, y = load_digits(return_X_y=True)
-#     X = X / X.max()
-#     enc = OneHotEncoder(sparse=False)
-#     y = enc.fit_transform(y.reshape(-1,1))
-#     weighted_class_transformed = enc.transform(np.array(weighted_class).reshape(-1,1))
-#     X_train, X_test, y_train, y_test = train_test_split(X, y,
-#                                                         train_size=0.5,
-#                                                         random_state=0)
-#     class_weight = dict([(i, standard_weight) for i in range(enc.get_feature_names().shape[0])])
-#     class_weight[weighted_class] = high_weight
-#
-#     sample_weight = np.ones((y_train.shape[0])) * standard_weight
-#     sample_weight[np.all(y_train == weighted_class_transformed, axis=1)] = high_weight
-#
-#     test_samples = X_test[np.all(y_test == weighted_class_transformed, axis=1)]
-#
-#     clf = MLPClassifier()
-#     clf.fit(X_train, y_train)
-#     score = clf.predict_log_proba(test_samples)
-#
-#     # TODO: fix class weight for the case of one hot encoding..
-#     #  current: <class 'dict'>: {0: 5, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1}
-#     clf = MLPClassifier(class_weight=class_weight)
-#     clf.fit(X_train, y_train)
-#     weighted_score = clf.predict_log_proba(test_samples)
-#
-#     pass
