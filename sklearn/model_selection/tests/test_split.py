@@ -412,6 +412,7 @@ def test_stratified_kfold_label_invariance(k, shuffle):
 
     random_state = None if not shuffle else 0
     def get_splits(y):
+        random_state = None if not shuffle else 0
         return [(list(train), list(test))
                 for train, test
                 in StratifiedKFold(k, random_state=random_state,
@@ -1572,6 +1573,7 @@ def test_different_instances_splits(Klass, random_state):
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
-    with pytest.raises(ValueError,
-                       match='will have no effect when shuffle is False'):
+    # TODO 0.24: raise a ValueError instead of a warning
+    with pytest.warns(DeprecationWarning,
+                      match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)
