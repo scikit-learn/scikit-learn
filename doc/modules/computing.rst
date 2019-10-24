@@ -297,7 +297,7 @@ decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 
 Here is an example using
-:class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
+:class:`sklearn.linear_model.SGDClassifier` with the
 ``elasticnet`` penalty. The regularization strength is globally controlled by
 the ``alpha`` parameter. With a sufficiently high ``alpha``,
 one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
