@@ -114,8 +114,7 @@ Changelog
 ..................................
 
 - |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
-  eigenvalues found by the solver for numerical or conditioning issues, relying
-  on new common util :func:`utils.validation._check_psd_eigenvalues`. This
+  eigenvalues found by the solver for numerical or conditioning issues. This
   ensures consistency of results across solvers (different choices for
   ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
   ``'lobpcg'`` (see :issue:`12068`).
