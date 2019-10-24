@@ -484,6 +484,10 @@ Changelog
   where one test set could be `n_classes` larger than another. Test sets should
   now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
 
+- |API| :class:`KFold` and :class:`StratifiedKFold` now raise a warning is
+  `random_state` is set but `shuffle` is False. This will raise an error in
+  0.24.
+
 :mod:`sklearn.multioutput`
 ..........................
 
