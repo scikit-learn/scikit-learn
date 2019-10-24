@@ -384,7 +384,7 @@ class KFold(_BaseKFold):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`. Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False: an error will be raised in 0.24.
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -590,7 +590,7 @@ class StratifiedKFold(_BaseKFold):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`. Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False: an error will be raised in 0.24.
+        to None if ``shuffle`` is False.
 
     Examples
     --------
