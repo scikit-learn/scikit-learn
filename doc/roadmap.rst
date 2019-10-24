@@ -62,7 +62,8 @@ Architectural / general goals
 -----------------------------
 The list is numbered not as an indication of the order of priority, but to
 make referring to specific points easier. Please add new entries only at the
-bottom.
+bottom. Note that the crossed out entries are already done, and we try to keep
+the document up to date as we work on these issues.
 
 
 #. Improved handling of Pandas DataFrames
@@ -135,7 +136,8 @@ bottom.
 
 #. Better interfaces for interactive development
 
-   * |ss| __repr__ and HTML visualisations of estimators :issue:`6323` |se|
+   * |ss| __repr__ |se| and HTML visualisations of estimators
+     |ss| :issue:`6323` |se|
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
