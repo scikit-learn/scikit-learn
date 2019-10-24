@@ -27,8 +27,6 @@ the technique.
 #
 # License: BSD 3 clause
 
-import re
-
 import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -40,51 +38,6 @@ from sklearn.metrics import classification_report
 from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.svm import LinearSVC
-
-
-_QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
-                       r'|^In article|^Quoted from|^\||^>)')
-
-
-def strip_newsgroup_quoting(text):
-    """
-    Given text in "news" format, strip lines beginning with the quote
-    characters > or |, plus lines that often introduce a quoted section
-    (for example, because they contain the string 'writes:'.)
-
-    Parameters
-    ----------
-    text : string
-        The text from which to remove the signature block.
-    """
-    good_lines = [line for line in text.split('\n')
-                  if not _QUOTE_RE.search(line)]
-    return '\n'.join(good_lines)
-
-
-def strip_newsgroup_footer(text):
-    """
-    Given text in "news" format, attempt to remove a signature block.
-
-    As a rough heuristic, we assume that signatures are set apart by either
-    a blank line or a line made of hyphens, and that it is the last such line
-    in the file (disregarding blank lines at the end).
-
-    Parameters
-    ----------
-    text : string
-        The text from which to remove the signature block.
-    """
-    lines = text.strip().split('\n')
-    for line_num in range(len(lines) - 1, -1, -1):
-        line = lines[line_num]
-        if line.strip().strip('-') == '':
-            break
-
-    if line_num > 0:
-        return '\n'.join(lines[:line_num])
-    else:
-        return text
 
 
 class TextStats(TransformerMixin, BaseEstimator):
@@ -114,8 +67,6 @@ class SubjectBodyExtractor(TransformerMixin, BaseEstimator):
         features = np.empty(shape=(len(posts), 2), dtype=object)
         for i, text in enumerate(posts):
             headers, _, bod = text.partition('\n\n')
-            bod = strip_newsgroup_footer(bod)
-            bod = strip_newsgroup_quoting(bod)
             features[i, 1] = bod
 
             prefix = 'Subject:'
@@ -169,10 +120,12 @@ categories = ['alt.atheism', 'talk.religion.misc']
 X_train, y_train = fetch_20newsgroups(random_state=1,
                                       subset='train',
                                       categories=categories,
+                                      remove=('footers', 'quotes'),
                                       return_X_y=True)
 X_test, y_test = fetch_20newsgroups(random_state=1,
                                     subset='test',
                                     categories=categories,
+                                    remove=('footers', 'quotes'),
                                     return_X_y=True)
 
 pipeline.fit(X_train, y_train)
