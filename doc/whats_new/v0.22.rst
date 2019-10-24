@@ -113,6 +113,14 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
+- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
+  eigenvalues found by the solver for numerical or conditioning issues, relying
+  on new common util :func:`utils.validation._check_psd_eigenvalues`. This
+  ensures consistency of results across solvers (different choices for
+  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
+  ``'lobpcg'`` (see :issue:`12068`).
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
+
 - |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
   with a target matrix `Y` in which the first column was constant.
