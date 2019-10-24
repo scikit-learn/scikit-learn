@@ -903,14 +903,6 @@ def test_gower_distances():
     #
     # The calculation formula for Gower similarity is available in the
     # user guide.
-
-    X = [['M', False, 222.22, 1],
-         ['F', True, 333.22, 2],
-         ['M', True, 1934.0, 4],
-         [np.nan, np.nan, np.nan, np.nan]]
-
-    D = gower_distances(X, scale=[np.nan, np.nan])
-    #############
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
     with pytest.raises(ValueError):
@@ -930,7 +922,6 @@ def test_gower_distances():
 
     # No errors are expected to be raised here
     D = gower_distances(X, scale=[np.nan, np.nan])
-    #raise ValueError("Exiting...")
     D = gower_distances(X, scale=np.array([1, 1]))
 
     D = gower_distances(X)
@@ -1031,7 +1022,7 @@ def test_gower_distances():
 
     assert_array_almost_equal(D, pairwise_distances(X, metric="hamming"))
 
-    # Categorical values, with boolean represented as number 1,`0
+    # Categorical values, with boolean represented as number 1, 0
     X = [['M', 0],
          ['F', 1],
          ['M', 1],
