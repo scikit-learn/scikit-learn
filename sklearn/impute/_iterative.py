@@ -11,10 +11,10 @@ import numpy as np
 from ..base import clone, BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, safe_indexing
+from ..utils import check_array, check_random_state, _safe_indexing
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils import is_scalar_nan
-from ..utils.mask import _get_mask
+from ..utils._mask import _get_mask
 
 from ._base import (MissingIndicator, SimpleImputer,
                     _check_inputs_dtype)
@@ -168,6 +168,20 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
     --------
     SimpleImputer : Univariate imputation of missing values.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer  
+    >>> from sklearn.impute import IterativeImputer
+    >>> imp_mean = IterativeImputer(random_state=0)
+    >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
+    IterativeImputer(random_state=0)
+    >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
+    >>> imp_mean.transform(X)
+    array([[ 6.9584...,  2.       ,  3.        ],
+           [ 4.       ,  2.6000...,  6.        ],
+           [10.       ,  4.9999...,  9.        ]])
+
     Notes
     -----
     To support imputation in inductive mode we store each feature's estimator
@@ -276,9 +290,9 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
+            X_train = _safe_indexing(X_filled[:, neighbor_feat_idx],
                                     ~missing_row_mask)
-            y_train = safe_indexing(X_filled[:, feat_idx],
+            y_train = _safe_indexing(X_filled[:, feat_idx],
                                     ~missing_row_mask)
             estimator.fit(X_train, y_train)
 
@@ -287,7 +301,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
+        X_test = _safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
@@ -635,7 +649,7 @@ class IterativeImputer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The input data to complete.
 
         Returns
