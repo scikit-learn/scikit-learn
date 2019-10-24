@@ -201,7 +201,6 @@ def type_of_target(y):
         * 'multiclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
-
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
           of two dimensions with at least two columns, and at most 2 unique
           values.
