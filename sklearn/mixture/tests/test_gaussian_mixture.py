@@ -559,7 +559,7 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_raise_message(NotFittedError,
                              "This GaussianMixture instance is not fitted "
                              "yet. Call 'fit' with appropriate arguments "
-                             "before using this method.", g.predict, X)
+                             "before using this estimator.", g.predict, X)
 
         g.fit(X)
         Y_pred = g.predict(X)
@@ -858,7 +858,7 @@ def test_score():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm1.score, X)
+                         "before using this estimator.", gmm1.score, X)
 
     # Check score value
     with warnings.catch_warnings():
@@ -888,7 +888,7 @@ def test_score_samples():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm.score_samples, X)
+                         "before using this estimator.", gmm.score_samples, X)
 
     gmm_score_samples = gmm.fit(X).score_samples(X)
     assert gmm_score_samples.shape[0] == rand_data.n_samples
