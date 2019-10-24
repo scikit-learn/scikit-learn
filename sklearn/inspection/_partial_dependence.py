@@ -875,6 +875,8 @@ class PartialDependenceDisplay:
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:
                     axi.set_ylabel('Partial dependence')
+                else:
+                    axi.set_yticklabels([])
                 axi.set_ylim(self.pdp_lim[1])
             else:
                 # contour plot
