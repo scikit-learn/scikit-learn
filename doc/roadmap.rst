@@ -1,5 +1,13 @@
 ﻿.. _roadmap:
 
+.. |ss| raw:: html
+
+   <strike>
+
+.. |se| raw:: html
+
+   </strike>
+
 Roadmap
 =======
 
@@ -63,13 +71,15 @@ bottom.
    * column reordering issue :issue:`7242`
    * avoiding unnecessary conversion to ndarray :issue:`12147`
    * returning DataFrames from transformers :issue:`5523`
-   * getting DataFrames from dataset loaders :issue:`10733`
+   * getting DataFrames from dataset loaders :issue:`10733`,
+     |ss| :issue:`13902` |se|
    * Sparse currently not considered :issue:`12800`
 
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
      features :issue:`12866`
+   * |ss| In dataset loaders :issue:`13902` |se|
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
      encoding supervised by correlation with target variable) :issue:`5853`,
      :issue:`11805`
@@ -79,8 +89,8 @@ bottom.
 
    * Making sure meta-estimators are lenient towards missing data,
      :issue:`15319`
-   * Non-trivial imputers
-   * Learners directly handling missing data
+   * Non-trivial imputers |ss| :issue:`11977`, :issue:`12852` |se|
+   * Learners directly handling missing data |ss| :issue:`13911` |se|
    * An amputation sample generator to make parts of a dataset go missing
      :issue:`6284`
 
@@ -125,10 +135,12 @@ bottom.
 
 #. Better interfaces for interactive development
 
+   * |ss| __repr__ and HTML visualisations of estimators :issue:`6323` |se|
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
 
+   * |ss| alternative feature importances implementations, :issue:`13146` |se|
    * better ways to handle validation sets when fitting
    * better ways to find thresholds / create decision rules :issue:`8614`
 
@@ -218,6 +230,10 @@ bottom.
 Subpackage-specific goals
 -------------------------
 
+:mod:`sklearn.ensemble`
+
+* |ss| a stacking implementation, :issue:`11047` |se|
+
 :mod:`sklearn.cluster`
 
 * kmeans variants for non-Euclidean distances, if we can show these have
@@ -225,6 +241,7 @@ Subpackage-specific goals
 
 :mod:`sklearn.model_selection`
 
+* |ss| multi-metric scoring is slow :issue:`9326` |se|
 * perhaps we want to be able to get back more than multiple metrics
 * the handling of random states in CV splitters is a poor design and
   contradicts the validation of similar parameters in estimators,
@@ -237,6 +254,12 @@ Subpackage-specific goals
 * Redundant computations in pipelines should be avoided (related to point
   above) cf `daskml
   <https://dask-ml.readthedocs.io/en/latest/hyper-parameter-search.html#avoid-repeated-work>`_
+
+:mod:`sklearn.neighbors`
+
+* |ss| Ability to substitute a custom/approximate/precomputed nearest neighbors
+  implementation for ours in all/most contexts that nearest neighbors are used
+  for learning. :issue:`10463` |se|
 
 :mod:`sklearn.pipeline`
 
