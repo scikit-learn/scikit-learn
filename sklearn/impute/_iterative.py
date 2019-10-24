@@ -305,7 +305,7 @@ class IterativeImputer(_BaseImputer):
 
         # get posterior samples if there is at least one missing value
         X_test = _safe_indexing(X_filled[:, neighbor_feat_idx],
-                               missing_row_mask)
+                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
