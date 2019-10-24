@@ -463,8 +463,11 @@ def test_partial_dependence_pipeline():
     [None,
      make_column_transformer(
          (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
-         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)]))],
-    ids=['None', 'column-transformer']
+         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])),
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         remainder='passthrough')],
+    ids=['None', 'column-transformer', 'column-transformer-passthrough']
 )
 @pytest.mark.parametrize(
     "features",
