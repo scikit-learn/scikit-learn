@@ -992,8 +992,10 @@ def _detect_categorical_features(X, categorical_features=None):
     # Automatic detection of categorical features
     if categorical_features is None:
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
+        def cat_detect(x):
+            return np.nan and not np.issubdtype(type(x), np.number)
         for col in range(np.shape(X)[1]):
-            f = lambda x: x != np.nan and not np.issubdtype(type(x), np.number) 
+            f = lambda x: x != cat_detect(x)
             f_test = np.frompyfunc(f, 1, 1)
             if np.any(f_test(X[:, col])):
                categorical_features[col] = True
