@@ -177,7 +177,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
