@@ -17,19 +17,18 @@ The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 by decomposing such problems into binary classification problems. ``multioutput``
 regression is also supported.
 
-- **Multiclass classification**: classification task which labels each
-  sample as **one** of a number of classes, where the number of classes is
-  greater than 2. Each sample can only be labelled as one class.
+- **Multiclass classification**: classification task with more than two classes.
+  Each sample can only be labelled as one class.
 
   For example, classification using features extracted from a set of images of
-  fruit, where each image may either be of an orange, an apples, or a pear.
+  fruit, where each image may either be of an orange, an apple, or a pear.
   Each image is one sample and is labelled as one of the 3 possible classes.
   Multiclass classification makes the assumption that each sample is assigned
   to one and only one label - one sample cannot, for example, be both a pear
-  and an apple at the same time.
+  and an apple.
   
-  - Valid :term:`multiclass` representations for
-    :func:`~utils.multiclass.type_of_target` (`y`) are:
+  Valid :term:`multiclass` representations for
+  :func:`~utils.multiclass.type_of_target` (`y`) are:
 
     - 1d or column vector containing more than two discrete values.
     - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
@@ -37,33 +36,40 @@ regression is also supported.
 
 
 - **Multilabel classification**: classification task which labels each sample
-  with a set of binary attributes (either True or False) independently of
-  one another. The number of binary attributes is greater or equal to 2.
+  with a **set** of target labels. This can be thought of as predicting
+  properties of a sample that are not mutually exclusive. Formally, a value of
+  0 or 1 is assigned to each label, for every sample. It is thus comparable
+  to running 'n' binary classification tasks, for example with
+  :class:`sklearn.multiclass.OneVsRestClassifier`. Multilabel classification
+  differs in that only one classification model is trained whereas 'n'
+  classification models would be trained using the 'n' binary classification
+  tasks approach.
 
-  For example, classification of 2 fruit attributes, crispy or not crispy and
-  sour or not sour, using features extracted from a set of images of fruit.
-  Each sample is an image of one fruit, labels for both binary attributes are
-  output for each sample and each attribute is labelled independently of the
-  other attribute.
+  For example, prediction of taste using features extracted from a set of
+  images of fruit, where the possible taste labels are 'sour', 'sweet',
+  'juicy' and 'bitter'. Each image is one sample and is labelled with a
+  set of target labels, where the set can be any number of labels, ranging from
+  all 4 labels to none of the labels.
 
-  - valid representation :term:`multilabel` `y` is:
+  Valid representation :term:`multilabel` `y` is:
 
     - either dense (or sparse) :term:`binary` matrix of shape
       ``(n_samples, n_classes)`` with multiple active elements per row to denote
-      that the sample belongs to multiple classes. Each column represents a class.
+      that the sample belongs to multiple classes. Each column represents a 
+      class.
 
 
 - **Multioutput regression**: predicts multiple numerical properties for each
-  sample. Each property is a continuous variable and the number of properties
+  sample. Each property is a numerical variable and the number of properties
   to be predicted for each sample is greater or equal to 2.
 
-  For example, prediction of weight, sugar content and number of calories using
-  features extracted from images of fruit. Each sample is one image of a fruit
-  and for each sample weight, sugar content and number of calories are all
-  output.
+  For example, prediction of the surface area and volume fruit, using features
+  extracted from images of fruit. Each sample is one image of a piece of fruit
+  and for each sample a numerical value for surface area and volume are
+  predicted.
 
-  - valid representation :term:`multilabel` `y` is:
-
+  Valid representation :term:`multilabel` `y` is:
+  
     - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
       concatenation of :term:`continuous` variables.
 
@@ -71,21 +77,21 @@ regression is also supported.
 - **Multioutput-multiclass classification**
   (also known as **multitask classification**):
   classification task which labels each sample with a set of **non-binary**
-  attributes. Both the number of attributes and the number of classes per
-  attribute is greater than 2. A single estimator thus handles several joint
-  classification tasks. This is both a generalization of the multi\ *label*
-  classification task, which only considers binary attributes, as well as a
-  generalization of the multi\ *class* classification task, where only one
-  attribute is considered.
+  properties. Both the number of properties and the number of
+  classes per property is greater than 2. A single estimator thus
+  handles several joint classification tasks. This is both a generalization of
+  the multi\ *label* classification task, which only considers binary
+  attributes, as well as a generalization of the multi\ *class* classification
+  task, where only one property is considered.
 
-  For example, classification of the attributes "type of fruit" and "colour"
-  for a set of images of fruit. The attribute "type of fruit" has the possible
-  classes: "apple", "pear" and "orange". The attribute "colour" has the
+  For example, classification of the properties "type of fruit" and "colour"
+  for a set of images of fruit. The property "type of fruit" has the possible
+  classes: "apple", "pear" and "orange". The property "colour" has the
   possible classes: "green", "red", "yellow" and "orange". Each sample is an
-  image of a fruit, a label is output for both attributes and each label is
-  one of the possible classes of the corresponding attribute.
+  image of a fruit, a label is output for both properties and each label is
+  one of the possible classes of the corresponding property.
 
-  - valid representation :term:`multilabel` `y` is:
+  Valid representation :term:`multilabel` `y` is:
 
     - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
       concatenation of 1d :term:`multiclass` variables.
@@ -107,14 +113,14 @@ because this may have an effect on classifier performance
 **Summary**
 
 +-----------------+-------------+-------------+------------------------------------------+
-|                 | Number of   | Classes per | Valid                                    |
-|                 | attributes  | attribute   | :func:`~utils.multiclass.type_of_target` |
+|                 | Number of   | Target      | Valid                                    |
+|                 | targets     | cardinality | :func:`~utils.multiclass.type_of_target` |
 +=================+=============+=============+==========================================+
 | Multiclass      |  1          | >2          | - 'multiclass'                           |
-| classification  |             |             | - sparse binary                          |
+| classification  |             |             |                                          |
 +-----------------+-------------+-------------+------------------------------------------+
 | Multilabel      | >1          |  2 (0 or 1) | - 'multilabel-indicator'                 |
-| classification  |             |             | - dense or sparse binary                 |
+| classification  |             |             |                                          |
 +-----------------+-------------+-------------+------------------------------------------+
 | Multioutput     | >1          | Continuous  | - 'continuous-multioutput'               |
 | regression      |             |             |                                          |
