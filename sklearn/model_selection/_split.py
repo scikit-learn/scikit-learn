@@ -287,6 +287,12 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
+        if not shuffle and random_state is not None:  # None is the default
+            raise ValueError(
+                'Setting a random_state has no effect since shuffle is '
+                'False.'
+            )
+
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
