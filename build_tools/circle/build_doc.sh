@@ -189,6 +189,8 @@ then
     if [ -z "$warnings" ]
     then
         warnings="/home/circleci/project/ no warnings"
+    else
+        check=1
     fi
     echo "$warnings"
 
@@ -204,8 +206,7 @@ then
     echo '</ul></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 
-    check = `echo $warnings | grep "no warnings"`
-    if [ -z "$check" ]
+    if [ $check ]
     then
         echo "There are Sphinx Warnings in the documentation!"
         echo "Please check doc/_build/html/stable/_changed.html"
