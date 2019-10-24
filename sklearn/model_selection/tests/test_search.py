@@ -856,10 +856,10 @@ def test_grid_search_cv_results():
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
         assert (all(cv_results[k] >= 0) for k in score_keys
-                if k is not 'rank_test_score')
+                if k != 'rank_test_score')
         assert (all(cv_results[k] <= 1) for k in score_keys
                 if 'time' not in k and
-                k is not 'rank_test_score')
+                k != 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
