@@ -49,7 +49,10 @@ regression is also supported.
   images of fruit, where the possible taste labels are 'sour', 'sweet',
   'juicy' and 'bitter'. Each image is one sample and is labelled with a
   set of target labels, where the set can be any number of labels, ranging from
-  all 4 labels to none of the labels.
+  all 4 labels to none of the labels. A good 'real-world' example is predicting
+  the topics relevant to a text document or video. The document or video may be
+  about 'religion', 'politics', 'finance' or 'education', or a subset of these
+  topic labels or even all of these topic labels.
 
   Valid representation :term:`multilabel` `y` is:
 
