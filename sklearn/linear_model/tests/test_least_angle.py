@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import TempMemmap
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
-from sklearn.linear_model.least_angle import _lars_path_residues, LassoLarsIC
+from sklearn.linear_model._least_angle import _lars_path_residues, LassoLarsIC
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -302,8 +302,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
     for alpha_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
                                                        alpha_min=alpha_min)
-        lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
-                                      tol=1e-8)
+        lasso_cd = linear_model.Lasso(normalize=True, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
         error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
@@ -688,8 +687,7 @@ def test_lasso_lars_vs_R_implementation():
                    [0, 0, -1.569380717440311, -5.924804108067312,
                     -7.996385265061972]])
 
-    model_lasso_lars2 = linear_model.LassoLars(alpha=0, fit_intercept=True,
-                                               normalize=True)
+    model_lasso_lars2 = linear_model.LassoLars(alpha=0, normalize=True)
     model_lasso_lars2.fit(X, y)
     skl_betas2 = model_lasso_lars2.coef_path_
 

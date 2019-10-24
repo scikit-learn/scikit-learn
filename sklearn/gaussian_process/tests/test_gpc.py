@@ -12,8 +12,7 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import (assert_greater, assert_almost_equal,
-                                   assert_array_equal)
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 
 
 def f(x):
@@ -59,6 +58,16 @@ def test_lml_precomputed(kernel):
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
     assert_almost_equal(gpc.log_marginal_likelihood(gpc.kernel_.theta),
                         gpc.log_marginal_likelihood(), 7)
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that clone_kernel=False has side-effects of kernel.theta.
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpc.kernel_.theta.shape, dtype=np.float64)
+
+    gpc.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpc.kernel_.theta, input_theta, 7)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)

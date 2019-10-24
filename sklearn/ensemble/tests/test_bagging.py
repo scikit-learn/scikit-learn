@@ -64,7 +64,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(tol=1e-3),
+                           Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -543,7 +543,7 @@ def test_base_estimator():
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
-    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
+    ensemble = BaggingClassifier(Perceptron(),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 

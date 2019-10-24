@@ -39,11 +39,18 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     #   and max_leaf_nodes is low enough.
     # - To ignore  discrepancies caused by small differences the binning
     #   strategy, data is pre-binned if n_samples > 255.
+    # - We don't check the least_absolute_deviation loss here. This is because
+    #   LightGBM's computation of the median (used for the initial value of
+    #   raw_prediction) is a bit off (they'll e.g. return midpoints when there
+    #   is no need to.). Since these tests only run 1 iteration, the
+    #   discrepancy between the initial values leads to biggish differences in
+    #   the predictions. These differences are much smaller with more
+    #   iterations.
 
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
     max_iter = 1
-    max_bins = 256
+    max_bins = 255
 
     X, y = make_regression(n_samples=n_samples, n_features=5,
                            n_informative=5, random_state=0)
@@ -51,7 +58,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(max_bins=max_bins).fit_transform(X).astype(np.float32)
+        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
@@ -95,7 +102,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
     max_iter = 1
-    max_bins = 256
+    max_bins = 255
 
     X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
                                n_informative=5, n_redundant=0, random_state=0)
@@ -103,7 +110,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(max_bins=max_bins).fit_transform(X).astype(np.float32)
+        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
@@ -155,7 +162,7 @@ def test_same_predictions_multiclass_classification(
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
     max_iter = 1
-    max_bins = 256
+    max_bins = 255
     lr = 1
 
     X, y = make_classification(n_samples=n_samples, n_classes=3, n_features=5,
@@ -165,7 +172,7 @@ def test_same_predictions_multiclass_classification(
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
         # treat it as pre-binned
-        X = _BinMapper(max_bins=max_bins).fit_transform(X).astype(np.float32)
+        X = _BinMapper(n_bins=max_bins + 1).fit_transform(X).astype(np.float32)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 

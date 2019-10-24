@@ -1,10 +1,11 @@
 """Test the 20news downloader, if the data is available."""
+from functools import partial
+
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
-from functools import partial
 
 from sklearn import datasets
 
@@ -21,8 +22,7 @@ def test_20news():
         subset='all', categories=data.target_names[-1:-3:-1], shuffle=False)
     # Check that the ordering of the target_names is the same
     # as the ordering in the full dataset
-    assert (data2cats.target_names ==
-                 data.target_names[-2:])
+    assert data2cats.target_names == data.target_names[-2:]
     # Assert that we have only 0 and 1 as labels
     assert np.unique(data2cats.target).tolist() == [0, 1]
 
@@ -37,6 +37,13 @@ def test_20news():
     label = data.target_names.index(category)
     entry2 = data.data[np.where(data.target == label)[0][0]]
     assert entry1 == entry2
+
+    # check that return_X_y option
+    X, y = datasets.fetch_20newsgroups(
+        subset='all', shuffle=False, return_X_y=True
+    )
+    assert len(X) == len(data.data)
+    assert y.shape == data.target.shape
 
 
 def test_20news_length_consistency():

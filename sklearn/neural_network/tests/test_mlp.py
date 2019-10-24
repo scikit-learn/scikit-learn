@@ -8,6 +8,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 import pytest
 import sys
 import warnings
+import re
 
 import numpy as np
 
@@ -23,23 +24,20 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater,
-                                   assert_equal, ignore_warnings)
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import ignore_warnings
 
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
-digits_dataset_multi = load_digits(n_class=3)
+X_digits, y_digits = load_digits(n_class=3, return_X_y=True)
 
-X_digits_multi = MinMaxScaler().fit_transform(digits_dataset_multi.data[:200])
-y_digits_multi = digits_dataset_multi.target[:200]
+X_digits_multi = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_multi = y_digits[:200]
 
-digits_dataset_binary = load_digits(n_class=2)
+X_digits, y_digits = load_digits(n_class=2, return_X_y=True)
 
-X_digits_binary = MinMaxScaler().fit_transform(
-    digits_dataset_binary.data[:200])
-y_digits_binary = digits_dataset_binary.target[:200]
+X_digits_binary = MinMaxScaler().fit_transform(X_digits[:200])
+y_digits_binary = y_digits[:200]
 
 classification_datasets = [(X_digits_multi, y_digits_multi),
                            (X_digits_binary, y_digits_binary)]
@@ -48,6 +46,8 @@ boston = load_boston()
 
 Xboston = StandardScaler().fit_transform(boston.data)[: 200]
 yboston = boston.target[:200]
+
+regression_datasets = [(Xboston, yboston)]
 
 iris = load_iris()
 
@@ -229,32 +229,30 @@ def test_gradient():
             assert_almost_equal(numgrad, grad)
 
 
-def test_lbfgs_classification():
+@pytest.mark.parametrize('X,y', classification_datasets)
+def test_lbfgs_classification(X, y):
     # Test lbfgs on classification.
     # It should achieve a score higher than 0.95 for the binary and multi-class
     # versions of the digits dataset.
-    for X, y in classification_datasets:
-        X_train = X[:150]
-        y_train = y[:150]
-        X_test = X[150:]
+    X_train = X[:150]
+    y_train = y[:150]
+    X_test = X[150:]
+    expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
 
-        expected_shape_dtype = (X_test.shape[0], y_train.dtype.kind)
-
-        for activation in ACTIVATION_TYPES:
-            mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
-                                max_iter=150, shuffle=True, random_state=1,
-                                activation=activation)
-            mlp.fit(X_train, y_train)
-            y_predict = mlp.predict(X_test)
-            assert mlp.score(X_train, y_train) > 0.95
-            assert ((y_predict.shape[0], y_predict.dtype.kind) ==
-                         expected_shape_dtype)
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
+                            max_iter=150, shuffle=True, random_state=1,
+                            activation=activation)
+        mlp.fit(X_train, y_train)
+        y_predict = mlp.predict(X_test)
+        assert mlp.score(X_train, y_train) > 0.95
+        assert ((y_predict.shape[0], y_predict.dtype.kind) ==
+                expected_shape_dtype)
 
 
-def test_lbfgs_regression():
+@pytest.mark.parametrize('X,y', regression_datasets)
+def test_lbfgs_regression(X, y):
     # Test lbfgs on the boston dataset, a regression problems.
-    X = Xboston
-    y = yboston
     for activation in ACTIVATION_TYPES:
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
                            max_iter=150, shuffle=True, random_state=1,
@@ -265,6 +263,40 @@ def test_lbfgs_regression():
         else:
             # Non linear models perform much better than linear bottleneck:
             assert mlp.score(X, y) > 0.95
+
+
+@pytest.mark.parametrize('X,y', classification_datasets)
+def test_lbfgs_classification_maxfun(X, y):
+    # Test lbfgs parameter max_fun.
+    # It should independently limit the number of iterations for lbfgs.
+    max_fun = 10
+    # classification tests
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
+                            max_iter=150, max_fun=max_fun, shuffle=True,
+                            random_state=1, activation=activation)
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
+
+
+@pytest.mark.parametrize('X,y', regression_datasets)
+def test_lbfgs_regression_maxfun(X, y):
+    # Test lbfgs parameter max_fun.
+    # It should independently limit the number of iterations for lbfgs.
+    max_fun = 10
+    # regression tests
+    for activation in ACTIVATION_TYPES:
+        mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
+                           max_iter=150, max_fun=max_fun, shuffle=True,
+                           random_state=1, activation=activation)
+        with pytest.warns(ConvergenceWarning):
+            mlp.fit(X, y)
+            assert max_fun >= mlp.n_iter_
+
+    mlp.max_fun = -1
+    with pytest.raises(ValueError):
+        mlp.fit(X, y)
 
 
 def test_learning_rate_warmstart():
@@ -329,7 +361,8 @@ def test_partial_fit_classes_error():
     y = [0]
     clf = MLPClassifier(solver='sgd')
     clf.partial_fit(X, y, classes=[0, 1])
-    assert_raises(ValueError, clf.partial_fit, X, y, classes=[1, 2])
+    with pytest.raises(ValueError):
+        clf.partial_fit(X, y, classes=[1, 2])
 
 
 def test_partial_fit_classification():
@@ -397,40 +430,44 @@ def test_partial_fit_errors():
     y = [1, 0]
 
     # no classes passed
-    assert_raises(ValueError,
-                  MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
+    with pytest.raises(ValueError):
+        MLPClassifier(solver='sgd').partial_fit(X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
     assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
-def test_params_errors():
+@pytest.mark.parametrize(
+        "args",
+        [{'hidden_layer_sizes': -1},
+         {'max_iter': -1},
+         {'shuffle': 'true'},
+         {'alpha': -1},
+         {'learning_rate_init': -1},
+         {'momentum': 2},
+         {'momentum': -0.5},
+         {'nesterovs_momentum': 'invalid'},
+         {'early_stopping': 'invalid'},
+         {'validation_fraction': 1},
+         {'validation_fraction': -0.5},
+         {'beta_1': 1},
+         {'beta_1': -0.5},
+         {'beta_2': 1},
+         {'beta_2': -0.5},
+         {'epsilon': -0.5},
+         {'n_iter_no_change': -1},
+         {'solver': 'hadoken'},
+         {'learning_rate': 'converge'},
+         {'activation': 'cloak'}]
+)
+def test_params_errors(args):
     # Test that invalid parameters raise value error
     X = [[3, 2], [1, 6]]
     y = [1, 0]
     clf = MLPClassifier
 
-    assert_raises(ValueError, clf(hidden_layer_sizes=-1).fit, X, y)
-    assert_raises(ValueError, clf(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, clf(shuffle='true').fit, X, y)
-    assert_raises(ValueError, clf(alpha=-1).fit, X, y)
-    assert_raises(ValueError, clf(learning_rate_init=-1).fit, X, y)
-    assert_raises(ValueError, clf(momentum=2).fit, X, y)
-    assert_raises(ValueError, clf(momentum=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(nesterovs_momentum='invalid').fit, X, y)
-    assert_raises(ValueError, clf(early_stopping='invalid').fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=1).fit, X, y)
-    assert_raises(ValueError, clf(validation_fraction=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_1=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=1).fit, X, y)
-    assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
-    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
-
-    assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
-    assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
-    assert_raises(ValueError, clf(activation='cloak').fit, X, y)
+    with pytest.raises(ValueError):
+        clf(**args).fit(X, y)
 
 
 def test_predict_proba_binary():
@@ -622,7 +659,8 @@ def test_warm_start():
         message = ('warm_start can only be used where `y` has the same '
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
-        assert_raise_message(ValueError, message, clf.fit, X, y_i)
+        with pytest.raises(ValueError, match=re.escape(message)):
+            clf.fit(X, y_i)
 
 
 def test_n_iter_no_change():

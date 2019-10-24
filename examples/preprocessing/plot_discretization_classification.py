@@ -140,7 +140,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
             enumerate(zip(names, classifiers)):
         ax = axes[ds_cnt, est_idx + 1]
 
-        clf = GridSearchCV(estimator=estimator, param_grid=param_grid, cv=5)
+        clf = GridSearchCV(estimator=estimator, param_grid=param_grid)
         with ignore_warnings(category=ConvergenceWarning):
             clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)

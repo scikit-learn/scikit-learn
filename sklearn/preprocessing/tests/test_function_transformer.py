@@ -3,7 +3,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils.testing import (assert_equal, assert_array_equal,
+from sklearn.utils.testing import (assert_array_equal,
                                    assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
@@ -30,20 +30,11 @@ def test_delegate_to_func():
     )
 
     # The function should only have received X.
-    assert_equal(
-        args_store,
-        [X],
-        'Incorrect positional arguments passed to func: {args}'.format(
-            args=args_store,
-        ),
-    )
-    assert_equal(
-        kwargs_store,
-        {},
-        'Unexpected keyword arguments passed to func: {args}'.format(
-            args=kwargs_store,
-        ),
-    )
+    assert args_store == [X], ('Incorrect positional arguments passed to '
+                               'func: {args}'.format(args=args_store))
+
+    assert not kwargs_store, ('Unexpected keyword arguments passed to '
+                              'func: {args}'.format(args=kwargs_store))
 
     # reset the argument stores.
     args_store[:] = []
@@ -56,20 +47,11 @@ def test_delegate_to_func():
                        err_msg='transform should have returned X unchanged')
 
     # The function should have received X
-    assert_equal(
-        args_store,
-        [X],
-        'Incorrect positional arguments passed to func: {args}'.format(
-            args=args_store,
-        ),
-    )
-    assert_equal(
-        kwargs_store,
-        {},
-        'Unexpected keyword arguments passed to func: {args}'.format(
-            args=kwargs_store,
-        ),
-    )
+    assert args_store == [X], ('Incorrect positional arguments passed '
+                               'to func: {args}'.format(args=args_store))
+
+    assert not kwargs_store, ('Unexpected keyword arguments passed to '
+                              'func: {args}'.format(args=kwargs_store))
 
 
 def test_np_log():
