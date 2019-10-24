@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.utils.optimize import newton_cg
+from sklearn.utils.optimize import _newton_cg
 from scipy.optimize import fmin_ncg
 
 from sklearn.utils.testing import assert_array_almost_equal
@@ -27,6 +27,6 @@ def test_newton_cg():
         return grad(x), lambda x: A.T.dot(A.dot(x))
 
     assert_array_almost_equal(
-        newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0],
+        _newton_cg(grad_hess, func, grad, x0, tol=1e-10)[0],
         fmin_ncg(f=func, x0=x0, fprime=grad, fhess_p=hess)
         )

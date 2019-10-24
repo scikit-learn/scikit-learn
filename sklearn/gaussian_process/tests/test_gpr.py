@@ -69,6 +69,16 @@ def test_lml_precomputed(kernel):
                  gpr.log_marginal_likelihood())
 
 
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that lml of optimized kernel is stored correctly.
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpr.kernel_.theta.shape, dtype=np.float64)
+
+    gpr.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpr.kernel_.theta, input_theta, 7)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_converged_to_local_maximum(kernel):
     # Test that we are in local maximum after hyperparameter-optimization.

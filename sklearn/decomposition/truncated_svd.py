@@ -20,7 +20,7 @@ from ..utils.sparsefuncs import mean_variance_axis
 __all__ = ["TruncatedSVD"]
 
 
-class TruncatedSVD(BaseEstimator, TransformerMixin):
+class TruncatedSVD(TransformerMixin, BaseEstimator):
     """Dimensionality reduction using truncated SVD (aka LSA).
 
     This transformer performs linear dimensionality reduction by means of
@@ -64,7 +64,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     n_iter : int, default=5
         Number of iterations for algorithm 'randomized' and 'lobpcg'.
         The default is larger than the default in
-        :func:`sklearn.utils.extmath.randomized_svd` to handle
+        `~sklearn.utils.extmath.randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance or None, optional, default = None

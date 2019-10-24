@@ -240,9 +240,9 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    sparseseries = (y.__class__.__name__ == 'SparseSeries')
-    if sparseseries:
-        raise ValueError("y cannot be class 'SparseSeries'.")
+    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    if sparse_pandas:
+        raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
@@ -333,7 +333,7 @@ def class_distribution(y, sample_weight=None):
     y : array like or sparse matrix of size (n_samples, n_outputs)
         The labels for each example.
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns

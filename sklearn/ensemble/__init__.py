@@ -3,26 +3,24 @@ The :mod:`sklearn.ensemble` module includes ensemble-based methods for
 classification, regression and anomaly detection.
 """
 
-from .base import BaseEnsemble
-from .forest import RandomForestClassifier
-from .forest import RandomForestRegressor
-from .forest import RandomTreesEmbedding
-from .forest import ExtraTreesClassifier
-from .forest import ExtraTreesRegressor
-from .bagging import BaggingClassifier
-from .bagging import BaggingRegressor
-from .iforest import IsolationForest
-from .weight_boosting import AdaBoostClassifier
-from .weight_boosting import AdaBoostRegressor
-from .gradient_boosting import GradientBoostingClassifier
-from .gradient_boosting import GradientBoostingRegressor
-from .voting import VotingClassifier
-from .voting import VotingRegressor
+from ._base import BaseEnsemble
+from ._forest import RandomForestClassifier
+from ._forest import RandomForestRegressor
+from ._forest import RandomTreesEmbedding
+from ._forest import ExtraTreesClassifier
+from ._forest import ExtraTreesRegressor
+from ._bagging import BaggingClassifier
+from ._bagging import BaggingRegressor
+from ._iforest import IsolationForest
+from ._weight_boosting import AdaBoostClassifier
+from ._weight_boosting import AdaBoostRegressor
+from ._gb import GradientBoostingClassifier
+from ._gb import GradientBoostingRegressor
+from ._voting import VotingClassifier
+from ._voting import VotingRegressor
+from ._stacking import StackingClassifier
+from ._stacking import StackingRegressor
 
-from . import bagging
-from . import forest
-from . import weight_boosting
-from . import gradient_boosting
 from . import partial_dependence
 
 __all__ = ["BaseEnsemble",
@@ -32,5 +30,5 @@ __all__ = ["BaseEnsemble",
            "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
-           "bagging", "forest", "gradient_boosting",
-           "partial_dependence", "weight_boosting"]
+           "StackingClassifier", "StackingRegressor",
+           "partial_dependence"]

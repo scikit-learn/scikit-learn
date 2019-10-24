@@ -19,7 +19,7 @@ from ..base import clone
 from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
-from ..metrics.scorer import check_scoring
+from ..metrics import check_scoring
 from .base import SelectorMixin
 
 
@@ -34,7 +34,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
+class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -87,7 +87,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     Examples
     --------
-    The following example shows how to retrieve the 5 right informative
+    The following example shows how to retrieve the 5 most informative
     features in the Friedman #1 dataset.
 
     >>> from sklearn.datasets import make_friedman1
@@ -136,10 +136,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             The target values.
         """
         return self._fit(X, y)
@@ -242,7 +242,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -258,11 +258,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.score(self.transform(X), y)
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'support_')
+        check_is_fitted(self)
         return self.support_
 
     @if_delegate_has_method(delegate='estimator')
@@ -271,7 +271,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
@@ -280,11 +280,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         -------
         score : array, shape = [n_samples, n_classes] or [n_samples]
             The decision function of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -293,18 +293,18 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
+        X : {array-like or sparse matrix} of shape (n_samples, n_features)
             The input samples. Internally, it will be converted to
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -318,11 +318,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes]
+        p : array of shape (n_samples, n_classes)
             The class log-probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self, 'estimator_')
+        check_is_fitted(self)
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
@@ -466,18 +466,18 @@ class RFECV(RFE):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training vector, where `n_samples` is the number of samples and
             `n_features` is the total number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like of shape (n_samples,)
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like, shape = [n_samples], optional
+        groups : array-like of shape (n_samples,) or None
             Group labels for the samples used while splitting the dataset into
-            train/test set. Only used in conjunction with a "Group" `cv`
-            instance (e.g., `GroupKFold`).
+            train/test set. Only used in conjunction with a "Group" :term:`cv`
+            instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
         """
         X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 

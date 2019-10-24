@@ -424,17 +424,28 @@ def _get_data_qualities(data_id, data_home):
         return None
 
 
-def _get_data_shape(data_qualities):
-    # Using the data_info dictionary from _get_data_info_by_name to extract
-    # the number of samples / features
+def _get_num_samples(data_qualities):
+    """Get the number of samples from data qualities.
+
+    Parameters
+    ----------
+    data_qualities : list of dict
+        Used to retrieve the number of instances (samples) in the dataset.
+
+    Returns
+    -------
+    n_samples : int
+        The number of samples in the dataset or -1 if data qualities are
+        unavailable.
+    """
+    # If the data qualities are unavailable, we return -1
+    default_n_samples = -1
+
     if data_qualities is None:
-        return None
+        return default_n_samples
+
     qualities = {d['name']: d['value'] for d in data_qualities}
-    try:
-        return (int(float(qualities['NumberOfInstances'])),
-                int(float(qualities['NumberOfFeatures'])))
-    except AttributeError:
-        return None
+    return int(float(qualities.get('NumberOfInstances', default_n_samples)))
 
 
 def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
@@ -581,6 +592,11 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
             The full description of the dataset
         feature_names : list
             The names of the dataset columns
+        target_names: list
+            The names of the target columns
+
+        .. versionadded:: 0.22
+
         categories : dict or None
             Maps each categorical feature name to a list of values, such
             that the value encoded as i is ith in the list. If ``as_frame``
@@ -708,12 +724,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     # determine arff encoding to return
     if not return_sparse:
+        # The shape must include the ignored features to keep the right indexes
+        # during the arff data conversion.
         data_qualities = _get_data_qualities(data_id, data_home)
-        shape = _get_data_shape(data_qualities)
-        # if the data qualities were not available, we can still get the
-        # n_features from the feature list, with the n_samples unknown
-        if shape is None:
-            shape = (-1, len(features_list))
+        shape = _get_num_samples(data_qualities), len(features_list)
     else:
         shape = None
 
@@ -775,6 +789,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     bunch = Bunch(
         data=X, target=y, frame=frame, feature_names=data_columns,
+        target_names=target_columns,
         DESCR=description, details=data_description,
         categories=nominal_attributes,
         url="https://www.openml.org/d/{}".format(data_id))

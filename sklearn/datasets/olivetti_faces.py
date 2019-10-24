@@ -37,7 +37,7 @@ FACES = RemoteFileMetadata(
 
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
-                         download_if_missing=True):
+                         download_if_missing=True, return_X_y=False):
     """Load the Olivetti faces data-set from AT&T (classification).
 
     Download it if necessary.
@@ -70,24 +70,26 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
+    return_X_y : boolean, default=False.
+        If True, returns `(data, target)` instead of a `Bunch` object. See
+        below for more information about the `data` and `target` object.
+
+        .. versionadded:: 0.22
+
     Returns
     -------
-    An object with the following attributes:
+    bunch : Bunch object with the following attributes:
+        - data: ndarray, shape (400, 4096). Each row corresponds to a ravelled
+          face image of original size 64 x 64 pixels.
+        - images : ndarray, shape (400, 64, 64). Each row is a face image
+          corresponding to one of the 40 subjects of the dataset.
+        - target : ndarray, shape (400,). Labels associated to each face image.
+          Those labels are ranging from 0-39 and correspond to the
+          Subject IDs.
+        - DESCR : string. Description of the modified Olivetti Faces Dataset.
 
-    data : numpy array of shape (400, 4096)
-        Each row corresponds to a ravelled face image of original size
-        64 x 64 pixels.
-
-    images : numpy array of shape (400, 64, 64)
-        Each row is a face image corresponding to one of the 40 subjects
-        of the dataset.
-
-    target : numpy array of shape (400, )
-        Labels associated to each face image. Those labels are ranging from
-        0-39 and correspond to the Subject IDs.
-
-    DESCR : string
-        Description of the modified Olivetti Faces Dataset.
+    (data, target) : tuple if `return_X_y=True`
+        .. versionadded:: 0.22
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -125,12 +127,16 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
+    faces_vectorized = faces.reshape(len(faces), -1)
 
     module_path = dirname(__file__)
     with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    return Bunch(data=faces.reshape(len(faces), -1),
+    if return_X_y:
+        return faces_vectorized, target
+
+    return Bunch(data=faces_vectorized,
                  images=faces,
                  target=target,
                  DESCR=fdescr)
