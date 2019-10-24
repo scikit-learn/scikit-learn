@@ -51,8 +51,8 @@ import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
 
-from .sgd_fast cimport LossFunction
-from .sgd_fast cimport Log, SquaredLoss
+from ._sgd_fast cimport LossFunction
+from ._sgd_fast cimport Log, SquaredLoss
 
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
@@ -62,7 +62,7 @@ from libc.stdio cimport printf
 
 {{for name, c_type, np_type in get_dispatch(dtypes)}}
 
-cdef extern from "sgd_fast_helpers.h":
+cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite{{name}}({{c_type}}) nogil
 
 

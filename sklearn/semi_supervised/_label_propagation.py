@@ -64,7 +64,7 @@ from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
-from ..neighbors.unsupervised import NearestNeighbors
+from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array

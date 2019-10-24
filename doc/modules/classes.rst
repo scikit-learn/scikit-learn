@@ -882,7 +882,7 @@ Miscellaneous
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-    manifold.t_sne.trustworthiness
+    manifold.trustworthiness
 	
 
 .. _metrics_ref:
@@ -1479,20 +1479,6 @@ Estimators
    :template: function.rst
 
    svm.l1_min_c
-
-Low-level methods
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   svm.libsvm.cross_validation
-   svm.libsvm.decision_function
-   svm.libsvm.fit
-   svm.libsvm.predict
-   svm.libsvm.predict_proba
-
 
 .. _tree_ref:
 
