@@ -401,7 +401,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     if preconditioner == 'lobpcg' and M.dtype not in (np.float32, np.float64):
         raise ValueError(
             "LOBPCG preconditioner is only supported for floating point "
-            "precision inputs. Got {} instead. Set 'preconditioner' to None."
+            "inputs. Got {} instead. Set 'preconditioner' to None."
             .format(M.dtype)
         )
 

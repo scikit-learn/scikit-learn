@@ -51,7 +51,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     algorithm : string {'randomized', 'lobpcg', 'arpack'}, default="randomized"
         SVD solver to use.
         randomized :
-            run randomized SVD as in [1].
+            run randomized SVD due to Halko (2009).
         lobpcg :
             run Locally Optimal Block Preconditioned Conjugate Gradient [2]
             for a normal matrix X'*X or X*X', whichever of the two is of
@@ -62,7 +62,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             0 < n_components < min(X.shape).
 
     n_iter : int, default=5
-        Number of iterations for algorithm 'randomized' and 'lobpcg'.
+        Number of iterations for algorithm 'randomized' and 'lobpcg'. Not used
+        by ARPACK.
         The default is larger than the default in
         `~sklearn.utils.extmath.randomized_svd` to handle
         sparse matrices that may have large slowly decaying spectrum.
