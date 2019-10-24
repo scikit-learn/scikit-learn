@@ -410,7 +410,6 @@ def test_stratified_kfold_label_invariance(k, shuffle):
                  [1] * int(0.01 * n_samples))
     X = np.ones(len(y))
 
-    random_state = None if not shuffle else 0
     def get_splits(y):
         random_state = None if not shuffle else 0
         return [(list(train), list(test))
