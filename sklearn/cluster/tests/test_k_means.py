@@ -22,8 +22,8 @@ from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster.k_means_ import _labels_inertia
-from sklearn.cluster.k_means_ import _mini_batch_step
+from sklearn.cluster._k_means import _labels_inertia
+from sklearn.cluster._k_means import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
@@ -734,7 +734,7 @@ def test_k_means_function():
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster.k_means_ import _init_centroids
+    from sklearn.cluster._k_means import _init_centroids
 
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
@@ -921,7 +921,7 @@ def test_sample_weight_length():
 
 
 def test_check_normalize_sample_weight():
-    from sklearn.cluster.k_means_ import _check_normalize_sample_weight
+    from sklearn.cluster._k_means import _check_normalize_sample_weight
     sample_weight = None
     checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
     assert _num_samples(X) == _num_samples(checked_sample_weight)
