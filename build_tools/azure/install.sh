@@ -4,20 +4,6 @@ set -e
 
 UNAMESTR=`uname`
 
-if [[ "$UNAMESTR" == "Darwin" ]]; then
-    # install OpenMP not present by default on osx
-    HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
-
-    # enable OpenMP support for Apple-clang
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
-    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-fi
-
 make_conda() {
     TO_INSTALL="$@"
     conda create -n $VIRTUALENV --yes $TO_INSTALL
@@ -34,8 +20,8 @@ version_ge() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
-                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+    TO_INSTALL="python=$PYTHON_VERSION pip \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -60,6 +46,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
     fi
 
+    if [[ "$UNAMESTR" == "Darwin" ]]; then
+        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
+        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
+    fi
+
     # Old packages coming from the 'free' conda channel have been removed but
     # we are using them for testing Python 3.5. See
     # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
@@ -67,6 +58,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
     conda_version=$(conda -V | awk '{print $2}')
     if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
         conda config --set restore_free_channel true
+    fi
+
+    if [[ "$PYTEST_VERSION" == "*" ]]; then
+        pip install pytest
+    else
+        pip install pytest=="$PYTEST_VERSION"
     fi
 
 	make_conda $TO_INSTALL
@@ -93,11 +90,11 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install numpy scipy joblib cython
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
-    python -m pip install pandas matplotlib pyamg pillow
+    python -m pip install pandas matplotlib pyamg
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install coverage codecov
+    python -m pip install coverage codecov pytest-cov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then

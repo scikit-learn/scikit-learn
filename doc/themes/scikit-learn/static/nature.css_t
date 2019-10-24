@@ -227,6 +227,7 @@ div.navbar div.nav-icon {
 
 form.gsc-search-box {
     padding: 0 !important;
+    margin: 0 !important;
 }
 
 input.gsc-search-button {
@@ -964,11 +965,6 @@ div.container.index-lower ul li {
 div.container.index-lower ul li em {
     font-style: normal;
     font-weight: bold;
-}
-
-#paypal-form {
-    margin: 30px 0;
-    padding: 0;
 }
 
 div.container.index-lower a.cite-us {

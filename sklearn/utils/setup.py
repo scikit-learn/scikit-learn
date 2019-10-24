@@ -35,15 +35,19 @@ def configuration(parent_package='', top_path=None):
                          sources=['graph_shortest_path.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension('fast_dict',
-                         sources=['fast_dict.pyx'],
+    config.add_extension('_fast_dict',
+                         sources=['_fast_dict.pyx'],
                          language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension('_openmp_helpers',
+                         sources=['_openmp_helpers.pyx'],
+                         libraries=libraries)
+
     # generate files from a template
-    pyx_templates = ['sklearn/utils/seq_dataset.pyx.tp',
-                     'sklearn/utils/seq_dataset.pxd.tp']
+    pyx_templates = ['sklearn/utils/_seq_dataset.pyx.tp',
+                     'sklearn/utils/_seq_dataset.pxd.tp']
 
     for pyxfiles in pyx_templates:
         outfile = pyxfiles.replace('.tp', '')
@@ -59,12 +63,12 @@ def configuration(parent_package='', top_path=None):
         with open(outfile, "w") as f:
             f.write(pyxcontent)
 
-    config.add_extension('seq_dataset',
-                         sources=['seq_dataset.pyx'],
+    config.add_extension('_seq_dataset',
+                         sources=['_seq_dataset.pyx'],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension('weight_vector',
-                         sources=['weight_vector.pyx'],
+    config.add_extension('_weight_vector',
+                         sources=['_weight_vector.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

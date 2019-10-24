@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -856,10 +856,10 @@ def test_grid_search_cv_results():
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
         assert (all(cv_results[k] >= 0) for k in score_keys
-                if k is not 'rank_test_score')
+                if k != 'rank_test_score')
         assert (all(cv_results[k] <= 1) for k in score_keys
                 if 'time' not in k and
-                k is not 'rank_test_score')
+                k != 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
@@ -1692,12 +1692,16 @@ def test_custom_run_search():
 
     results = mycv.cv_results_
     check_results(results, gscv)
-    for attr in dir(gscv):
-        if attr[0].islower() and attr[-1:] == '_' and \
-           attr not in {'cv_results_', 'best_estimator_',
-                        'refit_time_'}:
-            assert getattr(gscv, attr) == getattr(mycv, attr), \
-                   "Attribute %s not equal" % attr
+    # TODO: remove in v0.24, the deprecation goes away then.
+    with pytest.warns(DeprecationWarning,
+                      match="attribute is to be deprecated from version 0.22"):
+        for attr in dir(gscv):
+            if (attr[0].islower() and attr[-1:] == '_' and
+                    attr not in {'cv_results_', 'best_estimator_',
+                                 'refit_time_',
+                                 }):
+                assert getattr(gscv, attr) == getattr(mycv, attr), \
+                    "Attribute %s not equal" % attr
 
 
 def test__custom_fit_no_run_search():

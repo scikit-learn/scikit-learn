@@ -38,8 +38,8 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree.tree import CRITERIA_CLF
-from sklearn.tree.tree import CRITERIA_REG
+from sklearn.tree._classes import CRITERIA_CLF
+from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
@@ -433,12 +433,12 @@ def test_max_features():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.sqrt(iris.data.shape[1])))
+                int(np.sqrt(iris.data.shape[1])))
 
         est = TreeEstimator(max_features="log2")
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(np.log2(iris.data.shape[1])))
+                int(np.log2(iris.data.shape[1])))
 
         est = TreeEstimator(max_features=1)
         est.fit(iris.data, iris.target)
@@ -455,7 +455,7 @@ def test_max_features():
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
         assert (est.max_features_ ==
-                     int(0.5 * iris.data.shape[1]))
+                int(0.5 * iris.data.shape[1]))
 
         est = TreeEstimator(max_features=1.0)
         est.fit(iris.data, iris.target)
@@ -1823,26 +1823,6 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-@pytest.mark.parametrize('name', CLF_TREES)
-def test_multi_target(name):
-    Tree = CLF_TREES[name]
-
-    clf = Tree()
-
-    X = iris.data
-
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
-
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
-
-
 def test_decision_tree_memmap():
     # check that decision trees supports read-only buffer (#13626)
     X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
@@ -1966,3 +1946,20 @@ def test_prune_tree_raises_negative_ccp_alpha():
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
         clf._prune_tree()
+
+
+def test_classes_deprecated():
+    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
+    y = [0.5, 2.5, 3.5, 5.5]
+    clf = DecisionTreeRegressor()
+    clf = clf.fit(X, y)
+
+    match = ("attribute is to be deprecated from version "
+             "0.22 and will be removed in 0.24.")
+
+    with pytest.warns(DeprecationWarning, match=match):
+        n = len(clf.classes_)
+        assert n == clf.n_outputs_
+
+    with pytest.warns(DeprecationWarning, match=match):
+        assert len(clf.n_classes_) == clf.n_outputs_
