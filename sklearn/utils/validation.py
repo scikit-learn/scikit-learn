@@ -8,13 +8,14 @@
 #          Nicolas Tresegnie
 # License: BSD 3 clause
 
+from functools import wraps
 import warnings
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, isclass
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -453,6 +454,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+            dtype_orig = np.result_type(*array.dtypes)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -1105,3 +1108,41 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return np.allclose(x, y, rtol=rtol, atol=atol)
     raise ValueError("Can only compare two sparse matrices, not a sparse "
                      "matrix and an array")
+
+
+def _deprecate_positional_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
+
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(all_args)
+        if extra_args > 0:
+            # ignore first 'self' argument for instance methods
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            warnings.warn("Pass {} as keyword args. From version 0.24 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
+                          DeprecationWarning)
+        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        return f(**kwargs)
+    return inner_f

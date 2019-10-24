@@ -333,7 +333,7 @@ def class_distribution(y, sample_weight=None):
     y : array like or sparse matrix of size (n_samples, n_outputs)
         The labels for each example.
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns

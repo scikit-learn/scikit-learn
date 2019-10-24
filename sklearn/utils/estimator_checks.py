@@ -38,7 +38,6 @@ from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     BaseEstimator)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-
 from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
 from ..pipeline import make_pipeline
@@ -54,12 +53,12 @@ from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import load_iris, load_boston, make_blobs
+from ..datasets import (load_iris, load_boston, make_blobs,
+                        make_multilabel_classification, make_regression)
 
 
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-
 
 def _safe_tags(estimator, key=None):
     # if estimator doesn't have _get_tags, use _DEFAULT_TAGS
@@ -126,6 +125,8 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_one_label
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
+    if tags["multioutput"]:
+        yield check_classifier_multioutput
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
@@ -175,6 +176,8 @@ def _yield_regressor_checks(name, regressor):
     yield partial(check_regressors_train, readonly_memmap=True)
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
+    if tags["multioutput"]:
+        yield check_regressor_multioutput
     yield check_regressors_no_decision_function
     if not tags["no_validation"]:
         yield check_supervised_y_2d
@@ -1519,6 +1522,87 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
                            " changes between calls to "
                            "partial_fit.".format(name)):
         estimator.partial_fit(X[:, :-1], y)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_classifier_multioutput(name, estimator):
+    n_samples, n_labels, n_classes = 42, 5, 3
+    tags = _safe_tags(estimator)
+    estimator = clone(estimator)
+    X, y = make_multilabel_classification(random_state=42,
+                                          n_samples=n_samples,
+                                          n_labels=n_labels,
+                                          n_classes=n_classes)
+    estimator.fit(X, y)
+    y_pred = estimator.predict(X)
+
+    assert y_pred.shape == (n_samples, n_classes), (
+        "The shape of the prediction for multioutput data is "
+        "incorrect. Expected {}, got {}."
+        .format((n_samples, n_labels), y_pred.shape))
+    assert y_pred.dtype.kind == 'i'
+
+    if hasattr(estimator, "decision_function"):
+        decision = estimator.decision_function(X)
+        assert isinstance(decision, np.ndarray)
+        assert decision.shape == (n_samples, n_classes), (
+            "The shape of the decision function output for "
+            "multioutput data is incorrect. Expected {}, got {}."
+            .format((n_samples, n_classes), decision.shape))
+
+        dec_pred = (decision > 0).astype(np.int)
+        dec_exp = estimator.classes_[dec_pred]
+        assert_array_equal(dec_exp, y_pred)
+
+    if hasattr(estimator, "predict_proba"):
+        y_prob = estimator.predict_proba(X)
+
+        if isinstance(y_prob, list) and not tags['poor_score']:
+            for i in range(n_classes):
+                assert y_prob[i].shape == (n_samples, 2), (
+                    "The shape of the probability for multioutput data is"
+                    " incorrect. Expected {}, got {}."
+                    .format((n_samples, 2), y_prob[i].shape))
+                assert_array_equal(
+                    np.argmax(y_prob[i], axis=1).astype(np.int),
+                    y_pred[:, i]
+                )
+        elif not tags['poor_score']:
+            assert y_prob.shape == (n_samples, n_classes), (
+                "The shape of the probability for multioutput data is"
+                " incorrect. Expected {}, got {}."
+                .format((n_samples, n_classes), y_prob.shape))
+            assert_array_equal(y_prob.round().astype(int), y_pred)
+
+    if (hasattr(estimator, "decision_function") and
+            hasattr(estimator, "predict_proba")):
+        for i in range(n_classes):
+            y_proba = estimator.predict_proba(X)[:, i]
+            y_decision = estimator.decision_function(X)
+            assert_array_equal(rankdata(y_proba), rankdata(y_decision[:, i]))
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_regressor_multioutput(name, estimator):
+    estimator = clone(estimator)
+    n_samples = n_features = 10
+
+    if not _is_pairwise_metric(estimator):
+        n_samples = n_samples + 1
+
+    X, y = make_regression(random_state=42, n_targets=5,
+                           n_samples=n_samples, n_features=n_features)
+    X = pairwise_estimator_convert_X(X, estimator)
+
+    estimator.fit(X, y)
+    y_pred = estimator.predict(X)
+
+    assert y_pred.dtype == np.dtype('float64'), (
+        "Multioutput predictions by a regressor are expected to be"
+        " floating-point precision. Got {} instead".format(y_pred.dtype))
+    assert y_pred.shape == y.shape, (
+        "The shape of the orediction for multioutput data is incorrect."
+        " Expected {}, got {}.")
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
