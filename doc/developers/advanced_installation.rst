@@ -140,7 +140,7 @@ the conda-forge channel, which provides OpenMP-enabled C compilers.
 It is recommended to use a dedicated conda environment to build scikit-learn
 from source::
 
-    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
+    conda create -n sklearn-dev python numpy scipy Cython joblib pytest \
         conda-forge::compilers conda-forge::llvm-openmp
     conda activate sklearn-dev
     pip install --verbose --editable .
