@@ -1100,18 +1100,9 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     array([5., 0.])
 
     """
-    # is the provided array in double precision (float64) ?
-    if isinstance(lambdas, np.ndarray):
-        # From https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
-        # and https://docs.scipy.org/doc/numpy/user/basics.types.html
-        if lambdas.dtype.kind == 'f':
-            is_double_precision = (lambdas.dtype.itemsize >= 8)
-        else:
-            # default for non-float dtypes
-            is_double_precision = True
-    else:
-        # default for non-numpy inputs
-        is_double_precision = True
+
+    lambdas = np.array(lambdas)
+    is_double_precision = lambdas.dtype == np.float64
 
     # note: the minimum value available is
     #  - single-precision: np.finfo('float32').eps = 1.2e-07
@@ -1136,7 +1127,7 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
                 % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
-    lambdas = np.real(np.copy(lambdas))
+    lambdas = np.real(lambdas)
 
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
