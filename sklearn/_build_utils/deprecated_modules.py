@@ -90,8 +90,6 @@ _DEPRECATED_MODULES = [
      'sklearn.feature_extraction', 'DictVectorizer'),
     ('_hashing', 'sklearn.feature_extraction.hashing',
      'sklearn.feature_extraction', 'FeatureHasher'),
-    ('_hashing_fast', 'sklearn.feature_extraction._hashing',
-     'sklearn.feature_extraction', 'transform'),
     ('_stop_words', 'sklearn.feature_extraction.stop_words',
      'sklearn.feature_extraction.text', 'ENGLISH_STOP_WORDS'),
 
