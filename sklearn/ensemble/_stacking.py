@@ -8,8 +8,7 @@ from copy import deepcopy
 
 import numpy as np
 from joblib import Parallel, delayed
-from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
+import scipy.sparse as sparse
 
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
@@ -86,8 +85,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                     X_meta.append(preds)
         if self.passthrough:
             X_meta.append(X)
-            if issparse(X):
-                return sparse_hstack(X_meta).tocsr()
+            if sparse.issparse(X):
+                return sparse.hstack(X_meta).tocsr()
 
         return np.concatenate(X_meta, axis=1)
 
