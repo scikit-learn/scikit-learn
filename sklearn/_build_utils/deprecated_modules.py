@@ -188,6 +188,9 @@ _DEPRECATED_MODULES = [
      'Binarizer'),
     ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
      'LabelEncoder'),
+
+    ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
+     'all_estimators'),
 ]
 
 
