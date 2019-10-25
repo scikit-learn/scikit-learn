@@ -230,7 +230,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             warnings.warn(
                 "Using 'None' to drop an estimator from the ensemble is "
                 "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead.", DeprecationWarning
+                "Use the string 'drop' instead.", FutureWarning 
             )
 
         has_estimator = any(est not in (None, 'drop') for est in estimators)
