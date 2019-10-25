@@ -256,7 +256,7 @@ else:
 
 
 class SubSectionTitleOrder:
-    """Sort by title of subsection.
+    """Sort example gallery by title of subsection.
 
     Assumes README.txt exists for all subsections and uses the subsection with
     dashes, '---', as the adornment.
