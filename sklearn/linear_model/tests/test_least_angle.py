@@ -731,9 +731,11 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     lasso_lars.fit(X, y, copy_X=copy_X)
     assert copy_X == np.array_equal(X, X_copy)
 
+
 def test_lars_with_jitter():
     """
-    Test that user input of a small amount of jitter, using example provided in issue #2746
+    Test that user input of a small amount of jitter,
+    using example provided in issue #2746
 
     """
 
@@ -744,7 +746,8 @@ def test_lars_with_jitter():
     fit_intercept = False
 
     lars = linear_model.LassoLars(alpha=alpha, fit_intercept=fit_intercept)
-    lars_with_jiggle = linear_model.LassoLars(alpha=alpha, fit_intercept=fit_intercept,
+    lars_with_jiggle = linear_model.LassoLars(alpha=alpha,
+                                              fit_intercept=fit_intercept,
                                               jitter=10e-5)
 
     lars.fit(A, b)
@@ -753,5 +756,5 @@ def test_lars_with_jitter():
     w_nojiggle = lars.coef_
     w_jiggle = lars_with_jiggle.coef_
 
-    assert np.array_equal(w_jiggle, w_nojiggle) == False
+    assert not np.array_equal(w_jiggle, w_nojiggle)
     assert_array_almost_equal(w_jiggle, expected_output, decimal=2)
