@@ -24,7 +24,7 @@ from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
-JITTER = 10e-4
+DEFAULT_JITTER = None
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
@@ -862,7 +862,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 jitter=JITTER):
+                 jitter=DEFAULT_JITTER):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -971,12 +971,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
-        noise = np.random.RandomState(0).uniform(high=self.jitter, size=len(y))
-
-        if y.ndim == 2:
-            noise = noise.reshape(-1, 1)
-
-        y = y + noise
+        if self.jitter:
+            noise = np.random.RandomState(0).uniform(high=self.jitter, size=len(y))
+            if y.ndim == 2:
+                noise = noise.reshape(-1, 1)
+            y = y + noise
 
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
                   Xy=Xy)
@@ -1112,7 +1111,7 @@ class LassoLars(Lars):
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False, jitter=JITTER):
+                 positive=False, jitter=DEFAULT_JITTER):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
