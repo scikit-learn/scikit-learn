@@ -15,7 +15,7 @@ from libc.math cimport sqrt, log
 import numpy as np
 cimport numpy as np
 
-from ..neighbors.quad_tree cimport _QuadTree
+from ..neighbors._quad_tree cimport _QuadTree
 
 cdef char* EMPTY_STRING = ""
 

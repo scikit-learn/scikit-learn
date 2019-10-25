@@ -546,14 +546,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> from sklearn.svm import SVC
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    >>> X, y = make_classification(n_samples=100, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
     >>> clf = BaggingClassifier(base_estimator=SVC(),
-    ...                         n_estimators=100, random_state=0).fit(X, y)
+    ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
 
@@ -934,6 +931,19 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         was never left out during the bootstrap. In this case,
         `oob_prediction_` might contain NaN. This attribute exists only
         when ``oob_score`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=100, n_features=4,
+    ...                        n_informative=2, n_targets=1,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = BaggingRegressor(base_estimator=SVR(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([-2.8720...])
 
     References
     ----------
