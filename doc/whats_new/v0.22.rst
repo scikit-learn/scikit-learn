@@ -379,6 +379,9 @@ Changelog
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
 
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -606,6 +609,10 @@ Changelog
 
 - |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
+
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 
 :mod:`sklearn.tree`
 ...................

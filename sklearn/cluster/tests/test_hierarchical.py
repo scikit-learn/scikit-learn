@@ -14,7 +14,7 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.metrics.cluster.supervised import adjusted_rand_score
+from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raise_message

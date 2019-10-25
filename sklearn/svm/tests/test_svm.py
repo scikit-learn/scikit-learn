@@ -12,6 +12,8 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
+from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
@@ -21,6 +23,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message, assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils import shuffle
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
@@ -198,11 +201,12 @@ def test_linearsvr_fit_sampleweight():
     diabetes = datasets.load_diabetes()
     n_samples = len(diabetes.target)
     unit_weight = np.ones(n_samples)
-    lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
-                                    sample_weight=unit_weight)
+    lsvr = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
+        diabetes.data, diabetes.target, sample_weight=unit_weight)
     score1 = lsvr.score(diabetes.data, diabetes.target)
 
-    lsvr_no_weight = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
+    lsvr_no_weight = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
+        diabetes.data, diabetes.target)
     score2 = lsvr_no_weight.score(diabetes.data, diabetes.target)
 
     assert_allclose(np.linalg.norm(lsvr.coef_),
@@ -213,14 +217,15 @@ def test_linearsvr_fit_sampleweight():
     # X = X1 repeated n1 times, X2 repeated n2 times and so forth
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvr_unflat = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target,
-                                           sample_weight=random_weight)
+    lsvr_unflat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
+        diabetes.data, diabetes.target, sample_weight=random_weight)
     score3 = lsvr_unflat.score(diabetes.data, diabetes.target,
                                sample_weight=random_weight)
 
     X_flat = np.repeat(diabetes.data, random_weight, axis=0)
     y_flat = np.repeat(diabetes.target, random_weight, axis=0)
-    lsvr_flat = svm.LinearSVR(C=1e3).fit(X_flat, y_flat)
+    lsvr_flat = svm.LinearSVR(C=1e3, tol=1e-12, max_iter=10000).fit(
+        X_flat, y_flat)
     score4 = lsvr_flat.score(X_flat, y_flat)
 
     assert_almost_equal(score3, score4, 2)
@@ -834,7 +839,7 @@ def test_linearsvc_fit_sampleweight():
     n_samples = len(X)
     unit_weight = np.ones(n_samples)
     clf = svm.LinearSVC(random_state=0).fit(X, Y)
-    clf_unitweight = svm.LinearSVC(random_state=0).\
+    clf_unitweight = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).\
         fit(X, Y, sample_weight=unit_weight)
 
     # check if same as sample_weight=None
@@ -846,13 +851,14 @@ def test_linearsvc_fit_sampleweight():
 
     random_state = check_random_state(0)
     random_weight = random_state.randint(0, 10, n_samples)
-    lsvc_unflat = svm.LinearSVC(random_state=0).\
+    lsvc_unflat = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).\
         fit(X, Y, sample_weight=random_weight)
     pred1 = lsvc_unflat.predict(T)
 
     X_flat = np.repeat(X, random_weight, axis=0)
     y_flat = np.repeat(Y, random_weight, axis=0)
-    lsvc_flat = svm.LinearSVC(random_state=0).fit(X_flat, y_flat)
+    lsvc_flat = svm.LinearSVC(random_state=0, tol=1e-12, max_iter=1000).fit(
+        X_flat, y_flat)
     pred2 = lsvc_flat.predict(T)
 
     assert_array_equal(pred1, pred2)
@@ -1202,6 +1208,45 @@ def test_gamma_scale():
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
+
+
+@pytest.mark.parametrize(
+    "SVM, params",
+    [(LinearSVC, {'penalty': 'l1', 'loss': 'squared_hinge', 'dual': False}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': True}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'squared_hinge', 'dual': False}),
+     (LinearSVC, {'penalty': 'l2', 'loss': 'hinge', 'dual': True}),
+     (LinearSVR, {'loss': 'epsilon_insensitive', 'dual': True}),
+     (LinearSVR, {'loss': 'squared_epsilon_insensitive', 'dual': True}),
+     (LinearSVR, {'loss': 'squared_epsilon_insensitive', 'dual': True})]
+)
+def test_linearsvm_liblinear_sample_weight(SVM, params):
+    X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                  [2, 1], [2, 1], [2, 1], [2, 1],
+                  [3, 3], [3, 3], [3, 3], [3, 3],
+                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+    X2 = np.vstack([X, X])
+    y2 = np.hstack([y, 3 - y])
+    sample_weight = np.ones(shape=len(y) * 2)
+    sample_weight[len(y):] = 0
+    X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=0)
+
+    base_estimator = SVM(random_state=42)
+    base_estimator.set_params(**params)
+    base_estimator.set_params(tol=1e-12, max_iter=1000)
+    est_no_weight = base.clone(base_estimator).fit(X, y)
+    est_with_weight = base.clone(base_estimator).fit(
+        X2, y2, sample_weight=sample_weight
+    )
+
+    for method in ("predict", "decision_function"):
+        if hasattr(base_estimator, method):
+            X_est_no_weight = getattr(est_no_weight, method)(X)
+            X_est_with_weight = getattr(est_with_weight, method)(X)
+            assert_allclose(X_est_no_weight, X_est_with_weight)
 
 
 def test_n_support_oneclass_svr():
