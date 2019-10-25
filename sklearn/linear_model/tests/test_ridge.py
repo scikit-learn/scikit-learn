@@ -22,17 +22,17 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.ridge import ridge_regression
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.ridge import _RidgeGCV
-from sklearn.linear_model.ridge import RidgeCV
-from sklearn.linear_model.ridge import RidgeClassifier
-from sklearn.linear_model.ridge import RidgeClassifierCV
-from sklearn.linear_model.ridge import _solve_cholesky
-from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_CenterStackOp
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model._ridge import _solve_cholesky
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.linear_model._ridge import _check_gcv_mode
+from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -460,6 +460,33 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
     X_gcv = X_constructor(X)
     gcv_ridge.fit(X_gcv, y)
+
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+
+
+def test_ridge_loo_cv_asym_scoring():
+    # checking on asymmetric scoring
+    scoring = 'explained_variance'
+    n_samples, n_features = 10, 5
+    n_targets = 1
+    X, y = _make_sparse_offset_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets,
+        random_state=0, shuffle=False, noise=1, n_informative=5
+    )
+
+    alphas = [1e-3, .1, 1., 10., 1e3]
+    loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    gcv_ridge = RidgeCV(fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    loo_ridge.fit(X, y)
+    gcv_ridge.fit(X, y)
 
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
     assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)

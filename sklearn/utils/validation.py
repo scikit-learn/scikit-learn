@@ -8,13 +8,14 @@
 #          Nicolas Tresegnie
 # License: BSD 3 clause
 
+from functools import wraps
 import warnings
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature, isclass
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -32,7 +33,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-def _assert_all_finite(X, allow_nan=False):
+def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
@@ -52,7 +53,11 @@ def _assert_all_finite(X, allow_nan=False):
         if (allow_nan and np.isinf(X).any() or
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
-            raise ValueError(msg_err.format(type_err, X.dtype))
+            raise ValueError(
+                    msg_err.format
+                    (type_err,
+                     msg_dtype if msg_dtype is not None else X.dtype)
+            )
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
@@ -449,6 +454,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+            dtype_orig = np.result_type(*array.dtypes)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -494,7 +501,17 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.asarray(array, dtype=dtype, order=order)
+                if dtype is not None and np.dtype(dtype).kind in 'iu':
+                    # Conversion float -> int should not contain NaN or
+                    # inf (numpy#14412). We cannot use casting='safe' because
+                    # then conversion float -> int would be disallowed.
+                    array = np.asarray(array, order=order)
+                    if array.dtype.kind == 'f':
+                        _assert_all_finite(array, allow_nan=False,
+                                           msg_dtype=dtype)
+                    array = array.astype(dtype, casting="unsafe", copy=False)
+                else:
+                    array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
@@ -538,6 +555,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
         if force_all_finite:
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -747,6 +765,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -1003,6 +1022,11 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
 
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
+
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
@@ -1038,8 +1062,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -1084,3 +1108,41 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return np.allclose(x, y, rtol=rtol, atol=atol)
     raise ValueError("Can only compare two sparse matrices, not a sparse "
                      "matrix and an array")
+
+
+def _deprecate_positional_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
+
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(all_args)
+        if extra_args > 0:
+            # ignore first 'self' argument for instance methods
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            warnings.warn("Pass {} as keyword args. From version 0.24 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
+                          DeprecationWarning)
+        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        return f(**kwargs)
+    return inner_f

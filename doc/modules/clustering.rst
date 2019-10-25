@@ -948,10 +948,10 @@ represented as children of a larger parent cluster.
 Birch
 =====
 
-The :class:`Birch` builds a tree called the Characteristic Feature Tree (CFT)
+The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
 for the given data. The data is essentially lossy compressed to a set of
-Characteristic Feature nodes (CF Nodes). The CF Nodes have a number of
-subclusters called Characteristic Feature subclusters (CF Subclusters)
+Clustering Feature nodes (CF Nodes). The CF Nodes have a number of
+subclusters called Clustering Feature subclusters (CF Subclusters)
 and these CF Subclusters located in the non-terminal CF Nodes
 can have CF Nodes as children.
 
