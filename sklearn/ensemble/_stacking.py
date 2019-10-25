@@ -61,6 +61,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         """Concatenate the predictions of each first layer learner and
         possibly the input dataset `X`.
 
+        If `X` is sparse and `self.passthrough` is False, the output of
+        `transform` will be dense (the predictions). If `X` is sparse
+        and `self.passthrough` is True, the output of `transform` will
+        be sparse.
+
         This helper is in charge of ensuring the preditions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)

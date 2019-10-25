@@ -39,6 +39,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import KFold
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
@@ -218,7 +219,7 @@ def test_stacking_regressor_sparse_passthrough():
     )
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
-    assert_allclose(X_test.toarray(), X_trans[:, -10:].toarray())
+    assert_allclose_dense_sparse(X_test, X_trans[:, -10:])
 
 
 def test_stacking_classifier_sparse_passthrough():
@@ -233,7 +234,7 @@ def test_stacking_classifier_sparse_passthrough():
     )
     clf.fit(X_train, y_train)
     X_trans = clf.transform(X_test)
-    assert_allclose(X_test.toarray(), X_trans[:, -4:].toarray())
+    assert_allclose_dense_sparse(X_test, X_trans[:, -4:])
 
 
 def test_stacking_classifier_drop_binary_prob():
