@@ -16,18 +16,18 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns_message
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
-from sklearn.utils.testing import skip_if_no_parallel
+from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning

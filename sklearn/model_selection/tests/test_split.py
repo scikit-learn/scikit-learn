@@ -8,14 +8,14 @@ from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
 from sklearn.utils._mocking import MockDataFrame
 

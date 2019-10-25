@@ -17,10 +17,10 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message, assert_raise_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message, assert_raise_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier

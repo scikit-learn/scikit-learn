@@ -16,10 +16,10 @@ from sklearn.linear_model._logistic import _multinomial_loss_grad
 
 from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
