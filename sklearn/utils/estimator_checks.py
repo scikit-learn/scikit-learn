@@ -27,15 +27,13 @@ from .testing import assert_warns_message
 from .testing import set_random_state
 from .testing import SkipTest
 from .testing import ignore_warnings
-from .testing import assert_dict_equal
 from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector,
-                    BaseEstimator)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -131,6 +129,8 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
     yield check_classifiers_regression_target
+    if tags["multilabel"]:
+        yield check_classifiers_multilabel_representation_invariance
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
@@ -1936,7 +1936,41 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             assert_raises(ValueError, estimator.fit, X)
 
 
-@ignore_warnings(category=(FutureWarning, FutureWarning))
+@ignore_warnings(category=(FutureWarning))
+def check_classifiers_multilabel_representation_invariance(name,
+                                                           classifier_orig):
+    X, y = make_multilabel_classification(n_samples=100, n_features=20,
+                                          n_classes=5, n_labels=3,
+                                          length=50, allow_unlabeled=True,
+                                          random_state=0)
+
+    X_train, y_train = X[:80], y[:80]
+    X_test = X[80:]
+
+    y_train_list_of_lists = y_train.tolist()
+    y_train_list_of_arrays = list(y_train)
+
+    classifier = clone(classifier_orig)
+    set_random_state(classifier)
+
+    y_pred = classifier.fit(X_train, y_train).predict(X_test)
+
+    y_pred_list_of_lists = classifier.fit(
+        X_train, y_train_list_of_lists).predict(X_test)
+
+    y_pred_list_of_arrays = classifier.fit(
+        X_train, y_train_list_of_arrays).predict(X_test)
+
+    assert_array_equal(y_pred, y_pred_list_of_arrays)
+    assert_array_equal(y_pred, y_pred_list_of_lists)
+
+    assert y_pred.dtype == y_pred_list_of_arrays.dtype
+    assert y_pred.dtype == y_pred_list_of_lists.dtype
+    assert type(y_pred) == type(y_pred_list_of_arrays)
+    assert type(y_pred) == type(y_pred_list_of_lists)
+
+
+@ignore_warnings(category=(FutureWarning))
 def check_estimators_fit_returns_self(name, estimator_orig,
                                       readonly_memmap=False):
     """Check if self is returned when calling fit"""
@@ -2503,8 +2537,8 @@ def check_parameters_default_constructible(name, Estimator):
                 assert init_param.default in [np.float64, np.int64]
             else:
                 assert (type(init_param.default) in
-                          [str, int, float, bool, tuple, type(None),
-                           np.float64, types.FunctionType, joblib.Memory])
+                        [str, int, float, bool, tuple, type(None),
+                         np.float64, types.FunctionType, joblib.Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
@@ -2654,7 +2688,7 @@ def check_set_params(name, estimator_orig):
                 curr_params = estimator.get_params(deep=False)
                 try:
                     assert (set(params_before_exception.keys()) ==
-                                 set(curr_params.keys()))
+                            set(curr_params.keys()))
                     for k, v in curr_params.items():
                         assert params_before_exception[k] is v
                 except AssertionError:

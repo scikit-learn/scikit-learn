@@ -134,7 +134,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -227,7 +227,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
     >>> type_of_target([[1, 2]])
-    'multiclass-multioutput'
+    'multilabel-indicator'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
