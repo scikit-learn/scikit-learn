@@ -438,7 +438,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         This transformation will only be exact if n_components=n_features
         """
         check_is_fitted(self)
-        X = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+        X = check_array(X, dtype=FLOAT_DTYPES)
         # From pls space to original space
         X_reconstructed = np.matmul(X, self.x_loadings_.T)
 
