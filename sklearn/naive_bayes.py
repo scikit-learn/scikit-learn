@@ -31,7 +31,7 @@ from .utils import check_X_y, check_array, check_consistent_length
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative
+from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -204,6 +204,7 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
+        y = column_or_1d(y, warn=True)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
@@ -622,6 +623,7 @@ class BaseDiscreteNB(BaseNB):
         # this means we also don't have to cast X to floating point
         if sample_weight is not None:
             Y = Y.astype(np.float64, copy=False)
+            sample_weight = np.asarray(sample_weight)
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
 
