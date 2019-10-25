@@ -732,29 +732,33 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     assert copy_X == np.array_equal(X, X_copy)
 
 
-def test_lars_with_jitter():
+@pytest.mark.parametrize('y_list, expected_y', [
+    ([-2.5, -2.5], [0, 2.5, 0, 2.5, 0]),
+    ([[-2.5, -2.5], [-2.5, -2.5]],
+     [[0, 2.5, 0, 2.5, 0], [0, 2.5, 0, 2.5, 0]])])
+def test_lars_with_jitter(y_list, expected_y):
     """
     Test that user input of a small amount of jitter,
     using example provided in issue #2746
 
     """
 
-    A = np.array([[0.0, 0.0, 0.0, -1.0, 0.0], [0.0, -1.0, 0.0, 0.0, 0.0]])
-    b = np.array([-2.5, -2.5])
-    expected_output = np.array([0, 2.5, 0, 2.5, 0])
+    X = np.array([[0.0, 0.0, 0.0, -1.0, 0.0], [0.0, -1.0, 0.0, 0.0, 0.0]])
+    y = np.array(y_list)
+    expected_output = np.array(expected_y)
     alpha = 0.001
     fit_intercept = False
 
     lars = linear_model.LassoLars(alpha=alpha, fit_intercept=fit_intercept)
-    lars_with_jiggle = linear_model.LassoLars(alpha=alpha,
+    lars_with_jitter = linear_model.LassoLars(alpha=alpha,
                                               fit_intercept=fit_intercept,
                                               jitter=10e-5)
 
-    lars.fit(A, b)
-    lars_with_jiggle.fit(A, b)
+    lars.fit(X, y)
+    lars_with_jitter.fit(X, y)
 
-    w_nojiggle = lars.coef_
-    w_jiggle = lars_with_jiggle.coef_
+    w_nojitter = lars.coef_
+    w_jitter = lars_with_jitter.coef_
 
-    assert not np.array_equal(w_jiggle, w_nojiggle)
-    assert_array_almost_equal(w_jiggle, expected_output, decimal=2)
+    assert not np.array_equal(w_jitter, w_nojitter)
+    assert_array_almost_equal(w_jitter, expected_output, decimal=2)
