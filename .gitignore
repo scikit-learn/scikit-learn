@@ -99,6 +99,7 @@ sklearn/neural_network/multilayer_perceptron.py
 sklearn/utils/weight_vector.py
 sklearn/utils/seq_dataset.py
 sklearn/utils/fast_dict.py
+sklearn/utils/testing.py
 
 sklearn/cluster/affinity_propagation_.py
 sklearn/cluster/bicluster.py
