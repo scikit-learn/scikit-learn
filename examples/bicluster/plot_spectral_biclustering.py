@@ -28,15 +28,6 @@ from sklearn.cluster import SpectralBiclustering
 from sklearn.metrics import consensus_score
 
 
-def shuffle(data, random_state=None):
-    generator = np.random.RandomState(random_state)
-    n_rows, n_cols = data.shape
-    row_idx = generator.permutation(n_rows)
-    col_idx = generator.permutation(n_cols)
-    result = data[row_idx][:, col_idx]
-    return result, row_idx, col_idx
-
-
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(
     shape=(300, 300), n_clusters=n_clusters, noise=10,
@@ -45,7 +36,12 @@ data, rows, columns = make_checkerboard(
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
 
-data, row_idx, col_idx = shuffle(data, random_state=0)
+# shuffle clusters
+rng = np.random.RandomState(0)
+row_idx = rng.permutation(data.shape[0])
+col_idx = rng.permutation(data.shape[1])
+data = data[row_idx][:, col_idx]
+
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Shuffled dataset")
 
