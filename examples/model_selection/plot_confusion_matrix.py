@@ -53,7 +53,7 @@ titles_options = [("Confusion matrix, without normalization", False),
                   ("Normalized confusion matrix", True)]
 for title, normalize in titles_options:
     disp = plot_confusion_matrix(classifier, X_test, y_test,
-                                 target_names=class_names,
+                                 display_labels=class_names,
                                  normalize=normalize, xticks_rotation=45)
     disp.ax_.set_title(title)
 
