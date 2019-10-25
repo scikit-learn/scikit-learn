@@ -805,8 +805,6 @@ class Product(KernelOperator):
     1.0
     >>> kernel
     1.41**2 * RBF(length_scale=1)
-
-
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -908,9 +906,6 @@ class Exponentiation(Kernel):
     0.419...
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([635.5...]), array([0.559...]))
-
-
-
     """
     def __init__(self, kernel, exponent):
         self.kernel = kernel
@@ -1105,7 +1100,6 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
     0.3696...
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([606.1...]), array([0.24...]))
-
     """
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
@@ -1229,7 +1223,6 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
-
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1367,8 +1360,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.8354..., 0.03228..., 0.1322...],
            [0.7906..., 0.0652..., 0.1441...]])
-
-    .. versionadded:: 0.22
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1532,10 +1523,6 @@ class Matern(RBF):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.8513..., 0.0368..., 0.1117...],
             [0.8086..., 0.0693..., 0.1220...]])
-
-
-    .. versionadded:: 0.22
-
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
@@ -1705,10 +1692,6 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpc.predict_proba(X[:2,:])
     array([[0.8881..., 0.0566..., 0.05518...],
             [0.8678..., 0.0707... , 0.0614...]])
-
-
-    .. versionadded:: 0.22
-
     """
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
@@ -1846,11 +1829,6 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     0.0144...
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
-
-
-    .. versionadded:: 0.22
-
-
     """
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
@@ -1991,7 +1969,6 @@ class DotProduct(Kernel):
     0.3680...
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
-
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
