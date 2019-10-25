@@ -8,6 +8,7 @@
 cimport cython
 from libc.math cimport fabs
 
+__all__ = ["_update_cdnmf_fast"]
 
 def _update_cdnmf_fast(double[:, ::1] W, double[:, :] HHt, double[:, :] XHt,
                        Py_ssize_t[::1] permutation):
@@ -37,5 +38,5 @@ def _update_cdnmf_fast(double[:, ::1] W, double[:, :] HHt, double[:, :] XHt,
 
                 if hess != 0:
                     W[i, t] = max(W[i, t] - grad / hess, 0.)
-                
+
     return violation
