@@ -287,6 +287,15 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
+        if not shuffle and random_state is not None:  # None is the default
+            # TODO 0.24: raise a ValueError instead of a warning
+            warnings.warn(
+                'Setting a random_state has no effect since shuffle is '
+                'False. This will raise an error in 0.24. You should leave '
+                'random_state to its default (None), or set shuffle=True.',
+                DeprecationWarning
+            )
+
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
@@ -374,7 +383,8 @@ class KFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -579,7 +589,8 @@ class StratifiedKFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------

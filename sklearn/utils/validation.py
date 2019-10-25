@@ -765,6 +765,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -1061,8 +1062,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
