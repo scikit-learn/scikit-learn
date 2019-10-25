@@ -5,7 +5,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..metrics.cluster.supervised import mutual_info_score
+from ..metrics.cluster import mutual_info_score
 from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state

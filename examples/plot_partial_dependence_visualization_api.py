@@ -114,7 +114,8 @@ ax2.legend()
 # partial dependence plots. This can be passed to `mlp_disp` to have the same
 # affect of drawing the plots on top of each other. Furthermore, the
 # `mlp_disp.figure_` stores the figure, which allows for resizing the figure
-# after calling `plot`.
+# after calling `plot`. In this case `tree_disp.axes_` has two dimensions, thus
+# `plot` will only show the y label and y ticks on the left most plot.
 
 tree_disp.plot(line_kw={"label": "Decision Tree"})
 mlp_disp.plot(line_kw={"label": "Multi-layer Perceptron", "c": "red"},
