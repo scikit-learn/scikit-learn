@@ -810,7 +810,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    jitter : float, default=0.001
+    jitter : float, default=None
         Uniform noise parameter, added to the y values, to satisfy
         the model's assumption of one-at-a-time computations
         (Efron et al. 2004).
@@ -972,7 +972,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             max_iter = self.max_iter
 
         if self.jitter:
-            noise = np.random.RandomState(0).uniform(high=self.jitter, size=len(y))
+            noise = np.random.RandomState(0).uniform(high=self.jitter,
+                                                     size=len(y))
             if y.ndim == 2:
                 noise = noise.reshape(-1, 1)
             y = y + noise
@@ -1044,7 +1045,7 @@ class LassoLars(Lars):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    jitter : float, default=0.001
+    jitter : float, default=None
         Uniform noise parameter, added to the y values, to satisfy \
         the model's assumption of one-at-a-time computations \
         (Efron et al. 2004).
