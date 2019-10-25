@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
@@ -209,10 +209,11 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     assert_raise_message(AssertionError,
                          "Expected fit parameter(s) ['eggs'] not seen.",
                          searcher.fit, X, y, spam=np.ones(10))
-    assert_raise_message(AssertionError,
-                         "Fit parameter spam has length 1; expected",
-                         searcher.fit, X, y, spam=np.ones(1),
-                         eggs=np.zeros(10))
+    assert_raise_message(
+        ValueError,
+        "Found input variables with inconsistent numbers of samples: [",
+        searcher.fit, X, y, spam=np.ones(1),
+        eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
@@ -856,10 +857,10 @@ def test_grid_search_cv_results():
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
         assert (all(cv_results[k] >= 0) for k in score_keys
-                if k is not 'rank_test_score')
+                if k != 'rank_test_score')
         assert (all(cv_results[k] <= 1) for k in score_keys
                 if 'time' not in k and
-                k is not 'rank_test_score')
+                k != 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
@@ -1220,7 +1221,7 @@ def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
     estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
     est_parameters = {"random_state": [0, None]}
-    cv = KFold(random_state=0)
+    cv = KFold()
 
     for est in estimators:
         grid_search = GridSearchCV(est, est_parameters, cv=cv,
@@ -1294,7 +1295,7 @@ def test_grid_search_correct_score_results():
 
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
-    cv = StratifiedKFold(random_state=0)
+    cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
 
@@ -1345,7 +1346,7 @@ def test_grid_search_with_multioutput_data():
                                           random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
-    cv = KFold(random_state=0)
+    cv = KFold()
 
     estimators = [DecisionTreeRegressor(random_state=0),
                   DecisionTreeClassifier(random_state=0)]

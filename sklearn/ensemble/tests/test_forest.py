@@ -49,7 +49,7 @@ from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
 
-from sklearn.tree.tree import SPARSE_SPLITTERS
+from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
 # toy sample
@@ -1003,12 +1003,6 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
-    # Using a Python 2.x list as the sample_weight parameter used to raise
-    # an exception. This test makes sure such code will now run correctly.
-    clf = ForestClassifier()
-    sample_weight = [1.] * len(iris.data)
-    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
-
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_class_weights(name):
@@ -1292,27 +1286,6 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
-
-
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-@pytest.mark.parametrize('oob_score', (True, False))
-def test_multi_target(name, oob_score):
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-
-    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
-
-    X = iris.data
-
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
-
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
 
 
 def test_forest_feature_importances_sum():

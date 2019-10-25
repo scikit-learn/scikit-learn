@@ -22,7 +22,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
 from sklearn.base import TransformerMixin
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 import pickle
 
 

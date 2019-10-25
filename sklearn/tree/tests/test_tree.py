@@ -38,8 +38,8 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree.tree import CRITERIA_CLF
-from sklearn.tree.tree import CRITERIA_REG
+from sklearn.tree._classes import CRITERIA_CLF
+from sklearn.tree._classes import CRITERIA_REG
 from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
@@ -1821,26 +1821,6 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
-
-
-@pytest.mark.parametrize('name', CLF_TREES)
-def test_multi_target(name):
-    Tree = CLF_TREES[name]
-
-    clf = Tree()
-
-    X = iris.data
-
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
-
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
 
 
 def test_decision_tree_memmap():

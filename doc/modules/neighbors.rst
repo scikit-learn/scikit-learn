@@ -469,7 +469,7 @@ and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.Quadr
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
-    >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
+    >>> from sklearn.neighbors import NearestCentroid
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
@@ -807,5 +807,5 @@ added space complexity in the operation.
       J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
       Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    .. [2] `Wikipedia entry on Neighborhood Components Analysis
-      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+    `Wikipedia entry on Neighborhood Components Analysis
+    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

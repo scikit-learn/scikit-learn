@@ -13,7 +13,7 @@ from sklearn.utils.testing import (assert_raises_regex,
                                    ignore_warnings,
                                    assert_warns, assert_raises,
                                    SkipTest)
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -23,6 +23,7 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.fixes import _parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -282,7 +283,7 @@ class UntaggedBinaryClassifier(DecisionTreeClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
     def fit(self, X, y, sample_weight=None):
         super().fit(X, y, sample_weight)
-        if self.n_classes_ > 2:
+        if np.all(self.n_classes_ > 2):
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -296,13 +297,24 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, multi_output=True)
         if (y <= 0).any():
             raise ValueError('negative y values not supported!')
         return super().fit(X, y)
 
     def _more_tags(self):
         return {"requires_positive_y": True}
+
+
+def test_not_an_array_array_function():
+    np_version = _parse_version(np.__version__)
+    if np_version < (1, 17):
+        raise SkipTest("array_function protocol not supported in numpy <1.17")
+    not_array = _NotAnArray(np.ones(10))
+    msg = "Don't want to call array_function sum!"
+    assert_raises_regex(TypeError, msg, np.sum, not_array)
+    # always returns True
+    assert np.may_share_memory(not_array, None)
 
 
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
@@ -423,7 +435,9 @@ def test_check_estimator():
     check_estimator(TaggedBinaryClassifier)
 
     # Check regressor with requires_positive_y estimator tag
-    check_estimator(RequiresPositiveYRegressor)
+    msg = 'negative y values not supported!'
+    assert_raises_regex(ValueError, msg, check_estimator,
+                        RequiresPositiveYRegressor)
 
 
 def test_check_outlier_corruption():
@@ -511,7 +525,7 @@ def test_check_no_attributes_set_in_init():
 
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
-    # kernel or  metric
+    # kernel or metric
 
     # test precomputed kernel
     est = SVC(kernel='precomputed')
