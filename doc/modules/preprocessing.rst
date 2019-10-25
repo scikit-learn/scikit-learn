@@ -332,7 +332,7 @@ The Yeo-Johnson transform is given by:
     x_i^{(\lambda)} =
     \begin{cases}
      [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
-    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
     -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
      - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
