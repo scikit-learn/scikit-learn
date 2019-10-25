@@ -58,12 +58,12 @@ class KNNImputer(_BaseImputer):
         be done in-place whenever possible.
 
     add_indicator : bool, default=False
-        If True, a :class:`MissingIndicator` transform will stack onto the output
-        of the imputer's transform. This allows a predictive estimator
+        If True, a :class:`MissingIndicator` transform will stack onto the
+        output of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
-        missing values at fit/train time, the feature won't appear on
-        the missing indicator even if there are missing values at
-        transform/test time.
+        missing values at fit/train time, the feature won't appear on the
+        missing indicator even if there are missing values at transform/test
+        time.
 
     Attributes
     ----------
