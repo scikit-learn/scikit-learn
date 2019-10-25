@@ -11,7 +11,7 @@ jobs:
     TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '4'
-    PYTEST_VERSION: '3.8.1'
+    PYTEST_VERSION: '5.2.1'
     OPENBLAS_NUM_THREADS: '4'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
   strategy:

@@ -26,6 +26,7 @@ parser.add_argument('--catboost', action="store_true", default=False,
 parser.add_argument('--learning-rate', type=float, default=.1)
 parser.add_argument('--problem', type=str, default='classification',
                     choices=['classification', 'regression'])
+parser.add_argument('--loss', type=str, default='default')
 parser.add_argument('--missing-fraction', type=float, default=0)
 parser.add_argument('--n-classes', type=int, default=2)
 parser.add_argument('--n-samples-max', type=int, default=int(1e6))
@@ -81,6 +82,17 @@ def one_run(n_samples):
                     n_iter_no_change=None,
                     random_state=0,
                     verbose=0)
+    loss = args.loss
+    if args.problem == 'classification':
+        if loss == 'default':
+            # loss='auto' does not work with get_equivalent_estimator()
+            loss = 'binary_crossentropy' if args.n_classes == 2 else \
+                'categorical_crossentropy'
+    else:
+        # regression
+        if loss == 'default':
+            loss = 'least_squares'
+    est.set_params(loss=loss)
     est.fit(X_train, y_train)
     sklearn_fit_duration = time() - tic
     tic = time()
@@ -95,11 +107,6 @@ def one_run(n_samples):
     lightgbm_score_duration = None
     if args.lightgbm:
         print("Fitting a LightGBM model...")
-        # get_lightgbm does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
 
         tic = time()
@@ -117,11 +124,6 @@ def one_run(n_samples):
     xgb_score_duration = None
     if args.xgboost:
         print("Fitting an XGBoost model...")
-        # get_xgb does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         xgb_est = get_equivalent_estimator(est, lib='xgboost')
 
         tic = time()
@@ -139,11 +141,6 @@ def one_run(n_samples):
     cat_score_duration = None
     if args.catboost:
         print("Fitting a CatBoost model...")
-        # get_cat does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         cat_est = get_equivalent_estimator(est, lib='catboost')
 
         tic = time()

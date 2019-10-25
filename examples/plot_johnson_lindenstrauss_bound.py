@@ -102,27 +102,26 @@ plt.show()
 # Empirical validation
 # ====================
 #
-# We validate the above bounds on the digits dataset or on the 20 newsgroups
-# text document (TF-IDF word frequencies) dataset:
-#
-# - for the digits dataset, some 8x8 gray level pixels data for 500
-#   handwritten digits pictures are randomly projected to spaces for various
-#   larger number of dimensions ``n_components``.
+# We validate the above bounds on the 20 newsgroups text document
+# (TF-IDF word frequencies) dataset or on the digits dataset:
 #
 # - for the 20 newsgroups dataset some 500 documents with 100k
 #   features in total are projected using a sparse random matrix to smaller
 #   euclidean spaces with various values for the target number of dimensions
 #   ``n_components``.
 #
-# The default dataset is the digits dataset. To run the example on the twenty
-# newsgroups dataset, pass the --twenty-newsgroups command line argument to
+# - for the digits dataset, some 8x8 gray level pixels data for 500
+#   handwritten digits pictures are randomly projected to spaces for various
+#   larger number of dimensions ``n_components``.
+#
+# The default dataset is the 20 newsgroups dataset. To run the example on the
+# digits dataset, pass the ``--use-digits-dataset`` command line argument to
 # this script.
 
-if '--twenty-newsgroups' in sys.argv:
-    # Need an internet connection hence not enabled by default
-    data = fetch_20newsgroups_vectorized().data[:500]
-else:
+if '--use-digits-dataset' in sys.argv:
     data = load_digits().data[:500]
+else:
+    data = fetch_20newsgroups_vectorized().data[:500]
 
 ##########################################################
 # For each value of ``n_components``, we plot:
@@ -158,7 +157,10 @@ for n_components in n_components_range:
         projected_data, squared=True).ravel()[nonzero]
 
     plt.figure()
-    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu)
+    min_dist = min(projected_dists.min(), dists.min())
+    max_dist = max(projected_dists.max(), dists.max())
+    plt.hexbin(dists, projected_dists, gridsize=100, cmap=plt.cm.PuBu,
+               extent=[min_dist, max_dist, min_dist, max_dist])
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
     plt.title("Pairwise distances distribution for n_components=%d" %

@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 import pytest
 
-from sklearn.manifold import mds
+from sklearn.manifold import _mds as mds
 
 
 def test_smacof():

@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
@@ -390,7 +390,8 @@ def test_stratified_kfold_ratios(k, shuffle):
     distr = np.bincount(y) / len(y)
 
     test_sizes = []
-    skf = StratifiedKFold(k, random_state=0, shuffle=shuffle)
+    random_state = None if not shuffle else 0
+    skf = StratifiedKFold(k, random_state=random_state, shuffle=shuffle)
     for train, test in skf.split(X, y):
         assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
         assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
@@ -409,9 +410,10 @@ def test_stratified_kfold_label_invariance(k, shuffle):
     X = np.ones(len(y))
 
     def get_splits(y):
+        random_state = None if not shuffle else 0
         return [(list(train), list(test))
                 for train, test
-                in StratifiedKFold(k, random_state=0,
+                in StratifiedKFold(k, random_state=random_state,
                                    shuffle=shuffle).split(X, y)]
 
     splits_base = get_splits(y)
@@ -978,6 +980,17 @@ def test_repeated_cv_value_errors():
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
         assert_raises(ValueError, cv, n_repeats=0)
         assert_raises(ValueError, cv, n_repeats=1.5)
+
+
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
+def test_repeated_cv_repr(RepeatedCV):
+    n_splits, n_repeats = 2, 6
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv_repr = ('{}(n_repeats=6, n_splits=2, random_state=None)'
+                        .format(repeated_cv.__class__.__name__))
+    assert repeated_cv_repr == repr(repeated_cv)
 
 
 def test_repeated_kfold_determinstic_split():
@@ -1571,3 +1584,12 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+def test_random_state_shuffle_false(Klass):
+    # passing a non-default random_state when shuffle=False makes no sense
+    # TODO 0.24: raise a ValueError instead of a warning
+    with pytest.warns(DeprecationWarning,
+                      match='has no effect since shuffle is False'):
+        Klass(3, shuffle=False, random_state=0)

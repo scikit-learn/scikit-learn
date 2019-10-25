@@ -151,7 +151,7 @@ def _load_imgs(file_paths, slice_, color, resize):
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
         img = imread(file_path)
-        if img.ndim is 0:
+        if img.ndim == 0:
             raise RuntimeError("Failed to read the image file %s, "
                                "Please make sure that libjpeg is installed"
                                % file_path)

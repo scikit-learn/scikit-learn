@@ -23,7 +23,6 @@ from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
-from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
@@ -89,7 +88,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -134,7 +133,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -193,7 +192,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         X = check_array(X, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
-            delayed(parallel_helper)(e, 'predict', X)
+            delayed(e.predict)(X)
             for e in self.estimators_)
 
         return np.asarray(y).T
@@ -202,7 +201,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
+class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -212,10 +211,10 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit` and `predict`.
+        An estimator object implementing :term:`fit` and :term:`predict`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for `fit`.
+        The number of jobs to run in parallel for :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -246,7 +245,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         y : (sparse) array-like, shape (n_samples, n_outputs)
             Multi-output targets.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -297,7 +296,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
+class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -307,7 +306,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing `fit`, `score` and `predict_proba`.
+        An estimator object implementing :term:`fit`, :term:`score` and
+        :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
@@ -320,6 +320,18 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+
+    >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
+    >>> clf.predict(X[-2:])
+    array([[1, 1, 0], [1, 1, 1]])
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -361,10 +373,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
+        p : array of shape (n_samples, n_classes), or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+            classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
@@ -515,7 +527,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
         return Y_pred
 
 
-class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
+class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -529,7 +541,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
@@ -675,7 +687,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
                 'multioutput_only': True}
 
 
-class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
+class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -689,7 +701,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 

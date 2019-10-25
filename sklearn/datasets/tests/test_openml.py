@@ -96,10 +96,12 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if isinstance(target_column, str):
         # single target, so target is vector
         assert data_by_id.target.shape == (expected_observations, )
+        assert data_by_id.target_names == [target_column]
     elif isinstance(target_column, list):
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
+        assert data_by_id.target_names == target_column
     assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
@@ -310,6 +312,7 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert data.shape == data_shape
     assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.dtype == target_dtype
@@ -372,6 +375,7 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     assert data.shape == data_shape
     assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
+    assert bunch.target_names == target_names
 
     assert isinstance(target, pd.DataFrame)
     assert np.all(target.dtypes == target_dtypes)
@@ -453,6 +457,7 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
     assert np.all(data.dtypes == data_dtypes)
     assert np.all(data.columns == feature_names)
     assert np.all(bunch.feature_names == feature_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
@@ -671,6 +676,7 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
     assert isinstance(data, pd.DataFrame)
     assert data.shape == data_shape
     assert np.all(data.columns == feature_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape

@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .label import _encode, _encode_check_unknown
+from ._label import _encode, _encode_check_unknown
 
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class _BaseEncoder(BaseEstimator, TransformerMixin):
+class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
     transform the input features.
