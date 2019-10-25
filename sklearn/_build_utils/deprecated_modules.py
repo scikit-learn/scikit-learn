@@ -108,6 +108,13 @@ _DEPRECATED_MODULES = [
     ('_twenty_newsgroups', 'sklearn.datasets.twenty_newsgroups',
      'sklearn.datasets', 'strip_newsgroup_header'),
 
+    ('_dict_vectorizer', 'sklearn.feature_extraction.dict_vectorizer',
+     'sklearn.feature_extraction', 'DictVectorizer'),
+    ('_hashing', 'sklearn.feature_extraction.hashing',
+     'sklearn.feature_extraction', 'FeatureHasher'),
+    ('_stop_words', 'sklearn.feature_extraction.stop_words',
+     'sklearn.feature_extraction.text', 'ENGLISH_STOP_WORDS'),
+
     ('_base', 'sklearn.linear_model.base', 'sklearn.linear_model',
      'LinearRegression'),
     ('_cd_fast', 'sklearn.linear_model.cd_fast', 'sklearn.linear_model',
