@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import check_random_state
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
 from sklearn.utils.extmath import fast_logdet

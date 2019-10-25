@@ -133,6 +133,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.sparse_output_ = sp.issparse(y)
 
         if not self.sparse_output_:
+            y = np.asarray(y)
             y = np.atleast_1d(y)
 
         if y.ndim == 1:
@@ -470,6 +471,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)

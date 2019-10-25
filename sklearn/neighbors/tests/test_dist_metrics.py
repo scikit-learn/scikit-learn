@@ -9,7 +9,7 @@ import pytest
 from distutils.version import LooseVersion
 from scipy import __version__ as scipy_version
 from scipy.spatial.distance import cdist
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises_regex

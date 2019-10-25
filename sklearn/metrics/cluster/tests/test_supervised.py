@@ -13,7 +13,7 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster.supervised import _generalized_average
+from sklearn.metrics.cluster._supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils.testing import (
