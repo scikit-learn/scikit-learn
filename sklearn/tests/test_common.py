@@ -120,7 +120,7 @@ def test_check_estimator_generate_only():
             check(estimator)
 
 
-@ignore_warnings(category=FutureWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the

@@ -320,7 +320,7 @@ def test_calibration_less_classes():
                                  proba[:, i + 1:]]))
 
 
-@ignore_warnings(category=(FutureWarning, FutureWarning))
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):
