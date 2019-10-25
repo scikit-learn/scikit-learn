@@ -243,14 +243,6 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                 self.statistics_, missing_mask = self._sparse_fit(
                     X, self.strategy, self.missing_values, fill_value)
 
-                if self.add_indicator:
-                    sparse_constructor = (sparse.csr_matrix
-                                          if X.format == 'csr'
-                                          else sparse.csc_matrix)
-                    missing_mask = sparse_constructor(
-                        (missing_mask, X.indices.copy(), X.indptr.copy()),
-                        shape=X.shape, dtype=bool)
-
         else:
             self.statistics_, missing_mask = self._dense_fit(X,
                                                self.strategy,
@@ -269,7 +261,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        mask_data = _get_mask(X.data, missing_values)
+        mask_data, missing_mask = _get_mask(X, missing_values, True)
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
         statistics = np.empty(X.shape[1])
@@ -302,7 +294,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                     statistics[i] = _most_frequent(column,
                                                    0,
                                                    n_zeros)
-        return statistics, mask_data
+        return statistics, missing_mask
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
@@ -366,7 +358,7 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         X = self._validate_input(X)
-        X_ = X
+        X_ = X.copy()
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
@@ -398,19 +390,9 @@ class SimpleImputer(TransformerMixin, BaseEstimator):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                mask = _get_mask(X.data, self.missing_values)
+                mask, missing_mask = _get_mask(X, self.missing_values, True)
                 indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                     np.diff(X.indptr))[mask]
-
-                if self.add_indicator:
-                    sparse_constructor = (sparse.csr_matrix
-                                          if X.format == 'csr'
-                                          else sparse.csc_matrix)
-                    missing_mask = sparse_constructor(
-                                            (mask,
-                                             X.indices.copy(),
-                                             X.indptr.copy()),
-                                            shape=X.shape, dtype=bool)
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
@@ -528,15 +510,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         """
         if sparse.issparse(X):
             if not self._precomputed:
-                mask = _get_mask(X.data, self.missing_values)
-
-                # The imputer mask will be constructed with the same
-                # sparse format as X.
-                sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
-                                      else sparse.csc_matrix)
-                imputer_mask = sparse_constructor(
-                    (mask, X.indices.copy(), X.indptr.copy()),
-                    shape=X.shape, dtype=bool)
+                mask, imputer_mask = _get_mask(X, self.missing_values, True)
             else:
                 imputer_mask = X
 
