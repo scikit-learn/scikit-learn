@@ -452,6 +452,11 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
+- |Enhancement| Multilabel metrics now supports list of lists as input.
+  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`,
+  :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :user:`Léonard Binet <leonardbinet>`.
+
 - |API| ``scoring="neg_brier_score"`` should be used instead of
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
