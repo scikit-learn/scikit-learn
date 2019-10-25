@@ -255,6 +255,10 @@ Changelog
   now raise consistent error messages.
   :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights only.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
