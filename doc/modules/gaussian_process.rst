@@ -507,7 +507,7 @@ the smoothness of the resulting function. It is parameterized by a length-scale 
 
 .. math::
 
-    k(x_i, x_j) = \frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg)^\nu K_\nu\Bigg(\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg),
+    k(x_i, x_j) = \frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\frac{\sqrt{2\nu}}{l} d(x_i , x_j )\Bigg)^\nu K_\nu\Bigg(\frac{\sqrt{2\nu}}{l} d(x_i , x_j )\Bigg),
 
 where :math:`d(\cdot,\cdot)` is the Euclidean distance, :math:`K_\nu(\cdot)` is a modified Bessel function and :math:`\Gamma(\cdot)` is the gamma function.
 As :math:`\nu\rightarrow\infty`, the Matérn kernel converges to the RBF kernel.
@@ -515,17 +515,17 @@ When :math:`\nu = 1/2`, the Matérn kernel becomes identical to the absolute
 exponential kernel, i.e.,
 
 .. math::
-    k(x_i, x_j) = \exp \Bigg(- d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{1}{2}
+    k(x_i, x_j) = \exp \Bigg(- \frac{1}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{1}{2}
 
 In particular, :math:`\nu = 3/2`:
 
 .. math::
-    k(x_i, x_j) =  \Bigg(1 + \sqrt{3} d(x_i / l, x_j / l)\Bigg) \exp \Bigg(-\sqrt{3}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{3}{2}
+    k(x_i, x_j) =  \Bigg(1 + \frac{\sqrt{3}}{l} d(x_i , x_j )\Bigg) \exp \Bigg(-\frac{\sqrt{3}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{3}{2}
 
 and :math:`\nu = 5/2`:
 
 .. math::
-    k(x_i, x_j) = \Bigg(1 + \sqrt{5}d(x_i / l, x_j / l) +\frac{5}{3} d(x_i / l, x_j / l)^2 \Bigg) \exp \Bigg(-\sqrt{5}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{5}{2}
+    k(x_i, x_j) = \Bigg(1 + \frac{\sqrt{5}}{l} d(x_i , x_j ) +\frac{5}{3l} d(x_i , x_j )^2 \Bigg) \exp \Bigg(-\frac{\sqrt{5}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{5}{2}
 
 are popular choices for learning functions that are not infinitely
 differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =

@@ -1465,9 +1465,9 @@ class Matern(RBF):
 
     .. math::
          k(x_i, x_j) =  \\frac{1}{\\Gamma(\\nu)2^{\\nu-1}}\\Bigg(
-         \\sqrt{2\\nu} d(x_i / l, x_j / l)
+         \\frac{\\sqrt{2\\nu}}{l} d(x_i , x_j )
          \\Bigg)^\\nu K_\\nu\\Bigg(
-         \\sqrt{2\\nu} d(x_i / l, x_j / l)\\Bigg)
+         \\frac{\\sqrt{2\\nu}}{l} d(x_i , x_j )\\Bigg)
 
 
 
