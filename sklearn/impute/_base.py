@@ -83,7 +83,11 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             self.indicator_ = None
 
     def _transform_indicator(self, X):
-        """Compute the indicator mask."""
+        """Compute the indicator mask.'
+
+        Note that X must be the original data as passed to the imputer before
+        any imputation, since imputation may be done inplace in some cases.
+        """
         if self.add_indicator:
             if not hasattr(self, 'indicator_'):
                 raise ValueError(
