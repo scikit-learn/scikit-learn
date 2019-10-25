@@ -1144,7 +1144,7 @@ def all_estimators(include_meta_estimators=None,
     """
     # lazy import to avoid circular imports from sklearn.base
     import sklearn
-    from .testing import ignore_warnings
+    from ._testing import ignore_warnings
     from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                         TransformerMixin, ClusterMixin)
 
