@@ -428,12 +428,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X : array-like of shape (n_samples, n_components)
             New data, where n_samples is the number of samples
             and n_components is the number of pls components.
-        copy : bool, default=True
-            Whether to copy X, or perform in-place normalization.
 
         Returns
         -------
-        X_original array-like of shape (n_samples, n_features)
+        x_reconstructed array-like of shape (n_samples, n_features)
 
         Notes
         -----
@@ -442,12 +440,12 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         check_is_fitted(self)
         X = check_array(X, copy=True, dtype=FLOAT_DTYPES)
         # From pls space to original space
-        Xt = np.matmul(X, self.x_loadings_.T)
+        X_reconstructed = np.matmul(X, self.x_loadings_.T)
 
         # Denormalize
-        Xt *= self.x_std_
-        Xt += self.x_mean_
-        return Xt
+        X_reconstructed *= self.x_std_
+        X_reconstructed += self.x_mean_
+        return X_reconstructed
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.

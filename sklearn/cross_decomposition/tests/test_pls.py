@@ -82,10 +82,9 @@ def test_pls():
 
     # Check that inverse_transform works
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Xreconstructed = plsca.inverse_transform(Xr, copy=True)
+    Xreconstructed = plsca.inverse_transform(Xr)
     assert_array_almost_equal(Xreconstructed, X,
                               err_msg="inverse_transform failed")
-
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
