@@ -352,7 +352,7 @@ Changelog
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
 
-- |FIX| ensure that solver using liblinear support ``sample_weight``.
+- |FIX| The liblinear solver now supports ``sample_weight``.
   :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.manifold`
