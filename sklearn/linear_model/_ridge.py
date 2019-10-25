@@ -734,7 +734,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     Ridge()
 
     """
-
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
@@ -1419,14 +1418,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
                          dtype=[np.float64],
                          multi_output=True, y_numeric=True)
-
-        # if classification, LabelBinarizer applied first in RidgeClassifierCV
-        # y (output of lb) would be -1 or 1 only
-        is_clf = ((y == -1) | (y == 1)).all()
 
         if np.any(self.alphas <= 0):
             raise ValueError(
