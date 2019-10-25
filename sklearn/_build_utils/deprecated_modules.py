@@ -189,7 +189,7 @@ _DEPRECATED_MODULES = [
     ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
      'LabelEncoder'),
 
-    ('_testing', 'sklearn.utils._testing', 'sklearn.utils',
+    ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
      'all_estimators'),
 ]
 

@@ -58,7 +58,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
 deprecation_message = (
