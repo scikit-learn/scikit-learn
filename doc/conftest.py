@@ -6,8 +6,8 @@ import warnings
 import numpy as np
 
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_skip_network
+from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import check_skip_network
 from sklearn.datasets import get_data_home
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.datasets.twenty_newsgroups import CACHE_NAME

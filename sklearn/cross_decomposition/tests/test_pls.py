@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
                                    assert_warns)
 from sklearn.datasets import load_linnerud

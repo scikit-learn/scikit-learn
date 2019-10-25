@@ -7,8 +7,8 @@ from scipy import sparse
 import pytest
 
 from sklearn.exceptions import NotFittedError
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder

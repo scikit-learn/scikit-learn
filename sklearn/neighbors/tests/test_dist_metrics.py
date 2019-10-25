@@ -12,7 +12,7 @@ from scipy.spatial.distance import cdist
 from sklearn.neighbors import DistanceMetric
 from sklearn.neighbors import BallTree
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_raises_regex
 
 
 def dist_func(x1, x2, p):

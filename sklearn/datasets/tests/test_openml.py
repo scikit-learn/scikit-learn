@@ -17,10 +17,10 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _get_local_path,
                                      _retry_with_clean_cache,
                                      _feature_to_dtype)
-from sklearn.utils.testing import (assert_warns_message,
+from sklearn.utils._testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
-from sklearn.utils.testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
