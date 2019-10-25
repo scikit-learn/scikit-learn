@@ -91,7 +91,7 @@ _DEPRECATED_MODULES = [
     ('_dict_learning', 'sklearn.decomposition.dict_learning',
      'sklearn.decomposition', 'MiniBatchDictionaryLearning'),
     ('_cdnmf_fast', 'sklearn.decomposition.cdnmf_fast',
-     'sklearn.decomposition', '_update_cdnmf_fast'),
+     'sklearn.decomposition', '__dict__'),
     ('_factor_analysis', 'sklearn.decomposition.factor_analysis',
      'sklearn.decomposition', 'FactorAnalysis'),
     ('_fastica_', 'sklearn.decomposition.fastica_', 'sklearn.decomposition',
