@@ -643,6 +643,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
+        # make sure fit_params are sliceable
+        fit_params_values = indexable(*fit_params.values())
+        fit_params = dict(zip(fit_params.keys(), fit_params_values))
+
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
