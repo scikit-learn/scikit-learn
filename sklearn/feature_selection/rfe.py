@@ -66,6 +66,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
+    importance_getter : callable or 'auto', optional (default='auto')
+        If 'auto', uses the feature importance either through a ``coef_``
+        attribute or ``feature_importances_`` attribute of estimator.
+        If callable, overrides the feature importance getter 
+
     verbose : int, (default=0)
         Controls verbosity of output.
 
@@ -116,10 +121,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 verbose=0):
+                 importance_getter='auto', verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
+        self.importance_getter=importance_getter
         self.verbose = verbose
 
     @property
@@ -184,14 +190,20 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             estimator.fit(X[:, features], y)
 
             # Get coefs
-            if hasattr(estimator, 'coef_'):
-                coefs = estimator.coef_
+            if callable(self.importance_getter):
+                coefs = self.importance_getter(estimator)
+            elif self.importance_getter=='auto':    
+                if hasattr(estimator, 'coef_'):
+                    coefs = estimator.coef_
+                else:
+                    coefs = getattr(estimator, 'feature_importances_', None)
+                if coefs is None:
+                    raise RuntimeError('The classifier does not expose '
+                                    '"coef_" or "feature_importances_" '
+                                    'attributes')
             else:
-                coefs = getattr(estimator, 'feature_importances_', None)
-            if coefs is None:
-                raise RuntimeError('The classifier does not expose '
-                                   '"coef_" or "feature_importances_" '
-                                   'attributes')
+                raise ValueError('importance_getter has to be "auto" or '
+                                 '"callable"')
 
             # Get ranks
             if coefs.ndim > 1:

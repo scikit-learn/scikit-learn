@@ -13,6 +13,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
+from sklearn.compose import TransformedTargetRegressor
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
@@ -369,3 +370,21 @@ def test_rfe_cv_groups():
     )
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
+
+
+def test_rfe_w_target_transform():
+    n_features = 10
+    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    estimator = SVR(kernel="linear")
+
+    log_estimator = TransformedTargetRegressor(regressor=estimator,
+                                               func=np.log,
+                                               inverse_func=np.exp)
+
+    def importance_fetcher(estimator):
+        return estimator.regressor_.coef_
+
+    selector = RFE(log_estimator, step=0.01,
+                   importance_getter=importance_fetcher)
+    sel = selector.fit(X, y)
+    assert sel.support_.sum() == n_features // 2
