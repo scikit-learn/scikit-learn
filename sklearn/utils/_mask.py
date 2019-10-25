@@ -26,7 +26,7 @@ def _get_mask(X, value_to_mask, reconstruct_sparse=False):
         # element-wise for old versions of numpy
         Xt = np.equal(X_, value_to_mask)
 
-    if  not reconstruct_sparse:
+    if not reconstruct_sparse:
         return Xt
 
     else:
