@@ -35,8 +35,8 @@ from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
-from ..metrics.scorer import _check_multimetric_scoring
-from ..metrics.scorer import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring
+from ..metrics import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -188,13 +188,6 @@ class ParameterSampler:
     is given as a distribution, sampling with replacement is used.
     It is highly recommended to use continuous distributions for continuous
     parameters.
-
-    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
-    accept a custom RNG instance and always use the singleton RNG from
-    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
-    deterministic iteration whenever ``scipy.stats`` distributions are used to
-    define the parameter search space. Deterministic behavior is however
-    guaranteed from SciPy 0.16 onwards.
 
     Read more in the :ref:`User Guide <search>`.
 
@@ -650,6 +643,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_metric = 'score'
 
         X, y, groups = indexable(X, y, groups)
+        # make sure fit_params are sliceable
+        fit_params_values = indexable(*fit_params.values())
+        fit_params = dict(zip(fit_params.keys(), fit_params_values))
+
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
@@ -1170,12 +1167,6 @@ class RandomizedSearchCV(BaseSearchCV):
     is given as a distribution, sampling with replacement is used.
     It is highly recommended to use continuous distributions for continuous
     parameters.
-
-    Note that before SciPy 0.16, the ``scipy.stats.distributions`` do not
-    accept a custom RNG instance and always use the singleton RNG from
-    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
-    deterministic iteration whenever ``scipy.stats`` distributions are used to
-    define the parameter search space.
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 

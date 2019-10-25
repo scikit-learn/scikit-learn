@@ -36,7 +36,6 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  padding: 0.1rem;
   white-space: nowrap;
 }
 
@@ -60,10 +59,6 @@ dt:hover a.headerlink {
 
 strong {
   font-weight: bold;
-}
-
-div.line-block {
-  height: 0;
 }
 
 a code {
@@ -154,6 +149,21 @@ div.clearer {
 .sk-btn-primary:active {
   background-color: #3499cd;
   border-color: #3499cd;
+}
+
+/* Quote */
+
+.quote {
+  text-align: right;
+  line-height: 1.5em;
+  font-style: italic;
+  margin: 2em 3em 1em 3em;
+}
+
+.line-block {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
 }
 
 /* Search */
@@ -319,6 +329,10 @@ div#carouselExampleSlidesOnly {
   min-height: 200px;
 }
 
+ul.sk-landing-call-list li {
+  margin-bottom: 0.25rem;
+}
+
 img.sk-footer-funding-logo {
   max-height: 36px;
   max-width: 80px;
@@ -326,10 +340,9 @@ img.sk-footer-funding-logo {
   margin-bottom: 8px;
 }
 
-ul.sk-landing-call-list li {
-  margin-bottom: 0.25rem;
+a.sk-footer-funding-link:hover {
+  text-decoration: none;
 }
-
 /* DOCS STYLE */
 
 .navbar > .sk-docs-container {
@@ -478,6 +491,13 @@ div.sk-navbar-collapse {
   text-align: center;
 }
 
+dl.citation > dd > ol > li {
+  display: inline;
+}
+
+dl.citation > dd > ol {
+  margin-bottom: 0;
+}
 
 /* docs index */
 
@@ -696,7 +716,7 @@ dl.field-list > dt:after {
 
 .classifier::before {
   font-style: normal;
-  margin: 0.5em;
+  margin: 0.3em;
   content: ":";
 }
 
@@ -929,8 +949,7 @@ div.sphx-glr-thumbcontainer {
 }
 
 .sphx-glr-script-out .highlight pre {
-  padding-top: 1ex;
-  padding-right: 1ex;
+  padding: 1ex;
 }
 
 .sphx-glr-script-out div.highlight {
@@ -1017,18 +1036,16 @@ div.sphx-glr-thumbcontainer {
 div.testimonial h2 {
   background-color: transparent;
   color: #008EB2;
+  padding: 0;
   height: 26px;
   line-height: 1.1em;
   font-size: 22px;
   font-weight: bold;
-  text-align: center;
+  text-align: left;
 }
 
 div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
   color: #1c1c1c;
-  padding-left: 230px;
 }
 
 div.testimonial span.testimonial-author p {
@@ -1038,10 +1055,89 @@ div.testimonial span.testimonial-author p {
 }
 
 div.testimonial p {
-  line-height: 1.5em;
-  font-size: 1.1em;
   color: #1c1c1c;
-  padding-left: 230px;
+}
+
+/* Installation quickstart */
+/* This quickstart installation is a hack of the awesome
+   https://spacy.io/usage/#quickstart page.
+   See the original javascript implementation
+   https://github.com/ines/quickstart */
+
+/* style input radio and checkbox */
+
+div.install > input {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  opacity: 0;
+}
+
+/* Style the button */
+div.install > label {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 5px 11px;
+  background-color: #fff3cd;
+  border: none;
+  border-radius: 3px;
+  color: black;
+}
+
+div.install > label:hover {
+  cursor: pointer;
+}
+
+/* Style the button when the checkbox is checked */
+div.install > input:checked + label {
+  background-color: #ff9c34;
+  color: white;
+}
+
+/* Hide expandable content by default */
+.sk-expandable {
+  display: none;
+}
+
+div.highlight span.sk-expandable:before {
+  content: "$ ";
+}
+
+/* Show hidden content when the checkbox is checked */
+/* for conda */
+#quickstart-conda:checked  ~* [data-packager="conda"] {
+  display: block;
+}
+
+#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
+  content: "Use conda environment";
+}
+
+/* for pip */
+#quickstart-pip:checked ~* [data-packager="pip"] {
+  display: block;
+}
+
+#quickstart-pip:checked ~ label[for="quickstart-venv"]:before  {
+  content: "Use pip virtualenv";
+}
+
+#quickstart-win:not(:checked) ~* [data-os="windows"] {
+  display: none;
+}
+#quickstart-lin:not(:checked) ~* [data-os="linux"] {
+  display: none;
+}
+#quickstart-mac:not(:checked) ~* [data-os="mac"] {
+  display: none;
+}
+
+#quickstart-venv:not(:checked) ~* [data-venv=""] {
+  display: none;
+}
+
+#quickstart-venv:checked ~* [data-venv="no"] {
+  display: none;
 }
 
 /* Algorithm cheet-sheet */
@@ -1053,6 +1149,38 @@ div.sk-page-content img.map {
   -webkit-transform: scale(0.5);
       -ms-transform: scale(0.5);
           transform: scale(0.5);
+}
+
+/* sponsors and testimonials */
+
+div.sk-sponsor-div, div.sk-testimonial-div {
+  display: flex;
+  flex-wrap: wrap;
+  -webkit-flex-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+  width: 100%;
+}
+
+@media screen and (min-width: 500px) {
+  div.sk-sponsor-div-box, div.sk-testimonial-div-box {
+    width: 50%;
+  }
+}
+
+table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
+  border-style: none;
+  background-color: white;
+  vertical-align: middle;
+  text-align: center;
+}
+
+table.sk-sponsor-table td {
+  padding: 0.30rem;
 }
 
 /* pygments - highlightning */
