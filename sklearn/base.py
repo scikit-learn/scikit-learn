@@ -550,10 +550,10 @@ class TransformerMixin:
         # method is possible for a given clustering algorithm
         if y is None:
             # fit method of arity 1 (unsupervised transformation)
-            return self.fit(X, **fit_params).transform(X)
+            return self.fit(X, **fit_params).transform(X, **fit_params)
         else:
             # fit method of arity 2 (supervised transformation)
-            return self.fit(X, y, **fit_params).transform(X)
+            return self.fit(X, y, **fit_params).transform(X, **fit_params)
 
 
 class DensityMixin:

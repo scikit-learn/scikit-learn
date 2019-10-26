@@ -254,6 +254,21 @@ class Pipeline(_BaseComposition):
                                                   len(self.steps),
                                                   name)
 
+    def _make_params_steps(self, params):
+        params_steps = {name: {} for name, step in self.steps
+                        if step is not None}
+        for pname, pval in params.items():
+            if '__' not in pname:
+                raise ValueError(
+                    "Pipeline.fit does not accept the {} parameter. "
+                    "You can pass parameters to specific steps of your "
+                    "pipeline using the stepname__parameter format, e.g. "
+                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
+                    "=sample_weight)`.".format(pname))
+            step, param = pname.split('__', 1)
+            params_steps[step][param] = pval
+        return(params_steps)
+
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
@@ -265,18 +280,7 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = {name: {} for name, step in self.steps
-                            if step is not None}
-        for pname, pval in fit_params.items():
-            if '__' not in pname:
-                raise ValueError(
-                    "Pipeline.fit does not accept the {} parameter. "
-                    "You can pass parameters to specific steps of your "
-                    "pipeline using the stepname__parameter format, e.g. "
-                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                    "=sample_weight)`.".format(pname))
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
+        fit_params_steps = self._make_params_steps(fit_params)
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -387,7 +391,8 @@ class Pipeline(_BaseComposition):
             if hasattr(last_step, 'fit_transform'):
                 return last_step.fit_transform(Xt, y, **fit_params)
             else:
-                return last_step.fit(Xt, y, **fit_params).transform(Xt)
+                return last_step.fit(Xt, y, **fit_params).transform(
+                    Xt, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -411,9 +416,14 @@ class Pipeline(_BaseComposition):
         -------
         y_pred : array-like
         """
+        transform_params = {k: v for k, v in predict_params.items()
+                            if '__' in k}
+        predict_params = {k: v for k, v in predict_params.items()
+                          if '__' not in k}
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         return self.steps[-1][-1].predict(Xt, **predict_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -450,7 +460,7 @@ class Pipeline(_BaseComposition):
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X):
+    def predict_proba(self, X, **transform_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -463,13 +473,14 @@ class Pipeline(_BaseComposition):
         -------
         y_proba : array-like of shape (n_samples, n_classes)
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         return self.steps[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def decision_function(self, X):
+    def decision_function(self, X, **transform_params):
         """Apply transforms, and decision_function of the final estimator
 
         Parameters
@@ -482,13 +493,14 @@ class Pipeline(_BaseComposition):
         -------
         y_score : array-like of shape (n_samples, n_classes)
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         return self.steps[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score_samples(self, X):
+    def score_samples(self, X, **transform_params):
         """Apply transforms, and score_samples of the final estimator.
 
         Parameters
@@ -501,13 +513,14 @@ class Pipeline(_BaseComposition):
         -------
         y_score : ndarray, shape (n_samples,)
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
-        for _, _, transformer in self._iter(with_final=False):
-            Xt = transformer.transform(Xt)
+        for _, name, transformer in self._iter(with_final=False):
+            Xt = transformer.transform(Xt, **transform_params_steps[name])
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **transform_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
         Parameters
@@ -520,9 +533,10 @@ class Pipeline(_BaseComposition):
         -------
         y_score : array-like of shape (n_samples, n_classes)
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     @property
@@ -548,10 +562,11 @@ class Pipeline(_BaseComposition):
             self._final_estimator.transform
         return self._transform
 
-    def _transform(self, X):
+    def _transform(self, X, **transform_params):
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
-        for _, _, transform in self._iter():
-            Xt = transform.transform(Xt)
+        for _, name, transform in self._iter():
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         return Xt
 
     @property
@@ -578,15 +593,17 @@ class Pipeline(_BaseComposition):
             transform.inverse_transform
         return self._inverse_transform
 
-    def _inverse_transform(self, X):
+    def _inverse_transform(self, X, **transform_params):
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         reverse_iter = reversed(list(self._iter()))
-        for _, _, transform in reverse_iter:
-            Xt = transform.inverse_transform(Xt)
+        for _, name, transform in reverse_iter:
+            Xt = transform.inverse_transform(
+                Xt, **transform_params_steps[name])
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X, y=None, sample_weight=None):
+    def score(self, X, y=None, sample_weight=None, **transform_params):
         """Apply transforms, and score with the final estimator
 
         Parameters
@@ -607,9 +624,10 @@ class Pipeline(_BaseComposition):
         -------
         score : float
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xt = X
         for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+            Xt = transform.transform(Xt, **transform_params_steps[name])
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
@@ -700,8 +718,8 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
+def _transform_one(transformer, X, y, weight, **transform_params):
+    res = transformer.transform(X, **transform_params)
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
@@ -724,7 +742,8 @@ def _fit_transform_one(transformer,
         if hasattr(transformer, 'fit_transform'):
             res = transformer.fit_transform(X, y, **fit_params)
         else:
-            res = transformer.fit(X, y, **fit_params).transform(X)
+            res = transformer.fit(X, y, **fit_params).transform(
+                X, **fit_params)
 
     if weight is None:
         return res, transformer
@@ -960,7 +979,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))
 
-    def transform(self, X):
+    def transform(self, X, **transform_params):
         """Transform X separately by each transformer, concatenate results.
 
         Parameters
@@ -974,8 +993,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        transform_params_steps = self._make_params_steps(transform_params)
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
+            delayed(_transform_one)(trans, X, None, weight,
+                                    **transform_params_steps[name])
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
