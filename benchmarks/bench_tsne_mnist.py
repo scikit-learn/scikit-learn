@@ -21,7 +21,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 from sklearn.utils import shuffle as _shuffle
-
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 LOG_DIR = "mnist_tsne_output"
 if not os.path.exists(LOG_DIR):
@@ -86,6 +86,7 @@ if __name__ == "__main__":
                              "preprocessing.")
     args = parser.parse_args()
 
+    print("Used number of threads: {}".format(_openmp_effective_n_threads()))
     X, y = load_data(order=args.order)
 
     if args.pca_components > 0:

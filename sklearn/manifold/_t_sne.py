@@ -824,6 +824,8 @@ class TSNE(BaseEstimator):
             opt_args['kwargs']['angle'] = self.angle
             # Repeat verbose argument for _kl_divergence_bh
             opt_args['kwargs']['verbose'] = self.verbose
+            # Get the number of threads for gradient computation here to
+            # avoid recomputing it at each iteration.
             opt_args['kwargs']['num_threads'] = _openmp_effective_n_threads()
         else:
             obj_func = _kl_divergence
