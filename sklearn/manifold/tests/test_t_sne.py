@@ -828,7 +828,7 @@ def test_bh_match_exact():
     assert_allclose(X_embeddeds['exact'], X_embeddeds['barnes_hut'], rtol=1e-4)
 
 
-def test_parallel_gradient_bh_match_iterative():
+def test_gradient_bh_multithread_match_sequential():
     # check that the bh gradient with different num_threads gives the same
     # results
 
@@ -836,8 +836,6 @@ def test_parallel_gradient_bh_match_iterative():
     n_samples = 30
     n_components = 2
     degrees_of_freedom = 1
-
-    kl_and_grad = {}
 
     angle = 3
     perplexity = 5
@@ -850,17 +848,16 @@ def test_parallel_gradient_bh_match_iterative():
     distances_csr = NearestNeighbors().fit(data).kneighbors_graph(
         n_neighbors=n_neighbors, mode='distance')
     P_bh = _joint_probabilities_nn(distances_csr, perplexity, verbose=0)
-    for num_threads in [1, 2, 4]:
-        kl_and_grad[num_threads] = _kl_divergence_bh(
+    kl_sequential, grad_sequential = _kl_divergence_bh(
+        params, P_bh, degrees_of_freedom, n_samples, n_components,
+        angle=angle, skip_num_points=0, verbose=0, num_threads=1)
+    for num_threads in [2, 4]:
+        kl_multithread, grad_multithread = _kl_divergence_bh(
             params, P_bh, degrees_of_freedom, n_samples, n_components,
             angle=angle, skip_num_points=0, verbose=0, num_threads=num_threads)
 
-        if num_threads != 1:
-
-            assert_allclose(kl_and_grad[1][0], kl_and_grad[num_threads][0],
-                            rtol=1e-5)
-            assert_allclose(kl_and_grad[1][1], kl_and_grad[num_threads][1],
-                            rtol=1e-5)
+        assert_allclose(kl_multithread, kl_sequential, rtol=1e-6)
+        assert_allclose(grad_multithread, grad_multithread)
 
 
 def test_tsne_with_different_distance_metrics():
