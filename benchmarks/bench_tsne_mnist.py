@@ -142,7 +142,7 @@ $ cd ..
         data_size.append(70000)
 
     results = []
-    basename, _ = os.path.splitext(__file__)
+    basename = os.path.basename(os.path.splitext(__file__)[0])
     log_filename = os.path.join(LOG_DIR, basename + '.json')
     for n in data_size:
         X_train = X[:n]
