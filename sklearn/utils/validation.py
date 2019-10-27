@@ -1053,12 +1053,11 @@ def _check_sample_weight(sample_weight, X, dtype=None):
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is None or isinstance(sample_weight, numbers.Number):
-        if sample_weight is None:
-            sample_weight = np.ones(n_samples, dtype=dtype)
-        else:
-            sample_weight = np.full(n_samples, sample_weight,
-                                    dtype=dtype)
+    if sample_weight is None:
+        sample_weight = np.ones(n_samples, dtype=dtype)
+    elif isinstance(sample_weight, numbers.Number):
+        sample_weight = np.full(n_samples, sample_weight,
+                                dtype=dtype)
     else:
         if dtype is None:
             dtype = [np.float64, np.float32]
