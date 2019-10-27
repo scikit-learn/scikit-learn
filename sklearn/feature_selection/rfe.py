@@ -8,6 +8,7 @@
 
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
+from operator import attrgetter
 
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
@@ -53,8 +54,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     ----------
     estimator : object
         A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance either through a ``coef_``
-        attribute or through a ``feature_importances_`` attribute.
+        information about feature importance.
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
@@ -66,10 +66,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    importance_getter : callable or 'auto', optional (default='auto')
+    importance_getter : string, attrgetter or callable, optional
+                        (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
-        If callable, overrides the feature importance getter.
+        Also accpets a string that specifying an attribute name/path
+        (implemented with attrgetter) for extracting feature importance.
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -192,18 +196,24 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Get coefs
             if callable(self.importance_getter):
                 coefs = self.importance_getter(estimator)
+            elif isinstance(self.importance_getter, attrgetter):
+                try:
+                    coefs = self.importance_getter(estimator)
+                except AttributeError:
+                    continue
             elif self.importance_getter == 'auto':
                 if hasattr(estimator, 'coef_'):
                     coefs = estimator.coef_
                 else:
                     coefs = getattr(estimator, 'feature_importances_', None)
                 if coefs is None:
-                    raise RuntimeError('The classifier does not expose '
+                    raise RuntimeError('when `importance_getter == "auto"`, '
+                                       'the estimator has to expose either '
                                        '"coef_" or "feature_importances_" '
                                        'attributes')
             else:
-                raise ValueError('importance_getter has to be "auto" or '
-                                 '"callable"')
+                raise ValueError('importance_getter has to be "auto", '
+                                 '`getattr` or "callable"')
 
             # Get ranks
             if coefs.ndim > 1:

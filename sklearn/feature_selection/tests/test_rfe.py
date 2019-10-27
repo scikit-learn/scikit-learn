@@ -5,6 +5,8 @@ Testing Recursive feature elimination
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
+from operator import attrgetter
+import pytest
 
 from sklearn.feature_selection.rfe import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
@@ -17,6 +19,7 @@ from sklearn.compose import TransformedTargetRegressor
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -308,9 +311,9 @@ def test_number_of_subsets_of_features():
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
         assert (np.max(rfe.ranking_) ==
-                     formula1(n_features, n_features_to_select, step))
+                formula1(n_features, n_features_to_select, step))
         assert (np.max(rfe.ranking_) ==
-                     formula2(n_features, n_features_to_select, step))
+                formula2(n_features, n_features_to_select, step))
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
@@ -332,9 +335,9 @@ def test_number_of_subsets_of_features():
         rfecv.fit(X, y)
 
         assert (rfecv.grid_scores_.shape[0] ==
-                     formula1(n_features, n_features_to_select, step))
+                formula1(n_features, n_features_to_select, step))
         assert (rfecv.grid_scores_.shape[0] ==
-                     formula2(n_features, n_features_to_select, step))
+                formula2(n_features, n_features_to_select, step))
 
 
 def test_rfe_cv_n_jobs():
@@ -372,19 +375,40 @@ def test_rfe_cv_groups():
     assert est_groups.n_features_ > 0
 
 
-def test_rfe_w_target_transform():
+@pytest.mark.parametrize('importance_getter',
+                         (lambda est: est.regressor_.coef_,
+                          attrgetter('regressor_.coef_')))
+def test_rfe_w_target_transform(importance_getter):
     n_features = 10
-    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = SVR(kernel="linear")
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,
                                                inverse_func=np.exp)
 
-    def importance_fetcher(estimator):
-        return estimator.regressor_.coef_
-
-    selector = RFE(log_estimator, step=0.01,
-                   importance_getter=importance_fetcher)
+    selector = RFE(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
     assert sel.support_.sum() == n_features // 2
+
+
+def test_importance_getter_param_validation():
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = SVR(kernel="linear")
+    log_estimator = TransformedTargetRegressor(regressor=estimator,
+                                               func=np.log,
+                                               inverse_func=np.exp)
+
+    # when auto option is infeasible for given estimator
+    assert_raises(RuntimeError, RFE(log_estimator).fit, X, y)
+
+    # when provided with string value other than 'auto'
+    assert_raises(ValueError,
+                  RFE(log_estimator, importance_getter='chk_atr').fit,
+                  X, y)
+
+    # when provided with wrong attrgetter
+    assert_raises(AttributeError,
+                  RFE(log_estimator,
+                      importance_getter=attrgetter('est.coef')).fit,
+                  X, y)
