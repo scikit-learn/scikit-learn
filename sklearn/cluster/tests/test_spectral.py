@@ -18,7 +18,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa

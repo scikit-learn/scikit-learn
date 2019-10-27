@@ -69,7 +69,7 @@ for i, perplexity in enumerate(perplexities):
     ax.axis('tight')
 
 # Another example using s-curve
-X, color = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
+X, color = datasets.make_s_curve(n_samples, random_state=0)
 
 ax = subplots[1][0]
 ax.scatter(X[:, 0], X[:, 2], c=color)

@@ -11,7 +11,7 @@ import numpy as np
 from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
-from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.datasets import make_spd_matrix
 from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture

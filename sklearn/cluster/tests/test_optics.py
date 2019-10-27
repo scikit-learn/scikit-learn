@@ -5,7 +5,7 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.cluster import OPTICS
 from sklearn.cluster._optics import _extend_region, _extract_xi_labels
 from sklearn.metrics.cluster import contingency_matrix
