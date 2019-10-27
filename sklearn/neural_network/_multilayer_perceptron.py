@@ -176,7 +176,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
-            X, y, activations, deltas, coef_grads, intercept_grads, sample_weight)
+            X, y, activations, deltas, coef_grads, intercept_grads,
+            sample_weight)
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
@@ -227,7 +228,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if loss_func_name == 'log_loss' and self.out_activation_ == 'logistic':
             loss_func_name = 'binary_log_loss'
 
-        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1], sample_weight)
+        loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1],
+                                              sample_weight)
 
         # Add L2 regularization term to loss
         values = np.sum(
@@ -477,7 +479,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                     "iprint": iprint,
                     "gtol": self.tol
                 },
-                args=(X, y, activations, deltas, coef_grads, intercept_grads, sample_weight))
+                args=(X, y, activations, deltas, coef_grads, intercept_grads,
+                      sample_weight))
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
         self.loss_ = opt_res.fun
         self._unpack(opt_res.x)
@@ -526,14 +529,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         try:
             for it in range(self.max_iter):
                 if self.shuffle:
-                    X, y, sample_weight = shuffle(X, y, sample_weight,
-                                                  random_state=self._random_state)
+                    X, y, sample_weight = \
+                        shuffle(X, y, sample_weight,
+                                random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
                     batch_loss, coef_grads, intercept_grads = self._backprop(
                         X[batch_slice], y[batch_slice], activations, deltas,
-                        coef_grads, intercept_grads, sample_weight[batch_slice])
+                        coef_grads, intercept_grads,
+                        sample_weight[batch_slice])
                     accumulated_loss += batch_loss * (batch_slice.stop -
                                                       batch_slice.start)
 
@@ -635,6 +640,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self : returns a trained MLP model.
@@ -652,6 +660,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         y : array-like, shape (n_samples,)
             The target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
 
         Returns
         -------
@@ -869,6 +880,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
+        .. versionadded:: 0.22
+
     Attributes
     ----------
     classes_ : array or list of array of shape (n_classes,)
@@ -1011,6 +1024,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The target values (class labels in classification, real numbers in
             regression).
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self : returns a trained MLP model.
@@ -1039,6 +1055,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self : returns a trained MLP model.
@@ -1049,7 +1068,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
                                  % self.solver)
         return self._partial_fit
 
-    def _partial_fit(self, X, y, classes=None):
+    def _partial_fit(self, X, y, classes=None,
+                     sample_weight=None):
         if _check_partial_fit_first_call(self, classes):
             self._label_binarizer = LabelBinarizer()
             if type_of_target(y).startswith('multilabel'):
@@ -1057,7 +1077,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        super()._partial_fit(X, y)
+        super()._partial_fit(X, y,
+                             sample_weight=sample_weight)
 
         return self
 

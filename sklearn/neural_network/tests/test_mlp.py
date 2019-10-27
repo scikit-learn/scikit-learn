@@ -214,7 +214,7 @@ def test_gradient():
             def loss_grad_fun(t):
                 return mlp._loss_grad_lbfgs(t, X, Y, activations, deltas,
                                             coef_grads, intercept_grads,
-                                            sample_weight=np.ones(X.shape[0]).squeeze())
+                                            sample_weight=np.ones(X.shape[0]))
 
             [value, grad] = loss_grad_fun(theta)
             numgrad = np.zeros(np.size(theta))
@@ -720,28 +720,29 @@ def test_early_stopping_stratified():
         mlp.fit(X, y)
 
 
-def test_sample_class_weights():
-    """ test sample and class weights:
-    check that at least threshold % of samples (from chosen class)
-    have higher score vs. training without sample or class weights
+@pytest.mark.parametrize("weighted_class",
+                         [i for i in range(3)])
+def test_sample_class_weights(weighted_class):
+    # test sample and class weights:
+    # check that at least threshold % of samples (from chosen class)
+    # have higher score vs. training without sample or class weights
+    #
+    # test uses the digits dataset, and chooses parametrically class
+    # to apply weights for (classes set to digits 0,1 and 2 though
+    # all classes 0-9 should pass this test with threshold=0.15)
 
-    test uses the digits dataset, chooses a class to apply weights for
-    and checks the above assumption for different random states (defined by n_random_sates)
-    """
+    weighted_class = weighted_class
     standard_weight = 1.0
     high_weight = 5.0
-    weighted_class = 0
-    random_state = 0
-    threshold = 0.1
+    threshold = 0.15
     split_size = 0.5
-    n_random_states = 5
 
     # data preprocess
     X, y = load_digits(return_X_y=True)
     X = X / X.max()
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        train_size=split_size,
-                                                        random_state=random_state)
+    X_train, X_test, y_train, y_test = \
+        train_test_split(X, y, train_size=split_size,
+                         random_state=0)
 
     class_weight = [{0: standard_weight} for _ in range(np.max(y)+1)]
     class_weight[weighted_class] = {0: high_weight}
@@ -751,24 +752,27 @@ def test_sample_class_weights():
 
     test_samples = X_test[y_test == weighted_class]
 
-    random_states = [i for i in range(n_random_states)]
-    for state in random_states:
-        base_clf = MLPClassifier(random_state=state)
-        base_clf.fit(X_train, y_train)
-        score = base_clf.predict_proba(test_samples)[:,weighted_class]
+    base_clf = MLPClassifier(random_state=0)
+    base_clf.fit(X_train, y_train)
+    score = base_clf.predict_proba(test_samples)[:, weighted_class]
 
-        # test class weights
-        clf = MLPClassifier(class_weight=class_weight, random_state=state+1)
-        clf.fit(X_train, y_train)
-        weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+    # test class weights
+    clf = MLPClassifier(class_weight=class_weight, random_state=1)
+    clf.fit(X_train, y_train)
+    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-        samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
-        assert samples_with_greater_score > threshold
+    samples_with_greater_score = \
+        (weighted_score > score).sum() / weighted_score.shape[0]
+    assert samples_with_greater_score > threshold
 
-        # test sample weight
-        clf = MLPClassifier(random_state=state+2)
-        clf.fit(X_train, y_train, sample_weight=sample_weight)
-        weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+    # test sample weight
+    clf = MLPClassifier(random_state=2)
+    clf.fit(X_train, y_train, sample_weight=sample_weight)
+    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-        samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
-        assert samples_with_greater_score > threshold
+    samples_with_greater_score = \
+        (weighted_score > score).sum() / weighted_score.shape[0]
+    assert samples_with_greater_score > threshold
+
+# TODO: test rest of loss functions (regression, binary log-loss),
+#  test partial_fit, test zero sample weights effect
