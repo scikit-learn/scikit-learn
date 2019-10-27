@@ -10,7 +10,8 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_raises
-from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
+from sklearn.linear_model import LinearRegression, RANSACRegressor
+from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model._ransac import _dynamic_max_trials
 from sklearn.exceptions import ConvergenceWarning
 
@@ -491,6 +492,6 @@ def test_ransac_fit_sample_weight():
 
     # check that if base_estimator.fit doesn't support
     # sample_weight, raises error
-    base_estimator = Lasso()
+    base_estimator = OrthogonalMatchingPursuit()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
