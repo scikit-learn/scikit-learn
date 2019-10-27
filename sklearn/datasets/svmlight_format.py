@@ -39,7 +39,7 @@ else:
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
                        multilabel=False, zero_based="auto", query_id=False,
-                       offset=0, length=-1):
+                       offset=0, length=-1, start_feature=0, end_feature=-1):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -119,6 +119,17 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 
+    start_feature : integer, optional, default 0
+        The first feature index to read from the libsvm file. Ignore feature
+        index less than start_feature. Need to specify zero_based if it is
+        larger than zero. It cannot be 0 if zero_based is False.
+
+    end_feature : integer, optional, default -1
+        If -1, read from the start_feature to the last feature. If larger than
+        zero, read feature index [start_feature, end_feature) and ignore
+        feature index >= end_feature. Need to specify zero_based if it is
+        larger than zero.
+
     Returns
     -------
     X : scipy.sparse matrix of shape (n_samples, n_features)
@@ -152,7 +163,8 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         X, y = get_data()
     """
     return tuple(load_svmlight_files([f], n_features, dtype, multilabel,
-                                     zero_based, query_id, offset, length))
+                                     zero_based, query_id, offset, length,
+                                     start_feature, end_feature))
 
 
 def _gen_open(f):
@@ -173,16 +185,16 @@ def _gen_open(f):
 
 
 def _open_and_load(f, dtype, multilabel, zero_based, query_id,
-                   offset=0, length=-1):
+                   offset=0, length=-1, start_feature=0, end_feature=-1):
     if hasattr(f, "read"):
         actual_dtype, data, ind, indptr, labels, query = \
             _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
-                                offset, length)
+                                offset, length, start_feature, end_feature)
     else:
         with closing(_gen_open(f)) as f:
             actual_dtype, data, ind, indptr, labels, query = \
                 _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
-                                    offset, length)
+                                    offset, length, start_feature, end_feature)
 
     # convert from array.array, give data the right dtype
     if not multilabel:
@@ -198,7 +210,7 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
                         multilabel=False, zero_based="auto", query_id=False,
-                        offset=0, length=-1):
+                        offset=0, length=-1, start_feature=0, end_feature=-1):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -263,6 +275,17 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 
+    start_feature : integer, optional, default 0
+        The first feature index to read from the libsvm file. Ignore feature
+        index less than start_feature. Need to specify zero_based if it is
+        larger than zero. It cannot be 0 if zero_based is False.
+
+    end_feature : integer, optional, default -1
+        If -1, read from the start_feature to the last feature. If larger than
+        zero, read feature index [start_feature, end_feature) and ignore
+        feature index >= end_feature. Need to specify zero_based if it is
+        larger than zero.
+
     Returns
     -------
     [X1, y1, ..., Xn, yn]
@@ -292,8 +315,19 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         raise ValueError(
             "n_features is required when offset or length is specified.")
 
+    if start_feature < 0:
+        raise ValueError("start_feature should not be less than zero.")
+
+    if end_feature != -1 and end_feature <= start_feature:
+        raise ValueError("end_feature shoud be larger than start_feature")
+
+    if (start_feature > 0 or end_feature > 0) and zero_based == "auto":
+        raise ValueError("zero_based is required if start_feature > 0"
+                         " or end_feature > 0.")
+
     r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id),
-                        offset=offset, length=length)
+                        offset=offset, length=length,
+                        start_feature=start_feature, end_feature=end_feature)
          for f in files]
 
     if (zero_based is False or
@@ -303,6 +337,7 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
             indices -= 1
 
     n_f = max(ind[1].max() if len(ind[1]) else 0 for ind in r) + 1
+    n_f += start_feature
 
     if n_features is None:
         n_features = n_f
@@ -313,7 +348,11 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     result = []
     for data, indices, indptr, y, query_values in r:
-        shape = (indptr.shape[0] - 1, n_features)
+        if start_feature > 0 or end_feature > 0:
+            shape = (indptr.shape[0] - 1,
+                     max(n_f, end_feature) - start_feature)
+        else:
+            shape = (indptr.shape[0] - 1, n_features)
         X = sp.csr_matrix((data, indices, indptr), shape)
         X.sort_indices()
         result += X, y

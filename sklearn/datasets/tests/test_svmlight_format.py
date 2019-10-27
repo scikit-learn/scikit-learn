@@ -185,6 +185,71 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
+def test_load_svmlight_file_start_feature():
+    X, y = load_svmlight_file(datafile, zero_based=True, start_feature=10)
+
+    # test shape
+    assert X.indptr.shape[0] == 7
+    assert X.shape == (6, 12)
+    assert y.shape == (6,)
+
+    # test X's non-zero values
+    for i, j, val in ((0, 11, -5.2), (0, 16, 1.5), (1, 13, -3),
+                      (2, 21, 27)):
+        assert X[i, j-10] == val
+
+    # test X's zero values
+    assert X[0, 18-10] == 0
+    assert X[1, 15-10] == 0
+    assert X[2, 20-10] == 0
+    assert X[3, 11-10] == 0
+    assert X[4, 18-10] == 0
+    assert X[5, 19-10] == 0
+
+    # test y
+    assert_array_equal(y, [1, 2, 3, 4, 1, 2])
+
+
+def test_load_svmlight_file_end_feature():
+    X, y = load_svmlight_file(datafile, zero_based=True, end_feature=16)
+
+    # test shape
+    assert X.indptr.shape[0] == 7
+    assert X.shape == (6, 16)
+    assert y.shape == (6,)
+
+    # test X's non-zero values
+    for i, j, val in ((0, 3, 2.5), (0, 11, -5.2), (1, 6, 1), (1, 13, -3),
+                      (3, 2, 1.234567890123456e10)):
+        assert X[i, j] == val
+
+    # test X's zero values
+    assert X[1, 15] == 0
+    assert X[3, 11] == 0
+
+    # test y
+    assert_array_equal(y, [1, 2, 3, 4, 1, 2])
+
+    X, y = load_svmlight_file(datafile, zero_based=True, start_feature=10,
+                              end_feature=16)
+
+    # test shape
+    assert X.indptr.shape[0] == 7
+    assert X.shape == (6, 6)
+    assert y.shape == (6,)
+
+    # test X's non-zero values
+    for i, j, val in ((0, 11, -5.2), (1, 13, -3)):
+        assert X[i, j-10] == val
+
+    # test X's zero values
+    assert X[1, 15-10] == 0
+    assert X[3, 11-10] == 0
+
+    # test y
+    assert_array_equal(y, [1, 2, 3, 4, 1, 2])
+
+
 @pytest.mark.skip("testing the overflow of 32 bit sparse indexing requires a"
                   " large amount of memory")
 def test_load_large_qid():
