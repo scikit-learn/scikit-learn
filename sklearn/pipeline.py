@@ -979,7 +979,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             **fit_params) for idx, (name, transformer,
                                     weight) in enumerate(transformers, 1))
 
-    def transform(self, X, **transform_params):
+    def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
 
         Parameters
@@ -993,10 +993,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        transform_params_steps = self._make_params_steps(transform_params)
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight,
-                                    **transform_params_steps[name])
+            delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
