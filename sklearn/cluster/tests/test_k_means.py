@@ -24,7 +24,7 @@ from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._k_means import _labels_inertia
 from sklearn.cluster._k_means import _mini_batch_step
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
 

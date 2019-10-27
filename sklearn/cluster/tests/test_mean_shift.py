@@ -17,7 +17,7 @@ from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
 from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 
 n_clusters = 3

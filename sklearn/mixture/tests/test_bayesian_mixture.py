@@ -479,7 +479,7 @@ def test_bayesian_mixture_predict_predict_proba():
                                  "This BayesianGaussianMixture instance"
                                  " is not fitted yet. Call 'fit' with "
                                  "appropriate arguments before using "
-                                 "this method.", bgmm.predict, X)
+                                 "this estimator.", bgmm.predict, X)
 
             bgmm.fit(X)
             Y_pred = bgmm.predict(X)

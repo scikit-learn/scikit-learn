@@ -14,7 +14,7 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal

@@ -85,7 +85,7 @@ def test_notfitted():
                             voting='soft')
     ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
-           " with appropriate arguments before using this method.")
+           " with appropriate arguments before using this estimator.")
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
                          eclf.predict, X)
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
