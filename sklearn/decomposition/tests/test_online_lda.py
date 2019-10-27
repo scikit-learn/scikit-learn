@@ -184,7 +184,8 @@ def test_lda_no_component_error():
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
     regex = ("This LatentDirichletAllocation instance is not fitted yet. "
-             "Call 'fit' with appropriate arguments before using this method.")
+             "Call 'fit' with appropriate arguments before using this "
+             "estimator.")
     with pytest.raises(NotFittedError, match=regex):
         lda.perplexity(X)
 

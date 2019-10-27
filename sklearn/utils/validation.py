@@ -904,7 +904,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
+        yet. Call 'fit' with appropriate arguments before using this
+        estimator."
 
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
@@ -937,7 +938,7 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+               "appropriate arguments before using this estimator.")
 
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))

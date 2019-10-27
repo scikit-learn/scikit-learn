@@ -133,7 +133,7 @@ def test_tabs():
                                                   prefix='sklearn.'):
 
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
 
         # because we don't import

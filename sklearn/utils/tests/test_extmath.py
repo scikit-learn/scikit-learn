@@ -34,7 +34,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_min
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.datasets import make_low_rank_matrix
 
 
 def test_density():

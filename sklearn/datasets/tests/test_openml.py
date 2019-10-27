@@ -11,12 +11,12 @@ import pytest
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import (_open_openml_url,
-                                     _get_data_description_by_id,
-                                     _download_data_arff,
-                                     _get_local_path,
-                                     _retry_with_clean_cache,
-                                     _feature_to_dtype)
+from sklearn.datasets._openml import (_open_openml_url,
+                                      _get_data_description_by_id,
+                                      _download_data_arff,
+                                      _get_local_path,
+                                      _retry_with_clean_cache,
+                                      _feature_to_dtype)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
@@ -257,7 +257,7 @@ def _monkey_patch_webbased_functions(context,
 
     # XXX: Global variable
     if test_offline:
-        context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+        context.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
 
 @pytest.mark.parametrize('feature, expected_dtype', [
@@ -917,7 +917,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
     response1 = _open_openml_url(openml_path, cache_directory)
@@ -934,7 +934,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 def test_open_openml_url_unlinks_local_path(
         monkeypatch, gzip_response, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -944,7 +944,7 @@ def test_open_openml_url_unlinks_local_path(
                 f.write("")
         raise ValueError("Invalid request")
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
         _open_openml_url(openml_path, cache_directory)
@@ -954,7 +954,7 @@ def test_open_openml_url_unlinks_local_path(
 
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
     os.makedirs(os.path.dirname(location))
@@ -977,7 +977,7 @@ def test_retry_with_clean_cache(tmpdir):
 
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
 
     @_retry_with_clean_cache(openml_path, cache_directory)
@@ -1005,7 +1005,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
                                         data_home=cache_directory,
                                         return_X_y=True)
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen',
                         _mock_urlopen_raise)
 
     X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,

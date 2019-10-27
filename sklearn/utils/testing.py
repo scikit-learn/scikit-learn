@@ -513,7 +513,7 @@ def all_estimators(include_meta_estimators=None,
         if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
         with ignore_warnings(category=FutureWarning):
