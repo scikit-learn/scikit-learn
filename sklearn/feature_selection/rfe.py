@@ -69,7 +69,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     importance_getter : callable or 'auto', optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
-        If callable, overrides the feature importance getter 
+        If callable, overrides the feature importance getter.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -125,7 +125,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
-        self.importance_getter=importance_getter
+        self.importance_getter = importance_getter
         self.verbose = verbose
 
     @property
@@ -192,15 +192,15 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Get coefs
             if callable(self.importance_getter):
                 coefs = self.importance_getter(estimator)
-            elif self.importance_getter=='auto':    
+            elif self.importance_getter == 'auto':
                 if hasattr(estimator, 'coef_'):
                     coefs = estimator.coef_
                 else:
                     coefs = getattr(estimator, 'feature_importances_', None)
                 if coefs is None:
                     raise RuntimeError('The classifier does not expose '
-                                    '"coef_" or "feature_importances_" '
-                                    'attributes')
+                                       '"coef_" or "feature_importances_" '
+                                       'attributes')
             else:
                 raise ValueError('importance_getter has to be "auto" or '
                                  '"callable"')
