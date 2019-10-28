@@ -1186,7 +1186,7 @@ def test_column_transformer_mask_indexing(array_type):
     assert X_trans.shape == (3, 2)
 
 
-@pytest.mark.parametrize('cols,pattern,include,exclude', [
+@pytest.mark.parametrize('cols, pattern, include, exclude', [
     (['col_int', 'col_float'], None, np.number, None),
     (['col_int', 'col_float'], None, None, object),
     (['col_int', 'col_float'], None, [np.int, np.float], None),
@@ -1198,6 +1198,7 @@ def test_column_transformer_mask_indexing(array_type):
     (['col_int'], '^col_int', [np.number], None),
     (['col_float', 'col_str'], 'float|str', None, None),
     (['col_str'], '^col_s', None, [np.int]),
+    ([], 'str$', np.float, None),
     (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
 ])
 def test_make_column_selector_with_select_dtypes(cols, pattern, include,
@@ -1213,10 +1214,11 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include,
     selector = make_column_selector(
             dtype_include=include, dtype_exclude=exclude, pattern=pattern)
 
-    assert_array_equal(selector(X_df), sorted(cols))
+    assert_array_equal(selector(X_df), cols)
 
 
-def test_column_transformer_mixed_dtypes():
+def test_column_transformer_with_make_column_selector():
+    # Functional test for column transformer + column selector
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame({
         'col_int': np.array([0, 1, 2], dtype=np.int),

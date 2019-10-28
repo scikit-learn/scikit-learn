@@ -148,6 +148,8 @@ boolean mask array or callable
     sklearn.compose.make_column_transformer : convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
+    sklearn.compose.make_column_selector : convenience function for selecting
+        columns based on datatype or the columns name with a regex pattern.
 
     Examples
     --------
@@ -766,7 +768,7 @@ def _is_negative_indexing(key):
 
 class make_column_selector:
     """Create a callable to select columns to be used with
-    :func:`make_column_transformer` or :class:`ColumnTransformer`.
+    :class:`ColumnTransformer`.
 
     :func:`make_column_selector` can select columns based on datatype or the
     columns name with a regex. When using multiple selection criteria, **all**
@@ -789,7 +791,8 @@ class make_column_selector:
     Returns
     -------
     selector : callable
-        Callable for column selection.
+        Callable for column selection to be used by a
+        :class:`ColumnTransformer`.
 
     See also
     --------
@@ -804,11 +807,12 @@ class make_column_selector:
     >>> from sklearn.compose import make_column_selector
     >>> import pandas as pd
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
-    ...                   'expert_rating': [5, 3, 4, 5]})
+    ...                   'rating': [5, 3, 4, 5]})
     >>> ct = make_column_transformer(
     ...       (StandardScaler(),
-    ...        make_column_selector(dtype_include=np.number)),
-    ...       (OneHotEncoder(), make_column_selector(dtype_include=object)))
+    ...        make_column_selector(dtype_include=np.number)),  # rating
+    ...       (OneHotEncoder(),
+    ...        make_column_selector(dtype_include=object)))  # city
     >>> ct.fit_transform(X)
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],
@@ -831,5 +835,5 @@ class make_column_selector:
                                           exclude=self.dtype_exclude)
         cols = df_row.columns
         if self.pattern is not None:
-            cols = cols[cols.str.contains(self.pattern)]
-        return sorted(cols)
+            cols = cols[cols.str.contains(self.pattern, regex=True)]
+        return cols

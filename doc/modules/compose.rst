@@ -516,9 +516,10 @@ above example would be::
                                    'title')])
 
 scikit-learn provides a :func:`~sklearn.compose.make_column_selector` to help
-select columns based on data type::
+select columns based on data type or column name::
 
    >>> from sklearn.preprocessing import StandardScaler
+   >>> from sklearn.preprocessing import make_column_selector
    >>> ct = make_column_transformer(
    ...       (StandardScaler(), make_column_selector(dtype_include=object)),
    ...       (OneHotEncoder(), make_column_selector(dtype_include=np.number)))
