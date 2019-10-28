@@ -196,6 +196,18 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
+    x_mean_ : array, [p]
+        X mean for each predictor.
+
+    y_mean_ : array, [q]
+        Y mean for each response variable.
+
+    x_std_ : array, [p]
+        X standard deviation for each predictor.
+
+    y_std_ : array, [q]
+        Y standard deviation for each response variable.
+
     coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
@@ -419,6 +431,33 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             return x_scores, y_scores
 
         return x_scores
+
+    def inverse_transform(self, X):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_components)
+            New data, where n_samples is the number of samples
+            and n_components is the number of pls components.
+
+        Returns
+        -------
+        x_reconstructed : array-like of shape (n_samples, n_features)
+
+        Notes
+        -----
+        This transformation will only be exact if n_components=n_features
+        """
+        check_is_fitted(self)
+        X = check_array(X, dtype=FLOAT_DTYPES)
+        # From pls space to original space
+        X_reconstructed = np.matmul(X, self.x_loadings_.T)
+
+        # Denormalize
+        X_reconstructed *= self.x_std_
+        X_reconstructed += self.x_mean_
+        return X_reconstructed
 
     def predict(self, X, copy=True):
         """Apply the dimension reduction learned on the train data.

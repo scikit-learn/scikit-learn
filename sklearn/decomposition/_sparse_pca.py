@@ -10,7 +10,7 @@ from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
-from .dict_learning import dict_learning, dict_learning_online
+from ._dict_learning import dict_learning, dict_learning_online
 
 
 # FIXME: remove in 0.24
