@@ -10,7 +10,7 @@ from ._incremental_pca import IncrementalPCA
 from ._kernel_pca import KernelPCA
 from ._sparse_pca import SparsePCA, MiniBatchSparsePCA
 from ._truncated_svd import TruncatedSVD
-from ._fastica_ import FastICA, fastica
+from ._fastica import FastICA, fastica
 from ._dict_learning import (dict_learning, dict_learning_online,
                              sparse_encode, DictionaryLearning,
                              MiniBatchDictionaryLearning, SparseCoder)

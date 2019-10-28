@@ -94,7 +94,7 @@ _DEPRECATED_MODULES = [
      'sklearn.decomposition', '__dict__'),
     ('_factor_analysis', 'sklearn.decomposition.factor_analysis',
      'sklearn.decomposition', 'FactorAnalysis'),
-    ('_fastica_', 'sklearn.decomposition.fastica_', 'sklearn.decomposition',
+    ('_fastica', 'sklearn.decomposition.fastica_', 'sklearn.decomposition',
      'FastICA'),
     ('_incremental_pca', 'sklearn.decomposition.incremental_pca',
      'sklearn.decomposition', 'IncrementalPCA'),

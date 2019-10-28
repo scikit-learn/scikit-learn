@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 
 from sklearn.decomposition import FastICA, fastica, PCA
-from sklearn.decomposition._fastica_ import _gs_decorrelation
+from sklearn.decomposition._fastica import _gs_decorrelation
 from sklearn.exceptions import ConvergenceWarning
 
 
