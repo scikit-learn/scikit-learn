@@ -1173,7 +1173,7 @@ def all_estimators(include_meta_estimators=None,
 
     all_classes = []
     # get parent folder
-    modules_to_ignore = set(["tests", "externals"])
+    modules_to_ignore = set(["tests", "externals", "setup"])
     root = str(Path(__file__).parent.parent)
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
@@ -1181,11 +1181,11 @@ def all_estimators(include_meta_estimators=None,
         for importer, modname, ispkg in pkgutil.walk_packages(
                 path=[root], prefix='sklearn.'):
             mod_parts = modname.split(".")
-            if (modules_to_ignore & set(mod_parts) or
-                    any(part.startswith("_") for part in mod_parts)):
+            if modules_to_ignore & set(mod_parts):
                 continue
-            if IS_PYPY and ('_svmlight_format' in modname or
-                            'feature_extraction._hashing' in modname):
+            if IS_PYPY and ('svmlight_format' in modname or
+                            'feature_extraction._hashing' in modname or
+                            'feature_extraction.hashing' in modname):
                 continue
             module = import_module("..", modname)
             classes = inspect.getmembers(module, inspect.isclass)
