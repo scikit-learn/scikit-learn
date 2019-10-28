@@ -261,7 +261,7 @@ _DEPRECATED_MODULES = [
      'sklearn.feature_selection', 'chi2'),
     ('_variance_threshold',
      'sklearn.feature_selection.variance_threshold',
-     'sklearn.feature_selection', 'VarianceThreshold')
+     'sklearn.feature_selection', 'VarianceThreshold'),
 
     ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
      'all_estimators'),
