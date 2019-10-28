@@ -72,6 +72,7 @@ Functions
 .. autosummary::
 
    inspection.plot_partial_dependence
+   metrics.plot_confusion_matrix
    metrics.plot_roc_curve
 
 
@@ -83,4 +84,5 @@ Display Objects
 .. autosummary::
 
    inspection.PartialDependenceDisplay
+   metrics.ConfusionMatrixDisplay
    metrics.RocCurveDisplay
