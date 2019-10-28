@@ -43,7 +43,7 @@ Use `Git <https://git-scm.com/>`_ to check out the latest source from the
     cd scikit-learn
 
     pip install cython
-    pip install --editable .
+    pip install --verbose --editable .
 
 Check that the installed scikit-learn has a version number ending with
 `.dev0`::
