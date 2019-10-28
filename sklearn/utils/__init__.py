@@ -3,6 +3,7 @@ The :mod:`sklearn.utils` module includes various utilities.
 """
 import pkgutil
 import inspect
+from importlib import import_module
 from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ import numbers
 import platform
 import struct
 import timeit
+from pathlib import Path
 
 import warnings
 import numpy as np
@@ -1143,7 +1145,6 @@ def all_estimators(include_meta_estimators=None,
         and ``class`` is the actuall type of the class.
     """
     # lazy import to avoid circular imports from sklearn.base
-    import sklearn
     from ._testing import ignore_warnings
     from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                         TransformerMixin, ClusterMixin)
@@ -1172,19 +1173,23 @@ def all_estimators(include_meta_estimators=None,
 
     all_classes = []
     # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=DeprecationWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
+    modules_to_ignore = set(["tests", "externals"])
+    root = str(Path(__file__).parent.parent)
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
+    with ignore_warnings(category=DeprecationWarning):
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix='sklearn.'):
+            mod_parts = modname.split(".")
+            if (modules_to_ignore & set(mod_parts) or
+                    any(part.startswith("_") for part in mod_parts)):
+                continue
+            if IS_PYPY and ('_svmlight_format' in modname or
+                            'feature_extraction._hashing' in modname):
+                continue
+            module = import_module("..", modname)
+            classes = inspect.getmembers(module, inspect.isclass)
+            all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
