@@ -62,11 +62,9 @@ message).
 
 .. note::
 
-    You will have to re-run the ``pip install --editable .`` command every
-    time the source code of a compiled extension is changed (for instance when
-    switching branches or pulling changes from upstream). Compiled extensions
-    are Cython files (ending in `.pyx` or `.pxd`). See :ref:`editable_mode`
-    for more details.
+    You will have to re-run the ``pip install --editable .`` command every time
+    the source code of a Cython file (ending in `.pyx` or `.pxd`). See
+    :ref:`editable_mode` for more details.
 
 Dependencies
 ------------
