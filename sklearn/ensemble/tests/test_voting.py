@@ -562,7 +562,7 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
         est.fit(X, y)
 
 
-# TODO: Remove drop pparametrize in 0.24 when None is removed in Voting*
+# TODO: Remove drop parametrize in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "Voter, BaseEstimator",
     [(VotingClassifier, DecisionTreeClassifier),
