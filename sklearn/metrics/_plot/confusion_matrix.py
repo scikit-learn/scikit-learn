@@ -108,7 +108,7 @@ class ConfusionMatrixDisplay:
                ylabel="True label",
                xlabel="Predicted label")
 
-        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
+        # plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
         self.ax_ = ax
