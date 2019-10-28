@@ -332,7 +332,7 @@ can set the environment variables to these locations::
 
 Finally, build the package using the standard command::
 
-    pip install --editable .
+    pip install --verbose --editable .
 
 For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
