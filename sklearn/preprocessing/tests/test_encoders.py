@@ -8,7 +8,6 @@ import pytest
 
 from sklearn.exceptions import NotFittedError
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
@@ -85,7 +84,8 @@ def test_one_hot_encoder_not_fitted():
     X = np.array([['a'], ['b']])
     enc = OneHotEncoder(categories=['a', 'b'])
     msg = ("This OneHotEncoder instance is not fitted yet. "
-           "Call 'fit' with appropriate arguments before using this method.")
+           "Call 'fit' with appropriate arguments before using this "
+           "estimator.")
     with pytest.raises(NotFittedError, match=msg):
         enc.transform(X)
 
@@ -261,7 +261,8 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1], [1, 0, 1]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
 
 
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
@@ -382,47 +383,6 @@ def test_one_hot_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
-def test_one_hot_encoder_feature_names():
-    enc = OneHotEncoder()
-    X = [['Male', 1, 'girl', 2, 3],
-         ['Female', 41, 'girl', 1, 10],
-         ['Male', 51, 'boy', 12, 3],
-         ['Male', 91, 'girl', 21, 30]]
-
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert isinstance(feature_names, np.ndarray)
-
-    assert_array_equal(['x0_Female', 'x0_Male',
-                        'x1_1', 'x1_41', 'x1_51', 'x1_91',
-                        'x2_boy', 'x2_girl',
-                        'x3_1', 'x3_2', 'x3_12', 'x3_21',
-                        'x4_3',
-                        'x4_10', 'x4_30'], feature_names)
-
-    feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', 'five'])
-
-    assert_array_equal(['one_Female', 'one_Male',
-                        'two_1', 'two_41', 'two_51', 'two_91',
-                        'three_boy', 'three_girl',
-                        'four_1', 'four_2', 'four_12', 'four_21',
-                        'five_3', 'five_10', 'five_30'], feature_names2)
-
-    with pytest.raises(ValueError, match="input_features should have length"):
-        enc.get_feature_names(['one', 'two'])
-
-
-def test_one_hot_encoder_feature_names_unicode():
-    enc = OneHotEncoder()
-    X = np.array([['c❤t1', 'dat2']], dtype=object).T
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=['n👍me'])
-    assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
-
-
 @pytest.mark.parametrize("drop, expected_names",
                          [('first', ['x0_c', 'x2_b']),
                           (['c', 2, 'b'], ['x0_b', 'x2_a'])],
@@ -520,7 +480,8 @@ def test_ordinal_encoder_inverse():
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
@@ -550,6 +511,7 @@ def test_ordinal_encoder_raise_categories_shape():
 
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
 
 def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
@@ -643,10 +605,9 @@ def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
     enc = OneHotEncoder(drop=drop)
-    assert_raises_regex(
-        ValueError,
-        "`drop` should have length equal to the number",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+    err_msg = "`drop` should have length equal to the number"
+    with pytest.raises(ValueError, match=err_msg):
+        enc.fit([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
 
 @pytest.mark.parametrize("density", [True, False],

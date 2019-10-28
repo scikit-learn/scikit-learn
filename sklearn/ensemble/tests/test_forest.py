@@ -49,7 +49,7 @@ from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
 
-from sklearn.tree.tree import SPARSE_SPLITTERS
+from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
 # toy sample
@@ -367,7 +367,8 @@ def test_importances_asymptotic():
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.".format(name))
+               "appropriate arguments before using this estimator."
+               .format(name))
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
@@ -1003,12 +1004,6 @@ def check_class_weights(name):
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
-    # Using a Python 2.x list as the sample_weight parameter used to raise
-    # an exception. This test makes sure such code will now run correctly.
-    clf = ForestClassifier()
-    sample_weight = [1.] * len(iris.data)
-    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
-
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_class_weights(name):
@@ -1294,27 +1289,6 @@ def test_backend_respected():
     assert ba.count == 0
 
 
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-@pytest.mark.parametrize('oob_score', (True, False))
-def test_multi_target(name, oob_score):
-    ForestClassifier = FOREST_CLASSIFIERS[name]
-
-    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
-
-    X = iris.data
-
-    # Make multi column mixed type target.
-    y = np.vstack([
-        iris.target.astype(float),
-        iris.target.astype(int),
-        iris.target.astype(str),
-    ]).T
-
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
-
-
 def test_forest_feature_importances_sum():
     X, y = make_classification(n_samples=15, n_informative=3, random_state=1,
                                n_classes=3)
@@ -1330,3 +1304,65 @@ def test_forest_degenerate_feature_importances():
     gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
+
+
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
+@pytest.mark.parametrize(
+    'max_samples, exc_type, exc_msg',
+    [(int(1e9), ValueError,
+      "`max_samples` must be in range 1 to 6 but got value 1000000000"),
+     (1.0, ValueError,
+      r"`max_samples` must be in range \(0, 1\) but got value 1.0"),
+     (2.0, ValueError,
+      r"`max_samples` must be in range \(0, 1\) but got value 2.0"),
+     (0.0, ValueError,
+      r"`max_samples` must be in range \(0, 1\) but got value 0.0"),
+     (np.nan, ValueError,
+      r"`max_samples` must be in range \(0, 1\) but got value nan"),
+     (np.inf, ValueError,
+      r"`max_samples` must be in range \(0, 1\) but got value inf"),
+     ('str max_samples?!', TypeError,
+      r"`max_samples` should be int or float, but got "
+      r"type '\<class 'str'\>'"),
+     (np.ones(2), TypeError,
+      r"`max_samples` should be int or float, but got type "
+      r"'\<class 'numpy.ndarray'\>'")]
+)
+def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
+    # Check invalid `max_samples` values
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](max_samples=max_samples)
+    with pytest.raises(exc_type, match=exc_msg):
+        est.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    'ForestClass', [RandomForestClassifier, RandomForestRegressor]
+)
+def test_little_tree_with_small_max_samples(ForestClass):
+    rng = np.random.RandomState(1)
+
+    X = rng.randn(10000, 2)
+    y = rng.randn(10000) > 0
+
+    # First fit with no restriction on max samples
+    est1 = ForestClass(
+        n_estimators=1,
+        random_state=rng,
+        max_samples=None,
+    )
+
+    # Second fit with max samples restricted to just 2
+    est2 = ForestClass(
+        n_estimators=1,
+        random_state=rng,
+        max_samples=2,
+    )
+
+    est1.fit(X, y)
+    est2.fit(X, y)
+
+    tree1 = est1.estimators_[0].tree_
+    tree2 = est2.estimators_[0].tree_
+
+    msg = "Tree without `max_samples` restriction should have more nodes"
+    assert tree1.node_count > tree2.node_count, msg
