@@ -516,11 +516,11 @@ def test_sample_weight_effect(problem, duplication, seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    n_samples = 255  # fails for n_samples > 256
+    n_samples = 10  # fails for n_samples > 256
     n_features = 2
     if problem == 'regression':
         X, y = make_regression(n_samples=n_samples, n_features=n_features,
-                            n_informative=n_features, random_state=seed)
+                               n_informative=n_features, random_state=seed)
         Klass = HistGradientBoostingRegressor
     else:
         n_classes = 2 if problem == 'binary_classification' else 3
@@ -530,7 +530,7 @@ def test_sample_weight_effect(problem, duplication, seed):
                                    n_classes=n_classes, random_state=seed)
         Klass = HistGradientBoostingClassifier
 
-    est = Klass(min_samples_leaf=1)  # fails if min_samples_leaf > 1
+    est = Klass(min_samples_leaf=2, max_iter=1)  # fails if min_samples_leaf > 1
 
     # Create dataset with duplicate and corresponding sample weights
     if duplication == 'half':
@@ -542,8 +542,11 @@ def test_sample_weight_effect(problem, duplication, seed):
     sample_weight = np.ones(shape=(n_samples))
     sample_weight[:lim] = 2
 
-    no_dup_sw = est.fit(X, y, sample_weight=sample_weight).predict(X_dup)
-    dup_no_sw = est.fit(X_dup, y_dup).predict(X_dup)
+    # Check decision function instead of just classes for classification
+    print(est.fit(X_dup, y_dup)._raw_predict(X_dup))
+    print(est.fit(X, y, sample_weight=sample_weight)._raw_predict(X_dup))
+    # no_dup_sw = est.fit(X, y, sample_weight=sample_weight)._raw_predict(X_dup)
+    # dup_no_sw = est.fit(X_dup, y_dup)._raw_predict(X_dup)
 
     assert np.allclose(dup_no_sw, no_dup_sw)
 
