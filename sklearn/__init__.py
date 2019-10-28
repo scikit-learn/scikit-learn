@@ -22,7 +22,6 @@ from ._config import get_config, set_config, config_context
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-logger.setLevel(logging.INFO)
 
 
 # Make sure that DeprecationWarning within this package always gets printed
