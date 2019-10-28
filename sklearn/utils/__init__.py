@@ -1181,17 +1181,18 @@ def all_estimators(include_meta_estimators=None,
         for importer, modname, ispkg in pkgutil.walk_packages(
                 path=[root], prefix='sklearn.'):
             mod_parts = modname.split(".")
-            if modules_to_ignore & set(mod_parts):
+            if modules_to_ignore & set(mod_parts) or "._" in modname:
                 continue
-            if IS_PYPY and ('svmlight_format' in modname or
-                            'feature_extraction._hashing' in modname or
-                            'feature_extraction.hashing' in modname):
-                continue
-            relative_module = modname.replace("sklearn.", "..")
-            module = import_module(relative_module, "sklearn.utils")
+            module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
             classes = [(name, est_cls) for name, est_cls in classes
                        if not name.startswith("_")]
+
+            # remove FeatureHasher
+            if IS_PYPY and 'feature_extraction' in modname:
+                classes = [(name, est_cls) for name, est_cls in classes
+                           if name == "FeatureHasher"]
+
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
