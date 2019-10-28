@@ -1368,5 +1368,5 @@ def test_vectorizermixin_is_deprecated():
 
     msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         MyVectorizer()
