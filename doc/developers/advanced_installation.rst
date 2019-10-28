@@ -8,13 +8,14 @@ Installing the development version of scikit-learn
 This section introduces how to install the **master branch** of scikit-learn.
 This is required:
 
+- to work on a contribution (bug fix, new feature, code or documentation
+  improvement);
+
 - to try a new feature that will be shipped in the next release (that is, a
   feature from a pull-request that was recently merged to the master branch);
 
 - to check whether a bug you encountered has been fixed since the last
   release;
-
-- or to work on a contribution of your own.
 
 .. _install_nightly_builds:
 
@@ -31,7 +32,7 @@ basis to help users test bleeding edge features or bug fixes::
 .. _install_bleeding_edge:
 
 Building from source
-=====================
+====================
 
 .. _git_repo:
 
@@ -117,7 +118,7 @@ Test dependencies
 
 Running tests requires:
 
-.. |PytestMinVersion| replace:: 3.3.0
+.. |PytestMinVersion| replace:: 4.6.2
 
 - pytest >=\ |PytestMinVersion|
 
