@@ -836,4 +836,4 @@ class make_column_selector:
         cols = df_row.columns
         if self.pattern is not None:
             cols = cols[cols.str.contains(self.pattern, regex=True)]
-        return cols
+        return cols.tolist()
