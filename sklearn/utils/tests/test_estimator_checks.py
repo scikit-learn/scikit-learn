@@ -9,7 +9,7 @@ from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils.testing import (assert_raises_regex,
+from sklearn.utils._testing import (assert_raises_regex,
                                    ignore_warnings,
                                    assert_warns, assert_raises,
                                    SkipTest)

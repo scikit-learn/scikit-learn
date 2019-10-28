@@ -5,7 +5,7 @@ from numpy.testing import assert_array_almost_equal
 from sklearn.utils.fixes import comb
 from sklearn.utils.random import _random_choice_csc, sample_without_replacement
 from sklearn.utils._random import _our_rand_r_py
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 
 
 ###############################################################################

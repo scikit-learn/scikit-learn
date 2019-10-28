@@ -58,7 +58,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest"]
+           "assert_run_python_script", "SkipTest", "all_estimators"]
 
 _dummy = TestCase('__init__')
 deprecation_message = (
@@ -436,6 +436,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
+# TODO: Remove in 0.24. This class is now in utils.__init__.
 def all_estimators(include_meta_estimators=None,
                    include_other=None, type_filter=None,
                    include_dont_test=None):
@@ -512,7 +513,7 @@ def all_estimators(include_meta_estimators=None,
         if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
         with ignore_warnings(category=DeprecationWarning):

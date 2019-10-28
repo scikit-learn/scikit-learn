@@ -12,7 +12,7 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_raises,
     assert_less,
     assert_greater,
@@ -34,7 +34,7 @@ from sklearn.utils.testing import (
     create_memmap_backed_data,
     _delete_folder)
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 

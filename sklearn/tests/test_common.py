@@ -17,8 +17,8 @@ from functools import partial
 import pytest
 
 
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
@@ -29,7 +29,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -191,7 +191,7 @@ def test_import_all_consistency():
         if ".tests." in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
