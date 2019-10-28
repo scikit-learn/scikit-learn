@@ -354,7 +354,7 @@ def test_calibration_with_fit_params():
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
                                random_state=42)
 
-    fit_params = {'a': y, 'b': y}
+    fit_params = {'a': y, 'b': y, 'c': y.tolist()}
 
     clf = CheckingClassifier(expected_fit_params=fit_params)
     pc_clf = CalibratedClassifierCV(clf)

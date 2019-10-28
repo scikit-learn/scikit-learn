@@ -22,6 +22,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
+from .utils import _safe_indexing
 from .utils.validation import check_is_fitted, check_consistent_length
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
@@ -190,7 +191,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 if fit_params:
                     for k, v in fit_params.items():
                         check_consistent_length(y, v)
-                        fit_params_train[k] = v[train]
+                        fit_params_train[k] = _safe_indexing(v, train)
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(
                         X[train], y[train],
