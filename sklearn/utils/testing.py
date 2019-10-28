@@ -29,7 +29,6 @@ from inspect import signature
 import shutil
 import atexit
 import unittest
-from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
@@ -50,6 +49,7 @@ import sklearn
 from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",

@@ -431,7 +431,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         Returns
         -------
-        x_reconstructed : array-like of shape (n_samples, n_features)
+        x_reconstructed array-like of shape (n_samples, n_features)
 
         Notes
         -----
