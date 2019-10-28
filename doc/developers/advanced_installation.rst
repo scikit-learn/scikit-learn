@@ -45,7 +45,7 @@ Use `Git <https://git-scm.com/>`_ to check out the latest source from the
     pip install cython
     pip install --editable .
 
-Check that the installed scikit-learn with a version number ending with
+Check that the installed scikit-learn has a version number ending with
 `.dev0`::
 
     python -c "import sklearn; sklearn.show_versions()"
