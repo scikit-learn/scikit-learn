@@ -196,6 +196,18 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
+    x_mean_ : array, [p]
+        X mean for each predictor.
+
+    y_mean_ : array, [q]
+        Y mean for each response variable.
+
+    x_std_ : array, [p]
+        X standard deviation for each predictor.
+
+    y_std_ : array, [q]
+        Y standard deviation for each response variable.
+
     coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 

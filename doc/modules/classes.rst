@@ -1585,10 +1585,7 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.testing.assert_in
-   utils.testing.assert_not_in
-   utils.testing.assert_raise_message
-   utils.testing.all_estimators
+   utils.all_estimators
 
 Utilities from joblib:
 

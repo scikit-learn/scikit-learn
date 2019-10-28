@@ -86,6 +86,31 @@ _DEPRECATED_MODULES = [
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 
+    ('_base', 'sklearn.decomposition.base', 'sklearn.decomposition',
+     'BaseEstimator'),
+    ('_dict_learning', 'sklearn.decomposition.dict_learning',
+     'sklearn.decomposition', 'MiniBatchDictionaryLearning'),
+    ('_cdnmf_fast', 'sklearn.decomposition.cdnmf_fast',
+     'sklearn.decomposition', '__dict__'),
+    ('_factor_analysis', 'sklearn.decomposition.factor_analysis',
+     'sklearn.decomposition', 'FactorAnalysis'),
+    ('_fastica', 'sklearn.decomposition.fastica_', 'sklearn.decomposition',
+     'FastICA'),
+    ('_incremental_pca', 'sklearn.decomposition.incremental_pca',
+     'sklearn.decomposition', 'IncrementalPCA'),
+    ('_kernel_pca', 'sklearn.decomposition.kernel_pca',
+     'sklearn.decomposition', 'KernelPCA'),
+    ('_nmf', 'sklearn.decomposition.nmf', 'sklearn.decomposition', 'NMF'),
+    ('_online_lda', 'sklearn.decomposition.online_lda',
+     'sklearn.decomposition', 'LatentDirichletAllocation'),
+    ('_online_lda_fast', 'sklearn.decomposition.online_lda_fast',
+     'sklearn.decomposition', 'mean_change'),
+    ('_pca', 'sklearn.decomposition.pca', 'sklearn.decomposition', 'PCA'),
+    ('_sparse_pca', 'sklearn.decomposition.sparse_pca',
+     'sklearn.decomposition', 'SparsePCA'),
+    ('_truncated_svd', 'sklearn.decomposition.truncated_svd',
+     'sklearn.decomposition', 'TruncatedSVD'),
+
     ('_gpr', 'sklearn.gaussian_process.gpr', 'sklearn.gaussian_process',
      'GaussianProcessRegressor'),
     ('_gpc', 'sklearn.gaussian_process.gpc', 'sklearn.gaussian_process',
@@ -237,6 +262,9 @@ _DEPRECATED_MODULES = [
     ('_variance_threshold',
      'sklearn.feature_selection.variance_threshold',
      'sklearn.feature_selection', 'VarianceThreshold')
+
+    ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
+     'all_estimators'),
 ]
 
 
