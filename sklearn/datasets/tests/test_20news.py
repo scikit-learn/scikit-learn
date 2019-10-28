@@ -4,10 +4,11 @@ from functools import partial
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import SkipTest, assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn import datasets
+from sklearn.preprocessing import normalize
 
 
 def test_20news():
@@ -94,3 +95,19 @@ def test_20news_vectorized():
     assert bunch.data.shape == (11314 + 7532, 130107)
     assert bunch.target.shape[0] == 11314 + 7532
     assert bunch.data.dtype == np.float64
+
+
+def test_20news_normalization():
+    try:
+        X = datasets.fetch_20newsgroups_vectorized(normalize=False,
+                                                   download_if_missing=False)
+        X_ = datasets.fetch_20newsgroups_vectorized(normalize=True,
+                                                    download_if_missing=False)
+    except IOError:
+        raise SkipTest("Download 20 newsgroups to run this test")
+
+    X_norm = X_['data'][:100]
+    X = X['data'][:100]
+
+    assert_allclose_dense_sparse(X_norm, normalize(X))
+    assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)

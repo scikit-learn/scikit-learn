@@ -139,6 +139,10 @@ Changelog
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
 
+ - |Enhancement| The parameter `normalize` was added to
+   :func:`datasets.fetch_20newsgroups_vectorized`.
+   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
+
 :mod:`sklearn.decomposition`
 ............................
 
