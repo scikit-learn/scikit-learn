@@ -19,8 +19,8 @@ from sklearn.linear_model._base import _preprocess_data
 from sklearn.linear_model._base import _rescale_data
 from sklearn.linear_model._base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.datasets.samples_generator import make_sparse_uncorrelated
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_sparse_uncorrelated
+from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)

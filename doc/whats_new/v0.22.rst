@@ -118,6 +118,11 @@ Changelog
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
+- |Feature| :class:`cross_decomposition.PLSCanonical` and
+  :class:`cross_decomposition.PLSRegression` have a new function
+  ``inverse_transform`` to transform data to the original space`.
+  :pr:`15304` by :user:`Jaime Ferrando Huertas <jiwidi>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -138,6 +143,10 @@ Changelog
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
+
+ - |Enhancement| The parameter `normalize` was added to
+   :func:`datasets.fetch_20newsgroups_vectorized`.
+   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
 
 :mod:`sklearn.decomposition`
 ............................
@@ -162,6 +171,10 @@ Changelog
 - |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
+
+- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
+  matrices now uses batching to avoid briefly allocating an array with size
+  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
 
 :mod:`sklearn.dummy`
 ....................
@@ -310,6 +323,10 @@ Changelog
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
+
+- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+  to get indicator of missing data.
+  :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
   is False by default, which, when True, will skip computation on features that

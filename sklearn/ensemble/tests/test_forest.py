@@ -367,7 +367,8 @@ def test_importances_asymptotic():
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.".format(name))
+               "appropriate arguments before using this estimator."
+               .format(name))
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 

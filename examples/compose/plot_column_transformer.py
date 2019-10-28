@@ -31,8 +31,6 @@ import numpy as np
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.datasets.twenty_newsgroups import strip_newsgroup_footer
-from sklearn.datasets.twenty_newsgroups import strip_newsgroup_quoting
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -69,8 +67,6 @@ class SubjectBodyExtractor(TransformerMixin, BaseEstimator):
         features = np.empty(shape=(len(posts), 2), dtype=object)
         for i, text in enumerate(posts):
             headers, _, bod = text.partition('\n\n')
-            bod = strip_newsgroup_footer(bod)
-            bod = strip_newsgroup_quoting(bod)
             features[i, 1] = bod
 
             prefix = 'Subject:'
@@ -124,10 +120,12 @@ categories = ['alt.atheism', 'talk.religion.misc']
 X_train, y_train = fetch_20newsgroups(random_state=1,
                                       subset='train',
                                       categories=categories,
+                                      remove=('footers', 'quotes'),
                                       return_X_y=True)
 X_test, y_test = fetch_20newsgroups(random_state=1,
                                     subset='test',
                                     categories=categories,
+                                    remove=('footers', 'quotes'),
                                     return_X_y=True)
 
 pipeline.fit(X_train, y_train)
