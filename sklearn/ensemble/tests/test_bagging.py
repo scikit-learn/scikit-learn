@@ -63,7 +63,7 @@ def test_classification():
                           "bootstrap_features": [True, False]})
 
     for base_estimator in [None,
-                           DummyClassifier(),
+                           DummyClassifier(strategy='stratified'),
                            Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),

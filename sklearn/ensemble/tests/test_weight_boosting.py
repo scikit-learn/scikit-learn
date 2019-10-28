@@ -501,7 +501,8 @@ def test_multidimensional_X():
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
-    base_estimator = NoSampleWeightWrapper(DummyClassifier())
+    base_estimator = NoSampleWeightWrapper(
+        DummyClassifier(strategy='stratified'))
     clf = AdaBoostClassifier(
         base_estimator=base_estimator, algorithm=algorithm
     )
