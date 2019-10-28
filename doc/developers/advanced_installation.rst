@@ -291,7 +291,7 @@ Ubuntu::
 then proceed as usual::
 
     pip3 install cython
-    pip3 install --editable .
+    pip3 install --verbose --editable .
 
 When precompiled wheels of the runtime dependencies are not avalaible for your
 architecture (e.g. ARM), you can install the system versions::
