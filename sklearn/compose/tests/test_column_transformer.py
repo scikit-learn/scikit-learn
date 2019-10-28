@@ -10,6 +10,7 @@ import pytest
 
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_almost_equal
 
@@ -17,8 +18,10 @@ from sklearn.base import BaseEstimator
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
+from sklearn.preprocessing import (
+    StandardScaler, Normalizer, OneHotEncoder, MinMaxScaler)
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 
 
 class Trans(BaseEstimator):
@@ -34,22 +37,34 @@ class Trans(BaseEstimator):
             return np.atleast_2d(X).T
         return X
 
+    def inverse_transform(self, X):
+        return X
 
-class DoubleTrans(BaseEstimator):
+
+class DoubleTrans(Trans):
     def fit(self, X, y=None):
         return self
 
     def transform(self, X):
-        return 2*X
+        return 2 * super(DoubleTrans, self).transform(X)
+
+    def inverse_transform(self, X):
+        return X / 2
 
 
 class SparseMatrixTrans(BaseEstimator):
     def fit(self, X, y=None):
+        self.X_ = X
         return self
 
     def transform(self, X, y=None):
-        n_samples = len(X)
+        n_samples = len(self.X_)
         return sparse.eye(n_samples, n_samples).tocsr()
+
+    def inverse_transform(self, X):
+        if self.X_.ndim == 1:
+            return np.atleast_2d(self.X_).T
+        return self.X_
 
 
 class TransNo2D(BaseEstimator):
@@ -107,6 +122,7 @@ def test_column_transformer():
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert_array_equal(ct.inverse_transform(X_res_both), X_array)
     assert len(ct.transformers_) == 2
 
     # test with transformer_weights
@@ -118,13 +134,56 @@ def test_column_transformer():
                      transformer_weights['trans2'] * X_res_second1D]).T
     assert_array_equal(both.fit_transform(X_array), res)
     assert_array_equal(both.fit(X_array).transform(X_array), res)
+    assert_allclose(both.inverse_transform(res), X_array)
     assert len(both.transformers_) == 2
 
     both = ColumnTransformer([('trans', Trans(), [0, 1])],
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_array), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_array).transform(X_array), 0.1 * X_res_both)
+    assert_allclose(both.inverse_transform(0.1 * X_res_both), X_array)
     assert len(both.transformers_) == 1
+
+
+def test_column_transformer_inverse_transform_all_transformers_drop():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    ct = ColumnTransformer([('trans1', 'drop', [0]), ('trans2', 'drop', [1])])
+    res = ct.fit_transform(X_array)
+    assert_array_equal(np.zeros((X_array.shape[0], 0)), res)
+
+    error_msg = ("Unable to invert: dropping columns is "
+                 "not supported. all columns were dropped")
+
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(res)
+
+
+@pytest.mark.parametrize("transformers, error_msg", [
+    ([('trans1', Trans(), [0]), ('trans2', 'drop', [1])],
+     ("Unable to invert: dropping columns is "
+      "not supported. 'trans2' drops columns")),
+    ([('trans1', Trans(), [0]), ('trans2', Trans(), [0])],
+     "Unable to invert: transformers contain overlapping columns"),
+    ([('trans1', Trans(), [0])],
+     ("Unable to invert: dropping columns is not supported. "
+      "'remainder' drops columns")),
+    ([('trans1', Trans(), [0]), ('trans2', TransNo2D(), [1])],
+     ("Unable to invert: "
+      "trans2 does not define inverse_transform")),
+    ([('trans1', Trans(), [0]), ('trans2', TransNo2D(), [1])],
+     ("Unable to invert: "
+      "trans2 does not define inverse_transform"))
+])
+def test_column_transformer_errors(
+        transformers, error_msg):
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    ct = ColumnTransformer(transformers)
+    res = ct.fit_transform(X_array)
+
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(res)
 
 
 def test_column_transformer_dataframe():
@@ -180,6 +239,9 @@ def test_column_transformer_dataframe():
                             ('trans2', Trans(), ['second'])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+    inverse = ct.inverse_transform(X_res_both)
+    assert_array_equal(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -187,6 +249,9 @@ def test_column_transformer_dataframe():
                             ('trans2', Trans(), [1])])
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+    inverse = ct.inverse_transform(X_res_both)
+    assert_array_equal(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -199,6 +264,8 @@ def test_column_transformer_dataframe():
                      transformer_weights['trans2'] * X_df['second']]).T
     assert_array_equal(both.fit_transform(X_df), res)
     assert_array_equal(both.fit(X_df).transform(X_df), res)
+    inverse = both.inverse_transform(res)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 2
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -207,6 +274,9 @@ def test_column_transformer_dataframe():
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
+    inverse = both.inverse_transform(0.1 * X_res_both)
+    assert_allclose(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 1
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -214,6 +284,9 @@ def test_column_transformer_dataframe():
                              transformer_weights={'trans': .1})
     assert_array_equal(both.fit_transform(X_df), 0.1 * X_res_both)
     assert_array_equal(both.fit(X_df).transform(X_df), 0.1 * X_res_both)
+    inverse = both.inverse_transform(0.1 * X_res_both)
+    assert_allclose(inverse, X_df)
+    assert_array_equal(inverse.columns, X_df.columns)
     assert len(both.transformers_) == 1
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -319,6 +392,8 @@ def test_column_transformer_sparse_array():
         assert_allclose_dense_sparse(ct.fit_transform(X_sparse), X_res_both)
         assert_allclose_dense_sparse(ct.fit(X_sparse).transform(X_sparse),
                                      X_res_both)
+        assert_allclose_dense_sparse(
+            ct.inverse_transform(X_res_both), X_sparse)
 
 
 def test_column_transformer_list():
@@ -340,22 +415,26 @@ def test_column_transformer_list():
     assert_array_equal(ct.fit(X_list).transform(X_list), expected_result)
 
 
-def test_column_transformer_sparse_stacking():
+@pytest.mark.parametrize("sparse_col", [1, [1]])
+def test_column_transformer_sparse_stacking(sparse_col):
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
-    col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), 1)],
-                                  sparse_threshold=0.8)
+    col_trans = ColumnTransformer(
+        [('trans1', Trans(), [0]),
+         ('trans2', SparseMatrixTrans(), sparse_col)],
+        sparse_threshold=0.8)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert sparse.issparse(X_trans)
     assert X_trans.shape == (X_trans.shape[0], X_trans.shape[0] + 1)
     assert_array_equal(X_trans.toarray()[:, 1:], np.eye(X_trans.shape[0]))
+    assert_array_equal(col_trans.inverse_transform(X_trans), X_array)
     assert len(col_trans.transformers_) == 2
     assert col_trans.transformers_[-1][0] != 'remainder'
 
-    col_trans = ColumnTransformer([('trans1', Trans(), [0]),
-                                   ('trans2', SparseMatrixTrans(), 1)],
-                                  sparse_threshold=0.1)
+    col_trans = ColumnTransformer(
+        [('trans1', Trans(), [0]),
+         ('trans2', SparseMatrixTrans(), sparse_col)],
+        sparse_threshold=0.1)
     col_trans.fit(X_array)
     X_trans = col_trans.transform(X_array)
     assert not sparse.issparse(X_trans)
@@ -744,6 +823,7 @@ def test_column_transformer_remainder():
     ct = ColumnTransformer([('trans', Trans(), [0])], remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert_array_equal(ct.inverse_transform(X_res_both), X_array)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][1] == 'passthrough'
@@ -754,6 +834,7 @@ def test_column_transformer_remainder():
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
+    assert_array_equal(ct.inverse_transform(X_res_both[:, ::-1]), X_array)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][1] == 'passthrough'
@@ -796,6 +877,7 @@ def test_column_transformer_remainder_numpy(key):
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert_array_equal(ct.inverse_transform(X_res_both), X_array)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][1] == 'passthrough'
@@ -820,6 +902,7 @@ def test_column_transformer_remainder_pandas(key):
                            remainder='passthrough')
     assert_array_equal(ct.fit_transform(X_df), X_res_both)
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
+    assert_array_equal(ct.inverse_transform(X_res_both), X_df)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
     assert ct.transformers_[-1][1] == 'passthrough'
@@ -842,6 +925,7 @@ def test_column_transformer_remainder_transformer(key):
 
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+    assert_array_equal(ct.inverse_transform(X_res_both), X_array)
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] == 'remainder'
     assert isinstance(ct.transformers_[-1][1], DoubleTrans)
@@ -858,6 +942,7 @@ def test_column_transformer_no_remaining_remainder_transformer():
 
     assert_array_equal(ct.fit_transform(X_array), X_array)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_array)
+    assert_array_equal(ct.inverse_transform(X_array), X_array)
     assert len(ct.transformers_) == 1
     assert ct.transformers_[-1][0] != 'remainder'
 
@@ -1180,3 +1265,104 @@ def test_column_transformer_mask_indexing(array_type):
     )
     X_trans = column_transformer.fit_transform(X)
     assert X_trans.shape == (3, 2)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
+@pytest.mark.parametrize("transformers,remainder", [
+    ([('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+      ('title_bow', CountVectorizer(analyzer=lambda x: [x]), 'title')],
+     MinMaxScaler()),
+    ([('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+      ('min_max', MinMaxScaler(), ['expert_rating', 'user_rating'])],
+     'passthrough')
+])
+def test_column_transformer_inverse_with_strings(transformers, remainder):
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({
+        'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
+        'expert_rating': [5, 3, 4, 5],
+        'user_rating': [4, 5, 4, 3]
+    })
+
+    column_trans = ColumnTransformer(transformers, remainder=remainder)
+
+    result = column_trans.fit_transform(df)
+    df_inverse = column_trans.inverse_transform(result)
+
+    pd.util.testing.assert_frame_equal(df, df_inverse)
+
+
+@pytest.mark.filterwarnings("ignore::DeprecationWarning:pandas")
+def test_column_transformer_inverse_with_strings_default_count_vectorizer():
+    pd = pytest.importorskip('pandas')
+
+    df = pd.DataFrame({
+        'city': ['London', 'London', 'Paris', 'Sallisaw'],
+        'title': ["His Last Bow", "How Watson Learned the Trick",
+                  "A Moveable Feast", "The Grapes of Wrath"],
+        'expert_rating': [5, 3, 4, 5],
+        'user_rating': [4, 5, 4, 3]
+    })
+
+    column_trans = ColumnTransformer(
+        [('city_category', CountVectorizer(), 'city'),
+         ('title_bow', CountVectorizer(), 'title')],
+        remainder=MinMaxScaler())
+
+    result = column_trans.fit_transform(df)
+    df_inverse = column_trans.inverse_transform(result)
+
+    name_to_cv = {k: v for k, v, _ in column_trans.transformers_}
+    title_cv = name_to_cv['title_bow']
+    title_result = title_cv.transform(df['title'])
+    title_inverse = title_cv.inverse_transform(title_result)
+
+    city_cv = name_to_cv['city_category']
+    city_result = city_cv.transform(df['city'])
+    city_inverse = city_cv.inverse_transform(city_result)
+
+    expected_inverse = df.copy()
+    expected_inverse['title'] = np.array(title_inverse)
+    expected_inverse['city'] = np.array(city_inverse)
+
+    pd.util.testing.assert_frame_equal(df_inverse, expected_inverse)
+
+
+def test_column_transformer_transformer_does_not_define_inverse():
+
+    class NoInverseTransform(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            # 1D Series -> 2D DataFrame
+            if hasattr(X, 'to_frame'):
+                return X.to_frame()
+            # 1D array -> 2D array
+            if X.ndim == 1:
+                return np.atleast_2d(X).T
+            return X
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    ct = ColumnTransformer([('trans1', NoInverseTransform(), [0]),
+                            ('trans2', NoInverseTransform(), [1])])
+    X_trans = ct.fit_transform(X_array)
+
+    error_msg = ("Unable to invert: "
+                 "trans1,trans2 does not define inverse_transform")
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(X_trans)
+
+    pd = pytest.importorskip('pandas')
+    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
+    ct = ColumnTransformer([('trans1', Trans(), ['first']),
+                            ('trans2', NoInverseTransform(), ['second'])])
+    X_trans = ct.fit_transform(X_df)
+
+    error_msg = ("Unable to invert: "
+                 "trans2 does not define inverse_transform")
+    with pytest.raises(ValueError, match=error_msg):
+        ct.inverse_transform(X_trans)

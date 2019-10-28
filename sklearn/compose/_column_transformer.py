@@ -8,6 +8,7 @@ different columns.
 # License: BSD
 import warnings
 from itertools import chain
+from collections import namedtuple
 
 import numbers
 import numpy as np
@@ -15,7 +16,9 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
+from ..pipeline import (
+    _fit_transform_one, _transform_one, _name_estimators,
+    _inverse_transform_one)
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
@@ -31,6 +34,7 @@ __all__ = ['ColumnTransformer', 'make_column_transformer']
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
                      "Try to specify the column selection as a list of one "
                      "item instead of a scalar.")
+_Remainder = namedtuple('_Remainder', ['name', 'transformer', 'indices'])
 
 
 class ColumnTransformer(TransformerMixin, _BaseComposition):
@@ -320,7 +324,8 @@ boolean mask array or callable
         remaining_idx = list(set(range(self._n_features)) - set(cols))
         remaining_idx = sorted(remaining_idx) or None
 
-        self._remainder = ('remainder', self.remainder, remaining_idx)
+        self._remainder = _Remainder('remainder', self.remainder,
+                                     remaining_idx)
 
     @property
     def named_transformers_(self):
@@ -456,6 +461,60 @@ boolean mask array or callable
             else:
                 raise
 
+    def _calculate_inverse_indices(self, X, Xs):
+        """
+        Private function to calcuate indices for inverse_transform
+        """
+        # check transformers defines inverse_transform
+        trans_no_inverse = []
+        for name, trans, _ in self.transformers_:
+            if (trans in ['passthrough', 'drop'] or
+               hasattr(trans, "inverse_transform") and
+               callable(trans.inverse_transform)):
+                continue
+            trans_no_inverse.append(name)
+        if trans_no_inverse:
+            self._inverse_error = (
+                "Unable to invert: {} does not define "
+                "inverse_transform".format(",".join(trans_no_inverse))
+            )
+            return
+
+        # checks for overlap
+        all_indices = set()
+        input_indices = []
+        for name, trans, cols in self.transformers_:
+            col_indices = _get_column_indices(X, cols)
+            if not col_indices:
+                continue
+            col_indices_set = set(col_indices)
+            if not all_indices.isdisjoint(col_indices_set):
+                self._inverse_error = (
+                    "transformers contain overlapping columns")
+                return
+            if trans == 'drop':
+                self._inverse_error = ("dropping columns is not supported. "
+                                       "'{}' drops columns".format(name))
+                return
+            input_indices.append(col_indices)
+            all_indices.update(col_indices_set)
+
+        self._input_indices = input_indices
+        self._n_features_in = X.shape[1]
+        self._X_columns = getattr(X, 'columns', None)
+        self._X_dtypes = getattr(X, 'dtypes', None)
+        self._X_row_index = getattr(X, 'index', None)
+        self._X_is_sparse = sparse.issparse(X)
+        self._inverse_error = None
+        self._output_indices = []
+        cur_index = 0
+
+        for X_transform in Xs:
+            X_features = X_transform.shape[1]
+            self._output_indices.append(
+                list(range(cur_index, cur_index + X_features)))
+            cur_index += X_features
+
     def fit(self, X, y=None):
         """Fit all transformers using X.
 
@@ -514,6 +573,10 @@ boolean mask array or callable
 
         if not result:
             self._update_fitted_transformers([])
+            self._inverse_error = (
+                "dropping columns is not supported. "
+                "all columns were dropped"
+            )
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
@@ -530,6 +593,7 @@ boolean mask array or callable
             self.sparse_output_ = False
 
         self._update_fitted_transformers(transformers)
+        self._calculate_inverse_indices(X, Xs)
         self._validate_output(Xs)
 
         return self._hstack(list(Xs))
@@ -616,6 +680,81 @@ boolean mask array or callable
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
+
+    def inverse_transform(self, X):
+        """Apply inverse transform
+
+        All estimators in ``transformers`` must support ``inverse_transform``.
+
+        Parameters
+        ----------
+        X: array-like, shape = [n_samples, n_transformed_features]
+            Data samples, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        Xt : array-like or DataFrame of shape [n_samples, n_features]
+
+        """
+        check_is_fitted(self)
+
+        if self._inverse_error:
+            raise ValueError("Unable to invert: {}".format(
+                self._inverse_error))
+
+        X_sels = (_safe_indexing(X, indicies, axis=1)
+                  for indicies in self._output_indices)
+        inv_transformers = []
+        get_weight = (self.transformer_weights or {}).get
+
+        for (name, trans, column), X_sel in zip(self.transformers_, X_sels):
+            if trans == 'passthrough':
+                trans = FunctionTransformer(
+                    validate=False, accept_sparse=True, check_inverse=False)
+            inv_transformers.append((trans, X_sel, get_weight(name)))
+
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_inverse_transform_one)(trans, X_sel, weight)
+            for trans, X_sel, weight in inv_transformers)
+
+        if hasattr(X, 'shape'):
+            n_samples = X.shape[0]
+        else:
+            n_samples = len(X)
+
+        if not Xs:
+            # All transformers are None
+            return np.zeros((n_samples, 0))
+
+        if self._X_is_sparse:
+            inverse_Xs = sparse.lil_matrix((n_samples,
+                                            self._n_features_in))
+            for indices, inverse_X in zip(self._input_indices, Xs):
+                inverse_Xs[:, indices] = inverse_X
+            return inverse_Xs.tocsr()
+
+        # numpy array
+        if self._X_row_index is None:
+            inverse_Xs = np.empty((n_samples, self._n_features_in))
+            for indices, inverse_X in zip(self._input_indices, Xs):
+                if sparse.issparse(inverse_X):
+                    inverse_X = inverse_X.toarray()
+                inverse_Xs[:, indices] = inverse_X
+            return inverse_Xs
+
+        # pandas dataframe and cannot be sparse
+        import pandas as pd
+        output_dfs = []
+        for indices, inverse_X in zip(self._input_indices, Xs):
+            cols = self._X_columns[indices]
+            dtype = self._X_dtypes[indices][0]
+            if not hasattr(inverse_X, "dtype"):
+                inverse_X = np.array(inverse_X)
+            output_dfs.append(
+                pd.DataFrame(inverse_X, columns=cols, dtype=dtype))
+
+        return pd.concat(output_dfs, axis=1)[self._X_columns]
 
 
 def _check_X(X):

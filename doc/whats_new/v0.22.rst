@@ -101,6 +101,9 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
+- |Feature| :class:`compose.ColumnTransformer` now supports
+  `inverse_transform`. :pr:`11463` by `Thomas Fan`_.
+
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
   1.12.
