@@ -4,7 +4,7 @@ import numbers
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
-from sklearn.decomposition import nmf   # For testing internals
+from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
 import pytest
