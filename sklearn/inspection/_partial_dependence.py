@@ -298,7 +298,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
         )
 
     if isinstance(estimator, Pipeline):
-        # assuming Pipeline si the only estimator that does not store a new
+        # TODO: to be removed if/when pipeline get a `steps_` attributes
+        # assuming Pipeline is the only estimator that does not store a new
         # attribute
         for est in estimator:
             # FIXME: remove the None option when it will be deprecated
