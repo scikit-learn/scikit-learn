@@ -43,7 +43,7 @@ from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
-from ..preprocessing import normalize
+from .. import preprocessing
 from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
@@ -206,7 +206,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
@@ -317,7 +317,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
 
 def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
-                                  download_if_missing=True, return_X_y=False):
+                                  download_if_missing=True, return_X_y=False,
+                                  normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
 (classification).
 
@@ -332,6 +333,9 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
     :class:`sklearn.feature_extraction.text.HashingVectorizer`,
     :class:`sklearn.feature_extraction.text.TfidfTransformer` or
     :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
+
+    The resulting counts are normalized using
+    :func:`sklearn.preprocessing.normalize` unless normalize is set to False.
 
     =================   ==========
     Classes                     20
@@ -366,11 +370,17 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
         .. versionadded:: 0.20
+
+    normalize : bool, default=True
+        If True, normalizes each document's feature vector to unit norm using
+        :func:`sklearn.preprocessing.normalize`.
+
+        .. versionadded:: 0.22
 
     Returns
     -------
@@ -418,10 +428,11 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
-    X_train = X_train.astype(np.float64)
-    X_test = X_test.astype(np.float64)
-    normalize(X_train, copy=False)
-    normalize(X_test, copy=False)
+    if normalize:
+        X_train = X_train.astype(np.float64)
+        X_test = X_test.astype(np.float64)
+        preprocessing.normalize(X_train, copy=False)
+        preprocessing.normalize(X_test, copy=False)
 
     target_names = data_train.target_names
 

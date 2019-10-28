@@ -19,7 +19,7 @@ from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from .base import _BasePCA
+from ._base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip

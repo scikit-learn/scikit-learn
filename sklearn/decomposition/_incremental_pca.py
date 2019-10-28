@@ -7,7 +7,7 @@
 import numpy as np
 from scipy import linalg, sparse
 
-from .base import _BasePCA
+from ._base import _BasePCA
 from ..utils import check_array, gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
 

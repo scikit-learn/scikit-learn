@@ -7,8 +7,8 @@ from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.decomposition.pca import _assess_dimension_
-from sklearn.decomposition.pca import _infer_dimension_
+from sklearn.decomposition._pca import _assess_dimension_
+from sklearn.decomposition._pca import _infer_dimension_
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']

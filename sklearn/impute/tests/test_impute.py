@@ -462,16 +462,6 @@ def test_imputation_constant_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.parametrize('Imputer', (SimpleImputer, IterativeImputer))
-def test_imputation_missing_value_in_test_array(Imputer):
-    # [Non Regression Test for issue #13968] Missing value in test set should
-    # not throw an error and return a finite dataset
-    train = [[1], [2]]
-    test = [[3], [np.nan]]
-    imputer = Imputer(add_indicator=True)
-    imputer.fit(train).transform(test)
-
-
 @pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
 def test_iterative_imputer_one_feature(X):
     # check we exit early when there is a single feature
@@ -1241,32 +1231,6 @@ def test_missing_indicator_sparse_no_explicit_zeros():
     Xt = mi.fit_transform(X)
 
     assert Xt.getnnz() == Xt.sum()
-
-
-@pytest.mark.parametrize("marker", [np.nan, -1, 0])
-@pytest.mark.parametrize("imputer_constructor",
-                         [SimpleImputer, IterativeImputer])
-def test_imputers_add_indicator(marker, imputer_constructor):
-    X = np.array([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
-    ])
-    X_true_indicator = np.array([
-        [1., 0., 0., 1.],
-        [0., 1., 0., 1.],
-        [0., 0., 1., 1.],
-        [0., 0., 0., 1.]
-    ])
-    imputer = imputer_constructor(missing_values=marker,
-                                  add_indicator=True)
-
-    X_trans = imputer.fit(X).transform(X)
-    # The test is for testing the indicator,
-    # that's why we're looking at the last 4 columns only.
-    assert_allclose(X_trans[:, -4:], X_true_indicator)
-    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
 
 @pytest.mark.parametrize("imputer_constructor",

@@ -80,6 +80,12 @@ def test_pls():
     assert_array_almost_equal(Yr, plsca.y_scores_,
                               err_msg="rotation on Y failed")
 
+    # Check that inverse_transform works
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xreconstructed = plsca.inverse_transform(Xr)
+    assert_array_almost_equal(Xreconstructed, X,
+                              err_msg="inverse_transform failed")
+
     # "Non regression test" on canonical PLS
     # --------------------------------------
     # The results were checked against the R-package plspm
