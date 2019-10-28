@@ -310,7 +310,7 @@ in the user folder using conda::
 
     conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
     conda activate sklearn-dev
-    pip install --editable .
+    pip install --verbose --editable .
 
 
 FreeBSD
