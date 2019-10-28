@@ -281,6 +281,8 @@ line
     http://try.github.io are excellent resources to get started with git,
     and understanding all of the commands shown here.
 
+.. _pr_checklist:
+
 Pull request checklist
 ----------------------
 
@@ -326,8 +328,8 @@ complies with the following rules before marking a PR as ``[MRG]``. The
      estimator you changed).
 
    There may be other failing tests, but they will be caught by the CI so
-   you don't need to run the whole test suite locally. You can read more in
-   :ref:`testing_coverage`.
+   you don't need to run the whole test suite locally. For guidelines on how
+   to use ``pytest`` efficiently, see the :ref:`pytest_tips`.
 
 3. **Make sure your code is properly commented and documented**, and **make
    sure the documentation renders properly**. To build the documentation, please
@@ -700,14 +702,12 @@ package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
-The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'pytest' in a folder will run all the tests of
-the corresponding subpackages.
+Running `pytest` in a folder will run all the tests of the corresponding
+subpackages. For a more detailed `pytest` workflow, please refer to the
+:ref:`pr_checklist`.
 
 We expect code coverage of new features to be at least around 90%.
 
-For guidelines on how to use ``pytest`` efficiently, see the
-:ref:`pytest_tips`.
 
 Writing matplotlib related tests
 --------------------------------
