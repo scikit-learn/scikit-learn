@@ -118,6 +118,11 @@ Changelog
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
+- |Feature| :class:`cross_decomposition.PLSCanonical` and
+  :class:`cross_decomposition.PLSRegression` have a new function
+  ``inverse_transform`` to transform data to the original space`.
+  :pr:`15304` by :user:`Jaime Ferrando Huertas <jiwidi>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -138,6 +143,10 @@ Changelog
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
+
+ - |Enhancement| The parameter `normalize` was added to
+   :func:`datasets.fetch_20newsgroups_vectorized`.
+   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
 
 :mod:`sklearn.decomposition`
 ............................
@@ -162,6 +171,10 @@ Changelog
 - |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
+
+- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
+  matrices now uses batching to avoid briefly allocating an array with size
+  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
 
 :mod:`sklearn.dummy`
 ....................
@@ -255,6 +268,10 @@ Changelog
   now raise consistent error messages.
   :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights only.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -306,6 +323,10 @@ Changelog
 - |MajorFeature| Added :class:`impute.KNNImputer`, to impute missing values using
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
+
+- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+  to get indicator of missing data.
+  :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
   is False by default, which, when True, will skip computation on features that
@@ -378,6 +399,9 @@ Changelog
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
+
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -456,6 +480,11 @@ Changelog
   precomputed distance matrix contains non-zero diagonal entries.
   :pr:`12258` by :user:`Stephen Tierney <sjtrny>`.
 
+- |Enhancement| Multilabel metrics now supports list of lists as input.
+  :pr:`14865` :user:`Srivatsan Ramesh <srivatsan-ramesh>`,
+  :user:`Herilalaina Rakotoarison <herilalaina>`,
+  :user:`Léonard Binet <leonardbinet>`.
+
 - |API| ``scoring="neg_brier_score"`` should be used instead of
   ``scoring="brier_score_loss"`` which is now deprecated.
   :pr:`14898` by :user:`Stefan Matcovici <stefan-matcovici>`.
@@ -487,6 +516,11 @@ Changelog
 - |Fix| Reimplemented :class:`model_selection.StratifiedKFold` to fix an issue
   where one test set could be `n_classes` larger than another. Test sets should
   now be near-equally sized. :pr:`14704` by `Joel Nothman`_.
+
+- |API| :class:`model_selection.KFold` and
+  :class:`model_selection.StratifiedKFold` now raise a warning if
+  `random_state` is set but `shuffle` is False. This will raise an error in
+  0.24.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -597,6 +631,10 @@ Changelog
 - |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
 :mod:`sklearn.tree`
 ...................
 
@@ -646,6 +684,8 @@ Changelog
   - ``utils.seq_dataset``
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
+  - All of ``utils.testing`` except for ``all_estimators`` which is now
+    in ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -680,6 +720,14 @@ Changelog
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
 
+:mod:`sklearn.voting`
+.....................
+
+- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
+  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
+
 :mod:`sklearn.isotonic`
 ..................................
 
@@ -690,6 +738,12 @@ Changelog
 
 Miscellaneous
 .............
+
+- |API| Scikit-learn now converts any input data structure implementing a
+  duck array to a numpy array (using ``__array__``) to ensure consistent
+  behavior instead of relying on ``__array_function__`` (see `NEP 18
+  <https://numpy.org/neps/nep-0018-array-function-protocol.html>`_).
+  :pr:`14702` by `Andreas Müller`_.
 
 - |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
   using a non-fitted estimators are now more uniform.
@@ -712,6 +766,12 @@ These changes mostly affect library developers.
 - Binary only classifiers are now supported in estimator checks.
   Such classifiers need to have the `binary_only=True` estimator tag.
   :pr:`13875` by `Trevor Stephens`_.
+
+- Estimators are expected to convert input data (``X``, ``y``,
+  ``sample_weights``) to :class:`numpy.ndarray` and never call
+  ``__array_function__`` on the original datatype that is passed (see `NEP 18
+  <https://numpy.org/neps/nep-0018-array-function-protocol.html>`_).
+  :pr:`14702` by `Andreas Müller`_.
 
 - `requires_positive_X` estimator tag (for models that require
   X to be non-negative) is now used by :meth:`utils.estimator_checks.check_estimator`

@@ -33,8 +33,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.exceptions import NotFittedError
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 
 
 # toy sample

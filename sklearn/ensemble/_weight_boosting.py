@@ -38,6 +38,7 @@ from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
 
@@ -117,20 +118,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         X, y = self._validate_data(X, y)
 
-        if sample_weight is None:
-            # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(_num_samples(X), dtype=np.float64)
-            sample_weight[:] = 1. / _num_samples(X)
-        else:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            # Normalize existing weights
-            sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
-
-            # Check that the sample weights sum is positive
-            if sample_weight.sum() <= 0:
-                raise ValueError(
-                    "Attempting to fit with a non-positive "
-                    "weighted number of samples.")
+        sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+        sample_weight /= sample_weight.sum()
+        if np.any(sample_weight < 0):
+            raise ValueError("sample_weight cannot contain negative weights")
 
         # Check parameters
         self._validate_estimator()
@@ -1029,13 +1020,10 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         estimator = self._make_estimator(random_state=random_state)
 
         # Weighted sampling of the training set with replacement
-        # For NumPy >= 1.7.0 use np.random.choice
-        cdf = stable_cumsum(sample_weight)
-        cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(_num_samples(X))
-        bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
-        # searchsorted returns a scalar
-        bootstrap_idx = np.array(bootstrap_idx, copy=False)
+        bootstrap_idx = random_state.choice(
+            np.arange(_num_samples(X)), size=_num_samples(X), replace=True,
+            p=sample_weight
+        )
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
@@ -1045,18 +1033,21 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
-        error_max = error_vect.max()
+        sample_mask = sample_weight > 0
+        masked_sample_weight = sample_weight[sample_mask]
+        masked_error_vector = error_vect[sample_mask]
 
-        if error_max != 0.:
-            error_vect /= error_max
+        error_max = masked_error_vector.max()
+        if error_max != 0:
+            masked_error_vector /= error_max
 
         if self.loss == 'square':
-            error_vect **= 2
+            masked_error_vector **= 2
         elif self.loss == 'exponential':
-            error_vect = 1. - np.exp(- error_vect)
+            masked_error_vector = 1. - np.exp(-masked_error_vector)
 
         # Calculate the average loss
-        estimator_error = (sample_weight * error_vect).sum()
+        estimator_error = (masked_sample_weight * masked_error_vector).sum()
 
         if estimator_error <= 0:
             # Stop if fit is perfect
@@ -1074,9 +1065,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         estimator_weight = self.learning_rate * np.log(1. / beta)
 
         if not iboost == self.n_estimators - 1:
-            sample_weight *= np.power(
-                beta,
-                (1. - error_vect) * self.learning_rate)
+            sample_weight[sample_mask] *= np.power(
+                beta, (1. - masked_error_vector) * self.learning_rate
+            )
 
         return sample_weight, estimator_weight, estimator_error
 

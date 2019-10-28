@@ -2,7 +2,7 @@ import numpy as np
 
 import pytest
 
-from sklearn.utils.testing import assert_allclose, assert_raises
+from sklearn.utils._testing import assert_allclose, assert_raises
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors._ball_tree import kernel_norm
 from sklearn.pipeline import make_pipeline

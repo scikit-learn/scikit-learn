@@ -567,7 +567,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if ((sample_weight is not None) and
-                np.atleast_1d(sample_weight).ndim > 1):
+                np.asarray(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         # when X is sparse we only remove offset from y
