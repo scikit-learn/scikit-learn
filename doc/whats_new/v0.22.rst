@@ -668,7 +668,7 @@ Changelog
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
   - All of ``utils.testing`` except for ``all_estimators`` which is now
-    ``utils``.
+    in ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).

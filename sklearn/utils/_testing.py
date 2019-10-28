@@ -436,6 +436,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
+# TODO: Remove in 0.24. This class is now in utils.__init__.
 def all_estimators(include_meta_estimators=None,
                    include_other=None, type_filter=None,
                    include_dont_test=None):
