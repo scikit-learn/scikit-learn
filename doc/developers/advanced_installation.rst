@@ -191,7 +191,7 @@ environment variables in the current command prompt.
 
 Finally, build scikit-learn from this command prompt::
 
-    pip install --editable .
+    pip install --verbose --editable .
 
 macOS
 -----
