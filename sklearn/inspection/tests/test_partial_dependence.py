@@ -342,6 +342,22 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
 
 @pytest.mark.parametrize(
+    "with_dataframe, err_msg",
+    [(True, "a column name or an integer column indice"),
+     (False, "an integer column indice or an array-like")]
+)
+def test_partial_dependence_slice_error(with_dataframe, err_msg):
+    X, y = make_classification(random_state=0)
+    if with_dataframe:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+    estimator = LogisticRegression().fit(X, y)
+
+    with pytest.raises(ValueError, match=err_msg):
+        partial_dependence(estimator, X, features=slice(0, 2, 1))
+
+
+@pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
@@ -518,9 +534,8 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
      (iris.feature_names[0], (3, 10)),
      ([0, 2], (3, 10, 10)),
      ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
-     (slice(0, 2, 1), (3, 10, 10)),
      ([True, False, True, False], (3, 10, 10))],
-    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'slice', 'mask']
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'mask']
 )
 def test_partial_dependence_feature_type(features, expected_pd_shape):
     # check all possible features type supported in PDP

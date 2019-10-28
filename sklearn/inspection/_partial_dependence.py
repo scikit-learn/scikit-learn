@@ -368,16 +368,26 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "'decision_function'. Got {}.".format(response_method)
             )
 
+    if isinstance(features, slice):
+        err_msg = ("Unsupported type for the parameter 'features'. The "
+                   "expected type is {}. Got {!r} instead.")
+        if hasattr(X, "iloc"):
+            specified_msg = ("a column name or an integer column indice or an "
+                             "array-like containing column names or integer "
+                             "column indices")
+        else:
+            specified_msg = ("an integer column indice or an array-like "
+                             "containing integer column indices")
+        raise ValueError(err_msg.format(specified_msg, features))
+
     if _determine_key_type(features) == 'int':
-        if (isinstance(features, Iterable) or
-                isinstance(features, numbers.Integral)):
-            # _get_column_indices() supports negative indexing. Here, we limit
-            # the indexing to be positive. The upper bound will be checked
-            # by _get_column_indices()
-            if np.any(np.less(features, 0)):
-                raise ValueError(
-                    'all features must be in [0, {}]'.format(X.shape[1] - 1)
-                )
+        # _get_column_indices() supports negative indexing. Here, we limit
+        # the indexing to be positive. The upper bound will be checked
+        # by _get_column_indices()
+        if np.any(np.less(features, 0)):
+            raise ValueError(
+                'all features must be in [0, {}]'.format(X.shape[1] - 1)
+            )
 
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order='C'
