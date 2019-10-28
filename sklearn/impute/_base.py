@@ -102,14 +102,14 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             return X_imputed
 
         hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
-        if X_indicator is not None:
-            return hstack((X_imputed, X_indicator))
-
-        raise ValueError(
+        if X_indicator is None:
+            raise ValueError(
             "Data from the missing indicator are not provided. Call "
             "_fit_indicator and _transform_indicator in the imputer "
             "implementation."
         )
+
+        return hstack((X_imputed, X_indicator))
 
     def _more_tags(self):
         return {'allow_nan': is_scalar_nan(self.missing_values)}
