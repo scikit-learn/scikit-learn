@@ -3,6 +3,8 @@
 Release Highlights for scikit-learn 0.22
 ========================================
 
+.. currentmodule:: sklearn
+
 We are pleased to announce the release of scikit-learn 0.22, which comes
 with many bug fixes and new features! We detail below a few of the major
 features of this release. For an exhaustive list of all the changes, please
@@ -21,7 +23,7 @@ or with conda::
 # Permutation-based feature importance
 # ------------------------------------
 #
-# The :func:`~sklearn.inspection.permutation_importance` can be used to get an
+# The :func:`inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
 from sklearn.ensemble import RandomForestClassifier
@@ -47,8 +49,8 @@ plt.show()
 # Native support for missing values for gradient boosting
 # -------------------------------------------------------
 #
-# The :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
-# and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now have native
+# The :class:`ensemble.HistGradientBoostingClassifier`
+# and :class:`ensemble.HistGradientBoostingRegressor` now have native
 # support for missing values (NaNs). This means that there is no need for
 # imputing data when training or predicting.
 
@@ -117,3 +119,30 @@ from sklearn.datasets import fetch_openml
 
 titanic = fetch_openml('titanic', version=1, as_frame=True)
 print(titanic.data.head()[['pclass', 'embarked']])
+
+############################################################################
+# Precomputed sparse nearest neighbors graph
+# ------------------------------------------
+# Most estimators based on nearest neighbors graphs now accept precomputed
+# sparse graphs as input, to reuse the same graph for multiple estimator fits.
+# To use this feature in a pipeline, one can use the `memory` parameter, along
+# with one of the two new transformers,
+# :class:`neighbors.KNeighborsTransformer` and
+# :class:`neighbors.RadiusNeighborsTransformer`. The precomputation
+# can also be performed by custom estimators to use alternative
+# implementations, such as approximate nearest neighbors methods.
+# See more details in the :ref:`User Guide <neighbors_transformer>`.
+
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.manifold import Isomap
+from sklearn.pipeline import make_pipeline
+
+estimator = make_pipeline(
+    KNeighborsTransformer(n_neighbors=10, mode='distance'),
+    Isomap(n_neighbors=10, metric='precomputed'),
+    memory='.')
+estimator.fit(X)
+
+# We can decrease the number of neighbors and the graph will not be recomputed.
+estimator.set_params(isomap__n_neighbors=5)
+estimator.fit(X)

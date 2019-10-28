@@ -8,10 +8,10 @@ from scipy.stats import kstest
 
 import io
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
@@ -237,8 +237,23 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
     X = np.array([["a", "b", 3],
                   [4, "e", 6],
                   ["g", "h", 9]], dtype=dtype)
+    msg = "non-numeric data:\ncould not convert string to float: '"
+    with pytest.raises(ValueError, match=msg):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
 
-    with pytest.raises(ValueError, match="non-numeric data"):
+
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+@pytest.mark.parametrize("type", ['list', 'dataframe'])
+def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
+    X = [["a", "b", 3],
+         [4, "e", 6],
+         ["g", "h", 9]]
+    if type == 'dataframe':
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+    msg = "non-numeric data:\ncould not convert string to float: '"
+    with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
 
@@ -445,16 +460,6 @@ def test_imputation_constant_pandas(dtype):
     X_trans = imputer.fit_transform(df)
 
     assert_array_equal(X_trans, X_true)
-
-
-@pytest.mark.parametrize('Imputer', (SimpleImputer, IterativeImputer))
-def test_imputation_missing_value_in_test_array(Imputer):
-    # [Non Regression Test for issue #13968] Missing value in test set should
-    # not throw an error and return a finite dataset
-    train = [[1], [2]]
-    test = [[3], [np.nan]]
-    imputer = Imputer(add_indicator=True)
-    imputer.fit(train).transform(test)
 
 
 @pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
@@ -1226,32 +1231,6 @@ def test_missing_indicator_sparse_no_explicit_zeros():
     Xt = mi.fit_transform(X)
 
     assert Xt.getnnz() == Xt.sum()
-
-
-@pytest.mark.parametrize("marker", [np.nan, -1, 0])
-@pytest.mark.parametrize("imputer_constructor",
-                         [SimpleImputer, IterativeImputer])
-def test_imputers_add_indicator(marker, imputer_constructor):
-    X = np.array([
-        [marker, 1,      5,      marker, 1],
-        [2,      marker, 1,      marker, 2],
-        [6,      3,      marker, marker, 3],
-        [1,      2,      9,      marker, 4]
-    ])
-    X_true_indicator = np.array([
-        [1., 0., 0., 1.],
-        [0., 1., 0., 1.],
-        [0., 0., 1., 1.],
-        [0., 0., 0., 1.]
-    ])
-    imputer = imputer_constructor(missing_values=marker,
-                                  add_indicator=True)
-
-    X_trans = imputer.fit(X).transform(X)
-    # The test is for testing the indicator,
-    # that's why we're looking at the last 4 columns only.
-    assert_allclose(X_trans[:, -4:], X_true_indicator)
-    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
 
 @pytest.mark.parametrize("imputer_constructor",

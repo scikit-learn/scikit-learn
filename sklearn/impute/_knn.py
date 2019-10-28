@@ -1,18 +1,18 @@
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
+from ._base import _BaseImputer
 from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import _NAN_METRICS
-from ..neighbors.base import _get_weights
-from ..neighbors.base import _check_weights
+from ..neighbors._base import _get_weights
+from ..neighbors._base import _check_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
 
 
-class KNNImputer(TransformerMixin, BaseEstimator):
+class KNNImputer(_BaseImputer):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
     Each sample's missing values are imputed using the mean value from
@@ -32,7 +32,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
 
-    weights : str or callable, default='uniform'
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights. All points in each neighborhood are
@@ -44,7 +44,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : str or callable, default='nan_euclidean'
+    metric : {'nan_euclidean'} or callable, default='nan_euclidean'
         Distance metric for searching neighbors. Possible values:
 
         - 'nan_euclidean'
@@ -53,9 +53,23 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           accepts two arrays, X and Y, and a `missing_values` keyword in
           `kwds` and returns a scalar distance value.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
+
+    add_indicator : bool, default=False
+        If True, a :class:`MissingIndicator` transform will stack onto the
+        output of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on the
+        missing indicator even if there are missing values at transform/test
+        time.
+
+    Attributes
+    ----------
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     References
     ----------
@@ -78,9 +92,12 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     """
 
     def __init__(self, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean", copy=True):
-
-        self.missing_values = missing_values
+                 weights="uniform", metric="nan_euclidean", copy=True,
+                 add_indicator=False):
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -145,7 +162,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         -------
         self : object
         """
-
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
@@ -160,11 +176,11 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
+        super()._fit_indicator(X)
 
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
-
         return self
 
     def transform(self, X):
@@ -189,6 +205,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
+        X_indicator = super()._transform_indicator(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
@@ -237,7 +254,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
             # distances for samples that needed imputation for column
             dist_subset = (dist[dist_idx_map[receivers_idx]]
-                               [:, potential_donors_idx])
+                           [:, potential_donors_idx])
 
             # receivers with all nan distances impute with mean
             all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
@@ -255,7 +272,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                 # receivers with at least one defined distance
                 receivers_idx = receivers_idx[~all_nan_dist_mask]
                 dist_subset = (dist[dist_idx_map[receivers_idx]]
-                                   [:, potential_donors_idx])
+                               [:, potential_donors_idx])
 
             n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
             value = self._calc_impute(dist_subset, n_neighbors,
@@ -263,7 +280,4 @@ class KNNImputer(TransformerMixin, BaseEstimator):
                                       mask_fit_X[potential_donors_idx, col])
             X[receivers_idx, col] = value
 
-        return X[:, valid_idx]
-
-    def _more_tags(self):
-        return {'allow_nan': is_scalar_nan(self.missing_values)}
+        return super()._concatenate_indicator(X[:, valid_idx], X_indicator)
