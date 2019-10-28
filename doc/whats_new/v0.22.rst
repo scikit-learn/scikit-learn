@@ -324,6 +324,10 @@ Changelog
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
+- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+  to get indicator of missing data.
+  :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
   is False by default, which, when True, will skip computation on features that
   have no missing values during the fit phase. :issue:`13773` by
