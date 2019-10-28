@@ -16,8 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils import safe_mask
 
-from sklearn.datasets.samples_generator import (make_classification,
-                                                make_regression)
+from sklearn.datasets import make_classification, make_regression
 from sklearn.feature_selection import (
     chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
     mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,

@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -1358,3 +1359,14 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
            )
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+
+# TODO: Remove in 0.24
+def test_vectorizermixin_is_deprecated():
+    class MyVectorizer(VectorizerMixin):
+        pass
+
+    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
+           "in version 0.24.")
+    with pytest.warns(DeprecationWarning, match=msg):
+        MyVectorizer()

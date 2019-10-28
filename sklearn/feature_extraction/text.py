@@ -27,10 +27,10 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
-from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from ._hashing import FeatureHasher
+from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT
+from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
@@ -184,7 +184,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin:
+class _VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -500,7 +500,13 @@ class VectorizerMixin:
                               " since 'analyzer' != 'word'")
 
 
-class HashingVectorizer(TransformerMixin, VectorizerMixin, BaseEstimator):
+@deprecated("VectorizerMixin is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class VectorizerMixin(_VectorizerMixin):
+    pass
+
+
+class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -790,7 +796,7 @@ def _document_frequency(X):
         return np.diff(X.indptr)
 
 
-class CountVectorizer(VectorizerMixin, BaseEstimator):
+class CountVectorizer(_VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -1341,6 +1347,31 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfTransformer
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.pipeline import Pipeline
+    >>> import numpy as np
+    >>> corpus = ['this is the first document',
+    ...           'this document is the second document',
+    ...           'and this is the third one',
+    ...           'is this the first document']
+    >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
+    ...               'and', 'one']
+    >>> pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
+    ...                  ('tfid', TfidfTransformer())]).fit(corpus)
+    >>> pipe['count'].transform(corpus).toarray()
+    array([[1, 1, 1, 1, 0, 1, 0, 0],
+           [1, 2, 0, 1, 1, 1, 0, 0],
+           [1, 0, 0, 1, 0, 1, 1, 1],
+           [1, 1, 1, 1, 0, 1, 0, 0]])
+    >>> pipe['tfid'].idf_
+    array([1.        , 1.22314355, 1.51082562, 1.        , 1.91629073,
+           1.        , 1.91629073, 1.91629073])
+    >>> pipe.transform(corpus).shape
+    (4, 8)
 
     References
     ----------

@@ -8,11 +8,11 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.linear_model.sag import get_auto_step_size
-from sklearn.linear_model.sag_fast import _multinomial_grad_loss_all_samples
+from sklearn.linear_model._sag import get_auto_step_size
+from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model.base import make_dataset
-from sklearn.linear_model.logistic import _multinomial_loss_grad
+from sklearn.linear_model._base import make_dataset
+from sklearn.linear_model._logistic import _multinomial_loss_grad
 
 from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms

@@ -57,11 +57,12 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
                                    prob=np.arange(0.1, 1.0, 0.1)))
 
     single_feature_positions = [(0, 0), (0, 1)]
+    expected_ylabels = ["Partial dependence", ""]
 
     for i, pos in enumerate(single_feature_positions):
         ax = disp.axes_[pos]
+        assert ax.get_ylabel() == expected_ylabels[i]
         assert ax.get_xlabel() == boston.feature_names[i]
-        assert ax.get_ylabel() == "Partial dependence"
         assert_allclose(ax.get_ylim(), disp.pdp_lim[1])
 
         line = disp.lines_[pos]
@@ -171,6 +172,8 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
+    assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
+    assert disp1.axes_[0, 1].get_ylabel() == ""
     assert len(disp1.axes_[0, 0].get_lines()) == 1
     assert len(disp1.axes_[0, 1].get_lines()) == 1
 
@@ -296,10 +299,11 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     assert disp.bounding_ax_ is not None
 
     positions = [(0, 0), (0, 1)]
+    expected_label = ["Partial dependence", ""]
 
     for i, pos in enumerate(positions):
         ax = disp.axes_[pos]
-        assert ax.get_ylabel() == "Partial dependence"
+        assert ax.get_ylabel() == expected_label[i]
         assert ax.get_xlabel() == "{}".format(i)
 
 

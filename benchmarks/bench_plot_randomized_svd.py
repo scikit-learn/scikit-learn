@@ -77,8 +77,7 @@ import os.path
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import (make_low_rank_matrix,
-                                                make_sparse_uncorrelated)
+from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (fetch_lfw_people,
                               fetch_openml,
                               fetch_20newsgroups_vectorized,
