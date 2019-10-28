@@ -13,7 +13,7 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT
+from .utils import _IS_32BIT, get_param_names_from_constructor
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -129,59 +129,11 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class BaseEstimator:
-    """Base class for all estimators in scikit-learn
-
-    Notes
-    -----
-    All estimators should specify all the parameters that can be set
-    at the class level in their ``__init__`` as explicit keyword
-    arguments (no ``*args`` or ``**kwargs``).
-    """
-
-    @classmethod
-    def _get_param_names(cls):
-        """Get parameter names for the estimator"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        if init is object.__init__:
-            # No explicit constructor to introspect
-            return []
-
-        # introspect the constructor arguments to find the model parameters
-        # to represent
-        init_signature = inspect.signature(init)
-        # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-        for p in parameters:
-            if p.kind == p.VAR_POSITIONAL:
-                raise RuntimeError("scikit-learn estimators should always "
-                                   "specify their parameters in the signature"
-                                   " of their __init__ (no varargs)."
-                                   " %s with constructor %s doesn't "
-                                   " follow this convention."
-                                   % (cls, init_signature))
-        # Extract and sort argument names excluding 'self'
-        return sorted([p.name for p in parameters])
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
+class GetSetParamsMixin:
+    def _get_params_from(self, param_names, deep=True):
+        """Get parameters for this object from the given names"""
         out = dict()
-        for key in self._get_param_names():
+        for key in param_names:
             try:
                 value = getattr(self, key)
             except AttributeError:
@@ -197,10 +149,27 @@ class BaseEstimator:
             out[key] = value
         return out
 
-    def set_params(self, **params):
-        """Set the parameters of this estimator.
+    def get_params(self, deep=True):
+        """Get parameters for this object.
 
-        The method works on simple estimators as well as on nested objects
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this object and
+            contained subobjects that implement ``get_params``.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        param_names = get_param_names_from_constructor(self.__class__)
+        return self._get_params_from(param_names, deep=deep)
+
+    def set_params(self, **params):
+        """Set the parameters of this object.
+
+        The method works on simple objects as well as on nested objects
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
@@ -218,10 +187,10 @@ class BaseEstimator:
         for key, value in params.items():
             key, delim, sub_key = key.partition('__')
             if key not in valid_params:
-                raise ValueError('Invalid parameter %s for estimator %s. '
-                                 'Check the list of available parameters '
-                                 'with `estimator.get_params().keys()`.' %
-                                 (key, self))
+                raise ValueError("Invalid parameter %s for object %s. "
+                                 "Check the list of available parameters "
+                                 "with `object.get_params().keys()`."
+                                 % (key, self))
 
             if delim:
                 nested_params[key][sub_key] = value
@@ -233,6 +202,54 @@ class BaseEstimator:
             valid_params[key].set_params(**sub_params)
 
         return self
+
+
+class BaseEstimator(GetSetParamsMixin):
+    """Base class for all estimators in scikit-learn
+
+    Notes
+    -----
+    All estimators should specify all the parameters that can be set
+    at the class level in their ``__init__`` as explicit keyword
+    arguments (no ``*args`` or ``**kwargs``).
+    """
+
+    def get_params(self, deep=True):
+        """Get parameters for this estimator.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        try:
+            return super().get_params(deep=deep)
+        except RuntimeError as e:
+            raise RuntimeError("scikit-learn estimators should always "
+                               "specify their parameters in the signature"
+                               " of their __init__ (no varargs)."
+                               " %s doesn't follow this convention."
+                               % self.__class__) from e
+
+    def set_params(self, **params):
+        """Set the parameters of this estimator.
+
+        The method works on simple estimators as well as on nested objects
+        (such as pipelines). The latter have parameters of the form
+        ``<component>__<parameter>`` so that it's possible to update each
+        component of a nested object.
+
+        Returns
+        -------
+        self
+        """
+        return super().set_params(**params)
 
     def __repr__(self, N_CHAR_MAX=700):
         # N_CHAR_MAX is the (approximate) maximum number of non-blank

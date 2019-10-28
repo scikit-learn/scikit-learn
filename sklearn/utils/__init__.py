@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
 from itertools import islice
+import inspect
 import numbers
 import platform
 import struct
@@ -69,7 +70,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle", "check_matplotlib_support"]
+           "resample", "shuffle", "check_matplotlib_support",
+           "get_param_names_from_constructor"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -119,6 +121,45 @@ class Bunch(dict):
         # Overriding __setstate__ to be a noop has the effect of
         # ignoring the pickled __dict__
         pass
+
+
+def get_param_names_from_constructor(cls):
+    """ Get the parameter names a given class from its constructor.
+
+    Parameters
+    ----------
+    cls : type
+        Class to get the parameter names from.
+
+    Returns
+    -------
+    param_names : list of strings
+        Parameter names of the given class.
+
+    Raises
+    ------
+    RuntimeError
+        If the class constructor contains varargs.
+    """
+    # fetch the constructor or the original constructor before
+    # deprecation wrapping if any
+    init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+    if init is object.__init__:
+        # No explicit constructor to introspect
+        return []
+
+    # introspect the constructor arguments to find the model parameters
+    # to represent
+    init_signature = inspect.signature(init)
+    # Consider the constructor parameters excluding 'self'
+    parameters = [p for p in init_signature.parameters.values()
+                  if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+    for p in parameters:
+        if p.kind == p.VAR_POSITIONAL:
+            raise RuntimeError("%s with constructor %s contains varargs."
+                               % (cls, init_signature))
+    # Extract and sort argument names excluding 'self'
+    return sorted([p.name for p in parameters])
 
 
 def safe_mask(X, mask):
