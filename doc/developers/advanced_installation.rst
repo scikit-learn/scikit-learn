@@ -107,10 +107,10 @@ Building Scikit-learn also requires:
    not recommended since it will force some estimators to run in sequential
    mode.
 
-Since version 0.21, scikit-learn automatically detects and use the
-linear algebrea library used by SciPy **at runtime**. Scikit-learn has
-therefore no build dependency on BLAS/LAPACK implementations such as OpenBlas,
-Atlas or MKL.
+Since version 0.21, scikit-learn automatically detects and use the linear
+algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
+or MKL.
 
 Test dependencies
 ~~~~~~~~~~~~~~~~~
@@ -292,6 +292,16 @@ then proceed as usual::
 
     pip3 install cython
     pip3 install --verbose --editable .
+
+Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+and joblib) should automatically be installed in
+``$HOME/.local/lib/pythonX.Y/site-packages``. Alternatively you can run the
+above commands from a `virtualenv
+<https://docs.python.org/3/tutorial/venv.html>`_) or a `conda environment
+<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
+to get full isolation from the Python packages installed via the system
+packager. When using an isolated environment, ``pip3`` should be replaced by
+``pip`` in the above commands.
 
 When precompiled wheels of the runtime dependencies are not avalaible for your
 architecture (e.g. ARM), you can install the system versions::
