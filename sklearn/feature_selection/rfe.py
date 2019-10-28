@@ -66,14 +66,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    importance_getter : string, attrgetter or callable, optional
-                        (default='auto')
+    importance_getter : string or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
         Also accpets a string that specifying an attribute name/path
-        (implemented with attrgetter) for extracting feature importance.
+        for extracting feature importance (implemented with `attrgetter`).
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator.
+        The callable is passed with the fitted estimator and it should
+        return the feature importance.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -196,11 +196,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Get coefs
             if callable(self.importance_getter):
                 coefs = self.importance_getter(estimator)
-            elif isinstance(self.importance_getter, attrgetter):
-                try:
-                    coefs = self.importance_getter(estimator)
-                except AttributeError:
-                    continue
+            elif self.importance_getter != 'auto':
+                coefs = attrgetter(self.importance_getter)(estimator)
             elif self.importance_getter == 'auto':
                 if hasattr(estimator, 'coef_'):
                     coefs = estimator.coef_
@@ -212,8 +209,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                                        '"coef_" or "feature_importances_" '
                                        'attributes')
             else:
-                raise ValueError('importance_getter has to be "auto", '
-                                 '`getattr` or "callable"')
+                raise ValueError('importance_getter has to be string '
+                                 'or `callable`')
 
             # Get ranks
             if coefs.ndim > 1:
