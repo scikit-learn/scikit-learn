@@ -2927,7 +2927,16 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             x_trans = self._yeo_johnson_transform(x, lmbda)
             n_samples = x.shape[0]
 
-            loglike = -n_samples / 2 * np.log(x_trans.var())
+            var = x_trans.var()
+            if var < np.finfo(x_trans.dtype).eps * 10:
+                raise RuntimeError(
+                    "The variance of the transformed data is too small. "
+                    "This might be because your input values are too large. "
+                    "You can try to rescale your data. Note that if your "
+                    "data is strictly positive, you can use box-cox instead."
+                )
+
+            loglike = -n_samples / 2 * np.log(var)
             loglike += (lmbda - 1) * (np.sign(x) * np.log1p(np.abs(x))).sum()
 
             return -loglike

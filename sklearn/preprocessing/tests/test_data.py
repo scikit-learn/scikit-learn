@@ -2484,3 +2484,20 @@ def test_power_transform_default_method():
 
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
+
+
+def test_yeo_johnson_degenerate_case():
+    # When values are too high the variance of the transformed output may be
+    # too small in the log-likelihood computation. We error in these cases for
+    # now since there is no clean or easy fix. See issue 14959 or scipy issue
+    # 10821. (note that this is properly fixed for boxcox in scipy).
+
+    a = np.array([3251637.22, 620695.44]).reshape(-1, 1)
+
+    with pytest.raises(RuntimeError,
+                       match="variance of the transformed data is too small"):
+        PowerTransformer().fit_transform(a)
+
+    # error message suggests to scale the data, make sure that's OK then
+    a = StandardScaler().fit_transform(a)
+    PowerTransformer().fit_transform(a)
