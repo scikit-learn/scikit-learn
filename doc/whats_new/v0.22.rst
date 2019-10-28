@@ -680,6 +680,8 @@ Changelog
   - ``utils.seq_dataset``
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
+  - All of ``utils.testing`` except for ``all_estimators`` which is now
+    in ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -713,6 +715,14 @@ Changelog
   - ``mocking.CheckingClassifier``
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
+
+:mod:`sklearn.voting`
+.....................
+
+- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
+  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 ..................................

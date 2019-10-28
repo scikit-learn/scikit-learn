@@ -8,7 +8,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_array_equal, assert_warns,
     assert_warns_message, assert_no_warnings)
 

@@ -4,7 +4,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_equal, assert_almost_equal
+from sklearn.utils._testing import assert_array_equal, assert_almost_equal
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
 

@@ -3,9 +3,9 @@ import pytest
 import numpy as np
 from scipy import sparse
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
 
 from sklearn.experimental import enable_iterative_imputer  # noqa
 

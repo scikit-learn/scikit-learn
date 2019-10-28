@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import (assert_raises,
+from sklearn.utils._testing import (assert_raises,
                                    assert_array_equal,
                                    assert_allclose_dense_sparse,
                                    assert_raises_regex,

@@ -6,7 +6,7 @@ import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_warns_message
 
 
 @deprecated('qwerty')

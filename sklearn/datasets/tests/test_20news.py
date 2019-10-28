@@ -4,7 +4,7 @@ from functools import partial
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import SkipTest, assert_allclose_dense_sparse
+from sklearn.utils._testing import SkipTest, assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn import datasets

@@ -11,16 +11,16 @@ from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
@@ -50,8 +50,8 @@ import sklearn
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import TempMemmap
 
 
 def test_as_float_array():
