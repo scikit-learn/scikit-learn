@@ -5,13 +5,12 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics_ import (OPTICS,
-                                     _extend_region,
-                                     _extract_xi_labels)
+from sklearn.datasets import make_blobs
+from sklearn.cluster import OPTICS
+from sklearn.cluster._optics import _extend_region, _extract_xi_labels
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.cluster.dbscan_ import DBSCAN
+from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message

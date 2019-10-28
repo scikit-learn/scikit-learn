@@ -237,8 +237,23 @@ def test_imputation_mean_median_error_invalid_type(strategy, dtype):
     X = np.array([["a", "b", 3],
                   [4, "e", 6],
                   ["g", "h", 9]], dtype=dtype)
+    msg = "non-numeric data:\ncould not convert string to float: '"
+    with pytest.raises(ValueError, match=msg):
+        imputer = SimpleImputer(strategy=strategy)
+        imputer.fit_transform(X)
 
-    with pytest.raises(ValueError, match="non-numeric data"):
+
+@pytest.mark.parametrize("strategy", ["mean", "median"])
+@pytest.mark.parametrize("type", ['list', 'dataframe'])
+def test_imputation_mean_median_error_invalid_type_list_pandas(strategy, type):
+    X = [["a", "b", 3],
+         [4, "e", 6],
+         ["g", "h", 9]]
+    if type == 'dataframe':
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+    msg = "non-numeric data:\ncould not convert string to float: '"
+    with pytest.raises(ValueError, match=msg):
         imputer = SimpleImputer(strategy=strategy)
         imputer.fit_transform(X)
 
@@ -457,6 +472,18 @@ def test_imputation_missing_value_in_test_array(Imputer):
     imputer.fit(train).transform(test)
 
 
+@pytest.mark.parametrize("X", [[[1], [2]], [[1], [np.nan]]])
+def test_iterative_imputer_one_feature(X):
+    # check we exit early when there is a single feature
+    imputer = IterativeImputer().fit(X)
+    assert imputer.n_iter_ == 0
+    imputer = IterativeImputer()
+    imputer.fit([[1], [2]])
+    assert imputer.n_iter_ == 0
+    imputer.fit([[1], [np.nan]])
+    assert imputer.n_iter_ == 0
+
+
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     X = sparse_random_matrix(100, 100, density=0.10)
@@ -587,6 +614,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
                                max_iter=max_iter,
                                n_nearest_features=5,
                                sample_posterior=False,
+                               skip_complete=True,
                                min_value=0,
                                max_value=1,
                                verbose=1,
@@ -949,6 +977,36 @@ def test_iterative_imputer_catch_warning():
         X_fill = imputer.fit_transform(X, y)
     assert not record.list
     assert not np.any(np.isnan(X_fill))
+
+
+@pytest.mark.parametrize(
+    "skip_complete", [True, False]
+)
+def test_iterative_imputer_skip_non_missing(skip_complete):
+    # check the imputing strategy when missing data are present in the
+    # testing set only.
+    # taken from: https://github.com/scikit-learn/scikit-learn/issues/14383
+    rng = np.random.RandomState(0)
+    X_train = np.array([
+        [5, 2, 2, 1],
+        [10, 1, 2, 7],
+        [3, 1, 1, 1],
+        [8, 4, 2, 2]
+    ])
+    X_test = np.array([
+        [np.nan, 2, 4, 5],
+        [np.nan, 4, 1, 2],
+        [np.nan, 1, 10, 1]
+    ])
+    imputer = IterativeImputer(
+        initial_strategy='mean', skip_complete=skip_complete, random_state=rng
+    )
+    X_test_est = imputer.fit(X_train).transform(X_test)
+    if skip_complete:
+        # impute with the initial strategy: 'mean'
+        assert_allclose(X_test_est[:, 0], np.mean(X_train[:, 0]))
+    else:
+        assert_allclose(X_test_est[:, 0], [11, 7, 12], rtol=1e-4)
 
 
 @pytest.mark.parametrize(
