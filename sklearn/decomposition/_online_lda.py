@@ -23,8 +23,8 @@ from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
 
-from ._online_lda import (mean_change, _dirichlet_expectation_1d,
-                          _dirichlet_expectation_2d)
+from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
+                               _dirichlet_expectation_2d)
 
 EPS = np.finfo(np.float).eps
 
