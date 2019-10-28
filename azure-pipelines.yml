@@ -32,7 +32,7 @@ jobs:
       # It runs tests requiring pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        PYTHON_VERSION: '*'
+        PYTHON_VERSION: '3.7.4'  # FIXME: pinned until wheels are available
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
