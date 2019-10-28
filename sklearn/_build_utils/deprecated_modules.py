@@ -86,6 +86,11 @@ _DEPRECATED_MODULES = [
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
 
+    ('_gpr', 'sklearn.gaussian_process.gpr', 'sklearn.gaussian_process',
+     'GaussianProcessRegressor'),
+    ('_gpc', 'sklearn.gaussian_process.gpc', 'sklearn.gaussian_process',
+     'GaussianProcessClassifier'),
+
     ('_base', 'sklearn.datasets.base', 'sklearn.datasets', 'get_data_home'),
     ('_california_housing', 'sklearn.datasets.california_housing',
      'sklearn.datasets', 'fetch_california_housing'),

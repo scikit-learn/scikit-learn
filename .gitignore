@@ -130,6 +130,9 @@ sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
 
+sklearn/gaussian_process/gpr.py
+sklearn/gaussian_process/gpc.py
+
 sklearn/datasets/base.py
 sklearn/datasets/california_housing.py
 sklearn/datasets/covtype.py
