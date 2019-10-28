@@ -104,10 +104,10 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         hstack = sparse.hstack if sparse.issparse(X_imputed) else np.hstack
         if X_indicator is None:
             raise ValueError(
-            "Data from the missing indicator are not provided. Call "
-            "_fit_indicator and _transform_indicator in the imputer "
-            "implementation."
-        )
+                "Data from the missing indicator are not provided. Call "
+                "_fit_indicator and _transform_indicator in the imputer "
+                "implementation."
+                )
 
         return hstack((X_imputed, X_indicator))
 
