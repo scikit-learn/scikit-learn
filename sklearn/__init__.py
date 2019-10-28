@@ -21,7 +21,6 @@ import os
 from ._config import get_config, set_config, config_context
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
 logger.setLevel(logging.INFO)
 
 
