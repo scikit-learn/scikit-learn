@@ -8,7 +8,7 @@ from sklearn.neighbors._ball_tree import (BallTree, NeighborsHeap,
                                           nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 rng = np.random.RandomState(10)
 V_mahalanobis = rng.rand(3, 3)

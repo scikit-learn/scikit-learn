@@ -3,7 +3,7 @@ import scipy as sp
 
 import pytest
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
 from sklearn.decomposition import PCA

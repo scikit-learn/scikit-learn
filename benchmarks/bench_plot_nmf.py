@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from joblib import Memory
 import pandas
 
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
 from sklearn.decomposition._nmf import _initialize_nmf

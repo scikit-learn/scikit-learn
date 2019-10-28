@@ -16,18 +16,18 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
-from .testing import assert_raises, _get_args
-from .testing import assert_raises_regex
-from .testing import assert_raise_message
-from .testing import assert_array_equal
-from .testing import assert_array_almost_equal
-from .testing import assert_allclose
-from .testing import assert_allclose_dense_sparse
-from .testing import assert_warns_message
-from .testing import set_random_state
-from .testing import SkipTest
-from .testing import ignore_warnings
-from .testing import create_memmap_backed_data
+from ._testing import assert_raises, _get_args
+from ._testing import assert_raises_regex
+from ._testing import assert_raise_message
+from ._testing import assert_array_equal
+from ._testing import assert_array_almost_equal
+from ._testing import assert_allclose
+from ._testing import assert_allclose_dense_sparse
+from ._testing import assert_warns_message
+from ._testing import set_random_state
+from ._testing import SkipTest
+from ._testing import ignore_warnings
+from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
