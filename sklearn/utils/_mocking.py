@@ -105,27 +105,27 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """
         Parameters
         ----------
-        T : indexable, length n_samples
+        X : indexable, length n_samples
         """
         if self.check_X is not None:
-            assert self.check_X(T)
-        return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
+            assert self.check_X(X)
+        return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
 
-    def predict_proba(self, T):
+    def predict_proba(self, X):
         """
         Parameters
         ----------
-        T : indexable, length n_samples
+        X : indexable, length n_samples
         """
         if self.check_X is not None:
-            assert self.check_X(T)
+            assert self.check_X(X)
 
         num_classes = len(self.classes_)
-        y_proba = np.ones((_num_samples(T), num_classes))
+        y_proba = np.ones((_num_samples(X), num_classes))
         y_proba /= num_classes
         return y_proba
 
