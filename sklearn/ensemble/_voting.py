@@ -71,12 +71,11 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             )
 
         self.named_estimators_ = Bunch()
+
+        # Uses None or 'drop' as placeholder for dropped estimators
         est_iter = iter(self.estimators_)
         for name, est in self.estimators:
-            if est in (None, 'drop'):
-                current_est = est
-            else:
-                current_est = next(est_iter)
+            current_est = est if est in (None, 'drop') else next(est_iter)
             self.named_estimators_[name] = current_est
 
         return self
