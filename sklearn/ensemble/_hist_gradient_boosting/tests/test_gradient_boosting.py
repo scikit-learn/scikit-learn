@@ -516,7 +516,10 @@ def test_sample_weight_effect(problem, duplication, seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    n_samples = 10  # fails for n_samples > 256
+    # fails for n_samples > 255 because binning implementation isn't strictly
+    # equivalent to just duplicating samples. Keeping n_samples <= 255 makes
+    # sure only unique values are used so SW have no effect on binning.
+    n_samples = 255
     n_features = 2
     if problem == 'regression':
         X, y = make_regression(n_samples=n_samples, n_features=n_features,
@@ -530,7 +533,11 @@ def test_sample_weight_effect(problem, duplication, seed):
                                    n_classes=n_classes, random_state=seed)
         Klass = HistGradientBoostingClassifier
 
-    est = Klass(min_samples_leaf=2, max_iter=1)  # fails if min_samples_leaf > 1
+    # This test can't pass if min_samples_leaf > 1 because that would force 2
+    # samples to be in the same node in est_sw, while these samples would be
+    # free to be separate in est_dup: est_dup would just group together the
+    # duplicated samples.
+    est = Klass(min_samples_leaf=1)
 
     # Create dataset with duplicate and corresponding sample weights
     if duplication == 'half':
@@ -542,13 +549,12 @@ def test_sample_weight_effect(problem, duplication, seed):
     sample_weight = np.ones(shape=(n_samples))
     sample_weight[:lim] = 2
 
-    # Check decision function instead of just classes for classification
-    print(est.fit(X_dup, y_dup)._raw_predict(X_dup))
-    print(est.fit(X, y, sample_weight=sample_weight)._raw_predict(X_dup))
-    # no_dup_sw = est.fit(X, y, sample_weight=sample_weight)._raw_predict(X_dup)
-    # dup_no_sw = est.fit(X_dup, y_dup)._raw_predict(X_dup)
+    est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
+    est_dup = clone(est).fit(X_dup, y_dup)
 
-    assert np.allclose(dup_no_sw, no_dup_sw)
+    # Check decision function instead of just classes for classification
+    assert np.allclose(est_sw._raw_predict(X_dup),
+                       est_dup._raw_predict(X_dup))
 
 
 @pytest.mark.parametrize('loss_name', ('least_squares',
