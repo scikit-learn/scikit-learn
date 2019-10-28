@@ -560,3 +560,21 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
            "Use the string 'drop' instead.")
     with pytest.warns(DeprecationWarning, match=msg):
         est.fit(X, y)
+
+
+# TODO: Remove drop parametrize in 0.24 when None is removed in Voting*
+@pytest.mark.parametrize(
+    "Voter, BaseEstimator",
+    [(VotingClassifier, DecisionTreeClassifier),
+     (VotingRegressor, DecisionTreeRegressor)]
+)
+@pytest.mark.parametrize("drop", [None, 'drop'])
+def test_correct_named_estimator_with_drop(Voter, BaseEstimator, drop):
+    est = Voter(estimators=[('lr', drop),
+                            ('tree', BaseEstimator(random_state=0))])
+
+    with pytest.warns(None) as rec:
+        est.fit(X, y)
+    assert rec if drop is None else not rec
+
+    assert est.named_estimators_['lr'] == drop

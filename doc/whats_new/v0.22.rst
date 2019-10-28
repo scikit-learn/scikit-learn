@@ -716,6 +716,14 @@ Changelog
   - ``optimize.newton_cg`
   - ``random.random_choice_csc``
 
+:mod:`sklearn.voting`
+.....................
+
+- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
+  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
+
 :mod:`sklearn.isotonic`
 ..................................
 
