@@ -45,6 +45,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
+          .. versionchanged:: 0.20
+             The default value of `strategy` will change from "stratified" in
+             version 0.22 to "prior" in version 0.24.
+
           .. versionadded:: 0.17
              Dummy Classifier now supports prior fitting strategy using
              parameter *prior*.
