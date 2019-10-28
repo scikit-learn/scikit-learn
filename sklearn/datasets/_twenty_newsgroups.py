@@ -37,11 +37,11 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from .base import get_data_home
-from .base import load_files
-from .base import _pkl_filepath
-from .base import _fetch_remote
-from .base import RemoteFileMetadata
+from . import get_data_home
+from . import load_files
+from ._base import _pkl_filepath
+from ._base import _fetch_remote
+from ._base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..utils import check_random_state, Bunch

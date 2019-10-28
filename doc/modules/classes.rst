@@ -1480,20 +1480,6 @@ Estimators
 
    svm.l1_min_c
 
-Low-level methods
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   svm.libsvm.cross_validation
-   svm.libsvm.decision_function
-   svm.libsvm.fit
-   svm.libsvm.predict
-   svm.libsvm.predict_proba
-
-
 .. _tree_ref:
 
 :mod:`sklearn.tree`: Decision Trees
@@ -1551,7 +1537,6 @@ Plotting
    :toctree: generated/
    :template: function.rst
 
-   utils.arrayfuncs.cholesky_delete
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite

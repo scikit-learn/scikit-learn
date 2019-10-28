@@ -602,6 +602,10 @@ def test_label_binarize_multilabel():
 def test_invalid_input_label_binarize():
     with pytest.raises(ValueError):
         label_binarize([0, 2], classes=[0, 2], pos_label=0, neg_label=1)
+    with pytest.raises(ValueError, match="continuous target data is not "):
+        label_binarize([1.2, 2.7], classes=[0, 1])
+    with pytest.raises(ValueError, match="mismatch with the labels"):
+        label_binarize([[1, 3]], classes=[1, 2, 3])
 
 
 def test_inverse_binarize_multiclass():
