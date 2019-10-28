@@ -171,8 +171,9 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html',
-                         'documentation': 'documentation.html'}
+html_additional_pages = {
+    'index': 'index.html',
+    'documentation': 'documentation.html'}  # redirects to index
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -255,6 +256,36 @@ else:
     major, minor = match.groups()
     binder_branch = '{}.{}.X'.format(major, minor)
 
+
+class SubSectionTitleOrder:
+    """Sort example gallery by title of subsection.
+
+    Assumes README.txt exists for all subsections and uses the subsection with
+    dashes, '---', as the adornment.
+    """
+    def __init__(self, src_dir):
+        self.src_dir = src_dir
+        self.regex = re.compile(r"^([\w ]+)\n-", re.MULTILINE)
+
+    def __repr__(self):
+        return '<%s>' % (self.__class__.__name__,)
+
+    def __call__(self, directory):
+        src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+        readme = os.path.join(src_path, "README.txt")
+
+        try:
+            with open(readme, 'r') as f:
+                content = f.read()
+        except FileNotFoundError:
+            return directory
+
+        title_match = self.regex.search(content)
+        if title_match is not None:
+            return title_match.group(1)
+        return directory
+
+
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
@@ -263,6 +294,7 @@ sphinx_gallery_conf = {
         'sklearn': None},
     'examples_dirs': ['../examples'],
     'gallery_dirs': ['auto_examples'],
+    'subsection_order': SubSectionTitleOrder('../examples'),
     'binder': {
         'org': 'scikit-learn',
         'repo': 'scikit-learn',

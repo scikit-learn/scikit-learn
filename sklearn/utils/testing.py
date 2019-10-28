@@ -29,6 +29,7 @@ from inspect import signature
 import shutil
 import atexit
 import unittest
+from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
@@ -49,7 +50,6 @@ import sklearn
 from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
-from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
@@ -512,7 +512,7 @@ def all_estimators(include_meta_estimators=None,
         if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
         with ignore_warnings(category=DeprecationWarning):
@@ -580,7 +580,7 @@ try:
                                        reason='skipped on 32bit platforms')
     skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
                                      reason='skip on travis')
-    fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
+    fails_if_pypy = pytest.mark.xfail(IS_PYPY,
                                       reason='not compatible with PyPy')
     skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
                                              reason="joblib is in serial mode")

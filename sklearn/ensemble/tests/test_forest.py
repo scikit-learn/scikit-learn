@@ -49,7 +49,7 @@ from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
 
-from sklearn.tree.tree import SPARSE_SPLITTERS
+from sklearn.tree._classes import SPARSE_SPLITTERS
 
 
 # toy sample
@@ -367,7 +367,8 @@ def test_importances_asymptotic():
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.".format(name))
+               "appropriate arguments before using this estimator."
+               .format(name))
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
@@ -1002,12 +1003,6 @@ def check_class_weights(name):
     clf2 = ForestClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
-
-    # Using a Python 2.x list as the sample_weight parameter used to raise
-    # an exception. This test makes sure such code will now run correctly.
-    clf = ForestClassifier()
-    sample_weight = [1.] * len(iris.data)
-    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)

@@ -13,8 +13,8 @@ from sklearn.utils.testing import assert_array_equal
 
 from sklearn.metrics.cluster import adjusted_rand_score
 
-from sklearn.mixture.bayesian_mixture import _log_dirichlet_norm
-from sklearn.mixture.bayesian_mixture import _log_wishart_norm
+from sklearn.mixture._bayesian_mixture import _log_dirichlet_norm
+from sklearn.mixture._bayesian_mixture import _log_wishart_norm
 
 from sklearn.mixture import BayesianGaussianMixture
 
@@ -479,7 +479,7 @@ def test_bayesian_mixture_predict_predict_proba():
                                  "This BayesianGaussianMixture instance"
                                  " is not fitted yet. Call 'fit' with "
                                  "appropriate arguments before using "
-                                 "this method.", bgmm.predict, X)
+                                 "this estimator.", bgmm.predict, X)
 
             bgmm.fit(X)
             Y_pred = bgmm.predict(X)

@@ -47,7 +47,8 @@ def test_feature_hasher_strings():
 
 def test_hashing_transform_seed():
     # check the influence of the seed when computing the hashes
-    from sklearn.feature_extraction._hashing import (
+    # import is here to avoid importing on pypy
+    from sklearn.feature_extraction._hashing_fast import (
             transform as _hashing_transform)
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
              ["bar".encode("ascii"), "baz", "quux"]]
