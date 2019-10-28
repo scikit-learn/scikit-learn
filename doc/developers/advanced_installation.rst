@@ -283,7 +283,7 @@ Installing scikit-learn from source without using conda requires you to have
 installed the scikit-learn Python development headers and a working C/C++
 compiler with OpenMP support (typically the GCC toolchain).
 
-Install build dependencies for Debian-based operating systems, which include
+Install build dependencies for Debian-based operating systems, e.g.
 Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-pip
