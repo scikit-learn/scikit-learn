@@ -374,7 +374,8 @@ def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.
 
-    gbc = GradientBoostingClassifier(init=DummyClassifier(), random_state=0)
+    gbc = GradientBoostingClassifier(
+        init=DummyClassifier(strategy="stratified"), random_state=0)
     gbc.fit(X, y)
 
     with pytest.warns(
@@ -419,7 +420,7 @@ def test_partial_dependence_pipeline():
     iris = load_iris()
 
     scaler = StandardScaler()
-    clf = DummyClassifier(random_state=42)
+    clf = DummyClassifier(strategy="stratified", random_state=42)
     pipe = make_pipeline(scaler, clf)
 
     clf.fit(scaler.fit_transform(iris.data), iris.target)

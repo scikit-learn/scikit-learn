@@ -1299,9 +1299,11 @@ def _make_multiclass():
 
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
-    [(GradientBoostingClassifier, make_classification, DummyClassifier),
-     (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
-     (GradientBoostingRegressor, make_regression, DummyRegressor)],
+    [(GradientBoostingClassifier, make_classification,
+      DummyClassifier(strategy="stratified")),
+     (GradientBoostingClassifier, _make_multiclass,
+      DummyClassifier(strategy="stratified")),
+     (GradientBoostingRegressor, make_regression, DummyRegressor())],
     ids=["binary classification", "multiclass classification", "regression"])
 def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
@@ -1313,11 +1315,11 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     sample_weight = np.random.RandomState(42).rand(100)
 
     # init supports sample weights
-    init_est = init_estimator()
+    init_est = clone(init_estimator)
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = NoSampleWeightWrapper(init_estimator())
+    init_est = NoSampleWeightWrapper(clone(init_estimator))
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):
