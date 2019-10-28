@@ -14,7 +14,7 @@ from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct
 
-from sklearn.utils.testing \
+from sklearn.utils._testing \
     import (assert_array_less,
             assert_almost_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)

@@ -13,10 +13,10 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -26,8 +26,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics.ranking import _ndcg_sample_scores, _dcg_sample_scores
-from sklearn.metrics.ranking import ndcg_score, dcg_score
+from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
+from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 

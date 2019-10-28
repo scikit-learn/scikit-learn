@@ -765,6 +765,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -903,7 +904,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
+        yet. Call 'fit' with appropriate arguments before using this
+        estimator."
 
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
@@ -936,7 +938,7 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+               "appropriate arguments before using this estimator.")
 
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
@@ -1061,8 +1063,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")

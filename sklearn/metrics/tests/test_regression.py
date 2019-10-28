@@ -4,9 +4,9 @@ from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
@@ -17,7 +17,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
-from sklearn.metrics.regression import _check_reg_targets
+from sklearn.metrics._regression import _check_reg_targets
 
 from ...exceptions import UndefinedMetricWarning
 
