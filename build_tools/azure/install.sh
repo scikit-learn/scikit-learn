@@ -60,13 +60,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
         conda config --set restore_free_channel true
     fi
 
+	make_conda $TO_INSTALL
+
     if [[ "$PYTEST_VERSION" == "*" ]]; then
         pip install pytest
     else
         pip install pytest=="$PYTEST_VERSION"
     fi
 
-	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
     fi
