@@ -36,35 +36,37 @@ Building from source
 
 .. _git_repo:
 
-Use `Git <https://git-scm.com/>`_ to check out the latest source from the
-`scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
-`Github <https://github.com>`_ and pip to build the project::
+#. Use `Git <https://git-scm.com/>`_ to check out the latest source from the
+   `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
+   `Github <https://github.com>`::
 
-    git clone git://github.com/scikit-learn/scikit-learn.git
-    cd scikit-learn
+        git clone git://github.com/scikit-learn/scikit-learn.git
+        cd scikit-learn
 
-    pip install cython
-    pip install --verbose --editable .
+#. Install a compiler with OpenMP_ support for your platform. See intructions
+   for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
+   and :ref:`compiler_freebsd`.
 
-Check that the installed scikit-learn has a version number ending with
-`.dev0`::
+#. Optional (but recommended): create and activate a dedicated virtualenv_
+   or `conda environment`_.
+
+#. Install Cython_ and build the project with pip in :ref:`editable_mode`::
+
+        pip install cython
+        pip install --verbose --editable .
+
+#. Check that the installed scikit-learn has a version number ending with
+   `.dev0`::
 
     python -c "import sklearn; sklearn.show_versions()"
 
-Run the tests with ``pytest``::
-
-    pip install pytest
-    pytest sklearn
-
-Please read below for more details and :ref:`platform system specific
-instructions <platform_specific_instructions>` (e.g. in case compilation error
-message).
+#. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
+   the tests on the module of your choice.
 
 .. note::
 
     You will have to re-run the ``pip install --editable .`` command every time
-    the source code of a Cython file (ending in `.pyx` or `.pxd`). See
-    :ref:`editable_mode` for more details.
+    the source code of a Cython file (ending in `.pyx` or `.pxd`).
 
 Dependencies
 ------------
@@ -94,8 +96,7 @@ Build dependencies
 Building Scikit-learn also requires:
 
 - Cython >= 0.28.5
-- A C/C++ compiler and a matching `OpenMP
-  <https://en.wikipedia.org/wiki/OpenMP>`_ runtime library. See the
+- A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
   <platform_specific_instructions>` for more details.
 
@@ -158,6 +159,8 @@ Platform-specific instructions
 Here are instructions to install a working C/C++ compiler with OpenMP support
 to build scikit-learn Cython extensions for each supported platform.
 
+.. _compiler_windows:
+
 Windows
 -------
 
@@ -192,6 +195,8 @@ Finally, build scikit-learn from this command prompt::
 
     pip install --verbose --editable .
 
+.. _compiler_macos:
+
 macOS
 -----
 
@@ -210,8 +215,8 @@ If you use the conda package manager, you can install the ``compilers``
 meta-package from the conda-forge channel, which provides OpenMP-enabled C/C++
 compilers based on the llvm toolchain.
 
-It is recommended to use a dedicated conda environment to build scikit-learn
-from source::
+It is recommended to use a dedicated `conda environment`_ to build
+scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
         conda-forge::compilers conda-forge::llvm-openmp
@@ -252,8 +257,7 @@ macOS compilers from Homebrew
 Another solution is to enable OpenMP support for the clang compiler shipped
 by default on macOS.
 
-You first need to install the OpenMP library using `Homebrew
-<https://brew.sh>`_::
+You first need to install the OpenMP library using Homebrew_::
 
     brew install libomp
 
@@ -271,6 +275,8 @@ Finally, build scikit-learn in verbose mode (to check for the presence of the
 
     make clean
     pip install --verbose --editable .
+
+.. _compiler_linux:
 
 Linux
 -----
@@ -295,12 +301,10 @@ then proceed as usual::
 Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
 and joblib) should automatically be installed in
 ``$HOME/.local/lib/pythonX.Y/site-packages``. Alternatively you can run the
-above commands from a `virtualenv
-<https://docs.python.org/3/tutorial/venv.html>`_) or a `conda environment
-<https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html>`_
-to get full isolation from the Python packages installed via the system
-packager. When using an isolated environment, ``pip3`` should be replaced by
-``pip`` in the above commands.
+above commands from a virtualenv_ or a `conda environment`_ to get full
+isolation from the Python packages installed via the system packager. When
+using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
+above commands.
 
 When precompiled wheels of the runtime dependencies are not avalaible for your
 architecture (e.g. ARM), you can install the system versions::
@@ -321,6 +325,7 @@ in the user folder using conda::
     conda activate sklearn-dev
     pip install --verbose --editable .
 
+.. _compiler_freebsd:
 
 FreeBSD
 -------
@@ -345,3 +350,9 @@ Finally, build the package using the standard command::
 
 For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
+
+.. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
+.. _Cython: https://cython.org
+.. _Homebrew: https://brew.sh
+.. _virtualenv: https://docs.python.org/3/tutorial/venv.html
+.. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
