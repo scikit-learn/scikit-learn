@@ -12,7 +12,7 @@ jobs:
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
-    PYTEST_VERSION: '3.8.1'
+    PYTEST_VERSION: '5.2.1'
     TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
   strategy:
     matrix:
