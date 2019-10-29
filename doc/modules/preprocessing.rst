@@ -574,6 +574,27 @@ When this paramenter is not None, ``handle_unknown`` must be set to
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
+When using pandas dataframe with categorical dtypes, :class:`OneHotEncoder` and
+:class:`OrdinalEncoder` contain a `categories='dtypes'` option to use the
+encoding provided by the the pandas category::
+
+  >>> import pandas as pd
+  >>> from pandas.api.types import CategoricalDtype
+  >>> X_df = pd.DataFrame({
+  ...   'col_str': ['a', 'b', 'b', 'a'],
+  ...   'col_int': [3, 2, 1, 2]})
+  >>> str_category = CategoricalDtype(categories=['b', 'a'], ordered=True)
+  >>> int_category = CategoricalDtype(categories=[3, 1, 2], ordered=True)
+  >>> X_df['col_str'] = X_df['col_str'].astype(str_category)
+  >>> X_df['col_int'] = X_df['col_int'].astype(int_category)
+  >>> enc = preprocessing.OneHotEncoder(categories='dtypes').fit(X_df)
+  >>> enc.transform(X_df).toarray()
+  array([[0., 1., 1., 0., 0.],
+         [1., 0., 0., 0., 1.],
+         [1., 0., 0., 1., 0.],
+         [0., 1., 0., 0., 1.]])
+
+
 .. _preprocessing_discretization:
 
 Discretization
