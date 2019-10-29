@@ -363,7 +363,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
         pass
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {'allow_nan': False}
 
 
 ######################################################################
