@@ -56,7 +56,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
           If categories == 'dtype' and the pandas column is a category,
-          the pandas series will be return in this list.
+          the pandas series will be returned in this list.
         """
         if self.categories == 'dtypes':
             X_dtypes = getattr(X, "dtypes", None)
@@ -220,7 +220,9 @@ class OneHotEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - 'dtypes' : Uses pandas categorical dtype to encode categories.
+        - 'dtypes' : Uses pandas categorical dtype to encode categories. For
+          non pandas categorical data, the categories are automatically
+          determined from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values within a single feature, and should be sorted in case of
@@ -588,7 +590,9 @@ class OrdinalEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
-        - 'dtypes' : Uses pandas categorical dtype to encode categories.
+        - 'dtypes' : Uses pandas categorical dtype to encode categories. For
+          non pandas categorical data, the categories are automatically
+          determined from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.
