@@ -37,7 +37,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
-
+          If categories == 'dtype' and the pandas column is a category,
+          the pandas series will be return in this list.
         """
         if self.categories == 'dtypes':
             if not hasattr(X, 'dtypes'):
@@ -45,7 +46,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                 "categories='dtypes'")
             X_dtypes = getattr(X, 'dtypes')
 
-            if hasattr(self, "_X_fit_dtypes"):
+            if hasattr(self, "_X_fit_dtypes"):  # fitted
                 if (len(self._X_fit_dtypes) != len(X_dtypes) or
                         not all(self._X_fit_dtypes == X_dtypes)):
                     raise ValueError("X.dtypes must match the dtypes used "
@@ -140,6 +141,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
 
             if self.categories == 'dtypes' and hasattr(Xi, "cat"):
+                # categorical dtypes contain no unknown values
                 encoded = Xi.cat.codes
             else:
                 diff, valid_mask = _encode_check_unknown(Xi,
