@@ -29,6 +29,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     def _check_dtypes_equal(self, dtypes_l, dtypes_r):
         """Returns True if the dtypes."""
+        if ((dtypes_l is None and dtypes_r is not None) or
+                (dtypes_l is not None and dtypes_r is None)):
+            return False
+
         if len(dtypes_l) != len(dtypes_r):
             return False
 
@@ -55,10 +59,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           the pandas series will be return in this list.
         """
         if self.categories == 'dtypes':
-            if not hasattr(X, 'dtypes'):
-                raise TypeError("X must be a dataframe when "
-                                "categories='dtypes'")
-            X_dtypes = X.dtypes
+            X_dtypes = getattr(X, "dtypes", None)
             if hasattr(self, "_X_fit_dtypes"):  # fitted
                 if not self._check_dtypes_equal(self._X_fit_dtypes,
                                                 X_dtypes):
@@ -87,7 +88,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
             if self.categories == 'dtypes' and hasattr(Xi, 'cat'):
-                # TODO: Change missing value support is added
+                # TODO: Change when missing value support is added
                 _assert_all_finite(Xi)
             else:
                 Xi = check_array(Xi, ensure_2d=False, dtype=None,

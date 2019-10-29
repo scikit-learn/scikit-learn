@@ -736,11 +736,6 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
     with pytest.raises(ValueError, match=msg):
         enc.transform(X_df4)
 
-    X_np = X_df_orig.values
-    msg = "X must be a dataframe when categories='dtypes'"
-    with pytest.raises(TypeError, match=msg):
-        enc.transform(X_np)
-
 
 @pytest.mark.parametrize("is_sparse", [True, False])
 @pytest.mark.parametrize("drop", ["first", None])
