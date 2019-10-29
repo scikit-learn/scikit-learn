@@ -84,9 +84,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         if self.passthrough:
             X_meta.append(X)
             if sparse.issparse(X):
-                return sparse.hstack(X_meta).tocsr()
+                return sparse.hstack(X_meta, format=X.format)
 
-        return np.concatenate(X_meta, axis=1)
+        return np.hstack(X_meta)
 
     @staticmethod
     def _method_name(name, estimator, method):
@@ -303,8 +303,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         using all processors. See Glossary for more details.
 
     passthrough : bool, default=False
-        Whether or not to concatenate the original data ``X`` with the output
-        of ``estimators`` to feed the ``final_estimator``.
+        When False, only the predictions of estimators will be used as
+        training data for `final_estimator`. When True, the
+        `final_estimator` is trained on the predictions as well as the
+        original training data.
 
     Attributes
     ----------
@@ -546,8 +548,10 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         using all processors. See Glossary for more details.
 
     passthrough : bool, default=False
-        Whether or not to concatenate the original data ``X`` with the output
-        of ``estimators`` to feed the ``final_estimator``.
+        When False, only the predictions of estimators will be used as
+        training data for `final_estimator`. When True, the
+        `final_estimator` is trained on the predictions as well as the
+        original training data.
 
     Attributes
     ----------
