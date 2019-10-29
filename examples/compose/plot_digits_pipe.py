@@ -43,7 +43,7 @@ X_digits, y_digits = datasets.load_digits(return_X_y=True)
 # Parameters of pipelines can be set using ‘__’ separated parameter names:
 param_grid = {
     'pca__n_components': [5, 15, 30, 45, 64],
-    'logistic__alpha': np.logspace(-4, 4, 4),
+    'logistic__C': np.logspace(-4, 4, 4),
 }
 search = GridSearchCV(pipe, param_grid, n_jobs=-1)
 search.fit(X_digits, y_digits)
@@ -54,7 +54,8 @@ print(search.best_params_)
 pca.fit(X_digits)
 
 fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True, figsize=(6, 6))
-ax0.plot(1 + np.arange(64), pca.explained_variance_ratio_, '+', linewidth=2)
+ax0.plot(np.arange(1, pca.n_components_ + 1),
+         pca.explained_variance_ratio_, '+', linewidth=2)
 ax0.set_ylabel('PCA explained variance ratio')
 
 ax0.axvline(search.best_estimator_.named_steps['pca'].n_components,
