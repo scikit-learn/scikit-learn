@@ -67,11 +67,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pip install pytest-xdist
     fi
 
-    if [[ "$PANDAS_VERSION" == "*" ]]; then
-        pip install pandas
-    else
-        pip install pandas=="$PANDAS_VERSION"
-    fi
+    python -m pip install pandas
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
