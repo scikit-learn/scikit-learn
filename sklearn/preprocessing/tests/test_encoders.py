@@ -641,7 +641,8 @@ def test_encoders_has_categorical_tags(Encoder):
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])
-def test_one_hot_encoder_pd_categories(is_sparse):
+@pytest.mark.parametrize("drop", ["first", None])
+def test_one_hot_encoder_pd_categories(is_sparse, drop):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
@@ -656,13 +657,16 @@ def test_one_hot_encoder_pd_categories(is_sparse):
     X_df['col_str'] = X_df['col_str'].astype(str_category)
     X_df['col_int'] = X_df['col_int'].astype(int_category)
 
-    ohe = OneHotEncoder(categories='dtypes', sparse=is_sparse)
+    ohe = OneHotEncoder(categories='dtypes', sparse=is_sparse, drop=drop)
 
     expected_trans = np.array([
         [0, 1, 1, 0, 0],
         [1, 0, 0, 0, 1],
         [1, 0, 0, 1, 0],
         [0, 1, 0, 0, 1]], dtype=np.float64)
+
+    if drop == 'first':
+        expected_trans = expected_trans[:, [1, 3, 4]]
 
     X_trans = ohe.fit_transform(X_df)
     if is_sparse:
@@ -724,7 +728,8 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])
-def test_one_hot_encoder_pd_categories_mixed(is_sparse):
+@pytest.mark.parametrize("drop", ["first", None])
+def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
@@ -742,13 +747,18 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse):
     X_df['col_str'] = X_df['col_str'].astype(str_category)
     X_df['col_int'] = X_df['col_int'].astype(int_category)
 
-    ohe = OneHotEncoder(categories="dtypes", sparse=is_sparse).fit(X_df)
+    ohe = OneHotEncoder(categories="dtypes",
+                        sparse=is_sparse,
+                        drop=drop).fit(X_df)
 
     expected_trans = np.array([
         [0, 1, 1, 0, 0, 1, 0, 0, 1],
         [1, 0, 0, 0, 1, 0, 1, 1, 0],
         [1, 0, 0, 1, 0, 1, 0, 0, 1],
         [0, 1, 0, 0, 1, 1, 0, 1, 0]], dtype=np.float64)
+
+    if drop == 'first':
+        expected_trans = expected_trans[:, [1, 3, 4, 6, 8]]
 
     X_trans = ohe.fit_transform(X_df)
     if is_sparse:
