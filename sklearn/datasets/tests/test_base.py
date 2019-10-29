@@ -23,13 +23,12 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
-from sklearn.datasets.base import Bunch
-from sklearn.datasets.base import _refresh_cache
+from sklearn.utils import Bunch
+from sklearn.datasets._base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils.testing import assert_raises
 from sklearn.utils import IS_PYPY
 
 
@@ -169,8 +168,8 @@ def test_load_sample_image():
 
 def test_load_missing_sample_image_error():
     if pillow_installed:
-        assert_raises(AttributeError, load_sample_image,
-                      'blop.jpg')
+        with pytest.raises(AttributeError):
+            load_sample_image('blop.jpg')
     else:
         warnings.warn("Could not load sample images, PIL is not available.")
 

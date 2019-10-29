@@ -7,10 +7,48 @@
 Version 0.21.3
 ==============
 
-**In development**
+**July 30, 2019**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- The v0.20.0 release notes failed to mention a backwards incompatibility in
+  :func:`metrics.make_scorer` when `needs_proba=True` and `y_true` is binary.
+  Now, the scorer function is supposed to accept a 1D `y_pred` (i.e.,
+  probability of the positive class, shape `(n_samples,)`), instead of a 2D
+  `y_pred` (i.e., shape `(n_samples, 2)`).
 
 Changelog
 ---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation with
+  `init='random'` was single threaded for `n_jobs > 1` or `n_jobs = -1`.
+  :pr:`12955` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+- |Fix| Fixed a bug in :class:`cluster.OPTICS` where users were unable to pass
+  float `min_samples` and `min_cluster_size`. :pr:`14496` by
+  :user:`Fabian Klopfer <someusername1>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -19,30 +57,44 @@ Changelog
   :func:`datasets.fetch_covtype`,
   :func:`datasets.fetch_kddcup99`, :func:`datasets.fetch_olivetti_faces`,
   :func:`datasets.fetch_rcv1`, and :func:`datasets.fetch_species_distributions`
-  try to persist the previously cache using the new ``joblib`` if the cahced
+  try to persist the previously cache using the new ``joblib`` if the cached
   data was persisted using the deprecated ``sklearn.externals.joblib``. This
   behavior is set to be deprecated and removed in v0.23.
   :pr:`14197` by `Adrin Jalali`_.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix zero division error in :func:`HistGradientBoostingClassifier` and
+  :func:`HistGradientBoostingRegressor`.
+  :pr:`14024` by `Nicolas Hug <NicolasHug>`.
+
 :mod:`sklearn.impute`
 .....................
 
-- |Fix| Fixed a bug in :class:`SimpleImputer` and :class:`IterativeImputer`
-  so that no errors are thrown when there are missing values in training data.
-  :pr:`13974` by `Frank Hoang <fhoang7>`.
+- |Fix| Fixed a bug in :class:`impute.SimpleImputer` and
+  :class:`impute.IterativeImputer` so that no errors are thrown when there are
+  missing values in training data. :pr:`13974` by `Frank Hoang <fhoang7>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+  ``target`` parameter was not being taken into account for multiclass problems.
+  :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
 :mod:`sklearn.linear_model`
 ...........................
+
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where
   ``refit=False`` would fail depending on the ``'multiclass'`` and
   ``'penalty'`` parameters (regression introduced in 0.21). :pr:`14087` by
   `Nicolas Hug`_.
 
-:mod:`sklearn.tree`
-...................
-
-- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
-  a single feature name is passed in. :pr:`14053` by `Thomas Fan`
+- |Fix| Compatibility fix for :class:`linear_model.ARDRegression` and
+  Scipy>=1.3.0. Adapts to upstream changes to the default `pinvh` cutoff
+  threshold which otherwise results in poor accuracy in some cases.
+  :pr:`14067` by :user:`Tim Staley <timstaley>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -51,6 +103,16 @@ Changelog
   the validation of initial parameters ``n_components``, ``max_iter`` and
   ``tol`` required too strict types. :pr:`14092` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed bug in :func:`tree.export_text` when the tree has one feature and 
+  a single feature name is passed in. :pr:`14053` by `Thomas Fan`.
+
+- |Fix| Fixed an issue with :func:`plot_tree` where it displayed
+  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
+  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 .. _changes_0_21_2:
 
@@ -83,12 +145,6 @@ Changelog
   `drop` parameter was not reflected in `get_feature_names`. :pr:`13894`
   by :user:`James Myatt <jamesmyatt>`.
 
-:mod:`sklearn.tree`
-...................
-
-- |Fix| Fixed an issue with :func:`plot_tree` where it display
-  entropy calculations even for `gini` criterion in DecisionTreeClassifiers.
-  :pr:`13947` by :user:`Frank Hoang <fhoang7>`.
 
 :mod:`sklearn.utils.sparsefuncs`
 ................................
@@ -110,6 +166,13 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 
 Changelog
 ---------
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug in :func:`inspection.partial_dependence` to only check
+  classifier and not regressor for the multiclass-multioutput case.
+  :pr:`14309` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -165,7 +228,7 @@ random sampling procedures.
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
 - :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
-- Any model using the :func:`linear_model.sag.sag_solver` function with a `0`
+- Any model using the :func:`linear_model._sag.sag_solver` function with a `0`
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
@@ -225,11 +288,6 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Allow n-dimensional arrays as input for
   `calibration.CalibratedClassifierCV`. :pr:`13485` by
   :user:`William de Vazelhes <wdevazelhes>`.
-
-- |Fix| Fixed a bug that made `calibration.CalibratedClassifierCV` fail when
-  given a `sample_weight` parameter of type `list` (in the case where
-  `sample_weights` are not supported by the wrapped estimator). :issue:`1375`
-  by :user:`William de Vazelhes <wdevazelhes>`.
 
 :mod:`sklearn.cluster`
 ......................
@@ -743,6 +801,7 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :pr:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 
 :mod:`sklearn.model_selection`
 ..............................

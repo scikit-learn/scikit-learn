@@ -27,7 +27,7 @@ of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves multiple purposes here:
 
 Convenience and encapsulation
-    You only have to call ``fit`` and ``predict`` once on your
+    You only have to call :term:`fit` and :term:`predict` once on your
     data to fit a whole sequence of estimators.
 Joint parameter selection
     You can :ref:`grid search <grid_search>`
@@ -38,7 +38,7 @@ Safety
     used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
-(i.e. must have a ``transform`` method).
+(i.e. must have a :term:`transform` method).
 The last estimator may be any type (transformer, classifier, etc.).
 
 
@@ -101,6 +101,9 @@ permitted). This is convenient for performing only some of the transformations
     >>> pipe[-1:]
     Pipeline(steps=[('clf', SVC())])
 
+
+.. _pipeline_nested_parameters:
+
 Nested parameters
 .................
 
@@ -128,7 +131,7 @@ ignored by setting them to ``'passthrough'``::
 
 The estimators of the pipeline can be retrieved by index:
 
-    >>> pipe[0] 
+    >>> pipe[0]
     PCA()
 
 or by name::
@@ -147,7 +150,7 @@ or by name::
 
 .. topic:: See also:
 
- * :ref:`grid_search`
+ * :ref:`composite_grid_search`
 
 
 Notes
@@ -200,11 +203,11 @@ object::
    inspect the original instance such as::
 
      >>> from sklearn.datasets import load_digits
-     >>> digits = load_digits()
+     >>> X_digits, y_digits = load_digits(return_X_y=True)
      >>> pca1 = PCA()
      >>> svm1 = SVC()
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
-     >>> pipe.fit(digits.data, digits.target)
+     >>> pipe.fit(X_digits, y_digits)
      Pipeline(steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_)
@@ -224,7 +227,7 @@ object::
      >>> svm2 = SVC()
      >>> cached_pipe = Pipeline([('reduce_dim', pca2), ('clf', svm2)],
      ...                        memory=cachedir)
-     >>> cached_pipe.fit(digits.data, digits.target)
+     >>> cached_pipe.fit(X_digits, y_digits)
      Pipeline(memory=...,
              steps=[('reduce_dim', PCA()), ('clf', SVC())])
      >>> print(cached_pipe.named_steps['reduce_dim'].components_)
@@ -241,11 +244,11 @@ object::
 Transforming target in regression
 =================================
 
-:class:`TransformedTargetRegressor` transforms the targets ``y`` before fitting
-a regression model. The predictions are mapped back to the original space via
-an inverse transform. It takes as an argument the regressor that will be used
-for prediction, and the transformer that will be applied to the target
-variable::
+:class:`~sklearn.compose.TransformedTargetRegressor` transforms the
+targets ``y`` before fitting a regression model. The predictions are mapped
+back to the original space via an inverse transform. It takes as an argument
+the regressor that will be used for prediction, and the transformer that will
+be applied to the target variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
@@ -253,9 +256,7 @@ variable::
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> boston = load_boston()
-  >>> X = boston.data
-  >>> y = boston.target
+  >>> X, y = load_boston(return_X_y=True)
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
@@ -369,7 +370,7 @@ Like ``Pipeline``, individual steps may be replaced using ``set_params``,
 and ignored by setting to ``'drop'``::
 
     >>> combined.set_params(kernel_pca='drop')
-    FeatureUnion(transformer_list=[('linear_pca', PCA()), 
+    FeatureUnion(transformer_list=[('linear_pca', PCA()),
                                    ('kernel_pca', 'drop')])
 
 .. topic:: Examples:
@@ -420,7 +421,7 @@ preprocessing or a specific feature extraction method::
 
 For this data, we might want to encode the ``'city'`` column as a categorical
 variable using :class:`preprocessing.OneHotEncoder
-<sklearn.preprocessing.OneHotEncoder>` but apply a 
+<sklearn.preprocessing.OneHotEncoder>` but apply a
 :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give

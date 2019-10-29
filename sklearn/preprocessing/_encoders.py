@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .label import _encode, _encode_check_unknown
+from ._label import _encode, _encode_check_unknown
 
 
 __all__ = [
@@ -19,7 +19,7 @@ __all__ = [
 ]
 
 
-class _BaseEncoder(BaseEstimator, TransformerMixin):
+class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
     transform the input features.
@@ -149,13 +149,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
 
 class OneHotEncoder(_BaseEncoder):
-    """Encode categorical integer features as a one-hot numeric array.
+    """Encode categorical features as a one-hot numeric array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array.
+    returns a sparse matrix or dense array (depending on the ``sparse``
+    parameter)
 
     By default, the encoder derives the categories based on the unique values
     in each feature. Alternatively, you can also specify the `categories`
@@ -231,7 +232,6 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     OneHotEncoder(handle_unknown='ignore')
-
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
@@ -240,8 +240,9 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-    >>> enc.get_feature_names()
-    array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
+    >>> enc.get_feature_names(['gender', 'group'])
+    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
+      dtype=object)
     >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -370,7 +371,7 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -422,7 +423,7 @@ class OneHotEncoder(_BaseEncoder):
             Inverse transformed array.
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         n_samples, _ = X.shape
@@ -505,7 +506,7 @@ class OneHotEncoder(_BaseEncoder):
         output_feature_names : array of string, length n_output_features
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         cats = self.categories_
         if input_features is None:
             input_features = ['x%d' % i for i in range(len(cats))]
@@ -638,7 +639,7 @@ class OrdinalEncoder(_BaseEncoder):
             Inverse transformed array.
 
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
 
         n_samples, _ = X.shape

@@ -11,10 +11,10 @@ from inspect import signature
 
 import sklearn
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_docstring_parameters
-from sklearn.utils.testing import _get_func_name
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import check_docstring_parameters
+from sklearn.utils._testing import _get_func_name
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
 import pytest
@@ -132,7 +132,7 @@ def test_tabs():
                                                   prefix='sklearn.'):
 
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
 
         # because we don't import

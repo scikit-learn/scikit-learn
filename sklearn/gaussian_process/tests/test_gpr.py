@@ -14,7 +14,7 @@ from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct
 
-from sklearn.utils.testing \
+from sklearn.utils._testing \
     import (assert_array_less,
             assert_almost_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)
@@ -67,6 +67,16 @@ def test_lml_precomputed(kernel):
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
                  gpr.log_marginal_likelihood())
+
+
+@pytest.mark.parametrize('kernel', kernels)
+def test_lml_without_cloning_kernel(kernel):
+    # Test that lml of optimized kernel is stored correctly.
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    input_theta = np.ones(gpr.kernel_.theta.shape, dtype=np.float64)
+
+    gpr.log_marginal_likelihood(input_theta, clone_kernel=False)
+    assert_almost_equal(gpr.kernel_.theta, input_theta, 7)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)

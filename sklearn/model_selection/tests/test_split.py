@@ -6,17 +6,18 @@ from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
 from itertools import combinations
 from itertools import combinations_with_replacement
+from itertools import permutations
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
@@ -368,8 +369,17 @@ def test_stratified_kfold_no_shuffle():
         list(StratifiedKFold(2).split(X, y1)),
         list(StratifiedKFold(2).split(X, y2)))
 
+    # Check equivalence to KFold
+    y = [0, 1, 0, 1, 0, 1, 0, 1]
+    X = np.ones_like(y)
+    np.testing.assert_equal(
+        list(StratifiedKFold(3).split(X, y)),
+        list(KFold(3).split(X, y)))
 
-def test_stratified_kfold_ratios():
+
+@pytest.mark.parametrize('shuffle', [False, True])
+@pytest.mark.parametrize('k', [4, 5, 6, 7, 8, 9, 10])
+def test_stratified_kfold_ratios(k, shuffle):
     # Check that stratified kfold preserves class ratios in individual splits
     # Repeat with shuffling turned off and on
     n_samples = 1000
@@ -377,15 +387,40 @@ def test_stratified_kfold_ratios():
     y = np.array([4] * int(0.10 * n_samples) +
                  [0] * int(0.89 * n_samples) +
                  [1] * int(0.01 * n_samples))
+    distr = np.bincount(y) / len(y)
 
-    for shuffle in (False, True):
-        for train, test in StratifiedKFold(5, shuffle=shuffle).split(X, y):
-            assert_almost_equal(np.sum(y[train] == 4) / len(train), 0.10, 2)
-            assert_almost_equal(np.sum(y[train] == 0) / len(train), 0.89, 2)
-            assert_almost_equal(np.sum(y[train] == 1) / len(train), 0.01, 2)
-            assert_almost_equal(np.sum(y[test] == 4) / len(test), 0.10, 2)
-            assert_almost_equal(np.sum(y[test] == 0) / len(test), 0.89, 2)
-            assert_almost_equal(np.sum(y[test] == 1) / len(test), 0.01, 2)
+    test_sizes = []
+    random_state = None if not shuffle else 0
+    skf = StratifiedKFold(k, random_state=random_state, shuffle=shuffle)
+    for train, test in skf.split(X, y):
+        assert_allclose(np.bincount(y[train]) / len(train), distr, atol=0.02)
+        assert_allclose(np.bincount(y[test]) / len(test), distr, atol=0.02)
+        test_sizes.append(len(test))
+    assert np.ptp(test_sizes) <= 1
+
+
+@pytest.mark.parametrize('shuffle', [False, True])
+@pytest.mark.parametrize('k', [4, 6, 7])
+def test_stratified_kfold_label_invariance(k, shuffle):
+    # Check that stratified kfold gives the same indices regardless of labels
+    n_samples = 100
+    y = np.array([2] * int(0.10 * n_samples) +
+                 [0] * int(0.89 * n_samples) +
+                 [1] * int(0.01 * n_samples))
+    X = np.ones(len(y))
+
+    def get_splits(y):
+        random_state = None if not shuffle else 0
+        return [(list(train), list(test))
+                for train, test
+                in StratifiedKFold(k, random_state=random_state,
+                                   shuffle=shuffle).split(X, y)]
+
+    splits_base = get_splits(y)
+    for perm in permutations([0, 1, 2]):
+        y_perm = np.take(perm, y)
+        splits_perm = get_splits(y_perm)
+        assert splits_perm == splits_base
 
 
 def test_kfold_balance():
@@ -536,7 +571,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
 
     cv = StratifiedKFold(n_splits)
     mean_score = cross_val_score(model, X, y, cv=cv).mean()
-    assert 0.93 > mean_score
+    assert 0.94 > mean_score
     assert mean_score > 0.80
 
 
@@ -945,6 +980,17 @@ def test_repeated_cv_value_errors():
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
         assert_raises(ValueError, cv, n_repeats=0)
         assert_raises(ValueError, cv, n_repeats=1.5)
+
+
+@pytest.mark.parametrize(
+    "RepeatedCV", [RepeatedKFold, RepeatedStratifiedKFold]
+)
+def test_repeated_cv_repr(RepeatedCV):
+    n_splits, n_repeats = 2, 6
+    repeated_cv = RepeatedCV(n_splits=n_splits, n_repeats=n_repeats)
+    repeated_cv_repr = ('{}(n_repeats=6, n_splits=2, random_state=None)'
+                        .format(repeated_cv.__class__.__name__))
+    assert repeated_cv_repr == repr(repeated_cv)
 
 
 def test_repeated_kfold_determinstic_split():
@@ -1538,3 +1584,12 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+@pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
+def test_random_state_shuffle_false(Klass):
+    # passing a non-default random_state when shuffle=False makes no sense
+    # TODO 0.24: raise a ValueError instead of a warning
+    with pytest.warns(DeprecationWarning,
+                      match='has no effect since shuffle is False'):
+        Klass(3, shuffle=False, random_state=0)

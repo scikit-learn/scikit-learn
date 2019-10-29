@@ -18,6 +18,7 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
+from . import deprecated
 
 
 class _LineSearchError(RuntimeError):
@@ -111,8 +112,16 @@ def _cg(fhess_p, fgrad, maxiter, tol):
     return xsupi
 
 
+@deprecated("newton_cg is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
               maxiter=100, maxinner=200, line_search=True, warn=True):
+    return _newton_cg(grad_hess, func, grad, x0, args, tol, maxiter,
+                      maxinner, line_search, warn)
+
+
+def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
+               maxiter=100, maxinner=200, line_search=True, warn=True):
     """
     Minimization of scalar function of one or more variables using the
     Newton-CG algorithm.
@@ -227,7 +236,7 @@ def _check_optimize_result(solver, result, max_iter=None):
             warnings.warn("{} failed to converge (status={}): {}. "
                           "Increase the number of iterations."
                           .format(solver, result.status, result.message),
-                          ConvergenceWarning)
+                          ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
             # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854
