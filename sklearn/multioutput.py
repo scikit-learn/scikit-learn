@@ -26,6 +26,7 @@ from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
+from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -59,8 +60,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
-                           metaclass=ABCMeta):
+class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+                            metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
@@ -201,7 +202,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
+class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -296,7 +297,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
+class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -771,3 +772,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
+
+
+# TODO: remove in 0.24
+@deprecated("MultiOutputEstimator is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class MultiOutputEstimator(_MultiOutputEstimator):
+    pass

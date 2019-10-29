@@ -25,6 +25,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import MultiOutputEstimator
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
@@ -544,3 +545,11 @@ def test_multi_output_classes_(estimator):
     for estimator_classes, expected_classes in zip(classes,
                                                    estimator.classes_):
         assert_array_equal(estimator_classes, expected_classes)
+
+
+def test_deprecation():
+    class A(MultiOutputEstimator, MultiOutputRegressor):
+        pass
+
+    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
+        A(SGDRegressor(random_state=0, max_iter=5))
