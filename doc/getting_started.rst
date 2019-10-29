@@ -164,7 +164,7 @@ a :class:`~sklearn.ensemble.RandomForestRegressor` that has been fitted with
 the best set of parameters. Read more in the :ref:`User Guide
 <grid_search>`::
 
-  >>> from sklearn.datasets.california_housing import fetch_california_housing
+  >>> from sklearn.datasets import fetch_california_housing
   >>> from sklearn.ensemble import RandomForestRegressor
   >>> from sklearn.model_selection import RandomizedSearchCV
   >>> from sklearn.model_selection import train_test_split

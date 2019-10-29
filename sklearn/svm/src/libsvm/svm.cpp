@@ -3101,6 +3101,42 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 		free(count);
 	}
 
+	if(svm_type == C_SVC ||
+	   svm_type == EPSILON_SVR ||
+	   svm_type == NU_SVR ||
+	   svm_type == ONE_CLASS)
+	{
+		PREFIX(problem) newprob;
+		// filter samples with negative and null weights 
+		remove_zero_weight(&newprob, prob);
+
+		char* msg = NULL;
+		// all samples were removed
+		if(newprob.l == 0)
+			msg =  "Invalid input - all samples have zero or negative weights.";
+		else if(prob->l != newprob.l && 
+		        svm_type == C_SVC)
+		{
+			bool only_one_label = true;
+			int first_label = newprob.y[0];
+			for(int i=1;i<newprob.l;i++)
+			{
+				if(newprob.y[i] != first_label)
+				{
+					only_one_label = false;
+					break;
+				}
+			}
+			if(only_one_label == true)
+				msg = "Invalid input - all samples with positive weights have the same label.";
+		}
+
+		free(newprob.x);
+		free(newprob.y);
+		free(newprob.W);
+		if(msg != NULL)
+			return msg;
+	}
 	return NULL;
 }
 

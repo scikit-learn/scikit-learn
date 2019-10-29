@@ -17,22 +17,22 @@ from functools import partial
 import pytest
 
 
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
-from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.base import RegressorMixin, BiclusterMixin
 
-from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    set_checking_parameters,
+    _set_checking_parameters,
     _set_check_estimator_ids,
     check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
@@ -93,7 +93,7 @@ def test_estimators(estimator, check):
     # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        set_checking_parameters(estimator)
+        _set_checking_parameters(estimator)
         check(estimator)
 
 
@@ -191,7 +191,7 @@ def test_import_all_consistency():
         if ".tests." in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):

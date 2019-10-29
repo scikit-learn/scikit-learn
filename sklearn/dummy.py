@@ -14,7 +14,7 @@ from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
-from .utils.random import random_choice_csc
+from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 from .utils import deprecated
@@ -55,19 +55,19 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    constant : int or str or array of shape = [n_outputs]
+    constant : int or str or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
-    classes_ : array or list of array of shape = [n_classes]
+    classes_ : array or list of array of shape (n_classes,)
         Class labels for each output.
 
-    n_classes_ : array or list of array of shape = [n_classes]
+    n_classes_ : array or list of array of shape (n_classes,)
         Number of label for each output.
 
-    class_prior_ : array or list of array of shape = [n_classes]
+    class_prior_ : array or list of array of shape (n_classes,)
         Probability of each class for each output.
 
     n_outputs_ : int,
@@ -76,6 +76,20 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.dummy import DummyClassifier
+    >>> X = np.array([-1, 1, 1, 1])
+    >>> y = np.array([0, 1, 1, 1])
+    >>> dummy_clf = DummyClassifier(strategy="most_frequent")
+    >>> dummy_clf.fit(X, y)
+    DummyClassifier(strategy='most_frequent')
+    >>> dummy_clf.predict(X)
+    array([1, 1, 1, 1])
+    >>> dummy_clf.score(X, y)
+    0.75
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -92,10 +106,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -119,6 +133,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.sparse_output_ = sp.issparse(y)
 
         if not self.sparse_output_:
+            y = np.asarray(y)
             y = np.atleast_1d(y)
 
         if y.ndim == 1:
@@ -170,7 +185,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
         """
         check_is_fitted(self)
@@ -211,7 +226,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             elif self.strategy == "constant":
                 classes_ = [np.array([c]) for c in constant]
 
-            y = random_choice_csc(n_samples, classes_, class_prob,
+            y = _random_choice_csc(n_samples, classes_, class_prob,
                                   self.random_state)
         else:
             if self.strategy in ("most_frequent", "prior"):
@@ -246,7 +261,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-lke of shape = [n_samples, n_classes]
+        P : array-like or list of array-lke of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -309,7 +324,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape = [n_samples, n_classes]
+        P : array-like or list of array-like of shape (n_samples, n_classes)
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
@@ -338,10 +353,10 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             as passing real test samples, since DummyClassifier
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -386,7 +401,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array of shape = [n_outputs]
+    constant : int or float or array-like of shape (n_outputs,)
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -403,6 +418,20 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     n_outputs_ : int,
         Number of outputs.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.dummy import DummyRegressor
+    >>> X = np.array([1.0, 2.0, 3.0, 4.0])
+    >>> y = np.array([2.0, 3.0, 5.0, 10.0])
+    >>> dummy_regr = DummyRegressor(strategy="mean")
+    >>> dummy_regr.fit(X, y)
+    DummyRegressor()
+    >>> dummy_regr.predict(X)
+    array([5., 5., 5., 5.])
+    >>> dummy_regr.score(X, y)
+    0.0
     """
 
     def __init__(self, strategy="mean", constant=None, quantile=None):
@@ -418,10 +447,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         X : {array-like, object with finite length or shape}
             Training data, requires length = n_samples
 
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
-        sample_weight : array-like of shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -442,6 +471,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)
@@ -501,10 +532,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        y : array, shape = [n_samples] or [n_samples, n_outputs]
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Predicted target values for X.
 
-        y_std : array, shape = [n_samples] or [n_samples, n_outputs]
+        y_std : array-like of shape (n_samples,) or (n_samples, n_outputs)
             Standard deviation of predictive distribution of query points.
         """
         check_is_fitted(self)
@@ -546,10 +577,10 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             as passing real test samples, since DummyRegressor
             operates independently of the sampled observations.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns

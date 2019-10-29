@@ -1,6 +1,9 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+import pkgutil
+import inspect
+from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
@@ -69,7 +72,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle", "check_matplotlib_support"]
+           "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -270,8 +274,63 @@ def _determine_key_type(key):
     raise ValueError(err_msg)
 
 
+# TODO: remove in 0.24
+@deprecated("safe_indexing is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
 def safe_indexing(X, indices, axis=0):
     """Return rows, items or columns of X using indices.
+
+    .. deprecated:: 0.22
+        This function was deprecated in version 0.22 and will be removed in
+        version 0.24.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
+
+    indices : bool, int, str, slice, array-like
+
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
+
+    axis : int, default=0
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    return _safe_indexing(X, indices, axis)
+
+
+def _safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    .. warning::
+
+        This utility is documented, but **private**. This means that
+        backward compatibility might be broken without any deprecation
+        cycle.
 
     Parameters
     ----------
@@ -358,7 +417,7 @@ def _get_column_indices(X, key):
     elif key_dtype in ('bool', 'int'):
         # Convert key into positive indexes
         try:
-            idx = safe_indexing(np.arange(n_columns), key)
+            idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
                 'all features must be in [0, {}] or [-{}, 0]'
@@ -549,7 +608,7 @@ def resample(*arrays, **options):
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -1035,3 +1094,129 @@ def check_pandas_support(caller_name):
         raise ImportError(
             "{} requires pandas.".format(caller_name)
         ) from e
+
+
+def all_estimators(include_meta_estimators=None,
+                   include_other=None, type_filter=None,
+                   include_dont_test=None):
+    """Get a list of all estimators from sklearn.
+
+    This function crawls the module and gets all classes that inherit
+    from BaseEstimator. Classes that are defined in test-modules are not
+    included.
+    By default meta_estimators such as GridSearchCV are also not included.
+
+    Parameters
+    ----------
+    include_meta_estimators : boolean, default=False
+        Deprecated, ignored.
+
+        .. deprecated:: 0.21
+           ``include_meta_estimators`` has been deprecated and has no effect in
+           0.21 and will be removed in 0.23.
+
+    include_other : boolean, default=False
+        Deprecated, ignored.
+
+        .. deprecated:: 0.21
+           ``include_other`` has been deprecated and has not effect in 0.21 and
+           will be removed in 0.23.
+
+    type_filter : string, list of string,  or None, default=None
+        Which kind of estimators should be returned. If None, no filter is
+        applied and all estimators are returned.  Possible values are
+        'classifier', 'regressor', 'cluster' and 'transformer' to get
+        estimators only of these specific types, or a list of these to
+        get the estimators that fit at least one of the types.
+
+    include_dont_test : boolean, default=False
+        Deprecated, ignored.
+
+        .. deprecated:: 0.21
+           ``include_dont_test`` has been deprecated and has no effect in 0.21
+           and will be removed in 0.23.
+
+    Returns
+    -------
+    estimators : list of tuples
+        List of (name, class), where ``name`` is the class name as string
+        and ``class`` is the actuall type of the class.
+    """
+    # lazy import to avoid circular imports from sklearn.base
+    import sklearn
+    from ._testing import ignore_warnings
+    from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                        TransformerMixin, ClusterMixin)
+
+    def is_abstract(c):
+        if not(hasattr(c, '__abstractmethods__')):
+            return False
+        if not len(c.__abstractmethods__):
+            return False
+        return True
+
+    if include_other is not None:
+        warnings.warn("include_other was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_dont_test is not None:
+        warnings.warn("include_dont_test was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_meta_estimators is not None:
+        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    all_classes = []
+    # get parent folder
+    path = sklearn.__path__
+    for importer, modname, ispkg in pkgutil.walk_packages(
+            path=path, prefix='sklearn.', onerror=lambda x: None):
+        if ".tests." in modname or "externals" in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
+            continue
+        # Ignore deprecation warnings triggered at import time.
+        with ignore_warnings(category=DeprecationWarning):
+            module = __import__(modname, fromlist="dummy")
+        classes = inspect.getmembers(module, inspect.isclass)
+        all_classes.extend(classes)
+
+    all_classes = set(all_classes)
+
+    estimators = [c for c in all_classes
+                  if (issubclass(c[1], BaseEstimator) and
+                      c[0] != 'BaseEstimator')]
+    # get rid of abstract base classes
+    estimators = [c for c in estimators if not is_abstract(c[1])]
+
+    if type_filter is not None:
+        if not isinstance(type_filter, list):
+            type_filter = [type_filter]
+        else:
+            type_filter = list(type_filter)  # copy
+        filtered_estimators = []
+        filters = {'classifier': ClassifierMixin,
+                   'regressor': RegressorMixin,
+                   'transformer': TransformerMixin,
+                   'cluster': ClusterMixin}
+        for name, mixin in filters.items():
+            if name in type_filter:
+                type_filter.remove(name)
+                filtered_estimators.extend([est for est in estimators
+                                            if issubclass(est[1], mixin)])
+        estimators = filtered_estimators
+        if type_filter:
+            raise ValueError("Parameter type_filter must be 'classifier', "
+                             "'regressor', 'transformer', 'cluster' or "
+                             "None, got"
+                             " %s." % repr(type_filter))
+
+    # drop duplicates, sort for reproducibility
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))

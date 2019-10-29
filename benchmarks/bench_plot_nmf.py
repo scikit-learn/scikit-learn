@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt
 from joblib import Memory
 import pandas
 
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition.nmf import NMF
-from sklearn.decomposition.nmf import _initialize_nmf
-from sklearn.decomposition.nmf import _beta_divergence
-from sklearn.decomposition.nmf import _check_init
+from sklearn.decomposition import NMF
+from sklearn.decomposition._nmf import _initialize_nmf
+from sklearn.decomposition._nmf import _beta_divergence
+from sklearn.decomposition._nmf import _check_init
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array

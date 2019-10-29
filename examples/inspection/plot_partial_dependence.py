@@ -42,7 +42,7 @@ from sklearn.inspection import plot_partial_dependence
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.datasets.california_housing import fetch_california_housing
+from sklearn.datasets import fetch_california_housing
 
 
 ##############################################################################
@@ -111,7 +111,7 @@ print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with MLPRegressor')
-fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+fig.subplots_adjust(hspace=0.3)
 
 ##############################################################################
 # Partial Dependence computation for Gradient Boosting
@@ -150,7 +150,8 @@ print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
-fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+fig.subplots_adjust(wspace=0.4, hspace=0.3)
+
 
 ##############################################################################
 # Analysis of the plots

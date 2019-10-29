@@ -10,19 +10,20 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer, _MultimetricScorer)
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
+                                     _MultimetricScorer,
+                                     _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC

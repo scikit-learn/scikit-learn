@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn.feature_selection.rfe import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
@@ -15,7 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
