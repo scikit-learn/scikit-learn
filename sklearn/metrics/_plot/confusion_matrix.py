@@ -82,6 +82,7 @@ class ConfusionMatrixDisplay:
             fig = ax.figure
 
         cm = self.confusion_matrix
+        n_classes = cm.shape[0]
         normalized = np.issubdtype(cm.dtype, np.float_)
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
@@ -93,7 +94,7 @@ class ConfusionMatrixDisplay:
             if values_format is None:
                 values_format = '.2f' if normalized else 'd'
             thresh = (cm.max() - cm.min()) / 2.
-            for i, j in product(range(cm.shape[0]), range(cm.shape[1])):
+            for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
                 self.text_[i, j] = ax.text(j, i,
                                            format(cm[i, j], values_format),
@@ -101,14 +102,15 @@ class ConfusionMatrixDisplay:
                                            color=color)
 
         fig.colorbar(self.im_, ax=ax)
-        ax.set(xticks=np.arange(cm.shape[1]),
-               yticks=np.arange(cm.shape[0]),
+        ax.set(xticks=np.arange(n_classes),
+               yticks=np.arange(n_classes),
                xticklabels=self.display_labels,
                yticklabels=self.display_labels,
                ylabel="True label",
                xlabel="Predicted label")
 
-        # plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
+        ax.set_ylim((-0.5, n_classes - 0.5))
+        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
         self.ax_ = ax
