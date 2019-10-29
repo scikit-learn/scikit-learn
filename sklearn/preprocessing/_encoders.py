@@ -206,6 +206,7 @@ class OneHotEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
+        - 'dtypes' : Uses pandas categorical dtype to encode categories.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values within a single feature, and should be sorted in case of
@@ -573,6 +574,7 @@ class OrdinalEncoder(_BaseEncoder):
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
+        - 'dtypes' : Uses pandas categorical dtype to encode categories.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories should not mix strings and numeric
           values, and should be sorted in case of numeric values.

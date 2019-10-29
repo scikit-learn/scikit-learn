@@ -30,10 +30,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
-    if [[ -n "$PANDAS_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
-    fi
-
     if [[ -n "$PYAMG_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
     fi
@@ -69,6 +65,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
 	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
+    fi
+
+    if [[ "$PANDAS_VERSION" == "*" ]]; then
+        pip install pandas
+    else
+        pip install pandas=="$PANDAS_VERSION"
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
