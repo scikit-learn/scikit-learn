@@ -65,7 +65,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$PYTEST_VERSION" == "*" ]]; then
         pip install pytest
     else
-        pip install pytest=="$PYTEST_VERSION"
+        pip install pytest="$PYTEST_VERSION"
     fi
 
     if [[ "$PYTHON_VERSION" == "*" ]]; then
