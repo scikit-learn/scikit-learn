@@ -9,6 +9,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _assert_all_finite
 
 from ._label import _encode, _encode_check_unknown
 
@@ -38,6 +39,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           and cannot be used, eg for the `categories_` attribute.
 
         """
+        if self.categories == 'dtypes':
+            if not hasattr(X, 'dtypes'):
+                raise TypeError("X must be a dataframe when "
+                                "categories='dtypes'")
+            X_dtypes = getattr(X, 'dtypes')
+
+            if hasattr(self, "_X_fit_dtypes"):
+                if (len(self._X_fit_dtypes) != len(X_dtypes) or
+                        not all(self._X_fit_dtypes == X_dtypes)):
+                    raise ValueError("X.dtypes must match the dtypes used "
+                                     "when fitting")
+            else:
+                self._X_fit_dtypes = X_dtypes
+
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
             X_temp = check_array(X, dtype=None)
@@ -57,8 +72,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-            Xi = check_array(Xi, ensure_2d=False, dtype=None,
-                             force_all_finite=needs_validation)
+            if self.categories == 'dtypes' and hasattr(Xi, 'cat'):
+                # TODO: Change missing value support is added
+                _assert_all_finite(Xi)
+            else:
+                Xi = check_array(Xi, ensure_2d=False, dtype=None,
+                                 force_all_finite=needs_validation)
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
@@ -73,7 +92,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _fit(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
-        if self.categories != 'auto':
+        if self.categories not in ('auto', 'dtypes'):
             if len(self.categories) != n_features:
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
@@ -84,6 +103,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             Xi = X_list[i]
             if self.categories == 'auto':
                 cats = _encode(Xi)
+            elif self.categories == 'dtypes':
+                if hasattr(Xi, "cat"):
+                    cats = Xi.cat.categories.to_numpy()
+                else:
+                    cats = _encode(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -114,32 +138,36 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
-                                                     return_mask=True)
 
-            if not np.all(valid_mask):
-                if handle_unknown == 'error':
-                    msg = ("Found unknown categories {0} in column {1}"
-                           " during transform".format(diff, i))
-                    raise ValueError(msg)
-                else:
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (self.categories_[i].dtype.kind in ('U', 'S')
-                            and self.categories_[i].itemsize > Xi.itemsize):
-                        Xi = Xi.astype(self.categories_[i].dtype)
+            if self.categories == 'dtypes' and hasattr(Xi, "cat"):
+                encoded = Xi.cat.codes
+            else:
+                diff, valid_mask = _encode_check_unknown(Xi,
+                                                         self.categories_[i],
+                                                         return_mask=True)
+                if not np.all(valid_mask):
+                    if handle_unknown == 'error':
+                        msg = ("Found unknown categories {0} in column {1}"
+                               " during transform".format(diff, i))
+                        raise ValueError(msg)
                     else:
-                        Xi = Xi.copy()
+                        # Set the problematic rows to an acceptable value and
+                        # continue `The rows are marked `X_mask` and will be
+                        # removed later.
+                        X_mask[:, i] = valid_mask
+                        # cast Xi into the largest string type necessary
+                        # to handle different lengths of numpy strings
+                        if (self.categories_[i].dtype.kind in ('U', 'S')
+                                and self.categories_[i].itemsize > Xi.itemsize):
+                            Xi = Xi.astype(self.categories_[i].dtype)
+                        else:
+                            Xi = Xi.copy()
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _encode_check_unknown was
-            # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                 check_unknown=False)
+                        Xi[~valid_mask] = self.categories_[i][0]
+                # We use check_unknown=False, since _encode_check_unknown was
+                # already called above.
+                _, encoded = _encode(Xi, self.categories_[i], encode=True,
+                                     check_unknown=False)
             X_int[:, i] = encoded
 
         return X_int, X_mask

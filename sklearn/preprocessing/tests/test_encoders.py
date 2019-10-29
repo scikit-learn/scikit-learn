@@ -6,6 +6,7 @@ import numpy as np
 from scipy import sparse
 import pytest
 
+from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -637,3 +638,187 @@ def test_categories(density, drop):
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_one_hot_encoder_pd_categories(is_sparse):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a'],
+        'col_int': [3, 2, 1, 2]})
+
+    str_category = pd.api.types.CategoricalDtype(
+         categories=['b', 'a'])
+    int_category = pd.api.types.CategoricalDtype(
+         categories=[3, 1, 2], ordered=True)
+
+    X_df['col_str'] = X_df['col_str'].astype(str_category)
+    X_df['col_int'] = X_df['col_int'].astype(int_category)
+
+    ohe = OneHotEncoder(categories='dtypes', sparse=is_sparse)
+
+    expected_trans = np.array([
+        [0, 1, 1, 0, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 1, 0],
+        [0, 1, 0, 0, 1]], dtype=np.float64)
+
+    X_trans = ohe.fit_transform(X_df)
+    if is_sparse:
+        X_trans = X_trans.toarray()
+
+    assert_allclose(X_trans, expected_trans)
+
+    X_inverse = ohe.inverse_transform(expected_trans)
+
+    assert_array_equal(X_inverse, X_df.to_numpy())
+
+
+@pytest.mark.parametrize('encoder', [
+    OneHotEncoder(categories="dtypes"),
+    OrdinalEncoder(categories="dtypes")])
+def test_encoder_pd_error_mismatch_dtype(encoder):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a'],
+        'col_int': [3, 2, 1, 2]})
+
+    str_category = pd.api.types.CategoricalDtype(
+         categories=['b', 'a'], ordered=True)
+
+    X_df['col_str'] = X_df['col_str'].astype(str_category)
+    X_df['col_int'] = X_df['col_int'].astype('category')
+
+    enc = clone(encoder).fit(X_df)
+
+    # col_str dtype not ordered correctly
+    X_df2 = X_df.copy()
+    str_category_lex_ordered = pd.api.types.CategoricalDtype(
+         categories=['a', 'b'])
+    X_df2['col_str'] = X_df2['col_str'].astype(str_category_lex_ordered)
+
+    msg = "X.dtypes must match the dtypes used when fitting"
+    with pytest.raises(ValueError, match=msg):
+        enc.transform(X_df2)
+
+    # col_int not a categorical dtype
+    X_df3 = X_df.copy()
+    X_df3['col_int'] = X_df3['col_int'].astype(int)
+
+    with pytest.raises(ValueError, match=msg):
+        enc.transform(X_df2)
+
+    # number of features is not correct
+    X_df4 = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a']})
+
+    with pytest.raises(ValueError, match=msg):
+        enc.transform(X_df4)
+
+    X_np = X_df.to_numpy()
+    msg = "X must be a dataframe when categories='dtypes'"
+    with pytest.raises(TypeError, match=msg):
+        enc.transform(X_np)
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_one_hot_encoder_pd_categories_mixed(is_sparse):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a'],
+        'col_int': [3, 2, 1, 2],
+        'norm_float': [1.0, 2.0, 1.0, 1.0],  # not a pandas category
+        'norm_str': ['z', 'd', 'z', 'd']}  # not a pandas category
+    )
+
+    str_category = pd.api.types.CategoricalDtype(
+         categories=['b', 'a'])
+    int_category = pd.api.types.CategoricalDtype(
+         categories=[3, 1, 2], ordered=True)
+
+    X_df['col_str'] = X_df['col_str'].astype(str_category)
+    X_df['col_int'] = X_df['col_int'].astype(int_category)
+
+    ohe = OneHotEncoder(categories="dtypes", sparse=is_sparse).fit(X_df)
+
+    expected_trans = np.array([
+        [0, 1, 1, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 1, 0],
+        [1, 0, 0, 1, 0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 1, 1, 0, 1, 0]], dtype=np.float64)
+
+    X_trans = ohe.fit_transform(X_df)
+    if is_sparse:
+        X_trans = X_trans.toarray()
+
+    assert_allclose(X_trans, expected_trans)
+    X_inverse = ohe.inverse_transform(expected_trans)
+
+    assert_array_equal(X_inverse, X_df.to_numpy())
+
+
+def test_ordinal_encoder_pd_categories_mixed():
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a'],
+        'col_int': [3, 2, 1, 2],
+        'norm_float': [1.0, 2.0, 1.0, 1.0],  # not a pandas category
+        'norm_str': ['z', 'd', 'z', 'd']}  # not a pandas category
+    )
+
+    str_category = pd.api.types.CategoricalDtype(
+         categories=['b', 'a'])
+    int_category = pd.api.types.CategoricalDtype(
+         categories=[3, 1, 2], ordered=True)
+
+    X_df['col_str'] = X_df['col_str'].astype(str_category)
+    X_df['col_int'] = X_df['col_int'].astype(int_category)
+
+    ohe = OrdinalEncoder(categories="dtypes").fit(X_df)
+
+    expected_trans = np.array([
+        [1, 0, 0, 1],  # col_str
+        [0, 2, 1, 2],  # col_int
+        [0, 1, 0, 0],  # norm_float
+        [1, 0, 1, 0],  # norm_str
+    ], dtype=np.float64).T
+
+    X_trans = ohe.fit_transform(X_df)
+
+    assert_allclose(X_trans, expected_trans)
+    X_inverse = ohe.inverse_transform(expected_trans)
+
+    assert_array_equal(X_inverse, X_df.to_numpy())
+
+
+def test_ordinal_encoder_pd_categories():
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame({
+        'col_str': ['a', 'b', 'b', 'a'],
+        'col_int': [3, 2, 1, 2]})
+
+    str_category = pd.api.types.CategoricalDtype(
+         categories=['b', 'a'])
+    int_category = pd.api.types.CategoricalDtype(
+         categories=[3, 1, 2], ordered=True)
+
+    X_df['col_str'] = X_df['col_str'].astype(str_category)
+    X_df['col_int'] = X_df['col_int'].astype(int_category)
+
+    ohe = OrdinalEncoder(categories='dtypes')
+
+    expected_trans = np.array([
+        [1, 0, 0, 1],  # col_str
+        [0, 2, 1, 2],  # col_int
+    ], dtype=np.float64).T
+
+    X_trans = ohe.fit_transform(X_df)
+    assert_allclose(X_trans, expected_trans)
+    X_inverse = ohe.inverse_transform(expected_trans)
+
+    assert_array_equal(X_inverse, X_df.to_numpy())
