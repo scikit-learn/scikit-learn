@@ -6,16 +6,7 @@ Installing the development version of scikit-learn
 ==================================================
 
 This section introduces how to install the **master branch** of scikit-learn.
-This is required:
-
-- to work on a contribution (bug fix, new feature, code or documentation
-  improvement);
-
-- to try a new feature that will be shipped in the next release (that is, a
-  feature from a pull-request that was recently merged to the master branch);
-
-- to check whether a bug you encountered has been fixed since the last
-  release;
+This can be done by either installing a nightly build or building from source.
 
 .. _install_nightly_builds:
 
@@ -24,7 +15,16 @@ Installing nightly builds
 
 The continuous integration servers of the scikit-learn project build, test
 and upload wheel packages for the most recent Python version on a nightly
-basis to help users test bleeding edge features or bug fixes::
+basis.
+
+Installing a nightly build is the quickest way to:
+
+- try a new feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the master branch);
+
+- check whether a bug you encountered has been fixed since the last release.
+
+::
 
   pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
 
@@ -33,6 +33,9 @@ basis to help users test bleeding edge features or bug fixes::
 
 Building from source
 ====================
+
+Building from source is required to work on a contribution (bug fix, new
+feature, code or documentation improvement).
 
 .. _git_repo:
 
