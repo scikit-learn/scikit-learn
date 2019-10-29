@@ -55,7 +55,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
-          If categories == 'dtype' and the pandas column is a category,
+          If categories == 'dtypes' and the pandas column is a category,
           the pandas series will be returned in this list.
         """
         if self.categories == 'dtypes':
