@@ -592,7 +592,7 @@ Changelog
 
 - |Feature| :class:`preprocessing.OneHotEncoder` and 
   :class:`preprocessing.OrdinalEncoder` now supports `categories='dtype'`,
-  which enables support for using pandas categorical dtypes. :pr:`15396` by
+  which enables using pandas categorical dtypes for encoding. :pr:`15396` by
   `Thomas Fan`_.
 
 - |Enhancement| Avoid unnecessary data copy when fitting preprocessors
