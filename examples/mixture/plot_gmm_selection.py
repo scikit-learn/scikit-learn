@@ -11,8 +11,7 @@ In that case, AIC also provides the right result (not shown to save time),
 but BIC is better suited if the problem is to identify the right model.
 Unlike Bayesian procedures, such inferences are prior-free.
 
-In that case, the model with 2 components and full covariance
-(which corresponds to the true generative model) is selected.
+In this case, the model with 3 components and full covariance is selected.
 """
 
 import numpy as np
@@ -23,26 +22,34 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
+from sklearn.datasets import make_blobs
 
 print(__doc__)
 
-# Number of samples per component
 n_samples = 500
+skew_points = True
+n_components = 3
 
 # Generate random sample, two components
-np.random.seed(0)
-C = np.array([[0., -0.1], [1.7, .4]])
-X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
-          .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
+np.random.seed(1)
+n_features = 2
+cluster_std = np.random.random(n_components) + .5
+X = make_blobs(n_samples=n_samples,
+               n_features=n_features,
+               centers=n_components,
+               cluster_std=cluster_std)[0]
+if skew_points:
+    transformation = [[1, .8], [-.2, 1]]
+    X = np.dot(X, transformation)
 
 lowest_bic = np.infty
 bic = []
 n_components_range = range(1, 7)
 cv_types = ['spherical', 'tied', 'diag', 'full']
 for cv_type in cv_types:
-    for n_components in n_components_range:
+    for n_components_trial in n_components_range:
         # Fit a Gaussian mixture with EM
-        gmm = mixture.GaussianMixture(n_components=n_components,
+        gmm = mixture.GaussianMixture(n_components=n_components_trial,
                                       covariance_type=cv_type)
         gmm.fit(X)
         bic.append(gmm.bic(X))
@@ -76,7 +83,27 @@ spl.legend([b[0] for b in bars], cv_types)
 # Plot the winner
 splot = plt.subplot(2, 1, 2)
 Y_ = clf.predict(X)
-for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_,
+
+# convert covariances_ attribute to shape:
+#  (n_components, n_features, n_features)
+
+if clf.covariance_type == 'spherical':
+    identity_mx = np.identity(n_features)
+    covariances = identity_mx[:, :, np.newaxis] * clf.covariances_
+    covariances = covariances.T
+elif clf.covariance_type == 'tied':
+    covariances = clf.covariances_[np.newaxis, :, :]
+    covariances = np.repeat(covariances, clf.n_components, axis=0)
+elif clf.covariance_type == 'diag':
+    identity_mx = np.identity(n_features)
+    covariances = np.repeat(identity_mx[:, :, np.newaxis],
+                            clf.n_components,
+                            axis=2)
+    covariances = covariances.T * clf.covariances_[:, :, np.newaxis]
+elif clf.covariance_type == 'full':
+    covariances = clf.covariances_
+
+for i, (mean, cov, color) in enumerate(zip(clf.means_, covariances,
                                            color_iter)):
     v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
@@ -94,6 +121,8 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_,
 
 plt.xticks(())
 plt.yticks(())
-plt.title('Selected GMM: full model, 2 components')
+plt.title('Selected GMM: {cv_type} model, {n_components} components'.format(
+    cv_type=clf.covariance_type,
+    n_components=clf.n_components))
 plt.subplots_adjust(hspace=.35, bottom=.02)
 plt.show()
