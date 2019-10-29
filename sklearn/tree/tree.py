@@ -1636,12 +1636,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> from sklearn.ensemble import BaggingRegressor
     >>> from sklearn.tree import ExtraTreeRegressor
     >>> X, y = load_boston(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
     >>> extra_tree = ExtraTreeRegressor()
-    >>> reg = BaggingRegressor(extra_tree, n_estimators=10, random_state=0).fit(X_train, y_train)
+    >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
+    ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.7401...
-
+    0.7823...
+    
     """
     def __init__(self,
                  criterion="mse",
