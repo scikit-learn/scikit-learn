@@ -42,7 +42,7 @@ from sklearn.inspection import plot_partial_dependence
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.datasets.california_housing import fetch_california_housing
+from sklearn.datasets import fetch_california_housing
 
 
 ##############################################################################

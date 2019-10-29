@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, deprecated
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -241,7 +241,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         return all_patches
 
 
-def extract_patches(arr, patch_shape=8, extraction_step=1):
+def _extract_patches(arr, patch_shape=8, extraction_step=1):
     """Extracts patches of any n-dimensional array in place using strides.
 
     Given an n-dimensional array it will return a 2n-dimensional array with
@@ -297,6 +297,46 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     patches = as_strided(arr, shape=shape, strides=strides)
     return patches
+
+@deprecated("The function feature_extraction.image.extract_patches has been "
+            "deprecated in 0.22 and will be removed in 0.24.")
+def extract_patches(arr, patch_shape=8, extraction_step=1):
+    """Extracts patches of any n-dimensional array in place using strides.
+
+    Given an n-dimensional array it will return a 2n-dimensional array with
+    the first n dimensions indexing patch position and the last n indexing
+    the patch content. This operation is immediate (O(1)). A reshape
+    performed on the first n dimensions will cause numpy to copy data, leading
+    to a list of extracted patches.
+
+    Read more in the :ref:`User Guide <image_feature_extraction>`.
+
+    Parameters
+    ----------
+    arr : ndarray
+        n-dimensional array of which patches are to be extracted
+
+    patch_shape : integer or tuple of length arr.ndim
+        Indicates the shape of the patches to be extracted. If an
+        integer is given, the shape will be a hypercube of
+        sidelength given by its value.
+
+    extraction_step : integer or tuple of length arr.ndim
+        Indicates step size at which extraction shall be performed.
+        If integer is given, then the step is uniform in all dimensions.
+
+
+    Returns
+    -------
+    patches : strided ndarray
+        2n-dimensional array indexing patches on first n dimensions and
+        containing patches on the last n dimensions. These dimensions
+        are fake, but this way no data is copied. A simple reshape invokes
+        a copying operation to obtain a list of patches:
+        result.reshape([-1] + list(patch_shape))
+    """
+    return _extract_patches(arr, patch_shape=patch_shape,
+                            extraction_step=extraction_step)
 
 
 def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
@@ -373,9 +413,9 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
-    extracted_patches = extract_patches(image,
-                                        patch_shape=(p_h, p_w, n_colors),
-                                        extraction_step=1)
+    extracted_patches = _extract_patches(image,
+                                         patch_shape=(p_h, p_w, n_colors),
+                                         extraction_step=1)
 
     n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
     if max_patches:

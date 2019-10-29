@@ -10,7 +10,7 @@ from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
-    from ._hashing import transform as _hashing_transform
+    from ._hashing_fast import transform as _hashing_transform
 else:
     def _hashing_transform(*args, **kwargs):
         raise NotImplementedError(

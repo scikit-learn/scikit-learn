@@ -27,7 +27,7 @@ from .. import __version__
 from ..utils import check_array, IS_PYPY
 
 if not IS_PYPY:
-    from ._svmlight_format import _load_svmlight_file
+    from ._svmlight_format_fast import _load_svmlight_file
 else:
     def _load_svmlight_file(*args, **kwargs):
         raise NotImplementedError(

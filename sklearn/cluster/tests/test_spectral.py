@@ -8,8 +8,8 @@ import pytest
 import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster._spectral import discretize
@@ -18,7 +18,7 @@ from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa

@@ -20,11 +20,11 @@ import numpy as np
 from scipy.io.matlab import loadmat
 import joblib
 
-from .base import get_data_home
-from .base import _fetch_remote
-from .base import RemoteFileMetadata
-from .base import _pkl_filepath
-from .base import _refresh_cache
+from . import get_data_home
+from ._base import _fetch_remote
+from ._base import RemoteFileMetadata
+from ._base import _pkl_filepath
+from ._base import _refresh_cache
 from ..utils import check_random_state, Bunch
 
 # The original data can be found at:

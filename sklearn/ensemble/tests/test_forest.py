@@ -25,14 +25,14 @@ import pytest
 
 import joblib
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import skip_if_no_parallel
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import NotFittedError
 
@@ -367,7 +367,8 @@ def test_importances_asymptotic():
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
     err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.".format(name))
+               "appropriate arguments before using this estimator."
+               .format(name))
     with pytest.raises(NotFittedError, match=err_msg):
         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
