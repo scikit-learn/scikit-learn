@@ -20,6 +20,7 @@ jobs:
         INSTALL_MKL: 'false'
         NUMPY_VERSION: '1.11.0'
         SCIPY_VERSION: '0.17.0'
+        PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
         PYTEST_VERSION: '*'
         PILLOW_VERSION: '4.0.0'

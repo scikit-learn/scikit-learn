@@ -30,6 +30,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
+    fi
+
     if [[ -n "$PYAMG_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
     fi
@@ -66,8 +70,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$PYTHON_VERSION" == "*" ]]; then
         pip install pytest-xdist
     fi
-
-    python -m pip install pandas
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
