@@ -12,8 +12,8 @@ def configuration(parent_package='', top_path=None):
     config.add_data_dir('images')
     config.add_data_dir(os.path.join('tests', 'data'))
     if platform.python_implementation() != 'PyPy':
-        config.add_extension('_svmlight_format',
-                             sources=['_svmlight_format.pyx'],
+        config.add_extension('_svmlight_format_fast',
+                             sources=['_svmlight_format_fast.pyx'],
                              include_dirs=[numpy.get_include()])
     config.add_subpackage('tests')
     return config
