@@ -650,7 +650,7 @@ def test_one_hot_encoder_pd_categories(is_sparse, drop):
         'col_int': [3, 2, 1, 2]})
 
     str_category = pd.api.types.CategoricalDtype(
-         categories=['b', 'a'])
+         categories=['b', 'a'], ordered=True)
     int_category = pd.api.types.CategoricalDtype(
          categories=[3, 1, 2], ordered=True)
 
@@ -676,7 +676,7 @@ def test_one_hot_encoder_pd_categories(is_sparse, drop):
 
     X_inverse = ohe.inverse_transform(expected_trans)
 
-    assert_array_equal(X_inverse, X_df.to_numpy())
+    assert_array_equal(X_inverse, X_df.values)
 
 
 @pytest.mark.parametrize('encoder', [
@@ -700,7 +700,7 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
     # col_str dtype not ordered correctly
     X_df2 = X_df.copy()
     str_category_lex_ordered = pd.api.types.CategoricalDtype(
-         categories=['a', 'b'])
+         categories=['a', 'b'], ordered=True)
     X_df2['col_str'] = X_df2['col_str'].astype(str_category_lex_ordered)
 
     msg = "X.dtypes must match the dtypes used when fitting"
@@ -721,7 +721,7 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
     with pytest.raises(ValueError, match=msg):
         enc.transform(X_df4)
 
-    X_np = X_df.to_numpy()
+    X_np = X_df.values
     msg = "X must be a dataframe when categories='dtypes'"
     with pytest.raises(TypeError, match=msg):
         enc.transform(X_np)
@@ -740,7 +740,7 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop):
     )
 
     str_category = pd.api.types.CategoricalDtype(
-         categories=['b', 'a'])
+         categories=['b', 'a'], ordered=True)
     int_category = pd.api.types.CategoricalDtype(
          categories=[3, 1, 2], ordered=True)
 
@@ -767,7 +767,7 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop):
     assert_allclose(X_trans, expected_trans)
     X_inverse = ohe.inverse_transform(expected_trans)
 
-    assert_array_equal(X_inverse, X_df.to_numpy())
+    assert_array_equal(X_inverse, X_df.values)
 
 
 def test_ordinal_encoder_pd_categories_mixed():
@@ -781,7 +781,7 @@ def test_ordinal_encoder_pd_categories_mixed():
     )
 
     str_category = pd.api.types.CategoricalDtype(
-         categories=['b', 'a'])
+         categories=['b', 'a'], ordered=True)
     int_category = pd.api.types.CategoricalDtype(
          categories=[3, 1, 2], ordered=True)
 
@@ -802,7 +802,7 @@ def test_ordinal_encoder_pd_categories_mixed():
     assert_allclose(X_trans, expected_trans)
     X_inverse = ohe.inverse_transform(expected_trans)
 
-    assert_array_equal(X_inverse, X_df.to_numpy())
+    assert_array_equal(X_inverse, X_df.values)
 
 
 def test_ordinal_encoder_pd_categories():
@@ -813,7 +813,7 @@ def test_ordinal_encoder_pd_categories():
         'col_int': [3, 2, 1, 2]})
 
     str_category = pd.api.types.CategoricalDtype(
-         categories=['b', 'a'])
+         categories=['b', 'a'], ordered=True)
     int_category = pd.api.types.CategoricalDtype(
          categories=[3, 1, 2], ordered=True)
 
@@ -831,4 +831,4 @@ def test_ordinal_encoder_pd_categories():
     assert_allclose(X_trans, expected_trans)
     X_inverse = ohe.inverse_transform(expected_trans)
 
-    assert_array_equal(X_inverse, X_df.to_numpy())
+    assert_array_equal(X_inverse, X_df.values)
