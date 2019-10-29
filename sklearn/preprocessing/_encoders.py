@@ -106,7 +106,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _encode(Xi)
             elif self.categories == 'dtypes':
                 if hasattr(Xi, "cat"):
-                    cats = Xi.cat.categories.to_numpy()
+                    cats = Xi.cat.categories.values.copy()
                 else:
                     cats = _encode(Xi)
             else:
@@ -159,8 +159,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         X_mask[:, i] = valid_mask
                         # cast Xi into the largest string type necessary
                         # to handle different lengths of numpy strings
-                        if (self.categories_[i].dtype.kind in ('U', 'S')
-                                and self.categories_[i].itemsize > Xi.itemsize):
+                        if (self.categories_[i].dtype.kind in ('U', 'S') and
+                                self.categories_[i].itemsize > Xi.itemsize):
                             Xi = Xi.astype(self.categories_[i].dtype)
                         else:
                             Xi = Xi.copy()
