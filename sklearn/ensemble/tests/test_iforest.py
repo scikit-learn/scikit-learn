@@ -10,16 +10,16 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
-from sklearn.ensemble.iforest import _average_path_length
+from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
@@ -289,7 +289,7 @@ def test_iforest_warm_start():
 # mock get_chunk_n_rows to actually test more than one chunk (here one
 # chunk = 3 rows:
 @patch(
-    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 3}),
 )
 @pytest.mark.parametrize(
@@ -304,7 +304,7 @@ def test_iforest_chunks_works1(
 
 # idem with chunk_size = 5 rows
 @patch(
-    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 10}),
 )
 @pytest.mark.parametrize(

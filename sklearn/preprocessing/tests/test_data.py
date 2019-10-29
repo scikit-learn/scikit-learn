@@ -16,37 +16,37 @@ import pytest
 
 from sklearn.utils import gen_batches
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _handle_zeros_in_scale
-from sklearn.preprocessing.data import Binarizer
-from sklearn.preprocessing.data import KernelCenterer
-from sklearn.preprocessing.data import Normalizer
-from sklearn.preprocessing.data import normalize
-from sklearn.preprocessing.data import StandardScaler
-from sklearn.preprocessing.data import scale
-from sklearn.preprocessing.data import MinMaxScaler
-from sklearn.preprocessing.data import minmax_scale
-from sklearn.preprocessing.data import QuantileTransformer
-from sklearn.preprocessing.data import quantile_transform
-from sklearn.preprocessing.data import MaxAbsScaler
-from sklearn.preprocessing.data import maxabs_scale
-from sklearn.preprocessing.data import RobustScaler
-from sklearn.preprocessing.data import robust_scale
-from sklearn.preprocessing.data import add_dummy_feature
-from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.preprocessing.data import PowerTransformer
-from sklearn.preprocessing.data import power_transform
-from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.preprocessing._data import Binarizer
+from sklearn.preprocessing._data import KernelCenterer
+from sklearn.preprocessing._data import Normalizer
+from sklearn.preprocessing._data import normalize
+from sklearn.preprocessing._data import StandardScaler
+from sklearn.preprocessing._data import scale
+from sklearn.preprocessing._data import MinMaxScaler
+from sklearn.preprocessing._data import minmax_scale
+from sklearn.preprocessing._data import QuantileTransformer
+from sklearn.preprocessing._data import quantile_transform
+from sklearn.preprocessing._data import MaxAbsScaler
+from sklearn.preprocessing._data import maxabs_scale
+from sklearn.preprocessing._data import RobustScaler
+from sklearn.preprocessing._data import robust_scale
+from sklearn.preprocessing._data import add_dummy_feature
+from sklearn.preprocessing._data import PolynomialFeatures
+from sklearn.preprocessing._data import PowerTransformer
+from sklearn.preprocessing._data import power_transform
+from sklearn.preprocessing._data import BOUNDS_THRESHOLD
 from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
@@ -1537,7 +1537,7 @@ def test_deprecated_quantile_transform_copy():
     future_message = ("The default value of `copy` will change from False to "
                       "True in 0.23 in order to make it more consistent with "
                       "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      ":mod:`sklearn.preprocessing` and prevent "
                       "unexpected side effects by modifying the value of `X` "
                       "inplace. To avoid inplace modifications of `X`, it is "
                       "recommended to explicitly set `copy=True`")

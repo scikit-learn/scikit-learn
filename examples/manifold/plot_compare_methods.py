@@ -35,7 +35,7 @@ from sklearn import manifold, datasets
 Axes3D
 
 n_points = 1000
-X, color = datasets.samples_generator.make_s_curve(n_points, random_state=0)
+X, color = datasets.make_s_curve(n_points, random_state=0)
 n_neighbors = 10
 n_components = 2
 

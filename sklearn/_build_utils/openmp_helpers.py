@@ -50,8 +50,8 @@ def get_openmp_flag(compiler):
         # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
         # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         # export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+        # export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib
+        #                          -L/usr/local/opt/libomp/lib -lomp"
         return []
     # Default flag for GCC and clang:
     return ['-fopenmp']
@@ -86,9 +86,10 @@ def check_openmp_support():
             # Link test program
             extra_preargs = os.getenv('LDFLAGS', None)
             if extra_preargs is not None:
-                extra_preargs = extra_preargs.split(" ")
-            else:
-                extra_preargs = []
+                extra_preargs = extra_preargs.strip().split(" ")
+                extra_preargs = [
+                    flag for flag in extra_preargs
+                    if flag.startswith(('-L', '-Wl,-rpath', '-l'))]
 
             objects = glob.glob(
                 os.path.join('objects', '*' + ccompiler.obj_extension))
