@@ -680,7 +680,7 @@ def test_multimetric_scorer_sanity_check():
                                      average='weighted')),
     ('roc_auc_ovo_weighted', partial(roc_auc_score, multi_class='ovo',
                                      average='weighted'))])
-def test_multiclass_threshold_scorer(scorer_name, metric):
+def test_multiclass_roc_proba_scorer(scorer_name, metric):
     scorer = get_scorer(scorer_name)
     X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
                                random_state=0)
@@ -689,3 +689,17 @@ def test_multiclass_threshold_scorer(scorer_name, metric):
     expected_score = metric(y, y_proba)
 
     assert scorer(lr, X, y) == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize('scorer_name', [
+    'roc_auc_ovr', 'roc_auc_ovo',
+    'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted'])
+def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
+    # Perceptron has no predict_proba
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = Perceptron().fit(X, y)
+    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=msg):
+        scorer(lr, X, y)
