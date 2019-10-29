@@ -38,7 +38,7 @@ Building from source
 
 #. Use `Git <https://git-scm.com/>`_ to check out the latest source from the
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
-   `Github <https://github.com>`::
+   Github::
 
         git clone git://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
@@ -82,8 +82,8 @@ runtime:
 - SciPy (>= 0.17),
 - Joblib (>= 0.11).
 
-Those dependencies are **automatically installed by pip and conda** when
-installing scikit-learn or building scikit-learn from source.
+Those dependencies are **automatically installed by pip** if they were missing
+when building scikit-learn from source.
 
 .. note::
 
