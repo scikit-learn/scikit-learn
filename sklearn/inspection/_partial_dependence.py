@@ -644,7 +644,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     if fig is not None:
         warnings.warn("The fig parameter is deprecated in version "
                       "0.22 and will be removed in version 0.24",
-                      DeprecationWarning)
+                      FutureWarning)
         fig.clear()
         ax = fig.gca()
 
@@ -823,6 +823,11 @@ class PartialDependenceDisplay:
         else:  # array-like
             ax = check_array(ax, dtype=object, ensure_2d=False)
 
+            if ax.ndim == 2:
+                n_cols = ax.shape[1]
+            else:
+                n_cols = None
+
             if ax.ndim == 1 and ax.shape[0] != n_features:
                 raise ValueError("Expected len(ax) == len(features), "
                                  "got len(ax) = {}".format(len(ax)))
@@ -868,7 +873,10 @@ class PartialDependenceDisplay:
             axi.set_ylim(ylim)
 
             if len(values) == 1:
-                axi.set_ylabel('Partial dependence')
+                if n_cols is None or i % n_cols == 0:
+                    axi.set_ylabel('Partial dependence')
+                else:
+                    axi.set_yticklabels([])
                 axi.set_ylim(self.pdp_lim[1])
             else:
                 # contour plot

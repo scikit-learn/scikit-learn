@@ -18,7 +18,7 @@ import numpy as np
 import joblib
 from joblib import Memory
 
-from .base import get_data_home, _fetch_remote, RemoteFileMetadata
+from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 
 logger = logging.getLogger(__name__)

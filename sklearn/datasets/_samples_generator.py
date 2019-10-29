@@ -750,7 +750,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
 
     Examples
     --------
-    >>> from sklearn.datasets.samples_generator import make_blobs
+    >>> from sklearn.datasets import make_blobs
     >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2,
     ...                   random_state=0)
     >>> print(X.shape)
