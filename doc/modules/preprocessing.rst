@@ -582,7 +582,7 @@ encoding provided by the the pandas category::
   >>> from pandas.api.types import CategoricalDtype
   >>> X_df = pd.DataFrame({
   ...   'col_str': ['a', 'b', 'b', 'a'],
-  ...   'col_int': [3, 2, 1, 2]})
+  ...   'col_int': [3, 2, 1, 2]}, columns=['col_str', 'col_int'])
   >>> str_category = CategoricalDtype(categories=['b', 'a'], ordered=True)
   >>> int_category = CategoricalDtype(categories=[3, 1, 2], ordered=True)
   >>> X_df['col_str'] = X_df['col_str'].astype(str_category)

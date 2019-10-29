@@ -641,13 +641,13 @@ def test_encoders_has_categorical_tags(Encoder):
 
 
 @pytest.mark.parametrize("is_sparse", [True, False])
-@pytest.mark.parametrize("drop", ["first", None])
+@pytest.mark.parametrize("drop", [None, "first"])
 def test_one_hot_encoder_pd_categories(is_sparse, drop):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
         'col_str': ['a', 'b', 'b', 'a'],
-        'col_int': [3, 2, 1, 2]})
+        'col_int': [3, 2, 1, 2]}, columns=['col_str', 'col_int'])
 
     str_category = pd.api.types.CategoricalDtype(
          categories=['b', 'a'], ordered=True)
@@ -684,35 +684,50 @@ def test_one_hot_encoder_pd_categories(is_sparse, drop):
     OrdinalEncoder(categories="dtypes")])
 def test_encoder_pd_error_mismatch_dtype(encoder):
     pd = pytest.importorskip('pandas')
+    msg = "X.dtypes must match the dtypes used when fitting"
 
-    X_df = pd.DataFrame({
+    X_df_orig = pd.DataFrame({
         'col_str': ['a', 'b', 'b', 'a'],
-        'col_int': [3, 2, 1, 2]})
+        'col_int': [3, 2, 1, 2]}, columns=['col_str', 'col_int'])
+
+    enc_no_categories = clone(encoder).fit(X_df_orig)
+
+    X_df0 = X_df_orig.copy()
+    X_df0['col_int'] = X_df0['col_int'].astype('category')
+
+    # X_df0 has categories while the trained dataframe does not
+    with pytest.raises(ValueError, match=msg):
+        enc_no_categories.transform(X_df0)
 
     str_category = pd.api.types.CategoricalDtype(
          categories=['b', 'a'], ordered=True)
+    X_df1 = X_df_orig.copy()
+    X_df1['col_str'] = X_df1['col_str'].astype(str_category)
+    X_df1['col_int'] = X_df1['col_int'].astype('category')
 
-    X_df['col_str'] = X_df['col_str'].astype(str_category)
-    X_df['col_int'] = X_df['col_int'].astype('category')
+    # X_df1 has categories while the trained dataframe does not
+    with pytest.raises(ValueError, match=msg):
+        enc_no_categories.transform(X_df1)
 
-    enc = clone(encoder).fit(X_df)
+    # Train encoder with categoricals
+    enc = clone(encoder).fit(X_df1)
 
     # col_str dtype not ordered correctly
-    X_df2 = X_df.copy()
+    X_df2 = X_df_orig.copy()
     str_category_lex_ordered = pd.api.types.CategoricalDtype(
          categories=['a', 'b'], ordered=True)
     X_df2['col_str'] = X_df2['col_str'].astype(str_category_lex_ordered)
+    X_df2['col_int'] = X_df2['col_int'].astype('category')
 
-    msg = "X.dtypes must match the dtypes used when fitting"
     with pytest.raises(ValueError, match=msg):
         enc.transform(X_df2)
 
     # col_int not a categorical dtype
-    X_df3 = X_df.copy()
+    X_df3 = X_df_orig.copy()
     X_df3['col_int'] = X_df3['col_int'].astype(int)
 
     with pytest.raises(ValueError, match=msg):
-        enc.transform(X_df2)
+        enc.transform(X_df3)
 
     # number of features is not correct
     X_df4 = pd.DataFrame({
@@ -721,7 +736,7 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
     with pytest.raises(ValueError, match=msg):
         enc.transform(X_df4)
 
-    X_np = X_df.values
+    X_np = X_df_orig.values
     msg = "X must be a dataframe when categories='dtypes'"
     with pytest.raises(TypeError, match=msg):
         enc.transform(X_np)
@@ -732,12 +747,12 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
 def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop):
     pd = pytest.importorskip('pandas')
 
-    X_df = pd.DataFrame({
-        'col_str': ['a', 'b', 'b', 'a'],
-        'col_int': [3, 2, 1, 2],
-        'norm_float': [1.0, 2.0, 1.0, 1.0],  # not a pandas category
-        'norm_str': ['z', 'd', 'z', 'd']}  # not a pandas category
-    )
+    X_df = pd.DataFrame(
+        {'col_str': ['a', 'b', 'b', 'a'],
+         'col_int': [3, 2, 1, 2],
+         'norm_float': [1.0, 2.0, 1.0, 1.0],  # not a pandas category
+         'norm_str': ['z', 'd', 'z', 'd']},  # not a pandas category
+        columns=['col_str', 'col_int', 'norm_float', 'norm_str'])
 
     str_category = pd.api.types.CategoricalDtype(
          categories=['b', 'a'], ordered=True)
@@ -777,8 +792,8 @@ def test_ordinal_encoder_pd_categories_mixed():
         'col_str': ['a', 'b', 'b', 'a'],
         'col_int': [3, 2, 1, 2],
         'norm_float': [1.0, 2.0, 1.0, 1.0],  # not a pandas category
-        'norm_str': ['z', 'd', 'z', 'd']}  # not a pandas category
-    )
+        'norm_str': ['z', 'd', 'z', 'd']},  # not a pandas category
+        columns=['col_str', 'col_int', 'norm_float', 'norm_str'])
 
     str_category = pd.api.types.CategoricalDtype(
          categories=['b', 'a'], ordered=True)
@@ -810,7 +825,7 @@ def test_ordinal_encoder_pd_categories():
 
     X_df = pd.DataFrame({
         'col_str': ['a', 'b', 'b', 'a'],
-        'col_int': [3, 2, 1, 2]})
+        'col_int': [3, 2, 1, 2]}, columns=['col_str', 'col_int'])
 
     str_category = pd.api.types.CategoricalDtype(
          categories=['b', 'a'], ordered=True)

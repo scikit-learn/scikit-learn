@@ -27,6 +27,20 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
+    def _check_dtypes_equal(self, dtypes_l, dtypes_r):
+        """Returns True if the dtypes."""
+        if len(dtypes_l) != len(dtypes_r):
+            return False
+
+        for dtype_l, dtype_r in zip(dtypes_l, dtypes_r):
+            dtype_l_is_cat = hasattr(dtype_l, 'categories')
+            dtype_r_is_cat = hasattr(dtype_r, 'categories')
+            if ((dtype_l_is_cat and not dtype_r_is_cat)
+                    or (not dtype_l_is_cat and dtype_r_is_cat)
+                    or (dtype_l != dtype_r)):
+                return False
+        return True
+
     def _check_X(self, X):
         """
         Perform custom check_array:
@@ -44,11 +58,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if not hasattr(X, 'dtypes'):
                 raise TypeError("X must be a dataframe when "
                                 "categories='dtypes'")
-            X_dtypes = getattr(X, 'dtypes')
-
+            X_dtypes = X.dtypes
             if hasattr(self, "_X_fit_dtypes"):  # fitted
-                if (len(self._X_fit_dtypes) != len(X_dtypes) or
-                        not all(self._X_fit_dtypes == X_dtypes)):
+                if not self._check_dtypes_equal(self._X_fit_dtypes,
+                                                X_dtypes):
                     raise ValueError("X.dtypes must match the dtypes used "
                                      "when fitting")
             else:
