@@ -32,12 +32,13 @@ from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils import deprecated
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
 
 
-class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
+class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
@@ -115,7 +116,7 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
-class GaussianNB(BaseNB):
+class GaussianNB(_BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
@@ -461,13 +462,13 @@ class GaussianNB(BaseNB):
 _ALPHA_MIN = 1e-10
 
 
-class BaseDiscreteNB(BaseNB):
+class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
-    Any estimator based on this class should provide:
+    Any stimator based on this class should provide:
 
     __init__
-    _joint_log_likelihood(X) as per BaseNB
+    _joint_log_likelihood(X) as per _BaseNB
     """
 
     def _check_X(self, X):
@@ -662,7 +663,7 @@ class BaseDiscreteNB(BaseNB):
         return {'poor_score': True}
 
 
-class MultinomialNB(BaseDiscreteNB):
+class MultinomialNB(_BaseDiscreteNB):
     """
     Naive Bayes classifier for multinomial models
 
@@ -776,7 +777,7 @@ class MultinomialNB(BaseDiscreteNB):
                 self.class_log_prior_)
 
 
-class ComplementNB(BaseDiscreteNB):
+class ComplementNB(_BaseDiscreteNB):
     """The Complement Naive Bayes classifier described in Rennie et al. (2003).
 
     The Complement Naive Bayes classifier was designed to correct the "severe
@@ -871,10 +872,10 @@ class ComplementNB(BaseDiscreteNB):
         self.feature_all_ = self.feature_count_.sum(axis=0)
 
     def _update_feature_log_prob(self, alpha):
-        """Apply smoothing to raw counts and compute the weights."""
+        """pply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        # _BaseNB.predict uses argmax, but ComplementNB operates with argmin.
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
             feature_log_prob = logged / summed
@@ -890,7 +891,7 @@ class ComplementNB(BaseDiscreteNB):
         return jll
 
 
-class BernoulliNB(BaseDiscreteNB):
+class BernoulliNB(_BaseDiscreteNB):
     """Naive Bayes classifier for multivariate Bernoulli models.
 
     Like MultinomialNB, this classifier is suitable for discrete data. The
@@ -1020,7 +1021,7 @@ class BernoulliNB(BaseDiscreteNB):
         return jll
 
 
-class CategoricalNB(BaseDiscreteNB):
+class CategoricalNB(_BaseDiscreteNB):
     """Naive Bayes classifier for categorical features
 
     The categorical Naive Bayes classifier is suitable for classification with
@@ -1227,3 +1228,17 @@ class CategoricalNB(BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+# TODO: remove in 0.24
+@deprecated("BaseNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseNB(_BaseNB):
+    pass
+
+
+# TODO: remove in 0.24
+@deprecated("BaseDiscreteNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseDiscreteNB(_BaseDiscreteNB):
+    pass
