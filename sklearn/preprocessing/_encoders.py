@@ -27,23 +27,34 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_dtypes_equal(self, dtypes_l, dtypes_r):
-        """Returns True if the dtypes."""
-        if ((dtypes_l is None and dtypes_r is not None) or
-                (dtypes_l is not None and dtypes_r is None)):
-            return False
+    def _check_categories_dtypes_equal(self, fit_dtypes, trans_dtypes):
+        """Return True if the categorical dtypes are equal."""
+        msg = "categorical dtypes in X must match the dtypes used when fitting"
 
-        if len(dtypes_l) != len(dtypes_r):
-            return False
+        # one is None and the other is not
+        if ((fit_dtypes is None and trans_dtypes is not None) or
+                (fit_dtypes is not None and trans_dtypes is None)):
+            raise ValueError(msg)
 
-        for dtype_l, dtype_r in zip(dtypes_l, dtypes_r):
-            dtype_l_is_cat = hasattr(dtype_l, 'categories')
-            dtype_r_is_cat = hasattr(dtype_r, 'categories')
-            if ((dtype_l_is_cat and not dtype_r_is_cat)
-                    or (not dtype_l_is_cat and dtype_r_is_cat)
-                    or (dtype_l != dtype_r)):
-                return False
-        return True
+        if len(fit_dtypes) != len(trans_dtypes):
+            raise ValueError(msg)
+
+        for fit_dtype, trans_dtype in zip(fit_dtypes, trans_dtypes):
+            fit_cats = getattr(fit_dtype, 'categories', None)
+            trans_cats = getattr(trans_dtype, 'categories', None)
+
+            # not categories
+            if fit_cats is None and trans_cats is None:
+                continue
+
+            # one is category and the other is not
+            if ((fit_cats is not None and trans_cats is None) or
+                    (fit_cats is None and trans_cats is not None)):
+                raise ValueError(msg)
+
+            # both are categories and are not equal
+            if all(fit_cats != trans_cats):
+                raise ValueError(msg)
 
     def _check_X(self, X):
         """
@@ -61,10 +72,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if self.categories == 'dtypes':
             X_dtypes = getattr(X, "dtypes", None)
             if hasattr(self, "_X_fit_dtypes"):  # fitted
-                if not self._check_dtypes_equal(self._X_fit_dtypes,
-                                                X_dtypes):
-                    raise ValueError("X.dtypes must match the dtypes used "
-                                     "when fitting")
+                self._check_categories_dtypes_equal(self._X_fit_dtypes,
+                                                    X_dtypes)
             else:
                 self._X_fit_dtypes = X_dtypes
 
@@ -87,7 +96,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-            if self.categories == 'dtypes' and hasattr(Xi, 'cat'):
+            if self.categories == 'dtypes' and Xi.dtype.name == 'category':
                 # TODO: Change when missing value support is added
                 _assert_all_finite(Xi)
             else:
@@ -119,7 +128,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if self.categories == 'auto':
                 cats = _encode(Xi)
             elif self.categories == 'dtypes':
-                if hasattr(Xi, "cat"):
+                if Xi.dtype.name == 'category':
                     cats = Xi.cat.categories.values.copy()
                 else:
                     cats = _encode(Xi)
@@ -154,7 +163,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
 
-            if self.categories == 'dtypes' and hasattr(Xi, "cat"):
+            if self.categories == 'dtypes' and Xi.dtype.name == 'category':
                 # categorical dtypes contain no unknown values
                 encoded = Xi.cat.codes
             else:
