@@ -133,16 +133,19 @@ print(titanic.data.head()[['pclass', 'embarked']])
 # implementations, such as approximate nearest neighbors methods.
 # See more details in the :ref:`User Guide <neighbors_transformer>`.
 
+from tempfile import TemporaryDirectory
 from sklearn.neighbors import KNeighborsTransformer
 from sklearn.manifold import Isomap
 from sklearn.pipeline import make_pipeline
 
-estimator = make_pipeline(
-    KNeighborsTransformer(n_neighbors=10, mode='distance'),
-    Isomap(n_neighbors=10, metric='precomputed'),
-    memory='.')
-estimator.fit(X)
+with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
+    estimator = make_pipeline(
+        KNeighborsTransformer(n_neighbors=10, mode='distance'),
+        Isomap(n_neighbors=10, metric='precomputed'),
+        memory=tmpdir)
+    estimator.fit(X)
 
-# We can decrease the number of neighbors and the graph will not be recomputed.
-estimator.set_params(isomap__n_neighbors=5)
-estimator.fit(X)
+    # We can decrease the number of neighbors and the graph will not be
+    # recomputed.
+    estimator.set_params(isomap__n_neighbors=5)
+    estimator.fit(X)
