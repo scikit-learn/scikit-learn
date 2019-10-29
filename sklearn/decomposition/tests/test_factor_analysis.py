@@ -3,17 +3,14 @@
 # License: BSD3
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 
 # Ignore warnings from switching to more power iterations in randomized_svd
@@ -35,10 +32,12 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
 
-    assert_raises(ValueError, FactorAnalysis, svd_method='foo')
+    with pytest.raises(ValueError):
+        FactorAnalysis(svd_method='foo')
     fa_fail = FactorAnalysis()
     fa_fail.svd_method = 'foo'
-    assert_raises(ValueError, fa_fail.fit, X)
+    with pytest.raises(ValueError):
+        fa_fail.fit(X)
     fas = []
     for method in ['randomized', 'lapack']:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
@@ -46,13 +45,13 @@ def test_factor_analysis():
         fas.append(fa)
 
         X_t = fa.transform(X)
-        assert_equal(X_t.shape, (n_samples, n_components))
+        assert X_t.shape == (n_samples, n_components)
 
         assert_almost_equal(fa.loglike_[-1], fa.score_samples(X).sum())
         assert_almost_equal(fa.score_samples(X).mean(), fa.score(X))
 
         diff = np.all(np.diff(fa.loglike_))
-        assert_greater(diff, 0., 'Log likelihood dif not increase')
+        assert diff > 0., 'Log likelihood dif not increase'
 
         # Sample Covariance
         scov = np.cov(X, rowvar=0., bias=1.)
@@ -60,10 +59,11 @@ def test_factor_analysis():
         # Model Covariance
         mcov = fa.get_covariance()
         diff = np.sum(np.abs(scov - mcov)) / W.size
-        assert_less(diff, 0.1, "Mean absolute difference is %f" % diff)
+        assert diff < 0.1, "Mean absolute difference is %f" % diff
         fa = FactorAnalysis(n_components=n_components,
                             noise_variance_init=np.ones(n_features))
-        assert_raises(ValueError, fa.fit, X[:, :2])
+        with pytest.raises(ValueError):
+            fa.fit(X[:, :2])
 
     f = lambda x, y: np.abs(getattr(x, y))  # sign will not be equal
     fa1, fa2 = fas

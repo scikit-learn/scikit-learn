@@ -62,7 +62,7 @@ fpr_rt_lm, tpr_rt_lm, _ = roc_curve(y_test, y_pred_rt)
 
 # Supervised transformation based on random forests
 rf = RandomForestClassifier(max_depth=3, n_estimators=n_estimator)
-rf_enc = OneHotEncoder(categories='auto')
+rf_enc = OneHotEncoder()
 rf_lm = LogisticRegression(max_iter=1000)
 rf.fit(X_train, y_train)
 rf_enc.fit(rf.apply(X_train))
@@ -73,7 +73,7 @@ fpr_rf_lm, tpr_rf_lm, _ = roc_curve(y_test, y_pred_rf_lm)
 
 # Supervised transformation based on gradient boosted trees
 grd = GradientBoostingClassifier(n_estimators=n_estimator)
-grd_enc = OneHotEncoder(categories='auto')
+grd_enc = OneHotEncoder()
 grd_lm = LogisticRegression(max_iter=1000)
 grd.fit(X_train, y_train)
 grd_enc.fit(grd.apply(X_train)[:, :, 0])

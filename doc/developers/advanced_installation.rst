@@ -1,31 +1,9 @@
 
 .. _advanced-installation:
 
-===================================
-Advanced installation instructions
-===================================
-
-There are different ways to get scikit-learn installed:
-
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version
-    and pre-build packages are available for most platforms.
-
-  * Install the version of scikit-learn provided by your
-    :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is a quick option for those who have operating systems
-    that distribute scikit-learn. It might not provide the latest release
-    version.
-
-  * :ref:`Building the package from source
-    <install_bleeding_edge>`. This is best for users who want the
-    latest-and-greatest features and aren't afraid of running
-    brand-new code. This document describes how to build from source.
-
-.. note::
-
-    If you wish to contribute to the project, you need to
-    :ref:`install the latest development version<install_bleeding_edge>`.
+==================================================================
+Installing the development version of scikit-learn (master branch)
+==================================================================
 
 .. _install_nightly_builds:
 
@@ -44,11 +22,26 @@ basis to help users test bleeding edge features or bug fixes::
 Building from source
 =====================
 
+In the vast majority of cases, building scikit-learn for development purposes
+can be done with::
+
+    pip install cython pytest flake8
+
+Then, in the main repository::
+
+    pip install --editable .
+
+Please read below for details and more advanced instructions.
+
+Dependencies
+------------
+
 Scikit-learn requires:
 
 - Python (>= 3.5),
 - NumPy (>= 1.11),
-- SciPy (>= 0.17).
+- SciPy (>= 0.17),
+- Joblib (>= 0.11).
 
 .. note::
 
@@ -93,12 +86,12 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-If you have all the build requirements installed (see below for details), you
-can build and install the package in the following way.
+Once you have all the build requirements installed (see below for details),
+you can build and install the package in the following way.
 
 If you run the development version, it is cumbersome to reinstall the
 package each time you update the sources. Therefore it's recommended that you
-install in editable, which allows you to edit the code in-place. This
+install in editable mode, which allows you to edit the code in-place. This
 builds the extension in place and creates a link to the development directory
 (see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
@@ -112,25 +105,78 @@ builds the extension in place and creates a link to the development directory
 
 .. note::
 
-    If you decide to do an editable install you have to rerun::
+    You will have to re-run::
 
         pip install --editable .
 
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
+    every time the source code of a compiled extension is changed (for
+    instance when switching branches or pulling changes from upstream).
+    Compiled extensions are Cython files (ending in `.pyx` or `.pxd`).
 
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
+On Unix-like systems, you can equivalently type ``make in`` from the
+top-level folder. Have a look at the ``Makefile`` for additional utilities.
 
 Mac OSX
 -------
 
 The default C compiler, Apple-clang, on Mac OSX does not directly support
-OpenMP. The first solution to build scikit-learn is to install another C
-compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
-support on the default Apple-clang. In the following we present how to
-configure this second option.
+OpenMP. We present two solutions to enable OpenMP support (you need to do only
+one).
+
+.. note::
+
+    First, clean any previously built files in the source folder of
+    scikit-learn::
+
+        make clean
+
+Using conda
+~~~~~~~~~~~
+
+One solution is to install another compiler which supports OpenMP. If you use
+the conda package manager, you can install the ``compilers`` meta-package from
+the conda-forge channel, which provides OpenMP-enabled C compilers.
+
+It is recommended to use a dedicated conda environment to build scikit-learn
+from source::
+
+    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
+        conda-forge::compilers conda-forge::llvm-openmp
+    conda activate sklearn-dev
+    pip install --verbose --editable .
+
+.. note::
+
+    If you get any conflicting dependency error message, try commenting out
+    any custom conda configuration in the ``$HOME/.condarc`` file. In
+    particular the ``channel_priority: strict`` directive is known to cause
+    problems for this setup.
+
+You can check that the custom compilers are properly installed from conda
+forge using the following command::
+
+    conda list compilers llvm-openmp
+
+The compilers meta-package will automatically set custom environment
+variables::
+
+    echo $CC
+    echo $CXX
+    echo $CFLAGS
+    echo $CXXFLAGS
+    echo $LDFLAGS
+
+They point to files and folders from your sklearn-dev conda environment
+(in particular in the bin/, include/ and lib/ subfolders).
+
+The compiled extensions should be built with the clang and clang++ compilers
+with the ``-fopenmp`` command line flag.
+
+Using homebrew
+~~~~~~~~~~~~~~
+
+Another solution is to enable OpenMP support for the clang compiler shipped
+by default on macOS.
 
 You first need to install the OpenMP library::
 
@@ -143,10 +189,34 @@ Then you need to set the following environment variables::
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
+
+Finally, build scikit-learn in verbose mode::
+
+    pip install --verbose --editable .
+
+FreeBSD
+-------
+
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not 
+include OpenMP support. You need to install the `openmp` library from packages 
+(or ports)::
+
+    sudo pkg install openmp
+    
+This will install header files in ``/usr/local/include`` and libs in 
+``/usr/local/lib``. Since these directories are not searched by default, you 
+can set the environment variables to these locations::
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
 
 Finally you can build the package using the standard command.
+
+For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in 
+the base system and these steps will not be necessary.
+
 
 Installing build dependencies
 =============================
@@ -154,56 +224,38 @@ Installing build dependencies
 Linux
 -----
 
-Installing from source requires you to have installed the scikit-learn runtime
-dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu::
+Installing from source without conda requires you to have installed the
+scikit-learn runtime dependencies, Python development headers and a working
+C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
-                     python3-numpy python3-scipy \
-                     libatlas-dev libatlas3-base
+                     python3-pip
+    
+and then::
 
-On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
-is used to provide the implementation of the BLAS and LAPACK linear algebra
-routines::
-
-    sudo update-alternatives --set libblas.so.3 \
-        /usr/lib/atlas-base/atlas/libblas.so.3
-    sudo update-alternatives --set liblapack.so.3 \
-        /usr/lib/atlas-base/atlas/liblapack.so.3
+    pip3 install numpy scipy cython
 
 .. note::
 
     In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
-        sudo apt-get install python-matplotlib
+        pip3 install matplotlib
 
-.. note::
+When precompiled wheels are not avalaible for your architecture, you can
+install the system versions::
 
-    The above installs the ATLAS implementation of BLAS
-    (the Basic Linear Algebra Subprograms library).
-    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
-    offer an alternative implementation called OpenBLAS.
-
-    Using OpenBLAS can give speedups in some scikit-learn modules,
-    but can freeze joblib/multiprocessing prior to OpenBLAS version 0.2.8-4,
-    so using it is not recommended unless you know what you're doing.
-
-    If you do want to use OpenBLAS, then replacing ATLAS only requires a couple
-    of commands. ATLAS has to be removed, otherwise NumPy may not work::
-
-        sudo apt-get remove libatlas3gf-base libatlas-dev
-        sudo apt-get install libopenblas-dev
-
-        sudo update-alternatives  --set libblas.so.3 \
-            /usr/lib/openblas-base/libopenblas.so.0
-        sudo update-alternatives --set liblapack.so.3 \
-            /usr/lib/lapack/liblapack.so.3
+    sudo apt-get install cython3 python3-numpy python3-scipy python3-matplotlib
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-    sudo yum -y install gcc gcc-c++ numpy python-devel scipy
+    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
+.. note::
+
+    To use a high performance BLAS library (e.g. OpenBlas) see 
+    `scipy installation instructions
+    <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
 Windows
 -------
@@ -221,12 +273,20 @@ The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
 You will need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/de/downloads/>`_.
+<https://visualstudio.microsoft.com/downloads/>`_.
+
+.. warning::
+	You DO NOT need to install Visual Studio 2019. 
+	You only need the "Build Tools for Visual Studio 2019", 
+	under "All downloads" -> "Tools for Visual Studio 2019". 
 
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
+
+Please be aware that the path above might be different from user to user. 
+The aim is to point to the "vcvarsall.bat" file.
 
 And build scikit-learn from this environment::
 
@@ -260,58 +320,3 @@ build step::
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
-
-
-.. _testing:
-
-Testing
-=======
-
-Testing scikit-learn once installed
------------------------------------
-
-Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |PytestMinVersion|\ .
-Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
-After installation, the package can be tested by executing *from outside* the
-source directory::
-
-    $ pytest sklearn
-
-This should give you a lot of output (and some warnings) but
-eventually should finish with a message similar to::
-
-    =========== 8304 passed, 26 skipped, 4659 warnings in 557.76 seconds ===========
-
-Otherwise, please consider posting an issue into the `GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
-:ref:`mailing_lists` including the traceback of the individual failures
-and errors. Please include your operating system, your version of NumPy, SciPy
-and scikit-learn, and how you installed scikit-learn.
-
-
-Testing scikit-learn from within the source folder
---------------------------------------------------
-
-Scikit-learn can also be tested without having the package
-installed. For this you must compile the sources inplace from the
-source directory::
-
-    python setup.py build_ext --inplace
-
-Test can now be run using pytest::
-
-    pytest sklearn
-
-This is automated by the commands::
-
-    make in
-
-and::
-
-    make test
-
-
-You can also install a symlink named ``site-packages/scikit-learn.egg-link``
-to the development folder of scikit-learn with::
-
-    pip install --editable .

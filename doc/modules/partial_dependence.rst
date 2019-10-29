@@ -80,9 +80,9 @@ the plots, you can use the
     >>> from sklearn.inspection import partial_dependence
 
     >>> pdp, axes = partial_dependence(clf, X, [0])
-    >>> pdp  # doctest: +ELLIPSIS
+    >>> pdp
     array([[ 2.466...,  2.466..., ...
-    >>> axes  # doctest: +ELLIPSIS
+    >>> axes
     [array([-1.624..., -1.592..., ...
 
 The values at which the partial dependence should be evaluated are directly
@@ -121,9 +121,9 @@ which the trees were trained.
 
 .. topic:: References
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
+    T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
     Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 
- .. [Mol2019] C. Molnar, `Interpretable Machine Learning
+    C. Molnar, `Interpretable Machine Learning
     <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
