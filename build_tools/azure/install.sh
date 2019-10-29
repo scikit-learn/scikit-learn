@@ -63,13 +63,13 @@ if [[ "$DISTRIB" == "conda" ]]; then
 	make_conda $TO_INSTALL
 
     if [[ "$PYTEST_VERSION" == "*" ]]; then
-        pip install pytest
+        python -m pip install pytest
     else
-        pip install pytest="$PYTEST_VERSION"
+        python -m pip install pytest=="$PYTEST_VERSION"
     fi
 
     if [[ "$PYTHON_VERSION" == "*" ]]; then
-        pip install pytest-xdist
+        python -m pip install pytest-xdist
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
