@@ -91,7 +91,8 @@ def _tested_estimators():
 @parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+    with ignore_warnings(category=(FutureWarning,
+                                   ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
@@ -119,7 +120,7 @@ def test_check_estimator_generate_only():
             check(estimator)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
