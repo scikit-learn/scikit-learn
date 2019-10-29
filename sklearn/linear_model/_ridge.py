@@ -769,8 +769,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     This classifier first converts binary targets to ``{-1, 1}`` and then
     treats the problem as a regression task with a
-    :class:`~sklearn.linear_model.Ridge` regressor. The predicted class
-    corresponds to the sign of the regressor's prediction.
+    :class:`~sklearn.linear_model.Ridge` regressor.
 
     Read more about Ridge Regression in the :ref:`User Guide
     <ridge_regression>`.
