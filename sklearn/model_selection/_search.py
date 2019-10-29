@@ -727,8 +727,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
-            self.best_estimator_ = clone(base_estimator).set_params(
-                **self.best_params_)
+            # we clone again after setting params in case some
+            # of the params are estimators as well.
+            self.best_estimator_ = clone(clone(base_estimator).set_params(
+                **self.best_params_))
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
