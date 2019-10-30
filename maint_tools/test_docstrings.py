@@ -8,7 +8,7 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 # List of whitelisted modules and methods; regexp is supported.
 #
-DOCSTRING_WHITELIST = [r"LinearRegression$"]
+DOCSTRING_WHITELIST = [r"LogisticRegression$"]
 
 
 def get_all_methods():
@@ -55,7 +55,7 @@ def repr_errors(res, estimator, method: str) -> str:
         [
             res['file'],
             obj_name + str(obj_signature),
-            '"""' + res["docstring"] + '"""',
+            res["docstring"],
             "# Errors",
             "\n".join(
                 " - {}: {}".format(code, message)

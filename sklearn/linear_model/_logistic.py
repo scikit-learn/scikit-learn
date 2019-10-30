@@ -1180,7 +1180,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                          SparseCoefMixin):
-    """Logistic Regression (aka logit, MaxEnt) classifier.
+    """
+    Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr', and uses the
@@ -1267,7 +1268,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             optional (default='lbfgs').
+             optional (default='lbfgs')
 
         Algorithm to use in the optimization problem.
 
@@ -1367,25 +1368,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
-    >>> clf.predict(X[:2, :])
-    array([0, 0])
-    >>> clf.predict_proba(X[:2, :])
-    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
-           [9.7...e-01, 2.8...e-02, ...e-08]])
-    >>> clf.score(X, y)
-    0.97...
-
-    See also
-    --------
-    SGDClassifier : incrementally trained logistic regression (when given
+    SGDClassifier : Incrementally trained logistic regression (when given
         the parameter ``loss="log"``).
-    LogisticRegressionCV : Logistic regression with built-in cross validation
+    LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
     -----
@@ -1421,6 +1408,20 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf.predict(X[:2, :])
+    array([0, 0])
+    >>> clf.predict_proba(X[:2, :])
+    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
+           [9.7...e-01, 2.8...e-02, ...e-08]])
+    >>> clf.score(X, y)
+    0.97...
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
