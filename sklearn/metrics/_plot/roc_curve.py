@@ -3,7 +3,6 @@ import numpy as np
 from .. import auc
 from .. import roc_curve
 
-from ...preprocessing import label_binarize
 from ...utils import check_matplotlib_support
 
 
@@ -198,6 +197,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         y_pred = y_pred[:, 1]
     # infer pos_label automatically
     # the default definition is consistent with brier_score_loss
+    labels = np.unique(y_true)
     if pos_label is None:
         if (np.array_equal(labels, [0]) or
                 np.array_equal(labels, [-1])):
