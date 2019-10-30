@@ -41,10 +41,13 @@ feature, code or documentation improvement).
 
 #. Use `Git <https://git-scm.com/>`_ to check out the latest source from the
    `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
-   Github::
+   Github.::
 
         git clone git://github.com/scikit-learn/scikit-learn.git
         cd scikit-learn
+
+   If you plan on submitting a pull-request, you should clone from your fork
+   instead.
 
 #. Install a compiler with OpenMP_ support for your platform. See intructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
