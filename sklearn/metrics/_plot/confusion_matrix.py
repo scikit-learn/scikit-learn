@@ -29,8 +29,8 @@ class ConfusionMatrixDisplay:
     im_ : matplotlib AxesImage
         Image representing the confusion matrix.
 
-    text_ : ndarray of shape (n_classes, n_classes), dtype=matplotlib Text, or \
-           `None`
+    text_ : ndarray of shape (n_classes, n_classes), dtype=matplotlib Text, \
+            or None
         Array of matplotlib axes. `None` if `include_values` is false.
 
     ax_ : matplotlib Axes
