@@ -134,6 +134,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
                 est_fitted_idx += 1
+            else:
+                self.named_estimators_[name_est] = 'drop'
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
