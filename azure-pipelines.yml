@@ -42,7 +42,6 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
-        PANDAS_VERSION: '*'
         INSTALL_MKL: 'true'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
@@ -74,7 +73,6 @@ jobs:
         INSTALL_MKL: 'true'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
-        PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '*'
         PYTEST_VERSION: '*'
