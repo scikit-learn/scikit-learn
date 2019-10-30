@@ -72,7 +72,7 @@ feature, code or documentation improvement).
 .. note::
 
     You will have to re-run the ``pip install --editable .`` command every time
-    the source code of a Cython file (ending in `.pyx` or `.pxd`).
+    the source code of a Cython file is updated (ending in `.pyx` or `.pxd`).
 
 Dependencies
 ------------
@@ -254,8 +254,9 @@ variables::
 They point to files and folders from your ``sklearn-dev`` conda environment
 (in particular in the bin/, include/ and lib/ subfolders).
 
-The compiled extensions should be built with the clang and clang++ compilers
-installed by conda with the ``-fopenmp`` command line flag.
+In the log, you should see the compiled extension being built with the clang
+and clang++ compilers installed by conda with the ``-fopenmp`` command line
+flag.
 
 macOS compilers from Homebrew
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
