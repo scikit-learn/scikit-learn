@@ -73,7 +73,7 @@ this method has a cost of
 
 .. _ridge_regression:
 
-Ridge Regression and classification
+Ridge regression and classification
 ===================================
 
 Regression
