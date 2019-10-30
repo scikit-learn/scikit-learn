@@ -20,10 +20,15 @@ Deprecations: using ``FutureWarning`` from now on
 When deprecating a feature, previous versions of scikit-learn used to raise
 a ``DeprecationWarning``. Since the ``DeprecationWarnings`` aren't shown by
 default by Python, scikit-learn needed to resort to a custom warning filter
-that would always show the warnings.
+to always show the warnings. That filter would sometimes interfere
+with users custom warning filters.
 
-This filter is now removed, and starting from 0.22 scikit-learn will show
-``FutureWarnings`` for deprecations. :pr:`15080` by `Nicolas Hug`_.
+Starting from version 0.22, scikit-learn will show ``FutureWarnings`` for
+deprecations, `as recommended by the Python documentation
+<https://docs.python.org/3/library/exceptions.html#FutureWarning>`_.
+``FutureWarnings`` are always shown by default by Python so the custom
+filter has been removed and scikit-learn no longer hinders with user
+filters. :pr:`15080` by `Nicolas Hug`_.
 
 
 Changed models
