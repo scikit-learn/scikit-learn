@@ -592,15 +592,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         # regression and binary classification
         target_idx = 0
 
-    # Use check_array only on lists and other non-array-likes / sparse. Do not
-    # convert DataFrame into a NumPy array.
     X = check_array(X)
     n_features = X.shape[1]
 
     # convert feature_names to list
     if feature_names is None:
-        # if feature_names is None, use feature indices as name for NumPy array
-        # or the column names for a dataframe
+        # if feature_names is None, use feature indices as name
         feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
