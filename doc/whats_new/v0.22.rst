@@ -14,6 +14,38 @@ refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
 
+Cleaning of the public API
+--------------------------
+
+Scikit-learn has a public API, and a private API.
+
+Any change to the public API is subject to a deprecation cycle of two minor
+versions. The private API isn't publicly documented and isn't subject to any
+deprecation cycle, so users should not rely on it.
+
+Whether a tool is private or public depends on whether you can import it
+without a leading underscore in the import path. For example
+``sklearn.pipeline.make_pipeline`` is public, while
+`sklearn.pipeline._name_estimators` is private.
+``sklearn.ensemble._gb.BaseEnsemble`` is private too because the whole `_gb`
+module is private.
+
+Up to 0.22, some tools were de-facto public (no leading underscore), while
+they should have been private in the first place. In version 0.22, these
+tools have been made properly private, and the public API space has been
+cleaned. In addition, importing from files in sub-packages is deprecated:
+you should use ``from sklearn.cluster import Birch`` instead of ``from
+sklearn.cluster.birch import Birch`` (in practice, ``birch.py`` has been
+moved to ``_birch.py``).
+
+.. note::
+
+    All the tools in the public API should be documented in the `API
+    Reference <https://scikit-learn.org/dev/modules/classes.html>`_. If you
+    find a public tool that isn't in the API reference, that means it should
+    either be private or documented. Please let us know by opening an issue!
+
+
 Deprecations: using ``FutureWarning`` from now on
 -------------------------------------------------
 
@@ -26,10 +58,9 @@ with users custom warning filters.
 Starting from version 0.22, scikit-learn will show ``FutureWarnings`` for
 deprecations, `as recommended by the Python documentation
 <https://docs.python.org/3/library/exceptions.html#FutureWarning>`_.
-``FutureWarnings`` are always shown by default by Python so the custom
+``FutureWarnings`` are always shown by default by Python, so the custom
 filter has been removed and scikit-learn no longer hinders with user
 filters. :pr:`15080` by `Nicolas Hug`_.
-
 
 Changed models
 --------------
