@@ -16,7 +16,7 @@ DOCSTRING_WHITELIST = [
 
 
 def get_all_methods():
-    estimators = all_estimators(include_meta_estimators=True)
+    estimators = all_estimators()
     for name, estimator in estimators:
         if name.startswith("_"):
             # skip private classes
