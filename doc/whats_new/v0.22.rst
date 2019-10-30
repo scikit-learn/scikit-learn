@@ -462,9 +462,11 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
-- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
-  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
-  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
+  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
+  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
+  `Thomas Fan`_.
 
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a given ``power`` parameter. Also add mean Poisson
@@ -505,10 +507,6 @@ Changelog
 - |Enhancement| :func:`metrics.median_absolute_error` now supports
   ``multioutput`` parameter.
   :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
-
-- |Fix| The scorers: 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
-  and 'roc_auc_ovo_weighted' are now correctly configured to use
-  :term:`predict_proba`. :pr:`15274` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
