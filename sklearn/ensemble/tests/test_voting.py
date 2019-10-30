@@ -42,7 +42,7 @@ X_r, y_r = datasets.load_boston(return_X_y=True)
      ({'estimators': [('lr', LogisticRegression())], 'voting': 'error'},
       r"Voting must be 'soft' or 'hard'; got \(voting='error'\)"),
      ({'estimators': [('lr', LogisticRegression())], 'weights': [1, 2]},
-      "Number of `estimators` and weights must be equal"),]
+      "Number of `estimators` and weights must be equal")]
 )
 def test_voting_classifier_estimator_init(params, err_msg):
     ensemble = VotingClassifier(**params)
