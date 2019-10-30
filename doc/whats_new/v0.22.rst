@@ -390,7 +390,7 @@ Changelog
 
 - |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
   ``method="barnes-hut"`` by computing the gradient in parallel.
-  :issue:`13213` by :user:`Thomas Moreau <tommoral>`
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.

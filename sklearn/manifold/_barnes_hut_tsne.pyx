@@ -173,13 +173,13 @@ cdef float compute_gradient_positive(float[:] val_P,
 
 
 cdef double compute_gradient_negative(float[:, :] pos_reference,
-                                    float* neg_f,
-                                    _QuadTree qt,
-                                    int dof,
-                                    float theta,
-                                    long start,
-                                    long stop,
-                                    int num_threads) nogil:
+                                      float* neg_f,
+                                      _QuadTree qt,
+                                      int dof,
+                                      float theta,
+                                      long start,
+                                      long stop,
+                                      int num_threads) nogil:
     if stop == -1:
         stop = pos_reference.shape[0]
     cdef:
