@@ -465,7 +465,7 @@ _ALPHA_MIN = 1e-10
 class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
-    Any stimator based on this class should provide:
+    Any estimator based on this class should provide:
 
     __init__
     _joint_log_likelihood(X) as per _BaseNB
@@ -872,7 +872,7 @@ class ComplementNB(_BaseDiscreteNB):
         self.feature_all_ = self.feature_count_.sum(axis=0)
 
     def _update_feature_log_prob(self, alpha):
-        """pply smoothing to raw counts and compute the weights."""
+        """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
         # _BaseNB.predict uses argmax, but ComplementNB operates with argmin.

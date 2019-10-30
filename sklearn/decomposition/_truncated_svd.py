@@ -87,7 +87,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     >>> from sklearn.decomposition import TruncatedSVD
     >>> import scipy.sparse as sp
     >>> from sklearn.random_projection import sparse_random_matrix
-    >>> X = sp.random(100, 100, density=0.01, random_state=42)
+    >>> X = sp.random(100, 100, density=0.01, format='csr', random_state=42)
     >>> svd = TruncatedSVD(n_components=5, n_iter=7, random_state=42)
     >>> svd.fit(X)
     TruncatedSVD(n_components=5, n_iter=7, random_state=42)

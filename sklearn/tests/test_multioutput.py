@@ -547,6 +547,7 @@ def test_multi_output_classes_(estimator):
         assert_array_equal(estimator_classes, expected_classes)
 
 
+# TODO: remove in 0.24
 def test_deprecation():
     class A(MultiOutputEstimator, MultiOutputRegressor):
         pass

@@ -493,7 +493,7 @@ def test_check_array_warn_on_dtype_deprecation():
         check_X_y(X, Y, warn_on_dtype=True)
 
 
-def _test_check_array_accept_sparse_type_exception():
+def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
     invalid_type = SVR()
@@ -519,7 +519,7 @@ def _test_check_array_accept_sparse_type_exception():
                          check_array, X_csr, accept_sparse=[invalid_type])
 
 
-def _test_check_array_accept_sparse_no_exception():
+def test_check_array_accept_sparse_no_exception():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
 
@@ -538,12 +538,12 @@ def X_64bit(request):
     yield X
 
 
-def _test_check_array_accept_large_sparse_no_exception(X_64bit):
+def test_check_array_accept_large_sparse_no_exception(X_64bit):
     # When large sparse are allowed
     check_array(X_64bit, accept_large_sparse=True, accept_sparse=True)
 
 
-def _test_check_array_accept_large_sparse_raise_exception(X_64bit):
+def test_check_array_accept_large_sparse_raise_exception(X_64bit):
     # When large sparse are not allowed
     msg = ("Only sparse matrices with 32-bit integer indices "
            "are accepted. Got int64 indices.")
@@ -976,7 +976,7 @@ def test_check_sample_weight():
 
 @pytest.mark.parametrize("toarray", [
     np.array, sp.csr_matrix, sp.csc_matrix])
-def _test_allclose_dense_sparse_equals(toarray):
+def test_allclose_dense_sparse_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base)
     assert _allclose_dense_sparse(x, y)
@@ -984,14 +984,14 @@ def _test_allclose_dense_sparse_equals(toarray):
 
 @pytest.mark.parametrize("toarray", [
     np.array, sp.csr_matrix, sp.csc_matrix])
-def _test_allclose_dense_sparse_not_equals(toarray):
+def test_allclose_dense_sparse_not_equals(toarray):
     base = np.arange(9).reshape(3, 3)
     x, y = toarray(base), toarray(base + 1)
     assert not _allclose_dense_sparse(x, y)
 
 
 @pytest.mark.parametrize("toarray", [sp.csr_matrix, sp.csc_matrix])
-def _test_allclose_dense_sparse_raise(toarray):
+def test_allclose_dense_sparse_raise(toarray):
     x = np.arange(9).reshape(3, 3)
     y = toarray(x + 1)
 
