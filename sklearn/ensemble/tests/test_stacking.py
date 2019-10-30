@@ -214,7 +214,9 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
      sparse.coo_matrix(scale(X_diabetes))])
 def test_stacking_regressor_sparse_passthrough(X):
     # Check passthrough behavior on a sparse X matrix
-    X_train, X_test, y_train, _ = train_test_split(X, y_diabetes, random_state=42)
+    X_train, X_test, y_train, _ = train_test_split(
+        X, y_diabetes, random_state=42
+    )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf = StackingRegressor(
@@ -234,7 +236,9 @@ def test_stacking_regressor_sparse_passthrough(X):
      sparse.coo_matrix(scale(X_iris))])
 def test_stacking_classifier_sparse_passthrough(X):
     # Check passthrough behavior on a sparse X matrix
-    X_train, X_test, y_train, _ = train_test_split(X, y_iris, random_state=42)
+    X_train, X_test, y_train, _ = train_test_split(
+        X, y_iris, random_state=42
+    )
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf = StackingClassifier(
