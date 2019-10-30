@@ -13,6 +13,19 @@ For a short description of the main highlights of the release, please
 refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
+
+Deprecations: using ``FutureWarning`` from now on
+-------------------------------------------------
+
+When deprecating a feature, previous versions of scikit-learn used to raise
+a ``DeprecationWarning``. Since the ``DeprecationWarnings`` aren't shown by
+default by Python, scikit-learn needed to resort to a custom warning filter
+that would always show the warnings.
+
+This filter is now removed, and starting from 0.22 scikit-learn will show
+``FutureWarnings`` for deprecations. :pr:`15080` by `Nicolas Hug`_.
+
+
 Changed models
 --------------
 
@@ -271,6 +284,11 @@ Changelog
 - |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
   by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| Adds ``passthrough`` to :class: `ensemble.StackingClassifier`
+  and :class: `ensemble.StackingRegressor` allowing for the original dataset
+  to be used in the final estimator.
+  :pr:`15138` by :user:`Jon Cusick <jcusick13>`.
 
 :mod:`sklearn.feature_extraction`
 .................................

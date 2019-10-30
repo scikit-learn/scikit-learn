@@ -558,7 +558,7 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
     msg = ("Using 'None' to drop an estimator from the ensemble is "
            "deprecated in 0.22 and support will be dropped in 0.24. "
            "Use the string 'drop' instead.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         est.fit(X, y)
 
 

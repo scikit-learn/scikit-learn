@@ -67,7 +67,7 @@ def test_deprecated():
         assert spam == "spam"     # function must remain usable
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
@@ -83,7 +83,7 @@ def test_deprecated():
         assert hasattr(ham, "SPAM")
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
 
@@ -651,7 +651,8 @@ def dummy_func():
 def test_deprecation_joblib_api(tmpdir):
     def check_warning(*args, **kw):
         return assert_warns_message(
-            DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
+            FutureWarning, "deprecated in version 0.20.1",
+            *args, **kw)
 
     # Ensure that the joblib API is deprecated in sklearn.util
     from sklearn.utils import Parallel, Memory, delayed

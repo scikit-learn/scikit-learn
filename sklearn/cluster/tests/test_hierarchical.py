@@ -734,6 +734,6 @@ def test_n_components_deprecation():
 
     match = ("``n_components_`` attribute was deprecated "
              "in favor of ``n_connected_components_``")
-    with pytest.warns(DeprecationWarning, match=match):
+    with pytest.warns(FutureWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_

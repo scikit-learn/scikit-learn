@@ -543,7 +543,7 @@ def test_tfidf_vectorizer_deprecationwarning():
     msg = ("'copy' param is unused and has been deprecated since "
            "version 0.22. Backward compatibility for 'copy' will "
            "be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tv = TfidfVectorizer()
         train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)
@@ -1368,5 +1368,5 @@ def test_vectorizermixin_is_deprecated():
 
     msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         MyVectorizer()
