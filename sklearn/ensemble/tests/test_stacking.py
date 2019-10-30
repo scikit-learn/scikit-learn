@@ -207,15 +207,12 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
         assert_allclose(X_test, X_trans[:, -10:])
 
 
-@pytest.mark.parametrize(
-    'X',
-    [sparse.csc_matrix(scale(X_diabetes)),
-     sparse.csr_matrix(scale(X_diabetes)),
-     sparse.coo_matrix(scale(X_diabetes))])
-def test_stacking_regressor_sparse_passthrough(X):
+@pytest.mark.parametrize('fmt', ['csc', 'csr', 'coo'])
+def test_stacking_regressor_sparse_passthrough(fmt):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        X, y_diabetes, random_state=42
+        sparse.coo_matrix(scale(X_diabetes)).asformat(fmt),
+        y_diabetes, random_state=42
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
@@ -229,15 +226,12 @@ def test_stacking_regressor_sparse_passthrough(X):
     assert X_test.format == X_trans.format
 
 
-@pytest.mark.parametrize(
-    "X",
-    [sparse.csc_matrix(scale(X_iris)),
-     sparse.csr_matrix(scale(X_iris)),
-     sparse.coo_matrix(scale(X_iris))])
-def test_stacking_classifier_sparse_passthrough(X):
+@pytest.mark.parametrize('fmt', ['csc', 'csr', 'coo'])
+def test_stacking_classifier_sparse_passthrough(fmt):
     # Check passthrough behavior on a sparse X matrix
     X_train, X_test, y_train, _ = train_test_split(
-        X, y_iris, random_state=42
+        sparse.coo_matrix(scale(X_iris)).asformat(fmt),
+        y_iris, random_state=42
     )
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     rf = RandomForestClassifier(n_estimators=10, random_state=42)
