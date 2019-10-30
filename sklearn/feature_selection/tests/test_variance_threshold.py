@@ -4,7 +4,6 @@ import pytest
 from sklearn.utils._testing import assert_array_equal
 
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
-import numpy as np
 
 from sklearn.feature_selection import VarianceThreshold
 
