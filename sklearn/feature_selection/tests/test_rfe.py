@@ -19,6 +19,7 @@ from sklearn.compose import TransformedTargetRegressor
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_raises
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
