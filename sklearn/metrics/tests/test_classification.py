@@ -879,12 +879,6 @@ def test_confusion_matrix_dtype():
     assert cm[0, 0] == 4294967295
     assert cm[1, 1] == 8589934590
 
-    # np.iinfo(np.int64).max should cause an overflow
-    weight = np.full(len(y), 9223372036854775807, dtype=np.int64)
-    cm = confusion_matrix(y, y, sample_weight=weight)
-    assert cm[0, 0] == 9223372036854775807
-    assert cm[1, 1] == -2
-
 
 def test_classification_report_multiclass():
     # Test performance report

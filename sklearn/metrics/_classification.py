@@ -270,12 +270,30 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         if np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
+        check_consistent_length(y_true, y_pred, sample_weight)
+
+    if y_type == 'binary' and len(labels) == 2:
+        # fast path for binary case
+        if not np.all(labels == [0, 1]):
+            y_true = y_true == labels[1]
+            y_pred = y_pred == labels[1]
+
+        # bincount does not handle object sample_weight
+        if sample_weight is not None and sample_weight.dtype.kind == 'O':
+            sample_weight = sample_weight.astype(float)
+        out = np.bincount(y_true * 2 + y_pred,
+                          weights=sample_weight,
+                          minlength=4).reshape(2, 2)
+        if sample_weight is None:
+            return out
+        if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+            return out.astype(np.int64)
+        return out
+
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
-    else:
-        sample_weight = np.asarray(sample_weight)
-
-    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
