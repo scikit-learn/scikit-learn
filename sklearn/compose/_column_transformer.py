@@ -805,15 +805,15 @@ class make_column_selector:
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> from sklearn.compose import make_column_selector
-    >>> import pandas as pd
+    >>> import pandas as pd  # doctest: +SKIP
     >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
-    ...                   'rating': [5, 3, 4, 5]})
+    ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
     >>> ct = make_column_transformer(
     ...       (StandardScaler(),
     ...        make_column_selector(dtype_include=np.number)),  # rating
     ...       (OneHotEncoder(),
     ...        make_column_selector(dtype_include=object)))  # city
-    >>> ct.fit_transform(X)
+    >>> ct.fit_transform(X)  # doctest: +SKIP
     array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
            [-1.50755672,  1.        ,  0.        ,  0.        ],
            [-0.30151134,  0.        ,  1.        ,  0.        ],
