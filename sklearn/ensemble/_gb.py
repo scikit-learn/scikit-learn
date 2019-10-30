@@ -1443,7 +1443,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if not (self.warm_start and self._is_initialized()):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max,
                                             dtype='u8')
-            print(self._random_seed)
+            assert seed == 1.5
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
