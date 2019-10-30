@@ -276,7 +276,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     if y_type == 'binary' and len(labels) == 2:
         # fast path for binary case
-        if not np.all(labels == [0, 1]):
+        if labels[0] != 0 or labels[1] != 1:
             y_true = y_true == labels[1]
             y_pred = y_pred == labels[1]
 
