@@ -863,6 +863,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test = X_missing[n:]
 
     imputer = IterativeImputer(max_iter=5,
+                               imputation_order='descending',
                                verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
