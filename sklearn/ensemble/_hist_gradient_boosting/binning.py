@@ -16,44 +16,7 @@ from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _weighted_quantile(values, quantiles, sample_weight=None,
-                       values_sorted=False, old_style=True):
-    """ Very close to numpy.percentile, but supports weights.
-    NOTE: quantiles should be in [0, 1]!
-    :param values: numpy.array with data
-    :param quantiles: array-like with many quantiles needed
-    :param sample_weight: array-like of the same length as `array`
-    :param values_sorted: bool, if True, then will avoid sorting of
-        initial array
-    :param old_style: if True, will correct output to be consistent
-        with numpy.percentile.
-    :return: numpy.array with computed quantiles.
-    """
-    values = np.array(values)
-    quantiles = np.array(quantiles)
-    if sample_weight is None:
-        sample_weight = np.ones(len(values))
-    sample_weight = np.array(sample_weight)
-    assert np.all(quantiles >= 0) and np.all(quantiles <= 1), \
-        'quantiles should be in [0, 1]'
-
-    if not values_sorted:
-        sorter = np.argsort(values)
-        values = values[sorter]
-        sample_weight = sample_weight[sorter]
-
-    weighted_quantiles = np.cumsum(sample_weight) - 0.5 * sample_weight
-    if old_style:
-        # To be convenient with numpy.percentile
-        weighted_quantiles -= weighted_quantiles[0]
-        weighted_quantiles /= weighted_quantiles[-1]
-    else:
-        weighted_quantiles /= np.sum(sample_weight)
-    return np.interp(quantiles, weighted_quantiles, values)
-
-
-def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
-                             random_state):
+def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -84,12 +47,8 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
     """
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
-        # TODO: depends on the weights and stratify maybe
-        # Question: should we subsample based on the weight if we also compute
-        # weight-based quantiles??
         subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
         data = data.take(subset, axis=0)
-        sample_weight = sample_weight.take(subset)
 
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
@@ -109,13 +68,10 @@ def _find_binning_thresholds(data, sample_weight, max_bins, subsample,
             # np.unique(col_data, return_counts) instead but this is more
             # work and the performance benefit will be limited because we
             # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 1, num=max_bins + 1)
+            percentiles = np.linspace(0, 100, num=max_bins + 1)
             percentiles = percentiles[1:-1]
-            # midpoints = np.percentile(col_data, percentiles,
-            #                          interpolation='midpoint').astype(X_DTYPE)
-            # the utils.stat._weighted_percentile is not suitable here
-            midpoints = _weighted_quantile(col_data, percentiles,
-                                           sample_weight=sample_weight).astype(X_DTYPE)
+            midpoints = np.percentile(col_data, percentiles,
+                                      interpolation='midpoint').astype(X_DTYPE)
             assert midpoints.shape[0] == max_bins - 1
 
         # We avoid having +inf thresholds: +inf thresholds are only allowed in
@@ -180,7 +136,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.subsample = subsample
         self.random_state = random_state
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None):
         """Fit data X by computing the binning thresholds.
 
         The last bin is reserved for missing values, whether missing values
@@ -205,7 +161,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
         max_bins = self.n_bins - 1
         self.bin_thresholds_ = _find_binning_thresholds(
-            X, sample_weight, max_bins, subsample=self.subsample,
+            X, max_bins, subsample=self.subsample,
             random_state=self.random_state)
 
         self.n_bins_non_missing_ = np.array(

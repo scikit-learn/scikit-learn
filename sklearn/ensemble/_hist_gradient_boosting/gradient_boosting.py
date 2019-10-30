@@ -558,8 +558,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
         if is_training_data:
-            X_binned = self.bin_mapper_.fit(
-                X, None, sample_weight).transform(X)  # F-aligned array
+            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
         else:
             X_binned = self.bin_mapper_.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
