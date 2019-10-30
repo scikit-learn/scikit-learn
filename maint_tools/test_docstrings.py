@@ -1,5 +1,6 @@
 import re
 from inspect import signature
+from typing import Optional
 
 import pytest
 from sklearn.utils.testing import all_estimators
@@ -28,7 +29,10 @@ def get_all_methods():
 
 
 def filter_errors(errors, method):
-    """Ignore some errors based on the method type"""
+    """
+    Ignore some errors based on the method type.
+
+    These rules are specific for scikit-learn."""
     for code, message in errors:
         # Following codes are only taken into account for the
         # top level class docstrings:
@@ -44,16 +48,37 @@ def filter_errors(errors, method):
         yield code, message
 
 
-def repr_errors(res, estimator, method: str) -> str:
-    """Pretty print original docstring and the obtained errors"""
+def repr_errors(res, estimator=None, method: Optional[str]=None) -> str:
+    """Pretty print original docstring and the obtained errors
+
+    Parameters
+    ----------
+    res : dict
+        result of numpydoc.validate.validate
+    estimator : {estimator, None}
+        estimator object or None
+    method : str
+        if estimator is not None, either the method name or None. 
+
+    Returns
+    -------
+    str
+       String representation of the error.
+    """
     if method is None:
         if hasattr(estimator, "__init__"):
             method = "__init__"
+        elif estimator is None:
+            raise ValueError('At least one of estimator, method should be provided')
         else:
             raise NotImplementedError
 
-    obj_signature = signature(getattr(estimator, method))
-    obj_name = estimator.__name__ + "." + method
+    if estimator is not None:
+        obj_signature = signature(getattr(estimator, method))
+        obj_name = estimator.__name__ + "." + method
+    else:
+        obj_signature = ""
+        obj_name = method
 
     msg = "\n\n" + "\n\n".join(
         [
@@ -79,8 +104,9 @@ def test_docstring(estimator, method, request):
     import_path = ".".join(import_path)
 
     if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
-        request.applymarker(pytest.mark.xfail(
-            run=False, reason="TODO pass numpydoc validation"))
+        request.applymarker(
+            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
+        )
 
     res = numpydoc_validation.validate(import_path)
 
@@ -90,3 +116,39 @@ def test_docstring(estimator, method, request):
         msg = repr_errors(res, estimator, method)
 
         raise ValueError(msg)
+
+
+if __name__ == "__main__":
+    import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
+    parser.add_argument("import_path", help="Import path to validate")
+
+    args = parser.parse_args()
+
+    res = numpydoc_validation.validate(args.import_path)
+
+    import_path_sections = args.import_path.split(".")
+    # When applied to classes, detect class method. For functions
+    # method = None.
+    # TODO: this detection can be improved. Currently we assume that we have class
+    # methods if the second path element before last is in camel case.
+    if len(import_path_sections) >= 2 and re.match(
+        r"(?:[A-Z][a-z]*)+", import_path_sections[-2]
+    ):
+        method = import_path_sections[-1]
+    else:
+        method = None
+
+    res["errors"] = list(filter_errors(res["errors"], method))
+
+    if res["errors"]:
+        msg = repr_errors(res, method=args.import_path)
+
+        print(msg)
+        sys.exit(1)
+    else:
+        print(
+            "All docstring checks passed for {}!".format(args.import_path)
+        )
