@@ -100,6 +100,8 @@ def test_plot_roc_curve_pos_laebl(pyplot, data_binary):
     y = np.array(["neg", "pos"])[y]
     lr = LogisticRegression()
     lr.fit(X, y)
-    viz = plot_roc_curve(lr, X, y)
     y_pred = lr.predict_proba(X)[:, 1]
+    viz = plot_roc_curve(lr, X, y)
+    assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
+    viz = plot_roc_curve(lr, X, y, pos_label="pos")
     assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))

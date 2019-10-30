@@ -104,7 +104,7 @@ class RocCurveDisplay:
         return self
 
 
-def plot_roc_curve(estimator, X, y, sample_weight=None,
+def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.
@@ -124,6 +124,11 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     y : array-like of shape (n_samples,)
         Target values. The class with greater label is regarded as
         positive class.
+
+    pos_label : int or str, default=None
+        Label of the positive class.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -191,10 +196,14 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
             raise ValueError("Estimator should solve a "
                              "binary classification problem")
         y_pred = y_pred[:, 1]
-    # Keep consistent with roc_auc_score.
-    # The class with greater label is regarded as positive class.
-    labels = np.unique(y)
-    y = label_binarize(y, labels)[:, 0]
+    # infer pos_label automatically
+    # the default definition is consistent with brier_score_loss
+    if pos_label is None:
+        if (np.array_equal(labels, [0]) or
+                np.array_equal(labels, [-1])):
+            pos_label = 1
+        else:
+            pos_label = y_true.max()
     fpr, tpr, _ = roc_curve(y, y_pred, sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
