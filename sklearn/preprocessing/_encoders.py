@@ -158,10 +158,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
 
-            if self.categories == 'dtypes' and Xi.dtype.name == 'category':
-                # categorical dtypes contain no unknown values
-                _, encoded = _encode(Xi, self.categories_[i], encode=True)
-            else:
+            is_category = (self.categories == 'dtypes' and
+                           Xi.dtype.name == 'category')
+            if not is_category:
                 diff, valid_mask = _encode_check_unknown(Xi,
                                                          self.categories_[i],
                                                          return_mask=True)
@@ -184,10 +183,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                             Xi = Xi.copy()
 
                         Xi[~valid_mask] = self.categories_[i][0]
-                # We use check_unknown=False, since _encode_check_unknown was
-                # already called above.
-                _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                     check_unknown=False)
+            # We use check_unknown=False, since _encode_check_unknown was
+            # already called above.
+            _, encoded = _encode(Xi, self.categories_[i], encode=True,
+                                 check_unknown=False)
             X_int[:, i] = encoded
 
         return X_int, X_mask
