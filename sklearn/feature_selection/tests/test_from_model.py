@@ -353,8 +353,8 @@ def test_transform_accepts_nan_inf():
 def test_allow_nan_tag_comes_from_estimator():
     allow_nan_est = NaNTag()
     model = SelectFromModel(estimator=allow_nan_est)
-    assert_equal(model._get_tags()['allow_nan'], True)
+    assert model._get_tags()['allow_nan'] is True
 
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
-    assert_equal(model._get_tags()['allow_nan'], False)
+    assert model._get_tags()['allow_nan'] is False
