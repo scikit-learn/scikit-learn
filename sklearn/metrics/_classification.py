@@ -286,9 +286,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
         out = np.bincount(y_true * 2 + y_pred,
                           weights=sample_weight,
                           minlength=4).reshape(2, 2)
-        if sample_weight is None:
-            return out
-        if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+        if sample_weight is None or sample_weight.dtype.kind in 'iub':
             return out.astype(np.int64)
         return out
 
@@ -309,7 +307,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     sample_weight = sample_weight[ind]
 
     # Choose the accumulator dtype to always have high precision
-    if sample_weight.dtype.kind in {'i', 'u', 'b'}:
+    if sample_weight.dtype.kind in 'iub':
         dtype = np.int64
     else:
         dtype = np.float64
