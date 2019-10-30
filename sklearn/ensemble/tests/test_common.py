@@ -1,6 +1,7 @@
 import pytest
 
 from sklearn.base import clone
+from sklearn.base import ClassifierMixin
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
@@ -49,3 +50,20 @@ def test_ensemble_heterogeneous(X, y, estimator):
     for sub_est in estimator_dropped.named_estimators_:
         # check that the correspondence is correct
         assert not isinstance(sub_est, type(estimator.named_estimators.svm))
+
+
+@pytest.mark.parametrize(
+    "Ensemble",
+    [StackingClassifier, VotingClassifier, StackingRegressor, VotingRegressor]
+)
+def test_ensemble_heterogeneous_estimators_type(Ensemble):
+    # check that ensemble will fail during validation if the underlying
+    # estimators are not of the same type (i.e. classifier or regressor)
+    if issubclass(ClassifierMixin, Ensemble):
+        X, y = make_classification(n_samples=10)
+        estimators = [('lr', LinearRegression())]
+    else:
+        X, y = make_regression(n_samples=10)
+        estimators = [('lr', LogisticRegression())]
+    ensemble = Ensemble(estimators=estimators)
+    ensemble.fit(X, y)
