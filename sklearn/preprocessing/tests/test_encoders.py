@@ -727,6 +727,11 @@ def test_one_hot_encoder_pd_categories_mixed(is_sparse, drop, dtype):
         expected_trans = expected_trans[:, [1, 3, 4, 6, 8]]
 
     X_trans = ohe.fit_transform(X_df)
+    assert_array_equal(ohe.categories_[0], ['b', 'a'])
+    assert_array_equal(ohe.categories_[1], [3, 1, 2])
+    assert_allclose(ohe.categories_[2], [1.0, 2.0])
+    assert_array_equal(ohe.categories_[3], ['d', 'z'])
+
     if is_sparse:
         X_trans = X_trans.toarray()
 
@@ -749,7 +754,7 @@ def test_ordinal_encoder_pd_categories_mixed(dtype):
          'norm_str': ['z', 'd', 'z', 'd']},  # not a pandas category
         columns=['col_str', 'col_int', 'norm_float', 'norm_str'])
 
-    ohe = OrdinalEncoder(categories="dtypes", dtype=dtype).fit(X_df)
+    oe = OrdinalEncoder(categories="dtypes", dtype=dtype).fit(X_df)
 
     expected_trans = np.array([
         [1, 0, 0, 1],  # col_str
@@ -758,9 +763,13 @@ def test_ordinal_encoder_pd_categories_mixed(dtype):
         [1, 0, 1, 0],  # norm_str
     ], dtype=dtype).T
 
-    X_trans = ohe.fit_transform(X_df)
+    X_trans = oe.fit_transform(X_df)
+    assert_array_equal(oe.categories_[0], ['b', 'a'])
+    assert_array_equal(oe.categories_[1], [3, 1, 2])
+    assert_allclose(oe.categories_[2], [1.0, 2.0])
+    assert_array_equal(oe.categories_[3], ['d', 'z'])
 
     assert_allclose(X_trans, expected_trans)
-    X_inverse = ohe.inverse_transform(expected_trans)
+    X_inverse = oe.inverse_transform(expected_trans)
 
     assert_array_equal(X_inverse, X_df.values)
