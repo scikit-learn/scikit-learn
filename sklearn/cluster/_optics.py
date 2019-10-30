@@ -177,6 +177,21 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``X[ordering_][start:end + 1]`` form a cluster.
         Only available when ``cluster_method='xi'``.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import OPTICS
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> clustering = OPTICS(min_samples=2).fit(X) 
+    >>> clustering
+    OPTICS(algorithm='auto', cluster_method='xi', eps=None, leaf_size=30,
+           max_eps=inf, metric='minkowski', metric_params=None,
+           min_cluster_size=None, min_samples=2, n_jobs=None, p=2,
+           predecessor_correction=True, xi=0.05)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+
     See also
     --------
     DBSCAN
