@@ -160,6 +160,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             is_category = (self.categories == 'dtypes' and
                            Xi.dtype.name == 'category')
+            # categories without missing values do not have unknown values
             if not is_category:
                 diff, valid_mask = _encode_check_unknown(Xi,
                                                          self.categories_[i],
