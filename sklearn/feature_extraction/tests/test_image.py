@@ -12,7 +12,7 @@ from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, _extract_patches,
     extract_patches)
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 
 def test_img_to_graph():
@@ -340,5 +340,5 @@ def test_width_patch():
 def test_extract_patches_deprecated():
     msg = ("The function feature_extraction.image.extract_patches has been "
            "deprecated in 0.22 and will be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         extract_patches(downsampled_face)
