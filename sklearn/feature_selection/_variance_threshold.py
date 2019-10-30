@@ -81,7 +81,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         if self.threshold == 0:
             # Use peak-to-peak to avoid numeric precision issues
             # for constant features
-            self.variances_ = np.minimum(self.variances_, peak_to_peaks)
+            compare_arr = np.array([self.variances_, peak_to_peaks])
+            self.variances_ = np.nanmin(compare_arr, axis=0)
 
         if np.all(~np.isfinite(self.variances_) |
                   (self.variances_ <= self.threshold)):
