@@ -206,6 +206,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, predict_params,
     if passthrough:
         assert_allclose(X_test, X_trans[:, -10:])
 
+
 @pytest.mark.parametrize(
     'X',
     [sparse.csc_matrix(scale(X_diabetes)),
