@@ -1087,7 +1087,8 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+    est = assert_warns_message(FutureWarning,
+                               "min_impurity_decrease",
                                est.fit, X, y)
     for tree in est.estimators_.flat:
         assert tree.min_impurity_split == 0.1
@@ -1400,6 +1401,6 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     gb = Cls(presort=presort)
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)
