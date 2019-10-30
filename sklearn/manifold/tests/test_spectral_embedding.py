@@ -7,8 +7,8 @@ from scipy.sparse import csgraph
 from scipy.linalg import eigh
 
 from sklearn.manifold import SpectralEmbedding
-from sklearn.manifold._spectral_embedding_ import _graph_is_connected
-from sklearn.manifold._spectral_embedding_ import _graph_connected_component
+from sklearn.manifold._spectral_embedding import _graph_is_connected
+from sklearn.manifold._spectral_embedding import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
