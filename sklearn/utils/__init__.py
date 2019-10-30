@@ -230,6 +230,7 @@ def _determine_key_type(key, accept_slice=True):
     ----------
     key : scalar, slice or array-like
         The key from which we want to infer the data type.
+
     accept_slice : bool, default=True
         Whether or not to raise an error if the key is a slice.
 
