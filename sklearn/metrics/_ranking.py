@@ -31,6 +31,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils import _determine_key_type
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
@@ -525,14 +526,21 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
         sample_weight = column_or_1d(sample_weight)
 
     # ensure binary classification if pos_label is not specified
+    # _determine_key_type(classes) == 'str' is required to avoid
+    # triggering a FutureWarning by calling np.array_equal(a, b)
+    # where a has string values and b has integer values.
     classes = np.unique(y_true)
-    if (pos_label is None and
-        not (np.array_equal(classes, [0, 1]) or
-             np.array_equal(classes, [-1, 1]) or
-             np.array_equal(classes, [0]) or
-             np.array_equal(classes, [-1]) or
-             np.array_equal(classes, [1]))):
-        raise ValueError("Data is not binary and pos_label is not specified")
+    if (pos_label is None and (
+            _determine_key_type(classes) == 'str' or
+            not (np.array_equal(classes, [0, 1]) or
+                 np.array_equal(classes, [-1, 1]) or
+                 np.array_equal(classes, [0]) or
+                 np.array_equal(classes, [-1]) or
+                 np.array_equal(classes, [1])))):
+        raise ValueError("y_true takes value in {classes} and pos_label is "
+                         "not specified: either make y_true take integer "
+                         "value in {{0, 1}} or {{-1, 1}} or pass pos_label "
+                         "explicitly.".format(classes=set(classes)))
     elif pos_label is None:
         pos_label = 1.
 
