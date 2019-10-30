@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -30,7 +31,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.utils.testing import (assert_almost_equal,
+from sklearn.utils._testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry,
                                    SkipTest, assert_no_warnings,
@@ -542,7 +543,7 @@ def test_tfidf_vectorizer_deprecationwarning():
     msg = ("'copy' param is unused and has been deprecated since "
            "version 0.22. Backward compatibility for 'copy' will "
            "be removed in 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         tv = TfidfVectorizer()
         train_data = JUNK_FOOD_DOCS
         tv.fit(train_data)
@@ -1358,3 +1359,14 @@ def test_unused_parameters_warn(Vectorizer, stop_words,
            )
     with pytest.warns(UserWarning, match=msg):
         vect.fit(train_data)
+
+
+# TODO: Remove in 0.24
+def test_vectorizermixin_is_deprecated():
+    class MyVectorizer(VectorizerMixin):
+        pass
+
+    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
+           "in version 0.24.")
+    with pytest.warns(FutureWarning, match=msg):
+        MyVectorizer()

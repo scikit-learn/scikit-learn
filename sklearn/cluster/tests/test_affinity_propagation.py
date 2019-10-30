@@ -8,7 +8,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_array_equal, assert_warns,
     assert_warns_message, assert_no_warnings)
 
@@ -17,7 +17,7 @@ from sklearn.cluster._affinity_propagation import (
     _equal_similarities_and_preferences
 )
 from sklearn.cluster import affinity_propagation
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.metrics import euclidean_distances
 
 n_clusters = 3

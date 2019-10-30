@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_approx_equal
 
-from sklearn.utils.testing import (assert_array_almost_equal,
+from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_array_equal, assert_raise_message,
                                    assert_warns)
 from sklearn.datasets import load_linnerud
@@ -79,6 +79,12 @@ def test_pls():
                               err_msg="rotation on X failed")
     assert_array_almost_equal(Yr, plsca.y_scores_,
                               err_msg="rotation on Y failed")
+
+    # Check that inverse_transform works
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Xreconstructed = plsca.inverse_transform(Xr)
+    assert_array_almost_equal(Xreconstructed, X,
+                              err_msg="inverse_transform failed")
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
