@@ -427,7 +427,7 @@ boolean mask array or callable
             warnings.warn("Given feature/column names or counts do not match "
                           "the ones for the data given during fit. This will "
                           "fail from v0.24.",
-                          DeprecationWarning)
+                          FutureWarning)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:

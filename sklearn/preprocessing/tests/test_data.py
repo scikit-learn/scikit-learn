@@ -16,15 +16,15 @@ import pytest
 
 from sklearn.utils import gen_batches
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing._data import _handle_zeros_in_scale
