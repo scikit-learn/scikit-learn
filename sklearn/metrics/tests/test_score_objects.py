@@ -559,7 +559,7 @@ def test_deprecated_scorer():
     clf.fit(X_train, y_train)
 
     deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         deprecated_scorer(clf, X_test, y_test)
 
 
