@@ -231,6 +231,11 @@ def test_determine_key_type_error():
         _determine_key_type(1.0)
 
 
+def test_determine_key_type_slice_error():
+    with pytest.raises(TypeError, match="Only array-like or scalar are"):
+        _determine_key_type(slice(0, 2, 1), accept_slice=False)
+
+
 def _convert_container(container, constructor_name, columns_name=None):
     if constructor_name == 'list':
         return list(container)

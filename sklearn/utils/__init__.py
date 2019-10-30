@@ -223,13 +223,15 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
-def _determine_key_type(key):
+def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
     Parameters
     ----------
     key : scalar, slice or array-like
         The key from which we want to infer the data type.
+    accept_slice : bool, default=True
+        Whether or not to raise an error if the key is a slice.
 
     Returns
     -------
@@ -252,6 +254,11 @@ def _determine_key_type(key):
         except KeyError:
             raise ValueError(err_msg)
     if isinstance(key, slice):
+        if not accept_slice:
+            raise TypeError(
+                'Only array-like or scalar are supported. '
+                'A Python slice was given.'
+            )
         if key.start is None and key.stop is None:
             return None
         key_start_type = _determine_key_type(key.start)

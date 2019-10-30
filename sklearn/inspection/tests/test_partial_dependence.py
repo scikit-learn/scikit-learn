@@ -343,8 +343,8 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
 @pytest.mark.parametrize(
     "with_dataframe, err_msg",
-    [(True, "a column name or an integer column indice"),
-     (False, "an integer column indice or an array-like")]
+    [(True, "Only array-like or scalar are supported"),
+     (False, "Only array-like or scalar are supported")]
 )
 def test_partial_dependence_slice_error(with_dataframe, err_msg):
     X, y = make_classification(random_state=0)
@@ -353,7 +353,7 @@ def test_partial_dependence_slice_error(with_dataframe, err_msg):
         X = pd.DataFrame(X)
     estimator = LogisticRegression().fit(X, y)
 
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(TypeError, match=err_msg):
         partial_dependence(estimator, X, features=slice(0, 2, 1))
 
 
