@@ -285,6 +285,11 @@ Changelog
   by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Adds ``passthrough`` to :class: `ensemble.StackingClassifier`
+  and :class: `ensemble.StackingRegressor` allowing for the original dataset
+  to be used in the final estimator.
+  :pr:`15138` by :user:`Jon Cusick <jcusick13>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
