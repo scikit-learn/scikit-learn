@@ -73,8 +73,11 @@ this method has a cost of
 
 .. _ridge_regression:
 
-Ridge Regression
-================
+Ridge regression and classification
+===================================
+
+Regression
+----------
 
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
@@ -110,6 +113,34 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
+
+Classification
+--------------
+
+The :class:`Ridge` regressor has a classifier variant:
+:class:`RidgeClassifier`. This classifier first converts binary targets to
+``{-1, 1}`` and then treats the problem as a regression task, optimizing the
+same objective as above. The predicted class corresponds to the sign of the
+regressor's prediction. For multiclass classification, the problem is
+treated as multi-output regression, and the predicted class corresponds to
+the output with the highest value.
+
+It might seem questionable to use a (penalized) Least Squares loss to fit a
+classification model instead of the more traditional logistic or hinge
+losses. However in practice all those models can lead to similar
+cross-validation scores in terms of accuracy or precision/recall, while the
+penalized least squares loss used by the :class:`RidgeClassifier` allows for
+a very different choice of the numerical solvers with distinct computational
+performance profiles.
+
+The :class:`RidgeClassifier` can be significantly faster than e.g.
+:class:`LogisticRegression` with a high number of classes, because it is
+able to compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
+
+This classifier is sometimes referred to as a `Least Squares Support Vector
+Machines
+<https://en.wikipedia.org/wiki/Least-squares_support-vector_machine> `_ with
+a linear kernel.
 
 .. topic:: Examples:
 

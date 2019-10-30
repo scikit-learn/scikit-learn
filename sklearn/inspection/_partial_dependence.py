@@ -644,7 +644,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     if fig is not None:
         warnings.warn("The fig parameter is deprecated in version "
                       "0.22 and will be removed in version 0.24",
-                      DeprecationWarning)
+                      FutureWarning)
         fig.clear()
         ax = fig.gca()
 

@@ -1423,7 +1423,7 @@ def test_group_kfold():
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
+        warnings.simplefilter("ignore", FutureWarning)
         for group in np.unique(groups):
             assert len(np.unique(folds[groups == group])) == 1
 
@@ -1590,6 +1590,6 @@ def test_leave_p_out_empty_trainset():
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
     # TODO 0.24: raise a ValueError instead of a warning
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)

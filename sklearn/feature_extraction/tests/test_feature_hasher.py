@@ -144,7 +144,7 @@ def test_hasher_zeros():
     assert X.data.shape == (0,)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=FutureWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 
