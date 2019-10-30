@@ -139,8 +139,8 @@ if __name__ == "__main__":
     import_path_sections = args.import_path.split(".")
     # When applied to classes, detect class method. For functions
     # method = None.
-    # TODO: this detection can be improved. Currently we assume that we have class
-    # methods if the second path element before last is in camel case.
+    # TODO: this detection can be improved. Currently we assume that we have
+    # class # methods if the second path element before last is in camel case.
     if len(import_path_sections) >= 2 and re.match(
         r"(?:[A-Z][a-z]*)+", import_path_sections[-2]
     ):
