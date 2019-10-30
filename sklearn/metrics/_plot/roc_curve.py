@@ -1,5 +1,3 @@
-import numpy as np
-
 from .. import auc
 from .. import roc_curve
 
@@ -125,8 +123,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     pos_label : int or str, default=None
         Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        By default, pos_label is inferred automatically.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -194,15 +191,8 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
             raise ValueError("Estimator should solve a "
                              "binary classification problem")
         y_pred = y_pred[:, 1]
-    # infer pos_label automatically
-    # the default definition is consistent with brier_score_loss
-    labels = np.unique(y)
     if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
-        else:
-            pos_label = labels[1]
+        pos_label = estimator.classes_[1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
