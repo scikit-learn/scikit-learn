@@ -49,9 +49,11 @@ def _grid_from_X(X, percentiles, grid_resolution):
     ----------
     X : ndarray, shape (n_samples, n_target_features)
         The data
+
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
+
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
         feature.
@@ -61,6 +63,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     grid : ndarray, shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
+
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
         array ``values[j]`` is either ``grid_resolution``, or the number of
@@ -191,13 +194,16 @@ def partial_dependence(estimator, X, features, response_method='auto',
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
+
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
+
     features : array-like of {int, str}
-        The target features for which the partial dependency should be
-        computed.
+        The feature (e.g. `[0]`) or pair of interacting features
+        (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
@@ -207,12 +213,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
+
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
+
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the grid, for each target
         feature.
+
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
@@ -224,7 +233,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
           but is more efficient in terms of speed.
           With this method, ``X`` is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the ``init`` predictor of
           the boosting process, which may lead to incorrect values (see
           warning below). With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -256,6 +265,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         regression. For classical regression and binary classification
         ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
         ``values[j]``.
+
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
         is a cartesian product of the arrays in ``values``. ``len(values) ==
@@ -423,6 +433,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
+
     X : {array-like or dataframe} of shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
@@ -481,7 +492,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the ``init`` predictor of
           the boosting process, which may lead to incorrect values (see
           warning below. With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -520,7 +531,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
-            and a grid of partial depedendence plots will be drawn within
+            and a grid of partial dependence plots will be drawn within
             these bounds. The `n_cols` parameter controls the number of
             columns in the grid.
         - If an array-like of axes are passed in, the partial dependence
@@ -581,12 +592,15 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         # regression and binary classification
         target_idx = 0
 
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
     X = check_array(X)
     n_features = X.shape[1]
 
     # convert feature_names to list
     if feature_names is None:
-        # if feature_names is None, use feature indices as name
+        # if feature_names is None, use feature indices as name for NumPy array
+        # or the column names for a dataframe
         feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
@@ -709,7 +723,7 @@ class PartialDependenceDisplay:
         plot a two-way partial dependence curve as a contour plot.
 
     feature_names : list of str
-        Feature names corrsponding to the indicies in ``features``.
+        Feature names corresponding to the indices in ``features``.
 
     target_idx : int
 
@@ -777,7 +791,7 @@ class PartialDependenceDisplay:
         ----------
         ax : Matplotlib axes or array-like of Matplotlib axes, default=None
             - If a single axis is passed in, it is treated as a bounding axes
-                and a grid of partial depedendence plots will be drawn within
+                and a grid of partial dependence plots will be drawn within
                 these bounds. The `n_cols` parameter controls the number of
                 columns in the grid.
             - If an array-like of axes are passed in, the partial dependence
