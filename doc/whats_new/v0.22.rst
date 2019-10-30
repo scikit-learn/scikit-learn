@@ -14,14 +14,17 @@ refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
 
-Cleaning of the public API
---------------------------
+Clear definition of the public API
+----------------------------------
 
 Scikit-learn has a public API, and a private API.
 
-Any change to the public API is subject to a deprecation cycle of two minor
-versions. The private API isn't publicly documented and isn't subject to any
-deprecation cycle, so users should not rely on it.
+We do our best not to break the public API, and to only introduce
+backward-compatible changes that do not require any user action. However, in
+cases where that's not possible, any change to the public API is subject to
+a deprecation cycle of two minor versions. The private API isn't publicly
+documented and isn't subject to any deprecation cycle, so users should not
+rely on its stability.
 
 Whether a tool is private or public depends on whether you can import it
 without a leading underscore in the import path. For example
