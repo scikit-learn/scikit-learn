@@ -66,14 +66,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    importance_getter : string, attrgetter or callable, optional
-                        (default='auto')
+    importance_getter : string or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
-        Also accpets a string that specifying an attribute name/path
-        (implemented with attrgetter) for extracting feature importance.
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
         If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -196,11 +196,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Get coefs
             if callable(self.importance_getter):
                 coefs = self.importance_getter(estimator)
-            elif isinstance(self.importance_getter, attrgetter):
-                try:
-                    coefs = self.importance_getter(estimator)
-                except AttributeError:
-                    continue
+            elif self.importance_getter != 'auto':
+                coefs = attrgetter(self.importance_getter)(estimator)
             elif self.importance_getter == 'auto':
                 if hasattr(estimator, 'coef_'):
                     coefs = estimator.coef_
@@ -212,8 +209,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                                        '"coef_" or "feature_importances_" '
                                        'attributes')
             else:
-                raise ValueError('importance_getter has to be "auto", '
-                                 '`getattr` or "callable"')
+                raise ValueError('importance_getter has to be string '
+                                 'or `callable`')
 
             # Get ranks
             if coefs.ndim > 1:
@@ -380,6 +377,15 @@ class RFECV(RFE):
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
+    importance_getter : string or callable, optional (default='auto')
+        If 'auto', uses the feature importance either through a ``coef_``
+        attribute or ``feature_importances_`` attribute of estimator.
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
+
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -472,10 +478,12 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
+    def __init__(self, estimator, step=1, min_features_to_select=1,
+                 importance_getter='auto', cv=None,
                  scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step
+        self.importance_getter = importance_getter
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
@@ -519,6 +527,7 @@ class RFECV(RFE):
         # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=self.min_features_to_select,
+                  importance_getter=self.importance_getter,
                   step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
@@ -553,6 +562,7 @@ class RFECV(RFE):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step,
+                  importance_getter=self.importance_getter,
                   verbose=self.verbose)
 
         rfe.fit(X, y)

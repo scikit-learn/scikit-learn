@@ -375,9 +375,11 @@ def test_rfe_cv_groups():
 
 
 @pytest.mark.parametrize('importance_getter',
-                         (lambda est: est.regressor_.coef_,
-                          attrgetter('regressor_.coef_')))
-def test_rfe_w_target_transform(importance_getter):
+                         [attrgetter('regressor_.coef_'),
+                          'regressor_.coef_'])
+@pytest.mark.parametrize('model',
+                         [RFE, RFECV])
+def test_w_target_transform(importance_getter, model):
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = SVR(kernel="linear")
@@ -386,7 +388,7 @@ def test_rfe_w_target_transform(importance_getter):
                                                func=np.log,
                                                inverse_func=np.exp)
 
-    selector = RFE(log_estimator, importance_getter=importance_getter)
+    selector = model(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
     assert sel.support_.sum() == n_features // 2
 
@@ -402,12 +404,15 @@ def test_importance_getter_param_validation():
     assert_raises(RuntimeError, RFE(log_estimator).fit, X, y)
 
     # when provided with string value other than 'auto'
-    assert_raises(ValueError,
+    assert_raises(AttributeError,
                   RFE(log_estimator, importance_getter='chk_atr').fit,
                   X, y)
 
-    # when provided with wrong attrgetter
+    # when provided with wrong callabe
+    def imp_fetcher(estimator):
+        return estimator.feature_imp
+
     assert_raises(AttributeError,
-                  RFE(log_estimator,
-                      importance_getter=attrgetter('est.coef')).fit,
+                  RFECV(log_estimator,
+                        importance_getter=imp_fetcher).fit,
                   X, y)
