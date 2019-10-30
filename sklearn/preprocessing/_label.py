@@ -140,6 +140,10 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     Uses pure python method for object dtype, and numpy method for
     all other dtypes.
 
+    If values is a pandas Series with a categorical dtype, then we assume that
+    the dtype is checked to be the same as fit time and no missing values.
+
+
     Parameters
     ----------
     values : array
@@ -170,6 +174,12 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff, valid_mask
         else:
             return diff
+    elif values.dtype.name == "category":
+        # Assume there are no missing vlaues in categorical
+        diff = []
+        if return_mask:
+            return diff, np.ones_like(len(values), dtype=bool)
+        return diff
     else:
         unique_values = np.unique(values)
         diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
