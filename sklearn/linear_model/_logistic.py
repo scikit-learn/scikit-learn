@@ -1447,7 +1447,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.l1_ratio = l1_ratio
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the model according to the given training data.
+        """
+        Fit the model according to the given training data.
 
         Parameters
         ----------
@@ -1467,7 +1468,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        self : object
+        self
+            Fitted estimator.
 
         Notes
         -----

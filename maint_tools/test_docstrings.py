@@ -6,9 +6,12 @@ from sklearn.utils.testing import all_estimators
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-# List of whitelisted modules and methods; regexp is supported.
-#
-DOCSTRING_WHITELIST = [r"LogisticRegression$"]
+# List of whitelisted modules and methods; regexp are supported.
+DOCSTRING_WHITELIST = [
+    "LogisticRegression$",
+    "LogisticRegression.fit",
+    "LogisticRegression.decision_function",
+]
 
 
 def get_all_methods():
@@ -40,6 +43,7 @@ def filter_errors(errors, method):
             continue
         yield code, message
 
+
 def repr_errors(res, estimator, method: str) -> str:
     """Pretty print original docstring and the obtained errors"""
     if method is None:
@@ -53,13 +57,12 @@ def repr_errors(res, estimator, method: str) -> str:
 
     msg = "\n\n" + "\n\n".join(
         [
-            res['file'],
+            res["file"],
             obj_name + str(obj_signature),
             res["docstring"],
             "# Errors",
             "\n".join(
-                " - {}: {}".format(code, message)
-                for code, message in res['errors']
+                " - {}: {}".format(code, message) for code, message in res["errors"]
             ),
         ]
     )
@@ -67,7 +70,7 @@ def repr_errors(res, estimator, method: str) -> str:
 
 
 @pytest.mark.parametrize("estimator, method", get_all_methods())
-def test_docstring(estimator, method):
+def test_docstring(estimator, method, request):
     base_import_path = estimator.__module__
     import_path = [base_import_path, estimator.__name__]
     if method is not None:
@@ -76,13 +79,14 @@ def test_docstring(estimator, method):
     import_path = ".".join(import_path)
 
     if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
-        pytest.xfail(reason="TODO")
+        request.applymarker(pytest.mark.xfail(
+            run=False, reason="TODO pass numpydoc validation"))
 
     res = numpydoc_validation.validate(import_path)
 
-    res['errors'] = list(filter_errors(res["errors"], method))
+    res["errors"] = list(filter_errors(res["errors"], method))
 
-    if res['errors']:
+    if res["errors"]:
         msg = repr_errors(res, estimator, method)
 
         raise ValueError(msg)
