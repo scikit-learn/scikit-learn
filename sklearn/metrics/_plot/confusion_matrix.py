@@ -4,7 +4,6 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
-from ...utils.multiclass import unique_labels
 from ...base import is_classifier
 
 
@@ -27,10 +26,10 @@ class ConfusionMatrixDisplay:
 
     Attributes
     ----------
-    im_: matplotlib AxesImage
+    im_ : matplotlib AxesImage
         Image representing the confusion matrix.
 
-    text_: ndarray of shape (n_classes, n_classes), dtype=matplotlib Text, or \
+    text_ : ndarray of shape (n_classes, n_classes), dtype=matplotlib Text, or \
            `None`
         Array of matplotlib axes. `None` if `include_values` is false.
 
@@ -109,7 +108,7 @@ class ConfusionMatrixDisplay:
                ylabel="True label",
                xlabel="Predicted label")
 
-        ax.set_ylim((-0.5, n_classes - 0.5))
+        ax.set_ylim((n_classes - 0.5, -0.5))
         plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
@@ -175,7 +174,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
 
     Returns
     -------
-    display: :class:`~sklearn.metrics.ConfusionMatrixDisplay`
+    display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
     """
     check_matplotlib_support("plot_confusion_matrix")
 
@@ -190,7 +189,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = unique_labels(y_true, y_pred)
+            display_labels = estimator.classes_
         else:
             display_labels = labels
 
