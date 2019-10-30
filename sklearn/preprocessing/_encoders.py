@@ -56,7 +56,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             if all(fit_cats != trans_cats):
                 raise ValueError(msg)
 
-    def _check_X(self, X):
+    def _check_X(self, X, is_fitting):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -71,7 +71,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         """
         if self.categories == 'dtypes':
             X_dtypes = getattr(X, "dtypes", None)
-            if hasattr(self, "_X_fit_dtypes"):  # fitted
+            if not is_fitting:  # transform
                 self._check_categories_dtypes_equal(self._X_fit_dtypes,
                                                     X_dtypes)
             else:
@@ -114,7 +114,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X, is_fitting=True)
 
         if self.categories not in ('auto', 'dtypes'):
             if len(self.categories) != n_features:
@@ -125,13 +125,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            if self.categories == 'auto':
+            if self.categories in ('auto', 'dtypes'):
                 cats = _encode(Xi)
-            elif self.categories == 'dtypes':
-                if Xi.dtype.name == 'category':
-                    cats = Xi.cat.categories.values.copy()
-                else:
-                    cats = _encode(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -147,7 +142,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             self.categories_.append(cats)
 
     def _transform(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X, is_fitting=False)
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
         X_mask = np.ones((n_samples, n_features), dtype=np.bool)
@@ -165,7 +160,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             if self.categories == 'dtypes' and Xi.dtype.name == 'category':
                 # categorical dtypes contain no unknown values
-                encoded = Xi.cat.codes
+                _, encoded = _encode(Xi, self.categories_[i], encode=True)
             else:
                 diff, valid_mask = _encode_check_unknown(Xi,
                                                          self.categories_[i],

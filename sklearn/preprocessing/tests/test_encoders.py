@@ -6,7 +6,6 @@ import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -651,7 +650,7 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
         'col_str': ['a', 'b', 'b', 'a'],
         'col_int': [3, 2, 1, 2]}, columns=['col_str', 'col_int'])
 
-    enc_no_categories = clone(encoder).fit(X_df_orig)
+    enc_no_categories = encoder.fit(X_df_orig)
 
     X_df0 = X_df_orig.copy()
     X_df0['col_int'] = X_df0['col_int'].astype('category')
@@ -671,7 +670,7 @@ def test_encoder_pd_error_mismatch_dtype(encoder):
         enc_no_categories.transform(X_df1)
 
     # Train encoder with categoricals
-    enc = clone(encoder).fit(X_df1)
+    enc = encoder.fit(X_df1)
 
     # col_str dtype not ordered correctly
     X_df2 = X_df_orig.copy()

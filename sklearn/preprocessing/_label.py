@@ -71,6 +71,16 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
+def _encode_categorical(values, uniques=None, encode=False):
+    """Encode values of a pandas Series with a categorical dtype"""
+    if uniques is None:
+        uniques = values.cat.categories.values.copy()
+    if encode:
+        encoded = values.cat.codes
+        return uniques, encoded
+    return uniques
+
+
 def _encode(values, uniques=None, encode=False, check_unknown=True):
     """Helper function to factorize (find uniques) and encode values.
 
@@ -81,9 +91,12 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
     the case. The calling method needs to ensure this for all non-object
     values.
 
+    If values is a pandas Series with a categorical dtype then the encoding
+    will be infered from the series.
+
     Parameters
     ----------
-    values : array
+    values : array or pandas Series
         Values to factorize or encode.
     uniques : array, optional
         If passed, uniques are not determined from passed values (this
@@ -113,6 +126,8 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         except TypeError:
             raise TypeError("argument must be a string or number")
         return res
+    elif values.dtype.name == "category":
+        return _encode_categorical(values, uniques=uniques, encode=encode)
     else:
         return _encode_numpy(values, uniques, encode,
                              check_unknown=check_unknown)
