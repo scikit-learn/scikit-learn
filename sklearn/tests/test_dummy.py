@@ -5,12 +5,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -761,6 +761,6 @@ def test_dtype_of_classifier_probas(strategy):
 def test_outputs_2d_deprecation(Dummy):
     X = [[1, 2]]
     y = [0]
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="will be removed in version 0.24"):
         Dummy().fit(X, y).outputs_2d_

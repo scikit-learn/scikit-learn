@@ -21,7 +21,7 @@ from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
-from .base import SelectorMixin
+from ._base import SelectorMixin
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
