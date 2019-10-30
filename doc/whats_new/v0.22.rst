@@ -147,6 +147,12 @@ Changelog
   exposes an ``n_iter_`` indicating the maximum number of iterations performed
   on each seed. :pr:`15120` by `Adrin Jalali`_.
 
+- |Fix| :class:`cluster.AgglomerativeClustering` and
+  :class:`cluster.FeatureAgglomeration` now raise an error if
+  `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
+  :user:`mthorrell`.
+
+
 :mod:`sklearn.compose`
 ......................
 
@@ -372,14 +378,6 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
-:mod:`sklearn.hierarchical`
-...........................
-
-- |Fix| :class:`hierarchical.AgglomerativeClustering` and
-  :class:`hierarchical.FeatureAgglomeration` now raise an error if
-  `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
-  :user:`mthorrell`.
-
 :mod:`sklearn.impute`
 .....................
 
@@ -561,8 +559,8 @@ Changelog
   :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 - |Enhancement| 'roc_auc_ovr_weighted' and 'roc_auc_ovo_weighted' can now be
-  used as the `scoring` parameter of model-selection tools. :pr:`14417` by
-  `Thomas Fan`_.
+  used as the :term:`scoring` parameter of model-selection tools.
+  :pr:`14417` by `Thomas Fan`_.
 
 :mod:`sklearn.model_selection`
 ..............................
