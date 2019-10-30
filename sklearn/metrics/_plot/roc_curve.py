@@ -121,8 +121,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         Input values.
 
     y : array-like of shape (n_samples,)
-        Target values. The class with greater label is regarded as
-        positive class.
+        Target values.
 
     pos_label : int or str, default=None
         Label of the positive class.
@@ -197,14 +196,15 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         y_pred = y_pred[:, 1]
     # infer pos_label automatically
     # the default definition is consistent with brier_score_loss
-    labels = np.unique(y_true)
+    labels = np.unique(y)
     if pos_label is None:
         if (np.array_equal(labels, [0]) or
                 np.array_equal(labels, [-1])):
             pos_label = 1
         else:
-            pos_label = y_true.max()
-    fpr, tpr, _ = roc_curve(y, y_pred, sample_weight=sample_weight,
+            pos_label = labels[1]
+    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+                            sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
     viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
