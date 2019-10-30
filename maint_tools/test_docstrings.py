@@ -58,7 +58,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     estimator : {estimator, None}
         estimator object or None
     method : str
-        if estimator is not None, either the method name or None. 
+        if estimator is not None, either the method name or None.
 
     Returns
     -------
