@@ -14,26 +14,25 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.metrics.cluster.supervised import adjusted_rand_score
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                           _fix_connectivity)
-from sklearn.cluster.hierarchical import linkage_tree
+                                           linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors.graph import kneighbors_graph
+from sklearn.neighbors import kneighbors_graph
 from sklearn.cluster._hierarchical_fast import average_merge, max_merge
 from sklearn.utils._fast_dict import IntFloatDict
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -735,6 +734,6 @@ def test_n_components_deprecation():
 
     match = ("``n_components_`` attribute was deprecated "
              "in favor of ``n_connected_components_``")
-    with pytest.warns(DeprecationWarning, match=match):
+    with pytest.warns(FutureWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_

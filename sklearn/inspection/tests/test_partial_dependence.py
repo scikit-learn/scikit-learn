@@ -7,7 +7,7 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
-from sklearn.inspection.partial_dependence import (
+from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
@@ -30,8 +30,8 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 
 
 # toy sample
