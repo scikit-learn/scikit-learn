@@ -11,7 +11,7 @@ from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
 
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.feature_selection.univariate_selection import _chisquare
+from sklearn.feature_selection._univariate_selection import _chisquare
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 

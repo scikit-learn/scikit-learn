@@ -248,6 +248,21 @@ _DEPRECATED_MODULES = [
     ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
      'LabelEncoder'),
 
+    ('_base', 'sklearn.feature_selection.base', 'sklearn.feature_selection',
+     'SelectorMixin'),
+    ('_from_model', 'sklearn.feature_selection.from_model',
+     'sklearn.feature_selection', 'SelectFromModel'),
+    ('_mutual_info', 'sklearn.feature_selection.mutual_info',
+     'sklearn.feature_selection', 'mutual_info_regression'),
+    ('_rfe', 'sklearn.feature_selection.rfe',
+     'sklearn.feature_selection.rfe', 'RFE'),
+    ('_univariate_selection',
+     'sklearn.feature_selection.univariate_selection',
+     'sklearn.feature_selection', 'chi2'),
+    ('_variance_threshold',
+     'sklearn.feature_selection.variance_threshold',
+     'sklearn.feature_selection', 'VarianceThreshold'),
+
     ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
      'all_estimators'),
 ]

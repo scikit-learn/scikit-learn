@@ -1729,7 +1729,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 def test_logistic_regression_path_deprecation():
 
-    assert_warns_message(DeprecationWarning,
+    assert_warns_message(FutureWarning,
                          "logistic_regression_path was deprecated",
                          logistic_regression_path, X, Y1)
 

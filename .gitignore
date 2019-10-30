@@ -223,3 +223,10 @@ sklearn/semi_supervised/label_propagation.py
 
 sklearn/preprocessing/data.py
 sklearn/preprocessing/label.py
+
+sklearn/feature_selection/base.py
+sklearn/feature_selection/from_model.py
+sklearn/feature_selection/mutual_info.py
+sklearn/feature_selection/rfe.py
+sklearn/feature_selection/univariate_selection.py
+sklearn/feature_selection/variance_threshold.py

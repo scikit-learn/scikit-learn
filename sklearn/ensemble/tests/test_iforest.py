@@ -320,7 +320,7 @@ def test_iforest_chunks_works2(
 def test_iforest_deprecation():
     iforest = IsolationForest(behaviour='new')
     warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         iforest.fit(iris.data)
 
 

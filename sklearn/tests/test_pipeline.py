@@ -1188,10 +1188,10 @@ def test_feature_union_fit_params():
 def test_feature_union_warns_with_none():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         union = FeatureUnion([('multi1', None), ('multi2', Mult())])
 
     X = [[1, 2, 3], [4, 5, 6]]
 
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         union.fit_transform(X)
