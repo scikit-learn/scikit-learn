@@ -767,12 +767,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
-    This classifier first converts binary targets to ``{-1, 1}`` and then
-    treats the problem as a regression task with a
-    :class:`~sklearn.linear_model.Ridge` regressor.
-
-    Read more about Ridge Regression in the :ref:`User Guide
-    <ridge_regression>`.
+    Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
     ----------
