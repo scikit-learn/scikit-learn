@@ -3,7 +3,7 @@ from inspect import signature
 from typing import Optional
 
 import pytest
-from sklearn.utils.testing import all_estimators
+from sklearn.utils._testing import all_estimators
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
