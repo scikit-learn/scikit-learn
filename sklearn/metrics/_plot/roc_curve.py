@@ -185,6 +185,17 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
         if prediction_method is None:
             raise ValueError('response methods not defined')
 
+    if (pos_label is not None
+            and hasattr(estimator, "classes_")
+            and pos_label not in estimator.classes_):
+        estimator_name = estimator.__class__.__name__
+        expected_classes = set(estimator.classes_)
+        raise ValueError("pos_label={} is not a valid class label for {}. "
+                         "Expected one of {}."
+                         .format(repr(pos_label),
+                                 estimator_name,
+                                 expected_classes))
+
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:

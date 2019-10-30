@@ -532,7 +532,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
              np.array_equal(classes, [0]) or
              np.array_equal(classes, [-1]) or
              np.array_equal(classes, [1]))):
-        raise ValueError("Data is not binary and pos_label is not specified")
+        raise ValueError("y_true takes value in {classes} and pos_label is not "
+                         "specified: either make y_true take integer value in "
+                         "{{0, 1}} or {{-1, 1}} or pass pos_label explicitly."
+                         .format(classes=set(classes)))
     elif pos_label is None:
         pos_label = 1.
 

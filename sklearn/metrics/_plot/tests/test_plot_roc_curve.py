@@ -93,3 +93,24 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.line_.get_label() == expected_label
     assert viz.ax_.get_ylabel() == "True Positive Rate"
     assert viz.ax_.get_xlabel() == "False Positive Rate"
+
+
+def test_invalid_pos_label(data_binary):
+    X, y = data_binary
+    lr = LogisticRegression()
+    lr.fit(X, y)
+    msg = ("pos_label='invalid' is not a valid class label for "
+           "LogisticRegression. Expected one of {0, 1}.")
+    with pytest.raises(ValueError, match=msg):
+        plot_roc_curve(lr, X, y, pos_label="invalid")
+
+
+def test_implicit_pos_label(data_binary):
+    X, y = data_binary
+    y = y.astype(str)
+    lr = LogisticRegression()
+    lr.fit(X, y)
+    msg = ("make y_true take integer value in {0, 1} or {-1, 1}"
+           " or pass pos_label explicitly.")
+    with pytest.raises(ValueError, match=msg):
+        plot_roc_curve(lr, X, y)
