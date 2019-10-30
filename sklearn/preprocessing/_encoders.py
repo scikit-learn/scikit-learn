@@ -162,33 +162,28 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
+            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+                                                     return_mask=True)
 
-            is_category = (self.categories == 'dtypes' and
-                           Xi.dtype.name == 'category')
-            # categories without missing values do not have unknown values
-            if not is_category:
-                diff, valid_mask = _encode_check_unknown(Xi,
-                                                         self.categories_[i],
-                                                         return_mask=True)
-                if not np.all(valid_mask):
-                    if handle_unknown == 'error':
-                        msg = ("Found unknown categories {0} in column {1}"
-                               " during transform".format(diff, i))
-                        raise ValueError(msg)
+            if not np.all(valid_mask):
+                if handle_unknown == 'error':
+                    msg = ("Found unknown categories {0} in column {1}"
+                           " during transform".format(diff, i))
+                    raise ValueError(msg)
+                else:
+                    # Set the problematic rows to an acceptable value and
+                    # continue `The rows are marked `X_mask` and will be
+                    # removed later.
+                    X_mask[:, i] = valid_mask
+                    # cast Xi into the largest string type necessary
+                    # to handle different lengths of numpy strings
+                    if (self.categories_[i].dtype.kind in ('U', 'S')
+                            and self.categories_[i].itemsize > Xi.itemsize):
+                        Xi = Xi.astype(self.categories_[i].dtype)
                     else:
-                        # Set the problematic rows to an acceptable value and
-                        # continue `The rows are marked `X_mask` and will be
-                        # removed later.
-                        X_mask[:, i] = valid_mask
-                        # cast Xi into the largest string type necessary
-                        # to handle different lengths of numpy strings
-                        if (self.categories_[i].dtype.kind in ('U', 'S') and
-                                self.categories_[i].itemsize > Xi.itemsize):
-                            Xi = Xi.astype(self.categories_[i].dtype)
-                        else:
-                            Xi = Xi.copy()
+                        Xi = Xi.copy()
 
-                        Xi[~valid_mask] = self.categories_[i][0]
+                    Xi[~valid_mask] = self.categories_[i][0]
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
             _, encoded = _encode(Xi, self.categories_[i], encode=True,
