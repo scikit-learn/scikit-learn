@@ -27,33 +27,31 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
     """
 
-    def _check_categories_dtypes_equal(self, fit_dtypes, trans_dtypes):
-        """Return True if the categorical dtypes are equal."""
+    def _check_categories_dtypes_equal(self, fit_cat_dict, trans_dtypes):
+        """Return True if the categorical dtypes in fit_cat_dtypes are in
+        trans_dtypes."""
         msg = "categorical dtypes in X must match the dtypes used when fitting"
 
         # one is None and the other is not
-        if ((fit_dtypes is None and trans_dtypes is not None) or
-                (fit_dtypes is not None and trans_dtypes is None)):
+        if ((fit_cat_dict is None and trans_dtypes is not None) or
+                (fit_cat_dict is not None and trans_dtypes is None)):
             raise ValueError(msg)
 
-        if len(fit_dtypes) != len(trans_dtypes):
+        trans_dtypes_dict = {name: dtype for name, dtype in
+                             trans_dtypes.items() if dtype.name == 'category'}
+
+        # names do not match
+        if set(trans_dtypes_dict) ^ set(fit_cat_dict):
             raise ValueError(msg)
 
-        for fit_dtype, trans_dtype in zip(fit_dtypes, trans_dtypes):
-            fit_cats = getattr(fit_dtype, 'categories', None)
-            trans_cats = getattr(trans_dtype, 'categories', None)
-
-            # not categories
-            if fit_cats is None and trans_cats is None:
-                continue
-
-            # one is category and the other is not
-            if ((fit_cats is not None and trans_cats is None) or
-                    (fit_cats is None and trans_cats is not None)):
+        for name, fit_cat_dtype in fit_cat_dict.items():
+            try:
+                trans_cats = trans_dtypes[name].categories
+            except (AttributeError, KeyError):
                 raise ValueError(msg)
 
             # both are categories and are not equal
-            if all(fit_cats != trans_cats):
+            if all(fit_cat_dtype.categories != trans_cats):
                 raise ValueError(msg)
 
     def _check_X(self, X, is_fitting):
@@ -72,10 +70,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if self.categories == 'dtypes':
             X_dtypes = getattr(X, "dtypes", None)
             if not is_fitting:  # transform
-                self._check_categories_dtypes_equal(self._X_fit_dtypes,
-                                                    X_dtypes)
+                self._check_categories_dtypes_equal(
+                    self._X_fit_cat_dict, X_dtypes)
             else:
-                self._X_fit_dtypes = X_dtypes
+                if X_dtypes is not None:
+                    # only remember categorical dtypes
+                    self._X_fit_cat_dict = {
+                        name: dtype for name, dtype in X_dtypes.items()
+                        if dtype.name == 'category'}
+                else:
+                    # not a pandas dataframe
+                    self._X_fit_cat_dict = None
 
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
