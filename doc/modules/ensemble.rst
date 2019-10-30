@@ -941,6 +941,31 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
+Sample Weight Support
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` sample weights during :term:`fit`.
+
+The following toy example demonstrates how the model ignores the samples with
+zero sample weights:
+
+    >>> X = [[1, 0],
+    ...      [1, 0],
+    ...      [1, 0],
+    ...      [0, 1]]
+    >>> y = [0, 0, 1, 0]
+    >>> # ignore the first 2 training samples by setting their weight to 0
+    >>> sample_weight = [0, 0, 1, 1]
+    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+    >>> gb.fit(X, y, sample_weight=sample_weight)
+    HistGradientBoostingClassifier(...)
+    >>> gb.predict([[1, 0]])
+    array([1])
+
+As you can see, the `[1, 0]` is comfortably classified as `1` since the first
+two samples are ignored due to their sample weights.
+
 Low-level parallelism
 ---------------------
 
