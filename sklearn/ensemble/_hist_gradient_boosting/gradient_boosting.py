@@ -111,7 +111,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # Do not create unit sample weights by default to later skip some
         # computation
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=np.float64)
 
         rng = check_random_state(self.random_state)
 
@@ -474,8 +475,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if is_classifier(self):
             y_small_train = self.classes_[y_small_train.astype(int)]
 
-        # TODO: handle when _scorer doesn't accept sample_weight, but
-        # sample_weight is provided
         if sample_weight_small_train is None:
             self.train_score_.append(
                 self.scorer_(self, X_binned_small_train, y_small_train)

@@ -567,7 +567,8 @@ def test_sum_hessians_are_sample_weight(loss_name):
     rng = np.random.RandomState(0)
     n_samples = 1000
     n_features = 2
-    X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=rng)
+    X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                           random_state=rng)
     bin_mapper = _BinMapper()
     X_binned = bin_mapper.fit_transform(X)
 
@@ -597,5 +598,5 @@ def test_sum_hessians_are_sample_weight(loss_name):
 
     for feature_idx in range(n_features):
         for bin_idx in range(bin_mapper.n_bins):
-                assert histograms[feature_idx][bin_idx]['sum_hessians'] == (
-                    pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
+            assert histograms[feature_idx][bin_idx]['sum_hessians'] == (
+                pytest.approx(sum_sw[feature_idx, bin_idx], rel=1e-5))
