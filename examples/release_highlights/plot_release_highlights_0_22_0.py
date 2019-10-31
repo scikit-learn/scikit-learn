@@ -28,18 +28,19 @@ or with conda::
 # Each sample's missing values are imputed using the mean value from
 # ``n_neighbors`` nearest neighbors found in the training set. Two samples are
 # close if the features that neither is missing are close.
-# Please note that by default, a euclidean distance metric
+# By default, a euclidean distance metric
 # that supports missing values,
-# :func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the nearest
+# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
 # neighbors.
 #
 # Read more in the :ref:`User Guide <knnimpute>`.
 
+import numpy as np
 from sklearn.impute import KNNImputer
-nan = float("NaN")
-X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+
+X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
 imputer = KNNImputer(n_neighbors=2)
-imputer.fit_transform(X)
+print(imputer.fit_transform(X))
 
 ##############################################################################
 # Permutation-based feature importance
