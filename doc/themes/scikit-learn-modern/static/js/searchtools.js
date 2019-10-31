@@ -8,8 +8,7 @@
  * :license: BSD, see LICENSE for details.
  *
  * CHANGELOG:
- * - Adjusts Search.htmlToText to remove img tags so that the images are not
- * loaded when searching
+ * - Removes ajax call to get context for each result
  * - Adjusts Search.query to remove duplicates in search results.
  * - Adjusts Scorer to rank objects higher.
  */
@@ -26,16 +25,16 @@ if (!Scorer) {
               score: function(result) {
                 return result[4];
               },
-              */
+        */
 
         // query matches the full name of an object
         objNameMatch: 20,
         // or matches in the last dotted part of the object name
-        objPartialMatch: 20,
+        objPartialMatch: 10,
         // Additive scores depending on the priority of the object
         objPrio: {
-            0: 10, // used to be importantResults
-            1: 15, // used to be objectResults
+            0: 15, // used to be importantResults
+            1: 10, // used to be objectResults
             2: -5
         }, // used to be unimportantResults
         //  Used when the priority is not in the mapping.
@@ -164,7 +163,6 @@ var Search = {
         var excluded = [];
         var hlterms = [];
         var tmp = splitQuery(query);
-        console.log(tmp);
         var objectterms = [];
         for (i = 0; i < tmp.length; i++) {
             if (tmp[i] !== "") {
@@ -305,26 +303,26 @@ var Search = {
                     listItem.slideDown(5, function () {
                         displayNextItem();
                     });
-                } else if (DOCUMENTATION_OPTIONS.HAS_SOURCE) {
-                    $.ajax({
-                        url:
-                            DOCUMENTATION_OPTIONS.URL_ROOT +
-                            item[0] +
-                            DOCUMENTATION_OPTIONS.FILE_SUFFIX,
-                        dataType: "text",
-                        complete: function (jqxhr, textstatus) {
-                            var data = jqxhr.responseText;
-                            if (data !== "" && data !== undefined) {
-                                listItem.append(
-                                    Search.makeSearchSummary(data, searchterms, hlterms)
-                                );
-                            }
-                            Search.output.append(listItem);
-                            listItem.slideDown(5, function () {
-                                displayNextItem();
-                            });
-                        }
-                    });
+                // } else if (DOCUMENTATION_OPTIONS.HAS_SOURCE) {
+                //     $.ajax({
+                //         url:
+                //             DOCUMENTATION_OPTIONS.URL_ROOT +
+                //             item[0] +
+                //             DOCUMENTATION_OPTIONS.FILE_SUFFIX,
+                //         dataType: "text",
+                //         complete: function (jqxhr, textstatus) {
+                //             var data = jqxhr.responseText;
+                //             if (data !== "" && data !== undefined) {
+                //                 listItem.append(
+                //                     Search.makeSearchSummary(data, searchterms, hlterms)
+                //                 );
+                //             }
+                //             Search.output.append(listItem);
+                //             listItem.slideDown(5, function () {
+                //                 displayNextItem();
+                //             });
+                //         }
+                //     });
                 } else {
                     // no source available, just display title
                     Search.output.append(listItem);
