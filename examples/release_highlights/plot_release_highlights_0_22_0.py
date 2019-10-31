@@ -12,7 +12,7 @@ refer to the :ref:`release notes <changes_0_22>`.
 
 To install the latest version (with pip)::
 
-    pip install -U scikit-learn
+    pip install --upgrade scikit-learn
 
 or with conda::
 
