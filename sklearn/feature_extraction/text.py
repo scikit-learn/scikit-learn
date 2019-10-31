@@ -1837,7 +1837,7 @@ class TfidfVectorizer(CountVectorizer):
             msg = ("'copy' param is unused and has been deprecated since "
                    "version 0.22. Backward compatibility for 'copy' will "
                    "be removed in 0.24.")
-            warnings.warn(msg, DeprecationWarning)
+            warnings.warn(msg, FutureWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 

@@ -761,6 +761,6 @@ def test_dtype_of_classifier_probas(strategy):
 def test_outputs_2d_deprecation(Dummy):
     X = [[1, 2]]
     y = [0]
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="will be removed in version 0.24"):
         Dummy().fit(X, y).outputs_2d_

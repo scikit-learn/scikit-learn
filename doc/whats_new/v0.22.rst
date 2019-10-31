@@ -13,6 +13,19 @@ For a short description of the main highlights of the release, please
 refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
+
+Deprecations: using ``FutureWarning`` from now on
+-------------------------------------------------
+
+When deprecating a feature, previous versions of scikit-learn used to raise
+a ``DeprecationWarning``. Since the ``DeprecationWarnings`` aren't shown by
+default by Python, scikit-learn needed to resort to a custom warning filter
+that would always show the warnings.
+
+This filter is now removed, and starting from 0.22 scikit-learn will show
+``FutureWarnings`` for deprecations. :pr:`15080` by `Nicolas Hug`_.
+
+
 Changed models
 --------------
 
@@ -192,9 +205,9 @@ Changelog
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
+  classifier or regressor.  :pr:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
+  :user:`Jon Cusick <jcusick13>`..
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -411,6 +424,10 @@ Changelog
   multi-core calculation of the neighbors graph. This parameter has no
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
