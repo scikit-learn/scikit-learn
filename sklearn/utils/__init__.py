@@ -1181,7 +1181,7 @@ def all_estimators(include_meta_estimators=None,
                         'feature_extraction._hashing' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=FutureWarning):
             module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)

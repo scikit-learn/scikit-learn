@@ -463,7 +463,7 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)
@@ -473,7 +473,7 @@ def test_check_estimator_clones():
             check_estimator(est)
         assert old_hash == joblib.hash(est)
 
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)

@@ -849,7 +849,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 warnings.warn("Using None as a transformer is deprecated "
                               "in version 0.22 and will be removed in "
                               "version 0.24. Please use 'drop' instead.",
-                              DeprecationWarning)
+                              FutureWarning)
                 continue
             if t == 'drop':
                 continue
