@@ -162,6 +162,8 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 # Note that ``estimators_`` are fitted on the full ``X`` while
 # ``final_estimator``_ is trained using cross-validated predictions of the
 # base estimators using ``cross_val_predict`.
+#
+# Read more in the :ref:`User Guide <stacking>`.
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import RandomForestClassifier
