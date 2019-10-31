@@ -32,6 +32,8 @@ or with conda::
 # that supports missing values,
 # :func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the nearest
 # neighbors.
+#
+# Read more in the :ref:`User Guide <knnimpute>`.
 
 from sklearn.impute import KNNImputer
 nan = float("NaN")
