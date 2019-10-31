@@ -1718,6 +1718,7 @@ def test_score():
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
 
+
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_validate_return_test_indices():
     n_samples = 100
