@@ -1186,7 +1186,7 @@ def all_estimators(include_meta_estimators=None,
     all_classes = []
     # get parent folder
     modules_to_ignore = set(["tests", "externals", "setup"])
-    root = Path(__file__).parent.parent
+    root = str(Path(__file__).parent.parent)
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):
