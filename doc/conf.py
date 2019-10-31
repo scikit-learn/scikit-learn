@@ -345,7 +345,7 @@ def filter_search_index(app, exception):
     with open(searchindex_path, 'r') as f:
         searchindex_text = f.read()
 
-    new_searchindex_text = re.sub(r"{__init__.+?}", "{}", searchindex_text)
+    new_searchindex_text = re.sub(r"{__init__.+?}", r"{}", searchindex_text)
 
     with open(searchindex_path, 'w') as f:
         f.write(new_searchindex_text)
