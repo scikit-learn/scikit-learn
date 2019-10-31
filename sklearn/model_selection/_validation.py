@@ -39,7 +39,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score=np.nan):
+                   return_estimator=False, return_test_indices=False,
+                   return_predictions=False, error_score=np.nan):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -135,6 +136,15 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_estimator : boolean, default False
         Whether to return the estimators fitted on each split.
 
+    return_test_indices : boolean, default False
+        Whether to return test indices for each CV split.
+        The testset indices for each cross-validation split are returned to
+        allow reconstruction of training and test set for each CV split.
+
+    return_predictions : boolean, default False
+        Whether to return CV predictions.
+        Cross-validation predictions for the entire dataset.
+
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
@@ -172,6 +182,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 The estimator objects for each cv split.
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
+            ``test_indices``: array_like
+                Indices used for scoring for each cv split.
+                This is available only if ``return_test_indices`` parameter
+                is ``True``.
+            ``predictions``: array_like
+                Cross-validation predictions for the dataset.
+                This is available only if ``return_predictions`` parameter
+                is ``True``.
 
     Examples
     --------
@@ -231,13 +249,15 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            error_score=error_score)
+            return_test_indices=return_test_indices, error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
         train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
+    if return_test_indices:
+        test_indices = zipped_scores.pop()
     if return_estimator:
         fitted_estimators = zipped_scores.pop()
     test_scores, fit_times, score_times = zipped_scores
@@ -247,6 +267,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
 
+    if return_test_indices:
+        ret['test_indices'] = test_indices
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
@@ -394,7 +416,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan):
+                   return_test_indices=False, error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -455,6 +477,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
+    return_test_indices : boolean, default False
+        Whether to return test indices for each CV split.
+
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
@@ -478,6 +503,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     estimator : estimator object
         The fitted estimator
+
+    test_indices : array_like
+        Indices of dataset used for scoring.
     """
     if verbose > 1:
         if parameters is None:
@@ -573,6 +601,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.append(parameters)
     if return_estimator:
         ret.append(estimator)
+    if return_test_indices:
+        ret.append(test)
     return ret
 
 

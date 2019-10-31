@@ -1717,3 +1717,50 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_return_test_indices():
+    n_samples = 100
+    clf = SVC(kernel="linear", random_state=0)
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    # test indices not returned when return_test_indices is False
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=False, return_test_indices=False)
+    assert 'test_indices' not in ret
+
+    # test indices returned, with checks for various configurations
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=False, return_test_indices=True)
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
+
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=True, return_test_indices=True)
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
+
+    ret = cross_validate(clf, X, y, return_train_score=True,
+                         return_estimator=True, return_test_indices=True)
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
+
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_reconstruct_predictions():
+    clf = SVC(kernel="linear", random_state=0)
+    iris = load_iris()
+    X, y = iris['data'], iris['target']
+    cv = 5
+
+    ret = cross_validate(clf, X, y, cv=cv, return_estimator=True,
+                         return_test_indices=True)
+    split_test_scores = np.zeros(cv)
+
+    # reconstruct predictions for each cv split using estimator
+    for idx, (clf, split_indices) in \
+            enumerate(zip(ret['estimator'], ret['test_indices'])):
+        split_preds = clf.predict(X[split_indices])
+        split_test_scores[idx] = accuracy_score(y[split_indices], split_preds)
+
+    assert_array_almost_equal(ret['test_score'], split_test_scores)
