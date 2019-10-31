@@ -307,6 +307,18 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
+def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+    grid_resolution = 25
+
+    plot_partial_dependence(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
+
+
 dummy_classification_data = make_classification(random_state=0)
 
 
