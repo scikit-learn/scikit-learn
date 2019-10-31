@@ -212,3 +212,22 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, stratify=y, random_state=42
 )
 clf.fit(X_train, y_train).score(X_test, y_test)
+
+############################################################################
+# Checking scikit-learn compatibility of an estimator
+# ---------------------------------------------------
+# Developers can check the compatibility of their scikit-learn compatible
+# estimators using :func:`~utils.estimator_checks.check_estimator`. For
+# instance, the ``check_estimator(LinearSVC)`` passes.
+#
+# We now provide a ``pytest`` specific decorator which allows the ``pytest``
+# ro run all checks independently and report the checks that are failing.
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.utils.estimator_checks import parametrize_with_checks
+
+
+@parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+def test_sklearn_compatible_estimator(estimator, check):
+    check(estimator)
