@@ -365,6 +365,10 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
+- |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
+  and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
+  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
