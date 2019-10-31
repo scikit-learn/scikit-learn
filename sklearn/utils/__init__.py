@@ -1186,10 +1186,10 @@ def all_estimators(include_meta_estimators=None,
     all_classes = []
     # get parent folder
     modules_to_ignore = set(["tests", "externals", "setup"])
-    root = str(Path(__file__).parent.parent)
+    root = Path(__file__).parent.parent
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=FutureWarning):
         for importer, modname, ispkg in pkgutil.walk_packages(
                 path=[root], prefix='sklearn.'):
             mod_parts = modname.split(".")
