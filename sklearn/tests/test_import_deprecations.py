@@ -15,7 +15,9 @@ from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 @pytest.mark.parametrize('deprecated_path, importee', [
     (deprecated_path, importee)
     for _, deprecated_path, _, importee in _DEPRECATED_MODULES
-])
+] + [
+    # not in _forest.__all__
+    ('sklearn.ensemble.forest', '_parallel_build_trees')])
 def test_import_is_deprecated(deprecated_path, importee):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning
