@@ -26,9 +26,9 @@ a deprecation cycle of two minor versions. The private API isn't publicly
 documented and isn't subject to any deprecation cycle, so users should not
 rely on its stability.
 
-Whether a tool is private or public depends on whether you can import it
-without a leading underscore in the import path. For example
-``sklearn.pipeline.make_pipeline`` is public, while
+A function or object is public if it is documented in the reference API and
+if it can be imported with an import path without leading underscores. For
+example ``sklearn.pipeline.make_pipeline`` is public, while
 `sklearn.pipeline._name_estimators` is private.
 ``sklearn.ensemble._gb.BaseEnsemble`` is private too because the whole `_gb`
 module is private.
@@ -36,10 +36,10 @@ module is private.
 Up to 0.22, some tools were de-facto public (no leading underscore), while
 they should have been private in the first place. In version 0.22, these
 tools have been made properly private, and the public API space has been
-cleaned. In addition, importing from files in sub-packages is deprecated:
-you should use ``from sklearn.cluster import Birch`` instead of ``from
-sklearn.cluster.birch import Birch`` (in practice, ``birch.py`` has been
-moved to ``_birch.py``).
+cleaned. In addition, some sub-modules were deprecated: you should for
+example you should use ``from sklearn.cluster import Birch`` instead of
+``from sklearn.cluster.birch import Birch`` (in practice, ``birch.py`` has
+been moved to ``_birch.py``).
 
 .. note::
 
@@ -416,7 +416,7 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
-- |Feature| :func:`inspection.plot_partial_dependence` has been extended to
+- |Enhancement| :func:`inspection.plot_partial_dependence` has been extended to
   now support the new visualization API described in the :ref:`User Guide
   <visualizations>`. :pr:`14646` by `Thomas Fan`_.
 
@@ -667,7 +667,7 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Enhancement| :class:`preprocessing.PolynomialFeatures` is now faster when
+- |Efficiency| :class:`preprocessing.PolynomialFeatures` is now faster when
   the input data is dense. :pr:`13290` by :user:`Xavier Dupré <sdpython>`.
 
 - |Enhancement| Avoid unnecessary data copy when fitting preprocessors
