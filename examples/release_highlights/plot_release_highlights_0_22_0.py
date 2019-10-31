@@ -20,6 +20,26 @@ or with conda::
 """
 
 ##############################################################################
+# KNN Based Imputation
+# ------------------------------------
+# We now support imputation for completing missing values using k-Nearest
+# Neighbors.
+#
+# Each sample’s missing values are imputed using the mean value from
+# ``n_neighbors`` nearest neighbors found in the training set. Two samples are
+# close if the features that neither is missing are close.
+# Please note that by default, a euclidean distance metric
+# that supports missing values,
+# :func:`~sklearn.metrics.nan_euclidean_distances`, is used to find the nearest
+# neighbors.
+
+from sklearn.impute import KNNImputer
+nan = float("NaN")
+X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+imputer = KNNImputer(n_neighbors=2)
+imputer.fit_transform(X)
+
+##############################################################################
 # Permutation-based feature importance
 # ------------------------------------
 #
