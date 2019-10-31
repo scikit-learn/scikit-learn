@@ -201,7 +201,6 @@ htmlhelp_basename = 'scikit-learndoc'
 # If true, the reST sources are included in the HTML build as _sources/name.
 html_copy_source = True
 
-
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -345,10 +344,10 @@ def filter_search_index(app, exception):
     with open(searchindex_path, 'r') as f:
         searchindex_text = f.read()
 
-    new_searchindex_text = re.sub(r"{__init__.+?}", r"{}", searchindex_text)
+    searchindex_text = re.sub(r'"sklearn.+?":{.+?},', '', searchindex_text)
 
     with open(searchindex_path, 'w') as f:
-        f.write(new_searchindex_text)
+        f.write(searchindex_text)
 
 
 # Config for sphinx_issues
