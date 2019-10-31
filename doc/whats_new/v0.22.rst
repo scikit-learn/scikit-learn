@@ -26,9 +26,10 @@ a deprecation cycle of two minor versions. The private API isn't publicly
 documented and isn't subject to any deprecation cycle, so users should not
 rely on its stability.
 
-A function or object is public if it is documented in the reference API and
-if it can be imported with an import path without leading underscores. For
-example ``sklearn.pipeline.make_pipeline`` is public, while
+A function or object is public if it is documented in the `API Reference
+<https://scikit-learn.org/dev/modules/classes.html>`_ and if it can be
+imported with an import path without leading underscores. For example
+``sklearn.pipeline.make_pipeline`` is public, while
 `sklearn.pipeline._name_estimators` is private.
 ``sklearn.ensemble._gb.BaseEnsemble`` is private too because the whole `_gb`
 module is private.
@@ -36,8 +37,8 @@ module is private.
 Up to 0.22, some tools were de-facto public (no leading underscore), while
 they should have been private in the first place. In version 0.22, these
 tools have been made properly private, and the public API space has been
-cleaned. In addition, some sub-modules were deprecated: you should for
-example you should use ``from sklearn.cluster import Birch`` instead of
+cleaned. In addition, importing from most sub-modules is now deprecated: you
+should for example use ``from sklearn.cluster import Birch`` instead of
 ``from sklearn.cluster.birch import Birch`` (in practice, ``birch.py`` has
 been moved to ``_birch.py``).
 
@@ -45,8 +46,9 @@ been moved to ``_birch.py``).
 
     All the tools in the public API should be documented in the `API
     Reference <https://scikit-learn.org/dev/modules/classes.html>`_. If you
-    find a public tool that isn't in the API reference, that means it should
-    either be private or documented. Please let us know by opening an issue!
+    find a public tool (without leading underscore) that isn't in the API
+    reference, that means it should either be private or documented. Please
+    let us know by opening an issue!
 
 
 Deprecations: using ``FutureWarning`` from now on
