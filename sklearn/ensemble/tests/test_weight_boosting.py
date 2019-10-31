@@ -12,6 +12,7 @@ from scipy.sparse import lil_matrix
 from sklearn.utils._testing import assert_array_equal, assert_array_less
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises, assert_raises_regexp
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
@@ -498,11 +499,12 @@ def test_multidimensional_X():
     boost.predict(X)
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default changes
+@ignore_warnings
 @pytest.mark.parametrize("algorithm", ['SAMME', 'SAMME.R'])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
-    base_estimator = NoSampleWeightWrapper(
-        DummyClassifier(strategy='stratified'))
+    base_estimator = NoSampleWeightWrapper(DummyClassifier())
     clf = AdaBoostClassifier(
         base_estimator=base_estimator, algorithm=algorithm
     )

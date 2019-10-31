@@ -46,8 +46,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           class
 
           .. versionchanged:: 0.22
-             The default value of `strategy` will change from "stratified" in
-             version 0.22 to "prior" in version 0.24.
+             The default value of `strategy` will change to "prior" in version
+             0.24. Starting from version 0.22, a warning will be raised if
+             `strategy` is not explicity set.
 
           .. versionadded:: 0.17
              Dummy Classifier now supports prior fitting strategy using

@@ -32,6 +32,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 
 # toy sample
@@ -370,12 +371,13 @@ def test_partial_dependence_X_list(estimator):
     partial_dependence(estimator, list(X), [0])
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.
 
-    gbc = GradientBoostingClassifier(
-        init=DummyClassifier(strategy="stratified"), random_state=0)
+    gbc = GradientBoostingClassifier(init=DummyClassifier(), random_state=0)
     gbc.fit(X, y)
 
     with pytest.warns(
@@ -415,12 +417,14 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 def test_partial_dependence_pipeline():
     # check that the partial dependence support pipeline
     iris = load_iris()
 
     scaler = StandardScaler()
-    clf = DummyClassifier(strategy="stratified", random_state=42)
+    clf = DummyClassifier(random_state=42)
     pipe = make_pipeline(scaler, clf)
 
     clf.fit(scaler.fit_transform(iris.data), iris.target)

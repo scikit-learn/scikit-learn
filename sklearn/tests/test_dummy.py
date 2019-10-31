@@ -766,7 +766,7 @@ def test_outputs_2d_deprecation(Dummy):
         Dummy().fit(X, y).outputs_2d_
 
 
-# TODO: Remove in 0.24
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
 def test_strategy_stratified_deprecated_for_prior():
     X, y = [[1, 2]], [0]
 

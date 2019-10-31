@@ -33,6 +33,7 @@ from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1298,13 +1299,13 @@ def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
-    [(GradientBoostingClassifier, make_classification,
-      DummyClassifier(strategy="stratified")),
-     (GradientBoostingClassifier, _make_multiclass,
-      DummyClassifier(strategy="stratified")),
-     (GradientBoostingRegressor, make_regression, DummyRegressor())],
+    [(GradientBoostingClassifier, make_classification, DummyClassifier),
+     (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
+     (GradientBoostingRegressor, make_regression, DummyRegressor)],
     ids=["binary classification", "multiclass classification", "regression"])
 def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
@@ -1316,11 +1317,11 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     sample_weight = np.random.RandomState(42).rand(100)
 
     # init supports sample weights
-    init_est = clone(init_estimator)
+    init_est = init_estimator()
     gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
     # init does not support sample weights
-    init_est = NoSampleWeightWrapper(clone(init_estimator))
+    init_est = NoSampleWeightWrapper(init_estimator())
     gb(init=init_est).fit(X, y)  # ok no sample weights
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):
