@@ -153,14 +153,16 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 ############################################################################
 # Stacking Classifier (and Regressor)
 # -----------------------------------
-# These new estimators are a stack of estimators with a final classifier or
+# :class:`~sklearn.ensemble.StackingClassifier` and
+# :class:`~sklearn.ensemble.StackingRegressor`
+# allow you to have a stack of estimators with a final classifier or
 # a regressor.
 # Stacked generalization consists in stacking the output of individual
 # estimator and use a classifier to compute the final prediction. Stacking
 # allows to use the strength of each individual estimator by using their output
 # as input of a final estimator.
 # Note that ``estimators_`` are fitted on the full ``X`` while
-# ``final_estimator``_ is trained using cross-validated predictions of the
+# ``final_estimator_`` is trained using cross-validated predictions of the
 # base estimators using ``cross_val_predict`.
 #
 # Read more in the :ref:`User Guide <stacking>`.
