@@ -290,6 +290,11 @@ Changelog
   by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Adds ``passthrough`` to :class: `ensemble.StackingClassifier`
+  and :class: `ensemble.StackingRegressor` allowing for the original dataset
+  to be used in the final estimator.
+  :pr:`15138` by :user:`Jon Cusick <jcusick13>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -429,6 +434,10 @@ Changelog
   multi-core calculation of the neighbors graph. This parameter has no
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
