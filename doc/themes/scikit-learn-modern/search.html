@@ -4,20 +4,5 @@
   <script src="{{ pathto('_static/underscore.js', 1) }}"></script>
   <script src="{{ pathto('_static/doctools.js', 1) }}"></script>
   <script src="{{ pathto('_static/language_data.js', 1) }}"></script>
-  <script src="{{ pathto('_static/searchtools.js', 1) }}"></script>
-{% endblock %}
-{% block extraendjavascript %}
-<script>
-  Search["htmlToText"] = function(htmlString) {
-    // Removes image tags so that are not fetched when building search results
-    var htmlString = htmlString.replace(/<img.+?>/g, "");
-    var htmlElement = document.createElement("span");
-    htmlElement.innerHTML = htmlString;
-    $(htmlElement)
-      .find(".headerlink")
-      .remove();
-    docContent = $(htmlElement).find("[role=main]")[0];
-    return docContent.textContent || docContent.innerText;
-  }
-</script>
+  <script src="{{ pathto('_static/js/searchtools.js', 1) }}"></script>
 {% endblock %}
