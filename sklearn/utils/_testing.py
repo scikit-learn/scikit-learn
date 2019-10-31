@@ -18,7 +18,6 @@ import warnings
 import sys
 import functools
 import tempfile
-import importlib
 from subprocess import check_output, STDOUT, CalledProcessError
 from subprocess import TimeoutExpired
 
@@ -395,61 +394,6 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
 
         raise AssertionError("%s not raised by %s" %
                              (names, function.__name__))
-
-
-def build_and_load_pyx_module(module_name, include_dirs=[], cpp=False,
-                              use_numpy=True, raise_if_pyx_hooks=True):
-    """Helper function to build and import a pyx-extension
-
-    Uses pyximport. Deletes PyxImporters from sys.meta_path, if present.
-
-    Parameters
-    ----------
-    module_name : name of the pyx-module which should be build/imported
-
-    include_dirs : additional include_dirs for C-headers
-
-    cpp : True if should build with c++ rather than c
-
-    use_numpy : True if numpy-headers should be included as well
-
-    raise_if_pyx_hooks : if True raises an error if PyxImporter hooks are
-                         already present, rather than deleting them
-    """
-    import pyximport
-    # delete all old hooks or raise if needed:
-    old_hooks = [
-        hook for hook in sys.meta_path
-        if isinstance(hook, pyximport.PyxImporter)
-    ]
-    if old_hooks and raise_if_pyx_hooks:
-        raise RuntimeError('pyx import hooks already installed')
-    for pyx_hook in old_hooks:
-        pyximport.uninstall(pyx_hook)
-
-    # install new hook:
-    script_args = ["--force"]
-    if cpp:
-        script_args.append("--cython-cplus")
-    if use_numpy:
-        include_dirs.append(np.get_include())
-    setup_args = {
-        "include_dirs": os.pathsep.join(include_dirs),
-        "script_args": script_args,
-    }
-    py_importer, pyx_importer = pyximport.install(setup_args=setup_args,
-                                                  language_level=3)
-    try:
-        module = importlib.import_module(module_name)
-        return module
-    finally:
-        # clean up the sys.meth_path:
-        pyximport.uninstall(py_importer, pyx_importer)
-
-
-# pyximport uses depricated imp-module,
-# thus we ignore warnings for the time being
-build_and_load_pyx_module = ignore_warnings(build_and_load_pyx_module)
 
 
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):

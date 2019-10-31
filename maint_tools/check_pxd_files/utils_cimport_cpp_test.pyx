@@ -1,5 +1,5 @@
 # needs c++
-from sklearn.utils cimport _fast_dict
+cimport sklearn.utils._fast_dict
 
 
 def all_ok():

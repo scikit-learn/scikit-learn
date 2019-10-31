@@ -49,10 +49,6 @@ def configuration(parent_package="", top_path=None):
 
     config.add_data_files("_hist_gradient_boosting/*.pxd")
 
-    # test for cimport of pxd-files in installation,
-    # it is build at the run time, so we need the pyx-file
-    config.add_data_files("_hist_gradient_boosting/tests/*.pyx")
-
     return config
 
 

@@ -34,10 +34,6 @@ def configuration(parent_package="", top_path=None):
 
     config.add_data_files("*.pxd")
 
-    # test for cimport of pxd-files in installation,
-    # it is build at the run time, so we need the pyx-file
-    config.add_data_files("tests/cimport_test.pyx")
-
     return config
 
 if __name__ == "__main__":
