@@ -336,6 +336,21 @@ def make_carousel_thumbs(app, exception):
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
+def filter_search_index(app, exception):
+    if exception is not None:
+        return
+    print('Removing methods from search index')
+
+    searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
+    with open(searchindex_path, 'r') as f:
+        searchindex_text = f.read()
+
+    new_searchindex_text = re.sub(r"{__init__.+?}", "{}", searchindex_text)
+
+    with open(searchindex_path, 'w') as f:
+        f.write(new_searchindex_text)
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -345,6 +360,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 def setup(app):
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
+    app.connect('build-finished', filter_search_index)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
