@@ -274,7 +274,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         ret['estimator'] = fitted_estimators
     if return_predictions:
         predictions = [None] * len(y)
-        for split_test, split_estimator in zip(test_indices, fitted_estimators):
+        for split_test, split_estimator in \
+                zip(test_indices, fitted_estimators):
             X_test = [X[idx] for idx in split_test]
             y_preds = split_estimator.predict(X_test)
             for idx, pred in zip(split_test, y_preds):
