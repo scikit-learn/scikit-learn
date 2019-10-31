@@ -25,7 +25,7 @@ or with conda::
 # We now support imputation for completing missing values using k-Nearest
 # Neighbors.
 #
-# Each sample’s missing values are imputed using the mean value from
+# Each sample's missing values are imputed using the mean value from
 # ``n_neighbors`` nearest neighbors found in the training set. Two samples are
 # close if the features that neither is missing are close.
 # Please note that by default, a euclidean distance metric
