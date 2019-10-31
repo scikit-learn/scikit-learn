@@ -205,9 +205,9 @@ Changelog
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
+  classifier or regressor.  :pr:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
+  :user:`Jon Cusick <jcusick13>`..
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -284,11 +284,6 @@ Changelog
 - |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
   by the max of the samples with non-null weights only.
   :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| Adds ``passthrough`` to :class: `ensemble.StackingClassifier`
-  and :class: `ensemble.StackingRegressor` allowing for the original dataset
-  to be used in the final estimator.
-  :pr:`15138` by :user:`Jon Cusick <jcusick13>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
