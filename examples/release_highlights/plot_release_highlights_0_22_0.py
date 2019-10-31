@@ -12,7 +12,7 @@ refer to the :ref:`release notes <changes_0_22>`.
 
 To install the latest version (with pip)::
 
-    pip install -U scikit-learn --upgrade
+    pip install --upgrade scikit-learn
 
 or with conda::
 
@@ -172,3 +172,43 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
     # recomputed.
     estimator.set_params(isomap__n_neighbors=5)
     estimator.fit(X)
+
+############################################################################
+# Stacking Classifier and Regressor
+# ---------------------------------
+# :class:`~ensemble.StackingClassifier` and
+# :class:`~ensemble.StackingRegressor`
+# allow you to have a stack of estimators with a final classifier or
+# a regressor.
+# Stacked generalization consists in stacking the output of individual
+# estimators and use a classifier to compute the final prediction. Stacking
+# allows to use the strength of each individual estimator by using their output
+# as input of a final estimator.
+# Base estimators are fitted on the full ``X`` while
+# the final estimator is trained using cross-validated predictions of the
+# base estimators using ``cross_val_predict``.
+#
+# Read more in the :ref:`User Guide <stacking>`.
+
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import StackingClassifier
+from sklearn.model_selection import train_test_split
+
+X, y = load_iris(return_X_y=True)
+estimators = [
+    ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
+    ('svr', make_pipeline(StandardScaler(),
+                          LinearSVC(random_state=42)))
+]
+clf = StackingClassifier(
+    estimators=estimators, final_estimator=LogisticRegression()
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, random_state=42
+)
+clf.fit(X_train, y_train).score(X_test, y_test)
