@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.fixes import _argmax
 from ..utils.validation import check_is_fitted
 
-from .label import _encode, _encode_check_unknown
+from ._label import _encode, _encode_check_unknown
 
 
 __all__ = [
@@ -232,7 +232,6 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     OneHotEncoder(handle_unknown='ignore')
-
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
@@ -241,8 +240,9 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
-    >>> enc.get_feature_names()
-    array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
+    >>> enc.get_feature_names(['gender', 'group'])
+    array(['gender_Female', 'gender_Male', 'group_1', 'group_2', 'group_3'],
+      dtype=object)
     >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]

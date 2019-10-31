@@ -14,15 +14,15 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
@@ -63,7 +63,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier
+from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -198,6 +198,24 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def test_grid_search_pipeline_steps():
+    # check that parameters that are estimators are cloned before fitting
+    pipe = Pipeline([('regressor', LinearRegression())])
+    param_grid = {'regressor': [LinearRegression(), Ridge()]}
+    grid_search = GridSearchCV(pipe, param_grid, cv=2)
+    grid_search.fit(X, y)
+    regressor_results = grid_search.cv_results_['param_regressor']
+    assert isinstance(regressor_results[0], LinearRegression)
+    assert isinstance(regressor_results[1], Ridge)
+    assert not hasattr(regressor_results[0], 'coef_')
+    assert not hasattr(regressor_results[1], 'coef_')
+    assert regressor_results[0] is not grid_search.best_estimator_
+    assert regressor_results[1] is not grid_search.best_estimator_
+    # check that we didn't modify the parameter grid that was passed
+    assert not hasattr(param_grid['regressor'][0], 'coef_')
+    assert not hasattr(param_grid['regressor'][1], 'coef_')
+
+
 def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
@@ -209,10 +227,11 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     assert_raise_message(AssertionError,
                          "Expected fit parameter(s) ['eggs'] not seen.",
                          searcher.fit, X, y, spam=np.ones(10))
-    assert_raise_message(AssertionError,
-                         "Fit parameter spam has length 1; expected",
-                         searcher.fit, X, y, spam=np.ones(1),
-                         eggs=np.zeros(10))
+    assert_raise_message(
+        ValueError,
+        "Found input variables with inconsistent numbers of samples: [",
+        searcher.fit, X, y, spam=np.ones(1),
+        eggs=np.zeros(10))
     searcher.fit(X, y, spam=np.ones(10), eggs=np.zeros(10))
 
 
@@ -856,10 +875,10 @@ def test_grid_search_cv_results():
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
         assert (all(cv_results[k] >= 0) for k in score_keys
-                if k is not 'rank_test_score')
+                if k != 'rank_test_score')
         assert (all(cv_results[k] <= 1) for k in score_keys
                 if 'time' not in k and
-                k is not 'rank_test_score')
+                k != 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
@@ -1220,7 +1239,7 @@ def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
     estimators = (DecisionTreeRegressor(), DecisionTreeClassifier())
     est_parameters = {"random_state": [0, None]}
-    cv = KFold(random_state=0)
+    cv = KFold()
 
     for est in estimators:
         grid_search = GridSearchCV(est, est_parameters, cv=cv,
@@ -1294,7 +1313,7 @@ def test_grid_search_correct_score_results():
 
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
-    cv = StratifiedKFold(random_state=0)
+    cv = StratifiedKFold()
     svc = LinearSVC(random_state=0)
     scorer = make_scorer(accuracy_score)
 
@@ -1345,7 +1364,7 @@ def test_grid_search_with_multioutput_data():
                                           random_state=0)
 
     est_parameters = {"max_depth": [1, 2, 3, 4]}
-    cv = KFold(random_state=0)
+    cv = KFold()
 
     estimators = [DecisionTreeRegressor(random_state=0),
                   DecisionTreeClassifier(random_state=0)]
@@ -1693,7 +1712,7 @@ def test_custom_run_search():
     results = mycv.cv_results_
     check_results(results, gscv)
     # TODO: remove in v0.24, the deprecation goes away then.
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="attribute is to be deprecated from version 0.22"):
         for attr in dir(gscv):
             if (attr[0].islower() and attr[-1:] == '_' and
@@ -1733,7 +1752,7 @@ def test_deprecated_grid_search_iid(iid):
     grid = GridSearchCV(
         SVC(random_state=0), param_grid={'C': [10]}, cv=3, iid=iid
     )
-    with pytest.warns(DeprecationWarning, match=depr_msg):
+    with pytest.warns(FutureWarning, match=depr_msg):
         grid.fit(X, y)
 
 

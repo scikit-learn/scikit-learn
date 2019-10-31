@@ -78,7 +78,7 @@ It's clear how the kernel shape affects the smoothness of the resulting
 distribution.  The scikit-learn kernel density estimator can be used as
 follows:
 
-   >>> from sklearn.neighbors.kde import KernelDensity
+   >>> from sklearn.neighbors import KernelDensity
    >>> import numpy as np
    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)

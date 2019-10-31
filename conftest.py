@@ -37,9 +37,8 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name in (
-                    'sklearn.feature_extraction.hashing.FeatureHasher',
-                    'sklearn.feature_extraction.text.HashingVectorizer'):
+            if item.name.endswith(('hashing.FeatureHasher',
+                                   'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
     # Skip tests which require internet if the flag is provided
@@ -104,4 +103,4 @@ def pytest_runtest_teardown(item, nextitem):
 # Configures pytest to ignore deprecated modules.
 collect_ignore_glob = [
     os.path.join(*deprecated_path.split(".")) + ".py"
-    for _, deprecated_path, _ in _DEPRECATED_MODULES]
+    for _, deprecated_path, _, _ in _DEPRECATED_MODULES]
