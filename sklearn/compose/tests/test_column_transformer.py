@@ -1209,7 +1209,7 @@ def test_make_column_selector_with_select_dtypes(cols, pattern, include,
         'col_int': np.array([0, 1, 2], dtype=np.int),
         'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
         'col_str': ["one", "two", "three"],
-    })
+    }, columns=['col_int', 'col_float', 'col_str'])
 
     selector = make_column_selector(
             dtype_include=include, dtype_exclude=exclude, pattern=pattern)
@@ -1225,7 +1225,7 @@ def test_column_transformer_with_make_column_selector():
         'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
         'col_cat': ["one", "two", "one"],
         'col_str': ["low", "middle", "high"]
-    })
+    }, columns=['col_int', 'col_float', 'col_cat', 'col_str'])
     X_df['col_str'] = X_df['col_str'].astype('category')
 
     cat_selector = make_column_selector(dtype_include=['category', object])
@@ -1260,7 +1260,7 @@ def test_make_column_selector_pickle():
         'col_int': np.array([0, 1, 2], dtype=np.int),
         'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
         'col_str': ["one", "two", "three"],
-    })
+    }, columns=['col_int', 'col_float', 'col_str'])
 
     selector = make_column_selector(dtype_include=[object])
     selector_picked = pickle.loads(pickle.dumps(selector))

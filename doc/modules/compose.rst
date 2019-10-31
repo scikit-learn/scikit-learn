@@ -468,7 +468,7 @@ with a :func:`~sklearn.compose.make_column_selector`. The
 on data type or column name::
 
 >>> from sklearn.preprocessing import StandardScaler
->>> from sklearn.preprocessing import make_column_selector
+>>> from sklearn.compose import make_column_selector
 >>> ct = make_column_transformer(
 ...       (StandardScaler(), make_column_selector(dtype_include=object)),
 ...       (OneHotEncoder(), make_column_selector(dtype_include=np.number)))
