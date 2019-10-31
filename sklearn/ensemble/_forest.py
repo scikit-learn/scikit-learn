@@ -139,6 +139,12 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
+    if n_samples_bootstrap is None:
+        # for backward-compatibility, we can set the number of samples in each
+        # bootstrap to the number of samples in X in case `n_samples_bootstrap`
+        # is not defined
+        n_samples_bootstrap = X.shape[0]
+
     if forest.bootstrap:
         n_samples = X.shape[0]
         if sample_weight is None:
