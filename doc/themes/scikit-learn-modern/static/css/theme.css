@@ -77,6 +77,20 @@ img {
    max-width: 100%;
 }
 
+span.highlighted {
+    background-color: #fbe54e;
+}
+
+ul.search li div.context {
+  color: #888;
+  margin: 0.1rem 0 0 1rem;
+  text-align: left;
+}
+
+ul.search li a {
+  font-weight: bold;
+}
+
 div.highlight {
   padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
