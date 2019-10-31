@@ -273,6 +273,9 @@ _FILE_CONTENT_TEMPLATE = """
 from inspect import getmembers, isclass, isfunction
 from . import {new_module_name}
 
+if not hasattr({new_module_name}, '__all__'):
+    {new_module_name}.__all__ = []
+
 extra = [name
          for name, item in
          getmembers({new_module_name},
@@ -280,7 +283,7 @@ extra = [name
          if '.{new_module_name}' in item.__module__
          and name not in {new_module_name}.__all__]
 
-_forest.__all__.extend(extra)
+{new_module_name}.__all__.extend(extra)
 
 from .{new_module_name} import *  # noqa
 from {relative_dots}utils.deprecation import _raise_dep_warning_if_not_pytest
