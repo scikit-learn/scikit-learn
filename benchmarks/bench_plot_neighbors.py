@@ -15,7 +15,7 @@ def get_data(N, D, dataset='dense'):
         np.random.seed(0)
         return np.random.random((N, D))
     elif dataset == 'digits':
-        X = datasets.load_digits().data
+        X, _ = datasets.load_digits(return_X_y=True)
         i = np.argsort(X[0])[::-1]
         X = X[:, i]
         return X[:N, :D]

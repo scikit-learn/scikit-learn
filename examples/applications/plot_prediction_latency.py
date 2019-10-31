@@ -25,11 +25,11 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.datasets.samples_generator import make_regression
-from sklearn.ensemble.forest import RandomForestRegressor
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.stochastic_gradient import SGDRegressor
-from sklearn.svm.classes import SVR
+from sklearn.datasets import make_regression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import SGDRegressor
+from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 
@@ -278,12 +278,11 @@ configuration = {
     'estimators': [
         {'name': 'Linear Model',
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
-                                  l1_ratio=0.25, fit_intercept=True,
-                                  tol=1e-4),
+                                  l1_ratio=0.25, tol=1e-4),
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
-         'instance': RandomForestRegressor(n_estimators=100),
+         'instance': RandomForestRegressor(),
          'complexity_label': 'estimators',
          'complexity_computer': lambda clf: clf.n_estimators},
         {'name': 'SVR',

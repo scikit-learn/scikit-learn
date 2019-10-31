@@ -24,7 +24,7 @@ that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
 PCA centers but does not scale the input data for each feature before
-applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+applying the SVD. The optional parameter ``whiten=True`` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example the case
@@ -43,7 +43,7 @@ features, projected on the 2 dimensions that explain most variance:
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation:
+:term:`score` method that can be used in cross-validation:
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
@@ -74,7 +74,8 @@ out-of-core Principal Component Analysis either by:
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
- * Calling its fit method on a memory mapped file using ``numpy.memmap``.
+ * Calling its fit method on a sparse matrix or a memory mapped file using
+   ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why

@@ -511,7 +511,7 @@ cdef class WeightedMedianCalculator:
         or 0 otherwise.
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -568,7 +568,7 @@ cdef class WeightedMedianCalculator:
         from consideration in the median calculation
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -583,7 +583,7 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
-        cdef double original_median
+        cdef double original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()

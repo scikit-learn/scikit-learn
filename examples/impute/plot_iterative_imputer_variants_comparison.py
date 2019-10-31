@@ -42,6 +42,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# To use this experimental feature, we need to explicitly ask for it:
+from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import fetch_california_housing
 from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer

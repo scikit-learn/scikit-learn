@@ -1,19 +1,20 @@
 import os
 
 from sklearn._build_utils import maybe_cythonize_extensions
+from sklearn._build_utils.deprecated_modules import (
+    _create_deprecated_modules_files
+)
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info
     import numpy
-
-    # needs to be called during build otherwise show_version may fail sometimes
-    get_info('blas_opt', 0)
 
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
+
+    _create_deprecated_modules_files()
 
     config = Configuration('sklearn', parent_package, top_path)
 
@@ -33,6 +34,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_selection/tests')
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
+    config.add_subpackage('impute')
+    config.add_subpackage('impute/tests')
     config.add_subpackage('inspection')
     config.add_subpackage('inspection/tests')
     config.add_subpackage('mixture')
