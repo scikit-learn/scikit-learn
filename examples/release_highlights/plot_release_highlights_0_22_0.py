@@ -152,7 +152,7 @@ with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
 
 ############################################################################
 # Stacking Classifier (and Regressor)
-# ------------------------------------------
+# -----------------------------------
 # These new estimators are a stack of estimators with a final classifier or
 # a regressor.
 # Stacked generalization consists in stacking the output of individual
