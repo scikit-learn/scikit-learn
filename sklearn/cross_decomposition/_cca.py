@@ -1,4 +1,4 @@
-from ._pls_ import _PLS
+from ._pls import _PLS
 from ..base import _UnstableArchMixin
 
 __all__ = ['CCA']

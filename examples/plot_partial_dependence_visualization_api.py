@@ -15,6 +15,7 @@ customize the plot with the visualization API.
 """
 print(__doc__)
 
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.datasets import load_boston
 from sklearn.neural_network import MLPRegressor
@@ -32,8 +33,8 @@ from sklearn.inspection import plot_partial_dependence
 # housing price dataset.
 
 boston = load_boston()
-X, y = boston.data, boston.target
-feature_names = boston.feature_names
+X = pd.DataFrame(boston.data, columns=boston.feature_names)
+y = boston.target
 
 tree = DecisionTreeRegressor()
 mlp = make_pipeline(StandardScaler(),
@@ -55,7 +56,7 @@ mlp.fit(X, y)
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
 tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"],
-                                    feature_names=feature_names, ax=ax)
+                                    feature_names=X.columns.tolist(), ax=ax)
 
 ##############################################################################
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
@@ -65,7 +66,7 @@ tree_disp = plot_partial_dependence(tree, X, ["LSTAT", "RM"],
 fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT", "RM"],
-                                   feature_names=feature_names, ax=ax,
+                                   feature_names=X.columns.tolist(), ax=ax,
                                    line_kw={"c": "red"})
 
 ##############################################################################
@@ -134,7 +135,7 @@ plt.show()
 # the same axes. In this case, `tree_disp.axes_` is passed into the second
 # plot function.
 tree_disp = plot_partial_dependence(tree, X, ["LSTAT"],
-                                    feature_names=feature_names)
+                                    feature_names=X.columns.tolist())
 mlp_disp = plot_partial_dependence(mlp, X, ["LSTAT"],
-                                   feature_names=feature_names,
+                                   feature_names=X.columns.tolist(),
                                    ax=tree_disp.axes_, line_kw={"c": "red"})

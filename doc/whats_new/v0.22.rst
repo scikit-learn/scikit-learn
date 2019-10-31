@@ -205,9 +205,9 @@ Changelog
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
+  classifier or regressor.  :pr:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
+  :user:`Jon Cusick <jcusick13>`..
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -365,6 +365,10 @@ Changelog
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
+- |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
+  and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
+  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -424,6 +428,10 @@ Changelog
   multi-core calculation of the neighbors graph. This parameter has no
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
