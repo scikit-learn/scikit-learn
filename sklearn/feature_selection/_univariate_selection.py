@@ -338,7 +338,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'], force_all_finite=False,
+        X, y = check_X_y(X, y, ['csr', 'csc'],
+                         force_all_finite=not tags.get('allow_nan', True),
                          multi_output=True)
 
         if not callable(self.score_func):
@@ -362,6 +363,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
     def _check_params(self, X, y):
         pass
 
+    #FIXME: how do we determine the tags when it depends on the underlying score_func, which does not have tags?
     def _more_tags(self):
         return {'allow_nan': False}
 
