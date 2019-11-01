@@ -24,12 +24,6 @@ from sklearn.feature_selection import (
 
 
 ##############################################################################
-
-# dummy scorer to test other functionality
-def dummy_score(X, y):
-    return X[0], X[0]
-
-
 # Test the score functions
 
 def test_f_oneway_vs_scipy_stats():
@@ -477,6 +471,7 @@ def test_selectkbest_tiebreaking():
     # Prior to 0.11, SelectKBest would return more features than requested.
     Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
     y = [1]
+    dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
         sel = SelectKBest(dummy_score, k=1)
         X1 = ignore_warnings(sel.fit_transform)([X], y)
@@ -493,6 +488,7 @@ def test_selectpercentile_tiebreaking():
     # Test if SelectPercentile selects the right n_features in case of ties.
     Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
     y = [1]
+    dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
         sel = SelectPercentile(dummy_score, percentile=34)
         X1 = ignore_warnings(sel.fit_transform)([X], y)
@@ -671,14 +667,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-def test_univariate_nan_inf_allowed_in_fit():
-    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
-                           shuffle=False, random_state=0, noise=10)
-
-    univariate_filter = GenericUnivariateSelect(dummy_score,
-                                                mode='percentile')
-    X[0] = np.NaN
-    X[1] = np.Inf
-    univariate_filter.fit(X, y)

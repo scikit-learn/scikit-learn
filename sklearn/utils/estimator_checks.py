@@ -1475,18 +1475,7 @@ def check_estimators_pickle(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
 
     set_random_state(estimator)
-
-    try:
-        estimator.fit(X, y)
-    except ValueError as e:
-        if 'inf' not in repr(e) and 'NaN' not in repr(e):
-            raise e
-        else:
-            # Some feature selection estimators don't allow nan/inf with
-            # their default parameters, even though they are allowed in
-            # general. Remove the nan in these cases.
-            X = np.nan_to_num(X)
-            estimator.fit(X, y)
+    estimator.fit(X, y)
 
     result = dict()
     for method in check_methods:

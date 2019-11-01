@@ -338,8 +338,7 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc'], force_all_finite=False,
-                         multi_output=True)
+        X, y = check_X_y(X, y, ['csr', 'csc'], multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
@@ -361,9 +360,6 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
 
     def _check_params(self, X, y):
         pass
-
-    def _more_tags(self):
-        return {'allow_nan': False}
 
 
 ######################################################################
@@ -408,8 +404,6 @@ class SelectPercentile(_BaseFilter):
     -----
     Ties between features with equal scores will be broken in an unspecified
     way.
-
-    Allows NaN/Inf in the input if the underlying score_func does as well.
 
     See also
     --------
@@ -495,8 +489,6 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
-    Allows NaN/Inf in the input if the underlying score_func does as well.
-
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -576,10 +568,6 @@ class SelectFpr(_BaseFilter):
     >>> X_new.shape
     (569, 16)
 
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying score_func does as well.
-
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -646,10 +634,6 @@ class SelectFdr(_BaseFilter):
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
 
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying score_func does as well.
-
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -714,10 +698,6 @@ class SelectFwe(_BaseFilter):
 
     pvalues_ : array-like of shape (n_features,)
         p-values of feature scores.
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying score_func does as well.
 
     See also
     --------
@@ -784,10 +764,6 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X_new = transformer.fit_transform(X, y)
     >>> X_new.shape
     (569, 20)
-
-    Notes
-    -----
-    Allows NaN/Inf in the input if the underlying score_func does as well.
 
     See also
     --------
