@@ -12,6 +12,16 @@ DOCSTRING_WHITELIST = [
     "LogisticRegression$",
     "LogisticRegression.fit",
     "LogisticRegression.decision_function",
+    "Birch.predict",
+    "Birch.transform",
+    "LinearDiscriminantAnalysis.decision_function",
+    "LinearSVC.decision_function",
+    "LogisticRegressionCV.decision_function",
+    "PassiveAggressiveClassifier.decision_function",
+    "Perceptron.decision_function",
+    "RidgeClassifier.decision_function",
+    "RidgeClassifierCV.decision_function",
+    "SGDClassifier.decision_function",
 ]
 
 
@@ -75,9 +85,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
         if hasattr(estimator, "__init__"):
             method = "__init__"
         elif estimator is None:
-            raise ValueError(
-                "At least one of estimator, method should be provided"
-            )
+            raise ValueError("At least one of estimator, method should be provided")
         else:
             raise NotImplementedError
 
@@ -95,8 +103,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
             res["docstring"],
             "# Errors",
             "\n".join(
-                " - {}: {}".format(code, message)
-                for code, message in res["errors"]
+                " - {}: {}".format(code, message) for code, message in res["errors"]
             ),
         ]
     )
@@ -114,9 +121,7 @@ def test_docstring(estimator, method, request):
 
     if not any(re.search(regex, import_path) for regex in DOCSTRING_WHITELIST):
         request.applymarker(
-            pytest.mark.xfail(
-                run=False, reason="TODO pass numpydoc validation"
-            )
+            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
         )
 
     res = numpydoc_validation.validate(import_path)
@@ -133,9 +138,7 @@ if __name__ == "__main__":
     import sys
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Validate docstring with numpydoc."
-    )
+    parser = argparse.ArgumentParser(description="Validate docstring with numpydoc.")
     parser.add_argument("import_path", help="Import path to validate")
 
     args = parser.parse_args()
