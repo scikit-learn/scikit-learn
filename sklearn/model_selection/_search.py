@@ -34,7 +34,7 @@ from ..utils import check_random_state
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import if_delegate_has_method, check_routing
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
 
@@ -397,7 +397,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, scoring=None, n_jobs=None, iid='deprecated',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=True):
+                 error_score=np.nan, return_train_score=True,
+                 param_routing=None):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -409,12 +410,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.param_routing = param_routing
+        self.router = check_routing(self.param_routing,
+                                    ['estimator', 'cv', 'scoring'],
+                                    {'cv': 'groups', 'estimator': '-groups'})
 
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
 
-    def score(self, X, y=None):
+    def score(self, X, y=None, **score_params):
         """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -440,7 +445,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-        return score(self.best_estimator_, X, y)
+        return score(self.best_estimator_, X, y, **score_params)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
@@ -455,7 +460,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             check_is_fitted(self)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Call predict on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -469,10 +474,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('predict')
-        return self.best_estimator_.predict(X)
+        return self.best_estimator_.predict(X, **predict_params)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def predict_proba(self, X):
+    def predict_proba(self, X, **predict_params):
         """Call predict_proba on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -486,10 +491,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('predict_proba')
-        return self.best_estimator_.predict_proba(X)
+        return self.best_estimator_.predict_proba(X, **predict_params)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **predict_params):
         """Call predict_log_proba on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -503,10 +508,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('predict_log_proba')
-        return self.best_estimator_.predict_log_proba(X)
+        return self.best_estimator_.predict_log_proba(X, **predict_params)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def decision_function(self, X):
+    def decision_function(self, X, **predict_params):
         """Call decision_function on the estimator with the best found parameters.
 
         Only available if ``refit=True`` and the underlying estimator supports
@@ -520,10 +525,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('decision_function')
-        return self.best_estimator_.decision_function(X)
+        return self.best_estimator_.decision_function(X, **predict_params)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def transform(self, X):
+    def transform(self, X, **transform_params):
         """Call transform on the estimator with the best found parameters.
 
         Only available if the underlying estimator supports ``transform`` and
@@ -537,10 +542,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('transform')
-        return self.best_estimator_.transform(X)
+        return self.best_estimator_.transform(X, **transform_params)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, Xt, **transform_params):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -554,7 +559,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         self._check_is_fitted('inverse_transform')
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(Xt, **transform_params)
 
     @property
     def classes_(self):
@@ -595,7 +600,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def fit(self, X, y=None, groups=None, **fit_params):
+    def fit(self, X, y=None, **fit_params):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -642,12 +647,23 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             refit_metric = 'score'
 
-        X, y, groups = indexable(X, y, groups)
+        # so feature metadata/properties can work
+        feature_params = {k: v for k, v in fit_params.items()
+                          if k == 'feature_meta'}
+        fit_params = {k: v for k, v in fit_params.items()
+                      if k != 'feature_meta'}
+
         # make sure fit_params are sliceable
         fit_params_values = indexable(*fit_params.values())
         fit_params = dict(zip(fit_params.keys(), fit_params_values))
 
-        n_splits = cv.get_n_splits(X, y, groups)
+        (fit_params, cv_params, score_params), remainder = (
+            self.router(fit_params))
+        if remainder:
+            raise TypeError('fit() got unexpected keyword arguments %r'
+                            % sorted(remainder))
+
+        n_splits = cv.get_n_splits(X, y, **cv_params)
 
         base_estimator = clone(self.estimator)
 
@@ -656,6 +672,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
+                                    score_params=score_params,
                                     return_train_score=self.return_train_score,
                                     return_n_test_samples=True,
                                     return_times=True,
@@ -683,7 +700,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        **fit_and_score_kwargs)
                                for parameters, (train, test)
                                in product(candidate_params,
-                                          cv.split(X, y, groups)))
+                                          cv.split(X, y, **cv_params)))
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
@@ -733,9 +750,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 **self.best_params_))
             refit_start_time = time.time()
             if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+                self.best_estimator_.fit(X, y, **fit_params, **feature_params)
             else:
-                self.best_estimator_.fit(X, **fit_params)
+                self.best_estimator_.fit(X, **fit_params, **feature_params)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
@@ -1133,13 +1150,13 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False):
+                 verbose=0, pre_dispatch='2*n_jobs', error_score=np.nan,
+                 return_train_score=False, param_routing=None):
         super().__init__(
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score, param_routing=param_routing)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1462,7 +1479,7 @@ class RandomizedSearchCV(BaseSearchCV):
                  n_jobs=None, iid='deprecated', refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
-                 return_train_score=False):
+                 return_train_score=False, param_routing=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1470,7 +1487,7 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator=estimator, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score, param_routing=param_routing)
 
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""

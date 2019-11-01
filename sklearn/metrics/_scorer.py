@@ -138,7 +138,8 @@ class _BaseScorer:
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None):
+    def __call__(self, estimator, X, y_true, sample_weight=None,
+                 **predict_params):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -166,7 +167,7 @@ class _BaseScorer:
                           category=FutureWarning,
                           stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
-                           sample_weight=sample_weight)
+                           sample_weight=sample_weight, **predict_params)
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -174,7 +175,8 @@ class _BaseScorer:
 
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y_true, sample_weight=None,
+               **predict_params):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -202,7 +204,7 @@ class _PredictScorer(_BaseScorer):
             Score function applied to prediction of estimator on X.
         """
 
-        y_pred = method_caller(estimator, "predict", X)
+        y_pred = method_caller(estimator, "predict", X, **predict_params)
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
@@ -213,7 +215,8 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None,
+               **predict_params):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -243,7 +246,7 @@ class _ProbaScorer(_BaseScorer):
         """
 
         y_type = type_of_target(y)
-        y_pred = method_caller(clf, "predict_proba", X)
+        y_pred = method_caller(clf, "predict_proba", X, **predict_params)
         if y_type == "binary":
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
@@ -264,7 +267,8 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None,
+               **predict_params):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -300,17 +304,19 @@ class _ThresholdScorer(_BaseScorer):
             raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
-            y_pred = method_caller(clf, "predict", X)
+            y_pred = method_caller(clf, "predict", X, **predict_params)
         else:
             try:
-                y_pred = method_caller(clf, "decision_function", X)
+                y_pred = method_caller(clf, "decision_function", X,
+                                       **predict_params)
 
                 # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
                     y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
-                y_pred = method_caller(clf, "predict_proba", X)
+                y_pred = method_caller(clf, "predict_proba", X,
+                                       **predict_params)
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:

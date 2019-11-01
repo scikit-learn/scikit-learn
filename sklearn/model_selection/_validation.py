@@ -391,7 +391,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params, return_train_score=False,
+                   parameters, fit_params, score_params=None,
+                   feature_params=None, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    error_score=np.nan):
@@ -487,10 +488,16 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
-    # Adjust length of sample weights
+    # Subset fit_params values for train indices
     fit_params = fit_params if fit_params is not None else {}
     fit_params = {k: _index_param_value(X, v, train)
                   for k, v in fit_params.items()}
+    fit_params = {**fit_params, **feature_params}
+    # Subset score_params values for test indices
+    score_params = score_params if score_params is not None else {}
+    score_params = {k: _index_param_value(X, v, test)
+                    for k, v in score_params.items()}
+    score_params = {**score_params, **feature_params}
 
     train_scores = {}
     if parameters is not None:
@@ -541,10 +548,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer)
+        test_scores = _score(estimator, X_test, y_test, scorer, score_params)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer)
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  fit_params)
     if verbose > 2:
         if isinstance(test_scores, dict):
             for scorer_name in sorted(test_scores):
@@ -576,19 +584,21 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, score_params=None):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    if score_params is None:
+        score_params = {}
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
     if y_test is None:
-        scores = scorer(estimator, X_test)
+        scores = scorer(estimator, X_test, **score_params)
     else:
-        scores = scorer(estimator, X_test, y_test)
+        scores = scorer(estimator, X_test, y_test, **score_params)
 
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
@@ -788,7 +798,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
-                     method):
+                     method, predict_params=None, feature_params=None):
     """Fit estimator and predict values for a given dataset split.
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -828,10 +838,16 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     test : array-like
         This is the value of the test parameter
     """
-    # Adjust length of sample weights
+    # Subset fit_params values for train indices
     fit_params = fit_params if fit_params is not None else {}
     fit_params = {k: _index_param_value(X, v, train)
                   for k, v in fit_params.items()}
+    fit_params = {**fit_params, **feature_params}
+    # Subset predict_params values for test indices
+    predict_params = predict_params if predict_params is not None else {}
+    predict_params = {k: _index_param_value(X, v, test)
+                      for k, v in predict_params.items()}
+    predict_params = {**predict_params, **feature_params}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -841,7 +857,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     else:
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
-    predictions = func(X_test)
+    predictions = func(X_test, **predict_params)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         if isinstance(predictions, list):
             predictions = [_enforce_prediction_order(
@@ -949,7 +965,7 @@ def _index_param_value(X, v, indices):
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
-                           verbose=0, scoring=None):
+                           verbose=0, scoring=None, **score_params):
     """Evaluate the significance of a cross-validated score with permutations
 
     Read more in the :ref:`User Guide <cross_validation>`.
@@ -1054,25 +1070,27 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
+    score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer,
+                                    **score_params)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
             clone(estimator), X, _shuffle(y, groups, random_state),
-            groups, cv, scorer)
+            groups, cv, scorer, **score_params)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue
 
 
-def _permutation_test_score(estimator, X, y, groups, cv, scorer):
+def _permutation_test_score(estimator, X, y, groups, cv, scorer,
+                            **score_params):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv.split(X, y, groups):
         X_train, y_train = _safe_split(estimator, X, y, train)
         X_test, y_test = _safe_split(estimator, X, y, test, train)
         estimator.fit(X_train, y_train)
-        avg_score.append(scorer(estimator, X_test, y_test))
+        avg_score.append(scorer(estimator, X_test, y_test, **score_params))
     return np.mean(avg_score)
 
 

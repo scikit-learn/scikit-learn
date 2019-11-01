@@ -18,7 +18,8 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
-from .utils.metaestimators import if_delegate_has_method
+from .feature_selection.base import SelectorMixin
+from .utils.metaestimators import if_delegate_has_method, check_routing
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
 
@@ -126,11 +127,15 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    def __init__(self, steps, memory=None, verbose=False):
+    def __init__(self, steps, memory=None, verbose=False, param_routing=None):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
         self._validate_steps()
+        self.param_routing = param_routing
+        self.router = check_routing(self.param_routing,
+                                    [[name, '*'] for name, _ in self.steps],
+                                    self._default_routing)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -254,6 +259,47 @@ class Pipeline(_BaseComposition):
                                                   len(self.steps),
                                                   name)
 
+    def _default_routing(self, params):
+        names = [name for name, _ in self.steps]
+        step_params = {name: {} for name in names}
+        remainder = set()
+        for k, v in params.items():
+            if v is not None:
+                # XXX: not sure if we need to remove Nones
+                name, prop = k.split('__', 1)
+                try:
+                    step_params[name][prop] = v
+                except KeyError:
+                    remainder.add(k)
+        return [step_params[name] for name in names], remainder
+
+    def _transform_pipeline(self, caller_name, X, params):
+        step_params, remainder = self.router(params)
+        if remainder:
+            raise TypeError('%s() got unexpected keyword arguments %r'
+                            % (caller_name, sorted(remainder)))
+        fmt = None
+        if caller_name == 'transform':
+            iter = self._iter()
+        elif caller_name == 'inverse_transform':
+            iter = reversed(list(self._iter()))
+        else:
+            iter = self._iter(with_final=False)
+        for step_idx, _, transform in iter:
+            if isinstance(transform, SelectorMixin):
+                if fmt is not None and 'feature_meta' in step_params[step_idx]:
+                    step_params[step_idx]['feature_meta'] = fmt
+                res = transform.transform(X, **step_params[step_idx])
+                if isinstance(res, tuple):
+                    X, fmt = res
+                else:
+                    X = res
+            else:
+                X = transform.transform(X, **step_params[step_idx])
+        if caller_name in ['transform', 'inverse_transform']:
+            return X
+        return X, step_params[-1]
+
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
@@ -265,18 +311,11 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = {name: {} for name, step in self.steps
-                            if step is not None}
-        for pname, pval in fit_params.items():
-            if '__' not in pname:
-                raise ValueError(
-                    "Pipeline.fit does not accept the {} parameter. "
-                    "You can pass parameters to specific steps of your "
-                    "pipeline using the stepname__parameter format, e.g. "
-                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                    "=sample_weight)`.".format(pname))
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
+        step_fit_params, remainder = self.router(fit_params)
+        if remainder:
+            raise TypeError('fit() got unexpected keyword arguments %r'
+                            % sorted(remainder))
+        fmt = None
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -305,18 +344,32 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
-            X, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, X, y, None,
-                message_clsname='Pipeline',
-                message=self._log_message(step_idx),
-                **fit_params_steps[name])
+            if isinstance(transformer, SelectorMixin):
+                if (fmt is not None and 'feature_meta' in
+                        step_fit_params[step_idx]):
+                    step_fit_params[step_idx]['feature_meta'] = fmt
+                res, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, X, y, None,
+                    message_clsname='Pipeline',
+                    message=self._log_message(step_idx),
+                    **step_fit_params[step_idx])
+                if isinstance(res, tuple):
+                    X, fmt = res
+                else:
+                    X = res
+            else:
+                X, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, X, y, None,
+                    message_clsname='Pipeline',
+                    message=self._log_message(step_idx),
+                    **step_fit_params[step_idx])
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator == 'passthrough':
             return X, {}
-        return X, fit_params_steps[self.steps[-1][0]]
+        return X, step_fit_params[-1]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -387,7 +440,8 @@ class Pipeline(_BaseComposition):
             if hasattr(last_step, 'fit_transform'):
                 return last_step.fit_transform(Xt, y, **fit_params)
             else:
-                return last_step.fit(Xt, y, **fit_params).transform(Xt)
+                return last_step.fit(Xt, y, **fit_params).transform(
+                    Xt, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -411,9 +465,8 @@ class Pipeline(_BaseComposition):
         -------
         y_pred : array-like
         """
-        Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        Xt, predict_params = self._transform_pipeline('predict',
+                                                      X, predict_params)
         return self.steps[-1][-1].predict(Xt, **predict_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
@@ -450,7 +503,7 @@ class Pipeline(_BaseComposition):
         return y_pred
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_proba(self, X):
+    def predict_proba(self, X, **predict_params):
         """Apply transforms, and predict_proba of the final estimator
 
         Parameters
@@ -463,13 +516,12 @@ class Pipeline(_BaseComposition):
         -------
         y_proba : array-like of shape (n_samples, n_classes)
         """
-        Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        Xt, predict_params = self._transform_pipeline('predict_proba',
+                                                      X, predict_params)
         return self.steps[-1][-1].predict_proba(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def decision_function(self, X):
+    def decision_function(self, X, **predict_params):
         """Apply transforms, and decision_function of the final estimator
 
         Parameters
@@ -482,13 +534,12 @@ class Pipeline(_BaseComposition):
         -------
         y_score : array-like of shape (n_samples, n_classes)
         """
-        Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        Xt, predict_params = self._transform_pipeline('decision_function',
+                                                      X, predict_params)
         return self.steps[-1][-1].decision_function(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score_samples(self, X):
+    def score_samples(self, X, **transform_params):
         """Apply transforms, and score_samples of the final estimator.
 
         Parameters
@@ -501,13 +552,12 @@ class Pipeline(_BaseComposition):
         -------
         y_score : ndarray, shape (n_samples,)
         """
-        Xt = X
-        for _, _, transformer in self._iter(with_final=False):
-            Xt = transformer.transform(Xt)
+        Xt, transform_params = self._transform_pipeline('score_samples',
+                                                        X, transform_params)
         return self.steps[-1][-1].score_samples(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict_log_proba(self, X):
+    def predict_log_proba(self, X, **predict_params):
         """Apply transforms, and predict_log_proba of the final estimator
 
         Parameters
@@ -520,9 +570,8 @@ class Pipeline(_BaseComposition):
         -------
         y_score : array-like of shape (n_samples, n_classes)
         """
-        Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        Xt, predict_params = self._transform_pipeline('predict_log_proba',
+                                                      X, predict_params)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     @property
@@ -548,10 +597,8 @@ class Pipeline(_BaseComposition):
             self._final_estimator.transform
         return self._transform
 
-    def _transform(self, X):
-        Xt = X
-        for _, _, transform in self._iter():
-            Xt = transform.transform(Xt)
+    def _transform(self, X, **transform_params):
+        Xt = self._transform_pipeline('transform', X, transform_params)
         return Xt
 
     @property
@@ -578,15 +625,12 @@ class Pipeline(_BaseComposition):
             transform.inverse_transform
         return self._inverse_transform
 
-    def _inverse_transform(self, X):
-        Xt = X
-        reverse_iter = reversed(list(self._iter()))
-        for _, _, transform in reverse_iter:
-            Xt = transform.inverse_transform(Xt)
+    def _inverse_transform(self, X, **transform_params):
+        Xt = self._transform_pipeline('inverse_transform', X, transform_params)
         return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def score(self, X, y=None, sample_weight=None):
+    def score(self, X, y=None, sample_weight=None, **transform_params):
         """Apply transforms, and score with the final estimator
 
         Parameters
@@ -607,9 +651,7 @@ class Pipeline(_BaseComposition):
         -------
         score : float
         """
-        Xt = X
-        for _, name, transform in self._iter(with_final=False):
-            Xt = transform.transform(Xt)
+        Xt, _ = self._transform_pipeline('score', X, transform_params)
         score_params = {}
         if sample_weight is not None:
             score_params['sample_weight'] = sample_weight
@@ -700,11 +742,13 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = transformer.transform(X)
+def _transform_one(transformer, X, y, weight, **transform_params):
+    res = transformer.transform(X, **transform_params)
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res
+    if isinstance(transformer, SelectorMixin) and isinstance(res, tuple):
+        return res[0] * weight, res[1]
     return res * weight
 
 
@@ -724,10 +768,13 @@ def _fit_transform_one(transformer,
         if hasattr(transformer, 'fit_transform'):
             res = transformer.fit_transform(X, y, **fit_params)
         else:
-            res = transformer.fit(X, y, **fit_params).transform(X)
+            res = transformer.fit(X, y, **fit_params).transform(
+                X, **fit_params)
 
     if weight is None:
         return res, transformer
+    if isinstance(transformer, SelectorMixin) and isinstance(res, tuple):
+        return (res[0] * weight, res[1]), transformer
     return res * weight, transformer
 
 
