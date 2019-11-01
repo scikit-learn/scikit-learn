@@ -11,6 +11,7 @@
  * - Removes ajax call to get context for each result
  * - Adjusts Search.query to remove duplicates in search results.
  * - Adjusts Scorer to rank objects higher.
+ * - Adds Search._total_results to limit the number of search results.
  */
 
 if (!Scorer) {
