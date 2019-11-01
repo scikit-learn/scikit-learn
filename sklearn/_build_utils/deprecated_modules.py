@@ -278,7 +278,8 @@ if {new_module_name}.__file__.endswith(".py"):
 
     from inspect import getmembers  # noqa
     extra = [name for name, item in getmembers({new_module_name})
-             if not name.startswith('__')
+             if not name.startswith('__') and
+             item is not None
              and name not in {new_module_name}.__all__]
 
     {new_module_name}.__all__.extend(extra)
