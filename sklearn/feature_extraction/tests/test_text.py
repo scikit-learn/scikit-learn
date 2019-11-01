@@ -353,20 +353,19 @@ def test_fit_countvectorizer_twice():
 
 def test_countvectorizer_custom_token_pattern():
     corpus = [
-        'This is the first document.',
-        'This document is the second document.',
-        'And this is the third one.',
-        'Is this the first document?',
+        'This is the 1st document in my corpus.',
+        'This document is the 2nd sample.',
+        'And this is the 3rd one.',
+        'Is this the 4th document?',
     ]
-    # With no capturing group
-    token_pattern = r"[a-z]{2,}|(?:[0-9]{1,3})(?:st|nd|rd|th)?"
+    # With 1 capturing group, capturing the word after an ordinal
+    token_pattern = r"[0-9]{1,3}(?:st|nd|rd|th)\s\b(\w{2,})\b"
     vectorizer = CountVectorizer(token_pattern=token_pattern)
     vectorizer.fit_transform(corpus)
-    expected = ['and', 'document', 'first', 'is', 'one',
-                'second', 'the', 'third', 'this']
+    expected = ['document', 'one', 'sample']
     assert vectorizer.get_feature_names() == expected
-    # With 2 capturing groups
-    token_pattern = r"([a-z]{2,})|([0-9]{1,3})(?:st|nd|rd|th)?"
+    # With 2 capturing groups, capturing the ordinal and the word after it
+    token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
     message = "more than 1 capturing group in token pattern"
 
     def func(token_pattern):
