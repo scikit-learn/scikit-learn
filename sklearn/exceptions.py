@@ -31,7 +31,7 @@ class NotFittedError(ValueError, AttributeError):
     ... except NotFittedError as e:
     ...     print(repr(e))
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
-    appropriate arguments before using this method."...)
+    appropriate arguments before using this estimator."...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.

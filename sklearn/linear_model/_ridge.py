@@ -567,7 +567,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if ((sample_weight is not None) and
-                np.atleast_1d(sample_weight).ndim > 1):
+                np.asarray(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         # when X is sparse we only remove offset from y
@@ -766,6 +766,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
+
+    This classifier first converts the target values into ``{-1, 1}`` and
+    then treats the problem as a regression task (multi-output regression in
+    the multiclass case).
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 

@@ -436,7 +436,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            DeprecationWarning, stacklevel=2)
+            FutureWarning, stacklevel=2)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -766,6 +766,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -904,7 +905,8 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
+        yet. Call 'fit' with appropriate arguments before using this
+        estimator."
 
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
@@ -928,16 +930,16 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     if attributes != 'deprecated':
         warnings.warn("Passing attributes to check_is_fitted is deprecated"
                       " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", DeprecationWarning)
+                      "argument is ignored.", FutureWarning)
     if all_or_any != 'deprecated':
         warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
                       " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", DeprecationWarning)
+                      "argument is ignored.", FutureWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+               "appropriate arguments before using this estimator.")
 
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
@@ -1207,8 +1209,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -1287,7 +1289,7 @@ def _deprecate_positional_args(f):
             warnings.warn("Pass {} as keyword args. From version 0.24 "
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
-                          DeprecationWarning)
+                          FutureWarning)
         kwargs.update({k: arg for k, arg in zip(all_args, args)})
         return f(**kwargs)
     return inner_f
