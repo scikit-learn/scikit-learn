@@ -62,6 +62,7 @@ var Search = {
     _index: null,
     _queued_query: null,
     _pulse_status: -1,
+    _total_results: 12,
 
     htmlToText: function (htmlString) {
         var htmlString = htmlString.replace(/<img.+?>/g, "");
@@ -215,19 +216,24 @@ var Search = {
                 objectterms.slice(0, i),
                 objectterms.slice(i + 1, objectterms.length)
             );
+
+            if (results.length < this._total_results) {
+                results = $u.uniq(results.concat(
+                    this.performObjectSearch(objectterms[i], others)
+                ), false, function (item) {return item[1]});
+            }
+        }
+
+        if (results.length < this._total_results) {
+            // lookup as search terms in fulltext
             results = results.concat(
-                this.performObjectSearch(objectterms[i], others)
+                this.performTermsSearch(searchterms, excluded, terms, titleterms)
             );
         }
 
-        // lookup as search terms in fulltext
-        results = results.concat(
-            this.performTermsSearch(searchterms, excluded, terms, titleterms)
-        );
-
-        results = $u.uniq(results, false, function (item) {
-            return item[1];
-        });
+        if (results.length > this._total_results) {
+            results = results.slice(0, this._total_results);
+        }
 
         // let the scorer override scores with a custom scoring function
         if (Scorer.score) {
@@ -298,31 +304,31 @@ var Search = {
                     );
                 }
                 if (item[3]) {
-                    listItem.append($("<span> (" + item[3] + ")</span>"));
+                    // listItem.append($("<span> (" + item[3] + ")</span>"));
                     Search.output.append(listItem);
                     listItem.slideDown(5, function () {
                         displayNextItem();
                     });
-                // } else if (DOCUMENTATION_OPTIONS.HAS_SOURCE) {
-                //     $.ajax({
-                //         url:
-                //             DOCUMENTATION_OPTIONS.URL_ROOT +
-                //             item[0] +
-                //             DOCUMENTATION_OPTIONS.FILE_SUFFIX,
-                //         dataType: "text",
-                //         complete: function (jqxhr, textstatus) {
-                //             var data = jqxhr.responseText;
-                //             if (data !== "" && data !== undefined) {
-                //                 listItem.append(
-                //                     Search.makeSearchSummary(data, searchterms, hlterms)
-                //                 );
-                //             }
-                //             Search.output.append(listItem);
-                //             listItem.slideDown(5, function () {
-                //                 displayNextItem();
-                //             });
-                //         }
-                //     });
+                } else if (DOCUMENTATION_OPTIONS.HAS_SOURCE) {
+                    $.ajax({
+                        url:
+                            DOCUMENTATION_OPTIONS.URL_ROOT +
+                            item[0] +
+                            DOCUMENTATION_OPTIONS.FILE_SUFFIX,
+                        dataType: "text",
+                        complete: function (jqxhr, textstatus) {
+                            var data = jqxhr.responseText;
+                            if (data !== "" && data !== undefined) {
+                                listItem.append(
+                                    Search.makeSearchSummary(data, searchterms, hlterms)
+                                );
+                            }
+                            Search.output.append(listItem);
+                            listItem.slideDown(5, function () {
+                                displayNextItem();
+                            });
+                        }
+                    });
                 } else {
                     // no source available, just display title
                     Search.output.append(listItem);
