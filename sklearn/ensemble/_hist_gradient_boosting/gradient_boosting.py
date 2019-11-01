@@ -113,6 +113,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
                                                  dtype=np.float64)
+            self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
 
@@ -669,6 +670,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
+
+        if getattr(self, '_fitted_with_sw', False):
+            raise NotImplementedError("{} does not support partial dependence"
+                                      " plots when sample weights were given "
+                                      "during fit time.".format(
+                                          self.__class__.__name__
+                                      ))
+
         grid = np.asarray(grid, dtype=X_DTYPE, order='C')
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
