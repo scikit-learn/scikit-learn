@@ -1967,8 +1967,8 @@ class SVDD(OutlierMixin, BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-        super(SVDD, self).fit(X, np.ones(_num_samples(X)),
-                              sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)),
+                    sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
 
@@ -2021,5 +2021,5 @@ class SVDD(OutlierMixin, BaseLibSVM):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(SVDD, self).predict(X)
+        y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
