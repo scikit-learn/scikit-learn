@@ -372,14 +372,10 @@ var Search = {
 
         var i;
         var results = [];
-        var seenFullNames = new Set();
 
         for (var prefix in objects) {
             for (var name in objects[prefix]) {
                 var fullname = (prefix ? prefix + "." : "") + name;
-                if (seenFullNames.has(fullname)) {
-                    continue;
-                }
                 var fullnameLower = fullname.toLowerCase();
                 if (fullnameLower.indexOf(object) > -1) {
                     var score = 0;
