@@ -43,11 +43,3 @@ cd $TEST_DIR
 set -x
 $TEST_CMD --pyargs sklearn
 set +x
-
-if [[ -n "$VALIDATE_DOCSTRINGS" ]]; then
-    cd -
-    # Install nightly numpydoc for docstring validation
-    pip uninstall -y numpydoc
-    pip install https://github.com/numpy/numpydoc/archive/master.zip
-    $TEST_CMD maint_tools/test_docstrings.py
-fi

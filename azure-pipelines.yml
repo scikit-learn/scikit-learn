@@ -74,7 +74,6 @@ jobs:
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
-        VALIDATE_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
 
 - template: build_tools/azure/posix-32.yml
