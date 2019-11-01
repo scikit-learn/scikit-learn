@@ -16,6 +16,7 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.externals._pep562 import Pep562
 
 import pytest
 
@@ -145,6 +146,8 @@ def test_tabs():
 
         # because we don't import
         mod = importlib.import_module(modname)
+        if isinstance(mod, Pep562):
+            continue
         try:
             source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
