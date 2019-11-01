@@ -174,7 +174,7 @@ def test_lasso_cv():
 def test_lasso_cv_with_some_model_selection():
     from sklearn.pipeline import make_pipeline
     from sklearn.preprocessing import StandardScaler
-    from sklearn.model_selection import StratifiedKFold
+    from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
     from sklearn.linear_model import LassoCV
 
@@ -184,7 +184,7 @@ def test_lasso_cv_with_some_model_selection():
 
     pipe = make_pipeline(
         StandardScaler(),
-        LassoCV(cv=StratifiedKFold())
+        LassoCV(cv=ShuffleSplit(random_state=0))
     )
     pipe.fit(X, y)
 
@@ -973,3 +973,13 @@ def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
             X2, y2, sample_weight=None
     )
     assert_allclose(reg1.coef_, reg2.coef_)
+
+
+def test_enet_sample_weight_sparse():
+    reg = ElasticNet()
+    X = sparse.csc_matrix(np.zeros((3, 2)))
+    y = np.array([-1, 0, 1])
+    sw = np.array([1, 2, 3])
+    with pytest.raises(ValueError, match="Sample weights do not.*support "
+                                         "sparse matrices"):
+        reg.fit(X, y, sample_weight=sw, check_input=True)
