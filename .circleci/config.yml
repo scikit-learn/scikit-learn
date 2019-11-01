@@ -91,11 +91,8 @@ jobs:
           name: dependencies
           command: sudo pip install flake8
       - run:
-          name: flake8
-          command: ./build_tools/circle/flake8_diff.sh
-      - run:
-          name: deprecated_properties_checks
-          command: ./build_tools/circle/check_deprecated_properties.sh
+          name: linting
+          command: ./build_tools/circle/linting.sh
 
   pypy3:
     docker:
