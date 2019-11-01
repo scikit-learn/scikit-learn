@@ -34,16 +34,22 @@ def filter_errors(errors, method):
 
     These rules are specific for scikit-learn."""
     for code, message in errors:
+        # We ignore following error code,
+        #  - RT02: The first line of the Returns section
+        #    should contain only the type, ..
+        #   (as we may need refer to the name of the returned
+        #    object)
+
+        if code in ["RT02"]:
+            continue
+
         # Following codes are only taken into account for the
         # top level class docstrings:
         #  - ES01: No extended summary found
         #  - SA01: See Also section not found
         #  - EX01: No examples section found
-        if method is not None and code in [
-            "EX01",
-            "SA01",
-            "ES01",
-        ]:
+
+        if method is not None and code in ["EX01", "SA01", "ES01"]:
             continue
         yield code, message
 
