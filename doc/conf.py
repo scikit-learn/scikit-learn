@@ -338,13 +338,15 @@ def make_carousel_thumbs(app, exception):
 def filter_search_index(app, exception):
     if exception is not None:
         return
-    searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
 
-    # searchindex.js does not exist when generating latex
-    if not os.path.exists(searchindex_path):
+    # searchindex only exist when generating html
+    if app.builder.name != 'html':
         return
 
     print('Removing methods from search index')
+
+    searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
+
     with open(searchindex_path, 'r') as f:
         searchindex_text = f.read()
 
