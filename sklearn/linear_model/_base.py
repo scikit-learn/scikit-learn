@@ -1,5 +1,5 @@
 """
-Generalized Linear models.
+Generalized Linear Models.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -100,7 +100,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                      sample_weight=None, return_mean=False, check_input=True):
-    """
+    """Center and scale data.
+
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
     be applied. The function returns the statistics necessary to reconstruct
@@ -180,7 +181,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 # Currently, the fact that sag implements its own way to deal with
 # sample_weight makes the refactoring tricky.
 
-def _rescale_data(X, y, sample_weight):
+def _rescale_data(X, y, sample_weight, order='C'):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
     sample_weight = np.array(sample_weight)
@@ -192,6 +193,22 @@ def _rescale_data(X, y, sample_weight):
                                   shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
+    if sparse.issparse(X):
+        if order == 'F':
+            X = X.tocsc()
+            if y.ndim > 1:
+                y = y.tocsc()
+        else:
+            X = X.tocsr()
+            if y.ndim > 1:
+                y = y.tocsr()
+    else:
+        if order == 'F':
+            X = np.asfortranarray(X)
+            y = np.asfortranarray(y)
+        else:
+            X = np.ascontiguousarray(X)
+            y = np.ascontiguousarray(y)
     return X, y
 
 
@@ -540,7 +557,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
-             check_input=True):
+             check_input=True, sample_weight=None, order='C'):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
 
@@ -554,9 +571,11 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
-            check_input=check_input)
+            check_input=check_input, sample_weight=sample_weight)
+    if sample_weight is not None:
+        X, y = _rescale_data(X, y, sample_weight=sample_weight, order=order)
     if hasattr(precompute, '__array__') and (
-            fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
+        fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
         warnings.warn("Gram matrix was provided but X was centered"
                       " to fit intercept, "

@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
@@ -898,3 +899,77 @@ def test_multi_task_lasso_cv_dtype():
     y = X[:, [0, 0]].copy()
     est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
     assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)
+
+
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('alpha', [0.01])
+@pytest.mark.parametrize('normalize', [False, True])
+@pytest.mark.parametrize('precompute', [False, True])
+@pytest.mark.parametrize('sparseX', [False])
+def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
+                                        precompute, sparseX):
+    """Test that the impact of sample_weight is consistent."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    params = dict(alpha=alpha, fit_intercept=fit_intercept,
+                  precompute=precompute, tol=1e-6, l1_ratio=0.5)
+
+    if sparseX:
+        X = sparse.csc_matrix(X)
+
+    reg = ElasticNet(**params).fit(X, y)
+    coef = reg.coef_.copy()
+    if fit_intercept:
+        intercept = reg.intercept_
+
+    # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    sample_weight = np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # scaling of sample_weight should have no effect, cf. np.average()
+    sample_weight = 2 * np.ones_like(y)
+    reg.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept)
+
+    # setting one element of sample_weight to 0 is equivalent to removing
+    # the correspoding sample
+    sample_weight = np.ones_like(y)
+    sample_weight[-1] = 0
+    reg.fit(X, y, sample_weight=sample_weight)
+    coef1 = reg.coef_.copy()
+    if fit_intercept:
+        intercept1 = reg.intercept_
+    reg.fit(X[:-1], y[:-1])
+    assert_allclose(reg.coef_, coef1, rtol=1e-6)
+    if fit_intercept:
+        assert_allclose(reg.intercept_, intercept1)
+
+    # check that multiplying sample_weight by 2 is equivalent
+    # to repeating correspoding samples twice
+    if sparse.issparse(X):
+        X = X.toarray()
+
+    X2 = np.concatenate([X, X[:n_samples//2]], axis=0)
+    y2 = np.concatenate([y, y[:n_samples//2]])
+    sample_weight_1 = np.ones(len(y))
+    sample_weight_1[:n_samples//2] = 2
+    if sparseX:
+        X = sparse.csc_matrix(X)
+        X2 = sparse.csc_matrix(X2)
+
+    reg1 = ElasticNet(**params).fit(
+            X, y, sample_weight=sample_weight_1
+    )
+
+    reg2 = ElasticNet(**params).fit(
+            X2, y2, sample_weight=None
+    )
+    assert_allclose(reg1.coef_, reg2.coef_)
