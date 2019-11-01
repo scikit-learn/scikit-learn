@@ -144,6 +144,7 @@ def test_tabs():
                         'feature_extraction._hashing_fast' in modname):
             continue
 
+        # because we don't import
         mod = importlib.import_module(modname)
 
         # unwrap to get module because Pep562 backport wraps the original
