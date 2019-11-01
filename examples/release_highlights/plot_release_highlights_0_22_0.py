@@ -12,12 +12,35 @@ refer to the :ref:`release notes <changes_0_22>`.
 
 To install the latest version (with pip)::
 
-    pip install -U scikit-learn --upgrade
+    pip install --upgrade scikit-learn
 
 or with conda::
 
     conda install scikit-learn
 """
+
+##############################################################################
+# KNN Based Imputation
+# ------------------------------------
+# We now support imputation for completing missing values using k-Nearest
+# Neighbors.
+#
+# Each sample's missing values are imputed using the mean value from
+# ``n_neighbors`` nearest neighbors found in the training set. Two samples are
+# close if the features that neither is missing are close.
+# By default, a euclidean distance metric
+# that supports missing values,
+# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
+# neighbors.
+#
+# Read more in the :ref:`User Guide <knnimpute>`.
+
+import numpy as np
+from sklearn.impute import KNNImputer
+
+X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
+imputer = KNNImputer(n_neighbors=2)
+print(imputer.fit_transform(X))
 
 ##############################################################################
 # Permutation-based feature importance
@@ -133,16 +156,78 @@ print(titanic.data.head()[['pclass', 'embarked']])
 # implementations, such as approximate nearest neighbors methods.
 # See more details in the :ref:`User Guide <neighbors_transformer>`.
 
+from tempfile import TemporaryDirectory
 from sklearn.neighbors import KNeighborsTransformer
 from sklearn.manifold import Isomap
 from sklearn.pipeline import make_pipeline
 
-estimator = make_pipeline(
-    KNeighborsTransformer(n_neighbors=10, mode='distance'),
-    Isomap(n_neighbors=10, metric='precomputed'),
-    memory='.')
-estimator.fit(X)
+with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
+    estimator = make_pipeline(
+        KNeighborsTransformer(n_neighbors=10, mode='distance'),
+        Isomap(n_neighbors=10, metric='precomputed'),
+        memory=tmpdir)
+    estimator.fit(X)
 
-# We can decrease the number of neighbors and the graph will not be recomputed.
-estimator.set_params(isomap__n_neighbors=5)
-estimator.fit(X)
+    # We can decrease the number of neighbors and the graph will not be
+    # recomputed.
+    estimator.set_params(isomap__n_neighbors=5)
+    estimator.fit(X)
+
+############################################################################
+# Stacking Classifier and Regressor
+# ---------------------------------
+# :class:`~ensemble.StackingClassifier` and
+# :class:`~ensemble.StackingRegressor`
+# allow you to have a stack of estimators with a final classifier or
+# a regressor.
+# Stacked generalization consists in stacking the output of individual
+# estimators and use a classifier to compute the final prediction. Stacking
+# allows to use the strength of each individual estimator by using their output
+# as input of a final estimator.
+# Base estimators are fitted on the full ``X`` while
+# the final estimator is trained using cross-validated predictions of the
+# base estimators using ``cross_val_predict``.
+#
+# Read more in the :ref:`User Guide <stacking>`.
+
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import StackingClassifier
+from sklearn.model_selection import train_test_split
+
+X, y = load_iris(return_X_y=True)
+estimators = [
+    ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
+    ('svr', make_pipeline(StandardScaler(),
+                          LinearSVC(random_state=42)))
+]
+clf = StackingClassifier(
+    estimators=estimators, final_estimator=LogisticRegression()
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, random_state=42
+)
+clf.fit(X_train, y_train).score(X_test, y_test)
+
+############################################################################
+# Checking scikit-learn compatibility of an estimator
+# ---------------------------------------------------
+# Developers can check the compatibility of their scikit-learn compatible
+# estimators using :func:`~utils.estimator_checks.check_estimator`. For
+# instance, the ``check_estimator(LinearSVC)`` passes.
+#
+# We now provide a ``pytest`` specific decorator which allows the ``pytest``
+# ro run all checks independently and report the checks that are failing.
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.utils.estimator_checks import parametrize_with_checks
+
+
+@parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+def test_sklearn_compatible_estimator(estimator, check):
+    check(estimator)

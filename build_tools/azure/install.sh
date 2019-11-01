@@ -20,8 +20,8 @@ version_ge() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
 
-    TO_INSTALL="python=$PYTHON_VERSION pip pytest=$PYTEST_VERSION \
-                pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+    TO_INSTALL="python=$PYTHON_VERSION pip \
+                numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
@@ -61,8 +61,15 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
 	make_conda $TO_INSTALL
+
+    if [[ "$PYTEST_VERSION" == "*" ]]; then
+        python -m pip install pytest
+    else
+        python -m pip install pytest=="$PYTEST_VERSION"
+    fi
+
     if [[ "$PYTHON_VERSION" == "*" ]]; then
-        pip install pytest-xdist
+        python -m pip install pytest-xdist
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
@@ -88,7 +95,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    python -m pip install coverage codecov
+    python -m pip install coverage codecov pytest-cov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
@@ -109,6 +116,6 @@ try:
 except ImportError:
     print('pandas not installed')
 "
-pip list
+python -m pip list
 python setup.py build_ext --inplace -j 3
 python setup.py develop

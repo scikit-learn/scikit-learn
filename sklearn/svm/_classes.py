@@ -3,7 +3,7 @@ import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
+from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
@@ -223,7 +223,7 @@ else [n_classes, n_features]
             old_loss = self.loss
             self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          DeprecationWarning)
+                          FutureWarning)
         # ---------------------------------------------------------------------
 
         if self.C < 0:
@@ -412,7 +412,7 @@ class LinearSVR(RegressorMixin, LinearModel):
                          'l2': 'squared_epsilon_insensitive'
                          }.get(self.loss)
             warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          DeprecationWarning)
+                          FutureWarning)
         # ---------------------------------------------------------------------
 
         if self.C < 0:
