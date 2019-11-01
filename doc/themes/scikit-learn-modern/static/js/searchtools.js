@@ -29,13 +29,13 @@ if (!Scorer) {
         */
 
         // query matches the full name of an object
-        objNameMatch: 20,
+        objNameMatch: 11,
         // or matches in the last dotted part of the object name
-        objPartialMatch: 10,
+        objPartialMatch: 6,
         // Additive scores depending on the priority of the object
         objPrio: {
             0: 15, // used to be importantResults
-            1: 10, // used to be objectResults
+            1: 5, // used to be objectResults
             2: -5
         }, // used to be unimportantResults
         //  Used when the priority is not in the mapping.
