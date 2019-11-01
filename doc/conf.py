@@ -338,6 +338,11 @@ def make_carousel_thumbs(app, exception):
 def filter_search_index(app, exception):
     if exception is not None:
         return
+
+    # searchindex only exist when generating html
+    if app.builder.name != 'html':
+        return
+
     print('Removing methods from search index')
 
     searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
