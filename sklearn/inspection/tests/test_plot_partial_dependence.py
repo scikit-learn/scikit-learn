@@ -85,13 +85,17 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston):
+@pytest.mark.parametrize("feature_names", [None, load_boston().feature_names])
+def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
+                                              feature_names):
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
     grid_resolution = 25
     # check with str features and array feature names and single column
-    disp = plot_partial_dependence(clf_boston, boston.data,
+    disp = plot_partial_dependence(clf_boston, df,
                                    [('CRIM', 'ZN'), 'ZN'],
                                    grid_resolution=grid_resolution,
-                                   feature_names=boston.feature_names,
+                                   feature_names=feature_names,
                                    n_cols=1, line_kw={"alpha": 0.8})
     fig = pyplot.gcf()
     axs = fig.get_axes()
