@@ -29,9 +29,9 @@ if (!Scorer) {
         */
 
         // query matches the full name of an object
-        objNameMatch: 11,
+        objNameMatch: 15,
         // or matches in the last dotted part of the object name
-        objPartialMatch: 6,
+        objPartialMatch: 15,
         // Additive scores depending on the priority of the object
         objPrio: {
             0: 15, // used to be importantResults
