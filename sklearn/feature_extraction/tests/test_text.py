@@ -351,6 +351,31 @@ def test_fit_countvectorizer_twice():
     assert X1.shape[1] != X2.shape[1]
 
 
+def test_countvectorizer_custom_token_pattern():
+    corpus = [
+        'This is the first document.',
+        'This document is the second document.',
+        'And this is the third one.',
+        'Is this the first document?',
+    ]
+    # With no capturing group
+    token_pattern = r"[a-z]{2,}|(?:[0-9]{1,3})(?:st|nd|rd|th)?"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
+    vectorizer.fit_transform(corpus)
+    expected = ['and', 'document', 'first', 'is', 'one',
+                'second', 'the', 'third', 'this']
+    assert vectorizer.get_feature_names() == expected
+    # With 2 capturing groups
+    token_pattern = r"([a-z]{2,})|([0-9]{1,3})(?:st|nd|rd|th)?"
+    message = "more than 1 capturing group in token pattern"
+
+    def func(token_pattern):
+        vectorizer = CountVectorizer(token_pattern=token_pattern)
+        vectorizer.fit_transform(corpus)
+
+    assert_raise_message(ValueError, message, func, token_pattern)
+
+
 def test_tf_idf_smoothing():
     X = [[1, 1, 1],
          [1, 1, 0],

@@ -324,6 +324,10 @@ class _VectorizerMixin:
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
+
+        if token_pattern.groups > 1:
+            raise ValueError("more than 1 capturing group in token pattern")
+
         return token_pattern.findall
 
     def get_stop_words(self):
@@ -608,6 +612,10 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
+
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
@@ -873,6 +881,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -1571,6 +1583,10 @@ class TfidfVectorizer(CountVectorizer):
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
