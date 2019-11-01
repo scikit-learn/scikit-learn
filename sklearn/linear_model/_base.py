@@ -184,6 +184,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight, order='C'):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
+    sparse_X = sparse.issparse(X)
+    sparse_y = sparse.issparse(y)
     sample_weight = np.array(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight,
@@ -193,22 +195,26 @@ def _rescale_data(X, y, sample_weight, order='C'):
                                   shape=(n_samples, n_samples))
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
-    if sparse.issparse(X):
+
+    if sparse_X:
         if order == 'F':
-            X = X.tocsc()
-            if y.ndim > 1:
-                y = y.tocsc()
+            X = sparse.csc_matrix(X)
         else:
-            X = X.tocsr()
-            if y.ndim > 1:
-                y = y.tocsr()
+            X = sparse.csr_matrix(X)
+    elif order == 'F':
+        X = np.asfortranarray(X)
     else:
+        X = np.ascontiguousarray(X)
+
+    if sparse_y:
         if order == 'F':
-            X = np.asfortranarray(X)
-            y = np.asfortranarray(y)
+            y = sparse.csc_matrix(y)
         else:
-            X = np.ascontiguousarray(X)
-            y = np.ascontiguousarray(y)
+            y = sparse.csr_matrix(y)
+    elif order == 'F':
+        y = np.asfortranarray(y)
+    else:
+        y = np.ascontiguousarray(y)
     return X, y
 
 
