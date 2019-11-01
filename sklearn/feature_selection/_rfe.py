@@ -154,8 +154,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
+        tags = self._get_tags()
         X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=False)
+                         force_all_finite=not tags.get('allow_nan', True))
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -331,7 +332,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {'poor_score': True, 'allow_nan': True}
+        estimator_tags = self.estimator._get_tags()
+        return {'poor_score': True,
+                'allow_nan': estimator_tags.get('allow_nan', True)}
 
 
 class RFECV(RFE):
