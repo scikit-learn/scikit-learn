@@ -346,7 +346,6 @@ def filter_search_index(app, exception):
     print('Removing methods from search index')
 
     searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
-
     with open(searchindex_path, 'r') as f:
         searchindex_text = f.read()
 
