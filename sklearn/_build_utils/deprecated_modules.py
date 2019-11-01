@@ -273,8 +273,8 @@ _FILE_CONTENT_TEMPLATE = """
 from . import {new_module_name}
 
 if {new_module_name}.__file__.endswith(".py"):
-    if not hasattr({new_module_name}, '__all__'):
-        {new_module_name}.__all__ = []
+    {new_module_name}.__all__ = getattr({new_module_name},
+                                        '__all__', [])
 
     from inspect import getmembers  # noqa
     extra = [name for name, item in getmembers({new_module_name})
