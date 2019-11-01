@@ -1041,11 +1041,11 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     - that eigenvalues are not all negative. If this check fails, it raises a
       ``ValueError``
 
-    - that there are no significant negative eigenvalues (with absolute value
-      more than 1e-10 and more than 1e-5 times the largest positive
-      eigenvalue). If this check fails, it raises a
-      ``PositiveSpectrumWarning``. All negative eigenvalues (even smaller ones)
-      are set to zero in all cases.
+    - that there are no significant negative eigenvalues with absolute value
+      more than 1e-10 (1e-6) and more than 1e-5 (5e-3) times the largest
+      positive eigenvalue in double (simple) precision. If this check fails,
+      it raises a ``PositiveSpectrumWarning``. All negative eigenvalues
+      (even smaller ones) are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
@@ -1055,10 +1055,10 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Parameters
     ----------
-    lambdas : array-like, shape (n_eigenvalues,)
+    lambdas : array-like of shape (n_eigenvalues,)
         Array of eigenvalues to check / fix.
 
-    warn_on_zeros : bool, optional (default=False)
+    warn_on_zeros : bool, default=False
         When this is set to ``True``, a ``PositiveSpectrumWarning`` will be
         raised when there are extremely small eigenvalues. Otherwise no warning
         will be raised. Note that in both cases, extremely small eigenvalues
@@ -1066,39 +1066,32 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Returns
     -------
-    lambdas_fixed : ndarray, shape (n_eigenvalues,)
+    lambdas_fixed : ndarray of shape (n_eigenvalues,)
         A fixed validated copy of the array of eigenvalues.
 
     Examples
     --------
     >>> _check_psd_eigenvalues([1, 2])      # nominal case
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
     >>> _check_psd_eigenvalues([5, 5j])     # significant imag part
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
         of the maximum real part). The matrix is maybe not PSD, or something
         went wrong with the eigenvalues decomposition.
     >>> _check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
     >>> _check_psd_eigenvalues([-5, -1])    # all negative
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
         is maybe not PSD, or something went wrong with the eigenvalues
         decomposition.
     >>> _check_psd_eigenvalues([5, -1])     # significant negative
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
     >>> _check_psd_eigenvalues([5, -5e-5])  # insignificant negative
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
     >>> _check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
-    ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
 
     """

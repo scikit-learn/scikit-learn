@@ -182,5 +182,5 @@ class PositiveSpectrumWarning(UserWarning):
     (kernel) present significant negative eigenvalues, or bad conditioning i.e.
     very small non-zero eigenvalues compared to the largest eigenvalue.
 
-    .. versionadded:: 0.21
+    .. versionadded:: 0.22
     """
