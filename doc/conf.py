@@ -340,6 +340,7 @@ def filter_search_index(app, exception):
         return
     searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
 
+    # searchindex.js does not exist when generating latex
     if not os.path.exists(searchindex_path):
         return
 
