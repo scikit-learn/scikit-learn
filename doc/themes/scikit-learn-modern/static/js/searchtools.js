@@ -45,7 +45,7 @@ if (!Scorer) {
         title: 15,
         partialTitle: 7,
         // query found in terms
-        term: 5,
+        term: 10,
         partialTerm: 2
     };
 }
