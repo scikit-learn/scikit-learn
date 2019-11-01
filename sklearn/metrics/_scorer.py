@@ -247,7 +247,7 @@ class _ProbaScorer(_BaseScorer):
         if y_type == "binary":
             if y_pred.shape[1] == 2:
                 y_pred = y_pred[:, 1]
-            else:
+            elif y_pred.shape[1] == 1:  # not multiclass
                 raise ValueError('got predict_proba of shape {},'
                                  ' but need classifier with two'
                                  ' classes for {} scoring'.format(
