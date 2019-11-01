@@ -884,7 +884,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         If there is a capturing group in token_pattern then the
         captured group content, not the entire match, becomes the token.
-        For more than one capturing groups, it raises ValueError
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -1586,7 +1586,7 @@ class TfidfVectorizer(CountVectorizer):
 
         If there is a capturing group in token_pattern then the
         captured group content, not the entire match, becomes the token.
-        For more than one capturing groups, it raises ValueError
+        At most one capturing group is permitted.
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
