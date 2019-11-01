@@ -16,7 +16,7 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
-from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
+from sklearn.externals._pep562 import Pep562
 
 import pytest
 
@@ -134,10 +134,6 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-DEPRECATED_MODULE_NAMES = set(
-    deprecated_path for _, deprecated_path, _, _ in _DEPRECATED_MODULES)
-
-
 @ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
@@ -148,10 +144,13 @@ def test_tabs():
                         'feature_extraction._hashing_fast' in modname):
             continue
 
-        # Do not check deprecated paths
-        if modname in DEPRECATED_MODULE_NAMES:
-            continue
         mod = importlib.import_module(modname)
+
+        # unwrap to get module because Pep562 backport wraps the original
+        # module
+        if isinstance(mod, Pep562):
+            mod = mod._module
+
         try:
             source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
