@@ -300,9 +300,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is ``DecisionTreeClassifier(max_depth=1)``
+        the base estimator is ``DecisionTreeClassifier(max_depth=1)``.
 
-    n_estimators : integer, optional (default=50)
+    n_estimators : int, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
@@ -348,6 +348,31 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     feature_importances_ : ndarray of shape (n_features,)
         The feature importances if supported by the ``base_estimator``.
 
+    See Also
+    --------
+    AdaBoostRegressor
+        An AdaBoost regressor that begins by fitting a regressor on the original
+        dataset and then fits additional copies of the regressor on the same
+        dataset but where the weights of instances are adjusted according to the
+        error of the current prediction.
+
+    GradientBoostingClassifier
+        GB builds an additive model in a forward stage-wise fashion. Regression
+        trees are fit on the negative gradient of the binomial or multinomial deviance loss function.
+        Binary classification is a special case where only a single regression tree is induced.
+
+    sklearn.tree.DecisionTreeClassifier
+        A non-parametric supervised learning method used for classification.
+        Creates a model that predicts the value of a target variable by learning
+        simple decision rules inferred from the data features.
+
+    References
+    ----------
+    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
+           on-Line Learning and an Application to Boosting", 1995.
+
+    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
     Examples
     --------
     >>> from sklearn.ensemble import AdaBoostClassifier
@@ -364,19 +389,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     array([1])
     >>> clf.score(X, y)
     0.983...
-
-    See also
-    --------
-    AdaBoostRegressor, GradientBoostingClassifier,
-    sklearn.tree.DecisionTreeClassifier
-
-    References
-    ----------
-    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
-           on-Line Learning and an Application to Boosting", 1995.
-
-    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     def __init__(self,
                  base_estimator=None,
