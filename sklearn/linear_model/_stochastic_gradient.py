@@ -627,10 +627,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Subset of the training data
+            Subset of the training data.
 
         y : numpy array, shape (n_samples,)
-            Subset of the target values
+            Subset of the target values.
 
         classes : array, shape (n_classes,)
             Classes across all calls to partial_fit.
@@ -646,7 +646,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
         Returns
         -------
-        self : returns an instance of self.
+        self :
+            Returns an instance of self.
         """
         self._validate_params(for_partial_fit=True)
         if self.class_weight in ['balanced']:
