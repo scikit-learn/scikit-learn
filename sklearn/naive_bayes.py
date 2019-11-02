@@ -139,26 +139,23 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
-    class_prior_ : array, shape (n_classes,)
-        probability of each class.
-
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
+        
+    class_prior_ : array, shape (n_classes,)
+        probability of each class.
 
     classes_ : array, shape (n_classes,)
         class labels known to the classifier
 
-    theta_ : array, shape (n_classes, n_features)
-        mean of each feature per class
-
-    sigma_ : array, shape (n_classes, n_features)
-        variance of each feature per class
-
     epsilon_ : float
         absolute additive value to variances
-
-    classes_ : array-like, shape (n_classes,)
-        Unique class labels.
+        
+    sigma_ : array, shape (n_classes, n_features)
+        variance of each feature per class
+        
+    theta_ : array, shape (n_classes, n_features)
+        mean of each feature per class
 
     Examples
     --------
@@ -689,38 +686,36 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
-
-    intercept_ : array, shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
-        as a linear model.
-
-    feature_log_prob_ : array, shape (n_classes, n_features)
-        Empirical log probability of features
-        given a class, ``P(x_i|y)``.
-
-    coef_ : array, shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
-        as a linear model.
-
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class.
+
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : array, shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        as a linear model.
+    
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
 
+    feature_log_prob_ : array, shape (n_classes, n_features)
+        Empirical log probability of features
+        given a class, ``P(x_i|y)``.
+
+    intercept_ : array, shape (n_classes, )
+        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+        as a linear model.
+    
     n_features_ : int
         Number of features of each sample.
 
-    classes_ : array-like, shape (n_classes,)
-        Unique class labels.
 
     Examples
     --------
@@ -804,33 +799,30 @@ class ComplementNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class. Only used in edge
-        case with a single class in the training set.
-
-    feature_log_prob_ : array, shape (n_classes, n_features)
-        Empirical weights for class complements.
-
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class. Only used in edge
+        case with a single class in the training set.
+    
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-
+        
+    feature_all_ : array, shape (n_features,)
+        Number of samples encountered for each feature during fitting. This
+        value is weighted by the sample weight when provided.
+        
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
 
+    feature_log_prob_ : array, shape (n_classes, n_features)
+        Empirical weights for class complements.
+
     n_features_ : int
-        Number of features of each sample.
-
-    feature_all_ : array, shape (n_features,)
-        Number of samples encountered for each feature during fitting. This
-        value is weighted by the sample weight when provided.
-
-    classes_ : array of shape (n_classes,)
-        The classes labels.
+        Number of features of each sample.    
 
     Examples
     --------
@@ -919,29 +911,27 @@ class BernoulliNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape = [n_classes]
-        Log probability of each class (smoothed).
-
-    feature_log_prob_ : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
     class_count_ : array, shape = [n_classes]
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
+        
+    class_log_prior_ : array, shape = [n_classes]
+        Log probability of each class (smoothed).
 
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-
+        
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
+        
+    feature_log_prob_ : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
 
     n_features_ : int
         Number of features of each sample.
 
-    classes_ : array of shape (n_classes,)
-        The classes labels.
 
     Examples
     --------
@@ -1045,23 +1035,26 @@ class CategoricalNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
-
-    feature_log_prob_ : list of arrays, len n_features
-        Holds arrays of shape (n_classes, n_categories of respective feature)
-        for each feature. Each array provides the empirical log probability
-        of categories given the respective feature and class, ``P(x_i|y)``.
-
-    class_count_ : array, shape (n_classes,)
-        Number of samples encountered for each class during fitting. This
-        value is weighted by the sample weight when provided.
-
     category_count_ : list of arrays, len n_features
         Holds arrays of shape (n_classes, n_categories of respective feature)
         for each feature. Each array provides the number of samples
         encountered for each class and category of the specific feature.
 
+    class_count_ : array, shape (n_classes,)
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
+        
+    class_log_prior_ : array, shape (n_classes, )
+        Smoothed empirical log probability for each class.
+
+    classes_ : array, shape (n_classes,)
+        Class labels known to the classifier
+        
+    feature_log_prob_ : list of arrays, len n_features
+        Holds arrays of shape (n_classes, n_categories of respective feature)
+        for each feature. Each array provides the empirical log probability
+        of categories given the respective feature and class, ``P(x_i|y)``.
+    
     n_features_ : int
         Number of features of each sample.
 
