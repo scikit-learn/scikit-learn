@@ -792,8 +792,8 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    verbose : integer, default=0
-        The verbosity level
+    verbose : int, default=0
+        The verbosity level.
 
     epsilon : float, default=0.1
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
@@ -817,7 +817,7 @@ class SGDClassifier(BaseSGDClassifier):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    learning_rate : string, optional
+    learning_rate : str, optional
         The learning rate schedule:
 
         'constant':
@@ -870,7 +870,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -913,6 +913,13 @@ class SGDClassifier(BaseSGDClassifier):
         Number of weight updates performed during training.
         Same as ``(n_iter_ * n_samples)``.
 
+    See Also
+    --------
+    sklearn.svm.LinearSVC: Linear support vector classification.
+    LogisticRegression: Logistic regression.
+    Perceptron: Inherits from SGDClassifier. ``Perceptron()`` is equivalent to
+        SGDClassifier(loss="perceptron", eta0=1, learning_rate="constant", penalty=None).
+
     Examples
     --------
     >>> import numpy as np
@@ -925,10 +932,6 @@ class SGDClassifier(BaseSGDClassifier):
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
-
-    See also
-    --------
-    sklearn.svm.LinearSVC, LogisticRegression, Perceptron
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
@@ -1049,7 +1052,6 @@ class SGDClassifier(BaseSGDClassifier):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Input data for prediction
 
         Returns
         -------
