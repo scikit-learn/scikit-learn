@@ -26,12 +26,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : string, 'l1' or 'l2' (default='l2')
+    penalty : str, 'l1' or 'l2' (default='l2')
         Specifies the norm used in the penalization. The 'l2'
         penalty is the standard used in SVC. The 'l1' leads to ``coef_``
         vectors that are sparse.
 
-    loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
+    loss : str, 'hinge' or 'squared_hinge' (default='squared_hinge')
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
@@ -47,7 +47,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Regularization parameter. The strength of the regularization is
         inversely proportional to C. Must be strictly positive.
 
-    multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : str, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
@@ -58,7 +58,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
         will be ignored.
 
-    fit_intercept : boolean, optional (default=True)
+    fit_intercept : bool, optional (default=True)
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
@@ -80,7 +80,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : int, (default=0)
         Enable verbose output. Note that this setting takes advantage of a
@@ -119,41 +119,7 @@ else [n_classes, n_features]
     n_iter_ : int
         Maximum number of iterations run across all classes.
 
-    Examples
-    --------
-    >>> from sklearn.svm import LinearSVC
-    >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = LinearSVC(random_state=0, tol=1e-5)
-    >>> clf.fit(X, y)
-    LinearSVC(random_state=0, tol=1e-05)
-    >>> print(clf.coef_)
-    [[0.085... 0.394... 0.498... 0.375...]]
-    >>> print(clf.intercept_)
-    [0.284...]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
-
-    Notes
-    -----
-    The underlying C implementation uses a random number generator to
-    select features when fitting the model. It is thus not uncommon
-    to have slightly different results for the same input data. If
-    that happens, try with a smaller ``tol`` parameter.
-
-    The underlying implementation, liblinear, uses a sparse internal
-    representation for the data that will incur a memory copy.
-
-    Predict output may not match that of standalone liblinear in certain
-    cases. See :ref:`differences from liblinear <liblinear_differences>`
-    in the narrative documentation.
-
-    References
-    ----------
-    `LIBLINEAR: A Library for Large Linear Classification
-    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
-
-    See also
+    See Also
     --------
     SVC
         Implementation of Support Vector Machine classifier using libsvm:
@@ -174,6 +140,39 @@ else [n_classes, n_features]
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
 
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller ``tol`` parameter.
+
+    The underlying implementation, liblinear, uses a sparse internal
+    representation for the data that will incur a memory copy.
+
+    Predict output may not match that of standalone liblinear in certain
+    cases. See :ref:`differences from liblinear <liblinear_differences>`
+    in the narrative documentation.
+
+    References
+    ----------
+    `LIBLINEAR: A Library for Large Linear Classification
+    <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
+    Examples
+    --------
+    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = LinearSVC(random_state=0, tol=1e-5)
+    >>> clf.fit(X, y)
+    LinearSVC(random_state=0, tol=1e-05)
+    >>> print(clf.coef_)
+    [[0.085... 0.394... 0.498... 0.375...]]
+    >>> print(clf.intercept_)
+    [0.284...]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
     """
 
     def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
@@ -203,7 +202,7 @@ else [n_classes, n_features]
             n_features is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target vector relative to X
+            Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
@@ -213,6 +212,7 @@ else [n_classes, n_features]
         Returns
         -------
         self : object
+            An instance of the estimator.
         """
         # FIXME Remove l1/l2 support in 0.23 ----------------------------------
         msg = ("loss='%s' has been deprecated in favor of "
