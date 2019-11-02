@@ -764,6 +764,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    See Also
+    --------
+    DecisionTreeRegressor : A decision tree regressor.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -778,10 +782,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    See Also
-    --------
-    DecisionTreeRegressor : A decision tree regressor.
 
     References
     ----------
@@ -1115,6 +1115,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    See Also
+    --------
+    DecisionTreeClassifier : A decision tree classifier.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1129,10 +1133,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    See Also
-    --------
-    DecisionTreeClassifier : A decision tree classifier.
 
     References
     ----------
