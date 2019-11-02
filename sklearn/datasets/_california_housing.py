@@ -31,12 +31,12 @@ import logging
 import joblib
 
 from . import get_data_home
+from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
 from ._base import _refresh_cache
 from ..utils import Bunch
-from ..utils import check_pandas_support  # noqa
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
@@ -48,15 +48,6 @@ ARCHIVE = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
-
-def _convert_data_dataframe(caller_name, data, target, feature_names, target_names):
-    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
-    data_df = pd.DataFrame(data, columns=feature_names)
-    target_df = pd.DataFrame(target, columns=target_names)
-    combined_df = pd.concat([data_df, target_df], axis=1)
-    X = combined_df[feature_names]
-    y = combined_df[target_names]
-    return combined_df, X, y
 
 def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False, as_frame=False):
