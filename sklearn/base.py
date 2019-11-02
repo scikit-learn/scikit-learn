@@ -436,7 +436,7 @@ class ClusterMixin:
 
     def fit_predict(self, X, y=None):
         """
-        Performs clustering on X and returns cluster labels.
+        Perform clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -588,7 +588,7 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs fit on X and returns labels for X.
+        """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -598,7 +598,7 @@ class OutlierMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
