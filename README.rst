@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |PythonVersion|_ |PyPi|_ |DOI|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
