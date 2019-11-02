@@ -141,8 +141,16 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
         sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
+
+        Returns
+        -------
+        self : object
+            Returns instance of object.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
@@ -206,6 +214,9 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
