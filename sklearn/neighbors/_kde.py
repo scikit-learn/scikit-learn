@@ -7,7 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import check_array, check_random_state, check_consistent_length
+from ..utils import check_array, check_random_state
+from ..utils.validation import _check_sample_weight
 
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
@@ -154,13 +155,7 @@ class KernelDensity(BaseEstimator):
         X = check_array(X, order='C', dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,
-                                        ensure_2d=False)
-            if sample_weight.ndim != 1:
-                raise ValueError("the shape of sample_weight must be ({0},),"
-                                 " but was {1}".format(X.shape[0],
-                                                       sample_weight.shape))
-            check_consistent_length(X, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
             if sample_weight.min() <= 0:
                 raise ValueError("sample_weight must have positive values")
 
