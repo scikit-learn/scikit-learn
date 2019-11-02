@@ -446,7 +446,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def apply(self, X, check_input=True):
         """
-        Returns the index of the leaf that each sample is predicted as.
+        Return the index of the leaf that each sample is predicted as.
 
         .. versionadded:: 0.17
 
@@ -457,7 +457,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
