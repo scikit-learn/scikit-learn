@@ -779,7 +779,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
-    See also
+    See Also
     --------
     DecisionTreeRegressor
 
@@ -1130,7 +1130,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
 
-    See also
+    See Also
     --------
     DecisionTreeClassifier
 
@@ -1424,7 +1424,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    See also
+    See Also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
     sklearn.ensemble.ExtraTreesRegressor
@@ -1619,7 +1619,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    See also
+    See Also
     --------
     ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
     sklearn.ensemble.ExtraTreesRegressor
