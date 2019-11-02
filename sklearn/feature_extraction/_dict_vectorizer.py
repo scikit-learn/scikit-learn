@@ -225,6 +225,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
+
+        .. versionchanged:: 0.16
+            Can now perform fit_transform on an iterable in a single pass, when giving the option sort=False.
         """
         return self._transform(X, fitting=True)
 
