@@ -21,7 +21,6 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -141,7 +140,7 @@ class GaussianNB(BaseNB):
     ----------
     class_count_ : array, shape (n_classes,)
         number of training samples observed in each class.
-        
+
     class_prior_ : array, shape (n_classes,)
         probability of each class.
 
@@ -150,10 +149,10 @@ class GaussianNB(BaseNB):
 
     epsilon_ : float
         absolute additive value to variances
-        
+
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
-        
+
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
 
@@ -699,7 +698,7 @@ class MultinomialNB(BaseDiscreteNB):
     coef_ : array, shape (n_classes, n_features)
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
         as a linear model.
-    
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -712,7 +711,7 @@ class MultinomialNB(BaseDiscreteNB):
     intercept_ : array, shape (n_classes, )
         Mirrors ``class_log_prior_`` for interpreting MultinomialNB
         as a linear model.
-    
+
     n_features_ : int
         Number of features of each sample.
 
@@ -806,14 +805,14 @@ class ComplementNB(BaseDiscreteNB):
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class. Only used in edge
         case with a single class in the training set.
-    
+
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-        
+
     feature_all_ : array, shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
-        
+
     feature_count_ : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature) during fitting.
         This value is weighted by the sample weight when provided.
@@ -822,7 +821,7 @@ class ComplementNB(BaseDiscreteNB):
         Empirical weights for class complements.
 
     n_features_ : int
-        Number of features of each sample.    
+        Number of features of each sample.
 
     Examples
     --------
@@ -914,18 +913,18 @@ class BernoulliNB(BaseDiscreteNB):
     class_count_ : array, shape = [n_classes]
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
-        
+
     class_log_prior_ : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-        
+
     feature_count_ : array, shape = [n_classes, n_features]
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
-        
+
     feature_log_prob_ : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
@@ -1043,18 +1042,18 @@ class CategoricalNB(BaseDiscreteNB):
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
-        
+
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
     classes_ : array, shape (n_classes,)
         Class labels known to the classifier
-        
+
     feature_log_prob_ : list of arrays, len n_features
         Holds arrays of shape (n_classes, n_categories of respective feature)
         for each feature. Each array provides the empirical log probability
         of categories given the respective feature and class, ``P(x_i|y)``.
-    
+
     n_features_ : int
         Number of features of each sample.
 
