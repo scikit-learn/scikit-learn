@@ -171,7 +171,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
 
-    See also
+    See Also
     --------
     VotingRegressor: Prediction voting regressor.
     """
@@ -222,7 +222,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     def predict(self, X):
         """Predict class labels for X.
-
+        
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
@@ -233,7 +233,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         maj : array-like, shape (n_samples,)
             Predicted class labels.
         """
-
         check_is_fitted(self)
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
