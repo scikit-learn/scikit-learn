@@ -310,7 +310,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         ``alpha_min / alpha_max = 1e-3``
 
     n_alphas : int, optional
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path.
 
     alphas : ndarray, optional
         List of alphas where to compute the models.
