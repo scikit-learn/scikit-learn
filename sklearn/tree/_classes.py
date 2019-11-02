@@ -581,6 +581,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape = [n_features]
+            Normalized total reduction of critera by feature (Gini importance).
         """
         check_is_fitted(self)
 
@@ -1210,7 +1211,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -1223,6 +1224,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
 
         super().fit(
