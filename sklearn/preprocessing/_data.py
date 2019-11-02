@@ -411,12 +411,18 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """Undo the scaling of X according to feature_range.
+        """
+        Undo the scaling of X according to feature_range.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed. It cannot be sparse.
+
+        Returns
+        -------
+        Xt : array-like, shape [n_samples, n_features]
+            Transformed data.
         """
         check_is_fitted(self)
 
