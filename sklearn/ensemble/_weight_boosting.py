@@ -223,7 +223,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        Returns
+        Yields
         -------
         z : float
         """
@@ -242,7 +242,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         Returns
         -------
-        feature_importances_ : array, shape = [n_features]
+        feature_importances_ : ndarray of shape (n_features,)
+            The feature importances.
         """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
@@ -424,6 +425,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Returns
         -------
         self : object
+            A fitted estimator.
         """
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
@@ -642,7 +644,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        Returns
+        Yields
         -------
         y : generator of array, shape = [n_samples]
             The predicted classes.
@@ -713,7 +715,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        Returns
+        Yields
         -------
         score : generator of array, shape = [n_samples, k]
             The decision function of the input samples. The order of
@@ -821,7 +823,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The training input samples. Sparse matrix can be CSC, CSR, COO,
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
-        Returns
+        Yields
         -------
         p : generator of array, shape = [n_samples]
             The class probabilities of the input samples. The order of
@@ -1138,7 +1140,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The training input samples.
 
-        Returns
+        Yields
         -------
         y : generator of array, shape = [n_samples]
             The predicted regression values.
