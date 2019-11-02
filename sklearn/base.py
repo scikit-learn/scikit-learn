@@ -338,7 +338,7 @@ class ClassifierMixin:
 
     def score(self, X, y, sample_weight=None):
         """
-        Return the mean accuracy on the given test data and labels.
+        Returns the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -369,7 +369,7 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination R^2 of the prediction.
+        """Returns the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
