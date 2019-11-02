@@ -9,18 +9,18 @@ from copy import deepcopy
 
 from sklearn.datasets import load_boston
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import TempMemmap
 
-from sklearn.linear_model.coordinate_descent import Lasso, \
+from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
@@ -555,8 +555,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_boston(return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
@@ -865,3 +864,37 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+@pytest.mark.parametrize("precompute, inner_precompute", [
+    (True, True),
+    ('auto', False),
+    (False, False),
+])
+def test_lassoCV_does_not_set_precompute(monkeypatch, precompute,
+                                         inner_precompute):
+    X, y, _, _ = build_dataset()
+    calls = 0
+
+    class LassoMock(Lasso):
+        def fit(self, X, y):
+            super().fit(X, y)
+            nonlocal calls
+            calls += 1
+            assert self.precompute == inner_precompute
+
+    monkeypatch.setattr("sklearn.linear_model._coordinate_descent.Lasso",
+                        LassoMock)
+    clf = LassoCV(precompute=precompute)
+    clf.fit(X, y)
+    assert calls > 0
+
+
+def test_multi_task_lasso_cv_dtype():
+    n_samples, n_features = 10, 3
+    rng = np.random.RandomState(42)
+    X = rng.binomial(1, .5, size=(n_samples, n_features))
+    X = X.astype(int)  # make it explicit that X is int
+    y = X[:, [0, 0]].copy()
+    est = MultiTaskLassoCV(n_alphas=5, fit_intercept=True).fit(X, y)
+    assert_array_almost_equal(est.coef_, [[1, 0, 0]] * 2, decimal=3)

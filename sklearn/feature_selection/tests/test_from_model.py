@@ -1,11 +1,10 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -28,7 +27,8 @@ def test_invalid_input():
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        with pytest.raises(ValueError):
+            model.transform(data)
 
 
 def test_input_estimator_unchanged():
@@ -290,7 +290,8 @@ def test_prefit():
 
     # Check that prefit=True and calling fit raises a ValueError
     model = SelectFromModel(clf, prefit=True)
-    assert_raises(ValueError, model.fit, data, y)
+    with pytest.raises(ValueError):
+        model.fit(data, y)
 
 
 def test_threshold_string():

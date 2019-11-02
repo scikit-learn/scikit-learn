@@ -13,14 +13,14 @@ import os
 import shutil
 import tempfile
 import numpy as np
+import pytest
 from functools import partial
 from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
@@ -105,8 +105,9 @@ def teardown_module():
 
 
 def test_load_empty_lfw_people():
-    assert_raises(IOError, fetch_lfw_people, data_home=SCIKIT_LEARN_EMPTY_DATA,
-                  download_if_missing=False)
+    with pytest.raises(IOError):
+        fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA,
+                         download_if_missing=False)
 
 
 def test_load_fake_lfw_people():
@@ -149,14 +150,15 @@ def test_load_fake_lfw_people():
 
 
 def test_load_fake_lfw_people_too_restrictive():
-    assert_raises(ValueError, fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
-                  min_faces_per_person=100, download_if_missing=False)
+    with pytest.raises(ValueError):
+        fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100,
+                         download_if_missing=False)
 
 
 def test_load_empty_lfw_pairs():
-    assert_raises(IOError, fetch_lfw_pairs,
-                  data_home=SCIKIT_LEARN_EMPTY_DATA,
-                  download_if_missing=False)
+    with pytest.raises(IOError):
+        fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA,
+                        download_if_missing=False)
 
 
 def test_load_fake_lfw_pairs():

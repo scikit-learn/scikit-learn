@@ -7,8 +7,7 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
-from sklearn.inspection.partial_dependence import (
+from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
@@ -22,17 +21,20 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
+from sklearn.compose import make_column_transformer
 from sklearn.metrics import r2_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 
 
 # toy sample
@@ -50,6 +52,9 @@ multiclass_classification_data = (make_classification(n_samples=50,
 regression_data = (make_regression(n_samples=50, random_state=0), 1)
 multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
                                                random_state=0), 2)
+
+# iris
+iris = load_iris()
 
 
 @pytest.mark.parametrize('Estimator, method, data', [
@@ -287,7 +292,7 @@ def test_multiclass_multioutput(Estimator):
         partial_dependence(est, X, [0])
 
 
-class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
+class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         # simulate that we have some classes
         self.classes_ = [0, 1]
@@ -337,11 +342,27 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
 
 @pytest.mark.parametrize(
+    "with_dataframe, err_msg",
+    [(True, "Only array-like or scalar are supported"),
+     (False, "Only array-like or scalar are supported")]
+)
+def test_partial_dependence_slice_error(with_dataframe, err_msg):
+    X, y = make_classification(random_state=0)
+    if with_dataframe:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+    estimator = LogisticRegression().fit(X, y)
+
+    with pytest.raises(TypeError, match=err_msg):
+        partial_dependence(estimator, X, features=slice(0, 2, 1))
+
+
+@pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-@pytest.mark.parametrize('features', [-1, 1000000])
-def test_partial_dependence_unknown_feature(estimator, features):
+@pytest.mark.parametrize('features', [-1, 10000])
+def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
@@ -354,10 +375,16 @@ def test_partial_dependence_unknown_feature(estimator, features):
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-def test_partial_dependence_unfitted_estimator(estimator):
-    err_msg = "'estimator' parameter must be a fitted estimator"
+def test_partial_dependence_unknown_feature_string(estimator):
+    pd = pytest.importorskip("pandas")
+    X, y = make_classification(random_state=0)
+    df = pd.DataFrame(X)
+    estimator.fit(df, y)
+
+    features = ['random']
+    err_msg = 'A given column is not a column of the dataframe'
     with pytest.raises(ValueError, match=err_msg):
-        partial_dependence(estimator, X, [0])
+        partial_dependence(estimator, df, features)
 
 
 @pytest.mark.parametrize(
@@ -428,10 +455,11 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features]
+        pipe, iris.data, features=[features], grid_resolution=10
     )
     pdp_clf, values_clf = partial_dependence(
-        clf, scaler.transform(iris.data), features=[features]
+        clf, scaler.transform(iris.data), features=[features],
+        grid_resolution=10
     )
     assert_allclose(pdp_pipe, pdp_clf)
     assert_allclose(
@@ -440,150 +468,106 @@ def test_partial_dependence_pipeline():
     )
 
 
-def test_plot_partial_dependence(pyplot):
-    # Test partial dependence plot function.
-    boston = load_boston()
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
+@pytest.mark.parametrize(
+    "estimator",
+    [LogisticRegression(max_iter=1000, random_state=0),
+     GradientBoostingClassifier(random_state=0, n_estimators=5)],
+    ids=['estimator-brute', 'estimator-recursion']
+)
+@pytest.mark.parametrize(
+    "preprocessor",
+    [None,
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])),
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         remainder='passthrough')],
+    ids=['None', 'column-transformer', 'column-transformer-passthrough']
+)
+@pytest.mark.parametrize(
+    "features",
+    [[0, 2], [iris.feature_names[i] for i in (0, 2)]],
+    ids=['features-integer', 'features-string']
+)
+def test_partial_dependence_dataframe(estimator, preprocessor, features):
+    # check that the partial dependence support dataframe and pipeline
+    # including a column transformer
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
 
-    grid_resolution = 25
-    plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
-                            grid_resolution=grid_resolution,
-                            feature_names=boston.feature_names)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 3
-    assert all(ax.has_data for ax in axs)
+    pipe = make_pipeline(preprocessor, estimator)
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
 
-    # check with str features and array feature names
-    plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
-                                               ('CRIM', 'ZN')],
-                            grid_resolution=grid_resolution,
-                            feature_names=boston.feature_names)
+    # the column transformer will reorder the column when transforming
+    # we mixed the index to be sure that we are computing the partial
+    # dependence of the right columns
+    if preprocessor is not None:
+        X_proc = clone(preprocessor).fit_transform(df)
+        features_clf = [0, 1]
+    else:
+        X_proc = df
+        features_clf = [0, 2]
 
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 3
-    assert all(ax.has_data for ax in axs)
+    clf = clone(estimator).fit(X_proc, iris.target)
+    pdp_clf, values_clf = partial_dependence(
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
+    )
 
-    # check with list feature_names
-    feature_names = boston.feature_names.tolist()
-    plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
-                                               ('CRIM', 'ZN')],
-                            grid_resolution=grid_resolution,
-                            feature_names=feature_names)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 3
-    assert all(ax.has_data for ax in axs)
-
-
-def test_plot_partial_dependence_multiclass(pyplot):
-    grid_resolution = 25
-    clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
-    iris = load_iris()
-
-    # Test partial dependence plot function on multi-class input.
-    clf.fit(iris.data, iris.target)
-    plot_partial_dependence(clf, iris.data, [0, 1],
-                            target=0,
-                            grid_resolution=grid_resolution)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 2
-    assert all(ax.has_data for ax in axs)
-
-    # now with symbol labels
-    target = iris.target_names[iris.target]
-    clf.fit(iris.data, target)
-    plot_partial_dependence(clf, iris.data, [0, 1],
-                            target='setosa',
-                            grid_resolution=grid_resolution)
-    fig2 = pyplot.gcf()
-    axs2 = fig2.get_axes()
-    assert len(axs2) == 2
-    assert all(ax.has_data for ax in axs2)
-
-    # check that the pd plots are the same for 0 and "setosa"
-    assert all(axs[0].lines[0]._y == axs2[0].lines[0]._y)
-    # check that the pd plots are different for another target
-    clf.fit(iris.data, iris.target)
-    plot_partial_dependence(clf, iris.data, [0, 1],
-                            target=1,
-                            grid_resolution=grid_resolution)
-    fig3 = pyplot.gcf()
-    axs3 = fig3.get_axes()
-    assert any(axs[0].lines[0]._y != axs3[0].lines[0]._y)
-
-
-def test_plot_partial_dependence_multioutput(pyplot):
-    # Test partial dependence plot function on multi-output input.
-    (X, y), _ = multioutput_regression_data
-    clf = LinearRegression()
-    clf.fit(X, y)
-
-    grid_resolution = 25
-    plot_partial_dependence(clf, X, [0, 1],
-                            target=0,
-                            grid_resolution=grid_resolution)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 2
-    assert all(ax.has_data for ax in axs)
-
-    plot_partial_dependence(clf, X, [0, 1],
-                            target=1,
-                            grid_resolution=grid_resolution)
-    fig = pyplot.gcf()
-    axs = fig.get_axes()
-    assert len(axs) == 2
-    assert all(ax.has_data for ax in axs)
+    assert_allclose(pdp_pipe, pdp_clf)
+    if preprocessor is not None:
+        scaler = preprocessor.named_transformers_['standardscaler']
+        assert_allclose(
+            values_pipe[1],
+            values_clf[1] * scaler.scale_[1] + scaler.mean_[1]
+        )
+    else:
+        assert_allclose(values_pipe[1], values_clf[1])
 
 
 @pytest.mark.parametrize(
-    "data, params, err_msg",
-    [(multioutput_regression_data[0], {"target": None, 'features': [0]},
-      "target must be specified for multi-output"),
-     (multioutput_regression_data[0], {"target": -1, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (multioutput_regression_data[0], {"target": 100, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (make_classification(random_state=0),
-     {'features': ['foobar'], 'feature_names': None},
-     'Feature foobar not in feature_names'),
-     (make_classification(random_state=0),
-     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
-      'Feature foobar not in feature_names'),
-     (make_classification(random_state=0), {'features': [(1, 2, 3)]},
-      'Each entry in features must be either an int, '),
-     (make_classification(random_state=0), {'features': [1, {}]},
-      'Each entry in features must be either an int, '),
-     (make_classification(random_state=0), {'features': [tuple()]},
-      'Each entry in features must be either an int, '),
-     (make_classification(random_state=0),
-      {'features': [123], 'feature_names': ['blahblah']},
-      'All entries of features must be less than '),
-     (make_classification(random_state=0),
-      {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
-      'feature_names should not contain duplicates')]
+    "features, expected_pd_shape",
+    [(0, (3, 10)),
+     (iris.feature_names[0], (3, 10)),
+     ([0, 2], (3, 10, 10)),
+     ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
+     ([True, False, True, False], (3, 10, 10))],
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'mask']
 )
-def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
-    X, y = data
-    estimator = LinearRegression().fit(X, y)
+def test_partial_dependence_feature_type(features, expected_pd_shape):
+    # check all possible features type supported in PDP
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
 
-    with pytest.raises(ValueError, match=err_msg):
-        plot_partial_dependence(estimator, X, **params)
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+        (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])
+    )
+    pipe = make_pipeline(
+        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
+    )
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+    assert pdp_pipe.shape == expected_pd_shape
+    assert len(values_pipe) == len(pdp_pipe.shape) - 1
 
 
-def test_plot_partial_dependence_fig(pyplot):
-    # Make sure fig object is correctly used if not None
-    (X, y), _ = regression_data
-    clf = LinearRegression()
-    clf.fit(X, y)
-
-    fig = pyplot.figure()
-    grid_resolution = 25
-    plot_partial_dependence(
-        clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
-
-    assert pyplot.gcf() is fig
+@pytest.mark.parametrize(
+    "estimator", [LinearRegression(), LogisticRegression(),
+                  GradientBoostingRegressor(), GradientBoostingClassifier()]
+)
+def test_partial_dependence_unfitted(estimator):
+    X = iris.data
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
+    )
+    pipe = make_pipeline(preprocessor, estimator)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
