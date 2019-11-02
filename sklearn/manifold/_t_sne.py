@@ -607,7 +607,14 @@ class TSNE(BaseEstimator):
 
     See Also
     --------
-    LocallyLinearEmbedding, Isomap, MDS
+    PCA
+        Principal component analysis (PCA)
+    LocallyLinearEmbedding
+        Locally Linear Embedding
+    Isomap
+        Non-linear dimensionality reduction through Isometric Mapping
+    MDS
+        Multidimensional scaling
 
     References
     ----------
