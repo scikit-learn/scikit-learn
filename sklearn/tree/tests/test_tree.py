@@ -1121,7 +1121,7 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.ones(101)
