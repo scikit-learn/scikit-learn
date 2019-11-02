@@ -202,7 +202,7 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    handle_unknown : 'error' or 'ignore', default='error'
+    handle_unknown : {'error', 'ignore'}, default='error'
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
