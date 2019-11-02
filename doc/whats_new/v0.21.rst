@@ -7,7 +7,7 @@
 Version 0.21.3
 ==============
 
-.. include:: ../changelog_legend.inc
+.. include:: changelog_legend.inc
 
 **July 30, 2019**
 

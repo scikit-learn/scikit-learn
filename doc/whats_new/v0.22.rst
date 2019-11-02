@@ -13,7 +13,7 @@ For a short description of the main highlights of the release, please
 refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
-.. include:: ../changelog_legend.inc
+.. include:: changelog_legend.inc
 
 Deprecations: using ``FutureWarning`` from now on
 -------------------------------------------------
