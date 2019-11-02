@@ -25,7 +25,8 @@ from ..utils.validation import _deprecate_positional_args
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
-    """Classifier implementing the k-nearest neighbors vote.
+    """
+    Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
 
@@ -35,7 +36,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         Number of neighbors to use by default for :meth:`kneighbors` queries.
 
     weights : {'uniform', 'distance'} or callable, default='uniform'
-        weight function used in prediction.  Possible values:
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -70,7 +71,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -81,19 +82,22 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    **kwargs : dict, default=None
+        Additional keyword arguments to be passed to parent classes.
+
     Attributes
     ----------
     classes_ : array of shape (n_classes,)
         Class labels known to the classifier
 
-    effective_metric_ : str or callble
+    effective_metric_ : str or callable
         The distance metric used. It will be same as the `metric` parameter
         or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
         'minkowski' and `p` parameter set to 2.
@@ -111,25 +115,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
 
-    Examples
+    See Also
     --------
-    >>> X = [[0], [1], [2], [3]]
-    >>> y = [0, 0, 1, 1]
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> neigh = KNeighborsClassifier(n_neighbors=3)
-    >>> neigh.fit(X, y)
-    KNeighborsClassifier(...)
-    >>> print(neigh.predict([[1.1]]))
-    [0]
-    >>> print(neigh.predict_proba([[0.9]]))
-    [[0.66666667 0.33333333]]
-
-    See also
-    --------
-    RadiusNeighborsClassifier
-    KNeighborsRegressor
-    RadiusNeighborsRegressor
-    NearestNeighbors
+    RadiusNeighborsClassifier : Vote among neighbors within a given radius.
+    KNeighborsRegressor : Regression based on k-nearest neighbors.
+    RadiusNeighborsRegressor : Regression based on neighbors within a \
+        fixed radius.
+    NearestNeighbors : Unsupervised learner for implementing neighbor searches.
 
     Notes
     -----
@@ -144,6 +136,19 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
        training data.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+
+    Examples
+    --------
+    >>> X = [[0], [1], [2], [3]]
+    >>> y = [0, 0, 1, 1]
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> neigh = KNeighborsClassifier(n_neighbors=3)
+    >>> neigh.fit(X, y)
+    KNeighborsClassifier(...)
+    >>> print(neigh.predict([[1.1]]))
+    [0]
+    >>> print(neigh.predict_proba([[0.9]]))
+    [[0.66666667 0.33333333]]
     """
 
     @_deprecate_positional_args
@@ -160,7 +165,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def predict(self, X):
-        """Predict the class labels for the provided data.
+        """
+        Predict the class labels for the provided data.
 
         Parameters
         ----------
@@ -202,7 +208,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         return y_pred
 
     def predict_proba(self, X):
-        """Return probability estimates for the test data X.
+        """
+        Return probability estimates for the test data X.
 
         Parameters
         ----------
@@ -306,7 +313,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric : str or callable, default='minkowski'
-        the distance metric to use for the tree.  The default metric is
+        The distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
@@ -325,11 +332,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, default=None
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    **kwargs : dict, default=None
+        Additional keyword arguments to be passed to parent classes.
 
     Attributes
     ----------
@@ -401,7 +411,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """
+        Fit the model using X as training data and y as target values.
 
         Parameters
         ----------
@@ -410,10 +421,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Training data. If array or matrix, the shape is (n_samples,
             n_features), or (n_samples, n_samples) if metric='precomputed'.
 
-        y : {array-like, sparse matrix} of shape (n_samples,) or \
-                (n_samples, n_output)
-            Target values.
-
+        y : {array-like, sparse matrix}
+            Target values of shape = [n_samples] or [n_samples, n_outputs]
         """
 
         SupervisedIntegerMixin.fit(self, X, y)
@@ -506,7 +515,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         return y_pred
 
     def predict_proba(self, X):
-        """Return probability estimates for the test data X.
+        """
+        Return probability estimates for the test data X.
 
         Parameters
         ----------

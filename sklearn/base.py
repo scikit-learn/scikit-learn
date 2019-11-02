@@ -503,7 +503,8 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Return the coefficient of determination R^2 of the prediction.
+        """
+        Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
@@ -695,7 +696,8 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Return the score of the model on the data X
+        """
+        Return the score of the model on the data X
 
         Parameters
         ----------
@@ -716,7 +718,8 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Perform fit on X and returns labels for X.
+        """
+        Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 

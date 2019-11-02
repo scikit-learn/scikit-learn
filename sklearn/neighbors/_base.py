@@ -1,4 +1,6 @@
-"""Base and mixin classes for nearest neighbors"""
+"""
+Base and mixin classes for nearest neighbors.
+"""
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -287,7 +289,9 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 
 
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
-    """Base class for nearest neighbors estimators."""
+    """
+    Base class for nearest neighbors estimators.
+    """
 
     @abstractmethod
     def __init__(self, n_neighbors=None, radius=None,
@@ -532,7 +536,9 @@ class KNeighborsMixin:
         return result
 
     def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
-        """Finds the K-neighbors of a point.
+        """
+        Find the K-neighbors of a point.
+
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
@@ -543,18 +549,17 @@ class KNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
+        n_neighbors : int, default=None
+            Number of neighbors to get.
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
+        return_distance : bool, default=True
+            If False, distances will not be returned.
 
         Returns
         -------
         neigh_dist : array, shape (n_queries, n_neighbors)
             Array representing the lengths to points, only present if
-            return_distance=True
+            `return_distance=True`.
 
         neigh_ind : array, shape (n_queries, n_neighbors)
             Indices of the nearest points in the population matrix.
@@ -581,7 +586,6 @@ class KNeighborsMixin:
         >>> neigh.kneighbors(X, return_distance=False)
         array([[1],
                [2]]...)
-
         """
         check_is_fitted(self)
 
@@ -707,7 +711,8 @@ class KNeighborsMixin:
 
     def kneighbors_graph(self, X=None, n_neighbors=None,
                          mode='connectivity'):
-        """Computes the (weighted) graph of k-Neighbors for points in X
+        """
+        Compute the (weighted) graph of k-Neighbors for points in X.
 
         Parameters
         ----------
@@ -717,9 +722,8 @@ class KNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        n_neighbors : int
+        n_neighbors : int, default=None
             Number of neighbors for each sample.
-            (default is value passed to the constructor).
 
         mode : {'connectivity', 'distance'}, optional
             Type of returned matrix: 'connectivity' will return the
@@ -728,9 +732,12 @@ class KNeighborsMixin:
 
         Returns
         -------
-        A : sparse graph in CSR format, shape = [n_queries, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
+        A : {array-like, sparse matrix} of shape (n_queries, n_samples_fit)
+            Sparse graph in CSR format.
+
+        See Also
+        --------
+        NearestNeighbors.radius_neighbors_graph : Graph for RadiusNeighbors.
 
         Examples
         --------
@@ -744,10 +751,6 @@ class KNeighborsMixin:
         array([[1., 0., 1.],
                [0., 1., 1.],
                [1., 0., 1.]])
-
-        See also
-        --------
-        NearestNeighbors.radius_neighbors_graph
         """
         check_is_fitted(self)
         if n_neighbors is None:
@@ -846,9 +849,8 @@ class RadiusNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
+        radius : float, default=None
             Limiting distance of neighbors to return.
-            (default is the value passed to the constructor).
 
         return_distance : boolean, optional. Defaults to True.
             If False, distances will not be returned.
@@ -1016,9 +1018,8 @@ class RadiusNeighborsMixin:
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
 
-        radius : float
+        radius : float, default=None
             Radius of neighborhoods.
-            (default is the value passed to the constructor).
 
         mode : {'connectivity', 'distance'}, optional
             Type of returned matrix: 'connectivity' will return the
@@ -1092,7 +1093,8 @@ class RadiusNeighborsMixin:
 
 class SupervisedFloatMixin:
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """
+        Fit the model using X as training data and y as target values.
 
         Parameters
         ----------
@@ -1100,9 +1102,14 @@ class SupervisedFloatMixin:
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
 
-        y : {array-like, sparse matrix}
-            Target values, array of float values, shape = [n_samples]
-             or [n_samples, n_outputs]
+        y : {array-like, sparse matrix} of shape (n_samples,) \
+                or (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        fit : self
+            Return the object itself.
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
@@ -1116,7 +1123,8 @@ class SupervisedFloatMixin:
 
 class SupervisedIntegerMixin:
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """
+        Fit the model using X as training data and y as target values.
 
         Parameters
         ----------
@@ -1124,9 +1132,14 @@ class SupervisedIntegerMixin:
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
 
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
 
+        Returns
+        -------
+        fit : self
+            Returns the object itself.
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
@@ -1163,12 +1176,18 @@ class SupervisedIntegerMixin:
 
 class UnsupervisedMixin:
     def fit(self, X, y=None):
-        """Fit the model using X as training data
+        """
+        Fit the model using X as training data.
 
         Parameters
         ----------
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
+
+        Returns
+        -------
+        fit : self
+            Estimator instance.
         """
         return self._fit(X)
