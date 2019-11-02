@@ -292,7 +292,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     
-    ..versionadded::v0.16
+    ..versionadded:: v0.16
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
