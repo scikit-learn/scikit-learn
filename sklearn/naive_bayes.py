@@ -746,6 +746,12 @@ class MultinomialNB(BaseDiscreteNB):
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+    
+    ..versionadded:: v0.14
+    ..versionchanged:: v0.16 
+        Correct ``partial_fit`` handling of ``class_prior``
+    ..versionchanged:: v0.19
+        Fixed a bug where failed when ``alpha=0``.
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
@@ -851,6 +857,8 @@ class ComplementNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive bayes text classifiers. In ICML
     (Vol. 3, pp. 616-623).
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+    
+    ..versionadded:: v0.20
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,

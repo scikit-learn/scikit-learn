@@ -624,7 +624,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        .. versionchanged:: 0.21
+        .. versionadded:: v0.21
 
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
@@ -979,6 +979,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
+    
+    ..versionchanged:: v0.22
+        Raise warning of parameter choide means the another parameter unused
+    ..versionchanged:: v0.21
+        Read the data from the file instead of pass file name
+    ..versionchanged:: v0.20
+        Bug fix 
+    ..versionchanged:: v0.17
+        Bug fix of inconsistent results when pickling
+    ..versionchanged:: v0.14
+        Speed and memory imporvements
     """
 
     def __init__(self, input='content', encoding='utf-8',
@@ -1346,7 +1357,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     ----------
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if  ``use_idf`` is True.      
+        .. versionadded:: v0.20
 
     Examples
     --------
@@ -1382,6 +1394,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
+    
+    .. versionadded:: v.019
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,

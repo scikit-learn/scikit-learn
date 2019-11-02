@@ -758,6 +758,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     max_train_size : int, optional
         Maximum size for a single training set.
+        ..versionadded:: v0.19
 
     Examples
     --------
@@ -784,6 +785,8 @@ class TimeSeriesSplit(_BaseKFold):
     + n_samples % (n_splits + 1)`` in the ``i``th split,
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
+    
+    ..versionadded:: v0.18
     """
     def __init__(self, n_splits=5, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
