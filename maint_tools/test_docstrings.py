@@ -26,7 +26,7 @@ DOCSTRING_WHITELIST = [
     "KernelDensity",
     "KernelDensity.fit"
     "KernelDensity.score",
-    "LinearRegression$",
+    "LinearRegression$"
 ]
 
 
