@@ -317,13 +317,21 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             del self.data_range_
 
     def fit(self, X, y=None):
-        """Compute the minimum and maximum to be used for later scaling.
+        """
+        Compute the minimum and maximum to be used for later scaling.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : scaler
+            Fitted scaler.
         """
 
         # Reset internal state before fitting
