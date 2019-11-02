@@ -11,6 +11,8 @@ class CCA(_UnstableArchMixin, _PLS):
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     n_components : int, (default 2).
