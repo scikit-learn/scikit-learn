@@ -64,7 +64,7 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : bool, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
@@ -672,7 +672,7 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : boolean, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
