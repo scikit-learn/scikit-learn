@@ -415,7 +415,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def estimators_samples_(self):
-        """The subset of drawn samples for each base estimator.
+        """
+        The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,

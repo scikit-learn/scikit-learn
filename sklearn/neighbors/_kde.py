@@ -23,7 +23,7 @@ TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 # TODO: bandwidth estimation
 # TODO: create a density estimation base class?
 class KernelDensity(BaseEstimator):
-    """Kernel Density Estimation
+    """Kernel Density Estimation.
 
     Read more in the :ref:`User Guide <kernel_density>`.
 
@@ -32,16 +32,16 @@ class KernelDensity(BaseEstimator):
     bandwidth : float
         The bandwidth of the kernel.
 
-    algorithm : string
+    algorithm : str
         The tree algorithm to use.  Valid options are
         ['kd_tree'|'ball_tree'|'auto'].  Default is 'auto'.
 
-    kernel : string
+    kernel : str
         The kernel to use.  Valid kernels are
         ['gaussian'|'tophat'|'epanechnikov'|'exponential'|'linear'|'cosine']
         Default is 'gaussian'.
 
-    metric : string
+    metric : str
         The distance metric to use.  Note that not all metrics are
         valid with all algorithms.  Refer to the documentation of
         :class:`BallTree` and :class:`KDTree` for a description of
@@ -57,7 +57,7 @@ class KernelDensity(BaseEstimator):
         The desired relative tolerance of the result.  A larger tolerance will
         generally lead to faster execution.  Default is 1E-8.
 
-    breadth_first : boolean
+    breadth_first : bool
         If true (default), use a breadth-first approach to the problem.
         Otherwise use a depth-first approach.
 
@@ -69,6 +69,24 @@ class KernelDensity(BaseEstimator):
         Additional parameters to be passed to the tree for use with the
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
+
+    See Also
+    --------
+    sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
+        problems.
+    sklearn.neighbors.BallTree : Ball tree for fast generalized N-point
+        problems.
+
+    Examples
+    --------
+    Compute a gaussian kernel density estimate with a fixed bandwidth.
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.random_sample((100, 3))
+    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X)
+    >>> log_density = kde.score_samples(X[:3])
+    >>> log_density
+    array([-1.52955942, -1.51462041, -1.60244657])
     """
     def __init__(self, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
@@ -121,8 +139,16 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
         sample_weight : array_like, shape (n_samples,), optional
             List of sample weights attached to the data X.
+
+        Returns
+        -------
+        self : object
+            Returns instance of object.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = check_array(X, order='C', dtype=DTYPE)
@@ -186,6 +212,9 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
