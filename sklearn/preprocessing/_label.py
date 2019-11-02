@@ -285,7 +285,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y : numpy array of shape [n_samples].
+        y : numpy array of shape [n_samples]
+            Target values transformed back to original encoding.
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)
@@ -446,7 +447,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        y : array or sparse matrix of shape [n_samples,] or \
+        y : array or sparse matrix of shape [n_samples,] or
             [n_samples, n_classes]
             Target values. The 2-d matrix should only contain 0 and 1,
             represents multilabel classification. Sparse matrix can be
@@ -454,7 +455,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Y : array or CSR matrix of shape [n_samples, n_classes]
+        Y : array or CSR matrix of shape [n_samples, n_classes].
             Shape will be [n_samples, 1] for binary problems.
         """
         return self.fit(y).transform(y)
@@ -513,7 +514,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y : numpy array or CSR matrix of shape [n_samples] Target values.
+        y : numpy array or CSR matrix of shape [n_samples]
+            Target values.
 
         Notes
         -----

@@ -167,11 +167,12 @@ class BaseEstimator:
         return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
+        """
+        Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -198,7 +199,8 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """Set the parameters of this estimator.
+        """
+        Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
@@ -207,7 +209,7 @@ class BaseEstimator:
 
         Returns
         -------
-        self
+        self : returns an instance of self.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)
@@ -427,7 +429,8 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Performs clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -435,12 +438,12 @@ class ClusterMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -527,10 +530,10 @@ class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it.
-
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        """
+        Fit to data, then transform it. Fits transformer to X and y with 
+        optional parameters fit_params and returns a transformed 
+        version of X.
 
         Parameters
         ----------
