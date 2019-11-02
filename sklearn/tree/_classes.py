@@ -1081,7 +1081,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
-        .. deprecated :: 0.22
+        .. deprecated:: 0.22
 
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
