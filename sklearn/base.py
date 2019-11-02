@@ -334,6 +334,7 @@ class BaseEstimator:
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
+    
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
