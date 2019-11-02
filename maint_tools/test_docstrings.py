@@ -30,7 +30,17 @@ DOCSTRING_WHITELIST = [
     "KernelDensity.score",
     "DecisionTreeClassifier",
     "DecisionTreeRegressor",
-    "LinearRegression$"
+    "LinearRegression$",
+    "SGDClassifier.set_params",
+    "SGDClassifier.get_params",
+    "SGDClassifier.fit",
+    "SGDClassifier.partial_fit",
+    "SGDClassifier.predict",
+    "SGDClassifier.predict_proba",
+    "SGDClassifier.predict_log_proba",
+    "SGDClassifier.score",
+    "SGDClassifier.sparsify",
+    "SGDClassifier.densify",
 ]
 
 
