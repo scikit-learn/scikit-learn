@@ -670,10 +670,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : numpy array, shape (n_samples,)
-            Target values
+            Target values.
 
         coef_init : array, shape (n_classes, n_features)
             The initial coefficients to warm-start the optimization.
@@ -685,11 +685,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
-            constructor) if class_weight is specified
+            constructor) if class_weight is specified.
 
         Returns
         -------
-        self : returns an instance of self.
+        self :
+            Returns an instance of self.
         """
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
