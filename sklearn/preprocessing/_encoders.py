@@ -516,7 +516,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Returns
         -------
-        output_feature_names : array of string, length n_output_features
+        output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
         check_is_fitted(self)
