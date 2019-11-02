@@ -984,7 +984,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 0 1 0 1 0 1 0 0 1 0 0]
      [1 0 0 1 0 0 0 0 1 1 0 1 0]
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
-     
+
     See also
     --------
     HashingVectorizer, TfidfVectorizer
