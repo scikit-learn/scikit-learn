@@ -1347,6 +1347,9 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
+        
+   .. versionadded:: v0.20
+       idf_ can now be set
 
     Examples
     --------
@@ -1382,6 +1385,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
+    
+    .. versionadded::v019
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
