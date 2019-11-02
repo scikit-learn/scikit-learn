@@ -244,7 +244,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : boolean, optional
+    copy_x : bool, optional
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -286,7 +286,6 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
-
     """
 
     est = KMeans(
