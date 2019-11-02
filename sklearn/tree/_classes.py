@@ -474,7 +474,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
-        """Return the decision path in the tree
+        """Return the decision path in the tree.
 
         .. versionadded:: 0.18
 
@@ -485,7 +485,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -494,7 +494,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         indicator : sparse csr array, shape = [n_samples, n_nodes]
             Return a node indicator matrix where non zero elements
             indicates that the samples goes through the nodes.
-
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
