@@ -1325,7 +1325,8 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 
 
 class MiniBatchKMeans(KMeans):
-    """Mini-Batch K-Means clustering
+    """
+    Mini-Batch K-Means clustering.
 
     Read more in the :ref:`User Guide <mini_batch_kmeans>`.
 
@@ -1356,10 +1357,10 @@ class MiniBatchKMeans(KMeans):
     batch_size : int, optional, default: 100
         Size of the mini batches.
 
-    verbose : boolean, optional
+    verbose : bool, optional
         Verbosity mode.
 
-    compute_labels : boolean, default=True
+    compute_labels : bool, default=True
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
@@ -1419,6 +1420,17 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
+    See Also
+    --------
+    KMeans
+        The classic implementation of the clustering method based on the
+        Lloyd's algorithm. It consumes the whole set of input data at each
+        iteration.
+
+    Notes
+    -----
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -1448,19 +1460,6 @@ class MiniBatchKMeans(KMeans):
            [1.12195122, 1.3902439 ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
-
-    See also
-    --------
-
-    KMeans
-        The classic implementation of the clustering method based on the
-        Lloyd's algorithm. It consumes the whole set of input data at each
-        iteration.
-
-    Notes
-    -----
-    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
-
     """
 
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
@@ -1489,12 +1488,16 @@ class MiniBatchKMeans(KMeans):
             if the given data is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
+        Returns
+        -------
+        self : array, shape (n_samples,)
+            Cluster labels for each point.
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
