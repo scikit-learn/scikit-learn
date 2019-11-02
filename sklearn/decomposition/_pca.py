@@ -363,7 +363,7 @@ class PCA(_BasePCA):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Returns fitted values.
+            Transformed values.
 
         Notes
         -----
