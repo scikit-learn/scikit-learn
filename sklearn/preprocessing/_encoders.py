@@ -553,7 +553,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values
+    categories : 'auto' or a list of array-like, default='auto'
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
