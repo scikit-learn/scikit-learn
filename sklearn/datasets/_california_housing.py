@@ -169,8 +169,6 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
 
     X = data
     y = target
-    if return_X_y:
-        return X, y
 
     frame = None
     target_names = ["MedHouseVal", ]
@@ -180,6 +178,9 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
                                               target,
                                               feature_names,
                                               target_names)
+
+    if return_X_y:
+        return X, y
 
     return Bunch(data=X,
                  target=y,
