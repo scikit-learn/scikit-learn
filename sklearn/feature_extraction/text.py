@@ -979,6 +979,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
+    
+    ..versionchanged:: v0.22
+        Raise warning of parameter choide means the another parameter unused
+    ..versionchanged:: v0.21
+        Read the data from the file instead of pass file name
+    ..versionchanged:: v0.20
+        Bug fix 
+    ..versionchanged:: v0.17
+        Bug fix of inconsistent results when pickling
+    ..versionchanged:: v0.14
+        Speed and memory imporvements
     """
 
     def __init__(self, input='content', encoding='utf-8',
