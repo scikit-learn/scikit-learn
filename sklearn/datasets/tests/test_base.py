@@ -24,7 +24,6 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
-from sklearn.utils import check_pandas_support
 from sklearn.datasets._base import _refresh_cache
 from sklearn.datasets.tests.test_common import check_return_X_y
 
@@ -251,18 +250,6 @@ def test_loads_dumps_bunch():
     bunch_from_pkl = loads(dumps(bunch))
     bunch_from_pkl.x = "y"
     assert bunch_from_pkl['x'] == bunch_from_pkl.x
-
-
-def test_fetch_asframe():
-    # this test uses the california housing dataset
-    from sklearn.datasets import fetch_california_housing as fetch
-    pd = check_pandas_support('test_fetch_asframe with as_frame=True')
-    bunch = fetch(as_frame=True)
-    frame = bunch.frame
-    assert (hasattr(bunch, 'frame') == True)
-    assert (frame.shape == (20640, 9))
-    assert isinstance(bunch.data, pd.DataFrame)
-    assert isinstance(bunch.target, pd.DataFrame)
 
 
 def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():

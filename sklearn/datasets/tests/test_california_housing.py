@@ -4,6 +4,7 @@ Skipped if california_housing is not already downloaded to data_home.
 """
 
 from sklearn.datasets import fetch_california_housing
+from sklearn.utils import check_pandas_support
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -24,3 +25,13 @@ def test_fetch():
     # test return_X_y option
     fetch_func = partial(fetch)
     check_return_X_y(data, fetch_func)
+
+
+def test_fetch_asframe():
+    pd = check_pandas_support('test_fetch_asframe with as_frame=True')
+    bunch = fetch(as_frame=True)
+    frame = bunch.frame
+    assert (hasattr(bunch, 'frame') == True)
+    assert (frame.shape == (20640, 9))
+    assert isinstance(bunch.data, pd.DataFrame)
+    assert isinstance(bunch.target, pd.DataFrame)
