@@ -672,6 +672,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
+  .. versionadded:: 0.21
+
     Parameters
     ----------
     loss : {'least_squares', 'least_absolute_deviation'}, \
@@ -849,6 +851,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
+
+  ..versionadded:: 0.21
 
     Parameters
     ----------
