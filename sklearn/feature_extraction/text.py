@@ -879,7 +879,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         word n-grams or char n-grams to be extracted. All values of n such
         that min_n <= n <= max_n will be used.
-=======
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
         will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
@@ -977,7 +976,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 1 1 1 0 0 1 0 1]]
 
 
-    >>> vectorizer2 = CountVectorizer(analyzer='word',ngram_range=(2,2))
+    >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2,2))
     >>> X2 = vectorizer2.fit_transform(corpus)
     >>> print(vectorizer2.get_feature_names())
     ['and this', 'document is', 'first document', 'is the', 'is this', 
