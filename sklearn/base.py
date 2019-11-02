@@ -207,9 +207,15 @@ class BaseEstimator:
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 
+        Parameters
+        ----------
+        **params : dict
+                Estimator parameters.
+
         Returns
         -------
-        self
+            self: object
+                Estimator instance.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)
