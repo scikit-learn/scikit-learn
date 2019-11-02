@@ -693,9 +693,10 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``utils.choose_check_classifiers_labels``
   - ``utils.enforce_estimator_tags_y``
-  - ``utils.optimize.newton_cg`
+  - ``utils.optimize.newton_cg``
   - ``utils.random.random_choice_csc``
   - ``utils.safe_indexing``
   - ``utils.mocking``
@@ -703,8 +704,8 @@ Changelog
   - ``utils.seq_dataset``
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
-  - All of ``utils.testing`` except for ``all_estimators`` which is now
-    in ``utils``.
+  - All of ``utils.testing`` except for ``all_estimators`` which is now in
+    ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -732,11 +733,12 @@ Changelog
   unnecessarily. :pr:`15094` by `Andreas Müller`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
   - ``mocking.MockDataFrame``
   - ``mocking.CheckingClassifier``
-  - ``optimize.newton_cg`
+  - ``optimize.newton_cg``
   - ``random.random_choice_csc``
 
 :mod:`sklearn.voting`
