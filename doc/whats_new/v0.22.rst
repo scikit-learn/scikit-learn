@@ -367,11 +367,9 @@ Changelog
 
 - |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
-  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |Enhancement| :func:`inspection.plot_partial_dependence` will use the column
-  by default when `feature_names` is not specified.
-  :pr:`15429` by :user:`Guillaume Lemaitre <glemaitre>`.
+  In addition :func:`inspection.plot_partial_dependence` will use the column
+  names by default when a dataframe is passed.
+  :pr:`14028` and :pr:`15429` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
