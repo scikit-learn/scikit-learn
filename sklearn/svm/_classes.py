@@ -319,7 +319,8 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [n_features] if n_classes == 2 else \
+    [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -550,21 +551,12 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
-        Indices of support vectors.
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
-        Support vectors.
-
-    n_support_ : array-like, dtype=int32, shape = [n_class]
-        Number of support vectors for each class.
-
-    dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
-        For multiclass, coefficient for all 1-vs-1 classifiers.
-        The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in the
-        SVM section of the User Guide for details.
+    classes_ : array of shape (n_classes,)
+        The classes labels.
 
     coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
@@ -573,16 +565,30 @@ class SVC(BaseSVC):
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
-        Constants in decision function.
+    dual_coef_ : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in the
+        SVM section of the User Guide for details.
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    classes_ : array of shape (n_classes,)
-        The classes labels.
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
+        Constants in decision function.
+
+    n_support_ : array-like, dtype=int32, shape = [n_class]
+        Number of support vectors for each class.
+
+    support_ : array-like of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : array-like of shape (n_SV, n_features)
+        Support vectors.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
+
     probB_ : array, shape = [n_class * (n_class-1) / 2]
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
@@ -592,10 +598,6 @@ class SVC(BaseSVC):
         where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
-
-    class_weight_ : ndarray of shape (n_class,)
-        Multipliers of parameter C for each class.
-        Computed based on the ``class_weight`` parameter.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -756,21 +758,12 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
-        Indices of support vectors.
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C of each class.
+        Computed based on the ``class_weight`` parameter.
 
-    support_vectors_ : array-like of shape (n_SV, n_features)
-        Support vectors.
-
-    n_support_ : array-like, dtype=int32, shape = [n_class]
-        Number of support vectors for each class.
-
-    dual_coef_ : array, shape = [n_class-1, n_SV]
-        Coefficients of the support vector in the decision function.
-        For multiclass, coefficient for all 1-vs-1 classifiers.
-        The layout of the coefficients in the multiclass case is somewhat
-        non-trivial. See the section about multi-class classification in
-        the SVM section of the User Guide for details.
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
 
     coef_ : array, shape = [n_class * (n_class-1) / 2, n_features]
         Weights assigned to the features (coefficients in the primal
@@ -779,16 +772,24 @@ class NuSVC(BaseSVC):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
-        Constants in decision function.
-
-    classes_ : array of shape (n_classes,)
-        The unique classes labels.
+    dual_coef_ : array, shape = [n_class-1, n_SV]
+        Coefficients of the support vector in the decision function.
+        For multiclass, coefficient for all 1-vs-1 classifiers.
+        The layout of the coefficients in the multiclass case is somewhat
+        non-trivial. See the section about multi-class classification in
+        the SVM section of the User Guide for details.
 
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
 
+    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
+        Constants in decision function.
+
+    n_support_ : array-like, dtype = int32, shape = [n_class]
+        Number of support vectors for each class.
+
     probA_ : ndarray, shape of (n_class * (n_class-1) / 2,)
+
     probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
@@ -799,12 +800,14 @@ class NuSVC(BaseSVC):
         more information on the multiclass case and training procedure see
         section 8 of [1]_.
 
-    class_weight_ : ndarray of shape (n_class,)
-        Multipliers of parameter C of each class.
-        Computed based on the ``class_weight`` parameter.
-
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
+
+    support_ : array-like of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : array-like of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -926,14 +929,9 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
-        Indices of support vectors.
-
-    support_vectors_ : array-like of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : array, shape = [1, n_SV]
-        Coefficients of the support vector in the decision function.
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
@@ -942,11 +940,37 @@ class SVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    dual_coef_ : array, shape = [1, n_SV]
+        Coefficients of the support vector in the decision function.
+
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : array, shape = [1]
         Constants in decision function.
+
+    n_support_ : array-like, dtype = int32, shape = [n_class]
+        Number of support vectors for each class.
+
+    probA_ : array, shape = [n_class * (n_class-1) / 2]
+
+    probB_ : array, shape = [n_class * (n_class-1) / 2]
+        If probability=True, the parameters learned in Platt scaling to \
+        produce probability estimates from decision values. If \
+        probability=False, an empty array. Platt scaling uses the \
+        logistic function 1 / (1 + exp(decision_value * probA_ + probB_))\
+         where probA_ and probB_ are learned from the dataset \
+        [2]_. For more information on the multiclass case and training \
+        procedure see section 8 of [1]_.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : array-like of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : array-like of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -970,11 +994,14 @@ class SVR(RegressorMixin, BaseLibSVM):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'epsilon_svr'
@@ -1055,14 +1082,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
-        Indices of support vectors.
-
-    support_vectors_ : array-like of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : array, shape = [1, n_SV]
-        Coefficients of the support vector in the decision function.
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
@@ -1071,8 +1093,37 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
+    dual_coef_ : array, shape = [1, n_SV]
+        Coefficients of the support vector in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     intercept_ : array, shape = [1]
         Constants in decision function.
+
+    n_support_ : array-like, dtype = int32, shape = [n_class]
+        Number of support vectors for each class.
+
+    probA_ : array, shape = [n_class * (n_class-1) / 2]
+
+    probB_ : array, shape = [n_class * (n_class-1) / 2]
+        If probability=True, the parameters learned in Platt scaling to \
+        produce probability estimates from decision values. If \
+        probability=False, an empty array. Platt scaling uses the \
+        logistic function 1 / (1 + exp(decision_value * probA_ + probB_))\
+         where probA_ and probB_ are learned from the dataset \
+        [2]_. For more information on the multiclass case and training \
+        procedure see section 8 of [1]_.
+
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : array-like of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : array-like of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
@@ -1095,11 +1146,14 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     SVR
         epsilon Support Vector Machine for regression implemented with libsvm.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'nu_svr'
@@ -1176,14 +1230,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : array-like of shape (n_SV)
-        Indices of support vectors.
-
-    support_vectors_ : array-like of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : array, shape = [1, n_SV]
-        Coefficients of the support vectors in the decision function.
+    class_weight_ : ndarray of shape (n_class,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
@@ -1192,8 +1241,17 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
+    dual_coef_ : array, shape = [1, n_SV]
+        Coefficients of the support vectors in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
+
     intercept_ : array, shape = [1,]
         Constant in the decision function.
+
+    n_support_ : array-like, dtype=int32, shape = [n_class]
+        Number of support vectors for each class.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
@@ -1201,8 +1259,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
-    fit_status_ : int
-        0 if correctly fitted, 1 otherwise (will raise warning)
+    support_ : array-like of shape (n_SV)
+        Indices of support vectors.
+
+    support_vectors_ : array-like of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
