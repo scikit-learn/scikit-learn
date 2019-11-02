@@ -113,7 +113,7 @@ The form of these kernels is as follows:
 
 * Gaussian kernel (``kernel = 'gaussian'``)
 
-  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
+  :math:`K(x; h) \propto \exp(- \frac{x^2}{2} )`
 
 * Tophat kernel (``kernel = 'tophat'``)
 
