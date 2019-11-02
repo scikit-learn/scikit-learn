@@ -145,7 +145,7 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features) - 1
 
-    copy : bool (default  True)
+    copy : bool, default=True
         If False, data passed to fit are overwritten and running
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
