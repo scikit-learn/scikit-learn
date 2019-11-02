@@ -173,7 +173,7 @@ class OneHotEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values, default='auto'
+    categories : 'auto' or a list of array-like, default='auto'
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
@@ -184,7 +184,7 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    drop : 'first' or a list/array of shape (n_features,), default=None
+    drop : 'first' or a array-like of shape (n_features,), default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
@@ -202,7 +202,7 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    handle_unknown : 'error' or 'ignore', default='error'
+    handle_unknown : {'error', 'ignore'}, default='error'
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
@@ -333,9 +333,9 @@ class OneHotEncoder(_BaseEncoder):
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
-        y : any
+        y : None
             Ignored. This parameter exists only for compatibility with
-            sklearn.pipeline.Pipeline.
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -357,9 +357,9 @@ class OneHotEncoder(_BaseEncoder):
         X : array-like, shape [n_samples, n_features]
             The data to encode.
 
-        y : any
+        y : None
             Ignored. This parameter exists only for compatibility with
-            sklearn.pipeline.Pipeline.
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -420,7 +420,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def inverse_transform(self, X):
         """
-        Convert the back data to the original representation.
+        Convert the data back to the original representation.
 
         In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
@@ -510,13 +510,13 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        input_features : list of str, length n_features, optional
+        input_features : list of str of shape (n_features,)
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
         Returns
         -------
-        output_feature_names : array of string, length n_output_features
+        output_feature_names : ndarray of shape (n_output_features,)
             Array of feature names.
         """
         check_is_fitted(self)
@@ -553,7 +553,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values
+    categories : 'auto' or a list of array-like, default='auto'
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
@@ -614,9 +614,9 @@ class OrdinalEncoder(_BaseEncoder):
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
-        y : any
+        y : None
             Ignored. This parameter exists only for compatibility with
-            sklearn.pipeline.Pipeline.
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
