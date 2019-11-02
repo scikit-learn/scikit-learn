@@ -299,22 +299,22 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         can be sparse.
 
     y : ndarray, shape (n_samples,) or (n_samples, n_outputs)
-        Target values
+        Target values.
 
     l1_ratio : float, optional
-        float between 0 and 1 passed to elastic net (scaling between
-        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
+        Number between 0 and 1 passed to elastic net (scaling between
+        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso.
 
     eps : float
         Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
         Number of alphas along the regularization path.
 
     alphas : ndarray, optional
         List of alphas where to compute the models.
-        If None alphas are set automatically
+        If None alphas are set automatically.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -325,17 +325,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Xy = np.dot(X.T, y) that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     coef_init : array, shape (n_features, ) | None
         The initial values of the coefficients.
 
-    verbose : bool or integer
+    verbose : bool or int
         Amount of verbosity.
 
     return_n_iter : bool
-        whether to return the number of iterations or not.
+        Whether to return the number of iterations or not.
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
@@ -346,7 +346,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         assuming there are handled by the caller when check_input=False.
 
     **params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+        Keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
