@@ -422,7 +422,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The estimator itself.
         """
         y = column_or_1d(y, warn=True)
-        return super().fit(X, y, sample_weight, self.verbose)
+        return super().fit(X, y, sample_weight)
 
     def predict(self, X):
         """
