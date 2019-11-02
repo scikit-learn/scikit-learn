@@ -238,6 +238,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
 
+    .. versionadded:: 0.15
+
     Parameters
     ----------
     damping : float, optional, default: 0.5
