@@ -20,6 +20,7 @@ DOCSTRING_WHITELIST = [
     "PassiveAggressiveClassifier.decision_function",
     "Perceptron.decision_function",
     "RidgeClassifier.decision_function",
+    "RidgeClassifier.fit",
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
     "KernelDensity",
