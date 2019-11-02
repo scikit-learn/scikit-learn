@@ -229,15 +229,16 @@ class IsolationForest(OutlierMixin, BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-
-        y : Ignored
-            not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.behaviour != 'deprecated':
             if self.behaviour == 'new':

@@ -427,7 +427,8 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Performs clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -435,12 +436,12 @@ class ClusterMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
