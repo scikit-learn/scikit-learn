@@ -28,6 +28,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     Read more in the :ref:`User Guide <classification>`.
 
+    .. versionadded:: 0.22
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
@@ -256,6 +258,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
+
+    .. versionadded:: 0.14
 
     Parameters
     ----------
