@@ -643,7 +643,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, str or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1023,7 +1023,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, str or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1310,7 +1310,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1539,7 +1539,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
