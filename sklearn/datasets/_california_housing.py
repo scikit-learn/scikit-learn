@@ -94,6 +94,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
 
     dataset.data : ndarray, shape [20640, 8]
         Each row corresponding to the 8 feature values in order.
+        If ``as_frame`` is True, ``data`` is a pandas object.
 
     dataset.target : numpy array of shape (20640,)
         Each value corresponds to the average house value in units of 100,000.
@@ -170,15 +171,23 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     with open(join(module_path, 'descr', 'california_housing.rst')) as dfile:
         descr = dfile.read()
 
+    X = data
+    y = target
     if return_X_y:
-        return data, target
+        return X, y
 
     frame = None
+    target_names = ["MedHouseVal", ]
     if as_frame:
-        frame = _convert_data_dataframe(data, feature_names)
+        columns = feature_names + target_names
+        adjusted_data = np.hstack((data, target[:,np.newaxis]))
+        frame = _convert_data_dataframe(adjusted_data, columns)
+        X = frame[feature_names]
+        y = frame["MedHouseVal"]
 
-    return Bunch(data=data,
-                 target=target,
+    return Bunch(data=X,
+                 target=y,
                  frame=frame,
+                 target_names=target_names,
                  feature_names=feature_names,
                  DESCR=descr)
