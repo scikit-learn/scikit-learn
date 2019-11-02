@@ -22,6 +22,11 @@ DOCSTRING_WHITELIST = [
     "RidgeClassifier.decision_function",
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
+    "VotingRegressor$",
+    "VotingRegressor.fit",
+    "VotingRegressor.transform",
+    "VotingRegressor.predict",
+    "VotingRegressor.score",
 ]
 
 

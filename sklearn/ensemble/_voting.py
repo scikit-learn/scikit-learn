@@ -328,7 +328,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
@@ -359,6 +359,10 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
         .. versionadded:: 0.20
 
+    See Also
+    --------
+    VotingClassifier: Soft Voting/Majority Rule classifier.
+
     Examples
     --------
     >>> import numpy as np
@@ -372,10 +376,6 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
-
-    See also
-    --------
-    VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
     def __init__(self, estimators, weights=None, n_jobs=None):
@@ -384,7 +384,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self.n_jobs = n_jobs
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """Fit the estimators.
 
         Parameters
         ----------
@@ -403,6 +403,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Returns
         -------
         self : object
+            Returns self.
         """
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
@@ -438,7 +439,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Returns
         -------
         predictions
-            array-like of shape (n_samples, n_classifiers), being
+            Array-like of shape (n_samples, n_classifiers), being
             values predicted by each regressor.
         """
         check_is_fitted(self)
