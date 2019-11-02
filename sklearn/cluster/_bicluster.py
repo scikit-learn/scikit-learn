@@ -189,6 +189,8 @@ class SpectralCoclustering(BaseSpectral):
 
     Read more in the :ref:`User Guide <spectral_coclustering>`.
 
+    .. version:: 0.14
+
     Parameters
     ----------
     n_clusters : integer, optional, default: 3
@@ -316,6 +318,8 @@ class SpectralBiclustering(BaseSpectral):
     label vectors gives this checkerboard structure.
 
     Read more in the :ref:`User Guide <spectral_biclustering>`.
+
+    .. versionadded:: 0.14
 
     Parameters
     ----------
