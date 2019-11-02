@@ -781,7 +781,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     See Also
     --------
-    DecisionTreeRegressor
+    DecisionTreeRegressor : A decision tree regressor.
 
     References
     ----------
@@ -1132,7 +1132,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     See Also
     --------
-    DecisionTreeClassifier
+    DecisionTreeClassifier : A decision tree classifier.
 
     References
     ----------
