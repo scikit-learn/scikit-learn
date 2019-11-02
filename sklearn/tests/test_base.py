@@ -3,16 +3,14 @@
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 import sklearn
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -24,7 +22,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
 from sklearn.base import TransformerMixin
-from sklearn.utils.mocking import MockDataFrame
+from sklearn.utils._mocking import MockDataFrame
 import pickle
 
 
@@ -49,6 +47,30 @@ class T(BaseEstimator):
         self.b = b
 
 
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class OverrideTag(NaNTag):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    def _more_tags(self):
+        return dict()
+
+
+class InheritDiamondOverwriteTag(DiamondOverwriteTag):
+    pass
+
+
 class ModifyInitParams(BaseEstimator):
     """Deprecated behavior.
     Equal parameters but with a type cast.
@@ -65,7 +87,7 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
-class NoEstimator(object):
+class NoEstimator:
     def __init__(self):
         pass
 
@@ -96,7 +118,7 @@ def test_clone():
     selector = SelectFpr(f_classif, alpha=0.1)
     new_selector = clone(selector)
     assert selector is not new_selector
-    assert_equal(selector.get_params(), new_selector.get_params())
+    assert selector.get_params() == new_selector.get_params()
 
     selector = SelectFpr(f_classif, alpha=np.zeros((10, 2)))
     new_selector = clone(selector)
@@ -179,13 +201,12 @@ def test_repr():
     my_estimator = MyEstimator()
     repr(my_estimator)
     test = T(K(), K())
-    assert_equal(
-        repr(test),
-        "T(a=K(c=None, d=None), b=K(c=None, d=None))"
-    )
+    assert (
+        repr(test) ==
+        "T(a=K(c=None, d=None), b=K(c=None, d=None))")
 
     some_est = T(a=["long_params"] * 1000)
-    assert_equal(len(repr(some_est)), 495)
+    assert len(repr(some_est)) == 495
 
 
 def test_str():
@@ -268,16 +289,16 @@ def test_score_sample_weight():
         # generate random sample weights
         sample_weight = rng.randint(1, 10, size=len(ds.target))
         # check that the score with and without sample weights are different
-        assert_not_equal(est.score(ds.data, ds.target),
-                         est.score(ds.data, ds.target,
-                                   sample_weight=sample_weight),
-                         msg="Unweighted and weighted scores "
-                             "are unexpectedly equal")
+        assert (est.score(ds.data, ds.target) !=
+                est.score(ds.data, ds.target,
+                          sample_weight=sample_weight)), (
+                              "Unweighted and weighted scores "
+                              "are unexpectedly equal")
 
 
 def test_clone_pandas_dataframe():
 
-    class DummyEstimator(BaseEstimator, TransformerMixin):
+    class DummyEstimator(TransformerMixin, BaseEstimator):
         """This is a dummy class for generating numerical features
 
         This feature extractor extracts numerical features from pandas data
@@ -310,7 +331,7 @@ def test_clone_pandas_dataframe():
 
     # the test
     assert (e.df == cloned_e.df).values.all()
-    assert_equal(e.scalar_param, cloned_e.scalar_param)
+    assert e.scalar_param == cloned_e.scalar_param
 
 
 def test_pickle_version_warning_is_not_raised_with_matching_version():
@@ -323,7 +344,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
     # test that we can predict with the restored decision tree classifier
     score_of_original = tree.score(iris.data, iris.target)
     score_of_restored = tree_restored.score(iris.data, iris.target)
-    assert_equal(score_of_original, score_of_restored)
+    assert score_of_original == score_of_restored
 
 
 class TreeBadVersion(DecisionTreeClassifier):
@@ -381,7 +402,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(object):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None
@@ -392,7 +413,7 @@ class DontPickleAttributeMixin(object):
         self.__dict__.update(state)
 
 
-class MultiInheritanceEstimator(BaseEstimator, DontPickleAttributeMixin):
+class MultiInheritanceEstimator(DontPickleAttributeMixin, BaseEstimator):
     def __init__(self, attribute_pickled=5):
         self.attribute_pickled = attribute_pickled
         self._attribute_not_pickled = None
@@ -404,8 +425,8 @@ def test_pickling_when_getstate_is_overwritten_by_mixin():
 
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
-    assert_equal(estimator_restored.attribute_pickled, 5)
-    assert_equal(estimator_restored._attribute_not_pickled, None)
+    assert estimator_restored.attribute_pickled == 5
+    assert estimator_restored._attribute_not_pickled is None
     assert estimator_restored._restored
 
 
@@ -418,12 +439,12 @@ def test_pickling_when_getstate_is_overwritten_by_mixin_outside_of_sklearn():
         type(estimator).__module__ = "notsklearn"
 
         serialized = estimator.__getstate__()
-        assert_dict_equal(serialized, {'_attribute_not_pickled': None,
-                                       'attribute_pickled': 5})
+        assert serialized == {'_attribute_not_pickled': None,
+                              'attribute_pickled': 5}
 
         serialized['attribute_pickled'] = 4
         estimator.__setstate__(serialized)
-        assert_equal(estimator.attribute_pickled, 4)
+        assert estimator.attribute_pickled == 4
         assert estimator._restored
     finally:
         type(estimator).__module__ = old_mod
@@ -447,5 +468,61 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
 
     serialized = pickle.dumps(estimator)
     estimator_restored = pickle.loads(serialized)
-    assert_equal(estimator_restored.attribute_pickled, 5)
-    assert_equal(estimator_restored._attribute_not_pickled, None)
+    assert estimator_restored.attribute_pickled == 5
+    assert estimator_restored._attribute_not_pickled is None
+
+
+def test_tag_inheritance():
+    # test that changing tags by inheritance is not allowed
+
+    nan_tag_est = NaNTag()
+    no_nan_tag_est = NoNaNTag()
+    assert nan_tag_est._get_tags()['allow_nan']
+    assert not no_nan_tag_est._get_tags()['allow_nan']
+
+    redefine_tags_est = OverrideTag()
+    assert not redefine_tags_est._get_tags()['allow_nan']
+
+    diamond_tag_est = DiamondOverwriteTag()
+    assert diamond_tag_est._get_tags()['allow_nan']
+
+    inherit_diamond_tag_est = InheritDiamondOverwriteTag()
+    assert inherit_diamond_tag_est._get_tags()['allow_nan']
+
+
+# XXX: Remove in 0.23
+def test_regressormixin_score_multioutput():
+    from sklearn.linear_model import LinearRegression
+    # no warnings when y_type is continuous
+    X = [[1], [2], [3]]
+    y = [1, 2, 3]
+    reg = LinearRegression().fit(X, y)
+    assert_no_warnings(reg.score, X, y)
+    # warn when y_type is continuous-multioutput
+    y = [[1, 2], [2, 3], [3, 4]]
+    reg = LinearRegression().fit(X, y)
+    msg = ("The default value of multioutput (not exposed in "
+           "score method) will change from 'variance_weighted' "
+           "to 'uniform_average' in 0.23 to keep consistent "
+           "with 'metrics.r2_score'. To specify the default "
+           "value manually and avoid the warning, please "
+           "either call 'metrics.r2_score' directly or make a "
+           "custom scorer with 'metrics.make_scorer' (the "
+           "built-in scorer 'r2' uses "
+           "multioutput='uniform_average').")
+    assert_warns_message(FutureWarning, msg, reg.score, X, y)
+
+
+def test_warns_on_get_params_non_attribute():
+    class MyEstimator(BaseEstimator):
+        def __init__(self, param=5):
+            pass
+
+        def fit(self, X, y=None):
+            return self
+
+    est = MyEstimator()
+    with pytest.warns(FutureWarning, match='AttributeError'):
+        params = est.get_params()
+
+    assert params['param'] is None

@@ -27,12 +27,10 @@ The main theoretical result behind the efficiency of random projection is the
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from numpy.testing import assert_equal
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
@@ -291,7 +289,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
+class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
@@ -383,11 +381,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
                                                     n_features)
 
         # Check contract
-        assert_equal(
-            self.components_.shape,
-            (self.n_components_, n_features),
-            err_msg=('An error has occurred the self.components_ matrix has '
-                     ' not the proper shape.'))
+        assert self.components_.shape == (self.n_components_, n_features), (
+                'An error has occurred the self.components_ matrix has '
+                ' not the proper shape.')
 
         return self
 
@@ -406,7 +402,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin, metaclass=ABCMeta):
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        check_is_fitted(self, 'components_')
+        check_is_fitted(self)
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -457,7 +453,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : numpy array of shape [n_components, n_features]
@@ -467,8 +463,9 @@ class GaussianRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = GaussianRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
@@ -576,7 +573,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_ : int
+    n_components_ : int
         Concrete number of components computed when n_components="auto".
 
     components_ : CSR matrix with shape [n_components, n_features]
@@ -589,14 +586,14 @@ class SparseRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
-    >>> np.random.seed(42)
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = SparseRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
     >>> # very few components are non-zero
-    >>> np.mean(transformer.components_ != 0) # doctest: +ELLIPSIS
+    >>> np.mean(transformer.components_ != 0)
     0.0100...
 
     See Also
