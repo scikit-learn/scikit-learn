@@ -339,7 +339,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """Online computation of min and max on X for later scaling.
+        """
+        Online computation of min and max on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
@@ -347,11 +348,15 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation
-            used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -665,7 +670,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """Online computation of mean and std on X for later scaling.
+        """
+        Online computation of mean and std on X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
@@ -678,11 +684,15 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation
-            used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
@@ -933,7 +943,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """Online computation of max absolute value of X for later scaling.
+        """
+        Online computation of max absolute value of X for later scaling.
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
@@ -941,11 +952,14 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation
-            used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
