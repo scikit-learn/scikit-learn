@@ -267,7 +267,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                               "or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, np.float64)
+            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
