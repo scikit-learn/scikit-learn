@@ -674,7 +674,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     def partial_fit(self, X, y=None):
         """
         Online computation of mean and std on X for later scaling.
-        
+
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
