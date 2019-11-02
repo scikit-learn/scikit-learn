@@ -1061,19 +1061,19 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default=n_features)
+    n_components : int, default=n_features
         number of dictionary elements to extract
 
-    alpha : float, optional (default=1.0)
+    alpha : float, default=1.0
         sparsity controlling parameter
 
-    max_iter : int, optional (default=1000)
+    max_iter : int, default=1000
         maximum number of iterations to perform
 
-    tol : float, optional (default=1e-8)
+    tol : float, default=1e-8
         tolerance for numerical error
 
-    fit_algorithm : {'lars', 'cd'}, optional (default='lars')
+    fit_algorithm : {'lars', 'cd'}, default='lars'
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
@@ -1084,7 +1084,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
            *cd* coordinate descent method to improve speed.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}, optional (default='omp')
+    'threshold'}, default='omp'
         Algorithm used to transform the data
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -1098,12 +1098,12 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
 
-    transform_n_nonzero_coefs : int, optional (default=0.1*n_features)
+    transform_n_nonzero_coefs : int, default=0.1*n_features
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    transform_alpha : float, optional (default=1.0)
+    transform_alpha : float, default=1.0
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
@@ -1112,45 +1112,43 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    code_init : array of shape (n_samples, n_components), optional \
-    (default=None)
+    code_init : array of shape (n_samples, n_components), default=None
         initial value for the code, for warm restart
 
-    dict_init : array of shape (n_components, n_features), optional \
-    (default=None)
+    dict_init : array of shape (n_components, n_features), default=None
         initial values for the dictionary, for warm restart
 
-    verbose : bool, optional (default=False)
+    verbose : bool, default=False
         To control the verbosity of the procedure.
 
-    split_sign : bool, optional (default=False)
+    split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    positive_code : bool, optional (default=False)
+    positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
 
         .. versionadded:: 0.20
 
-    positive_dict : bool, optional (default=False)
+    positive_dict : bool, default=False
         Whether to enforce positivity when finding the dictionary
 
         .. versionadded:: 0.20
 
-    transform_max_iter : int, optional (default=1000)
+    transform_max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
