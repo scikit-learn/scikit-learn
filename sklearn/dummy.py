@@ -90,6 +90,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     array([1, 1, 1, 1])
     >>> dummy_clf.score(X, y)
     0.75
+    ..vershionchanged:: v0.19
+        Accepts non-finite features
+    ..versionadded:: v0.13
     """
 
     def __init__(self, strategy="stratified", random_state=None,
