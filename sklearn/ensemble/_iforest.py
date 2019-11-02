@@ -161,12 +161,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     See Also
     ----------
-    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a 
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
         Gaussian distributed dataset.
-    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection. 
-        Estimate the support of a high-dimensional distribution. 
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
         The implementation is based on libsvm.
-    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection 
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
         using Local Outlier Factor (LOF).
 
     Examples
@@ -283,7 +283,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             else:
                 max_samples = self.max_samples
         else:  # float
-            if not (0. < self.max_samples <= 1.):
+            if not 0. < self.max_samples <= 1.:
                 raise ValueError("max_samples must be in (0, 1], got %r"
                                  % self.max_samples)
             max_samples = int(self.max_samples * X.shape[0])
