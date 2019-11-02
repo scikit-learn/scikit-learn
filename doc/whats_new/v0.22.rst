@@ -310,7 +310,7 @@ Changelog
 
 - |Fix| Fixed a bug that caused :class:`feature_extraction.DictVectorizer` to raise
   an `OverflowError` during the `transform` operation when producing a `scipy.sparse`
-  matrix on large input data. :pr:`` by :user:`Norvan Sahiner <norvan>`.
+  matrix on large input data. :pr:`15463` by :user:`Norvan Sahiner <norvan>`.
 
 :mod:`sklearn.feature_selection`
 ................................
