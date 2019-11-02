@@ -146,6 +146,16 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Attributes
+    ----------
+    random_weights_ : array-like, shape (n_features, n_components)
+        Weight array, sampled from a secant hyperbolic distribution, which will
+        be used to linearly transform the log of the data.
+
+    random_offset_ : array-like, shape (n_features, n_components)
+        Bias term, which will be added to the data. It is uniformly distributed
+        between 0 and 2*pi.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import SkewedChi2Sampler
