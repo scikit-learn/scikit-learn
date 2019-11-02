@@ -624,7 +624,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        .. versionadded:: 0.21
+        .. versionadded:: v0.21
 
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
