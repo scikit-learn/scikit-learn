@@ -61,6 +61,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     check_X
     foo_param
     expected_fit_params
+
+    .. versionchanged:: 0.22
+        Has been deprecated and made private.
     """
     def __init__(self, check_y=None, check_X=None, foo_param=0,
                  expected_fit_params=None):

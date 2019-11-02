@@ -291,6 +291,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+    
+    ..versionadded:: v0.16
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
