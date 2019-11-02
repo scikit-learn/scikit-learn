@@ -760,6 +760,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <feature_union>`.
 
+..versionadded:: 0.13
+
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples

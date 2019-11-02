@@ -437,6 +437,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
 
+  ..versionadded:: 0.13
+
     Parameters
     ----------
     kernel : string or callable, default="rbf"

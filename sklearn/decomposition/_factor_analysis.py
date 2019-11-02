@@ -53,6 +53,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <FA>`.
 
+  ..versionadded:: 0.13
+
     Parameters
     ----------
     n_components : int | None

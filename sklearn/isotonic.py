@@ -156,6 +156,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <isotonic>`.
 
+  ..versionadded:: 0.13
+
     Parameters
     ----------
     y_min : optional, default: None
