@@ -183,7 +183,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
         adjusted_data = np.hstack((data, target[:,np.newaxis]))
         frame = _convert_data_dataframe(adjusted_data, columns)
         X = frame[feature_names]
-        y = frame["MedHouseVal"]
+        y = frame[target_names[0]]
 
     return Bunch(data=X,
                  target=y,
