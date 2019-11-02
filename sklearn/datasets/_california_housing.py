@@ -49,9 +49,14 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def _convert_data_dataframe(data, columns):
-    pd = check_pandas_support('fetch_california_housing with as_frame=True')
-    return pd.DataFrame(data, columns=columns)
+def _convert_data_dataframe(caller_name, data, target, feature_names, target_names):
+    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
+    data_df = pd.DataFrame(data, columns=feature_names)
+    target_df = pd.DataFrame(target, columns=target_names)
+    combined_df = pd.concat([data_df, target_df], axis=1)
+    X = combined_df[feature_names]
+    y = combined_df[target_names]
+    return combined_df, X, y
 
 def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False, as_frame=False):
@@ -179,11 +184,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True,
     frame = None
     target_names = ["MedHouseVal", ]
     if as_frame:
-        columns = feature_names + target_names
-        adjusted_data = np.hstack((data, target[:,np.newaxis]))
-        frame = _convert_data_dataframe(adjusted_data, columns)
-        X = frame[feature_names]
-        y = frame[target_names[0]]
+        frame, X, y = _convert_data_dataframe("fetch_california_housing", data, target, feature_names, target_names)
 
     return Bunch(data=X,
                  target=y,
