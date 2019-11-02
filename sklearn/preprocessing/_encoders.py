@@ -149,7 +149,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
 
 class OneHotEncoder(_BaseEncoder):
-    """Encode categorical features as a one-hot numeric array.
+    """
+    Encode categorical features as a one-hot numeric array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
@@ -172,7 +173,7 @@ class OneHotEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values, default='auto'.
+    categories : 'auto' or a list of lists/arrays of values, default='auto'
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
@@ -183,7 +184,7 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
-    drop : 'first' or a list/array of shape (n_features,), default=None.
+    drop : 'first' or a list/array of shape (n_features,), default=None
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
@@ -195,13 +196,13 @@ class OneHotEncoder(_BaseEncoder):
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
           should be dropped.
 
-    sparse : boolean, default=True
+    sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    handle_unknown : 'error' or 'ignore', default='error'.
+    handle_unknown : 'error' or 'ignore', default='error'
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
@@ -221,6 +222,20 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature. None if all the transformed features will
         be retained.
+        
+    See Also
+    --------
+    sklearn.preprocessing.OrdinalEncoder : Performs an ordinal (integer)
+      encoding of the categorical features.
+    sklearn.feature_extraction.DictVectorizer : Performs a one-hot encoding of
+      dictionary items (also handles string-valued features).
+    sklearn.feature_extraction.FeatureHasher : Performs an approximate one-hot
+      encoding of dictionary items or strings.
+    sklearn.preprocessing.LabelBinarizer : Binarizes labels in a one-vs-all
+      fashion.
+    sklearn.preprocessing.MultiLabelBinarizer : Transforms between iterable of
+      iterables and a multilabel format, e.g. a (samples x classes) binary
+      matrix indicating the presence of a class label.
 
     Examples
     --------
@@ -249,20 +264,6 @@ class OneHotEncoder(_BaseEncoder):
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
     array([[0., 0., 0.],
            [1., 1., 0.]])
-
-    See also
-    --------
-    sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
-      encoding of the categorical features.
-    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
-      dictionary items (also handles string-valued features).
-    sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
-      encoding of dictionary items or strings.
-    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
-      fashion.
-    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
-      iterables and a multilabel format, e.g. a (samples x classes) binary
-      matrix indicating the presence of a class label.
     """
 
     def __init__(self, categories='auto', drop=None, sparse=True,
@@ -324,13 +325,18 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError(msg.format(type(self.drop)))
 
     def fit(self, X, y=None):
-        """Fit OneHotEncoder to X.
+        """
+        Fit OneHotEncoder to X.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
-
+        
+        y : any
+            Ignored. This parameter exists only for compatibility with
+            sklearn.pipeline.Pipeline.
+        
         Returns
         -------
         self
@@ -341,7 +347,8 @@ class OneHotEncoder(_BaseEncoder):
         return self
 
     def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
+        """
+        Fit OneHotEncoder to X, then transform X.
 
         Equivalent to fit(X).transform(X) but more convenient.
 
@@ -349,6 +356,10 @@ class OneHotEncoder(_BaseEncoder):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to encode.
+            
+        y : any
+            Ignored. This parameter exists only for compatibility with
+            sklearn.pipeline.Pipeline.
 
         Returns
         -------
@@ -359,7 +370,8 @@ class OneHotEncoder(_BaseEncoder):
         return super().fit_transform(X, y)
 
     def transform(self, X):
-        """Transform X using one-hot encoding.
+        """
+        Transform X using one-hot encoding.
 
         Parameters
         ----------
@@ -407,7 +419,8 @@ class OneHotEncoder(_BaseEncoder):
             return out
 
     def inverse_transform(self, X):
-        """Convert the back data to the original representation.
+        """
+        Convert the back data to the original representation.
 
         In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
@@ -421,7 +434,6 @@ class OneHotEncoder(_BaseEncoder):
         -------
         X_tr : array-like, shape [n_samples, n_features]
             Inverse transformed array.
-
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
@@ -493,18 +505,19 @@ class OneHotEncoder(_BaseEncoder):
         return X_tr
 
     def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
+        """
+        Return feature names for output features.
 
         Parameters
         ----------
-        input_features : list of string, length n_features, optional
+        input_features : list of str, length n_features, optional
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
         Returns
         -------
         output_feature_names : array of string, length n_output_features
-
+            Array of feature names.
         """
         check_is_fitted(self)
         cats = self.categories_
