@@ -1700,7 +1700,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     print('after micro',tn_sum, fp_sum, fn_sum, tp_sum, pred_sum, neg_sum, pos_sum)
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-    print('before divide',tpr,fpr,tnr,fnr)
+    #print('before divide',tpr,fpr,tnr,fnr)
     tpr = _prf_divide(tp_sum, pos_sum, 'tpr',
                             'positives', average, warn_for, zero_division)
     fpr = _prf_divide(fp_sum, neg_sum, 'fpr',
