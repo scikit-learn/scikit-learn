@@ -371,7 +371,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     Ordinary least squares Linear Regression.
 
-    LinearRegression fits a linear model with coefficients w = (w1, ..., wp) to minimize the residual sum of squares between the observed targets in the dataset, and the targets predicted by the linear approximation.
+    LinearRegression fits a linear model with coefficients w = (w1, ..., wp)
+     to minimize the residual sum of squares between the observed targets in
+     the dataset, and the targets predicted by the linear approximation.
 
     Parameters
     ----------
@@ -418,9 +420,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     
     See Also
     --------
-    sklearn.linear_model.Ridge : Ridge regression addresses some of the problems of Ordinary Least Squares by imposing a penalty on the size of the coefficients with l2 regularization.
-    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates sparse coefficients with l1 regularization.
-    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression model trained with both l1 and l2 -norm regularization of the coefficients.
+    sklearn.linear_model.Ridge : Ridge regression addresses some of the 
+    problems of Ordinary Least Squares by imposing a penalty on the size of 
+    the coefficients with l2 regularization.
+    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates 
+    sparse coefficients with l1 regularization.
+    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression 
+    model trained with both l1 and l2 -norm regularization of the coefficients.
 
     Notes
     -----
