@@ -634,6 +634,8 @@ class PLSRegression(_PLS):
     In french but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
+
+    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True,
@@ -778,6 +780,8 @@ class PLSCanonical(_PLS):
     --------
     CCA
     PLSSVD
+
+    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
@@ -845,6 +849,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     --------
     PLSCanonical
     CCA
+
+    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True, copy=True):

@@ -513,6 +513,8 @@ class PatchExtractor(BaseEstimator):
     >>> pe_trans = pe.transform(X)
     >>> print('Patches shape: {}'.format(pe_trans.shape))
     Patches shape: (545706, 2, 2)
+
+    .. versionadded:: 0.9
     """
 
     def __init__(self, patch_size=None, max_patches=None, random_state=None):

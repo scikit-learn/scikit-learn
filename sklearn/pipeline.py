@@ -122,6 +122,9 @@ class Pipeline(_BaseComposition):
     (1, 10)
     >>> sub_pipeline.inverse_transform(coef).shape
     (1, 20)
+
+    .. versionadded:: 0.5
+
     """
 
     # BaseEstimator interface
