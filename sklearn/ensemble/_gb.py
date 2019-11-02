@@ -2552,19 +2552,17 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     Examples
     --------
+    >>> from sklearn.metrics import mean_squared_error
+    >>> from sklearn.datasets import make_friedman1
     >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
-    ...     max_depth=1, random_state=0, loss='ls')
-    GradientBoostingRegressor(alpha=0.9, ccp_alpha=0.0,
-                          criterion='friedman_mse',
-                          init=None, learning_rate=0.1, loss='ls', max_depth=1,
-                          max_features=None, max_leaf_nodes=None,
-                          min_impurity_decrease=0.0, min_impurity_split=None,
-                          min_samples_leaf=1, min_samples_split=2,
-                          min_weight_fraction_leaf=0.0, n_estimators=100,
-                          n_iter_no_change=None, presort='deprecated',
-                          random_state=0, subsample=1.0, tol=0.0001,
-                          validation_fraction=0.1, verbose=0, warm_start=False)
+
+    >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
+    >>> X_train, X_test = X[:200], X[200:]
+    >>> y_train, y_test = y[:200], y[200:]
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
+    ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
+    >>> mean_squared_error(y_test, est.predict(X_test))
+    5.00...
     """
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
