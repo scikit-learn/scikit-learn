@@ -53,9 +53,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @abstractmethod
     def fit(self, X, y, sample_weight=None):
-        """
-        common fit operations.
-        """
+        """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
         if (self.weights is not None and
