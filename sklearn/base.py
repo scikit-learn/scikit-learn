@@ -330,7 +330,8 @@ class ClassifierMixin:
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """
+        Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -351,7 +352,6 @@ class ClassifierMixin:
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
