@@ -267,7 +267,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
-    """Compute elastic net path with coordinate descent
+    """
+    Compute elastic net path with coordinate descent.
 
     The elastic net optimization function varies for mono and multi-outputs.
 
@@ -365,18 +366,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         reach the specified tolerance for each alpha.
         (Is returned when ``return_n_iter`` is set to True).
 
-    Notes
-    -----
-    For an example, see
-    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
-    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
-
-    See also
+    See Also
     --------
     MultiTaskElasticNet
     MultiTaskElasticNetCV
     ElasticNet
     ElasticNetCV
+
+    Notes
+    -----
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
     """
     # We expect X and y to be already Fortran ordered when bypassing
     # checks
