@@ -362,6 +362,8 @@ class SpectralEmbedding(BaseEstimator):
 
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     n_components : integer, default: 2
