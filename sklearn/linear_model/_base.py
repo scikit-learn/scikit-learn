@@ -320,7 +320,8 @@ class SparseCoefMixin:
     """
 
     def densify(self):
-        """Convert coefficient matrix to dense array format.
+        """
+        Convert coefficient matrix to dense array format.
 
         Converts the ``coef_`` member (back) to a numpy.ndarray. This is the
         default format of ``coef_`` and is required for fitting, so calling
@@ -329,7 +330,8 @@ class SparseCoefMixin:
 
         Returns
         -------
-        self : estimator
+        self
+            Fitted estimator.
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, msg=msg)
