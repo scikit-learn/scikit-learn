@@ -739,12 +739,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         and always treated as a token separator).
 
     ngram_range : tuple (min_n, max_n)
-        The lower and upper boundary of the range of n-values for different word n-grams or char 
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used. 
+        The lower and upper boundary of the range of n-values for different 
+        word n-grams or char n-grams to be extracted. All values of n such 
+        that min_n <= n <= max_n will be used. 
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
-        Whether the feature should be made of word n-gram or character n-grams.
+        Whether the feature should be made of word n-gram or character 
+        n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
 
