@@ -624,7 +624,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-        .. versionchanged:: 0.21
+        .. versionadded:: 0.21
 
         Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
         first read from the file and then passed to the given callable
@@ -1346,7 +1346,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     ----------
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if  ``use_idf`` is True.      
+        .. versionadded:: v0.20
 
     Examples
     --------
@@ -1382,6 +1383,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
+    
+    .. versionadded:: v.019
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
