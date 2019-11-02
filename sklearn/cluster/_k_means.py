@@ -1496,8 +1496,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        self : array, shape (n_samples,)
-            Cluster labels for each point.
+        self
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
