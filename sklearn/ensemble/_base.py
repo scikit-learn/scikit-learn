@@ -230,7 +230,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             warnings.warn(
                 "Using 'None' to drop an estimator from the ensemble is "
                 "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead.", DeprecationWarning
+                "Use the string 'drop' instead.", FutureWarning
             )
 
         has_estimator = any(est not in (None, 'drop') for est in estimators)
@@ -254,7 +254,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return names, estimators
 
     def set_params(self, **params):
-        """Set the parameters of an estimator from the ensemble.
+        """
+        Set the parameters of an estimator from the ensemble.
 
         Valid parameter keys can be listed with `get_params()`.
 
@@ -271,7 +272,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return self
 
     def get_params(self, deep=True):
-        """Get the parameters of an estimator from the ensemble.
+        """
+        Get the parameters of an estimator from the ensemble.
 
         Parameters
         ----------

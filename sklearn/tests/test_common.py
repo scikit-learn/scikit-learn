@@ -17,8 +17,8 @@ from functools import partial
 import pytest
 
 
-from sklearn.utils.testing import all_estimators
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.estimator_checks import check_estimator
 
@@ -29,7 +29,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -91,7 +91,8 @@ def _tested_estimators():
 @parametrize_with_checks(_tested_estimators())
 def test_estimators(estimator, check):
     # Common tests for estimator instances
-    with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
+    with ignore_warnings(category=(FutureWarning,
+                                   ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
@@ -119,7 +120,7 @@ def test_check_estimator_generate_only():
             check(estimator)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 # ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
@@ -191,7 +192,7 @@ def test_import_all_consistency():
         if ".tests." in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):

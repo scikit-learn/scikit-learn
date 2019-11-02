@@ -6,7 +6,7 @@ import warnings
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_warns_message

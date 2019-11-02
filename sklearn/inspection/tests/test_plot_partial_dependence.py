@@ -307,6 +307,18 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
+def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+    grid_resolution = 25
+
+    plot_partial_dependence(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
+
+
 dummy_classification_data = make_classification(random_state=0)
 
 
@@ -373,7 +385,7 @@ def test_plot_partial_dependence_fig_deprecated(pyplot):
 
     msg = ("The fig parameter is deprecated in version 0.22 and will be "
            "removed in version 0.24")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         plot_partial_dependence(
             clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 

@@ -5,15 +5,15 @@ from itertools import product
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -522,10 +522,10 @@ def test_ridge_gcv_sample_weights(
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
-    # ignore warning from GridSearchCV: DeprecationWarning: The default of the
-    # `iid` parameter will change from True to False in version 0.22 and will
-    # be removed in 0.24
-    with ignore_warnings(category=DeprecationWarning):
+    # ignore warning from GridSearchCV: FutureWarning: The default
+    # of the `iid` parameter will change from True to False in version 0.22
+    # and will be removed in 0.24
+    with ignore_warnings(category=FutureWarning):
         kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
