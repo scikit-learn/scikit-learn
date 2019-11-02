@@ -232,12 +232,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’
+        if metric=’precomputed’
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
         y : ignored
-            May be ignored.
+            Ignored.
 
         Returns
         -------
