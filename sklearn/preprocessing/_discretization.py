@@ -129,9 +129,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         X : numeric array-like, shape (n_samples, n_features)
             Data to be discretized.
 
-        y : any
+        y : None
             Ignored. This parameter exists only for compatibility with
-            sklearn.pipeline.Pipeline.
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
