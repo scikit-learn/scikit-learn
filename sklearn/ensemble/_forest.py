@@ -1538,7 +1538,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
@@ -1552,10 +1552,13 @@ class ExtraTreesClassifier(ForestClassifier):
         <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls 3 sources of randomness:
+        - the bootstrapping of the samples used when building trees
+          (if ``bootstrap=True``)
+        - the sampling of the features to consider when looking for the best
+          split at each node (if ``max_features < n_features``)
+        - the draw of the splits for each of the `max_features`
+        See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
@@ -1842,7 +1845,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees. If False, the
-        whole datset is used to build each tree.
+        whole dataset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
@@ -1855,10 +1858,13 @@ class ExtraTreesRegressor(ForestRegressor):
         <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls 3 sources of randomness:
+        - the bootstrapping of the samples used when building trees
+          (if ``bootstrap=True``)
+        - the sampling of the features to consider when looking for the best
+          split at each node (if ``max_features < n_features``)
+        - the draw of the splits for each of the `max_features`
+        See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
