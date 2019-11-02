@@ -537,8 +537,8 @@ class TransformerMixin:
 
     def fit_transform(self, X, y=None, **fit_params):
         """
-        Fit to data, then transform it. Fits transformer to X and y with 
-        optional parameters fit_params and returns a transformed 
+        Fit to data, then transform it. Fits transformer to X and y with
+        optional parameters fit_params and returns a transformed
         version of X.
 
         Parameters
