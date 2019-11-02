@@ -386,6 +386,8 @@ class ARDRegression(RegressorMixin, LinearModel):
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     n_iter : int, default=300
