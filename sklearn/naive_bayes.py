@@ -359,8 +359,7 @@ class GaussianNB(BaseNB):
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=np.float64)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
