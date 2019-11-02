@@ -210,7 +210,7 @@ class BaseEstimator:
         Parameters
         ----------
         **params : dict
-                Estimator parameters.
+            Estimator parameters.
 
         Returns
         -------
