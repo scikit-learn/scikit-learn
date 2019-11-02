@@ -1029,6 +1029,8 @@ class CategoricalNB(BaseDiscreteNB):
 
     Read more in the :ref:`User Guide <categorical_naive_bayes>`.
 
+    .. versionadded:: 0.22
+
     Parameters
     ----------
     alpha : float, optional (default=1.0)
