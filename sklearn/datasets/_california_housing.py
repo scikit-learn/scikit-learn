@@ -49,9 +49,9 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def _convert_data_dataframe(data, feature_names):
+def _convert_data_dataframe(data, columns):
     pd = check_pandas_support('fetch_california_housing with as_frame=True')
-    return pd.DataFrame(data, columns=feature_names)
+    return pd.DataFrame(data, columns=columns)
 
 def fetch_california_housing(data_home=None, download_if_missing=True,
                              return_X_y=False, as_frame=False):
