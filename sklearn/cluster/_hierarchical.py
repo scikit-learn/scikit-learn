@@ -661,6 +661,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <hierarchical_clustering>`.
 
+	.. versionadded:: 0.15
+
     Parameters
     ----------
     n_clusters : int or None, optional (default=2)

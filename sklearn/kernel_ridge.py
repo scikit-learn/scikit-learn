@@ -36,6 +36,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <kernel_ridge>`.
 
+	.. versionchanged:: 0.16
+
     Parameters
     ----------
     alpha : {float, array-like}, shape = [n_targets]
