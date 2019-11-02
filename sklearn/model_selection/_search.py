@@ -780,6 +780,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             array_means = np.average(array, axis=1, weights=weights)
             results['mean_%s' % key_name] = array_means
+            if (~np.isfinite(array_means)).any():
+                warnings.warn("Some test scores are not finite {}"
+                              .format(array_means), category = UserWarning) 
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(np.average((array -
                                              array_means[:, np.newaxis]) ** 2,

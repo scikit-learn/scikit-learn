@@ -1798,3 +1798,27 @@ def test_random_search_bad_cv():
                              'inconsistent results. Expected \\d+ '
                              'splits, got \\d+'):
         ridge.fit(X[:train_size], y[:train_size])
+
+    def test_infwarnings_in_GridSearchCV():
+        import numpy as np
+        from sklearn.neighbors import KernelDensity
+        from scipy.stats.distributions import norm
+        from sklearn.model_selection import GridSearchCV
+
+        rng = np.random.RandomState(0)
+        x_grid = np.linspace(-4.5, 6, 10)
+
+        X =  norm(-1, 0.5).rvs(100, random_state=rng)
+        kernel =  'epanechnikov' 
+        steps = 10
+        lower = 0.0194867441113 
+        upper = 0.0974337205567
+        bandwidth_range = np.linspace(lower, upper, steps)
+        grid = GridSearchCV(KernelDensity(kernel = kernel),
+                            {'bandwidth': bandwidth_range},
+                            cv=20
+                            )
+
+        with pytest.warns(UserWarning,
+                       match='Some test scores are not finite\\d+'):
+            grid.fit(X[:,np.newaxis])
