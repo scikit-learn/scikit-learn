@@ -536,6 +536,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <classifierchain>`.
 
+  .. versionadded:: 0.19
+
     Parameters
     ----------
     base_estimator : estimator

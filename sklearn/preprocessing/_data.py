@@ -2111,6 +2111,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
+  ..versionadded:: 0.19
+
     Parameters
     ----------
     n_quantiles : int, optional (default=1000 or n_samples)
