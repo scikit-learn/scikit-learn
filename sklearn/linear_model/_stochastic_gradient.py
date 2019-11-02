@@ -972,10 +972,6 @@ class SGDClassifier(BaseSGDClassifier):
         the classifier with
         :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-
         Returns
         -------
         array, shape (n_samples, n_classes)
@@ -1048,10 +1044,6 @@ class SGDClassifier(BaseSGDClassifier):
         and ones, so taking the logarithm is not possible.
 
         See ``predict_proba`` for details.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
 
         Returns
         -------
