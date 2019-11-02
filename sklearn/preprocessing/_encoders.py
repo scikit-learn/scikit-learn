@@ -36,7 +36,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
-          
+
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
@@ -222,7 +222,7 @@ class OneHotEncoder(_BaseEncoder):
         ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
         be dropped for each feature. None if all the transformed features will
         be retained.
-        
+
     See Also
     --------
     sklearn.preprocessing.OrdinalEncoder : Performs an ordinal (integer)
@@ -332,11 +332,11 @@ class OneHotEncoder(_BaseEncoder):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
-        
+
         y : any
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
-        
+
         Returns
         -------
         self
@@ -356,7 +356,7 @@ class OneHotEncoder(_BaseEncoder):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to encode.
-            
+
         y : any
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
@@ -572,7 +572,7 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
         of ``transform``).
-        
+
     See Also
     --------
     sklearn.preprocessing.OneHotEncoder : Performs a one-hot encoding of
@@ -613,7 +613,7 @@ class OrdinalEncoder(_BaseEncoder):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
-            
+
         y : any
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
