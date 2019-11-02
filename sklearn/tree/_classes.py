@@ -948,8 +948,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
+        proba : array of shape (n_samples, n_classes), or a list of such arrays
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
