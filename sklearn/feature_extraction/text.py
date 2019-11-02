@@ -304,7 +304,7 @@ class _VectorizerMixin:
 
     def build_preprocessor(self):
         """Return a function to preprocess the text before tokenization.
-        
+
         Returns
         -------
         _preprocess: object
@@ -332,7 +332,7 @@ class _VectorizerMixin:
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens.
-        
+
         Returns
         -------
         tokenizer: object
@@ -345,11 +345,11 @@ class _VectorizerMixin:
 
     def get_stop_words(self):
         """Build or fetch the effective stop words list.
-        
+
         Returns
         -------
         stop_words: list or None
-                A list of stop words. 
+                A list of stop words.
         """
         return _check_stop_list(self.stop_words)
 
@@ -414,12 +414,14 @@ class _VectorizerMixin:
 
     def build_analyzer(self):
         """
-        Return a callable that handles preprocessing, tokenization and n-grams generation.
+        Return a callable that handles preprocessing, tokenization
+        and n-grams generation.
 
         Returns
         -------
         _analyze: object
-              A function to handle preprocessing, tokenization and n-grams generation.  
+            A function to handle preprocessing, tokenization
+            and n-grams generation.
         """
 
         if callable(self.analyzer):
@@ -699,6 +701,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -1291,11 +1294,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
-        
+
         Returns
         -------
         feature_names : list
-                    A list of feature name. 
+                    A list of feature name.
         """
 
         self._check_vocabulary()
@@ -1689,20 +1692,20 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
-    
+
     See Also
     --------
     CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
 
     TfidfTransformer : Performs the TF-IDF transformation from a provided
         matrix of counts.
-    
+
     Notes
     -----
     The ``stop_words_`` attribute can get large and increase the model size
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
-    
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfVectorizer
@@ -1717,7 +1720,7 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.shape)
-    (4, 9) 
+    (4, 9)
     """
 
     def __init__(self, input='content', encoding='utf-8',
