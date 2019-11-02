@@ -452,7 +452,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
+  .. versionadded:: 0.15
 
     Parameters
     ----------
@@ -854,7 +854,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
-    .. versionadded:: 0.15
+  .. versionadded:: 0.15
 
     Parameters
     ----------
