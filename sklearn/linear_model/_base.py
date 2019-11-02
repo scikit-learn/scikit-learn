@@ -210,7 +210,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                                dense_output=True) + self.intercept_
 
     def predict(self, X):
-        """Predict using the linear model
+        """
+        Predict using the linear model
 
         Parameters
         ----------
@@ -277,7 +278,8 @@ class LinearClassifierMixin(ClassifierMixin):
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
-        """Predict class labels for samples in X.
+        """
+        Predict class labels for samples in X.
 
         Parameters
         ----------
