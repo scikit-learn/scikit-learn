@@ -140,6 +140,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
+        
+        check_consistent_length(X, y, sample_weight)
+        
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
@@ -470,7 +473,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
         self.n_outputs_ = y.shape[1]
-
+        
+        check_consistent_length(X, y, sample_weight)
+        
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
 
