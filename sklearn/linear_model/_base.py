@@ -245,7 +245,8 @@ class LinearClassifierMixin(ClassifierMixin):
     """
 
     def decision_function(self, X):
-        """Predict confidence scores for samples.
+        """
+        Predict confidence scores for samples.
 
         The confidence score for a sample is the signed distance of that
         sample to the hyperplane.
