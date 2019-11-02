@@ -829,12 +829,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             copy if the given data is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
-
+            are assigned equal weight (default: None).
         """
         random_state = check_random_state(self.random_state)
 
