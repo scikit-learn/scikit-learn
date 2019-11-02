@@ -22,6 +22,7 @@ DOCSTRING_WHITELIST = [
     "RidgeClassifier.decision_function",
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
+    "LinearRegression"
 ]
 
 
