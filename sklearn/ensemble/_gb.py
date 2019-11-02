@@ -1814,13 +1814,13 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'deviance', 'exponential'}, optional (default='deviance')
-        loss function to be optimized. 'deviance' refers to
+        The loss function to be optimized. 'deviance' refers to
         deviance (= logistic regression) for classification
         with probabilistic outputs. For loss 'exponential' gradient
         boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
@@ -1835,7 +1835,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : string, optional (default="friedman_mse")
+    criterion : str, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
         score by Friedman, "mse" for mean squared error, and "mae" for
@@ -1876,8 +1876,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
+    max_depth : int, optional (default=3)
+        The maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -1922,7 +1922,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, str or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1959,7 +1959,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
-        .. deprecated :: 0.22
+        .. deprecated:: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -2033,6 +2033,21 @@ shape (n_estimators, ``loss_.K``)
     classes_ : array of shape (n_classes,)
         The classes labels.
 
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingClassifier : Histogram-based Gradient
+        Boosting Classification Tree.
+    sklearn.tree.DecisionTreeClassifier : A decision tree classifier.
+    sklearn.ensemble.RandomForestClassifier : A meta-estimator that fits a
+        number of decision tree classifiers on various sub-samples of the
+        dataset and uses averaging to improve the predictive accuracy and
+        control over-fitting.
+    sklearn.ensemble.AdaBoostClassifier : A meta-estimator that begins by
+        fitting a classifier on the original dataset and then fits additional
+        copies of the classifier on the same dataset where the weights of
+        incorrectly classified instances are adjusted such that subsequent
+        classifiers focus more on difficult cases.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -2041,12 +2056,6 @@ shape (n_estimators, ``loss_.K``)
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingClassifier,
-    sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
-    AdaBoostClassifier
 
     References
     ----------
@@ -2057,6 +2066,23 @@ shape (n_estimators, ``loss_.K``)
 
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
+
+    Examples
+    --------
+    The following example shows how to fit a gradient boosting classifier with
+        100 decision stumps as weak learners.
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> X_train, X_test = X[:2000], X[2000:]
+    >>> y_train, y_test = y[:2000], y[2000:]
+
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X_train, y_train)
+    >>> clf.score(X_test, y_test)
+    0.913...
     """
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
