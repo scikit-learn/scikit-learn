@@ -510,7 +510,7 @@ class OneHotEncoder(_BaseEncoder):
 
         Parameters
         ----------
-        input_features : list of str, length n_features, optional
+        input_features : list of str of shape (n_features,)
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
