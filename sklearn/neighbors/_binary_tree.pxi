@@ -1313,7 +1313,7 @@ cdef class BinaryTree:
             neighbors of the corresponding point
         """
         # XXX: we should allow X to be a pre-built tree.
-        X = check_array(X, dtype=DTYPE, order='C', dtype=[np.float64, np.float32])
+        X = check_array(X, dtype=DTYPE, order='C')
 
         if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
@@ -1325,7 +1325,7 @@ cdef class BinaryTree:
 
         # flatten X, and save original shape information
         np_Xarr = X.reshape((-1, self.data.shape[1]))
-        cdef X.dtype[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
+        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
         cdef DTYPE_t* pt
