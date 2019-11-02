@@ -44,6 +44,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     Read more in the :ref:`User Guide <calibration>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     base_estimator : instance BaseEstimator
