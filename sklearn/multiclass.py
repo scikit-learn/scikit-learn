@@ -316,10 +316,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             maxima = np.empty(n_samples, dtype=float)
             maxima.fill(-np.inf)
             argmaxima = np.zeros(n_samples, dtype=int)
-            for i, e in enumerate(self.estimators_):
+            n_classes = len(self.estimators_)
+            for i, e in enumerate(reversed(self.estimators_)):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
-                argmaxima[maxima == pred] = i
+                argmaxima[maxima == pred] = n_classes - i - 1
             return self.classes_[argmaxima]
         else:
             if (hasattr(self.estimators_[0], "decision_function") and

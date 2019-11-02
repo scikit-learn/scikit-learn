@@ -20,7 +20,7 @@ from sklearn.utils import shuffle
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-
+from sklearn.base import BaseEstimator
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
@@ -58,6 +58,26 @@ def test_check_classification_targets():
     y = np.array([0.0, 1.1, 2.0, 3.0])
     msg = type_of_target(y)
     assert_raise_message(ValueError, msg, check_classification_targets, y)
+
+
+def test_ovr_ties():
+    # Test that ties are resolved as described in the documentation. #15504
+    class Dummy(BaseEstimator):
+        def fit(self, _X, _y):
+            return self
+
+        def decision_function(self, X):
+            return np.zeros(len(X))
+
+    class WrapperClass(OneVsRestClassifier):
+        def _more_tags(self):
+            return {'poor_score': True}
+
+    x = np.array([[0], [0], [0]])
+    y = np.array([0, 1, 2])
+    od = WrapperClass(Dummy()).fit(x, y)
+    assert np.array_equal(od.predict(x),
+                          np.argmax(od.decision_function(x), axis=1))
 
 
 def test_ovr_fit_predict():
