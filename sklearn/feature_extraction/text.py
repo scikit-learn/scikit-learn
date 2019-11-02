@@ -876,7 +876,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
-<<<<<<< HEAD
+
         word n-grams or char n-grams to be extracted. All values of n such
         that min_n <= n <= max_n will be used.
 =======
@@ -885,7 +885,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
         only bigrams.
         Only applies if ``analyzer is not callable``.
->>>>>>> b13b02c311c18c2041782bcdaadd08b8fd3f216b
+
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word n-gram or character
