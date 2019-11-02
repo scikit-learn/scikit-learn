@@ -614,7 +614,7 @@ class OrdinalEncoder(_BaseEncoder):
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
-        y : any
+        y : None
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
 
