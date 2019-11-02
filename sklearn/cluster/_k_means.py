@@ -1013,11 +1013,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             New data to transform.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
