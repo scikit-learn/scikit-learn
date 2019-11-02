@@ -97,6 +97,9 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
+    classes_ : array of shape (n_classes,)
+        The unique classes labels.
+
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
             n_features]
         Weights assigned to the features.
@@ -104,12 +107,13 @@ class Perceptron(BaseSGDClassifier):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    loss_function_ : concrete LossFunction
+        The function that determines the loss, or difference between the \
+        output of the algorithm and the target values.
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
-
-    classes_ : array of shape (n_classes,)
-        The unique classes labels.
 
     t_ : int
         Number of weight updates performed during training.
