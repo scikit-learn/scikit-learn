@@ -592,7 +592,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     contingency : {None, array, sparse matrix}, \
@@ -679,7 +679,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : string, optional (default: 'arithmetic')
@@ -798,7 +798,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     labels_true : int array, shape = [n_samples]
         A clustering of the data into disjoint subsets.
 
-    labels_pred : array-like of shape (n_samples,)
+    labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
     average_method : string, optional (default: 'arithmetic')
