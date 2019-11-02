@@ -167,11 +167,12 @@ class BaseEstimator:
         return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
+        """
+        Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
