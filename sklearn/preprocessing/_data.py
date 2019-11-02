@@ -388,12 +388,18 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Scaling features of X according to feature_range.
+        """
+        Scaling features of X according to feature_range.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             Input data that will be transformed.
+
+        Returns
+        -------
+        Xt : array-like, shape [n_samples, n_features]
+            Transformed data.
         """
         check_is_fitted(self)
 
