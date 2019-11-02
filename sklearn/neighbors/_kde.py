@@ -148,7 +148,7 @@ class KernelDensity(BaseEstimator):
         return self
 
     def score_samples(self, X):
-        """Evaluate the density model on the data.
+        """Evaluate the log density model on the data.
 
         Parameters
         ----------
