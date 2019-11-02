@@ -36,7 +36,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
           constructed feature by feature to preserve the data types
           of pandas DataFrame columns, as otherwise information is lost
           and cannot be used, eg for the `categories_` attribute.
-
+          
         """
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             # if not a dataframe, do normal check_array validation
@@ -541,7 +541,8 @@ class OneHotEncoder(_BaseEncoder):
 
 
 class OrdinalEncoder(_BaseEncoder):
-    """Encode categorical features as an integer array.
+    """
+    Encode categorical features as an integer array.
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
@@ -552,7 +553,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of lists/arrays of values.
+    categories : 'auto' or a list of lists/arrays of values
         Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
@@ -571,6 +572,13 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
         of ``transform``).
+        
+    See Also
+    --------
+    sklearn.preprocessing.OneHotEncoder : Performs a one-hot encoding of
+      categorical features.
+    sklearn.preprocessing.LabelEncoder : Encodes target labels with values
+      between 0 and n_classes-1.
 
     Examples
     --------
@@ -591,13 +599,6 @@ class OrdinalEncoder(_BaseEncoder):
     >>> enc.inverse_transform([[1, 0], [0, 1]])
     array([['Male', 1],
            ['Female', 2]], dtype=object)
-
-    See also
-    --------
-    sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
-      categorical features.
-    sklearn.preprocessing.LabelEncoder : encodes target labels with values
-      between 0 and n_classes-1.
     """
 
     def __init__(self, categories='auto', dtype=np.float64):
@@ -605,24 +606,29 @@ class OrdinalEncoder(_BaseEncoder):
         self.dtype = dtype
 
     def fit(self, X, y=None):
-        """Fit the OrdinalEncoder to X.
+        """
+        Fit the OrdinalEncoder to X.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
+            
+        y : any
+            Ignored. This parameter exists only for compatibility with
+            sklearn.pipeline.Pipeline.
 
         Returns
         -------
         self
-
         """
         self._fit(X)
 
         return self
 
     def transform(self, X):
-        """Transform X to ordinal codes.
+        """
+        Transform X to ordinal codes.
 
         Parameters
         ----------
@@ -633,13 +639,13 @@ class OrdinalEncoder(_BaseEncoder):
         -------
         X_out : sparse matrix or a 2-d array
             Transformed input.
-
         """
         X_int, _ = self._transform(X)
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
-        """Convert the data back to the original representation.
+        """
+        Convert the data back to the original representation.
 
         Parameters
         ----------
@@ -650,7 +656,6 @@ class OrdinalEncoder(_BaseEncoder):
         -------
         X_tr : array-like, shape [n_samples, n_features]
             Inverse transformed array.
-
         """
         check_is_fitted(self)
         X = check_array(X, accept_sparse='csr')
