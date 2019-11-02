@@ -198,7 +198,8 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """Set the parameters of this estimator.
+        """
+        Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
