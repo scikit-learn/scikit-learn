@@ -1535,6 +1535,206 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
+def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=None,
+                           warn_for=('tpr', 'fpr', 'tnr', 'fnr'), sample_weight=None,zero_division="warn"):
+    """Compute TPR, FPR, TNR, FNR for each class
+
+    The TPR is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives.
+
+    The FPR is the ratio ``fp / (tn + fp)`` where ``tn`` is the number of
+    true negatives and ``fp`` the number of false positives.
+
+    The TNR is the ratio ``tn / (tn + fp)`` where ``tn`` is the number of
+    true negatives and ``fp`` the number of false positives.
+
+    The FNR is the ratio ``fn / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives.
+
+    If ``pos_label is None`` and in binary classification, this function
+    returns the average precision, recall and F-measure if ``average``
+    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    labels : list, optional
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+    pos_label : str or int, 1 by default
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
+
+    average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
+                       'weighted']
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
+    warn_for : tuple or set, for internal use
+        This determines which warnings will be made in the case that this
+        function is being used to return only one of its metrics.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division:
+           - recall: when there are no positive labels
+           - precision: when there are no positive predictions
+           - f-score: both
+
+        If set to "warn", this acts as 0, but warnings are also raised.
+
+    Returns
+    -------
+    tpr : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+
+    fpr : float (if average is not None) or array of float, , shape =\
+        [n_unique_labels]
+
+    tnr : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+
+    fnr : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
+        The number of occurrences of each label in ``y_true``.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for confusion matrix
+           <https://en.wikipedia.org/wiki/Confusion_matrix>`_
+
+    .. [2] `Discriminative Methods for Multi-labeled Classification Advances
+           in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
+           Godbole, Sunita Sarawagi
+           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
+    >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
+    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
+    (0.33333333333333331, 0.0, 0.0, 0.66666666666666663)
+    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='micro')
+    (0.33333333333333331, 0.0, 0.0, 0.66666666666666663)
+    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='weighted')
+    (0.22..., 0.33..., 0.26..., None)
+
+    It is possible to compute per-label fpr, fnr, tnr, tpr and
+    supports instead of averaging:
+
+    >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None,
+    ... labels=['pig', 'dog', 'cat'])
+    (array([0, 0, 1]), array([0, 0, 0]),
+     array([0, 0, 0]), array([1, 1, 0]))
+
+    Notes
+    -----
+    When ``true positive + false negative == 0``, TPR, FNR are not undefined;
+    When ``true negative + false positive == 0``, FPR, TNR are not undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
+    """
+    _check_zero_division(zero_division)
+
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels,
+                                    pos_label)
+
+    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pred_sum, pos_sum, neg_sum ###
+    samplewise = average == 'samples'
+    MCM = multilabel_confusion_matrix(y_true, y_pred,
+                                      sample_weight=sample_weight,
+                                      labels=labels, samplewise=samplewise)
+    tn_sum = MCM[:, 0, 0]
+    fp_sum = MCM[:, 0, 1]
+    fn_sum = MCM[:, 1, 0]
+    tp_sum = MCM[:, 1, 1]
+    pred_sum = tp_sum + MCM[:, 0, 1]
+    neg_sum = tn_sum+fp_sum
+    pos_sum = fn_sum+tp_sum
+
+
+    if average == 'micro':
+        fp_sum = np.array([fp_sum.sum()])
+        tn_sum = np.array([tn_sum.sum()])
+        fn_sum = np.array([fn_sum.sum()])
+        neg_sum = np.array([neg_sum.sum()])
+        pos_sum = np.array([pos_sum.sum()])
+
+    # Divide, and on zero-division, set scores and/or warn according to
+    # zero_division:
+    fpr = _prf_divide(fp_sum, neg_sum, 'fpr',
+                            'negatives', average, warn_for, zero_division)
+    tnr = _prf_divide(tn_sum, neg_sum, 'tnr',
+                            'negatives', average, warn_for, zero_division)
+    fnr = _prf_divide(fn_sum, pos_sum, 'fnr',
+                            'positives', average, warn_for, zero_division)
+    tpr = _prf_divide(tp_sum, pos_sum, 'tpr',
+                            'positives', average, warn_for, zero_division)
+
+    # Average the results
+    if average == 'weighted':
+        weights = pos_sum
+        if weights.sum() == 0:
+            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            # precision is zero_division if there are no positive predictions
+            # recall is zero_division if there are no positive labels
+            # fscore is zero_division if all labels AND predictions are
+            # negative
+            return (zero_division_value if pred_sum.sum() == 0 else 0,
+                    zero_division_value,
+                    zero_division_value if pred_sum.sum() == 0 else 0)
+
+    elif average == 'samples':
+        weights = sample_weight
+    else:
+        weights = None
+
+    if average is not None:
+        assert average != 'binary' or len(fpr) == 1
+        fpr = np.average(fpr, weights=weights)
+        tnr = np.average(tnr, weights=weights)
+        fnr = np.average(fnr, weights=weights)
+        tpr = np.average(tpr, weights=weights)
+    return tpr, fpr, tnr, fnr
+
+
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
