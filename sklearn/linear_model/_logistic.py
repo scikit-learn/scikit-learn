@@ -1607,7 +1607,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return self
 
     def predict_proba(self, X):
-        """Probability estimates.
+        """
+        Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -1622,6 +1623,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -1647,7 +1650,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             return softmax(decision_2d, copy=False)
 
     def predict_log_proba(self, X):
-        """Log of probability estimates.
+        """
+        Predict logarithm of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -1655,6 +1659,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
