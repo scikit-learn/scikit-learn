@@ -1172,6 +1172,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Read more in the :ref:`User Guide <randomized_parameter_search>`.
 
+  ..versionadded:: 0.14
+
     Parameters
     ----------
     estimator : estimator object.

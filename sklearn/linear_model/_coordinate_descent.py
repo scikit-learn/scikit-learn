@@ -1934,6 +1934,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
+  ..versionadded:: 0.15
+
     Parameters
     ----------
     l1_ratio : float or array of floats
@@ -2119,6 +2121,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     i.e. the sum of norm of each row.
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
+
+  ..versionadded:: 0.15
 
     Parameters
     ----------
