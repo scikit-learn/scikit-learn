@@ -139,7 +139,7 @@ able to compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
 
 This classifier is sometimes referred to as a `Least Squares Support Vector
 Machines
-<https://en.wikipedia.org/wiki/Least-squares_support-vector_machine> `_ with
+<https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
 a linear kernel.
 
 .. topic:: Examples:
@@ -597,11 +597,11 @@ not set in a hard sense but tuned to the data at hand.
 This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
-The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a posteriori estimation under a Gaussian prior over the
-coefficients :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
-`\lambda` manually, it is possible to treat it as a random variable to be
-estimated from the data.
+The :math:`\ell_{2}` regularization used in :ref:`ridge_regression` is
+equivalent to finding a maximum a posteriori estimation under a Gaussian prior
+over the coefficients :math:`w` with precision :math:`\lambda^{-1}`.
+Instead of setting `\lambda` manually, it is possible to treat it as a random
+variable to be estimated from the data.
 
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
