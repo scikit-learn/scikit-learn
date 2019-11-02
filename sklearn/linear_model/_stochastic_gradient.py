@@ -99,6 +99,19 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self._validate_params()
 
     def set_params(self, **kwargs):
+        """
+        Set and validate the parameters of this estimator.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Estimator parameters.
+
+        Returns
+        -------
+        self : object
+            Estimator instance.
+        """
         super().set_params(**kwargs)
         self._validate_params()
         return self
@@ -916,7 +929,6 @@ class SGDClassifier(BaseSGDClassifier):
     See also
     --------
     sklearn.svm.LinearSVC, LogisticRegression, Perceptron
-
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
@@ -1037,6 +1049,7 @@ class SGDClassifier(BaseSGDClassifier):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+            Input data for prediction
 
         Returns
         -------
