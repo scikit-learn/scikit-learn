@@ -30,10 +30,14 @@ __all__ = ["BaggingClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _generate_indices(random_state, bootstrap, n_population, n_samples):
+def _generate_indices(random_state, bootstrap, n_population, n_samples,
+                      p=None):
     """Draw randomly sampled indices."""
     # Draw sample indices
-    if bootstrap:
+    if p is not None:
+        indices = random_state.choice(a=n_population, size=n_samples,
+                                      replace=bootstrap, p=p)
+    elif bootstrap:
         indices = random_state.randint(0, n_population, n_samples)
     else:
         indices = sample_without_replacement(n_population, n_samples,
@@ -44,14 +48,15 @@ def _generate_indices(random_state, bootstrap, n_population, n_samples):
 
 def _generate_bagging_indices(random_state, bootstrap_features,
                               bootstrap_samples, n_features, n_samples,
-                              max_features, max_samples):
+                              max_features, max_samples, feature_weight=None):
     """Randomly draw feature and sample indices."""
     # Get valid random state
     random_state = check_random_state(random_state)
 
     # Draw indices
     feature_indices = _generate_indices(random_state, bootstrap_features,
-                                        n_features, max_features)
+                                        n_features, max_features,
+                                        feature_weight)
     sample_indices = _generate_indices(random_state, bootstrap_samples,
                                        n_samples, max_samples)
 
@@ -64,6 +69,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     # Retrieve settings
     n_samples, n_features = X.shape
     max_features = ensemble._max_features
+    feature_weight = ensemble.feature_weight
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
@@ -90,7 +96,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                                       bootstrap_features,
                                                       bootstrap, n_features,
                                                       n_samples, max_features,
-                                                      max_samples)
+                                                      max_samples,
+                                                      feature_weight)
 
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
@@ -195,6 +202,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                  n_estimators=10,
                  max_samples=1.0,
                  max_features=1.0,
+                 feature_weight=None,
                  bootstrap=True,
                  bootstrap_features=False,
                  oob_score=False,
@@ -208,6 +216,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         self.max_samples = max_samples
         self.max_features = max_features
+        self.feature_weight = feature_weight
         self.bootstrap = bootstrap
         self.bootstrap_features = bootstrap_features
         self.oob_score = oob_score
@@ -323,6 +332,16 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         # Store validated integer feature sampling value
         self._max_features = max_features
+
+        # Validate feature weight has the same length as n_features
+        if self.feature_weight is not None:
+            self.feature_weight = check_array(self.feature_weight,
+                                              ensure_2d=False)
+            if len(self.feature_weight) != self.n_features_:
+                raise ValueError("Feature weights must have shape "
+                                 "[n_features]")
+            # Normalize feature weight
+            self.feature_weight /= np.sum(self.feature_weight)
 
         # Other checks
         if not self.bootstrap and self.oob_score:

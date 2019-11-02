@@ -50,7 +50,8 @@ if __name__ == "__main__":
 
     default_algorithms = "custom-tracking-selection,custom-auto," \
                          "custom-reservoir-sampling,custom-pool,"\
-                         "python-core-sample,numpy-permutation"
+                         "python-core-sample,numpy-permutation"\
+                         ",numpy-choice"
 
     op.add_option("--algorithm",
                   dest="selected_algorithm",
@@ -127,6 +128,12 @@ if __name__ == "__main__":
     sampling_algorithm["numpy-permutation"] = \
         lambda n_population, n_sample: \
         np.random.permutation(n_population)[:n_sample]
+
+    ###########################################################################
+    # Numpy choice based
+    sampling_algorithm["numpy-choice"] = \
+        lambda n_population, n_sample: \
+        np.random.choice(n_population, n_sample, False)
 
     ###########################################################################
     # Remove unspecified algorithm

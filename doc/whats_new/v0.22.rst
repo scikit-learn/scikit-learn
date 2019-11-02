@@ -274,6 +274,10 @@ Changelog
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
+- |Feature| :class:`ensemble.IsolationForest` now has `feature_weight`
+  parameters that enable feature selection based on input weight. :pr:`11915`
+  by :user:`Zijie (ZJ) Poh <zjpoh>`.
+
 - |Fix| Stacking and Voting estimators now ensure that their underlying
   estimators are either all classifiers or all regressors.
   :class:`ensemble.StackingClassifier`, :class:`ensemble.StackingRegressor`,

@@ -80,6 +80,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
+    feature_weight : array-like, shape = [n_features] or None,
+        optional (default=None)
+        Feature weights in feature sampling. Weights have to sum to 1.
+        If None, then features are equally weighted.
+
     bootstrap : boolean, optional (default=False)
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
@@ -173,6 +178,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                  max_samples="auto",
                  contamination="auto",
                  max_features=1.,
+                 feature_weight=None,
                  bootstrap=False,
                  n_jobs=None,
                  behaviour='deprecated',
@@ -190,6 +196,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             n_estimators=n_estimators,
             max_samples=max_samples,
             max_features=max_features,
+            feature_weight=feature_weight,
             warm_start=warm_start,
             n_jobs=n_jobs,
             random_state=random_state,

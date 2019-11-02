@@ -26,6 +26,7 @@ from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
 from scipy.sparse import csc_matrix, csr_matrix
+from scipy.stats import kurtosis
 from unittest.mock import Mock, patch
 
 rng = check_random_state(0)
@@ -129,6 +130,11 @@ def test_iforest_error():
     with pytest.raises(NotImplementedError, match=msg):
         IsolationForest(behaviour='old').fit(X)
 
+    # test feature_weight length matches n_features:
+    msg = "Feature weights must have shape"
+    with pytest.raises(ValueError, match=msg):
+        IsolationForest(feature_weight=[1]).fit(X)
+
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
@@ -199,6 +205,49 @@ def test_iforest_performance():
 
     # check that there is at most 6 errors (false positive or false negative)
     assert roc_auc_score(y_test, y_pred) > 0.98
+
+
+def test_iforest_performance_feature_weight():
+    """Test Isolation Forest performs well"""
+
+    n_fea = 5
+    n_noise = 100
+
+    rng = np.random.RandomState(2)
+
+    # Generate data with some abnormal observations
+    X = np.vstack(
+        [
+            # Normally distributed points
+            0.3 * rng.randn(1000, n_fea),
+            # Uniform, i.e. might be outliers
+            rng.uniform(low=-4, high=4, size=(200, n_fea))
+        ]
+    )
+    X = np.hstack([X, rng.uniform(-4, 4, size=(X.shape[0], n_noise))])
+    # Lower score -> More abnormal
+    y = [1] * 1000 + [0] * 200
+
+    # Calculate feature weight using kurtosis
+    # Unset fisher so that normal distribution has a value of 3
+    # and uniform distribution has a value of 1.2, a smaller value
+    feature_weight = kurtosis(X, fisher=False)
+
+    # fit the model without feature weight and not all features
+    clf_wo = IsolationForest(random_state=rng)
+    clf_wo.fit(X)
+
+    # fit the model with feature weight and not all features
+    clf_w = IsolationForest(
+        random_state=rng, feature_weight=feature_weight, max_features=10
+    )
+    clf_w.fit(X)
+
+    # With feature weight should be better than without
+    assert (
+        roc_auc_score(y, clf_w.score_samples(X)) >
+        roc_auc_score(y, clf_wo.score_samples(X))
+    )
 
 
 @pytest.mark.parametrize("contamination", [0.25, "auto"])
