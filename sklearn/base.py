@@ -369,7 +369,7 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
@@ -506,7 +506,7 @@ class BiclusterMixin:
         return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
-        """Returns the submatrix corresponding to bicluster `i`.
+        """Return the submatrix corresponding to bicluster `i`.
 
         Parameters
         ----------
@@ -569,7 +569,7 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Returns the score of the model on the data X
+        """Return the score of the model on the data X
 
         Parameters
         ----------
@@ -627,7 +627,7 @@ class _UnstableArchMixin:
 
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier.
+    """Return True if the given estimator is (probably) a classifier.
 
     Parameters
     ----------
@@ -643,7 +643,7 @@ def is_classifier(estimator):
 
 
 def is_regressor(estimator):
-    """Returns True if the given estimator is (probably) a regressor.
+    """Return True if the given estimator is (probably) a regressor.
 
     Parameters
     ----------
@@ -659,7 +659,7 @@ def is_regressor(estimator):
 
 
 def is_outlier_detector(estimator):
-    """Returns True if the given estimator is (probably) an outlier detector.
+    """Return True if the given estimator is (probably) an outlier detector.
 
     Parameters
     ----------
