@@ -67,7 +67,8 @@ def clear_data_home(data_home=None):
     shutil.rmtree(data_home)
 
 
-def _convert_data_dataframe(caller_name, data, target, feature_names, target_names):
+def _convert_data_dataframe(caller_name, data, target, 
+                            feature_names, target_names):
     pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
     data_df = pd.DataFrame(data, columns=feature_names)
     target_df = pd.DataFrame(target, columns=target_names)
