@@ -20,9 +20,13 @@ DOCSTRING_WHITELIST = [
     "PassiveAggressiveClassifier.decision_function",
     "Perceptron.decision_function",
     "RidgeClassifier.decision_function",
+    "RidgeClassifier.fit",
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
-    "LinearRegression$"
+    "KernelDensity",
+    "KernelDensity.fit"
+    "KernelDensity.score",
+    "LinearRegression$",
 ]
 
 
@@ -50,8 +54,11 @@ def filter_errors(errors, method):
         #    should contain only the type, ..
         #   (as we may need refer to the name of the returned
         #    object)
+        #  - GL01: Docstring text (summary) should start in the line
+        #  immediately after the opening quotes (not in the same line,
+        #  or leaving a blank line in between)
 
-        if code in ["RT02"]:
+        if code in ["RT02", "GL01"]:
             continue
 
         # Following codes are only taken into account for the
