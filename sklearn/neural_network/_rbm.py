@@ -36,6 +36,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <rbm>`.
 
+    .. versionadded:: 0.14
+
     Parameters
     ----------
     n_components : int, optional
