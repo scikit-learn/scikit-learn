@@ -49,8 +49,9 @@ def filter_errors(errors, method):
         #    should contain only the type, ..
         #   (as we may need refer to the name of the returned
         #    object)
+        #  - SA04: Missing description for See Also
 
-        if code in ["RT02"]:
+        if code in ["RT02", "SA04"]:
             continue
 
         # Following codes are only taken into account for the

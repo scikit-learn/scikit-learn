@@ -470,7 +470,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
 
 
 class TSNE(BaseEstimator):
-    """t-distributed Stochastic Neighbor Embedding.
+    """
+    T-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
@@ -534,7 +535,7 @@ class TSNE(BaseEstimator):
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : string or callable, optional
+    metric : str or callable, optional
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -546,7 +547,7 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string or numpy array, optional (default: "random")
+    init : str or numpy array, optional (default: "random")
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
@@ -562,7 +563,7 @@ class TSNE(BaseEstimator):
         by `np.random`.  Note that different initializations might result in
         different local minima of the cost function.
 
-    method : string (default: 'barnes_hut')
+    method : str (default: 'barnes_hut')
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -603,16 +604,10 @@ class TSNE(BaseEstimator):
 
     n_iter_ : int
         Number of iterations run.
-
-    Examples
+    
+    See Also
     --------
-
-    >>> import numpy as np
-    >>> from sklearn.manifold import TSNE
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> X_embedded = TSNE(n_components=2).fit_transform(X)
-    >>> X_embedded.shape
-    (4, 2)
+    LocallyLinearEmbedding, Isomap, MDS
 
     References
     ----------
@@ -626,6 +621,16 @@ class TSNE(BaseEstimator):
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.manifold import TSNE
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> X_embedded = TSNE(n_components=2).fit_transform(X)
+    >>> X_embedded.shape
+    (4, 2)
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -864,8 +869,8 @@ class TSNE(BaseEstimator):
         return X_embedded
 
     def fit_transform(self, X, y=None):
-        """Fit X into an embedded space and return that transformed
-        output.
+        """
+        Fit X into an embedded space and return that transformed output.
 
         Parameters
         ----------
@@ -876,7 +881,8 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None,
+            Ignored.
 
         Returns
         -------
@@ -888,7 +894,8 @@ class TSNE(BaseEstimator):
         return self.embedding_
 
     def fit(self, X, y=None):
-        """Fit X into an embedded space.
+        """
+        Fit X into an embedded space.
 
         Parameters
         ----------
@@ -899,7 +906,13 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : Ignored
+        y : None, 
+            Ignored.
+
+        Returns
+        -------
+        X_new : array, shape (n_samples, n_components)
+            Embedding of the training data in low-dimensional space.
         """
         self.fit_transform(X)
         return self
