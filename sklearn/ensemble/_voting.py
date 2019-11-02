@@ -250,11 +250,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return maj
 
     def _collect_probas(self, X):
-        """Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls."""
         return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
 
     def _predict_proba(self, X):
-        """Predict class probabilities for X in 'soft' voting """
+        """Predict class probabilities for X in 'soft' voting."""
         check_is_fitted(self)
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
