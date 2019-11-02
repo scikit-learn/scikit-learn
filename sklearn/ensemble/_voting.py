@@ -88,7 +88,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators : list of (str, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'``
@@ -136,6 +136,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     classes_ : array-like, shape (n_predictions,)
         The classes labels.
 
+    See Also
+    --------
+    VotingRegressor: Prediction voting regressor.
+
     Examples
     --------
     >>> import numpy as np
@@ -170,10 +174,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
-
-    See Also
-    --------
-    VotingRegressor: Prediction voting regressor.
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
