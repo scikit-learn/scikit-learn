@@ -964,6 +964,12 @@ class RandomForestClassifier(ForestClassifier):
         when building trees (if `bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
         (if ``max_features < n_features``).
+        The features are always randomly permuted at each split. Therefore,
+        the best found split may vary, even with the same training data,
+        ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+        of the criterion is identical for several splits enumerated during the
+        search of the best split. To obtain a deterministic behaviour during
+        fitting, ``random_state`` has to be fixed.
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -1079,13 +1085,6 @@ class RandomForestClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
-
-    The features are always randomly permuted at each split. Therefore,
-    the best found split may vary, even with the same training data,
-    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
-    of the criterion is identical for several splits enumerated during the
-    search of the best split. To obtain a deterministic behaviour during
-    fitting, ``random_state`` has to be fixed.
 
     References
     ----------
