@@ -224,7 +224,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return np.array(results).T
 
     def decision_path(self, X):
-        """Return the decision path in the forest
+        """Return the decision path in the forest.
 
         .. versionadded:: 0.18
 
@@ -244,7 +244,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         n_nodes_ptr : array of size (n_estimators + 1, )
             The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
             gives the indicator value for the i-th estimator.
-
         """
         X = self._validate_X_predict(X)
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
@@ -283,6 +282,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         self : object
+            Returns instance of fitted object.
         """
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
@@ -404,15 +404,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """
+        Returns the feature importances (array, shape =  [n_features]).
 
-        Returns
-        -------
-        feature_importances_ : array, shape = [n_features]
-            The values of this array sum to 1, unless all trees are single node
-            trees consisting of only the root node, in which case it will be an
-            array of zeros.
+        More important features have higher values. The values of this array
+        sum to 1, unless all trees are single nodetrees consisting of only the
+        root node, in which case it will be an array of zeros.
         """
         check_is_fitted(self)
 
@@ -629,7 +626,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         Returns
         -------
         p : array of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -675,7 +671,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         Returns
         -------
         p : array of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -825,19 +820,19 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=100)
+    n_estimators : int, optional (default=100)
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, optional (default="gini")
+    criterion : str, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
@@ -873,7 +868,7 @@ class RandomForestClassifier(ForestClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -922,8 +917,7 @@ class RandomForestClassifier(ForestClassifier):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-
-    bootstrap : boolean, optional (default=True)
+    bootstrap : bool, optional (default=True)
         Whether bootstrap samples are used when building trees. If False, the
         whole datset is used to build each tree.
 
@@ -1034,21 +1028,12 @@ class RandomForestClassifier(ForestClassifier):
         `oob_decision_function_` might contain NaN. This attribute exists
         only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.datasets import make_classification
-
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
-    ...                            n_informative=2, n_redundant=0,
-    ...                            random_state=0, shuffle=False)
-    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit(X, y)
-    RandomForestClassifier(max_depth=2, random_state=0)
-    >>> print(clf.feature_importances_)
-    [0.14205973 0.76664038 0.0282433  0.06305659]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
+    sklearn.ensemble.DecisionTreeClassifier :  Classifier using a single
+        decision tree.
+    sklearn.ensemble.ExtraTreesClassifier : Meta-estimator to build a number of
+        random decision tree classifiers.
 
     Notes
     -----
@@ -1070,9 +1055,21 @@ class RandomForestClassifier(ForestClassifier):
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    See also
+    Examples
     --------
-    DecisionTreeClassifier, ExtraTreesClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.datasets import make_classification
+
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
+    >>> clf.fit(X, y)
+    RandomForestClassifier(max_depth=2, random_state=0)
+    >>> print(clf.feature_importances_)
+    [0.14205973 0.76664038 0.0282433  0.06305659]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
     """
     def __init__(self,
                  n_estimators=100,
@@ -1137,14 +1134,14 @@ class RandomForestRegressor(ForestRegressor):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=10)
+    n_estimators : int, optional (default=10)
         The number of trees in the forest.
 
         .. versionchanged:: 0.22
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : string, optional (default="mse")
+    criterion : str, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
@@ -1153,7 +1150,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
@@ -1189,7 +1186,7 @@ class RandomForestRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1238,12 +1235,12 @@ class RandomForestRegressor(ForestRegressor):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    bootstrap : boolean, optional (default=True)
+    bootstrap : bool, optional (default=True)
         Whether bootstrap samples are used when building trees. If False, the
         whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
-        whether to use out-of-bag samples to estimate
+        Whether to use out-of-bag samples to estimate
         the R^2 on unseen data.
 
     n_jobs : int or None, optional (default=None)
@@ -1312,20 +1309,12 @@ class RandomForestRegressor(ForestRegressor):
         Prediction computed with out-of-bag estimate on the training set.
         This attribute exists only when ``oob_score`` is True.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.ensemble import RandomForestRegressor
-    >>> from sklearn.datasets import make_regression
-
-    >>> X, y = make_regression(n_features=4, n_informative=2,
-    ...                        random_state=0, shuffle=False)
-    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
-    >>> regr.fit(X, y)
-    RandomForestRegressor(max_depth=2, random_state=0)
-    >>> print(regr.feature_importances_)
-    [0.18146984 0.81473937 0.00145312 0.00233767]
-    >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-8.32987858]
+    sklearn.ensemble.DecisionTreeRegressor :  Regressor using a single decision
+        tree.
+    sklearn.ensemble.ExtraTreesRegressor : Meta-estimator to build a number of
+        random decision tree regressors.
 
     Notes
     -----
@@ -1354,9 +1343,20 @@ class RandomForestRegressor(ForestRegressor):
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
-    See also
+    Examples
     --------
-    DecisionTreeRegressor, ExtraTreesRegressor
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.datasets import make_regression
+
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
+    >>> regr.fit(X, y)
+    RandomForestRegressor(max_depth=2, random_state=0)
+    >>> print(regr.feature_importances_)
+    [0.18146984 0.81473937 0.00145312 0.00233767]
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-8.32987858]
     """
     def __init__(self,
                  n_estimators=100,
@@ -2175,6 +2175,7 @@ class RandomTreesEmbedding(BaseForest):
         Returns
         -------
         self : object
+            Returns instance of fitted object
 
         """
         self.fit_transform(X, y, sample_weight=sample_weight)
