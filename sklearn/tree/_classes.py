@@ -852,7 +852,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ignored if they would result in any single class carrying a
             negative weight in either child node.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -865,6 +865,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
 
         super().fit(
