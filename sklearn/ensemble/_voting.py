@@ -64,7 +64,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf not in (None, 'drop')
@@ -82,7 +82,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
-    """Soft Voting/Majority Rule classifier for unfitted estimators.
+    """
+    Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
 
@@ -123,6 +124,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         matrix with shape (n_samples, n_classifiers * n_classes). If
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
+
+    verbose : int, optional (default=0)
+        Enable progress messages of ``fit`` calls.
 
     Attributes
     ----------
@@ -178,16 +182,18 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     VotingRegressor: Prediction voting regressor.
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
-                 flatten_transform=True):
+    def __init__(self, estimators, voting='hard', weights=None,
+                 n_jobs=None, flatten_transform=True, verbose=0):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """
+        Fit the estimators.
 
         Parameters
         ----------
@@ -206,6 +212,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
+            The estimator itself.
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
@@ -223,7 +230,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
-        """ Predict class labels for X.
+        """
+        Predict class labels for X.
 
         Parameters
         ----------
@@ -264,7 +272,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     @property
     def predict_proba(self):
-        """Compute probabilities of possible outcomes for samples in X.
+        """
+        Compute probabilities of possible outcomes for samples in X.
 
         Parameters
         ----------
@@ -282,7 +291,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return self._predict_proba
 
     def transform(self, X):
-        """Return class labels or probabilities for X for each estimator.
+        """
+        Return class labels or probabilities for X for each estimator.
 
         Parameters
         ----------
@@ -316,7 +326,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
-    """Prediction voting regressor for unfitted estimators.
+    """
+    Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21
 
@@ -348,6 +359,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    verbose : int, optional (default=0)
+        Enable progress messages of ``fit`` calls.
+
     Attributes
     ----------
     estimators_ : list of regressors
@@ -373,18 +387,20 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
 
-    See also
+    See Also
     --------
     VotingClassifier: Soft Voting/Majority Rule classifier.
     """
 
-    def __init__(self, estimators, weights=None, n_jobs=None):
+    def __init__(self, estimators, weights=None, n_jobs=None, verbose=0):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """
+        Fit the estimators.
 
         Parameters
         ----------
@@ -403,12 +419,14 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         Returns
         -------
         self : object
+            The estimator itself.
         """
         y = column_or_1d(y, warn=True)
-        return super().fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight, self.verbose)
 
     def predict(self, X):
-        """Predict regression target for X.
+        """
+        Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the estimators in the ensemble.
@@ -428,7 +446,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
                           weights=self._weights_not_none)
 
     def transform(self, X):
-        """Return predictions for X for each estimator.
+        """
+        Return predictions for X for each estimator.
 
         Parameters
         ----------
