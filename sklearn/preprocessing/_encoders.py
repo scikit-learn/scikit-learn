@@ -616,7 +616,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            sklearn.pipeline.Pipeline.
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
