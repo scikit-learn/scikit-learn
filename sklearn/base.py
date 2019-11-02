@@ -542,7 +542,7 @@ class TransformerMixin:
         y : numpy array of shape [n_samples]
             Target values.
         **fit_params : dict
-                       Additional fit parameters.
+            Additional fit parameters.
 
         Returns
         -------

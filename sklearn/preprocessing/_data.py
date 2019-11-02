@@ -325,12 +325,12 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         X : array-like, shape [n_samples, n_features]
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
-        y : None
+        y : Any, default=None
             Ignored.
 
         Returns
         -------
-        self : scaler
+        self
             Fitted scaler.
         """
 
@@ -352,7 +352,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : None
+        y : Any, default=None
             Ignored.
 
         Returns
@@ -428,7 +428,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        Xt : array-like, shape [n_samples, n_features]
+        Xt : array-like of shape {n_samples, n_features}
             Transformed data.
         """
         check_is_fitted(self)
@@ -690,12 +690,12 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : None
+        y
             Ignored.
 
         Returns
         -------
-        self : object
+        self
             Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
@@ -960,11 +960,11 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y : None
+        y
             Ignored.
         Returns
         -------
-        self : object
+        self
             Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
