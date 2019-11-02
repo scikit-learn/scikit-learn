@@ -945,7 +945,8 @@ class BernoulliNB(BaseDiscreteNB):
 
     See Also
     ----------
-    MultinomialNB: The multinomial Naive Bayes classifier is suitable for classification with discrete features.
+    MultinomialNB: The multinomial Naive Bayes classifier is \
+        suitable for classification with discrete features.
 
     References
     ----------
