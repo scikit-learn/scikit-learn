@@ -214,7 +214,8 @@ class BaseEstimator:
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Estimator instance.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)

@@ -229,7 +229,8 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Estimator instance.
         """
         y = column_or_1d(y, warn=True)
         self.classes_ = _encode(y)
@@ -424,7 +425,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Estimator instance.
         """
         self.y_type_ = type_of_target(y)
         if 'multioutput' in self.y_type_:
@@ -439,8 +441,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
     def fit_transform(self, y):
         """
-        Fit label binarizer and transform multi-class labels to binary
-        labels.
+        Fit label binarizer and transform multi-class labels to binary \
+            labels.
 
         The output of transform is sometimes referred to as
         the 1-of-K coding scheme.
@@ -448,10 +450,10 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         y : array or sparse matrix of shape [n_samples,] or
-            [n_samples, n_classes]
-            Target values. The 2-d matrix should only contain 0 and 1,
-            represents multilabel classification. Sparse matrix can be
-            CSR, CSC, COO, DOK, or LIL.
+            [n_samples, n_classes]. Target values. The 2-d matrix
+            should only contain 0 and 1, represents multilabel
+            classification. Sparse matrix can be CSR, CSC, COO, DOK, or
+            LIL.
 
         Returns
         -------
@@ -878,7 +880,8 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns this MultiLabelBinarizer instance.
+        self : object
+            Estimator instance.
         """
         self._cached_dict = None
         if self.classes is None:
