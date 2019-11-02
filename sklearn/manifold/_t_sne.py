@@ -604,7 +604,7 @@ class TSNE(BaseEstimator):
 
     n_iter_ : int
         Number of iterations run.
-    
+
     See Also
     --------
     LocallyLinearEmbedding, Isomap, MDS
@@ -881,7 +881,7 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : None,
+        y : None
             Ignored.
 
         Returns
@@ -906,7 +906,7 @@ class TSNE(BaseEstimator):
             or 'coo'. If the method is 'barnes_hut' and the metric is
             'precomputed', X may be a precomputed sparse graph.
 
-        y : None, 
+        y : None
             Ignored.
 
         Returns
