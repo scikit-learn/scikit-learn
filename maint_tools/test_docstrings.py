@@ -14,6 +14,8 @@ DOCSTRING_WHITELIST = [
     "LogisticRegression.decision_function",
     "Birch.predict",
     "Birch.transform",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
     "LinearDiscriminantAnalysis.decision_function",
     "LinearSVC.decision_function",
     "LogisticRegressionCV.decision_function",
@@ -22,7 +24,6 @@ DOCSTRING_WHITELIST = [
     "RidgeClassifier.decision_function",
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
-    "GradientBoostingRegressor"
 ]
 
 
