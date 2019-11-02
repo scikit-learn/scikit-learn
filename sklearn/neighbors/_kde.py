@@ -83,8 +83,7 @@ class KernelDensity(BaseEstimator):
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
-    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5)
-    >>> kde.fit(X)
+    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.5).fit(X)
     KernelDensity(...)
     >>> log_density = kde.score_samples(X[:3])
     >>> log_density
