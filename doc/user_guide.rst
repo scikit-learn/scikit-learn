@@ -1,3 +1,7 @@
+.. Places global toc into the sidebar
+
+:globalsidebartoc: True
+
 .. title:: User guide: contents
 
 .. _user_guide:
@@ -14,11 +18,13 @@ User Guide
 
 .. toctree::
    :numbered:
+   :maxdepth: 3
 
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst
+   inspection.rst
+   visualizations.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
-   modules/scaling_strategies.rst
-   modules/computational_performance.rst
+   modules/computing.rst

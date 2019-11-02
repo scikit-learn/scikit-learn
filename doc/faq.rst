@@ -21,7 +21,7 @@ Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
-Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
+Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
@@ -33,9 +33,9 @@ of scikit-learn directly regarding contributing to scikit-learn.
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
 **For general machine learning questions**, please use
-`Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
+`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
 with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
 <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
@@ -50,7 +50,7 @@ shell with scikit-learn installed. Do not forget to include the import statement
 
 More guidance to write good reproduction code snippets can be found at:
 
-http://stackoverflow.com/help/mcve
+https://stackoverflow.com/help/mcve
 
 If your problem raises an exception that you do not understand (even after googling it),
 please make sure to include the full traceback that you obtain when running the
@@ -65,6 +65,11 @@ might be found.
 
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
+
+How should I save, export or deploy estimators for production?
+--------------------------------------------------------------
+
+See :ref:`model_persistence`.
 
 How can I create a bunch object?
 ------------------------------------------------
@@ -111,13 +116,22 @@ improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
+Inclusion of a new algorithm speeding up an existing model is easier if:
+
+- it does not introduce new hyper-parameters (as it makes the library
+  more future-proof),
+- it is easy to document clearly when the contribution improves the speed
+  and when it does not, for instance "when n_features >>
+  n_samples",
+- benchmarks clearly show a speed up.
+
 Also note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
 in a scikit-learn compatible way, upload it to GitHub and let us know. We
 will be happy to list it under :ref:`related_projects`. If you already have
 a package on GitHub following the scikit-learn API, you may also be
 interested to look at `scikit-learn-contrib
-<http://scikit-learn-contrib.github.io>`_.
+<https://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -156,12 +170,12 @@ would likely collapse under its own weight.
 There are two project with API similar to scikit-learn that
 do structured prediction:
 
-* `pystruct <http://pystruct.github.io/>`_ handles general structured
+* `pystruct <https://pystruct.github.io/>`_ handles general structured
   learning (focuses on SSVMs on arbitrary graph structures with
   approximate inference; defines the notion of sample as an instance of
   the graph structure)
 
-* `seqlearn <http://larsmans.github.io/seqlearn/>`_ handles sequences only
+* `seqlearn <https://larsmans.github.io/seqlearn/>`_ handles sequences only
   (focuses on exact inference; has HMMs, but mostly for the sake of
   completeness; treats a feature vector as a sample and uses an offset encoding
   for the dependencies between feature vectors)
@@ -179,12 +193,10 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <http://pypy.org/>`_ is the new, fast,
-just-in-time compiling Python implementation. We don't support it.
-When the `NumPy support <http://buildbot.pypy.org/numpy-status/latest.html>`_
-in PyPy is complete or near-complete, and SciPy is ported over as well,
-we can start thinking of a port.
-We use too much of NumPy to work with a partial implementation.
+In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
+Python implementation with a built-in just-in-time compiler. Experimental
+support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
+and scipy 1.1.0+.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------
@@ -224,7 +236,10 @@ DBSCAN with Levenshtein distances::
     array([[0],
            [1],
            [2]])
-    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2)  # doctest: +SKIP
+    >>> # We need to specify algoritum='brute' as the default assumes
+    >>> # a continuous feature space.
+    >>> dbscan(X, metric=lev_metric, eps=5, min_samples=2, algorithm='brute')
+    ... # doctest: +SKIP
     ([0, 1], array([ 0,  0, -1]))
 
 (This uses the third-party edit distance package ``leven``.)
@@ -284,23 +299,20 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why does my job use more cores than specified with n_jobs under OSX or Linux?
------------------------------------------------------------------------------
+Why does my job use more cores than specified with n_jobs?
+----------------------------------------------------------
 
-This happens when vectorized numpy operations are handled by libraries such
-as MKL or OpenBLAS.
+This is because ``n_jobs`` only controls the number of jobs for
+routines that are parallelized with ``joblib``, but parallel code can come
+from other sources:
 
-While scikit-learn adheres to the limit set by ``n_jobs``,
-numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
-threads within each scikit-learn job (thread or process).
+- some routines may be parallelized with OpenMP (for code written in C or
+  Cython).
+- scikit-learn relies a lot on numpy, which in turn may rely on numerical
+  libraries like MKL, OpenBLAS or BLIS which can provide parallel
+  implementations.
 
-The number of threads used by the BLAS library can be set via an environment
-variable. For example, to set the maximum number of threads to some integer
-value ``N``, the following environment variables should be set:
-
-* For MKL: ``export MKL_NUM_THREADS=N``
-
-* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
 
 
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
@@ -355,17 +367,18 @@ instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------
 
 Most of scikit-learn assumes data is in NumPy arrays or SciPy sparse matrices
 of a single numeric dtype. These do not explicitly represent categorical
 variables at present. Thus, unlike R's data.frames or pandas.DataFrame, we
 require explicit conversion of categorical features to numeric values, as
 discussed in :ref:`preprocessing_categorical_features`.
-See also :ref:`sphx_glr_auto_examples_hetero_feature_union.py` for an example of
-working with heterogeneous (e.g. categorical and numeric) data.
+See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py` for an
+example of working with heterogeneous (e.g. categorical and numeric) data.
 
 Why does Scikit-learn not directly work with, for example, pandas.DataFrame?
+----------------------------------------------------------------------------
 
 The homogeneous NumPy and SciPy data objects currently expected are most
 efficient to process for most operations. Extensive work would also be needed

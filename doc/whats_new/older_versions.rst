@@ -783,9 +783,9 @@ Changelog
 
 - :class:`Mini-Batch K-Means <cluster.MiniBatchKMeans>` by Nelle Varoquaux and Peter Prettenhofer.
 
-- :ref:`mldata` utilities by Pietro Berkes.
+- mldata utilities by Pietro Berkes.
 
-- :ref:`olivetti_faces` by `David Warde-Farley`_.
+- :ref:`olivetti_faces_dataset` by `David Warde-Farley`_.
 
 
 API changes summary
@@ -932,7 +932,7 @@ Several new modules where introduced during this release:
 
 - :ref:`kernel_pca` implementation by `Mathieu Blondel`_
 
-- :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
+- :ref:`labeled_faces_in_the_wild_dataset` by `Olivier Grisel`_.
 
 - New :ref:`cross_decomposition` module by `Edouard Duchesnay`_.
 
@@ -1273,7 +1273,7 @@ Examples
 
 - new examples using some of the mlcomp datasets:
   ``sphx_glr_auto_examples_mlcomp_sparse_document_classification.py`` (since removed) and
-  :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`
+  :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 
 - Many more examples. `See here
   <http://scikit-learn.org/stable/auto_examples/index.html>`_

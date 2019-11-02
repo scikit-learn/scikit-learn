@@ -197,6 +197,10 @@ div.navbar div.nav-icon {
     }
 }
 
+.section > p {
+    margin-top: 1em;
+}
+
 /*-------------------------------------------------------------*/
 /* The next few elements have to do with the gsc (referring to */
 /* Google's custom search bar */
@@ -223,6 +227,7 @@ div.navbar div.nav-icon {
 
 form.gsc-search-box {
     padding: 0 !important;
+    margin: 0 !important;
 }
 
 input.gsc-search-button {
@@ -231,6 +236,10 @@ input.gsc-search-button {
     border-radius: 5px !important;
     border-color: #FFFFFF !important;
     background-color: #ff9c34 !important;
+}
+
+.gsc-search-button-v2 {
+    line-height: 1em;
 }
 
 a.gs-title, a.gs-title > b{
@@ -504,7 +513,8 @@ div.body h6 {
 
 div.body h1,
 div.body h2,
-div.body h3 {
+div.body h3,
+div.body h4 {
     padding: 10px;
     text-align: center;
     border-radius: 10px;
@@ -513,7 +523,8 @@ div.body h3 {
 }
 
 div.body h2,
-div.body h3 {
+div.body h3,
+div.body h4 {
     text-align: left;
 }
 
@@ -523,13 +534,13 @@ div.bodywrapper {
 
 
 div.bodywrapper h1 {
-    margin: 0 -10px 0 -10px;
     text-align: center;
     background-color: #cde8ef;
     font-family: Helvetica, Arial, sans-serif;
     font-size: 190%;
     border-radius: 0 15px 0 15px;
     -moz-border-radius: 0 15px 0 15px;
+    margin: 0 0 0 0;
 }
 
 div.body h3 {
@@ -537,9 +548,13 @@ div.body h3 {
     background-color: #eee;
     padding: 5px;
     border-radius: 10px;
-
 }
-div.body h4 { font-size: 110%; background-color: #F4F4F4; }
+div.body h4 {
+    font-size: 110%;
+    background-color: #F4F4F4;
+    padding: 5px;
+    border-radius: 10px;
+}
 div.body h5 { font-size: 100%; background-color: #F4F4F4; }
 div.body h6 { font-size: 100%; background-color: #F4F4F4; }
 
@@ -773,6 +788,14 @@ th.field-name {
     white-space: nowrap;
 }
 
+@media screen and (max-width: 780px) {
+    /* field lists aren't shown as a table in small screens */
+
+    th.field-name, td.field-body {
+        display: block;
+    }
+}
+
 
 /* -------- warning header for old versions --------------------------------*/
 
@@ -786,7 +809,7 @@ div.warning-wrapper p {
 }
 
 
-/*-----------------------The Code Sprint Sponser Banner---------------------*/
+/*-----------------------The Code Sprint Sponsor Banner---------------------*/
 
 div.sprint-wrapper {
     font-weight: bold;
@@ -854,11 +877,6 @@ table.docutils td {
 pre {
     padding: 5px 10px 5px 10px;
     margin: .1em 0 .5em 0;
-}
-
-div.body p {
-    margin-top: 1.2em;
-    margin-bottom: .1em;
 }
 
 .float-right {
@@ -1091,6 +1109,11 @@ p.citing {
 
 .field-odd, .field-even {
     background-color: #fff;
+    margin-top: 0;
+}
+
+.field-odd > dl, .field-even > dl {
+    margin-top: 0;
 }
 
 .field-name {
@@ -1099,6 +1122,40 @@ p.citing {
 
 .field-body {
     background-color: #fff;
+}
+
+dl.field-list > dt {
+    flex-basis: 12%;
+}
+
+dl.field-list > dd {
+    flex-basis: 88%;
+}
+
+@media screen and (max-width: 780px) {
+
+    dl.field-list > dt {
+        flex-basis: 100%;
+    }
+
+    dl.field-list > dd {
+        flex-basis: 100%;
+    }
+}
+
+.field-odd, .field-even {
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+dt.field-odd, dt.field-even {
+    background-color: #F0F7FA;
+    padding: 4px 0 0 4px;
+}
+
+dd.field-odd, dd.field-even {
+    padding-top: 0.3em;
 }
 
 dl.class > dt, dl.function > dt, dl.method > dt {
@@ -1123,12 +1180,20 @@ table.docutils.citation td, table.docutils.citation tr, table.docutils.footnote 
     background-color: transparent;
 }
 
-table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
+table.docutils.citation tr td.label, table.docutils.footnote tr td.label dt.label {
     font-size: 0.9em;
     background-color: transparent;
     border-radius: 0px;
     color: #1D1F22;
     text-shadow: none;
+}
+
+table.longtable p {
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    -webkit-hyphens: none;
+    hyphens: none;
+    line-height: 1em;
 }
 
 /*----- testimonials ----------*/

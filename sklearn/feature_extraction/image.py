@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import check_array, check_random_state
+from ..utils import check_array, check_random_state, deprecated
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -32,7 +32,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
     """Returns a list of edges for a 3D image.
 
     Parameters
-    ===========
+    ----------
     n_x : integer
         The size of the grid in the x direction.
     n_y : integer
@@ -51,7 +51,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 
 def _compute_gradient_3d(edges, img):
-    n_x, n_y, n_z = img.shape
+    _, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
                       (edges[0] % (n_y * n_z)) // n_z,
                       (edges[0] % (n_y * n_z)) % n_z] -
@@ -241,7 +241,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         return all_patches
 
 
-def extract_patches(arr, patch_shape=8, extraction_step=1):
+def _extract_patches(arr, patch_shape=8, extraction_step=1):
     """Extracts patches of any n-dimensional array in place using strides.
 
     Given an n-dimensional array it will return a 2n-dimensional array with
@@ -286,7 +286,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     patch_strides = arr.strides
 
-    slices = [slice(None, None, st) for st in extraction_step]
+    slices = tuple(slice(None, None, st) for st in extraction_step)
     indexing_strides = arr[slices].strides
 
     patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) //
@@ -297,6 +297,46 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     patches = as_strided(arr, shape=shape, strides=strides)
     return patches
+
+@deprecated("The function feature_extraction.image.extract_patches has been "
+            "deprecated in 0.22 and will be removed in 0.24.")
+def extract_patches(arr, patch_shape=8, extraction_step=1):
+    """Extracts patches of any n-dimensional array in place using strides.
+
+    Given an n-dimensional array it will return a 2n-dimensional array with
+    the first n dimensions indexing patch position and the last n indexing
+    the patch content. This operation is immediate (O(1)). A reshape
+    performed on the first n dimensions will cause numpy to copy data, leading
+    to a list of extracted patches.
+
+    Read more in the :ref:`User Guide <image_feature_extraction>`.
+
+    Parameters
+    ----------
+    arr : ndarray
+        n-dimensional array of which patches are to be extracted
+
+    patch_shape : integer or tuple of length arr.ndim
+        Indicates the shape of the patches to be extracted. If an
+        integer is given, the shape will be a hypercube of
+        sidelength given by its value.
+
+    extraction_step : integer or tuple of length arr.ndim
+        Indicates step size at which extraction shall be performed.
+        If integer is given, then the step is uniform in all dimensions.
+
+
+    Returns
+    -------
+    patches : strided ndarray
+        2n-dimensional array indexing patches on first n dimensions and
+        containing patches on the last n dimensions. These dimensions
+        are fake, but this way no data is copied. A simple reshape invokes
+        a copying operation to obtain a list of patches:
+        result.reshape([-1] + list(patch_shape))
+    """
+    return _extract_patches(arr, patch_shape=patch_shape,
+                            extraction_step=extraction_step)
 
 
 def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
@@ -322,42 +362,41 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.  If int, random_state is the seed used by
-        the random number generator; If RandomState instance, random_state is
-        the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
     patches : array, shape = (n_patches, patch_height, patch_width) or
-         (n_patches, patch_height, patch_width, n_channels)
-         The collection of patches extracted from the image, where `n_patches`
-         is either `max_patches` or the total number of patches that can be
-         extracted.
+        (n_patches, patch_height, patch_width, n_channels)
+        The collection of patches extracted from the image, where `n_patches`
+        is either `max_patches` or the total number of patches that can be
+        extracted.
 
     Examples
     --------
-
+    >>> from sklearn.datasets import load_sample_image
     >>> from sklearn.feature_extraction import image
-    >>> one_image = np.arange(16).reshape((4, 4))
-    >>> one_image
-    array([[ 0,  1,  2,  3],
-           [ 4,  5,  6,  7],
-           [ 8,  9, 10, 11],
-           [12, 13, 14, 15]])
+    >>> # Use the array data from the first image in this dataset:
+    >>> one_image = load_sample_image("china.jpg")
+    >>> print('Image shape: {}'.format(one_image.shape))
+    Image shape: (427, 640, 3)
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
-    >>> print(patches.shape)
-    (9, 2, 2)
-    >>> patches[0]
-    array([[0, 1],
-           [4, 5]])
-    >>> patches[1]
-    array([[1, 2],
-           [5, 6]])
-    >>> patches[8]
-    array([[10, 11],
-           [14, 15]])
+    >>> print('Patches shape: {}'.format(patches.shape))
+    Patches shape: (272214, 2, 2, 3)
+    >>> # Here are just two of these patches:
+    >>> print(patches[1])
+    [[[174 201 231]
+      [174 201 231]]
+     [[173 200 230]
+      [173 200 230]]]
+    >>> print(patches[800])
+    [[[187 214 243]
+      [188 215 244]]
+     [[187 214 243]
+      [188 215 244]]]
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
@@ -374,9 +413,9 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
 
-    extracted_patches = extract_patches(image,
-                                        patch_shape=(p_h, p_w, n_colors),
-                                        extraction_step=1)
+    extracted_patches = _extract_patches(image,
+                                         patch_shape=(p_h, p_w, n_colors),
+                                         extraction_step=1)
 
     n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
     if max_patches:
@@ -420,7 +459,6 @@ def reconstruct_from_patches_2d(patches, image_size):
     -------
     image : array, shape = image_size
         the reconstructed image
-
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
@@ -456,12 +494,27 @@ class PatchExtractor(BaseEstimator):
         of patches.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines the random number generator used for random sampling when
+        `max_patches` is not None. Use an int to make the randomness
+        deterministic.
+        See :term:`Glossary <random_state>`.
 
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_sample_images
+    >>> from sklearn.feature_extraction import image
+    >>> # Use the array data from the second image in this dataset:
+    >>> X = load_sample_images().images[1]
+    >>> print('Image shape: {}'.format(X.shape))
+    Image shape: (427, 640, 3)
+    >>> pe = image.PatchExtractor(patch_size=(2, 2))
+    >>> pe_fit = pe.fit(X)
+    >>> pe_trans = pe.transform(X)
+    >>> print('Patches shape: {}'.format(pe_trans.shape))
+    Patches shape: (545706, 2, 2)
     """
+
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
@@ -472,6 +525,11 @@ class PatchExtractor(BaseEstimator):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Training data.
         """
         return self
 
@@ -493,7 +551,6 @@ class PatchExtractor(BaseEstimator):
              The collection of patches extracted from the images, where
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
-
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
@@ -517,3 +574,6 @@ class PatchExtractor(BaseEstimator):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, patch_size, self.max_patches, self.random_state)
         return patches
+
+    def _more_tags(self):
+        return {'X_types': ['3darray']}

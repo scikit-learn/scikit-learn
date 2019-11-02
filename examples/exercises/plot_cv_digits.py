@@ -15,9 +15,7 @@ import numpy as np
 from sklearn.model_selection import cross_val_score
 from sklearn import datasets, svm
 
-digits = datasets.load_digits()
-X = digits.data
-y = digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 svc = svm.SVC(kernel='linear')
 C_s = np.logspace(-10, 0, 10)
@@ -32,8 +30,7 @@ for C in C_s:
 
 # Do the plotting
 import matplotlib.pyplot as plt
-plt.figure(1, figsize=(4, 3))
-plt.clf()
+plt.figure()
 plt.semilogx(C_s, scores)
 plt.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 plt.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')

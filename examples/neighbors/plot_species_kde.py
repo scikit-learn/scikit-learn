@@ -7,7 +7,7 @@ density estimate) on geospatial data, using a Ball Tree built upon the
 Haversine distance metric -- i.e. distances over points in latitude/longitude.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.org/basemap>`_
+`basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
 This example does not perform any learning over the data
@@ -42,7 +42,6 @@ References
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_species_distributions
-from sklearn.datasets.species_distributions import construct_grids
 from sklearn.neighbors import KernelDensity
 
 # if basemap is available, we'll use it.
@@ -52,6 +51,34 @@ try:
     basemap = True
 except ImportError:
     basemap = False
+
+
+def construct_grids(batch):
+    """Construct the map grid from the batch object
+
+    Parameters
+    ----------
+    batch : Batch object
+        The object returned by :func:`fetch_species_distributions`
+
+    Returns
+    -------
+    (xgrid, ygrid) : 1-D arrays
+        The grid corresponding to the values in batch.coverages
+    """
+    # x,y coordinates for corner cells
+    xmin = batch.x_left_lower_corner + batch.grid_size
+    xmax = xmin + (batch.Nx * batch.grid_size)
+    ymin = batch.y_left_lower_corner + batch.grid_size
+    ymax = ymin + (batch.Ny * batch.grid_size)
+
+    # x coordinates of the grid cells
+    xgrid = np.arange(xmin, xmax, batch.grid_size)
+    # y coordinates of the grid cells
+    ygrid = np.arange(ymin, ymax, batch.grid_size)
+
+    return (xgrid, ygrid)
+
 
 # Get matrices/arrays of species IDs and locations
 data = fetch_species_distributions()
@@ -87,7 +114,7 @@ for i in range(2):
     kde.fit(Xtrain[ytrain == i])
 
     # evaluate only on the land: -9999 indicates ocean
-    Z = -9999 + np.zeros(land_mask.shape[0])
+    Z = np.full(land_mask.shape[0], -9999, dtype='int')
     Z[land_mask] = np.exp(kde.score_samples(xy))
     Z = Z.reshape(X.shape)
 
@@ -105,7 +132,7 @@ for i in range(2):
     else:
         print(" - plot coastlines from coverage")
         plt.contour(X, Y, land_reference,
-                    levels=[-9999], colors="k",
+                    levels=[-9998], colors="k",
                     linestyles="solid")
         plt.xticks([])
         plt.yticks([])

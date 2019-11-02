@@ -165,12 +165,14 @@ General Concepts
         tree-based models such as random forests and gradient boosting
         models that often work better and faster with integer-coded
         categorical variables.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.
+        :class:`~sklearn.preprocessing.OrdinalEncoder` helps encoding
+        string-valued categorical features as ordinal integers, and
+        :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
+        one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package for tools related to encoding
-        categorical features.
+        `categorical-encoding
+        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        package for tools related to encoding categorical features.
 
     clone
     cloned
@@ -200,7 +202,7 @@ General Concepts
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the the default value of a parameter; or
+        * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -223,8 +225,8 @@ General Concepts
         accessible as the object's ``__doc__`` attribute.
 
         We try to adhere to `PEP257
-        <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
-        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
+        <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
+        conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
     double underscore notation
@@ -286,6 +288,13 @@ General Concepts
         * For determining some aspects of an estimator's expectations or
           support for some feature, we use :term:`estimator tags` instead of
           duck typing.
+
+    early stopping
+        This consists in stopping an iterative optimization method before the
+        convergence of the training loss, to avoid over-fitting. This is
+        generally done by monitoring the generalization score on a validation
+        set. When available, it is activated through the parameter
+        ``early_stopping`` or by setting a positive :term:`n_iter_no_change`.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -433,6 +442,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    impute
+    imputation
+        Most machine learning algorithms require that their inputs have no
+        :term:`missing values`, and will not work if this requirement is
+        violated. Algorithms that attempt to fill in (or impute) missing values
+        are referred to as imputation algorithms.
+
     indexable
         An :term:`array-like`, :term:`sparse matrix`, pandas DataFrame or
         sequence (usually a list).
@@ -445,13 +461,15 @@ General Concepts
         and/or :term:`transform` methods.
 
     joblib
-        A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
+        A Python library (https://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
-        :term:`memory mapping`.
+        :term:`memory mapping`. See :ref:`parallelism` for more
+        information.
 
     label indicator matrix
     multilabel indicator matrix
+    multilabel indicator matrices
         The format used to represent multilabel data, where each row of a 2d
         array or sparse matrix corresponds to a sample, each column
         corresponds to a class, and each element is 1 if the sample is labeled
@@ -483,7 +501,7 @@ General Concepts
         do (e.g. in :class:`impute.SimpleImputer`), NaN is the preferred
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
-        specifying another ``missing_values`` value when imputation or
+        specifying another ``missing_values`` value when :term:`imputation` or
         learning can be performed in integer space.  :term:`Unlabeled data`
         is a special case of missing values in the :term:`target`.
 
@@ -602,7 +620,7 @@ General Concepts
         structures.
 
     pd
-        A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
+        A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
         conventional import statement::
 
             import pandas as pd
@@ -655,7 +673,20 @@ General Concepts
         A venue for publishing Scikit-learn-compatible libraries that are
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
-        See http://scikit-learn-contrib.github.io.
+        See https://scikit-learn-contrib.github.io.
+
+    scikit-learn enhancement proposals
+    SLEP
+    SLEPs
+        Changes to the API principles and changes to dependencies or supported
+        versions happen via a :ref:`SLEP <slep>` and follows the
+        decision-making process outlined in :ref:`governance`.
+        For all votes, a proposal must have been made public and discussed before the
+        vote. Such proposal must be a consolidated document, in the form of a
+        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        issue. A SLEP must be submitted as a pull-request to
+        `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
+        `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
 
     semi-supervised
     semi-supervised learning
@@ -666,6 +697,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
@@ -823,10 +855,10 @@ Class APIs and Estimator Types
     feature extractors
         A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object of :term:`features` for each sample
-        (and thus a 2-dimensional array-like for a set of samples).  In other
-        words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        produces an :term:`array-like` object of :term:`features` for each
+        sample (and thus a 2-dimensional array-like for a set of samples).  In
+        other words, it (lossily) maps a non-rectangular data representation
+        into :term:`rectangular` data.
 
         Feature extractors must implement at least:
 
@@ -937,10 +969,27 @@ such as:
         and do not provide :term:`set_params` or :term:`get_params`.
         Parameter validation may be performed in ``__init__``.
 
+    cross-validation estimator
+        An estimator that has built-in cross-validation capabilities to
+        automatically select the best hyper-parameters (see the :ref:`User
+        Guide <grid_search>`). Some example of cross-validation estimators
+        are :class:`ElasticNetCV <linear_model.ElasticNetCV>` and
+        :class:`LogisticRegressionCV <linear_model.LogisticRegressionCV>`.
+        Cross-validation estimators are named `EstimatorCV` and tend to be
+        roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
+        advantage of using a cross-validation estimator over the canonical
+        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
+        that they can take advantage of warm-starting by reusing precomputed
+        results in the previous steps of the cross-validation process. This
+        generally leads to speed improvements. An exception is the
+        :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
+        perform efficient Leave-One-Out CV.
+
     scorer
         A non-estimator callable object which evaluates an estimator on given
-        test data, returning a number. See :ref:`scoring_parameter`; see also
-        :term:`evaluation metric`.
+        test data, returning a number. Unlike :term:`evaluation metrics`,
+        a greater returned number must correspond with a *better* score.
+        See :ref:`scoring_parameter`.
 
 Further examples:
 
@@ -990,7 +1039,7 @@ Target Types
         :term:`outputs`, each one a finite floating point number, for a
         fixed int ``n_outputs > 1`` in a particular dataset.
 
-        Continous multioutput targets are represented as multiple
+        Continuous multioutput targets are represented as multiple
         :term:`continuous` targets, horizontally stacked into an array
         of shape ``(n_samples, n_outputs)``.
 
@@ -1066,6 +1115,13 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
+
+    multioutput
+    multi-output
+        A target where each sample has multiple classification/regression
+        labels. See :term:`multiclass multioutput` and :term:`continuous
+        multioutput`. We do not currently support modelling mixed
+        classification and regression targets.
 
 .. _glossary_methods:
 
@@ -1194,7 +1250,8 @@ Methods
         repeatedly calling ``partial_fit`` does not clear the model, but
         updates it with respect to the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
-        Each mini-batch must be of consistent shape, etc.
+        Each mini-batch must be of consistent shape, etc. In iterative
+        estimators, ``partial_fit`` often only performs a single iteration.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed
@@ -1215,6 +1272,8 @@ Methods
 
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
+
+        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
 
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
@@ -1356,7 +1415,14 @@ functions or non-estimator constructors.
         ``class_weight='balanced'`` can be used to give all classes
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        ``n_samples / (n_classes * np.bincount(y))``. Class weights will be
+        used differently depending on the algorithm: for linear models (such
+        as linear SVM or logistic regression), the class weights will alter the
+        loss function by weighting the loss of each sample by its class weight.
+        For tree-based algorithms, the class weights will be used for
+        reweighting the splitting criterion.
+        **Note** however that this rebalancing does not take the weight of
+        samples in each class into account.
 
         For multioutput classification, a list of dicts is used to specify
         weights for each output. For example, for four-class multilabel
@@ -1388,7 +1454,7 @@ functions or non-estimator constructors.
         - An iterable yielding train/test splits.
 
         With some exceptions (especially where not using cross validation at
-        all is an option), the default is 3-fold.
+        all is an option), the default is 5-fold.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
@@ -1435,39 +1501,36 @@ functions or non-estimator constructors.
         input into. See :term:`components_` for the special case of affine
         projection.
 
+    ``n_iter_no_change``
+        Number of iterations with no improvement to wait before stopping the
+        iterative procedure. This is also known as a *patience* parameter. It
+        is typically used with :term:`early stopping` to avoid stopping too
+        early.
+
     ``n_jobs``
-        This is used to specify how many concurrent processes/threads should be
-        used for parallelized routines.  Scikit-learn uses one processor for
-        its processing by default, although it also makes use of NumPy, which
-        may be configured to use a threaded numerical processor library (like
-        MKL; see :ref:`FAQ <faq_mkl_threading>`).
+        This parameter is used to specify how many concurrent processes or
+        threads should be used for routines that are parallelized with
+        :term:`joblib`.
 
-        ``n_jobs`` is an int, specifying the maximum number of concurrently
-        running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
-        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+        ``n_jobs`` is an integer, specifying the maximum number of concurrently
+        running workers. If 1 is given, no joblib parallelism is used at all,
+        which is useful for debugging. If set to -1, all CPUs are used. For
+        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used. For example with
+        ``n_jobs=-2``, all CPUs but one are used.
 
-        The use of ``n_jobs``-based parallelism in estimators varies:
+        ``n_jobs`` is ``None`` by default, which means *unset*; it will
+        generally be interpreted as ``n_jobs=1``, unless the current
+        :class:`joblib.Parallel` backend context specifies otherwise.
 
-        * Most often parallelism happens in :term:`fitting <fit>`, but
-          sometimes parallelism happens in prediction (e.g. in random forests).
-        * Some parallelism uses a multi-threading backend by default, some
-          a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
-        * Whether parallel processing is helpful at improving runtime depends
-          on many factors, and it's usually a good idea to experiment rather
-          than assuming that increasing the number of jobs is always a good
-          thing.  *It can be highly detrimental to performance to run multiple
-          copies of some estimators or functions in parallel.*
+        For more details on the use of ``joblib`` and its interactions with
+        scikit-learn, please refer to our :ref:`parallelism notes
+        <parallelism>`.
 
-        Nested uses of ``n_jobs``-based parallelism with the same backend will
-        result in an exception.
-        So ``GridSearchCV(OneVsRestClassifier(SVC(), n_jobs=2), n_jobs=2)``
-        won't work.
-
-        When ``n_jobs`` is not 1, the estimator being parallelized must be
-        picklable.  This means, for instance, that lambdas cannot be used
-        as estimator parameters.
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
 
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a
@@ -1489,7 +1552,7 @@ functions or non-estimator constructors.
             worthwhile checking that your results are stable across a
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
-            <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
@@ -1537,7 +1600,7 @@ functions or non-estimator constructors.
         performance as in :ref:`grid search <grid_search>`), it may be possible
         to reuse aspects of the model learnt from the previous parameter value,
         saving time.  When ``warm_start`` is true, the existing :term:`fitted`
-        model :term:`attributes` an are used to initialise the new model
+        model :term:`attributes` are used to initialise the new model
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some
