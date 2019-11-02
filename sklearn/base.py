@@ -172,7 +172,7 @@ class BaseEstimator:
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -214,8 +214,8 @@ class BaseEstimator:
 
         Returns
         -------
-            self: object
-                Estimator instance.
+        self : object
+            Estimator instance.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)

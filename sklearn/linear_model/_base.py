@@ -211,7 +211,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def predict(self, X):
         """
-        Predict using the linear model
+        Predict using the linear model.
 
         Parameters
         ----------

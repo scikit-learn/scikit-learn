@@ -1623,8 +1623,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Scoring vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -1651,7 +1651,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     def predict_log_proba(self, X):
         """
-        Log of probability estimates.
+        Predict logarithm of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -1659,8 +1659,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Scoring vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
