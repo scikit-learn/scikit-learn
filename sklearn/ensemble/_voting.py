@@ -185,7 +185,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
 
     def fit(self, X, y, sample_weight=None):
-        """ Fit the estimators.
+        """Fit the estimators.
 
         Parameters
         ----------
@@ -221,7 +221,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
-        """ Predict class labels for X.
+        """Predict class labels for X.
 
         Parameters
         ----------
