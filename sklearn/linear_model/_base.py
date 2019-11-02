@@ -340,13 +340,19 @@ class SparseCoefMixin:
         return self
 
     def sparsify(self):
-        """Convert coefficient matrix to sparse format.
+        """
+        Convert coefficient matrix to sparse format.
 
         Converts the ``coef_`` member to a scipy.sparse matrix, which for
         L1-regularized models can be much more memory- and storage-efficient
         than the usual numpy.ndarray representation.
 
         The ``intercept_`` member is not converted.
+
+        Returns
+        -------
+        self
+            Fitted estimator.
 
         Notes
         -----
@@ -358,10 +364,6 @@ class SparseCoefMixin:
 
         After calling this method, further fitting with the partial_fit
         method (if any) will not work until you call densify.
-
-        Returns
-        -------
-        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, msg=msg)
