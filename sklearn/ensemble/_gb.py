@@ -2311,14 +2311,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     Parameters
     ----------
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
-        loss function to be optimized. 'ls' refers to least squares
+        Loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
@@ -2333,7 +2333,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    criterion : string, optional (default="friedman_mse")
+    criterion : str, optional (default="friedman_mse")
         The function to measure the quality of a split. Supported criteria
         are "friedman_mse" for the mean squared error with improvement
         score by Friedman, "mse" for mean squared error, and "mae" for
@@ -2374,8 +2374,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_depth : integer, optional (default=3)
-        maximum depth of the individual regression estimators. The maximum
+    max_depth : int, optional (default=3)
+        Maximum depth of the individual regression estimators. The maximum
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
@@ -2421,7 +2421,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, str or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -2462,7 +2462,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
-        .. deprecated :: 0.22
+        .. deprecated:: 0.22
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -2524,6 +2524,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : array of DecisionTreeRegressor, shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    See Also
+    --------
+    sklearn.ensemble.HistGradientBoostingRegressor : Histogram-based
+        Gradient Boosting Classification Tree.
+    sklearn.tree.DecisionTreeRegressor : A decision tree regressor.
+    sklearn.tree.RandomForestRegressor : A random forest regressor.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -2532,11 +2539,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    See also
-    --------
-    sklearn.ensemble.HistGradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
@@ -2547,6 +2549,22 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
+    ...     max_depth=1, random_state=0, loss='ls')
+    GradientBoostingRegressor(alpha=0.9, ccp_alpha=0.0,
+                          criterion='friedman_mse',
+                          init=None, learning_rate=0.1, loss='ls', max_depth=1,
+                          max_features=None, max_leaf_nodes=None,
+                          min_impurity_decrease=0.0, min_impurity_split=None,
+                          min_samples_leaf=1, min_samples_split=2,
+                          min_weight_fraction_leaf=0.0, n_estimators=100,
+                          n_iter_no_change=None, presort='deprecated',
+                          random_state=0, subsample=1.0, tol=0.0001,
+                          validation_fraction=0.1, verbose=0, warm_start=False)
     """
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
