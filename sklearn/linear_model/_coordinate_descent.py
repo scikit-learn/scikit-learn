@@ -957,13 +957,13 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     alphas : array-like, optional
         Array of float that is used for cross-validation. If not
-        provided, computed using 'path'
+        provided, computed using 'path'.
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
         l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
         L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
-        < l1_ratio < 1``, the penalty is a combination of L1 and L2
+        < l1_ratio < 1``, the penalty is a combination of L1 and L2.
 
     X_order : {'F', 'C', or None}, optional
         The order of the arrays expected by the path function to
