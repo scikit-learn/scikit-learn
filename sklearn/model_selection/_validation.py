@@ -249,17 +249,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            return_test_indices=return_test_indices,
-            return_predictions=return_predictions, error_score=error_score)
+            return_test_indices=return_test_indices, error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
         train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
-    if return_test_indices or return_predictions:
+    if return_test_indices:
         test_indices = zipped_scores.pop()
-    if return_estimator or return_predictions:
+    if return_estimator:
         fitted_estimators = zipped_scores.pop()
     test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
@@ -272,14 +271,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         ret['test_indices'] = test_indices
     if return_estimator:
         ret['estimator'] = fitted_estimators
-    if return_predictions:
-        predictions = [None] * len(y)
-        for split_test, split_estimator in zip(test_indices, fitted_estimators):
-            X_test = [X[idx] for idx in split_test]
-            y_preds = split_estimator.predict(X_test)
-            for idx, pred in zip(split_test, y_preds):
-                predictions[idx] = pred
-        ret['predictions'] = predictions
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
@@ -425,8 +416,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   return_test_indices=False, return_predictions=False,
-                   error_score=np.nan):
+                   return_test_indices=False, error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -609,9 +599,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
-    if return_estimator or return_predictions:
+    if return_estimator:
         ret.append(estimator)
-    if return_test_indices or return_predictions:
+    if return_test_indices:
         ret.append(test)
     return ret
 
