@@ -126,7 +126,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.max_depth
 
     def get_n_leaves(self):
-        """Returns the number of leaves of the decision tree.
+        """Return the number of leaves of the decision tree.
+
+        Returns
+        -------
+        self.tree_.n_leaves : int
+            Number of leaves.
         """
         check_is_fitted(self)
         return self.tree_.n_leaves
