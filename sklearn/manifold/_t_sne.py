@@ -893,7 +893,7 @@ class TSNE(BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
         embedding = self._fit(X)
@@ -918,7 +918,7 @@ class TSNE(BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
         self.fit_transform(X)
