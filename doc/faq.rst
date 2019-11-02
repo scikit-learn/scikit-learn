@@ -385,3 +385,7 @@ efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
+
+Do you plan to implement transform() for target y in a pipeline? Currently transform() only works for features X in a pipeline.
+----------------------------------------------------------------------------
+This a long-standing discussion about not being able to transform y in a pipeline, follow on github issue #4143. Meanwhile check out TargetTransformer, [pipegraph](pipegraph), [imbalanced-learn](https://github.com/scikit-learn-contrib/imbalanced-learn)
