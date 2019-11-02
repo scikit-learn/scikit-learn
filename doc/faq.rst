@@ -388,4 +388,4 @@ data structures.
 
 Do you plan to implement transform for target y in a pipeline? Currently transform only works for features X in a pipeline.
 ----------------------------------------------------------------------------
-This a long-standing discussion about not being able to transform y in a pipeline, follow on github issue #4143. Meanwhile check out TargetTransformer, pipegraph, `imbalanced-learn`<https://github.com/scikit-learn-contrib/imbalanced-learn>
+This a long-standing discussion about not being able to transform y in a pipeline, follow on github issue #4143. Meanwhile check out TargetTransformer, pipegraph, `imbalanced-learn<https://github.com/scikit-learn-contrib/imbalanced-learn>`
