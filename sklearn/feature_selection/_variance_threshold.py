@@ -17,6 +17,8 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <variance_threshold>`.
 
+    .. versionadded:: 0.15
+
     Parameters
     ----------
     threshold : float, optional
