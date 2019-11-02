@@ -41,14 +41,14 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
     @property
     def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
+        """Get the weights of not `None` estimators."""
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators, self.weights)
                 if est[1] not in (None, 'drop')]
 
     def _predict(self, X):
-        """Collect results from clf.predict calls. """
+        """Collect results from clf.predict calls."""
         return np.asarray([est.predict(X) for est in self.estimators_]).T
 
     @abstractmethod
