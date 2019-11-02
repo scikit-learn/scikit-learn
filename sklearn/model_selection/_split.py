@@ -455,6 +455,8 @@ class GroupKFold(_BaseKFold):
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     n_splits : int, default=5
@@ -573,6 +575,8 @@ class StratifiedKFold(_BaseKFold):
     samples for each class.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -846,6 +850,8 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.18
+
     Examples
     --------
     >>> import numpy as np
@@ -960,6 +966,8 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.18
+    
     Parameters
     ----------
     n_groups : int
