@@ -349,7 +349,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
 
         y : None
             Ignored.
@@ -686,7 +687,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
 
         y : None
             Ignored.
@@ -955,7 +957,8 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape [n_samples, n_features]
-            The data used to compute the mean and standard deviation used for later scaling along the features axis.
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
 
         y : None
             Ignored.
