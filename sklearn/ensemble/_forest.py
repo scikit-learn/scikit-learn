@@ -1,4 +1,5 @@
-"""Forest of trees-based ensemble methods
+"""
+Forest of trees-based ensemble methods.
 
 Those methods include random forests and extremely randomized trees.
 
@@ -29,7 +30,6 @@ The module structure is the following:
   sub-estimator implementations.
 
 Single and multi-output problems are both handled.
-
 """
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
@@ -74,7 +74,8 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _get_n_samples_bootstrap(n_samples, max_samples):
-    """Get the number of samples in a bootstrap sample.
+    """
+    Get the number of samples in a bootstrap sample.
 
     Parameters
     ----------
@@ -112,7 +113,8 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
 
 
 def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
-    """Private function used to _parallel_build_trees function."""
+    """
+    Private function used to _parallel_build_trees function."""
 
     random_instance = check_random_state(random_state)
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
@@ -121,7 +123,8 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
 
 
 def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
-    """Private function used to forest._set_oob_score function."""
+    """
+    Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples,
                                               n_samples_bootstrap)
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
@@ -135,7 +138,8 @@ def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None,
                           n_samples_bootstrap=None):
-    """Private function used to fit a single tree in parallel."""
+    """
+    Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
@@ -166,7 +170,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
 
 class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
-    """Base class for forests of trees.
+    """
+    Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -200,7 +205,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.max_samples = max_samples
 
     def apply(self, X):
-        """Apply trees in the forest to X, return leaf indices.
+        """
+        Apply trees in the forest to X, return leaf indices.
 
         Parameters
         ----------
@@ -224,7 +230,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return np.array(results).T
 
     def decision_path(self, X):
-        """Return the decision path in the forest
+        """
+        Return the decision path in the forest.
 
         .. versionadded:: 0.18
 
@@ -260,7 +267,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
 
     def fit(self, X, y, sample_weight=None):
-        """Build a forest of trees from the training set (X, y).
+        """
+        Build a forest of trees from the training set (X, y).
 
         Parameters
         ----------
@@ -390,21 +398,24 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def _set_oob_score(self, X, y):
-        """Calculate out of bag predictions and score."""
+        """
+        Calculate out of bag predictions and score."""
 
     def _validate_y_class_weight(self, y):
         # Default implementation
         return y, None
 
     def _validate_X_predict(self, X):
-        """Validate X whenever one tries to predict, apply, predict_proba"""
+        """
+        Validate X whenever one tries to predict, apply, predict_proba."""
         check_is_fitted(self)
 
         return self.estimators_[0]._validate_X_predict(X, check_input=True)
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
+        """
+        Return the feature importances (the higher, the more important the
            feature).
 
         Returns
@@ -430,7 +441,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
 
 
 def _accumulate_prediction(predict, X, out, lock):
-    """This is a utility function for joblib's Parallel.
+    """
+    This is a utility function for joblib's Parallel.
 
     It can't go locally in ForestClassifier or ForestRegressor, because joblib
     complains that it cannot pickle it when placed there.
@@ -445,7 +457,8 @@ def _accumulate_prediction(predict, X, out, lock):
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
-    """Base class for forest of trees-based classifiers.
+    """
+    Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -478,7 +491,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples)
 
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag score"""
+        """
+        Compute out-of-bag score."""
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_classes_ = self.n_classes_
@@ -573,7 +587,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         return y, expanded_class_weight
 
     def predict(self, X):
-        """Predict class for X.
+        """
+        Predict class for X.
 
         The predicted class of an input sample is a vote by the trees in
         the forest, weighted by their probability estimates. That is,
@@ -612,7 +627,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             return predictions
 
     def predict_proba(self, X):
-        """Predict class probabilities for X.
+        """
+        Predict class probabilities for X.
 
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
@@ -659,7 +675,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             return all_proba
 
     def predict_log_proba(self, X):
-        """Predict class log-probabilities for X.
+        """
+        Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
         the log of the mean predicted class probabilities of the trees in the
@@ -692,7 +709,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
-    """Base class for forest of trees-based regressors.
+    """
+    Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -723,7 +741,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             max_samples=max_samples)
 
     def predict(self, X):
-        """Predict regression target for X.
+        """
+        Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
         mean predicted regression targets of the trees in the forest.
@@ -765,7 +784,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         return y_hat
 
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag scores"""
+        """
+        Compute out-of-bag scores."""
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]
@@ -812,7 +832,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
 
 class RandomForestClassifier(ForestClassifier):
-    """A random forest classifier.
+    """
+    A random forest classifier.
 
     A random forest is a meta estimator that fits a number of decision tree
     classifiers on various sub-samples of the dataset and uses averaging to
@@ -1070,7 +1091,7 @@ class RandomForestClassifier(ForestClassifier):
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    See also
+    See Also
     --------
     DecisionTreeClassifier, ExtraTreesClassifier
     """
@@ -1124,7 +1145,8 @@ class RandomForestClassifier(ForestClassifier):
 
 
 class RandomForestRegressor(ForestRegressor):
-    """A random forest regressor.
+    """
+    A random forest regressor.
 
     A random forest is a meta estimator that fits a number of classifying
     decision trees on various sub-samples of the dataset and uses averaging
@@ -1354,7 +1376,7 @@ class RandomForestRegressor(ForestRegressor):
     .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
-    See also
+    See Also
     --------
     DecisionTreeRegressor, ExtraTreesRegressor
     """
@@ -1406,7 +1428,8 @@ class RandomForestRegressor(ForestRegressor):
 
 
 class ExtraTreesClassifier(ForestClassifier):
-    """An extra-trees classifier.
+    """
+    An extra-trees classifier.
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
@@ -1648,7 +1671,7 @@ class ExtraTreesClassifier(ForestClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
-    See also
+    See Also
     --------
     sklearn.tree.ExtraTreeClassifier : Base classifier for this ensemble.
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
@@ -1704,7 +1727,8 @@ class ExtraTreesClassifier(ForestClassifier):
 
 
 class ExtraTreesRegressor(ForestRegressor):
-    """An extra-trees regressor.
+    """
+    An extra-trees regressor.
 
     This class implements a meta estimator that fits a number of
     randomized decision trees (a.k.a. extra-trees) on various sub-samples
@@ -1903,7 +1927,7 @@ class ExtraTreesRegressor(ForestRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
 
-    See also
+    See Also
     --------
     sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
     RandomForestRegressor: Ensemble regressor using trees with optimal splits.
@@ -1956,7 +1980,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
 
 class RandomTreesEmbedding(BaseForest):
-    """An ensemble of totally random trees.
+    """
+    An ensemble of totally random trees.
 
     An unsupervised transformation of a dataset to a high-dimensional
     sparse representation. A datapoint is coded according to which leaf of
@@ -2156,7 +2181,8 @@ class RandomTreesEmbedding(BaseForest):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
-        """Fit estimator.
+        """
+        Fit estimator.
 
         Parameters
         ----------
@@ -2181,7 +2207,8 @@ class RandomTreesEmbedding(BaseForest):
         return self
 
     def fit_transform(self, X, y=None, sample_weight=None):
-        """Fit estimator and transform dataset.
+        """
+        Fit estimator and transform dataset.
 
         Parameters
         ----------
@@ -2215,7 +2242,8 @@ class RandomTreesEmbedding(BaseForest):
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):
-        """Transform dataset.
+        """
+        Transform dataset.
 
         Parameters
         ----------
