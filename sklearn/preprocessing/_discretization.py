@@ -54,8 +54,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
 
-    dtype : {'float32', 'float64'}, (default='float64')
-        The dtype of transformed array.
+    dtype : {np.float32, np.float64}, (default=np.float64)
+        The dtype of the transformed array.
 
     Attributes
     ----------
@@ -122,7 +122,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                  n_bins=5,
                  encode='onehot',
                  strategy='quantile',
-                 dtype='float64'):
+                 dtype=np.float64):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
@@ -157,7 +157,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             raise ValueError("Valid options for 'strategy' are {}. "
                              "Got strategy={!r} instead."
                              .format(valid_strategy, self.strategy))
-        valid_dtype = ('float32', 'float64')
+        valid_dtype = (np.float32, np.float64)
         if self.dtype not in valid_dtype:
             raise ValueError("Valid options for 'dtype' are {}. "
                              "Got dtype={!r} instead."
@@ -216,7 +216,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == 'onehot')
+                sparse=self.encode == 'onehot',
+                dtype=self.dtype)
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
             self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=int))
@@ -294,7 +295,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if self.encode == 'ordinal':
             return Xt.astype(self.dtype)
 
-        return self._encoder.transform(Xt).astype(self.dtype)
+        return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
         """
