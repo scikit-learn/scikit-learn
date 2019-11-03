@@ -1688,6 +1688,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     pred_sum = tp_sum + MCM[:, 0, 1]
     neg_sum = tn_sum+fp_sum
     pos_sum = fn_sum+tp_sum
+
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         fp_sum = np.array([fp_sum.sum()])
@@ -1696,6 +1697,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
         neg_sum = np.array([neg_sum.sum()])
         pos_sum = np.array([pos_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
+
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
     tpr = _prf_divide(tp_sum, pos_sum, 'tpr',
