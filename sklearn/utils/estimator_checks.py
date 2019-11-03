@@ -13,6 +13,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 import joblib
+import pytest
 
 from . import IS_PYPY
 from .. import config_context
@@ -1487,6 +1488,9 @@ def check_estimators_pickle(name, estimator_orig):
     if estimator.__module__.startswith('sklearn.'):
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
+    assert len(pickled_estimator) == pytest.approx(
+        sys.getsizeof(estimator), rel=0.05
+    )
 
     result = dict()
     for method in check_methods:
