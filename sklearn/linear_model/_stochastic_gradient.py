@@ -973,6 +973,18 @@ class SGDClassifier(BaseSGDClassifier):
         the classifier with
         :class:`sklearn.calibration.CalibratedClassifierCV` instead.
 
+        Side note: ``predict_proba`` is a property. Technically, it
+        accepts no arguments except self, and it returns a method,
+        ``_predict_proba``. However, since it returns a callable
+        method, when it's invoked in code, it appears
+        like it's being called with an argument (of input data) X, and
+        returning probabilities T.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data for prediction.
+
         Returns
         -------
         array, shape (n_samples, n_classes)
@@ -1045,6 +1057,18 @@ class SGDClassifier(BaseSGDClassifier):
         and ones, so taking the logarithm is not possible.
 
         See ``predict_proba`` for details.
+
+        Side note: ``predict_log_proba`` is a property. Technically, it
+        accepts no arguments except self, and returns a method,
+        ``_predict_log_proba``. However, since it returns a callable
+        method, when it's invoked in code, it appears
+        like it's being called with an argument (of input data) X, and
+        returning probabilities T.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Input data for prediction.
 
         Returns
         -------
