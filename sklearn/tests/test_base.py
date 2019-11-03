@@ -1,6 +1,8 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import sys
+
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -13,7 +15,9 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
+from sklearn.datasets import make_classification
 from sklearn.svm import SVC
+from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
@@ -526,3 +530,15 @@ def test_warns_on_get_params_non_attribute():
         params = est.get_params()
 
     assert params['param'] is None
+
+
+def test_sizeof():
+    est = LinearRegression()
+    init = sys.getsizeof(est)
+    assert init == 120
+    est.fit(*make_classification())
+    usage = sum(
+        getattr(est, name).nbytes
+        for name in ["coef_", "intercept_", "singular_"]
+    ) + sys.getsizeof(est.rank_)
+    assert sys.getsizeof(est) == init + usage

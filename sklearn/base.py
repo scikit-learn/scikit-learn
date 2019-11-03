@@ -9,6 +9,7 @@ from collections import defaultdict
 import platform
 import inspect
 import re
+import sys
 
 import numpy as np
 
@@ -316,6 +317,10 @@ class BaseEstimator:
             super().__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
+
+    def __sizeof__(self):
+        return sum(x.nbytes if hasattr(x, 'nbytes') else sys.getsizeof(x)
+                   for x in self.__dict__.values())
 
     def _more_tags(self):
         return _DEFAULT_TAGS
