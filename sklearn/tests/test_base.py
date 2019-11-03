@@ -535,10 +535,16 @@ def test_warns_on_get_params_non_attribute():
 def test_sizeof():
     est = LinearRegression()
     init = sys.getsizeof(est)
-    assert init == 120
-    est.fit(*make_classification())
+    assert init <= 200
+
+    est.fit(*make_classification(n_features=1000))
     usage = sum(
         getattr(est, name).nbytes
-        for name in ["coef_", "intercept_", "singular_"]
+        for name in ["singular_", "intercept_", "coef_"]
     ) + sys.getsizeof(est.rank_)
-    assert sys.getsizeof(est) == init + usage
+
+    assert init + usage <= sys.getsizeof(est)  # lower bound: number of bytes
+
+    # Does it take __sizeof__ byte to encode approximately?
+    msg = pickle.dumps(est)
+    assert len(msg) * 0.95 <= sys.getsizeof(est) <= len(msg) * 1.05
