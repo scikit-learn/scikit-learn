@@ -1535,8 +1535,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=None,
-                           warn_for=('tpr', 'fpr', 'tnr', 'fnr'), sample_weight=None,zero_division="warn"):
+def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
+                           average=None, warn_for=('tpr', 'fpr',
+                                                   'tnr', 'fnr'),
+                           sample_weight=None, zero_division="warn"):
     """Compute TPR, FPR, TNR, FNR for each class
 
     The TPR is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
@@ -1649,18 +1651,22 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
+     0.6666666666666666)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='micro')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
+     0.6666666666666666)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='weighted')
-    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666,
+    0.6666666666666666)
 
     It is possible to compute per-label fpr, fnr, tnr, tpr and
     supports instead of averaging:
 
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0., 0., 1.]), array([0.25, 0.5 , 0.25]), array([0.75, 0.5 , 0.75]), array([1., 1., 0.]))
+    (array([0., 0., 1.]), array([0.25, 0.5 , 0.25]),
+    array([0.75, 0.5 , 0.75]), array([1., 1., 0.]))
 
     Notes
     -----
@@ -1672,8 +1678,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     """
     _check_zero_division(zero_division)
 
-    labels = _check_set_wise_labels(y_true, y_pred, average, labels,
-                                    pos_label)
+    labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pred_sum, pos_sum, neg_sum ###
     samplewise = average == 'samples'
@@ -1699,14 +1704,14 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-    tpr = _prf_divide(tp_sum, pos_sum, 'tpr',
-                            'positives', average, warn_for, zero_division)
-    fpr = _prf_divide(fp_sum, neg_sum, 'fpr',
-                            'negatives', average, warn_for, zero_division)
-    tnr = _prf_divide(tn_sum, neg_sum, 'tnr',
-                            'negatives', average, warn_for, zero_division)
-    fnr = _prf_divide(fn_sum, pos_sum, 'fnr',
-                            'positives', average, warn_for, zero_division)
+    tpr = _prf_divide(tp_sum, pos_sum, 'tpr', 'positives',
+                      average, warn_for, zero_division)
+    fpr = _prf_divide(fp_sum, neg_sum, 'fpr', 'negatives',
+                      average, warn_for, zero_division)
+    tnr = _prf_divide(tn_sum, neg_sum, 'tnr', 'negatives',
+                      average, warn_for, zero_division)
+    fnr = _prf_divide(fn_sum, pos_sum, 'fnr', 'positives',
+                      average, warn_for, zero_division)
     # Average the results
     if average == 'weighted':
         weights = pos_sum
@@ -2371,7 +2376,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes)
+    or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
