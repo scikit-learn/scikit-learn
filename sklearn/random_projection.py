@@ -422,7 +422,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Read more in the :ref:`User Guide <gaussian_random_matrix>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -524,7 +524,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Read more in the :ref:`User Guide <sparse_random_matrix>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------

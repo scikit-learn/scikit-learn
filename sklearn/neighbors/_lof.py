@@ -31,7 +31,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     its neighbors, one can identify samples that have a substantially lower
     density than their neighbors. These are considered outliers.
 
-  ..versionadded:: 0.19
+    .. versionadded:: 0.19
 
     Parameters
     ----------

@@ -29,7 +29,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -391,7 +391,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------

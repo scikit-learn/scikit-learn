@@ -43,7 +43,7 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <feature_hashing>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------

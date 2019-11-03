@@ -672,7 +672,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
-  .. versionadded:: 0.21
+    .. versionadded:: 0.21
 
     Parameters
     ----------
@@ -852,7 +852,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
 
-  ..versionadded:: 0.21
+    .. versionadded:: 0.21
 
     Parameters
     ----------

@@ -760,7 +760,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <feature_union>`.
 
-..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------

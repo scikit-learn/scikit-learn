@@ -294,7 +294,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-  .. versionadded:: 0.14
+    .. versionadded:: 0.14
 
     Parameters
     ----------
@@ -860,7 +860,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     Read more in the :ref:`User Guide <adaboost>`.
 
-  ..versionadded:: 0.14
+    .. versionadded:: 0.14
 
     Parameters
     ----------

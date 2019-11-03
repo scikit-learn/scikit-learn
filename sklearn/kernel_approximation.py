@@ -437,7 +437,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
 
-  ..versionadded:: 0.13
+    .. versionadded:: 0.13
 
     Parameters
     ----------

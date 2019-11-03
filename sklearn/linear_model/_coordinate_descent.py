@@ -1934,7 +1934,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_elastic_net>`.
 
-  ..versionadded:: 0.15
+    .. versionadded:: 0.15
 
     Parameters
     ----------
@@ -2122,7 +2122,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
 
     Read more in the :ref:`User Guide <multi_task_lasso>`.
 
-  ..versionadded:: 0.15
+    .. versionadded:: 0.15
 
     Parameters
     ----------
