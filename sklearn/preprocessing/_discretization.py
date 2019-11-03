@@ -292,7 +292,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
 
         if self.encode == 'ordinal':
-            return Xt
+            return Xt.astype(self.dtype)
 
         return self._encoder.transform(Xt).astype(self.dtype)
 
