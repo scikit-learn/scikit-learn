@@ -651,7 +651,7 @@ def test_ordinal_encoder_deprecated_categories_auto_with_string_labels(
 
     enc = OrdinalEncoder()
     for X in X_possibilities:
-        with pytest.warns(DeprecationWarning, match="From version 0.24"):
+        with pytest.warns(FutureWarning, match="From version 0.24"):
             Xt = enc.fit_transform(X)
 
         # checking the output is correct when `categories==sort`

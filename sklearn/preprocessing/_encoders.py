@@ -71,13 +71,30 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error'):
+    def _fit(self, X, handle_unknown='error', ordinal=False):
         X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories not in ['auto', 'sort']:
             if len(self.categories) != n_features:
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
+
+        if ordinal:
+            contain_str = any([isinstance(Xi[0], str)
+                              for Xi in X_list])
+
+            if self.categories == 'auto' and contain_str:
+                warnings.warn(
+                    "From version 0.24, OrdinalEncoder's categories='auto' "
+                    "setting will not work with string-valued features. "
+                    "categories='sort' or an explicit "
+                    "category order will be required.",
+                    FutureWarning, stacklevel=1)
+
+        elif type(self.categories) == str and self.categories != 'auto':
+            raise ValueError("The valid values for `categories` for "
+                             "OneHotEncoder are "
+                             "'auto' or a list of lists/arrays of values.")
 
         self.categories_ = []
 
@@ -609,18 +626,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         """
 
-        checkd_X = check_array(X, dtype=None)
-        contain_str = checkd_X.dtype == object or np.issubdtype(
-            checkd_X.dtype, np.str_)
-        if self.categories == 'auto' and contain_str:
-            warnings.warn(
-                "From version 0.24, OrdinalEncoder's categories='auto' "
-                "setting will not work with string-valued features. "
-                "categories='sort' or an explicit "
-                "category order will be required.",
-                DeprecationWarning, stacklevel=1)
-
-        self._fit(X)
+        self._fit(X, ordinal=True)
 
         return self
 
