@@ -970,14 +970,13 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 2 0 1 0 1 1 0 1]
      [1 0 0 1 1 0 1 1 1]
      [0 1 1 1 0 0 1 0 1]]
-
     >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2,2))
     >>> X2 = vectorizer2.fit_transform(corpus)
     >>> print(vectorizer2.get_feature_names())
-    ['and this', 'document is', 'first document', 'is the', 'is this', 
+    ['and this', 'document is', 'first document', 'is the', 'is this',
     'second document', 'the first', 'the second', 'the third', 'third one',
      'this document', 'this is', 'this the']
-     >>> print(X2.toarray()) 
+     >>> print(X2.toarray())
      [[0 0 1 1 0 0 1 0 0 0 0 1 0]
      [0 1 0 1 0 1 0 1 0 0 1 0 0]
      [1 0 0 1 0 0 0 0 1 1 0 1 0]
