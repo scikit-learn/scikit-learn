@@ -1688,7 +1688,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     pred_sum = tp_sum + MCM[:, 0, 1]
     neg_sum = tn_sum+fp_sum
     pos_sum = fn_sum+tp_sum
-    print('before micro',tn_sum, fp_sum, fn_sum, tp_sum, pred_sum, neg_sum, pos_sum)
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         fp_sum = np.array([fp_sum.sum()])
@@ -1697,10 +1696,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
         neg_sum = np.array([neg_sum.sum()])
         pos_sum = np.array([pos_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
-    print('after micro',tn_sum, fp_sum, fn_sum, tp_sum, pred_sum, neg_sum, pos_sum)
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
-    #print('before divide',tpr,fpr,tnr,fnr)
     tpr = _prf_divide(tp_sum, pos_sum, 'tpr',
                             'positives', average, warn_for, zero_division)
     fpr = _prf_divide(fp_sum, neg_sum, 'fpr',
@@ -1709,7 +1706,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
                             'negatives', average, warn_for, zero_division)
     fnr = _prf_divide(fn_sum, pos_sum, 'fnr',
                             'positives', average, warn_for, zero_division)
-    print('after divide',tpr,fpr,tnr,fnr)
     # Average the results
     if average == 'weighted':
         weights = pos_sum
@@ -1727,14 +1723,12 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
         weights = sample_weight
     else:
         weights = None
-    print('before avg', tpr, fpr, tnr, fnr,weights)
     if average is not None:
         assert average != 'binary' or len(fpr) == 1
         fpr = np.average(fpr, weights=weights)
         tnr = np.average(tnr, weights=weights)
         fnr = np.average(fnr, weights=weights)
         tpr = np.average(tpr, weights=weights)
-    print('after avg', tpr, fpr, tnr, fnr)
     return tpr, fpr, tnr, fnr
 
 
