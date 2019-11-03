@@ -1685,7 +1685,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
                                       labels=labels, samplewise=samplewise)
-
     tn_sum = MCM[:, 0, 0]
     fp_sum = MCM[:, 0, 1]
     fn_sum = MCM[:, 1, 0]
