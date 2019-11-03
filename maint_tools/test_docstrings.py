@@ -38,7 +38,13 @@ def get_all_methods():
         if name.startswith("_"):
             # skip private classes
             continue
-        methods = [el for el in dir(estimator) if not el.startswith("_")]
+        methods = []
+        for name in dir(estimator):
+            if name.startswith("_"):
+                continue
+            method_obj = getattr(estimator, name)
+            if hasattr(method_obj, '__call__') or name == "predict_proba":
+                methods.append(name)
         methods.append(None)
 
         for method in sorted(methods, key=lambda x: str(x)):
@@ -102,7 +108,15 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
             raise NotImplementedError
 
     if estimator is not None:
-        obj_signature = signature(getattr(estimator, method))
+        obj = getattr(estimator, method)
+        try:
+            obj_signature = signature(obj)
+        except TypeError:
+            # In particular we can't parse the signature
+            # for properties that are still callable such as
+            # predict_proba
+            obj_signature = "Parsing of the method signature failed."
+
         obj_name = estimator.__name__ + "." + method
     else:
         obj_signature = ""
@@ -110,7 +124,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
 
     msg = "\n\n" + "\n\n".join(
         [
-            res["file"],
+            str(res["file"]),
             obj_name + str(obj_signature),
             res["docstring"],
             "# Errors",
