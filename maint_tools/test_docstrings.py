@@ -35,7 +35,7 @@ DOCSTRING_WHITELIST = [
     "SGDClassifier.get_params",
     "SGDClassifier.fit",
     "SGDClassifier.partial_fit",
-    "SGDClassifier.predict",
+    "SGDClassifier.predict$",  # $ to avoid match w/ predict_proba (regex)
     "SGDClassifier.score",
     "SGDClassifier.sparsify",
     "SGDClassifier.densify",
