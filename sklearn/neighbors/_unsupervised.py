@@ -65,11 +65,11 @@ class NearestNeighbors(
 
     See Also
     --------
-    KNeighborsClassifier : Classifier implementing the k-nearest neighbors vote.
+    KNeighborsClassifier : Classifier based on the k-nearest neighbors vote.
     RadiusNeighborsClassifier : Classifier implementing a vote among neighbors
         within a given radius.
-    KNeighborsRegressor : Regression based on k-nearest neighbors.
-    RadiusNeighborsRegressor : Regression based on neighbors
+    KNeighborsRegressor : Regressor based on k-nearest neighbors.
+    RadiusNeighborsRegressor : Regressor based on neighbors
         within a fixed radius.
     BallTree : BallTree for fast generalized N-point problems.
 
