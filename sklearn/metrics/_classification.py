@@ -1649,19 +1649,18 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1, average=Non
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
-    (0.33333333333333331, 0.0, 0.0, 0.66666666666666663)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='micro')
-    (0.33333333333333331, 0.0, 0.0, 0.66666666666666663)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='weighted')
-    (0.22..., 0.33..., 0.26..., None)
+    (0.3333333333333333, 0.3333333333333333, 0.6666666666666666, 0.6666666666666666)
 
     It is possible to compute per-label fpr, fnr, tnr, tpr and
     supports instead of averaging:
 
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
-    (array([0, 0, 1]), array([0, 0, 0]),
-     array([0, 0, 0]), array([1, 1, 0]))
+    (array([0., 0., 1.]), array([0.25, 0.5 , 0.25]), array([0.75, 0.5 , 0.75]), array([1., 1., 0.]))
 
     Notes
     -----
