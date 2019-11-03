@@ -15,11 +15,20 @@ def fetch(*args, **kwargs):
     return fetch_california_housing(*args, download_if_missing=False, **kwargs)
 
 
-def test_fetch():
+def _is_california_housing_dataset_not_available():
     try:
-        data = fetch()
+        fetch_california_housing(download_if_missing=False)
+        return False
     except IOError:
-        raise SkipTest("California housing dataset can not be loaded.")
+        return True
+
+
+@pytest.mark.skipif(
+    _is_california_housing_dataset_not_available(),
+    reason='Download California Housing dataset to run this test'
+)
+def test_fetch():
+    data = fetch()
     assert((20640, 8) == data.data.shape)
     assert((20640, ) == data.target.shape)
 
@@ -28,6 +37,10 @@ def test_fetch():
     check_return_X_y(data, fetch_func)
 
 
+@pytest.mark.skipif(
+    _is_california_housing_dataset_not_available(),
+    reason='Download California Housing dataset to run this test'
+)
 def test_fetch_asframe():
     pd = pytest.importorskip('pandas')
     bunch = fetch(as_frame=True)
