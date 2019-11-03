@@ -205,9 +205,9 @@ Changelog
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
+  classifier or regressor.  :pr:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
+  :user:`Jon Cusick <jcusick13>`..
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -308,6 +308,10 @@ Changelog
   removes accents from strings that are in NFKD normalized form. :pr:`15100` by
   :user:`Daniel Grady <DGrady>`.
 
+- |Fix| Fixed a bug that caused :class:`feature_extraction.DictVectorizer` to raise
+  an `OverflowError` during the `transform` operation when producing a `scipy.sparse`
+  matrix on large input data. :pr:`15463` by :user:`Norvan Sahiner <norvan>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -364,6 +368,10 @@ Changelog
   method for :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
+
+- |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
+  and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
+  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -425,6 +433,10 @@ Changelog
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
 
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
+
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
 
@@ -462,9 +474,11 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
-- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
-  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
-  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
+  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
+  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
+  `Thomas Fan`_.
 
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a given ``power`` parameter. Also add mean Poisson
@@ -683,9 +697,10 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``utils.choose_check_classifiers_labels``
   - ``utils.enforce_estimator_tags_y``
-  - ``utils.optimize.newton_cg`
+  - ``utils.optimize.newton_cg``
   - ``utils.random.random_choice_csc``
   - ``utils.safe_indexing``
   - ``utils.mocking``
@@ -693,8 +708,8 @@ Changelog
   - ``utils.seq_dataset``
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
-  - All of ``utils.testing`` except for ``all_estimators`` which is now
-    in ``utils``.
+  - All of ``utils.testing`` except for ``all_estimators`` which is now in
+    ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -722,11 +737,12 @@ Changelog
   unnecessarily. :pr:`15094` by `Andreas Müller`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
   - ``mocking.MockDataFrame``
   - ``mocking.CheckingClassifier``
-  - ``optimize.newton_cg`
+  - ``optimize.newton_cg``
   - ``random.random_choice_csc``
 
 :mod:`sklearn.voting`

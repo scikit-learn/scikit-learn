@@ -525,7 +525,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def cost_complexity_pruning_path(self, X, y, sample_weight=None):
         """Compute the pruning path during Minimal Cost-Complexity Pruning.
 
-        See `ref`:minimal_cost_complexity_pruning` for details on the pruning
+        See :ref:`minimal_cost_complexity_pruning` for details on the pruning
         process.
 
         Parameters

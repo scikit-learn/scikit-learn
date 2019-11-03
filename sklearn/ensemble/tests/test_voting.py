@@ -181,21 +181,21 @@ def test_predict_on_toy_problem():
 
     y = np.array([1, 1, 1, 2, 2, 2])
 
-    assert all(clf1.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
-    assert all(clf2.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
-    assert all(clf3.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf1.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf2.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf3.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='hard',
                             weights=[1, 1, 1])
-    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(eclf.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 1, 1])
-    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(eclf.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
 
 def test_predict_proba_on_toy_problem():
