@@ -210,7 +210,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                                dense_output=True) + self.intercept_
 
     def predict(self, X):
-        """Predict using the linear model
+        """
+        Predict using the linear model.
 
         Parameters
         ----------
@@ -245,7 +246,8 @@ class LinearClassifierMixin(ClassifierMixin):
     """
 
     def decision_function(self, X):
-        """Predict confidence scores for samples.
+        """
+        Predict confidence scores for samples.
 
         The confidence score for a sample is the signed distance of that
         sample to the hyperplane.
@@ -276,7 +278,8 @@ class LinearClassifierMixin(ClassifierMixin):
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
-        """Predict class labels for samples in X.
+        """
+        Predict class labels for samples in X.
 
         Parameters
         ----------
@@ -319,7 +322,8 @@ class SparseCoefMixin:
     """
 
     def densify(self):
-        """Convert coefficient matrix to dense array format.
+        """
+        Convert coefficient matrix to dense array format.
 
         Converts the ``coef_`` member (back) to a numpy.ndarray. This is the
         default format of ``coef_`` and is required for fitting, so calling
@@ -328,7 +332,8 @@ class SparseCoefMixin:
 
         Returns
         -------
-        self : estimator
+        self
+            Fitted estimator.
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, msg=msg)
@@ -337,13 +342,19 @@ class SparseCoefMixin:
         return self
 
     def sparsify(self):
-        """Convert coefficient matrix to sparse format.
+        """
+        Convert coefficient matrix to sparse format.
 
         Converts the ``coef_`` member to a scipy.sparse matrix, which for
         L1-regularized models can be much more memory- and storage-efficient
         than the usual numpy.ndarray representation.
 
         The ``intercept_`` member is not converted.
+
+        Returns
+        -------
+        self
+            Fitted estimator.
 
         Notes
         -----
@@ -355,10 +366,6 @@ class SparseCoefMixin:
 
         After calling this method, further fitting with the partial_fit
         method (if any) will not work until you call densify.
-
-        Returns
-        -------
-        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, msg=msg)

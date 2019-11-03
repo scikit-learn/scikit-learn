@@ -4,7 +4,7 @@
 import numpy as np
 import numbers
 
-from .base import SelectorMixin
+from ._base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 
 from ..exceptions import NotFittedError

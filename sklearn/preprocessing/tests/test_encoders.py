@@ -7,8 +7,8 @@ from scipy import sparse
 import pytest
 
 from sklearn.exceptions import NotFittedError
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
@@ -84,7 +84,8 @@ def test_one_hot_encoder_not_fitted():
     X = np.array([['a'], ['b']])
     enc = OneHotEncoder(categories=['a', 'b'])
     msg = ("This OneHotEncoder instance is not fitted yet. "
-           "Call 'fit' with appropriate arguments before using this method.")
+           "Call 'fit' with appropriate arguments before using this "
+           "estimator.")
     with pytest.raises(NotFittedError, match=msg):
         enc.transform(X)
 

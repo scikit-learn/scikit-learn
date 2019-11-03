@@ -13,6 +13,19 @@ For a short description of the main highlights of the release, please
 refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
+
+Deprecations: using ``FutureWarning`` from now on
+-------------------------------------------------
+
+When deprecating a feature, previous versions of scikit-learn used to raise
+a ``DeprecationWarning``. Since the ``DeprecationWarnings`` aren't shown by
+default by Python, scikit-learn needed to resort to a custom warning filter
+that would always show the warnings.
+
+This filter is now removed, and starting from 0.22 scikit-learn will show
+``FutureWarnings`` for deprecations. :pr:`15080` by `Nicolas Hug`_.
+
+
 Changed models
 --------------
 
@@ -118,6 +131,11 @@ Changelog
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
 
+- |Feature| :class:`cross_decomposition.PLSCanonical` and
+  :class:`cross_decomposition.PLSRegression` have a new function
+  ``inverse_transform`` to transform data to the original space`.
+  :pr:`15304` by :user:`Jaime Ferrando Huertas <jiwidi>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -138,6 +156,10 @@ Changelog
 - |Fix| Fixed a bug in :func:`datasets.fetch_openml`, which failed to load
   an OpenML dataset that contains an ignored feature.
   :pr:`14623` by :user:`Sarra Habchi <HabchiSarra>`.
+
+ - |Enhancement| The parameter `normalize` was added to
+   :func:`datasets.fetch_20newsgroups_vectorized`.
+   :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
 
 :mod:`sklearn.decomposition`
 ............................
@@ -163,6 +185,10 @@ Changelog
   underlying :class:`linear_model.LassoLars` when `algorithm='lasso_lars'`.
   :issue:`12650` by `Adrin Jalali`_.
 
+- |Efficiency| :class:`decomposition.NMF(solver='mu')` fitted on sparse input
+  matrices now uses batching to avoid briefly allocating an array with size
+  (#non-zero elements, n_components). :pr:`15257` by `Mart Willocx <Maocx>`_.
+
 :mod:`sklearn.dummy`
 ....................
 
@@ -179,9 +205,9 @@ Changelog
 
 - |MajorFeature| Added :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :pr:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
+  classifier or regressor.  :pr:`11047` by :user:`Guillaume Lemaitre
+  <glemaitre>` and :user:`Caio Oliveira <caioaao>` and :pr:`15138` by
+  :user:`Jon Cusick <jcusick13>`..
 
 - Many improvements were made to
   :class:`ensemble.HistGradientBoostingClassifier` and
@@ -255,6 +281,10 @@ Changelog
   now raise consistent error messages.
   :pr:`15084` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`ensemble.AdaBoostRegressor` where the loss should be normalized
+  by the max of the samples with non-null weights only.
+  :pr:`14294` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -277,6 +307,10 @@ Changelog
 - |Fix| :func:`feature_extraction.text.strip_accents_unicode` now correctly
   removes accents from strings that are in NFKD normalized form. :pr:`15100` by
   :user:`Daniel Grady <DGrady>`.
+
+- |Fix| Fixed a bug that caused :class:`feature_extraction.DictVectorizer` to raise
+  an `OverflowError` during the `transform` operation when producing a `scipy.sparse`
+  matrix on large input data. :pr:`15463` by :user:`Norvan Sahiner <norvan>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -307,6 +341,10 @@ Changelog
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
+- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+  to get indicator of missing data.
+  :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Feature| :class:`impute.IterativeImputer` has new `skip_compute` flag that
   is False by default, which, when True, will skip computation on features that
   have no missing values during the fit phase. :issue:`13773` by
@@ -330,6 +368,10 @@ Changelog
   method for :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
+
+- |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
+  and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
+  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -375,6 +417,9 @@ Changelog
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
 
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -387,6 +432,10 @@ Changelog
   multi-core calculation of the neighbors graph. This parameter has no
   impact when ``metric="precomputed"`` or (``metric="euclidean"`` and
   ``method="exact"``). :issue:`15082` by `Roman Yurchak`_.
+
+- |Efficiency| Improved efficiency of :class:`manifold.TSNE` when
+  ``method="barnes-hut"`` by computing the gradient in parallel.
+  :pr:`13213` by :user:`Thomas Moreau <tommoral>`
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
@@ -425,9 +474,11 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
-- |Feature| Added multiclass support to :func:`metrics.roc_auc_score`.
-  :issue:`12789` by :user:`Kathy Chen <kathyxchen>`,
-  :user:`Mohamed Maskani <maskani-moh>`, and :user:`Thomas Fan <thomasjpfan>`.
+- |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
+  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
+  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
+  `Thomas Fan`_.
 
 - |Feature| Add :class:`metrics.mean_tweedie_deviance` measuring the
   Tweedie deviance for a given ``power`` parameter. Also add mean Poisson
@@ -603,6 +654,10 @@ Changelog
 - |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
+- |FIX| The liblinear solver now supports ``sample_weight``.
+  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
 :mod:`sklearn.tree`
 ...................
 
@@ -642,9 +697,10 @@ Changelog
   estimator checks for a list of estimators. :pr:`14381` by `Thomas Fan`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``utils.choose_check_classifiers_labels``
   - ``utils.enforce_estimator_tags_y``
-  - ``utils.optimize.newton_cg`
+  - ``utils.optimize.newton_cg``
   - ``utils.random.random_choice_csc``
   - ``utils.safe_indexing``
   - ``utils.mocking``
@@ -652,6 +708,8 @@ Changelog
   - ``utils.seq_dataset``
   - ``utils.weight_vector``
   - ``utils.fixes.parallel_helper`` (removed)
+  - All of ``utils.testing`` except for ``all_estimators`` which is now in
+    ``utils``.
 
 - A new random variable, :class:`utils.fixes.loguniform` implements a
   log-uniform random variable (e.g., for use in RandomizedSearchCV).
@@ -679,12 +737,21 @@ Changelog
   unnecessarily. :pr:`15094` by `Andreas Müller`_.
 
 - |API| The following utils have been deprecated and are now private:
+
   - ``choose_check_classifiers_labels``
   - ``enforce_estimator_tags_y``
   - ``mocking.MockDataFrame``
   - ``mocking.CheckingClassifier``
-  - ``optimize.newton_cg`
+  - ``optimize.newton_cg``
   - ``random.random_choice_csc``
+
+:mod:`sklearn.voting`
+.....................
+
+- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
+  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 ..................................

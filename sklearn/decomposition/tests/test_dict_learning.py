@@ -7,10 +7,10 @@ from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning

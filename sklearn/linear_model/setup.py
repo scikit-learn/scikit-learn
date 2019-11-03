@@ -1,6 +1,8 @@
 import os
-
 import numpy
+
+from sklearn._build_utils import gen_from_templates
+
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -22,19 +24,8 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     # generate sag_fast from template
-    sag_cython_file = 'sklearn/linear_model/_sag_fast.pyx.tp'
-    sag_file = sag_cython_file.replace('.tp', '')
-
-    if not (os.path.exists(sag_file) and
-            os.stat(sag_cython_file).st_mtime < os.stat(sag_file).st_mtime):
-
-        with open(sag_cython_file, "r") as f:
-            tmpl = f.read()
-        from Cython import Tempita # noqa
-        tmpl_ = Tempita.sub(tmpl)
-
-        with open(sag_file, "w") as f:
-            f.write(tmpl_)
+    templates = ['sklearn/linear_model/_sag_fast.pyx.tp']
+    gen_from_templates(templates, top_path)
 
     config.add_extension('_sag_fast',
                          sources=['_sag_fast.pyx'],

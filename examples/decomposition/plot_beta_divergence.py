@@ -8,7 +8,7 @@ the Multiplicative-Update ('mu') solver in :class:`sklearn.decomposition.NMF`.
 """
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.decomposition.nmf import _beta_divergence
+from sklearn.decomposition._nmf import _beta_divergence
 
 print(__doc__)
 
