@@ -403,5 +403,5 @@ and inverted after prediction. Scikit-learn intends to solve for
 use cases where y should be transformed at training time 
 and not at test time, for resampling and similar uses, 
 like at imbalanced learn. 
-In general, these use cases should be solved 
+In general, these use cases can be solved 
 with a custom meta estimator rather than a Pipeline
