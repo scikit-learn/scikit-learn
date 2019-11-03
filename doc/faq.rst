@@ -396,4 +396,12 @@ Follow on github issue
 Meanwhile check out
 :class:`sklearn.compose.TransformedTargetRegressor`,
 `pipegraph<https://github.com/mcasl/PipeGraph>`_,
-`imbalanced-learn<https://github.com/scikit-learn-contrib/imbalanced-learn>`_
+`imbalanced-learn<https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
+Note that Scikit-learn solved for the case where y 
+has an invertible transformation applied before training 
+and inverted after prediction. Scikit-learn intends to solve for
+use cases where y should be transformed at training time 
+and not at test time, for resampling and similar uses, 
+like at imbalanced learn. 
+In general, these use cases should be solved 
+with a custom meta estimator rather than a Pipeline
