@@ -53,6 +53,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         kmeans
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
+    
+    dtype : {'float32', 'float64'}, (default='float64')
+        The dtype of transformed array.
 
     Attributes
     ----------
@@ -115,10 +118,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
+    def __init__(self, n_bins=5, encode='onehot', strategy='quantile', dtype='float64'):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
+        self.dtype = dtype
 
     def fit(self, X, y=None):
         """
@@ -149,6 +153,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             raise ValueError("Valid options for 'strategy' are {}. "
                              "Got strategy={!r} instead."
                              .format(valid_strategy, self.strategy))
+        valid_dtype = ('float32', 'float64')
+        if self.dtype not in valid_dtype:
+            raise ValueError("Valid options for 'dtype' are {}."
+                             "Got dtype={!r} instead."
+                             .format(valid_dtype, self.dtype))
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
@@ -281,7 +290,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if self.encode == 'ordinal':
             return Xt
 
-        return self._encoder.transform(Xt)
+        return self._encoder.transform(Xt).astype(self.dtype)
 
     def inverse_transform(self, Xt):
         """
