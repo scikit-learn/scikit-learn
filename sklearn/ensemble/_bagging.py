@@ -17,11 +17,12 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils import indices_to_mask, check_consistent_length
+from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import has_fit_parameter, check_is_fitted, \
+    _check_sample_weight
 
 
 __all__ = ["BaggingClassifier",
@@ -282,8 +283,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             multi_output=True
         )
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            check_consistent_length(y, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -415,7 +415,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def estimators_samples_(self):
-        """The subset of drawn samples for each base estimator.
+        """
+        The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
