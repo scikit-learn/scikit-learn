@@ -93,7 +93,8 @@ class NearestNeighbors(
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
       array([[2, 0]]...)
 
-      >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
+      >>> X = [[0, 0, 1.3]]
+      >>> nbrs = neigh.radius_neighbors(X, 0.4, return_distance=False)
       >>> np.asarray(nbrs[0][0])
       array(2)
     """
