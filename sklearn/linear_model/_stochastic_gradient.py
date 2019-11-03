@@ -100,7 +100,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
 
     def set_params(self, **kwargs):
         """
-        Set and validate the parameters of this estimator.
+        Set and validate the parameters of estimator.
 
         Parameters
         ----------
