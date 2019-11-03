@@ -566,9 +566,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         else:
             solver = self.solver
 
-        if ((sample_weight is not None) and
-                np.asarray(sample_weight).ndim > 1):
-            raise ValueError("Sample weights must be 1D array or scalar")
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -926,7 +926,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True,
+                         y_numeric=False)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -939,8 +941,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
                     self.__class__.__name__))
 
         if self.class_weight:
-            if sample_weight is None:
-                sample_weight = 1.
             # modify the sample weights with the corresponding class weight
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
@@ -1423,16 +1423,17 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
-                         dtype=[np.float64],
-                         multi_output=True, y_numeric=True)
-
         if np.any(self.alphas <= 0):
             raise ValueError(
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
+                         multi_output=True, y_numeric=True)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         n_samples, n_features = X.shape
 
@@ -1525,7 +1526,7 @@ class _BaseRidgeCV(LinearModel):
         self.store_cv_values = store_cv_values
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Ridge regression model
+        """Fit Ridge regression model with cv.
 
         Parameters
         ----------
@@ -1536,7 +1537,7 @@ class _BaseRidgeCV(LinearModel):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : float or array-like of shape [n_samples]
+        sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight
 
         Returns
@@ -1835,8 +1836,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                  multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         multi_output=True, y_numeric=False)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -1844,8 +1846,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
-            if sample_weight is None:
-                sample_weight = 1.
             # modify the sample weights with the corresponding class weight
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
