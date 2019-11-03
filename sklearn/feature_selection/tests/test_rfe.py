@@ -417,3 +417,9 @@ def test_importance_getter_param_validation():
                   RFECV(log_estimator,
                         importance_getter=imp_fetcher).fit,
                   X, y)
+
+    # when provided with values other than string or callable
+    assert_raises(ValueError,
+                  RFECV(log_estimator,
+                        importance_getter=[0]).fit,
+                  X, y)

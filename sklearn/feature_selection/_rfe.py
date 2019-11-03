@@ -75,6 +75,10 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
+        For example, give `regressor_.coef_` in case of
+        `TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of `Pipeline`
+
     verbose : int, (default=0)
         Controls verbosity of output.
 
@@ -124,6 +128,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
+
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  importance_getter='auto', verbose=0):
         self.estimator = estimator
@@ -196,7 +201,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             # Get coefs
             if callable(self.importance_getter):
                 coefs = self.importance_getter(estimator)
-            elif self.importance_getter != 'auto':
+            elif (isinstance(self.importance_getter, str)
+                    and self.importance_getter != 'auto'):
                 coefs = attrgetter(self.importance_getter)(estimator)
             elif self.importance_getter == 'auto':
                 if hasattr(estimator, 'coef_'):
@@ -478,6 +484,7 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
+
     def __init__(self, estimator, step=1, min_features_to_select=1,
                  importance_getter='auto', cv=None,
                  scoring=None, verbose=0, n_jobs=None):
