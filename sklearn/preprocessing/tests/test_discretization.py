@@ -255,7 +255,7 @@ def test_transform_outside_fit_range(strategy):
 
 @pytest.mark.parametrize('data_type', ['float32', 'float64'])
 def test_dtype_float32_float64(data_type):
-    kbd = KBinsDiscretizer(n_bins=3, strategy='uniform', encode='ordinal', 
+    kbd = KBinsDiscretizer(n_bins=3, strategy='uniform', encode='ordinal',
                            dtype=data_type)
     Xt = kbd.fit_transform(X)
     assert Xt.dtype == data_type
