@@ -190,10 +190,10 @@ def test_invalid_strategy_option():
 
 
 def test_invalid_dtype_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], dtype='invalid-dtype')
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], dtype='int32')
     err_msg = (r"Valid options for 'dtype' are "
                r"\(<class 'numpy.float32'>, <class 'numpy.float64'>\). "
-               r"Got dtype='invalid-dtype' instead.")
+               r"Got dtype='int32' instead.")
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 

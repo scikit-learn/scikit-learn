@@ -54,7 +54,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
 
-    dtype : {np.float32, np.float64}, (default=np.float64)
+    dtype : {np.float32, np.float64}, default=np.float64
         The dtype of the transformed array.
 
     Attributes
@@ -158,7 +158,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                              "Got strategy={!r} instead."
                              .format(valid_strategy, self.strategy))
         valid_dtype = (np.float32, np.float64)
-        if self.dtype not in valid_dtype:
+        if np.dtype(self.dtype) not in valid_dtype:
             raise ValueError("Valid options for 'dtype' are {}. "
                              "Got dtype={!r} instead."
                              .format(valid_dtype, self.dtype))
