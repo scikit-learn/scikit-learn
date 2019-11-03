@@ -1675,12 +1675,15 @@ class MiniBatchKMeans(KMeans):
             X will be copied if it is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
+        Returns
+        -------
+        self
         """
 
         X = check_array(X, accept_sparse="csr", order="C",
@@ -1746,7 +1749,7 @@ class MiniBatchKMeans(KMeans):
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
