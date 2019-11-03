@@ -159,7 +159,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                              .format(valid_strategy, self.strategy))
         valid_dtype = ('float32', 'float64')
         if self.dtype not in valid_dtype:
-            raise ValueError("Valid options for 'dtype' are {}."
+            raise ValueError("Valid options for 'dtype' are {}. "
                              "Got dtype={!r} instead."
                              .format(valid_dtype, self.dtype))
 

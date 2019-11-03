@@ -258,7 +258,7 @@ def test_dtype_float32_float64(data_type):
     kbd = KBinsDiscretizer(n_bins=3, strategy='uniform', encode='ordinal',
                            dtype=data_type)
     Xt = kbd.fit_transform(X)
-    assert data_type == Xt.dtype
+    assert Xt.dtype == data_type
 
 
 def test_overwrite():
