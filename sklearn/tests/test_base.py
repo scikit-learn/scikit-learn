@@ -547,4 +547,4 @@ def test_sizeof():
 
     # Does it take __sizeof__ byte to encode approximately?
     msg = pickle.dumps(est)
-    assert len(msg) * 0.95 <= sys.getsizeof(est) <= len(msg) * 1.05
+    assert len(msg) == pytest.approx(sys.getsizeof(est), rel=0.05)
