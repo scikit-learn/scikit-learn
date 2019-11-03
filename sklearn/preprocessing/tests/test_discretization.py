@@ -188,6 +188,13 @@ def test_invalid_strategy_option():
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X)
 
+def test_invalid_dtype_option():
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], dtype='invalid-dtype')
+    err_msg = (r"Valid options for 'dtype' are "
+               r"\('float32', 'float64'\). "
+               r"Got dtype='invalid-dtype' instead.")
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X)
 
 @pytest.mark.parametrize(
     'strategy, expected_2bins, expected_3bins, expected_5bins',
@@ -242,6 +249,12 @@ def test_transform_outside_fit_range(strategy):
     X2t = kbd.transform(X2)
     assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
     assert_array_equal(X2t.min(axis=0), [0])
+
+@pytest.mark.parametrize('data_type', ['float32', 'float64'])
+def test_dtype_float32_float64(data_type):
+    kbd = KBinsDiscretizer(n_bins=3, strategy='uniform', encode='ordinal', dtype=data_type)
+    Xt = kbd.fit_transform(X)
+    assert Xt.dtype == data_type
 
 
 def test_overwrite():
