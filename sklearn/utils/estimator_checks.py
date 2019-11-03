@@ -1488,9 +1488,12 @@ def check_estimators_pickle(name, estimator_orig):
     if estimator.__module__.startswith('sklearn.'):
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
-    assert len(pickled_estimator) == pytest.approx(
-        sys.getsizeof(estimator), rel=0.05
-    )
+    if len(pickled_estimator) <= 512:
+        assert len(pickled_estimator) <= 2 * sys.getsizeof(estimator)
+    else:
+        assert len(pickled_estimator) == pytest.approx(
+            sys.getsizeof(estimator), rel=0.05
+        )
 
     result = dict()
     for method in check_methods:
