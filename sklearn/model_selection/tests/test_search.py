@@ -1816,6 +1816,7 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
         cv = GridSearchCV(est, {'n_neighbors': [10]})
         assert _pairwise_setting == cv._pairwise, attr_message
 
+
 def test_search_cv__pairwise_property_equivalence_of_precomputed():
     """
     Test implementation of BaseSearchCV has the _pairwise property
