@@ -881,11 +881,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         ``ngram_range`` of ``(1, 1)`` means only unigrams, ``(1, 2)`` means 
         unigrams and bigrams, and ``(2, 2)`` means only bigrams.
         Only applies if ``analyzer is not callable``.
-        For example an ``ngram_range`` of ``(1, 1)`` means only
-        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
-        only bigrams.
-        Only applies if ``analyzer is not callable``.
-
+        
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word n-gram or character
         n-grams.
