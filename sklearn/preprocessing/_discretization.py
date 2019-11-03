@@ -53,7 +53,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         kmeans
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
-    
+
     dtype : {'float32', 'float64'}, (default='float64')
         The dtype of transformed array.
 
