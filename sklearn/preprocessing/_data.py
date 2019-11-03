@@ -2111,7 +2111,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-  ..versionadded:: 0.19
+    .. versionadded:: 0.19
 
     Parameters
     ----------
