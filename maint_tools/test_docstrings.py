@@ -24,8 +24,10 @@ DOCSTRING_WHITELIST = [
     "RidgeClassifierCV.decision_function",
     "SGDClassifier.decision_function",
     "KernelDensity",
-    "KernelDensity.fit"
+    "KernelDensity.fit",
     "KernelDensity.score",
+    "DecisionTreeClassifier",
+    "DecisionTreeRegressor",
     "LinearRegression$"
 ]
 
