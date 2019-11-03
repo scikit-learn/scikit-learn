@@ -148,6 +148,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
+    'tpr_fpr_tnr_fnr_scores',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
