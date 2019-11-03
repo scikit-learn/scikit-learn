@@ -548,12 +548,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". \
-                                     Given "%s".'
+                                     '"balanced" and "balanced_subsample".'
+                                     'Given "%s".'
                                      % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or \
-                         "balanced_subsample" are '
+                    warn('class_weight presets "balanced" or '
+                         '"balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
                          '"balanced" weights, use compute_class_weight\
