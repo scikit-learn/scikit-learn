@@ -62,23 +62,14 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    **kwargs : dict, default=None
-        Additional keyword arguments to be passed to parent classes.
-
-    Attributes
-    ----------
-    effective_metric_ : str
-        Metric used to compute distances to neighbors.
-
-    effective_metric_params_ : dict
-        Parameters for the metric used to compute distances to neighbors.
-
     See Also
     --------
     KNeighborsClassifier : Classifier implementing the k-nearest neighbors vote.
-    RadiusNeighborsClassifier : Classifier implementing a vote among neighbors within a given radius.
+    RadiusNeighborsClassifier : Classifier implementing a vote among neighbors
+        within a given radius.
     KNeighborsRegressor : Regression based on k-nearest neighbors.
-    RadiusNeighborsRegressor : Regression based on neighbors within a fixed radius.
+    RadiusNeighborsRegressor : Regression based on neighbors
+        within a fixed radius.
     BallTree : BallTree for fast generalized N-point problems.
 
     Notes
@@ -101,7 +92,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> neigh.kneighbors([[0, 0, 1.3]], 2, return_distance=False)
       array([[2, 0]]...)
 
-      >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4, return_distance=False)
+      >>> nbrs = neigh.radius_neighbors([[0, 0, 1.3]], 0.4,
+                                        return_distance=False)
       >>> np.asarray(nbrs[0][0])
       array(2)
     """
