@@ -66,9 +66,7 @@ class _ValidationScoreCallback:
 
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
-    """Base class for SGD classification and regression.
-    .. version:: 0.21
-    """
+    """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,

@@ -528,7 +528,8 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
         probas : 2d array, shape (n_samples, K)
             The predicted probabilities.
 
-        .. versionadded:: 0.20.3
+        .. versionadded:: 0.20
+        
         """
 
     @abstractmethod

@@ -37,6 +37,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <LSA>`.
 
+    .. versionadded:: 0.14
+    
     Parameters
     ----------
     n_components : int, default = 2
@@ -113,8 +115,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     sign of the ``components_`` and the output from transform depend on the
     algorithm and random state. To work around this, fit instances of this
     class to data once, then keep the instance around to do transformations.
-    
-    ..versionadded:: v0.14
+
     """
     def __init__(self, n_components=2, algorithm="randomized", n_iter=5,
                  random_state=None, tol=0.):
