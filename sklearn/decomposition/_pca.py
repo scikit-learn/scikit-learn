@@ -28,8 +28,7 @@ from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
-    """
-    Compute the likelihood of a rank ``rank`` dataset.
+    """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
     dimf) having spectrum ``spectrum``.
@@ -103,8 +102,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
 
 
 class PCA(_BasePCA):
-    """
-    Principal component analysis (PCA).
+    """Principal component analysis (PCA).
 
     Linear dimensionality reduction using Singular Value Decomposition of the
     data to project it to a lower dimensional space. The input data is centered
@@ -327,8 +325,7 @@ class PCA(_BasePCA):
         self.random_state = random_state
 
     def fit(self, X, y=None):
-        """
-        Fit the model with X.
+        """Fit the model with X.
 
         Parameters
         ----------
@@ -348,8 +345,7 @@ class PCA(_BasePCA):
         return self
 
     def fit_transform(self, X, y=None):
-        """
-        Fit the model with X and apply the dimensionality reduction on X.
+        """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
         ----------
@@ -559,8 +555,7 @@ class PCA(_BasePCA):
         return U, S, V
 
     def score_samples(self, X):
-        """
-        Return the log-likelihood of each sample.
+        """Return the log-likelihood of each sample.
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
