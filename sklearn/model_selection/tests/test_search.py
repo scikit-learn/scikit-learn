@@ -1802,26 +1802,26 @@ def test_random_search_bad_cv():
         ridge.fit(X[:train_size], y[:train_size])
 
 
-def test_search_cv__pairwise_property():
+def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
     Test implementation of BaseSearchCV has the _pairwise property
     which matches the _pairwise property of its estimator.
+    This test make sure _pairwise is delegated to the base estimator.
     """
-    class PairwiseCV(BaseSearchCV):
-        def __init__(self, estimator, **kwargs):
-            super().__init__(estimator, **kwargs)
-
-    # first test: check BaseSearchCV children copy _pairwise
     est = BaseEstimator()
-
     attr_message = "BaseSearchCV _pairwise property must match estimator"
 
     for _pairwise_setting in [True, False]:
         setattr(est, '_pairwise', _pairwise_setting)
-        cv = PairwiseCV(est)
+        cv = GridSearchCV(est, {'n_neighbors': [10]})
         assert _pairwise_setting == cv._pairwise, attr_message
 
-    # second test: ensure equivalence of 'precomputed'
+def test_search_cv__pairwise_property_equivalence_of_precomputed():
+    """
+    Test implementation of BaseSearchCV has the _pairwise property
+    which matches the _pairwise property of its estimator.
+    This test ensures the equivalence of 'precomputed'.
+    """
     n_samples = 50
     n_splits = 2
     X, y = make_classification(n_samples=n_samples, random_state=0)
@@ -1831,7 +1831,6 @@ def test_search_cv__pairwise_property():
     clf = KNeighborsClassifier()
     cv = GridSearchCV(clf, grid_params, cv=n_splits)
     cv.fit(X, y)
-
     preds_original = cv.predict(X)
 
     # precompute euclidean metric to validate _pairwise is working
@@ -1839,9 +1838,7 @@ def test_search_cv__pairwise_property():
     clf = KNeighborsClassifier(metric='precomputed')
     cv = GridSearchCV(clf, grid_params, cv=n_splits)
     cv.fit(X_precomputed, y)
-
     preds_precomputed = cv.predict(X_precomputed)
 
     attr_message = "GridSearchCV not identical with precomputed metric"
-
     assert (preds_original == preds_precomputed).all(), attr_message
