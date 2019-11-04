@@ -1540,7 +1540,7 @@ class TfidfVectorizer(CountVectorizer):
         Otherwise the input is expected to be a sequence of items that
         can be of type string or byte.
 
-    encoding : str, 'utf-8' by default
+    encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
