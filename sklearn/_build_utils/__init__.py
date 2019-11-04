@@ -44,7 +44,7 @@ def generate_cythonize_extensions(top_path, config):
     with_openmp = check_openmp_support()
 
     message = ('Please install cython with a version >= {0} in order '
-                'to build a scikit-learn development version.').format(
+               'to build a scikit-learn development version.').format(
                     CYTHON_MIN_VERSION)
     try:
         import Cython
