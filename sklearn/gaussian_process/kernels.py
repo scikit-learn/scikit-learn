@@ -1642,8 +1642,8 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     sum) of RBF kernels with different characteristic length scales. It is
     parameterized by a length scale parameter :math:`l>0` and a scale
     mixture parameter :math:`\\alpha>0`. Only the isotropic variant
-     where length_scale :math:`l` is a scalar is supported at the moment.
-     The kernel is given by:
+    where length_scale :math:`l` is a scalar is supported at the moment.
+    The kernel is given by:
 
     .. math::
         k(x_i, x_j) = \\left(
