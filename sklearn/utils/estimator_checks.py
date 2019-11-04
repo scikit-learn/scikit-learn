@@ -1517,9 +1517,9 @@ def check_estimators_pickle_many_features(name, estimator_orig):
     y = _enforce_estimator_tags_y(estimator, y)
     estimator.fit(X, y)
 
-    msg = pickle.dumps(estimator)
-    assert len(msg) == pytest.approx(sys.getsizeof(estimator), rel=0.05)
-
+    encoded_bytes = len(pickle.dumps(estimator))
+    estimated_bytes = sys.getsizeof(estimator)
+    assert encoded_bytes == pytest.approx(estimated_bytes, rel=0.05)
 
 
 @ignore_warnings(category=FutureWarning)
