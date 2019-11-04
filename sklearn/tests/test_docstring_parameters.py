@@ -147,6 +147,7 @@ def test_tabs():
         # because we don't import
         mod = importlib.import_module(modname)
 
+        # TODO: Remove when minimum python version is 3.7
         # unwrap to get module because Pep562 backport wraps the original
         # module
         if isinstance(mod, Pep562):
