@@ -110,11 +110,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
         # computation
-        sample_weight = _check_sample_weight(sample_weight, X,
-                                             dtype=np.float64,
-                                             return_ones=False)
-        # TODO: remove when PDP suports sample weights
         if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=np.float64)
+            # TODO: remove when PDP suports sample weights
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)

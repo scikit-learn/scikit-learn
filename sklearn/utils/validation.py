@@ -1020,11 +1020,13 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_sample_weight(sample_weight, X, dtype=None, return_ones=True):
+def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
 
-    Note that passing sample_weight=None will output an array of ones if
-    ``return_ones=True``, otherwise ``None``.
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
 
     Parameters
     ----------
@@ -1041,13 +1043,9 @@ def _check_sample_weight(sample_weight, X, dtype=None, return_ones=True):
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
 
-    return_ones: boolean, default=True
-        If ``True``, returns an array of ones if ``sample_weight is None``.
-        Otherwise returns ``None`` when ``sample_weight is None``.
-
     Returns
     -------
-    sample_weight : ndarray of shape (n_samples,), or None
+    sample_weight : ndarray, shape (n_samples,)
        Validated sample weight. It is guaranteed to be "C" contiguous.
     """
     n_samples = _num_samples(X)
@@ -1055,8 +1053,6 @@ def _check_sample_weight(sample_weight, X, dtype=None, return_ones=True):
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64
 
-    if sample_weight is None and not return_ones:
-        sample_weight = None
     if sample_weight is None or isinstance(sample_weight, numbers.Number):
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=dtype)
