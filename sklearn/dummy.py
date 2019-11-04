@@ -13,7 +13,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
@@ -144,6 +144,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -475,8 +478,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.n_outputs_ = y.shape[1]
 
         check_consistent_length(X, y, sample_weight)
+
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)
