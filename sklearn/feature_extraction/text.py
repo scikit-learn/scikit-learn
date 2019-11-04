@@ -419,7 +419,7 @@ class _VectorizerMixin:
 
         Returns
         -------
-        _analyze: object
+        analyzer: callable
             A function to handle preprocessing, tokenization
             and n-grams generation.
         """
