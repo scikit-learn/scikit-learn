@@ -413,8 +413,7 @@ class _VectorizerMixin:
             pass
 
     def build_analyzer(self):
-        """
-        Return a callable that handles preprocessing, tokenization
+        """Return a callable that handles preprocessing, tokenization
         and n-grams generation.
 
         Returns
@@ -1298,7 +1297,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Returns
         -------
         feature_names : list
-                    A list of feature name.
+            A list of feature name.
         """
 
         self._check_vocabulary()
@@ -1807,7 +1806,7 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which has either str, unicode or file objects.
+            An iterable which yields either str, unicode or file objects.
         y : None
             This parameter is not needed to compute tfidf.
 
@@ -1831,7 +1830,7 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which has either str, unicode or file objects.
+            An iterable which yields either str, unicode or file objects.
         y : None
             This parameter is ignored.
 
@@ -1856,7 +1855,7 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            An iterable which has either str, unicode or file objects.
+            An iterable which yields either str, unicode or file objects.
 
         copy : bool, default True
             Whether to copy X and operate on the copy or perform in-place
