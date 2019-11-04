@@ -26,6 +26,7 @@ from sklearn.pipeline import make_union
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
+from sklearn.exceptions import ConvergenceWarning
 
 
 def _check_statistics(X, X_true,
@@ -1272,3 +1273,24 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose(X_trans.toarray(), X_true)
+
+
+@pytest.mark.parametrize(
+    "order, idx_order",
+    [
+        ("ascending", [3, 4, 2, 0, 1]),
+        ("descending", [1, 0, 2, 4, 3])
+    ]
+)
+def test_imputation_order(order, idx_order):
+    X = np.random.rand(100, 5)
+    X[:50, 1] = np.nan
+    X[:30, 0] = np.nan
+    X[:20, 2] = np.nan
+    X[:10, 4] = np.nan
+
+    with pytest.warns(ConvergenceWarning):
+        trs = IterativeImputer(max_iter=1,
+                               imputation_order=order).fit(X)
+        idx = [x.feat_idx for x in trs.imputation_sequence_]
+        assert idx == idx_order
