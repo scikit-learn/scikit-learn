@@ -1814,7 +1814,7 @@ class TfidfVectorizer(CountVectorizer):
         Returns
         -------
         self : object
-            TfidfVectorizer.
+            Fitted vectorizer.
         """
         self._check_params()
         self._warn_for_unused_params()
