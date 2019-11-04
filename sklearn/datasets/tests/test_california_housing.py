@@ -45,7 +45,7 @@ def test_fetch_asframe():
     pd = pytest.importorskip('pandas')
     bunch = fetch(as_frame=True)
     frame = bunch.frame
-    assert (hasattr(bunch, 'frame') is True)
+    assert hasattr(bunch, 'frame') is True
     assert (frame.shape == (20640, 9))
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.DataFrame)
