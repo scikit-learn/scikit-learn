@@ -307,7 +307,7 @@ class _VectorizerMixin:
 
         Returns
         -------
-        _preprocess: object
+        preprocessor: callable
               A function to preprocess the text before tokenization.
         """
         if self.preprocessor is not None:
