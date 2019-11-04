@@ -28,7 +28,8 @@ __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 
 class Pipeline(_BaseComposition):
-    """Pipeline of transforms with a final estimator.
+    """
+    Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
     Intermediate steps of the pipeline must be 'transforms', that is, they
@@ -63,7 +64,7 @@ class Pipeline(_BaseComposition):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : bool, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
@@ -73,9 +74,9 @@ class Pipeline(_BaseComposition):
         Read-only attribute to access any step parameter by user given name.
         Keys are step names and values are steps parameters.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_pipeline : convenience function for simplified
+    sklearn.pipeline.make_pipeline : Convenience function for simplified
         pipeline construction.
 
     Examples
@@ -671,11 +672,11 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional
+    verbose : boolean, default=False
         If True, the time elapsed while fitting each step will be printed as it
         is completed.
 
-    See also
+    See Also
     --------
     sklearn.pipeline.Pipeline : Class for creating a pipeline of
         transforms with a final estimator.
@@ -759,6 +760,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Read more in the :ref:`User Guide <feature_union>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     transformer_list : list of (string, transformer) tuples
@@ -782,9 +785,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         If True, the time elapsed while fitting each transformer will be
         printed as it is completed.
 
-    See also
+    See Also
     --------
-    sklearn.pipeline.make_union : convenience function for simplified
+    sklearn.pipeline.make_union : Convenience function for simplified
         feature union construction.
 
     Examples
@@ -994,7 +997,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(*transformers, **kwargs):
-    """Construct a FeatureUnion from the given transformers.
+    """
+    Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -1018,7 +1022,7 @@ def make_union(*transformers, **kwargs):
     -------
     f : FeatureUnion
 
-    See also
+    See Also
     --------
     sklearn.pipeline.FeatureUnion : Class for concatenating the results
         of multiple transformer objects.

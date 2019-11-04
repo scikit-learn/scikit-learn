@@ -263,6 +263,8 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     epsilon : float, optional (default=0.0)
