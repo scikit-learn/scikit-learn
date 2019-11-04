@@ -5,9 +5,8 @@ from ._base import RadiusNeighborsMixin
 from ._base import UnsupervisedMixin
 
 
-class NearestNeighbors(
-    NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin, UnsupervisedMixin
-):
+class NearestNeighbors(NeighborsBase, KNeighborsMixin,
+                       RadiusNeighborsMixin, UnsupervisedMixin):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -63,6 +62,14 @@ class NearestNeighbors(
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    Attributes
+    ----------
+    effective_metric_ : str
+        Metric used to compute distances to neighbors.
+
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+
     See Also
     --------
     KNeighborsClassifier : Classifier based on the k-nearest neighbors vote.
@@ -99,24 +106,12 @@ class NearestNeighbors(
       array(2)
     """
 
-    def __init__(
-        self,
-        n_neighbors=5,
-        radius=1.0,
-        algorithm="auto",
-        leaf_size=30,
-        metric="minkowski",
-        p=2,
-        metric_params=None,
-        n_jobs=None,
-    ):
+    def __init__(self, n_neighbors=5, radius=1.0,
+                 algorithm='auto', leaf_size=30, metric='minkowski',
+                 p=2, metric_params=None, n_jobs=None, **kwargs):
         super().__init__(
-            n_neighbors=n_neighbors,
-            radius=radius,
-            algorithm=algorithm,
-            leaf_size=leaf_size,
-            metric=metric,
-            p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs,
-        )
+              n_neighbors=n_neighbors,
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size, metric=metric, p=p,
+              metric_params=metric_params, n_jobs=n_jobs, **kwargs)
