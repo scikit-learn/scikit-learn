@@ -359,12 +359,6 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    def _check_proba(self):
-        if not all([hasattr(estimator, "predict_proba")
-                    for estimator in self.estimators_]):
-            raise AttributeError("The base estimator should "
-                                 "implement predict_proba method")
-
     @property
     def predict_proba(self):
         """Probability estimates.
@@ -386,7 +380,10 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        self._check_proba()
+        if not all([hasattr(estimator, "predict_proba")
+                    for estimator in self.estimators_]):
+            raise AttributeError("The base estimator should "
+                                 "implement predict_proba method")
         return self._predict_proba
 
     def _predict_proba(self, X):

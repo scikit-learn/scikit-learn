@@ -181,13 +181,13 @@ def test_hasattr_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    assert hasattr(multi_target_linear, "predict_proba") is False
+    assert not hasattr(multi_target_linear, "predict_proba")
 
     # case where predict_proba attribute exists
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    assert hasattr(multi_target_linear, "predict_proba") is True
+    assert hasattr(multi_target_linear, "predict_proba")
 
 
 # check predict_proba passes
