@@ -113,9 +113,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
         try:
             obj_signature = signature(obj)
         except TypeError:
-            # In particular we can't parse the signature
-            # for properties that are still callable such as
-            # predict_proba
+            # In particular we can't parse the signature of properties
             obj_signature = (
                     "\nParsing of the method signature failed, "
                     "possibly because this is a property."
