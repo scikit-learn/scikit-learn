@@ -1502,6 +1502,24 @@ def check_estimators_pickle(name, estimator_orig):
         assert_allclose_dense_sparse(result[method], unpickled_result)
 
 
+def check_estimators_pickle_many_features(name, estimator_orig):
+    """ Test that sys.getsizeof is (approximately) accurate """
+    X, y = make_blobs(n_samples=30, random_state=0, n_features=100)
+
+    # some estimators can't do features less than 0
+    X -= X.min()
+    X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    y = _enforce_estimator_tags_y(estimator, y)
+    estimator.fit(X, y)
+
+    msg = pickle.dumps(estimator)
+    assert len(msg) == pytest.approx(sys.getsizeof(estimator), rel=0.05)
+
+
+
 @ignore_warnings(category=FutureWarning)
 def check_estimators_partial_fit_n_features(name, estimator_orig):
     # check if number of features changes between calls to partial_fit.
