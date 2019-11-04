@@ -1833,7 +1833,7 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             An iterable which has either str, unicode or file objects.
         y : None
-            This parameter is not needed to compute tfidf.
+            This parameter is ignored.
 
         Returns
         -------
