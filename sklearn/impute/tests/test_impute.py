@@ -1283,6 +1283,7 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     ]
 )
 def test_imputation_order(order, idx_order):
+    # regression test for #15393
     X = np.random.rand(100, 5)
     X[:50, 1] = np.nan
     X[:30, 0] = np.nan
