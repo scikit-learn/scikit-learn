@@ -32,6 +32,7 @@ from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_array
 from ..utils import check_random_state
+from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -266,18 +267,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                               "or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
-            if (getattr(sample_weight, "dtype", None) != DOUBLE or
-                    not sample_weight.flags.contiguous):
-                sample_weight = np.ascontiguousarray(
-                    sample_weight, dtype=DOUBLE)
-            if len(sample_weight.shape) > 1:
-                raise ValueError("Sample weights array has more "
-                                 "than one dimension: %d" %
-                                 len(sample_weight.shape))
-            if len(sample_weight) != n_samples:
-                raise ValueError("Number of weights=%d does not match "
-                                 "number of samples=%d" %
-                                 (len(sample_weight), n_samples))
+            sample_weight = _check_sample_weight(sample_weight, X, DOUBLE)
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
