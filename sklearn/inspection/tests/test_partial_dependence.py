@@ -442,26 +442,10 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-def test_partial_dependence_sample_weight_hgbt():
-    # Test near perfect correlation between partial dependence and diagonal
-    # when sample weights emphasize y = x predictions
-    # non-regression test for #13193
-    # TODO: check properly when sample weight is supported in pdp of HGBT
-    N = 1000
-    rng = np.random.RandomState(123456)
-    mask = rng.randint(2, size=N, dtype=bool)
-
-    x = rng.rand(N)
-    # set y = x on mask and y = -x outside
-    y = x.copy()
-    y[~mask] = -y[~mask]
-    X = np.c_[mask, x]
-    # sample weights to emphasize data points where y = x
-    sample_weight = np.ones(N)
-    sample_weight[mask] = 1000.
-
+def check_hist_gbdt_sw_not_supported():
+    # TODO: remove/fix when PDP supports HGBT with sample weights
     clf = HistGradientBoostingRegressor(random_state=1)
-    clf.fit(X, y, sample_weight=sample_weight)
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
 
     with pytest.raises(NotImplementedError,
                        match="does not support partial dependence"):

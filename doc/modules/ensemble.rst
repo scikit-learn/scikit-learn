@@ -842,8 +842,7 @@ leverage integer-based data structures (histograms) instead of relying on
 sorted continuous values when building the trees. The API of these
 estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-are not yet supported: in particular sample weights, and some loss
-functions.
+are not yet supported, for instance some loss functions.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -941,11 +940,12 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
-Sample Weight Support
+Sample weight support
 ---------------------
 
 :class:`HistGradientBoostingClassifier` and
-:class:`HistGradientBoostingRegressor` sample weights during :term:`fit`.
+:class:`HistGradientBoostingRegressor` sample support weights during
+:term:`fit`.
 
 The following toy example demonstrates how the model ignores the samples with
 zero sample weights:
@@ -965,6 +965,11 @@ zero sample weights:
 
 As you can see, the `[1, 0]` is comfortably classified as `1` since the first
 two samples are ignored due to their sample weights.
+
+Implementation detail: taking sample weights into accounts amounts to
+multiplying the gradients (and the hessians) by the sample weights. Note that
+the binning stage (specifically the quantiles computation) does not take the
+weights into account.
 
 Low-level parallelism
 ---------------------

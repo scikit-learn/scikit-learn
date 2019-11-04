@@ -146,9 +146,9 @@ def _update_gradients_hessians_categorical_crossentropy(
                 p[i, k] = raw_predictions[k, i]  # prepare softmax
             _compute_softmax(p, i)
             # then update gradients and hessians
+            sw = sample_weight[i]
             for k in range(prediction_dim):
                 p_i_k = p[i, k]
-                sw = sample_weight[i]
                 gradients[k, i] = (p_i_k - (y_true[i] == k)) * sw
                 hessians[k, i] = (p_i_k * (1. - p_i_k)) * sw
 

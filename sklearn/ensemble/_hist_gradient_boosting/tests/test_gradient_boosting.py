@@ -416,7 +416,7 @@ def test_consistent_lengths():
     X = np.array([-np.inf, 0, 1, np.inf]).reshape(-1, 1)
     y = np.array([0, 0, 1, 1])
     sample_weight = np.array([.1, .3, .1])
-    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gbdt = HistGradientBoostingRegressor()
     with pytest.raises(ValueError,
                        match=r"sample_weight.shape == \(3,\), expected"):
         gbdt.fit(X, y, sample_weight)
@@ -465,7 +465,10 @@ def test_string_target_early_stopping(scoring):
     gbrt.fit(X, y)
 
 
-def test_non_uniform_weights_toy_edge_case_reg():
+def test_zero_sample_weights_regression():
+    # Make sure setting a SW to zero amounts to ignoring the corresponding
+    # sample
+
     X = [[1, 0],
          [1, 0],
          [1, 0],
@@ -478,7 +481,10 @@ def test_non_uniform_weights_toy_edge_case_reg():
     assert gb.predict([[1, 0]])[0] > 0.5
 
 
-def test_non_uniform_weights_toy_edge_case_clf():
+def test_zero_sample_weights_classification():
+    # Make sure setting a SW to zero amounts to ignoring the corresponding
+    # sample
+
     X = [[1, 0],
          [1, 0],
          [1, 0],
@@ -516,8 +522,8 @@ def test_sample_weight_effect(problem, duplication, seed):
     # High level test to make sure that duplicating a sample is equivalent to
     # giving it weight of 2.
 
-    # fails for n_samples > 255 because binning implementation isn't strictly
-    # equivalent to just duplicating samples. Keeping n_samples <= 255 makes
+    # fails for n_samples > 255 because binning does not take sample weights
+    # into account. Keeping n_samples <= 255 makes
     # sure only unique values are used so SW have no effect on binning.
     n_samples = 255
     n_features = 2
@@ -552,7 +558,7 @@ def test_sample_weight_effect(problem, duplication, seed):
     est_sw = clone(est).fit(X, y, sample_weight=sample_weight)
     est_dup = clone(est).fit(X_dup, y_dup)
 
-    # Check decision function instead of just classes for classification
+    # checking raw_predict is stricter than just predict for classification
     assert np.allclose(est_sw._raw_predict(X_dup),
                        est_dup._raw_predict(X_dup))
 

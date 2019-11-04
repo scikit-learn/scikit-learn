@@ -283,5 +283,8 @@ def test_init_gradient_and_hessians_sample_weight():
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
         sample_weight=np.ones(n_samples))
+    # the `hessians_are_constant` is true for the class, but not for the
+    # instance.
+    assert _LOSSES['least_squares'].hessians_are_constant  # still true
     assert not loss.hessians_are_constant
     assert hessians.shape == (prediction_dim, n_samples)

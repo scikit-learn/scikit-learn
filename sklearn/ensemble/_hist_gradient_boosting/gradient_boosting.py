@@ -110,9 +110,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         check_consistent_length(X, y)
         # Do not create unit sample weights by default to later skip some
         # computation
+        sample_weight = _check_sample_weight(sample_weight, X,
+                                             dtype=np.float64,
+                                             return_ones=False)
+        # TODO: remove when PDP suports sample weights
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X,
-                                                 dtype=np.float64)
             self._fitted_with_sw = True
 
         rng = check_random_state(self.random_state)
@@ -183,11 +185,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_bins = self.max_bins + 1  # + 1 for missing values
         self.bin_mapper_ = _BinMapper(n_bins=n_bins,
                                       random_state=self._random_seed)
-        X_binned_train = self._bin_data(X_train, sample_weight_train,
-                                        is_training_data=True)
+        X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, sample_weight_val,
-                                          is_training_data=False)
+            X_binned_val = self._bin_data(X_val, is_training_data=False)
         else:
             X_binned_val = None
 
@@ -545,7 +545,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, sample_weight, is_training_data):
+    def _bin_data(self, X, is_training_data):
         """Bin data X.
 
         If is_training_data, then set the bin_mapper_ attribute.

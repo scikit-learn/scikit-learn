@@ -30,15 +30,13 @@ class BaseLoss(ABC):
     """Base class for a loss."""
 
     def __call__(self, y_true, raw_predictions, sample_weight):
-        """Return the weighted average loss
-        """
+        """Return the weighted average loss"""
         return np.average(self.pointwise_loss(y_true, raw_predictions),
                           weights=sample_weight)
 
     @abstractmethod
     def pointwise_loss(self, y_true, raw_predictions):
-        """Return loss value for each input
-        """
+        """Return loss value for each input"""
 
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
@@ -261,7 +259,8 @@ class LeastAbsoluteDeviation(BaseLoss):
                                        - raw_predictions[indices])
             else:
                 median_res = _weighted_percentile(y_true[indices]
-                                                  - raw_predictions[indices])
+                                                  - raw_predictions[indices],
+                                                  percentile=50)
             leaf.value = grower.shrinkage * median_res
             # Note that the regularization is ignored here
 
