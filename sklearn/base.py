@@ -319,8 +319,7 @@ class BaseEstimator:
             self.__dict__.update(state)
 
     def __sizeof__(self):
-        return sum(x.nbytes if hasattr(x, 'nbytes') else sys.getsizeof(x)
-                   for x in self.__dict__.values())
+        return _sizeof(self)
 
     def _more_tags(self):
         return _DEFAULT_TAGS
@@ -337,9 +336,17 @@ class BaseEstimator:
         return collected_tags
 
 
+def _sizeof(cls):
+    return sum(x.nbytes if hasattr(x, 'nbytes') else sys.getsizeof(x)
+               for x in cls.__dict__.values())
+
+
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
     def score(self, X, y, sample_weight=None):
         """
@@ -372,6 +379,9 @@ class ClassifierMixin:
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
@@ -439,6 +449,9 @@ class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
 
+    def __sizeof__(self):
+        return _sizeof(self)
+
     def fit_predict(self, X, y=None):
         """
         Perform clustering on X and returns cluster labels.
@@ -464,6 +477,9 @@ class ClusterMixin:
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
     @property
     def biclusters_(self):
@@ -540,6 +556,9 @@ class BiclusterMixin:
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
+    def __sizeof__(self):
+        return _sizeof(self)
+
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it.
 
@@ -574,6 +593,9 @@ class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"
 
+    def __sizeof__(self):
+        return _sizeof(self)
+
     def score(self, X, y=None):
         """Returns the score of the model on the data X
 
@@ -591,6 +613,9 @@ class DensityMixin:
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
     def fit_predict(self, X, y=None):
         """Perform fit on X and returns labels for X.
@@ -618,11 +643,17 @@ class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
 
+    def __sizeof__(self):
+        return _sizeof(self)
+
 
 class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
     def _more_tags(self):
         return {'multioutput': True}
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
 
 class _UnstableArchMixin:
@@ -630,6 +661,9 @@ class _UnstableArchMixin:
     def _more_tags(self):
         return {'non_deterministic': (
             _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
+
+    def __sizeof__(self):
+        return _sizeof(self)
 
 
 def is_classifier(estimator):
