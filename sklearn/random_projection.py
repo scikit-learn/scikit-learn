@@ -422,6 +422,8 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Read more in the :ref:`User Guide <gaussian_random_matrix>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     n_components : int or 'auto', optional (default = 'auto')
@@ -521,6 +523,8 @@ class SparseRandomProjection(BaseRandomProjection):
       - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
 
     Read more in the :ref:`User Guide <sparse_random_matrix>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
