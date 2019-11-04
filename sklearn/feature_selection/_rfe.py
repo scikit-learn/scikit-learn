@@ -43,7 +43,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
     features and the importance of each feature is obtained either through a
-    ``coef_`` attribute or through a ``feature_importances_`` attribute.
+    any specific attribute or callable.
     Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
@@ -77,7 +77,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         For example, give `regressor_.coef_` in case of
         `TransformedTargetRegressor`  or
-        `named_steps.clf.feature_importances_` in case of `Pipeline`
+        `named_steps.clf.feature_importances_` in case of
+        `Pipeline` with its last step named `clf`
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -159,6 +160,18 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         """
         return self._fit(X, y)
 
+    def _get_importances_auto(self, estimator):
+        if hasattr(estimator, 'coef_'):
+            getter = attrgetter('coef_')
+        elif hasattr(estimator, 'feature_importances_'):
+            getter = attrgetter('feature_importances_')
+        else:
+            raise RuntimeError('when `importance_getter == "auto"`, '
+                               'the estimator has to expose either '
+                               '"coef_" or "feature_importances_" '
+                               'attributes')
+        return getter
+
     def _fit(self, X, y, step_score=None):
         # Parameter step_score controls the calculation of self.scores_
         # step_score is not exposed to users
@@ -199,24 +212,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             estimator.fit(X[:, features], y)
 
             # Get coefs
-            if callable(self.importance_getter):
-                coefs = self.importance_getter(estimator)
-            elif (isinstance(self.importance_getter, str)
-                    and self.importance_getter != 'auto'):
-                coefs = attrgetter(self.importance_getter)(estimator)
-            elif self.importance_getter == 'auto':
-                if hasattr(estimator, 'coef_'):
-                    coefs = estimator.coef_
+            getter = self.importance_getter
+            if isinstance(getter, str):
+                if getter == 'auto':
+                    getter = self._get_importances_auto(estimator)
                 else:
-                    coefs = getattr(estimator, 'feature_importances_', None)
-                if coefs is None:
-                    raise RuntimeError('when `importance_getter == "auto"`, '
-                                       'the estimator has to expose either '
-                                       '"coef_" or "feature_importances_" '
-                                       'attributes')
-            else:
-                raise ValueError('importance_getter has to be string '
-                                 'or `callable`')
+                    getter = attrgetter(getter)
+            elif not callable(getter):
+                raise ValueError('`importance_getter` has to be a string'
+                                 ' or `callable`')
+            coefs = getter(estimator)
 
             # Get ranks
             if coefs.ndim > 1:
