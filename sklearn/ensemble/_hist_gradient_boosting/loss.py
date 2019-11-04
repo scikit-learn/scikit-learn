@@ -244,7 +244,7 @@ class LeastAbsoluteDeviation(BaseLoss):
                 gradients, hessians, y_true, raw_predictions, sample_weight)
 
     def update_leaves_values(self, grower, y_true, raw_predictions,
-                             sample_weights):
+                             sample_weight):
         # Update the values predicted by the tree with
         # median(y_true - raw_predictions).
         # See note about need_update_leaves_values in BaseLoss.
@@ -254,12 +254,13 @@ class LeastAbsoluteDeviation(BaseLoss):
         # requires a cython version of median()
         for leaf in grower.finalized_leaves:
             indices = leaf.sample_indices
-            if sample_weights is None:
+            if sample_weight is None:
                 median_res = np.median(y_true[indices]
                                        - raw_predictions[indices])
             else:
                 median_res = _weighted_percentile(y_true[indices]
                                                   - raw_predictions[indices],
+                                                  sample_weight=sample_weight,
                                                   percentile=50)
             leaf.value = grower.shrinkage * median_res
             # Note that the regularization is ignored here
