@@ -34,21 +34,22 @@ DOCSTRING_WHITELIST = [
 
 def get_all_methods():
     estimators = all_estimators()
-    for name, estimator in estimators:
+    for name, Estimator in estimators:
         if name.startswith("_"):
             # skip private classes
             continue
         methods = []
-        for name in dir(estimator):
+        for name in dir(Estimator):
             if name.startswith("_"):
                 continue
-            method_obj = getattr(estimator, name)
-            if hasattr(method_obj, '__call__') or name == "predict_proba":
+            method_obj = getattr(Estimator, name)
+            if (hasattr(method_obj, '__call__')
+                    or isinstance(method_obj, property)):
                 methods.append(name)
         methods.append(None)
 
         for method in sorted(methods, key=lambda x: str(x)):
-            yield estimator, method
+            yield Estimator, method
 
 
 def filter_errors(errors, method):
@@ -115,7 +116,10 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
             # In particular we can't parse the signature
             # for properties that are still callable such as
             # predict_proba
-            obj_signature = "Parsing of the method signature failed."
+            obj_signature = (
+                    "\nParsing of the method signature failed, "
+                    "possibly because this is a property."
+            )
 
         obj_name = estimator.__name__ + "." + method
     else:
@@ -137,10 +141,10 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
     return msg
 
 
-@pytest.mark.parametrize("estimator, method", get_all_methods())
-def test_docstring(estimator, method, request):
-    base_import_path = estimator.__module__
-    import_path = [base_import_path, estimator.__name__]
+@pytest.mark.parametrize("Estimator, method", get_all_methods())
+def test_docstring(Estimator, method, request):
+    base_import_path = Estimator.__module__
+    import_path = [base_import_path, Estimator.__name__]
     if method is not None:
         import_path.append(method)
 
@@ -158,7 +162,7 @@ def test_docstring(estimator, method, request):
     res["errors"] = list(filter_errors(res["errors"], method))
 
     if res["errors"]:
-        msg = repr_errors(res, estimator, method)
+        msg = repr_errors(res, Estimator, method)
 
         raise ValueError(msg)
 
