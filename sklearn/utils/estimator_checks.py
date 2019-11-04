@@ -1489,8 +1489,8 @@ def check_estimators_pickle(name, estimator_orig):
         assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
-    assert len(estimator.coef_) == 2, "Only two features; pickle msg is small"
-    assert len(pickled_estimator) <= 2 * sys.getsizeof(estimator)
+    assert X.shape[1] <= 5, "Few features; lots overhead in small msg"
+    assert len(pickled_estimator) <= 3 * sys.getsizeof(estimator)
 
     result = dict()
     for method in check_methods:
