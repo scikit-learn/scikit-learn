@@ -12,7 +12,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -128,8 +128,8 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
-                                    random_state=0).toarray()
+X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
+                                     random_state=0).toarray()
 
 
 DATASETS = {
