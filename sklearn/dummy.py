@@ -29,6 +29,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     strategy : str, default="stratified"
@@ -388,6 +390,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (real) regressors. Do not use it for real problems.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
