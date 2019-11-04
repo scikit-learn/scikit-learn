@@ -335,7 +335,7 @@ class _VectorizerMixin:
 
         Returns
         -------
-        tokenizer: object
+        tokenizer: callable
               A function to split a string into a sequence of tokens.
         """
         if self.tokenizer is not None:
