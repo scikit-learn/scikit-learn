@@ -113,6 +113,8 @@ def _yield_checks(name, estimator):
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     yield check_estimators_pickle
+    # Test the pickle size is estimated correctly with many features
+    yield check_estimators_pickle_many_features
 
 
 def _yield_classifier_checks(name, classifier):
