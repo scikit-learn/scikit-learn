@@ -7,7 +7,6 @@ Base class for ensemble-based estimators.
 
 from abc import ABCMeta, abstractmethod
 import numbers
-import sys
 import warnings
 
 import numpy as np
