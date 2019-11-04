@@ -197,7 +197,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(TransformerMixin, BaseEstimator):
-    """Transforms features by scaling each feature to a given range.
+    """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, e.g. between
@@ -225,36 +225,36 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    copy : boolean, optional, default True
+    copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
     Attributes
     ----------
-    min_ : ndarray, shape (n_features,)
+    min_ : ndarray of shape (n_features,)
         Per feature adjustment for minimum. Equivalent to
         ``min - X.min(axis=0) * self.scale_``
 
-    scale_ : ndarray, shape (n_features,)
+    scale_ : ndarray of shape (n_features,)
         Per feature relative scaling of the data. Equivalent to
         ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
         .. versionadded:: 0.17
            *scale_* attribute.
 
-    data_min_ : ndarray, shape (n_features,)
+    data_min_ : ndarray of shape (n_features,)
         Per feature minimum seen in the data
 
         .. versionadded:: 0.17
            *data_min_*
 
-    data_max_ : ndarray, shape (n_features,)
+    data_max_ : ndarray of shape (n_features,)
         Per feature maximum seen in the data
 
         .. versionadded:: 0.17
            *data_max_*
 
-    data_range_ : ndarray, shape (n_features,)
+    data_range_ : ndarray of shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
         .. versionadded:: 0.17
@@ -317,14 +317,14 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             del self.data_range_
 
     def fit(self, X, y=None):
-        """
-        Compute the minimum and maximum to be used for later scaling.
+        """Compute the minimum and maximum to be used for later scaling.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
+
         y : None
             Ignored.
 
@@ -339,8 +339,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """
-        Online computation of min and max on X for later scaling.
+        """Online computation of min and max on X for later scaling.
 
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
@@ -348,7 +347,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
@@ -395,17 +394,16 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """
-        Scaling features of X according to feature_range.
+        """Scale features of X according to feature_range.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Input data that will be transformed.
 
         Returns
         -------
-        Xt : array-like, shape [n_samples, n_features]
+        Xt : array-like of shape (n_samples, n_features)
             Transformed data.
         """
         check_is_fitted(self)
@@ -418,12 +416,11 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """
-        Undo the scaling of X according to feature_range.
+        """Undo the scaling of X according to feature_range.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Input data that will be transformed. It cannot be sparse.
 
         Returns
@@ -445,7 +442,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
-    """Transforms features by scaling each feature to a given range.
+    """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, i.e. between
@@ -474,17 +471,17 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data.
 
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    axis : int (0 by default)
-        axis used to scale along. If 0, independently scale each feature,
+    axis : int, default=0
+        Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
-    copy : boolean, optional, default is True
+    copy : bool, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
@@ -962,9 +959,10 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
 
         y : None
             Ignored.
+
         Returns
         -------
-        self
+        self : object
             Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
