@@ -362,8 +362,8 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     def _check_proba(self):
         if not all([hasattr(estimator, "predict_proba")
                     for estimator in self.estimators_]):
-            raise AttributeError("The base estimator should implement "
-                             "predict_proba method")
+            raise AttributeError("The base estimator should "
+                                 "implement predict_proba method")
 
     @property
     def predict_proba(self):
