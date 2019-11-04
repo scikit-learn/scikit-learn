@@ -46,6 +46,6 @@ def test_fetch_asframe():
     bunch = fetch(as_frame=True)
     frame = bunch.frame
     assert hasattr(bunch, 'frame') is True
-    assert (frame.shape == (20640, 9))
+    assert frame.shape == (20640, 9)
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.DataFrame)
