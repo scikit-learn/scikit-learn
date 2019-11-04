@@ -3,7 +3,6 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from functools import partial
 from itertools import product
 import struct
 
@@ -1121,7 +1120,8 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    with pytest.raises(ValueError):
+    expected_err = r"Singleton.* cannot be considered a valid collection"
+    with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.ones(101)
