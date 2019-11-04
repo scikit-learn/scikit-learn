@@ -10,7 +10,9 @@ from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import (RandomForestClassifier,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
 
@@ -338,16 +340,31 @@ def test_threshold_without_refitting():
     assert X_transform.shape[1] > model.transform(data).shape[1]
 
 
+def test_fit_accepts_nan_inf():
+    # Test that fit doesn't check for np.inf and np.nan values.
+    clf = HistGradientBoostingClassifier(random_state=0)
+
+    model = SelectFromModel(estimator=clf)
+
+    nan_data = data.copy()
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.fit(data, y)
+
+
 def test_transform_accepts_nan_inf():
     # Test that transform doesn't check for np.inf and np.nan values.
     clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    nan_data = data.copy()
 
     model = SelectFromModel(estimator=clf)
-    model.fit(data, y)
+    model.fit(nan_data, y)
 
-    data[0] = np.NaN
-    data[1] = np.Inf
-    model.transform(data)
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.transform(nan_data)
 
 
 def test_allow_nan_tag_comes_from_estimator():
