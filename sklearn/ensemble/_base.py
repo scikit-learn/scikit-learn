@@ -254,7 +254,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return names, estimators
 
     def set_params(self, **params):
-        """Set the parameters of an estimator from the ensemble.
+        """
+        Set the parameters of an estimator from the ensemble.
 
         Valid parameter keys can be listed with `get_params()`.
 
@@ -271,7 +272,8 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         return self
 
     def get_params(self, deep=True):
-        """Get the parameters of an estimator from the ensemble.
+        """
+        Get the parameters of an estimator from the ensemble.
 
         Parameters
         ----------
