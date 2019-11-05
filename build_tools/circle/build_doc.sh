@@ -133,6 +133,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib memory_profiler
 
 source activate testenv
+pip install -U pip
 pip install sphinx-gallery==0.3.1
 pip install numpydoc==0.9
 
