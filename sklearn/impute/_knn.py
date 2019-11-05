@@ -1,4 +1,3 @@
-
 # Authors: Ashim Bhattarai <ashimb9@gmail.com>
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
