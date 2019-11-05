@@ -210,7 +210,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
                                dense_output=True) + self.intercept_
 
     def predict(self, X):
-        """Predict using the linear model
+        """
+        Predict using the linear model.
 
         Parameters
         ----------
@@ -245,7 +246,8 @@ class LinearClassifierMixin(ClassifierMixin):
     """
 
     def decision_function(self, X):
-        """Predict confidence scores for samples.
+        """
+        Predict confidence scores for samples.
 
         The confidence score for a sample is the signed distance of that
         sample to the hyperplane.
@@ -276,7 +278,8 @@ class LinearClassifierMixin(ClassifierMixin):
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
-        """Predict class labels for samples in X.
+        """
+        Predict class labels for samples in X.
 
         Parameters
         ----------
@@ -319,7 +322,8 @@ class SparseCoefMixin:
     """
 
     def densify(self):
-        """Convert coefficient matrix to dense array format.
+        """
+        Convert coefficient matrix to dense array format.
 
         Converts the ``coef_`` member (back) to a numpy.ndarray. This is the
         default format of ``coef_`` and is required for fitting, so calling
@@ -328,7 +332,8 @@ class SparseCoefMixin:
 
         Returns
         -------
-        self : estimator
+        self
+            Fitted estimator.
         """
         msg = "Estimator, %(name)s, must be fitted before densifying."
         check_is_fitted(self, msg=msg)
@@ -337,13 +342,19 @@ class SparseCoefMixin:
         return self
 
     def sparsify(self):
-        """Convert coefficient matrix to sparse format.
+        """
+        Convert coefficient matrix to sparse format.
 
         Converts the ``coef_`` member to a scipy.sparse matrix, which for
         L1-regularized models can be much more memory- and storage-efficient
         than the usual numpy.ndarray representation.
 
         The ``intercept_`` member is not converted.
+
+        Returns
+        -------
+        self
+            Fitted estimator.
 
         Notes
         -----
@@ -355,10 +366,6 @@ class SparseCoefMixin:
 
         After calling this method, further fitting with the partial_fit
         method (if any) will not work until you call densify.
-
-        Returns
-        -------
-        self : estimator
         """
         msg = "Estimator, %(name)s, must be fitted before sparsifying."
         check_is_fitted(self, msg=msg)
@@ -370,14 +377,18 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     Ordinary least squares Linear Regression.
 
+    LinearRegression fits a linear model with coefficients w = (w1, ..., wp)
+    to minimize the residual sum of squares between the observed targets in
+    the dataset, and the targets predicted by the linear approximation.
+
     Parameters
     ----------
-    fit_intercept : boolean, optional, default True
-        whether to calculate the intercept for this model. If set
+    fit_intercept : bool, optional, default True
+        Whether to calculate the intercept for this model. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default False
+    normalize : bool, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -385,7 +396,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
         an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : bool, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
     n_jobs : int or None, optional (default=None)
@@ -413,6 +424,22 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
+    See Also
+    --------
+    sklearn.linear_model.Ridge : Ridge regression addresses some of the
+        problems of Ordinary Least Squares by imposing a penalty on the
+        size of the coefficients with l2 regularization.
+    sklearn.linear_model.Lasso : The Lasso is a linear model that estimates
+        sparse coefficients with l1 regularization.
+    sklearn.linear_model.ElasticNet : Elastic-Net is a linear regression
+        model trained with both l1 and l2 -norm regularization of the
+        coefficients.
+
+    Notes
+    -----
+    From the implementation point of view, this is just plain Ordinary
+    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+
     Examples
     --------
     >>> import numpy as np
@@ -429,12 +456,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     3.0000...
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
-
-    Notes
-    -----
-    From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
-
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,

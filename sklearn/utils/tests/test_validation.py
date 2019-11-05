@@ -26,7 +26,7 @@ from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -93,7 +93,7 @@ def test_as_float_array():
     matrices = [
         np.matrix(np.arange(5)),
         sp.csc_matrix(np.arange(5)).toarray(),
-        sparse_random_matrix(10, 10, density=0.10).toarray()
+        _sparse_random_matrix(10, 10, density=0.10).toarray()
     ]
     for M in matrices:
         N = as_float_array(M, copy=True)
