@@ -1284,7 +1284,8 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
 )
 def test_imputation_order(order, idx_order):
     # regression test for #15393
-    X = np.random.rand(100, 5)
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 5)
     X[:50, 1] = np.nan
     X[:30, 0] = np.nan
     X[:20, 2] = np.nan
@@ -1292,6 +1293,7 @@ def test_imputation_order(order, idx_order):
 
     with pytest.warns(ConvergenceWarning):
         trs = IterativeImputer(max_iter=1,
-                               imputation_order=order).fit(X)
+                               imputation_order=order,
+                               random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
