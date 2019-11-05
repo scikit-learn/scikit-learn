@@ -157,19 +157,19 @@ def test_top_k_accuracy_score():
     # Test top_k_accuracy_score on synthetic five-class prediction task
     y_true = np.array([2, 1, 2, 3])
     # Correct classes in pred_proba are at ranks 2, 4, 3, 4
-    pred_proba = np.array([[0.3, 0.2, 0.25, 0.15, 0.1],
+    y_scores = np.array([[0.3, 0.2, 0.25, 0.15, 0.1],
                            [0.2, 0.06, 0.1, 0.04, 0.6],
                            [0.1, 0.15, 0.2, 0.3, 0.25],
                            [0.4, 0.05, 0.25, 0.1, 0.2]])
 
     # edge case, perfect accuracy
-    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=5), 1.0)
+    assert top_k_accuracy_score(y_true, y_scores, k=5) == 1.0
 
-    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=1),
-                 accuracy_score(y_true, np.argmax(pred_proba, axis=1)))
-    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=2), 0.25)
-    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=3), 0.5)
-    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=4), 1.0)
+    assert top_k_accuracy_score(y_true, y_scores, k=1) == \
+                 accuracy_score(y_true, np.argmax(y_scores, axis=1))
+    assert top_k_accuracy_score(y_true, y_scores, k=2) == 0.25
+    assert top_k_accuracy_score(y_true, y_scores, k=3) == 0.5
+    assert top_k_accuracy_score(y_true, y_scores, k=4) == 1.0
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
