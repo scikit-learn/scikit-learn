@@ -14,8 +14,6 @@ See http://scikit-learn.org for complete documentation.
 """
 import sys
 import re
-import textwrap
-import warnings
 import logging
 import os
 
@@ -75,8 +73,6 @@ else:
     from . import __check_build
     from .base import clone
     from .utils._show_versions import show_versions
-    from .utils._openmp_helpers import _openmp_supported
-    from .exceptions import EfficiencyWarning
 
     __check_build  # avoid flakes unused variable error
 
@@ -93,20 +89,6 @@ else:
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
-
-    if not _openmp_supported():
-        base_url = "dev" if __version__.endswith(".dev0") else "stable"
-        message = textwrap.dedent(
-            """
-
-            Scikit-learn has been built without OpenMP support. Some estimators
-            will run in sequential mode instead of leveraging thread-based
-            parallelism. You can find instructions to build scikit-learn with
-            OpenMP support at this address:
-
-                https://scikit-learn.org/{}/developers/advanced_installation.html
-            """)
-        warnings.warn(message.format(base_url), EfficiencyWarning)
 
 
 def setup_module(module):
