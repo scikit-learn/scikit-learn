@@ -535,7 +535,7 @@ class TSNE(BaseEstimator):
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : str or callable, optional
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -547,7 +547,7 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : str or numpy array, optional (default: "random")
+    init : : {'random', 'pca'} or ndarray of shape (n_samples, n_components), default="random"
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
@@ -563,7 +563,7 @@ class TSNE(BaseEstimator):
         by `np.random`.  Note that different initializations might result in
         different local minima of the cost function.
 
-    method : str (default: 'barnes_hut')
+    method : {'exact', 'barnet_hut'}, default= 'barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -608,13 +608,10 @@ class TSNE(BaseEstimator):
     See Also
     --------
     PCA
-        Principal component analysis (PCA)
-    LocallyLinearEmbedding
-        Locally Linear Embedding
+        Principal Component Analysis which can be used for visualization
+        by a linear decomposition
     Isomap
         Non-linear dimensionality reduction through Isometric Mapping
-    MDS
-        Multidimensional scaling
 
     References
     ----------
