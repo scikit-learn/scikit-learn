@@ -452,6 +452,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
+    .. versionadded:: 0.15
+
     Parameters
     ----------
     base_estimator : object or None, optional (default=None)
@@ -851,6 +853,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     Random Patches [4]_.
 
     Read more in the :ref:`User Guide <bagging>`.
+
+    .. versionadded:: 0.15
 
     Parameters
     ----------

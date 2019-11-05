@@ -2,6 +2,7 @@
 Testing Recursive feature elimination
 """
 
+import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
@@ -57,6 +58,9 @@ class MockClassifier:
 
     def set_params(self, **params):
         return self
+
+    def _get_tags(self):
+        return {}
 
 
 def test_rfe_features_importance():
@@ -423,3 +427,23 @@ def test_importance_getter_param_validation():
                   RFECV(log_estimator,
                         importance_getter=[0]).fit,
                   X, y)
+@pytest.mark.parametrize("cv", [
+    None,
+    5
+])
+def test_rfe_allow_nan_inf_in_x(cv):
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+
+    # add nan and inf value to X
+    X[0][0] = np.NaN
+    X[0][1] = np.Inf
+
+    clf = MockClassifier()
+    if cv is not None:
+        rfe = RFECV(estimator=clf, cv=cv)
+    else:
+        rfe = RFE(estimator=clf)
+    rfe.fit(X, y)
+    rfe.transform(X)
