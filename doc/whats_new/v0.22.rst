@@ -423,7 +423,8 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
   imputed in the reverse desired order with ``imputation_order`` either
-  ``"ascending"`` or ``"descending"``. :pr:`15393` by :user:`<venkyyuvy>`.
+  ``"ascending"`` or ``"descending"``. :pr:`15393` by :user:
+  `Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.inspection`
 .........................
