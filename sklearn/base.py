@@ -435,7 +435,8 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Perform clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -443,12 +444,12 @@ class ClusterMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -535,7 +536,8 @@ class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it.
+        """
+        Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
@@ -548,11 +550,13 @@ class TransformerMixin:
         y : numpy array of shape [n_samples]
             Target values.
 
+        **fit_params : dict
+            Additional fit parameters.
+
         Returns
         -------
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
-
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -587,7 +591,7 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs fit on X and returns labels for X.
+        """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -597,7 +601,7 @@ class OutlierMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
