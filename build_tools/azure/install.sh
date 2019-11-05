@@ -47,8 +47,18 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
-        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
-        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
+        if [[ "$SKLEARN_TEST_NO_OPENMP" == "true" ]]; then
+            # to test sklearn built without OpenMP support, we do nothing to
+            # enable OpenMP.
+            # We set SKLEARN_SKIP_OPENMP_TEST to skip the test checking that
+            # scikit-learn has been built with OpenMP.
+            export SKLEARN_SKIP_OPENMP_TEST=1
+        else
+            # to test sklearn built with OpenMP support, on macOS, install an
+            # OpenMP-enabled clang/llvm from conda-forge.
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+                        conda-forge::llvm-openmp"
+        fi
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
