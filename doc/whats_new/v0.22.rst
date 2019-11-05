@@ -110,7 +110,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-
 :mod:`sklearn.base`
 ...................
 
@@ -367,6 +366,15 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
+- |Enhancement| Updated the following :mod:`feature_selection` estimators to allow
+  NaN/Inf values in ``transform`` and ``fit``:
+  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV`,
+  :class:`feature_selection.SelectFromModel`,
+  and :class:`feature_selection.VarianceThreshold`. Note that if the underlying
+  estimator of the feature selector does not allow NaN/Inf then it will still
+  error, but the feature selectors themselves no longer enforce this
+  restriction unnecessarily. :issue:`11635` by :user:`Alec Peters <adpeters>`.
 
 - |Fix| Fixed a bug where :class:`feature_selection.VarianceThreshold` with
   `threshold=0` did not remove constant features due to numerical instability,
