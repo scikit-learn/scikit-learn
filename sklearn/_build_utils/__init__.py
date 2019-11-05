@@ -20,7 +20,7 @@ def get_cython_version():
     # Try to find pyproject.toml
     pyproject_toml = join(dirname(__file__), '..', '..', 'pyproject.toml')
     if not os.path.exists(pyproject_toml):
-        raise ImportError()
+        raise ImportError("Unable to locate file pyproject.toml")
 
     # Try to find the minimum version from pyproject.toml
     with open(pyproject_toml) as pt:
@@ -31,33 +31,13 @@ def get_cython_version():
             required_version, _ = line.split('"')
             return required_version
         else:
-            raise ImportError()
+            raise KeyError("Can't find cython min version in pyproject.toml")
 
 
 CYTHON_MIN_VERSION = get_cython_version()
 
 
-def build_from_c_and_cpp_files(extensions):
-    """Modify the extensions to build from the .c and .cpp files.
-
-    This is useful for releases, this way cython is not required to
-    run python setup.py install.
-    """
-    for extension in extensions:
-        sources = []
-        for sfile in extension.sources:
-            path, ext = os.path.splitext(sfile)
-            if ext in ('.pyx', '.py'):
-                if extension.language == 'c++':
-                    ext = '.cpp'
-                else:
-                    ext = '.c'
-                sfile = path + ext
-            sources.append(sfile)
-        extension.sources = sources
-
-
-def generate_cythonize_extensions(top_path, config):
+def cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
     with_openmp = check_openmp_support()
 

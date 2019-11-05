@@ -1,7 +1,7 @@
 import sys
 import os
 
-from sklearn._build_utils import generate_cythonize_extensions
+from sklearn._build_utils import cythonize_extensions
 from sklearn._build_utils.deprecated_modules import (
     _create_deprecated_modules_files
 )
@@ -80,7 +80,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tests')
 
     if 'sdist' not in sys.argv:
-        generate_cythonize_extensions(top_path, config)
+        cythonize_extensions(top_path, config)
 
     return config
 
