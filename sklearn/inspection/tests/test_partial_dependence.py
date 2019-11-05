@@ -442,7 +442,7 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-def check_hist_gbdt_sw_not_supported():
+def test_hist_gbdt_sw_not_supported():
     # TODO: remove/fix when PDP supports HGBT with sample weights
     clf = HistGradientBoostingRegressor(random_state=1)
     clf.fit(X, y, sample_weight=np.ones(len(X)))
