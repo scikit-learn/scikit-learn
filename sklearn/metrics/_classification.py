@@ -206,11 +206,11 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
         Ground truth (correct) classes.
 
     y_score : 2d array-like, shape [n_samples, n_classes]
-        For each sample, each row represents the likelihood of each possible class.
-        The number of columns must be equal to number of classes.
+        For each sample, each row represents the likelihood of each possible
+        class. The number of columns must be equal to number of classes.
     k : int, optional (default=5)
-        Predictions are counted as correct if probability of correct class is in the
-        top-k classes.
+        Predictions are counted as correct if probability of correct class is
+        in the top-k classes.
 
     normalize : bool, optional (default=True)
         If ``False``, return the number of top-k correctly classified samples.

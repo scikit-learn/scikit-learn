@@ -166,7 +166,7 @@ def test_top_k_accuracy_score():
     assert top_k_accuracy_score(y_true, y_scores, k=5) == 1.0
 
     assert top_k_accuracy_score(y_true, y_scores, k=1) == \
-                 accuracy_score(y_true, np.argmax(y_scores, axis=1))
+        accuracy_score(y_true, np.argmax(y_scores, axis=1))
     assert top_k_accuracy_score(y_true, y_scores, k=2) == 0.25
     assert top_k_accuracy_score(y_true, y_scores, k=3) == 0.5
     assert top_k_accuracy_score(y_true, y_scores, k=4) == 1.0
