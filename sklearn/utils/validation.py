@@ -1127,9 +1127,10 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
     if max_eig < 0:
-        raise ValueError("All eigenvalues are negative (maximum is %f). The "
-                         "matrix is maybe not PSD, or something went wrong "
-                         "with the eigenvalues decomposition." % max_eig)
+        raise ValueError("All eigenvalues are negative (maximum is %f). "
+                         "Either the matrix is not PSD, or there was an "
+                         "issue while computing the eigendecomposition of "
+                         "the matrix" % max_eig)
 
     else:
         min_eig = lambdas.min()
