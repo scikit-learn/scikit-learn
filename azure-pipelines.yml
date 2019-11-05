@@ -115,6 +115,7 @@ jobs:
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
         SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
 
 - template: build_tools/azure/windows.yml
   parameters:
