@@ -1,6 +1,5 @@
 import os
 import pytest
-import textwrap
 
 from sklearn.utils._openmp_helpers import _openmp_supported
 
