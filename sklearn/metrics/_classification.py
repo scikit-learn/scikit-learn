@@ -246,9 +246,9 @@ def top_k_accuracy_score(y_true, y_score, k=5, normalize=True):
     >>> import numpy as np
     >>> from sklearn.metrics import top_k_accuracy_score
     >>> y_scores = np.array([[0.1, 0.3, 0.4, 0.2],
-    ...                    [0.4, 0.3, 0.2, 0.1],
-    ...                    [0.2, 0.3, 0.4, 0.1],
-    ...                    [0.8, 0.1, 0.025, 0.075]])
+    ...                      [0.4, 0.3, 0.2, 0.1],
+    ...                      [0.2, 0.3, 0.4, 0.1],
+    ...                      [0.8, 0.1, 0.025, 0.075]])
     >>> y_true = np.array([2, 2, 2, 1])
     >>> top_k_accuracy_score(y_true, y_scores, k=1)
     0.5
