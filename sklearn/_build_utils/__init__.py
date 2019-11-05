@@ -128,4 +128,3 @@ def gen_from_templates(templates, top_path):
 
             with open(outfile, "w") as f:
                 f.write(tmpl_)
-
