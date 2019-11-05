@@ -260,7 +260,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def threshold_(self):
-        scores = _get_feature_importances(self.estimator_, self.norm_order)
+        scores = _get_feature_importances(self.importance_getter,
+                                          self.estimator_, self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')
