@@ -580,23 +580,6 @@ def test_sample_weight_invalid():
     clf = DummyClassifier().fit(X, y, sample_weight)
     assert_array_almost_equal(clf.class_prior_, [0.2 / 1.2, 1. / 1.2])
 
-    sample_weight = np.random.rand(3, 1)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.array(0)
-    expected_err = r"Singleton.* cannot be considered a valid collection"
-    with pytest.raises(TypeError, match=expected_err):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(4)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(2)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
 
 def test_constant_strategy_sparse_target():
     X = [[0]] * 5  # ignored
