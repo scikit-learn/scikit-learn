@@ -40,6 +40,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
+from .utils import deprecated
 
 
 __all__ = ["SparseRandomProjection",
@@ -150,7 +151,14 @@ def _check_input_size(n_components, n_features):
                          n_features)
 
 
+# TODO: remove in 0.24
+@deprecated("gaussian_random_matrix is deprecated in "
+            "0.22 and will be removed in version 0.24.")
 def gaussian_random_matrix(n_components, n_features, random_state=None):
+    return _gaussian_random_matrix(n_components, n_features, random_state)
+
+
+def _gaussian_random_matrix(n_components, n_features, random_state=None):
     """Generate a dense Gaussian random matrix.
 
     The components of the random matrix are drawn from
@@ -182,7 +190,6 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     See Also
     --------
     GaussianRandomProjection
-    sparse_random_matrix
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
@@ -192,8 +199,17 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     return components
 
 
+# TODO: remove in 0.24
+@deprecated("gaussian_random_matrix is deprecated in "
+            "0.22 and will be removed in version 0.24.")
 def sparse_random_matrix(n_components, n_features, density='auto',
                          random_state=None):
+    return _sparse_random_matrix(n_components, n_features, density,
+                                 random_state)
+
+
+def _sparse_random_matrix(n_components, n_features, density='auto',
+                          random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
@@ -241,7 +257,6 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     See Also
     --------
     SparseRandomProjection
-    gaussian_random_matrix
 
     References
     ----------
@@ -502,9 +517,9 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         """
         random_state = check_random_state(self.random_state)
-        return gaussian_random_matrix(n_components,
-                                      n_features,
-                                      random_state=random_state)
+        return _gaussian_random_matrix(n_components,
+                                       n_features,
+                                       random_state=random_state)
 
 
 class SparseRandomProjection(BaseRandomProjection):
@@ -644,7 +659,7 @@ class SparseRandomProjection(BaseRandomProjection):
         """
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
-        return sparse_random_matrix(n_components,
-                                    n_features,
-                                    density=self.density_,
-                                    random_state=random_state)
+        return _sparse_random_matrix(n_components,
+                                     n_features,
+                                     density=self.density_,
+                                     random_state=random_state)
