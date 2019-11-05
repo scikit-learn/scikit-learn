@@ -7,7 +7,6 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 from operator import attrgetter
-import pytest
 
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
@@ -427,6 +426,8 @@ def test_importance_getter_param_validation():
                   RFECV(log_estimator,
                         importance_getter=[0]).fit,
                   X, y)
+
+
 @pytest.mark.parametrize("cv", [
     None,
     5
