@@ -25,7 +25,9 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 
 
-__all__ = ['ColumnTransformer', 'make_column_transformer']
+__all__ = [
+    'ColumnTransformer', 'make_column_transformer', 'make_column_selector'
+]
 
 
 _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
@@ -69,7 +71,8 @@ boolean mask array or callable
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
-            above.
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_transformer`.
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -145,6 +148,8 @@ boolean mask array or callable
     sklearn.compose.make_column_transformer : convenience function for
         combining the outputs of multiple transformer objects applied to
         column subsets of the original feature space.
+    sklearn.compose.make_column_selector : convenience function for selecting
+        columns based on datatype or the columns name with a regex pattern.
 
     Examples
     --------
@@ -759,3 +764,76 @@ def _is_negative_indexing(key):
     elif _determine_key_type(key) == 'int':
         return np.any(np.asarray(key) < 0)
     return False
+
+
+class make_column_selector:
+    """Create a callable to select columns to be used with
+    :class:`ColumnTransformer`.
+
+    :func:`make_column_selector` can select columns based on datatype or the
+    columns name with a regex. When using multiple selection criteria, **all**
+    criteria must match for a column to be selected.
+
+    Parameters
+    ----------
+    pattern : str, default=None
+        Name of columns containing this regex pattern will be included. If
+        None, column selection will not be selected based on pattern.
+
+    dtype_include : column dtype or list of column dtypes, default=None
+        A selection of dtypes to include. For more details, see
+        :meth:`pandas.DataFrame.select_dtypes`.
+
+    dtype_exclude : column dtype or list of column dtypes, default=None
+        A selection of dtypes to exclude. For more details, see
+        :meth:`pandas.DataFrame.select_dtypes`.
+
+    Returns
+    -------
+    selector : callable
+        Callable for column selection to be used by a
+        :class:`ColumnTransformer`.
+
+    See also
+    --------
+    sklearn.compose.ColumnTransformer : Class that allows combining the
+        outputs of multiple transformer objects used on column subsets
+        of the data into a single feature space.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    >>> from sklearn.compose import make_column_transformer
+    >>> from sklearn.compose import make_column_selector
+    >>> import pandas as pd  # doctest: +SKIP
+    >>> X = pd.DataFrame({'city': ['London', 'London', 'Paris', 'Sallisaw'],
+    ...                   'rating': [5, 3, 4, 5]})  # doctest: +SKIP
+    >>> ct = make_column_transformer(
+    ...       (StandardScaler(),
+    ...        make_column_selector(dtype_include=np.number)),  # rating
+    ...       (OneHotEncoder(),
+    ...        make_column_selector(dtype_include=object)))  # city
+    >>> ct.fit_transform(X)  # doctest: +SKIP
+    array([[ 0.90453403,  1.        ,  0.        ,  0.        ],
+           [-1.50755672,  1.        ,  0.        ,  0.        ],
+           [-0.30151134,  0.        ,  1.        ,  0.        ],
+           [ 0.90453403,  0.        ,  0.        ,  1.        ]])
+    """
+
+    def __init__(self, pattern=None, dtype_include=None, dtype_exclude=None):
+        self.pattern = pattern
+        self.dtype_include = dtype_include
+        self.dtype_exclude = dtype_exclude
+
+    def __call__(self, df):
+        if not hasattr(df, 'iloc'):
+            raise ValueError("make_column_selector can only be applied to "
+                             "pandas dataframes")
+        df_row = df.iloc[:1]
+        if self.dtype_include is not None or self.dtype_exclude is not None:
+            df_row = df_row.select_dtypes(include=self.dtype_include,
+                                          exclude=self.dtype_exclude)
+        cols = df_row.columns
+        if self.pattern is not None:
+            cols = cols[cols.str.contains(self.pattern, regex=True)]
+        return cols.tolist()
