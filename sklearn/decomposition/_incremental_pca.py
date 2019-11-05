@@ -37,6 +37,8 @@ class IncrementalPCA(_BasePCA):
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     n_components : int or None, (default=None)

@@ -194,17 +194,19 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
             unconverged = (np.sum((se == convergence_iter) + (se == 0))
                            != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
+                never_converged = False
                 if verbose:
                     print("Converged after %d iterations." % it)
                 break
     else:
+        never_converged = True
         if verbose:
             print("Did not converge")
 
     I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
-    if K > 0:
+    if K > 0 and not never_converged:
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
@@ -408,6 +410,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             Cluster labels.
         """
         check_is_fitted(self)
+        X = check_array(X)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
