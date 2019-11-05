@@ -162,8 +162,8 @@ def test_format_invariance(metric_name):
         yield y, 'array of ints'
         yield y.tolist(), 'list of ints'
         yield [str(x) + "-a" for x in y.tolist()], 'list of strs'
-        yield (np.array([str(x) + "-a" for x in y.tolist()], dtype=object)
-               , 'array of strs')
+        yield (np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
+               'array of strs')
         yield y - 1, 'including negative ints'
         yield y + 1, 'strictly positive ints'
 
