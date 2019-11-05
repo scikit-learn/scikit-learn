@@ -4,10 +4,8 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
@@ -137,17 +135,17 @@ def test_correct_labelsize():
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    err_msg = (r'Number of labels is %d\. Valid values are 2 '
+               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
+    with pytest.raises(ValueError, match=err_msg):
+        silhouette_score(X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
-    assert_raises_regexp(ValueError,
-                         r'Number of labels is %d\. Valid values are 2 '
-                         r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)),
-                         silhouette_score, X, y)
+    err_msg = (r'Number of labels is %d\. Valid values are 2 '
+               r'to n_samples - 1 \(inclusive\)' % len(np.unique(y)))
+    with pytest.raises(ValueError, match=err_msg):
+        silhouette_score(X, y)
 
 
 def test_non_encoded_labels():
@@ -168,20 +166,38 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)) == silhouette_score(X, y))
 
 
+@pytest.mark.parametrize('dtype', (np.float32, np.float64))
+def test_silhouette_nonzero_diag(dtype):
+    # Make sure silhouette_samples requires diagonal to be zero.
+    # Non-regression test for #12178
+
+    # Construct a zero-diagonal matrix
+    dists = pairwise_distances(
+        np.array([[0.2, 0.1, 0.12, 1.34, 1.11, 1.6]], dtype=dtype).T)
+    labels = [0, 0, 0, 1, 1, 1]
+
+    # small values on the diagonal are OK
+    dists[2][2] = np.finfo(dists.dtype).eps * 10
+    silhouette_samples(dists, labels, metric='precomputed')
+
+    # values bigger than eps * 100 are not
+    dists[2][2] = np.finfo(dists.dtype).eps * 1000
+    with pytest.raises(ValueError, match='contains non-zero'):
+        silhouette_samples(dists, labels, metric='precomputed')
+
+
 def assert_raises_on_only_one_label(func):
     """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.zeros(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.zeros(10))
 
 
 def assert_raises_on_all_points_same_cluster(func):
     """Assert message when all point are in different clusters"""
     rng = np.random.RandomState(seed=0)
-    assert_raise_message(ValueError, "Number of labels is",
-                         func,
-                         rng.rand(10, 2), np.arange(10))
+    with pytest.raises(ValueError, match="Number of labels is"):
+        func(rng.rand(10, 2), np.arange(10))
 
 
 def test_calinski_harabasz_score():
@@ -209,7 +225,7 @@ def test_deprecated_calinski_harabaz_score():
     depr_message = ("Function 'calinski_harabaz_score' has been renamed "
                     "to 'calinski_harabasz_score' "
                     "and will be removed in version 0.23.")
-    assert_warns_message(DeprecationWarning, depr_message,
+    assert_warns_message(FutureWarning, depr_message,
                          calinski_harabaz_score,
                          np.ones((10, 2)), [0] * 5 + [1] * 5)
 

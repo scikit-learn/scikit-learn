@@ -24,13 +24,13 @@ def configuration(parent_package='', top_path=None):
                        extra_compiler_args=['-std=c++11'],
                        )
 
-    libsvm_sources = ['libsvm.pyx']
+    libsvm_sources = ['_libsvm.pyx']
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
                       join('src', 'libsvm', 'libsvm_template.cpp'),
                       join('src', 'libsvm', 'svm.cpp'),
                       join('src', 'libsvm', 'svm.h')]
 
-    config.add_extension('libsvm',
+    config.add_extension('_libsvm',
                          sources=libsvm_sources,
                          include_dirs=[numpy.get_include(),
                                        join('src', 'libsvm')],
@@ -56,16 +56,16 @@ def configuration(parent_package='', top_path=None):
                        extra_compiler_args=['-std=c++11'],
                        )
 
-    liblinear_sources = ['liblinear.pyx']
+    liblinear_sources = ['_liblinear.pyx']
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
-    config.add_extension('liblinear',
+    config.add_extension('_liblinear',
                          sources=liblinear_sources,
+                         libraries=['liblinear-skl'] + libraries,
                          include_dirs=[join('.', 'src', 'liblinear'),
                                        join('..', 'utils'),
                                        numpy.get_include()],
-                         libraries=['liblinear-skl'] + libraries,
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
                          )
@@ -73,8 +73,8 @@ def configuration(parent_package='', top_path=None):
     # end liblinear module
 
     # this should go *after* libsvm-skl
-    libsvm_sparse_sources = ['libsvm_sparse.pyx']
-    config.add_extension('libsvm_sparse', libraries=['libsvm-skl'],
+    libsvm_sparse_sources = ['_libsvm_sparse.pyx']
+    config.add_extension('_libsvm_sparse', libraries=['libsvm-skl'],
                          sources=libsvm_sparse_sources,
                          include_dirs=[numpy.get_include(),
                                        join("src", "libsvm")],

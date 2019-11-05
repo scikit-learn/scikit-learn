@@ -8,13 +8,14 @@
 #          Nicolas Tresegnie
 # License: BSD 3 clause
 
+from functools import wraps
 import warnings
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature
+from inspect import signature, isclass, Parameter
 
 from numpy.core.numeric import ComplexWarning
 import joblib
@@ -32,7 +33,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-def _assert_all_finite(X, allow_nan=False):
+def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
     """Like assert_all_finite, but only for ndarray."""
     # validation is also imported in extmath
     from .extmath import _safe_accumulator_op
@@ -52,7 +53,11 @@ def _assert_all_finite(X, allow_nan=False):
         if (allow_nan and np.isinf(X).any() or
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
-            raise ValueError(msg_err.format(type_err, X.dtype))
+            raise ValueError(
+                    msg_err.format
+                    (type_err,
+                     msg_dtype if msg_dtype is not None else X.dtype)
+            )
     # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
@@ -153,7 +158,6 @@ def _num_samples(x):
         return len(x)
     except TypeError:
         raise TypeError(message)
-
 
 
 def check_memory(memory):
@@ -431,7 +435,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in version 0.21 and will be "
             "removed in 0.23. Don't set `warn_on_dtype` to remove this "
             "warning.",
-            DeprecationWarning, stacklevel=2)
+            FutureWarning, stacklevel=2)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -450,6 +454,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+            dtype_orig = np.result_type(*array.dtypes)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
@@ -495,7 +501,17 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         with warnings.catch_warnings():
             try:
                 warnings.simplefilter('error', ComplexWarning)
-                array = np.asarray(array, dtype=dtype, order=order)
+                if dtype is not None and np.dtype(dtype).kind in 'iu':
+                    # Conversion float -> int should not contain NaN or
+                    # inf (numpy#14412). We cannot use casting='safe' because
+                    # then conversion float -> int would be disallowed.
+                    array = np.asarray(array, order=order)
+                    if array.dtype.kind == 'f':
+                        _assert_all_finite(array, allow_nan=False,
+                                           msg_dtype=dtype)
+                    array = array.astype(dtype, casting="unsafe", copy=False)
+                else:
+                    array = np.asarray(array, order=order, dtype=dtype)
             except ComplexWarning:
                 raise ValueError("Complex data not supported\n"
                                  "{}\n".format(array))
@@ -539,6 +555,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if not allow_nd and array.ndim >= 3:
             raise ValueError("Found array with dim %d. %s expected <= 2."
                              % (array.ndim, estimator_name))
+
         if force_all_finite:
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
@@ -748,6 +765,7 @@ def column_or_1d(y, warn=False):
     y : array
 
     """
+    y = np.asarray(y)
     shape = np.shape(y)
     if len(shape) == 1:
         return np.ravel(y)
@@ -866,33 +884,38 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
+def check_is_fitted(estimator, attributes='deprecated', msg=None,
+                    all_or_any='deprecated'):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
-    "all_or_any" of the passed attributes and raises a NotFittedError with the
-    given message.
+    fitted attributes (ending with a trailing underscore) and otherwise
+    raises a NotFittedError with the given message.
 
     Parameters
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
+    attributes : deprecated, ignored
+        .. deprecated:: 0.22
+           `attributes` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
+        yet. Call 'fit' with appropriate arguments before using this
+        estimator."
 
         For custom messages if "%(name)s" is present in the message string,
         it is substituted for the estimator name.
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : callable, {all, any}, default all
-        Specify whether all or any of the given attributes must exist.
+    all_or_any : deprecated, ignored
+        .. deprecated:: 0.21
+           `all_or_any` is deprecated, is currently ignored and will be removed
+           in 0.23.
 
     Returns
     -------
@@ -903,17 +926,28 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     NotFittedError
         If the attributes are not found.
     """
+    if attributes != 'deprecated':
+        warnings.warn("Passing attributes to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The attributes "
+                      "argument is ignored.", FutureWarning)
+    if all_or_any != 'deprecated':
+        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
+                      " and will be removed in 0.23. The any_or_all "
+                      "argument is ignored.", FutureWarning)
+    if isclass(estimator):
+        raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+               "appropriate arguments before using this estimator.")
 
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    if not isinstance(attributes, (list, tuple)):
-        attributes = [attributes]
+    attrs = [v for v in vars(estimator)
+             if (v.endswith("_") or v.startswith("_"))
+             and not v.startswith("__")]
 
-    if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
+    if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
@@ -989,6 +1023,11 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 def _check_sample_weight(sample_weight, X, dtype=None):
     """Validate sample weights.
 
+    Note that passing sample_weight=None will output an array of ones.
+    Therefore, in some cases, you may want to protect the call with:
+    if sample_weight is not None:
+        sample_weight = _check_sample_weight(...)
+
     Parameters
     ----------
     sample_weight : {ndarray, Number or None}, shape (n_samples,)
@@ -1024,8 +1063,8 @@ def _check_sample_weight(sample_weight, X, dtype=None):
         if dtype is None:
             dtype = [np.float64, np.float32]
         sample_weight = check_array(
-                sample_weight, accept_sparse=False,
-                ensure_2d=False, dtype=dtype, order="C"
+            sample_weight, accept_sparse=False, ensure_2d=False, dtype=dtype,
+            order="C"
         )
         if sample_weight.ndim != 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -1034,3 +1073,77 @@ def _check_sample_weight(sample_weight, X, dtype=None):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
     return sample_weight
+
+
+def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
+    """Check allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    rtol : float, optional
+        relative tolerance; see numpy.allclose
+
+    atol : float, optional
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
+    """
+    if sp.issparse(x) and sp.issparse(y):
+        x = x.tocsr()
+        y = y.tocsr()
+        x.sum_duplicates()
+        y.sum_duplicates()
+        return (np.array_equal(x.indices, y.indices) and
+                np.array_equal(x.indptr, y.indptr) and
+                np.allclose(x.data, y.data, rtol=rtol, atol=atol))
+    elif not sp.issparse(x) and not sp.issparse(y):
+        return np.allclose(x, y, rtol=rtol, atol=atol)
+    raise ValueError("Can only compare two sparse matrices, not a sparse "
+                     "matrix and an array")
+
+
+def _deprecate_positional_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
+
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(all_args)
+        if extra_args > 0:
+            # ignore first 'self' argument for instance methods
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            warnings.warn("Pass {} as keyword args. From version 0.24 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
+                          FutureWarning)
+        kwargs.update({k: arg for k, arg in zip(all_args, args)})
+        return f(**kwargs)
+    return inner_f

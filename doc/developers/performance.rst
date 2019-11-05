@@ -200,7 +200,8 @@ Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition import NMF
+    ... : from sklearn.decomposition._nmf import _nls_subproblem
 
   In [3]: X, _ = load_digits(return_X_y=True)
 
@@ -403,11 +404,7 @@ kcachegrind
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://joblib.readthedocs.io
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:

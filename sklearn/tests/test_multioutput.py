@@ -4,12 +4,12 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
@@ -25,6 +25,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import MultiOutputEstimator
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
@@ -527,3 +528,29 @@ def test_base_chain_crossval_fit_and_predict():
             assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25
+
+
+@pytest.mark.parametrize(
+    'estimator',
+    [RandomForestClassifier(n_estimators=2),
+     MultiOutputClassifier(RandomForestClassifier(n_estimators=2)),
+     ClassifierChain(RandomForestClassifier(n_estimators=2))]
+)
+def test_multi_output_classes_(estimator):
+    # Tests classes_ attribute of multioutput classifiers
+    # RandomForestClassifier supports multioutput out-of-the-box
+    estimator.fit(X, y)
+    assert isinstance(estimator.classes_, list)
+    assert len(estimator.classes_) == n_outputs
+    for estimator_classes, expected_classes in zip(classes,
+                                                   estimator.classes_):
+        assert_array_equal(estimator_classes, expected_classes)
+
+
+# TODO: remove in 0.24
+def test_deprecation():
+    class A(MultiOutputEstimator, MultiOutputRegressor):
+        pass
+
+    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
+        A(SGDRegressor(random_state=0, max_iter=5))

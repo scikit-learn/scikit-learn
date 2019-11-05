@@ -74,9 +74,7 @@ for model in models:
               (model_params['name'], solver, this_max_iter))
         lr = LogisticRegression(solver=solver,
                                 multi_class=model,
-                                C=1,
                                 penalty='l1',
-                                fit_intercept=True,
                                 max_iter=this_max_iter,
                                 random_state=42,
                                 )
