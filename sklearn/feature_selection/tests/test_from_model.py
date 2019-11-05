@@ -7,6 +7,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
+from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
@@ -15,6 +16,8 @@ from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import Pipeline
+from sklearn.decomposition import PCA
 
 
 class NaNTag(BaseEstimator):
@@ -118,7 +121,7 @@ def test_max_features():
 
     for n_features in range(1, X_new1.shape[1] + 1):
         transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                       random_state=42),
+                                                       random_state=42),
                                        max_features=n_features,
                                        threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
@@ -220,7 +223,7 @@ def test_coef_default_threshold():
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42))
+                                                  random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -375,3 +378,27 @@ def test_allow_nan_tag_comes_from_estimator():
     no_nan_est = NoNaNTag()
     model = SelectFromModel(estimator=no_nan_est)
     assert model._get_tags()['allow_nan'] is False
+
+
+def test_w_pipeline():
+    pipeline = Pipeline([('scalling', StandardScaler()),
+                         ('clf', LogisticRegression(C=0.1))])
+    model = SelectFromModel(pipeline, threshold="mean",
+                            importance_getter='named_steps.clf.coef_')
+    model.fit(data, y)
+    X_transform = model.transform(data)
+
+    assert X_transform.shape[1] == 2
+
+
+def test_w_pca():
+
+    def pca_importances(estimator):
+        return np.abs(estimator.components_.ravel())
+
+    sfm = SelectFromModel(PCA(n_components=1), threshold=0.1,
+                          importance_getter=pca_importances)
+
+    sfm.fit(data, y)
+
+    assert sfm.transform(data).shape[1] == 3

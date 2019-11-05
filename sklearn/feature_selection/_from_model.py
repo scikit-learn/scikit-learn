@@ -3,6 +3,7 @@
 
 import numpy as np
 import numbers
+from operator import attrgetter
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
@@ -11,25 +12,42 @@ from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
 
 
-def _get_feature_importances(estimator, norm_order=1):
+def _get_importances_auto(estimator):
+    if hasattr(estimator, 'coef_'):
+        getter = attrgetter('coef_')
+    elif hasattr(estimator, 'feature_importances_'):
+        getter = attrgetter('feature_importances_')
+    else:
+        raise ValueError("when `importance_getter=='auto'`, "
+                         "the underlying estimator %s should have `coef_` or "
+                         "`feature_importances_` attribute. "
+                         " Either pass a fitted estimator to SelectFromModel"
+                         "  or call fit before calling transform."
+                         % estimator.__class__.__name__)
+    return getter
+
+
+def _get_feature_importances(importance_getter,
+                             estimator, norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
-    importances = getattr(estimator, "feature_importances_", None)
-
-    coef_ = getattr(estimator, "coef_", None)
-    if importances is None and coef_ is not None:
-        if estimator.coef_.ndim == 1:
-            importances = np.abs(coef_)
-
+    # Get coefs
+    getter = importance_getter
+    if isinstance(getter, str):
+        if getter == 'auto':
+            getter = _get_importances_auto(estimator)
         else:
-            importances = np.linalg.norm(coef_, axis=0,
-                                         ord=norm_order)
+            getter = attrgetter(getter)
+    elif not callable(getter):
+        raise ValueError('`importance_getter` has to be a string'
+                         ' or `callable`')
+    importances = getter(estimator)
 
-    elif importances is None:
-        raise ValueError(
-            "The underlying estimator %s has no `coef_` or "
-            "`feature_importances_` attribute. Either pass a fitted estimator"
-            " to SelectFromModel or call fit before calling transform."
-            % estimator.__class__.__name__)
+    if importances.ndim == 1:
+        importances = np.abs(importances)
+
+    else:
+        importances = np.linalg.norm(importances, axis=0,
+                                     ord=norm_order)
 
     return importances
 
@@ -109,6 +127,20 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
+    importance_getter : string or callable, optional (default='auto')
+        If 'auto', uses the feature importance either through a ``coef_``
+        attribute or ``feature_importances_`` attribute of estimator.
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
+
+        For example, give `regressor_.coef_` in case of
+        `TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        `Pipeline` with its last step named `clf`
+
     norm_order : non-zero int, inf, -inf, default 1
         Order of the norm used to filter the vectors of coefficients below
         ``threshold`` in the case where the ``coef_`` attribute of the
@@ -157,11 +189,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [-0.48],
            [ 1.48]])
     """
+
     def __init__(self, estimator, threshold=None, prefit=False,
+                 importance_getter='auto',
                  norm_order=1, max_features=None):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.importance_getter = importance_getter
         self.norm_order = norm_order
         self.max_features = max_features
 
@@ -175,7 +210,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise ValueError('Either fit the model before transform or set'
                              ' "prefit=True" while passing the fitted'
                              ' estimator to the constructor.')
-        scores = _get_feature_importances(estimator, self.norm_order)
+        scores = _get_feature_importances(self.importance_getter,
+                                          estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
