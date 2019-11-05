@@ -93,10 +93,33 @@ void set_seed(unsigned custom_seed) {
     mt_rand.seed(custom_seed);
 }
 
-// - (3) New internal `myrand()` function, used instead of rand() everywhere.
-inline int myrand() {
-    // make a 31bit or 63bit positive random number
-    return abs( (int)mt_rand());
+// - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
+inline int bounded_rand_int(int orig_range) {
+    // "Legacy way" - make a 31bit or 63bit positive random number
+    // and use modulo to make it fit in the range
+    // return abs( (int)mt_rand()) % orig_range;
+
+    // "Better way": tweaked Lemire post-processor
+    // from http://www.pcg-random.org/posts/bounded-rands.html
+    // TODO how could we make this casting safer, raising an error if lost information?
+    uint32_t range = uint32_t(orig_range);
+    uint32_t x = mt_rand();
+    uint64_t m = uint64_t(x) * uint64_t(range);
+    uint32_t l = uint32_t(m);
+    if (l < range) {
+        uint32_t t = -range;
+        if (t >= range) {
+            t -= range;
+            if (t >= range)
+                t %= range;
+        }
+        while (l < t) {
+            x = mt_rand();
+            m = uint64_t(x) * uint64_t(range);
+            l = uint32_t(m);
+        }
+    }
+    return m >> 32;
 }
 
 
@@ -644,7 +667,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
 		{
-			int j = i+myrand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
@@ -917,7 +940,7 @@ static int solve_l2r_l1l2_svc(
 
 		for (i=0; i<active_size; i++)
 		{
-			int j = i+myrand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1136,7 +1159,7 @@ static int solve_l2r_l1l2_svr(
 
 		for(i=0; i<active_size; i++)
 		{
-			int j = i+myrand()%(active_size-i);
+			int j = i+bounded_rand_int(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1362,7 +1385,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	{
 		for (i=0; i<l; i++)
 		{
-			int j = i+myrand()%(l-i);
+			int j = i+bounded_rand_int(l-i);
 			swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
@@ -1550,7 +1573,7 @@ static int solve_l1r_l2_svc(
 
 		for(j=0; j<active_size; j++)
 		{
-			int i = j+myrand()%(active_size-j);
+			int i = j+bounded_rand_int(active_size-j);
 			swap(index[i], index[j]);
 		}
 
@@ -1932,7 +1955,7 @@ static int solve_l1r_lr(
 
 			for(j=0; j<QP_active_size; j++)
 			{
-				int i = j+myrand()%(QP_active_size-j);
+				int i = j+bounded_rand_int(QP_active_size-j);
 				swap(index[i], index[j]);
 			}
 
@@ -2623,7 +2646,7 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
-		int j = i+myrand()%(l-i);
+		int j = i+bounded_rand_int(l-i);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)

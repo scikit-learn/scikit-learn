@@ -113,10 +113,34 @@ void set_seed(unsigned custom_seed) {
     mt_rand.seed(custom_seed);
 }
 
-// - (3) New internal `myrand()` function, used instead of rand() everywhere.
-inline int myrand() {
+// - (3) New internal `bounded_rand_int()` function, used instead of rand() everywhere.
+inline int bounded_rand_int(int orig_range) {
+    // "Legacy way"
     // make a 31bit or 63bit positive random number
-    return abs( (int)mt_rand());
+    // and use modulo to make it fit in the range
+    // return abs( (int)mt_rand()) % range;
+
+    // "Better way": tweaked Lemire post-processor
+    // from http://www.pcg-random.org/posts/bounded-rands.html
+    // TODO how could we make this safer, raising an error if lost information?
+    uint32_t range = uint32_t(orig_range);
+    uint32_t x = mt_rand();
+    uint64_t m = uint64_t(x) * uint64_t(range);
+    uint32_t l = uint32_t(m);
+    if (l < range) {
+        uint32_t t = -range;
+        if (t >= range) {
+            t -= range;
+            if (t >= range)
+                t %= range;
+        }
+        while (l < t) {
+            x = mt_rand();
+            m = uint64_t(x) * uint64_t(range);
+            l = uint32_t(m);
+        }
+    }
+    return m >> 32;
 }
 
 static void print_string_stdout(const char *s)
@@ -2123,7 +2147,7 @@ static void svm_binary_svc_probability(
 	for(i=0;i<prob->l;i++) perm[i]=i;
 	for(i=0;i<prob->l;i++)
 	{
-		int j = i+myrand()%(prob->l-i);
+		int j = i+bounded_rand_int(prob->l-i);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<nr_fold;i++)
@@ -2682,7 +2706,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		for (c=0; c<nr_class; c++) 
 			for(i=0;i<count[c];i++)
 			{
-				int j = i+myrand()%(count[c]-i);
+				int j = i+bounded_rand_int(count[c]-i);
 				swap(index[start[c]+j],index[start[c]+i]);
 			}
 		for(i=0;i<nr_fold;i++)
@@ -2719,7 +2743,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 		for(i=0;i<l;i++) perm[i]=i;
 		for(i=0;i<l;i++)
 		{
-			int j = i+myrand()%(l-i);
+			int j = i+bounded_rand_int(l-i);
 			swap(perm[i],perm[j]);
 		}
 		for(i=0;i<=nr_fold;i++)
