@@ -19,6 +19,10 @@ DEFAULT_ROOT = 'sklearn'
 def get_cython_version():
     # Try to find pyproject.toml
     pyproject_toml = join(dirname(__file__), '..', '..', 'pyproject.toml')
+    print("----debuging")
+    print(__file__)
+    print(pyproject_toml)
+    print("----debuging")
     if not os.path.exists(pyproject_toml):
         raise ImportError("Unable to locate file pyproject.toml")
 
