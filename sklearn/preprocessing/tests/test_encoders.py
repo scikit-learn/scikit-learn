@@ -658,3 +658,11 @@ def test_ordinal_encoder_deprecated_categories_auto_with_string_labels(
         # checking the output is correct when `categories==sort`
         assert_array_equal(Xt, OrdinalEncoder(categories='sort')
                            .fit_transform(X))
+
+
+def test_ohe_not_accept_sort_ordering():
+    X = [['Male', 1], ['Female', 3], ['Female', 2]]
+
+    enc = OneHotEncoder(categories='sort')
+    with pytest.raises(ValueError, match="The valid values"):
+        enc.fit_transform(X)
