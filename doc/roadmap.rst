@@ -152,7 +152,7 @@ bottom.
 
 #. A way forward for more out of core
 
-   * Dask enables easy out-of-core computation. While the dask model probably
+   * Dask enables easy out-of-core computation. While the Dask model probably
      cannot be adaptable to all machine-learning algorithms, most machine
      learning is on smaller data than ETL, hence we can maybe adapt to very
      large scale while supporting only a fraction of the patterns.
