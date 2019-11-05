@@ -4,5 +4,7 @@ requires = [
     "setuptools",
     "wheel",
     "numpy>=1.11",
+    # on conda, this is the latest for python 3.5
+    # keep synced with circleci config and advanced installation
     "Cython>=0.28.5",
 ]

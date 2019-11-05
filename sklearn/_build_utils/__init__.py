@@ -6,7 +6,7 @@ Utilities useful during the build.
 
 
 import os
-
+from os.path import join, dirname
 from distutils.version import LooseVersion
 import contextlib
 
@@ -14,9 +14,27 @@ from .openmp_helpers import check_openmp_support
 
 
 DEFAULT_ROOT = 'sklearn'
-# on conda, this is the latest for python 3.5
-# keep synced with pyproject.toml and circleci config
-CYTHON_MIN_VERSION = '0.28.5'
+
+
+def get_cython_version():
+    # Try to find pyproject.toml
+    pyproject_toml = join(dirname(__file__), '../..', 'pyproject.toml')
+    if not os.path.exists(pyproject_toml):
+        raise ImportError()
+
+    # Try to find the minimum version from pyproject.toml
+    with open(pyproject_toml) as pt:
+        for line in pt:
+            if "cython" not in line.lower():
+                continue
+            _, line = line.split('=')
+            required_version, _ = line.split('"')
+            return required_version
+        else:
+            raise ImportError()
+
+
+CYTHON_MIN_VERSION = get_cython_version()
 
 
 def build_from_c_and_cpp_files(extensions):
@@ -110,3 +128,4 @@ def gen_from_templates(templates, top_path):
 
             with open(outfile, "w") as f:
                 f.write(tmpl_)
+
