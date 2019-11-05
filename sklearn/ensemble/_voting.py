@@ -71,8 +71,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             )
 
         self.named_estimators_ = Bunch()
-        for k, e in zip(self.estimators, self.estimators_):
-            self.named_estimators_[k[0]] = e
+
+        # Uses None or 'drop' as placeholder for dropped estimators
+        est_iter = iter(self.estimators_)
+        for name, est in self.estimators:
+            current_est = est if est in (None, 'drop') else next(est_iter)
+            self.named_estimators_[name] = current_est
+
         return self
 
 
@@ -88,8 +93,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
+        ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
+
+        .. deprecated:: 0.22
+           Using ``None`` to drop an estimator is deprecated in 0.22 and
+           support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -119,7 +128,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None`.
+        that are not 'drop'.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
@@ -322,8 +331,12 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
-        using ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``'drop'`` using
+        ``set_params``.
+
+        .. deprecated:: 0.22
+           Using ``None`` to drop an estimator is deprecated in 0.22 and
+           support will be dropped in 0.24. Use the string ``'drop'`` instead.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -339,10 +352,12 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     ----------
     estimators_ : list of regressors
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None`.
+        that are not 'drop'.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
+
+        .. versionadded:: 0.20
 
     Examples
     --------

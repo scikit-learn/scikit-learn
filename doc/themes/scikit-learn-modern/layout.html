@@ -35,7 +35,8 @@
     {%- endif %}
   {%- endfor %}
   <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
-
+<script id="documentation_options" data-url_root="{{ pathto('', 1) }}" src="{{ pathto('_static/documentation_options.js', 1) }}"></script>
+<script src="{{ pathto('_static/jquery.js', 1) }}"></script>
 {%- block extrahead %} {% endblock %}
 </head>
 <body>
@@ -123,6 +124,7 @@
   </div>
 </div>
 {%- endblock %}
+<script src="{{ pathto('_static/js/vendor/bootstrap.min.js', 1) }}"></script>
 {% include "javascript.html" %}
 </body>
 </html>

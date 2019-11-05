@@ -7,7 +7,7 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
-from sklearn.inspection.partial_dependence import (
+from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
@@ -24,14 +24,17 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
+from sklearn.compose import make_column_transformer
 from sklearn.metrics import r2_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 
 
 # toy sample
@@ -49,6 +52,9 @@ multiclass_classification_data = (make_classification(n_samples=50,
 regression_data = (make_regression(n_samples=50, random_state=0), 1)
 multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
                                                random_state=0), 2)
+
+# iris
+iris = load_iris()
 
 
 @pytest.mark.parametrize('Estimator, method, data', [
@@ -336,11 +342,27 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
 
 @pytest.mark.parametrize(
+    "with_dataframe, err_msg",
+    [(True, "Only array-like or scalar are supported"),
+     (False, "Only array-like or scalar are supported")]
+)
+def test_partial_dependence_slice_error(with_dataframe, err_msg):
+    X, y = make_classification(random_state=0)
+    if with_dataframe:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+    estimator = LogisticRegression().fit(X, y)
+
+    with pytest.raises(TypeError, match=err_msg):
+        partial_dependence(estimator, X, features=slice(0, 2, 1))
+
+
+@pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-@pytest.mark.parametrize('features', [-1, 1000000])
-def test_partial_dependence_unknown_feature(estimator, features):
+@pytest.mark.parametrize('features', [-1, 10000])
+def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
@@ -353,10 +375,16 @@ def test_partial_dependence_unknown_feature(estimator, features):
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-def test_partial_dependence_unfitted_estimator(estimator):
-    err_msg = "'estimator' parameter must be a fitted estimator"
+def test_partial_dependence_unknown_feature_string(estimator):
+    pd = pytest.importorskip("pandas")
+    X, y = make_classification(random_state=0)
+    df = pd.DataFrame(X)
+    estimator.fit(df, y)
+
+    features = ['random']
+    err_msg = 'A given column is not a column of the dataframe'
     with pytest.raises(ValueError, match=err_msg):
-        partial_dependence(estimator, X, [0])
+        partial_dependence(estimator, df, features)
 
 
 @pytest.mark.parametrize(
@@ -427,13 +455,119 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features]
+        pipe, iris.data, features=[features], grid_resolution=10
     )
     pdp_clf, values_clf = partial_dependence(
-        clf, scaler.transform(iris.data), features=[features]
+        clf, scaler.transform(iris.data), features=[features],
+        grid_resolution=10
     )
     assert_allclose(pdp_pipe, pdp_clf)
     assert_allclose(
         values_pipe[0],
         values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
     )
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [LogisticRegression(max_iter=1000, random_state=0),
+     GradientBoostingClassifier(random_state=0, n_estimators=5)],
+    ids=['estimator-brute', 'estimator-recursion']
+)
+@pytest.mark.parametrize(
+    "preprocessor",
+    [None,
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])),
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         remainder='passthrough')],
+    ids=['None', 'column-transformer', 'column-transformer-passthrough']
+)
+@pytest.mark.parametrize(
+    "features",
+    [[0, 2], [iris.feature_names[i] for i in (0, 2)]],
+    ids=['features-integer', 'features-string']
+)
+def test_partial_dependence_dataframe(estimator, preprocessor, features):
+    # check that the partial dependence support dataframe and pipeline
+    # including a column transformer
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+    pipe = make_pipeline(preprocessor, estimator)
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+
+    # the column transformer will reorder the column when transforming
+    # we mixed the index to be sure that we are computing the partial
+    # dependence of the right columns
+    if preprocessor is not None:
+        X_proc = clone(preprocessor).fit_transform(df)
+        features_clf = [0, 1]
+    else:
+        X_proc = df
+        features_clf = [0, 2]
+
+    clf = clone(estimator).fit(X_proc, iris.target)
+    pdp_clf, values_clf = partial_dependence(
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
+    )
+
+    assert_allclose(pdp_pipe, pdp_clf)
+    if preprocessor is not None:
+        scaler = preprocessor.named_transformers_['standardscaler']
+        assert_allclose(
+            values_pipe[1],
+            values_clf[1] * scaler.scale_[1] + scaler.mean_[1]
+        )
+    else:
+        assert_allclose(values_pipe[1], values_clf[1])
+
+
+@pytest.mark.parametrize(
+    "features, expected_pd_shape",
+    [(0, (3, 10)),
+     (iris.feature_names[0], (3, 10)),
+     ([0, 2], (3, 10, 10)),
+     ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
+     ([True, False, True, False], (3, 10, 10))],
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'mask']
+)
+def test_partial_dependence_feature_type(features, expected_pd_shape):
+    # check all possible features type supported in PDP
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+        (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])
+    )
+    pipe = make_pipeline(
+        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
+    )
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+    assert pdp_pipe.shape == expected_pd_shape
+    assert len(values_pipe) == len(pdp_pipe.shape) - 1
+
+
+@pytest.mark.parametrize(
+    "estimator", [LinearRegression(), LogisticRegression(),
+                  GradientBoostingRegressor(), GradientBoostingClassifier()]
+)
+def test_partial_dependence_unfitted(estimator):
+    X = iris.data
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
+    )
+    pipe = make_pipeline(preprocessor, estimator)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)

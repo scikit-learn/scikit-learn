@@ -330,6 +330,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <birch>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     threshold : float, default 0.5

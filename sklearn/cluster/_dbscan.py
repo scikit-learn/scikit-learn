@@ -14,7 +14,8 @@ import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array
+from ..utils.validation import _check_sample_weight
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -312,8 +313,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             raise ValueError("eps must be positive.")
 
         if sample_weight is not None:
-            sample_weight = np.asarray(sample_weight)
-            check_consistent_length(X, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # Calculate neighborhood for all samples. This leaves the original
         # point in, which needs to be considered later (i.e. point i is in the
