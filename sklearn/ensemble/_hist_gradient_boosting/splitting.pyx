@@ -39,6 +39,8 @@ cdef struct split_info_struct:
     Y_DTYPE_C sum_hessian_right
     unsigned int n_samples_left
     unsigned int n_samples_right
+    Y_DTYPE_C value_left
+    Y_DTYPE_C value_right
 
 
 class SplitInfo:
@@ -70,7 +72,7 @@ class SplitInfo:
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
                  sum_gradient_right, sum_hessian_right, n_samples_left,
-                 n_samples_right):
+                 n_samples_right, value_left, value_right):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
@@ -81,6 +83,8 @@ class SplitInfo:
         self.sum_hessian_right = sum_hessian_right
         self.n_samples_left = n_samples_left
         self.n_samples_right = n_samples_right
+        self.value_left = value_left
+        self.value_right = value_right
 
 
 @cython.final
@@ -353,7 +357,10 @@ cdef class Splitter:
             unsigned int n_samples,
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
-            const Y_DTYPE_C sum_hessians):
+            const Y_DTYPE_C sum_hessians,
+            const Y_DTYPE_C lower_bound,
+            const Y_DTYPE_C upper_bound,
+            ):
         """For each feature, find the best bin to split on at a given node.
 
         Return the best split info among all features.
@@ -408,6 +415,7 @@ cdef class Splitter:
                     feature_idx, has_missing_values[feature_idx],
                     self.monotonic_cst[feature_idx],
                     histograms, n_samples, sum_gradients, sum_hessians,
+                    lower_bound, upper_bound,
                     &split_infos[feature_idx])
 
                 if has_missing_values[feature_idx]:
@@ -418,7 +426,9 @@ cdef class Splitter:
                         feature_idx,
                         self.monotonic_cst[feature_idx],
                         histograms, n_samples,
-                        sum_gradients, sum_hessians, &split_infos[feature_idx])
+                        sum_gradients, sum_hessians,
+                        lower_bound, upper_bound,
+                        &split_infos[feature_idx])
 
             # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
@@ -436,6 +446,8 @@ cdef class Splitter:
             split_info.sum_hessian_right,
             split_info.n_samples_left,
             split_info.n_samples_right,
+            split_info.value_left,
+            split_info.value_right,
         )
         free(split_infos)
         return out
@@ -463,6 +475,8 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C lower_bound,
+            Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT
         """Find best bin to split on for a given feature.
 
@@ -528,8 +542,15 @@ cdef class Splitter:
                                sum_gradient_right, sum_hessian_right,
                                negative_loss_current_node,
                                monotonic_cst,
+                               lower_bound,
+                               upper_bound,
                                self.l2_regularization)
 
+            # TODO: this could be slightly optimized, we don't need to update
+            # all the split_info attributes now, we can update some of them
+            # after the for loop. For example we can infer n_samples_right
+            # from n_samples_left, etc (see lightgbm
+            # FindBestThresholdSequence)
             if gain > split_info.gain and gain > self.min_gain_to_split:
                 split_info.gain = gain
                 split_info.feature_idx = feature_idx
@@ -543,6 +564,14 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
+        split_info.value_left = compute_value(
+            split_info.sum_gradient_left, split_info.sum_hessian_left,
+            lower_bound, upper_bound, self.l2_regularization)
+
+        split_info.value_right = compute_value(
+            split_info.sum_gradient_right, split_info.sum_hessian_right,
+            lower_bound, upper_bound, self.l2_regularization)
+
     cdef void _find_best_bin_to_split_right_to_left(
             self,
             unsigned int feature_idx,
@@ -551,6 +580,8 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C lower_bound,
+            Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT
         """Find best bin to split on for a given feature.
 
@@ -615,6 +646,8 @@ cdef class Splitter:
                                sum_gradient_right, sum_hessian_right,
                                negative_loss_current_node,
                                monotonic_cst,
+                               lower_bound,
+                               upper_bound,
                                self.l2_regularization)
 
             if gain > split_info.gain and gain > self.min_gain_to_split:
@@ -630,6 +663,14 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
+        split_info.value_left = compute_value(
+            split_info.sum_gradient_left, split_info.sum_hessian_left,
+            lower_bound, upper_bound, self.l2_regularization)
+
+        split_info.value_right = compute_value(
+            split_info.sum_gradient_right, split_info.sum_hessian_right,
+            lower_bound, upper_bound, self.l2_regularization)
+
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,
         Y_DTYPE_C sum_hessian_left,
@@ -637,6 +678,8 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_hessian_right,
         Y_DTYPE_C negative_loss_current_node,
         unsigned char monotonic_cst,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
         Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
 
@@ -649,16 +692,18 @@ cdef inline Y_DTYPE_C _split_gain(
     """
     cdef:
         Y_DTYPE_C gain
-        Y_DTYPE_C left_leaf_value
-        Y_DTYPE_C right_leaf_value
+        Y_DTYPE_C left_value
+        Y_DTYPE_C right_value
 
-    left_leaf_value = compute_leaf_value(sum_gradient_left,
-                                         sum_hessian_left, l2_regularization)
-    right_leaf_value = compute_leaf_value(sum_gradient_right,
-                                          sum_hessian_right, l2_regularization)
+    left_value = compute_value(sum_gradient_left, sum_hessian_left,
+                               lower_bound, upper_bound,
+                               l2_regularization)
+    right_value = compute_value(sum_gradient_right, sum_hessian_right,
+                                lower_bound, upper_bound,
+                                l2_regularization)
 
-    if ((monotonic_cst == 1 and left_leaf_value > right_leaf_value) or  # INC
-            (monotonic_cst == 2 and left_leaf_value < right_leaf_value)):  # DEC
+    if ((monotonic_cst == 1 and left_value > right_value) or  # INC
+            (monotonic_cst == 2 and left_value < right_value)):  # DEC
         # don't consider this split since it does not respect the monotonic
         # constraints
         return -1
@@ -676,19 +721,33 @@ cdef inline Y_DTYPE_C negative_loss(
         Y_DTYPE_C l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)
 
-cdef inline Y_DTYPE_C compute_leaf_value(
+cdef inline Y_DTYPE_C compute_value(
         Y_DTYPE_C gradient,
         Y_DTYPE_C hessian,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
         Y_DTYPE_C l2_regularization) nogil:
-    # same as grower.finalize_leaf.
+    """Compute (potential) leaf value.
+
+    The value is capped in the [lower_bound, upper_bound] interval to respect
+    monotonic constraints.
+    """
+
+    cdef:
+        Y_DTYPE_C value
+
     # TODO:
-    #  - bound values with constraints
-    #  - only compute the leaf values once
     #  - refactor code to use the leaf values when computing the negative_loss
     #  - zero div error
 
-    # missing shrinkage term but we don't care here
-    return - gradient / (hessian + l2_regularization)
+    value = - gradient / (hessian + l2_regularization)
+
+    if value < lower_bound:
+        value = lower_bound
+    elif value > upper_bound:
+        value = upper_bound
+
+    return value
 
 cdef inline unsigned char sample_goes_left(
         unsigned char missing_go_to_left,
