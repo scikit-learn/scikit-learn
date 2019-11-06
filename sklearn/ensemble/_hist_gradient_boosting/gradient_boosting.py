@@ -287,6 +287,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             begin_at_stage = self.n_iter_
 
+        # 0 = None
+        # 1 = INC
+        # 2 = DEC
+        # TODO: Obvisouly not this
+        monotonic_cst = getattr(self, 'monotonic_cst', None)
+
         for iteration in range(begin_at_stage, self.max_iter):
 
             if self.verbose:
@@ -309,6 +315,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins=n_bins,
                     n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
+                    monotonic_cst=monotonic_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,

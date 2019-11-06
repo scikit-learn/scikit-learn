@@ -166,6 +166,7 @@ class TreeGrower:
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
                  n_bins=256, n_bins_non_missing=None, has_missing_values=False,
+                 monotonic_cst=None,
                  l2_regularization=0., min_hessian_to_split=1e-3,
                  shrinkage=1.):
 
@@ -188,13 +189,19 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
+        if monotonic_cst is None:
+            monotonic_cst = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
+        else:
+            monotonic_cst = np.asarray(monotonic_cst, dtype=np.uint8)
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, n_bins, gradients, hessians, hessians_are_constant)
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
             X_binned, n_bins_non_missing, missing_values_bin_idx,
-            has_missing_values, l2_regularization, min_hessian_to_split,
+            has_missing_values, monotonic_cst,
+            l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split, hessians_are_constant)
         self.n_bins_non_missing = n_bins_non_missing
         self.max_leaf_nodes = max_leaf_nodes
@@ -371,8 +378,14 @@ class TreeGrower:
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
+
+        if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
+
+
+
         # Compute histograms of childs, and compute their best possible split
         # (if needed)
+        # TODO: is this condition still valid??? All nodes must have a value now
         should_split_left = left_child_node.value is None  # node isn't a leaf
         should_split_right = right_child_node.value is None
         if should_split_left or should_split_right:
@@ -463,6 +476,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     else:
         node['gain'] = -1
 
+    # TODO: condition about .value probably not valid anymore
     if grower_node.value is not None:
         # Leaf node
         node['is_leaf'] = True
