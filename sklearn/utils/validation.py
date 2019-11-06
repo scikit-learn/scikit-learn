@@ -1021,7 +1021,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
+def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
     """Check the eigenvalues of a positive semidefinite (PSD) matrix.
 
     Checks the provided array of PSD matrix eigenvalues for numerical or
@@ -1058,7 +1058,7 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     lambdas : array-like of shape (n_eigenvalues,)
         Array of eigenvalues to check / fix.
 
-    warn_on_zeros : bool, default=False
+    bad_conditioning_warning : bool, default=True
         When this is set to ``True``, a ``PositiveSpectrumWarning`` will be
         raised when there are extremely small eigenvalues. Otherwise no warning
         will be raised. Note that in both cases, extremely small eigenvalues
@@ -1150,7 +1150,7 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     # Finally check for conditioning
     too_small_lambdas = (0 < lambdas) & (lambdas < small_pos_ratio * max_eig)
     if too_small_lambdas.any():
-        if warn_on_zeros:
+        if bad_conditioning_warning:
             warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
                           "Small eigenvalues will be replaced with 0."

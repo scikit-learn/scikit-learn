@@ -974,7 +974,8 @@ def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
 
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
-            _check_psd_eigenvalues(lambdas, warn_on_zeros=warn_on_zeros),
+            _check_psd_eigenvalues(lambdas,
+                                   bad_conditioning_warning=warn_on_zeros),
             expected_lambdas
         )
     if w_type is None:
@@ -990,14 +991,14 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
     output = np.array([5, 0])
 
     with pytest.warns(None) as w:
-        assert_array_equal(_check_psd_eigenvalues(input, warn_on_zeros=False),
-                           output)
+        checked = _check_psd_eigenvalues(input, bad_conditioning_warning=False)
+        assert_array_equal(checked, output)
     assert not w
 
     w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
     with pytest.warns(PositiveSpectrumWarning, match=w_msg) as w:
-        assert_array_equal(_check_psd_eigenvalues(input, warn_on_zeros=True),
-                           output)
+        checked = _check_psd_eigenvalues(input, bad_conditioning_warning=True)
+        assert_array_equal(checked, output)
 
 
 _psd_cases_invalid = {
