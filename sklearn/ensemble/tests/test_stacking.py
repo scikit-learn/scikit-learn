@@ -272,7 +272,7 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
 
 class NoWeightClassifier(BaseEstimator, ClassifierMixin):
     def fit(self, X, y):
-        self.clf = DummyClassifier()
+        self.clf = DummyClassifier(strategy='stratified')
         return self.clf.fit(X, y)
 
 

@@ -13,6 +13,7 @@ For a short description of the main highlights of the release, please
 refer to
 :ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_22_0.py`.
 
+.. include:: changelog_legend.inc
 
 Clear definition of the public API
 ----------------------------------
@@ -160,6 +161,10 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
+- |Feature|  Adds :func:`compose.make_column_selector` which is used with
+  :class:`compose.ColumnTransformer` to select DataFrame columns on the basis
+  of name and dtype. :pr:`12303` by `Thomas Fan `_.
+
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
   1.12.
@@ -243,6 +248,11 @@ Changelog
 
 :mod:`sklearn.dummy`
 ....................
+
+- |API| The default value of the `strategy` parameter in
+  :class:`dummy.DummyClassifier` will change from `'stratified'` in version
+  0.22 to `'prior'` in 0.24. A FutureWarning is raised when the default value
+  is used. :pr:`15382` by `Thomas Fan`_.
 
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
   of the provided constant in multiouput cases.
