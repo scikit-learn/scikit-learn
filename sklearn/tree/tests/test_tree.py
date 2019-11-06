@@ -3,7 +3,6 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from functools import partial
 from itertools import product
 import struct
 
@@ -13,7 +12,7 @@ from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
 
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -129,8 +128,8 @@ X_multilabel, y_multilabel = datasets.make_multilabel_classification(
 X_sparse_pos = random_state.uniform(size=(20, 5))
 X_sparse_pos[X_sparse_pos <= 0.8] = 0.
 y_random = random_state.randint(0, 4, size=(20, ))
-X_sparse_mix = sparse_random_matrix(20, 10, density=0.25,
-                                    random_state=0).toarray()
+X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
+                                     random_state=0).toarray()
 
 
 DATASETS = {
@@ -526,7 +525,7 @@ def test_error():
         with pytest.raises(ValueError):
             TreeEstimator(max_features=42).fit(X, y)
         # min_impurity_split warning
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=FutureWarning):
             with pytest.raises(ValueError):
                 TreeEstimator(min_impurity_split=-1.0).fit(X, y)
         with pytest.raises(ValueError):
@@ -807,7 +806,7 @@ def test_min_impurity_split():
             "Failed, min_impurity_split = {0} > 1e-7".format(
                 est.min_impurity_split))
         try:
-            assert_warns(DeprecationWarning, est.fit, X, y)
+            assert_warns(FutureWarning, est.fit, X, y)
         except AssertionError:
             pass
         for node in range(est.tree_.node_count):
@@ -823,7 +822,7 @@ def test_min_impurity_split():
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
-        assert_warns_message(DeprecationWarning,
+        assert_warns_message(FutureWarning,
                              "Use the min_impurity_decrease",
                              est.fit, X, y)
         for node in range(est.tree_.node_count):
@@ -1121,7 +1120,8 @@ def test_sample_weight_invalid():
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.array(0)
-    with pytest.raises(ValueError):
+    expected_err = r"Singleton.* cannot be considered a valid collection"
+    with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
     sample_weight = np.ones(101)
@@ -1623,7 +1623,7 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     tree = Cls(presort=presort)
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         tree.fit(X, y)
 
@@ -1957,9 +1957,9 @@ def test_classes_deprecated():
     match = ("attribute is to be deprecated from version "
              "0.22 and will be removed in 0.24.")
 
-    with pytest.warns(DeprecationWarning, match=match):
+    with pytest.warns(FutureWarning, match=match):
         n = len(clf.classes_)
         assert n == clf.n_outputs_
 
-    with pytest.warns(DeprecationWarning, match=match):
+    with pytest.warns(FutureWarning, match=match):
         assert len(clf.n_classes_) == clf.n_outputs_

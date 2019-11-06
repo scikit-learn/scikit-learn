@@ -16,12 +16,20 @@ from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.externals._pep562 import Pep562
 
 import pytest
 
-PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
-                                                        path=sklearn.__path__)
-                      if not ("._" in pckg[1] or ".tests." in pckg[1])])
+
+# walk_packages() ignores DeprecationWarnings, now we need to ignore
+# FutureWarnings
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore', FutureWarning)
+    PUBLIC_MODULES = set([
+        pckg[1] for pckg in walk_packages(prefix='sklearn.',
+                                          path=sklearn.__path__)
+        if not ("._" in pckg[1] or ".tests." in pckg[1])
+    ])
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -45,6 +53,7 @@ _METHODS_IGNORE_NONE_Y = [
 
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
@@ -125,7 +134,7 @@ def test_docstring_parameters():
         raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
@@ -137,6 +146,13 @@ def test_tabs():
 
         # because we don't import
         mod = importlib.import_module(modname)
+
+        # TODO: Remove when minimum python version is 3.7
+        # unwrap to get module because Pep562 backport wraps the original
+        # module
+        if isinstance(mod, Pep562):
+            mod = mod._module
+
         try:
             source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"

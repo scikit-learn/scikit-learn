@@ -67,7 +67,7 @@ def test_deprecated():
         assert spam == "spam"     # function must remain usable
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
     # ... then a class.
@@ -83,7 +83,7 @@ def test_deprecated():
         assert hasattr(ham, "SPAM")
 
         assert len(w) == 1
-        assert issubclass(w[0].category, DeprecationWarning)
+        assert issubclass(w[0].category, FutureWarning)
         assert "deprecated" in str(w[0].message).lower()
 
 
@@ -205,15 +205,19 @@ def test_column_or_1d():
      (np.bool_(True), 'bool'),
      ([0, 1, 2], 'int'),
      (['0', '1', '2'], 'str'),
+     ((0, 1, 2), 'int'),
+     (('0', '1', '2'), 'str'),
      (slice(None, None), None),
      (slice(0, 2), 'int'),
      (np.array([0, 1, 2], dtype=np.int32), 'int'),
      (np.array([0, 1, 2], dtype=np.int64), 'int'),
      (np.array([0, 1, 2], dtype=np.uint8), 'int'),
      ([True, False], 'bool'),
+     ((True, False), 'bool'),
      (np.array([True, False]), 'bool'),
      ('col_0', 'str'),
      (['col_0', 'col_1', 'col_2'], 'str'),
+     (('col_0', 'col_1', 'col_2'), 'str'),
      (slice('begin', 'end'), 'str'),
      (np.array(['col_0', 'col_1', 'col_2']), 'str'),
      (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')]
@@ -227,9 +231,16 @@ def test_determine_key_type_error():
         _determine_key_type(1.0)
 
 
+def test_determine_key_type_slice_error():
+    with pytest.raises(TypeError, match="Only array-like or scalar are"):
+        _determine_key_type(slice(0, 2, 1), accept_slice=False)
+
+
 def _convert_container(container, constructor_name, columns_name=None):
     if constructor_name == 'list':
         return list(container)
+    elif constructor_name == 'tuple':
+        return tuple(container)
     elif constructor_name == 'array':
         return np.asarray(container)
     elif constructor_name == 'sparse':
@@ -247,7 +258,9 @@ def _convert_container(container, constructor_name, columns_name=None):
 @pytest.mark.parametrize(
     "array_type", ["list", "array", "sparse", "dataframe"]
 )
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -261,7 +274,9 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -275,7 +290,9 @@ def test_safe_indexing_1d_container(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series", "slice"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     # validation of the indices
@@ -328,7 +345,7 @@ def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 def test_safe_indexing_1d_container_mask(array_type, indices_type):
     indices = [False] + [True] * 2 + [False] * 6
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
@@ -340,7 +357,7 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-@pytest.mark.parametrize("indices_type", ["list", "array", "series"])
+@pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
 @pytest.mark.parametrize(
     "axis, expected_subset",
     [(0, [[4, 5, 6], [7, 8, 9]]),
@@ -639,7 +656,8 @@ def dummy_func():
 def test_deprecation_joblib_api(tmpdir):
     def check_warning(*args, **kw):
         return assert_warns_message(
-            DeprecationWarning, "deprecated in version 0.20.1", *args, **kw)
+            FutureWarning, "deprecated in version 0.20.1",
+            *args, **kw)
 
     # Ensure that the joblib API is deprecated in sklearn.util
     from sklearn.utils import Parallel, Memory, delayed

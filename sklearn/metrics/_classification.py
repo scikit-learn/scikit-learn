@@ -641,7 +641,8 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     warnings.warn('jaccard_similarity_score has been deprecated and replaced '
                   'with jaccard_score. It will be removed in version 0.23. '
                   'This implementation has surprising behavior for binary '
-                  'and multiclass classification tasks.', DeprecationWarning)
+                  'and multiclass classification tasks.',
+                  FutureWarning)
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
@@ -2133,7 +2134,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         warnings.warn("The labels parameter is unused. It was"
                       " deprecated in version 0.21 and"
                       " will be removed in version 0.23",
-                      DeprecationWarning)
+                      FutureWarning)
 
     if sample_weight is None:
         weight_average = 1.

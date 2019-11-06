@@ -192,6 +192,8 @@ def _array_indexing(array, key, key_dtype, axis):
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
             key = np.asarray(key)
+    if isinstance(key, tuple):
+        key = list(key)
     return array[key] if axis == 0 else array[:, key]
 
 
@@ -202,6 +204,8 @@ def _pandas_indexing(X, key, key_dtype, axis):
         # FIXME: solved in pandas 0.25
         key = np.asarray(key)
         key = key if key.flags.writeable else key.copy()
+    elif isinstance(key, tuple):
+        key = list(key)
     # check whether we should index with loc or iloc
     indexer = X.iloc if key_dtype == 'int' else X.loc
     return indexer[:, key] if axis else indexer[key]
@@ -219,13 +223,16 @@ def _list_indexing(X, key, key_dtype):
     return [X[idx] for idx in key]
 
 
-def _determine_key_type(key):
+def _determine_key_type(key, accept_slice=True):
     """Determine the data type of key.
 
     Parameters
     ----------
     key : scalar, slice or array-like
         The key from which we want to infer the data type.
+
+    accept_slice : bool, default=True
+        Whether or not to raise an error if the key is a slice.
 
     Returns
     -------
@@ -248,6 +255,11 @@ def _determine_key_type(key):
         except KeyError:
             raise ValueError(err_msg)
     if isinstance(key, slice):
+        if not accept_slice:
+            raise TypeError(
+                'Only array-like or scalar are supported. '
+                'A Python slice was given.'
+            )
         if key.start is None and key.stop is None:
             return None
         key_start_type = _determine_key_type(key.start)
@@ -258,7 +270,7 @@ def _determine_key_type(key):
         if key_start_type is not None:
             return key_start_type
         return key_stop_type
-    if isinstance(key, list):
+    if isinstance(key, (list, tuple)):
         unique_key = set(key)
         key_type = {_determine_key_type(elt) for elt in unique_key}
         if not key_type:
@@ -411,7 +423,7 @@ def _get_column_indices(X, key):
 
     key_dtype = _determine_key_type(key)
 
-    if isinstance(key, list) and not key:
+    if isinstance(key, (list, tuple)) and not key:
         # we get an empty list
         return []
     elif key_dtype in ('bool', 'int'):
@@ -1181,7 +1193,7 @@ def all_estimators(include_meta_estimators=None,
                         'feature_extraction._hashing' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=FutureWarning):
             module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
