@@ -8,7 +8,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_array_equal, assert_warns,
     assert_warns_message, assert_no_warnings)
 
@@ -17,7 +17,7 @@ from sklearn.cluster._affinity_propagation import (
     _equal_similarities_and_preferences
 )
 from sklearn.cluster import affinity_propagation
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.metrics import euclidean_distances
 
 n_clusters = 3
@@ -150,6 +150,14 @@ def test_affinity_propagation_predict_non_convergence():
     to_predict = np.array([[2, 2], [3, 3], [4, 4]])
     y = assert_warns(ConvergenceWarning, af.predict, to_predict)
     assert_array_equal(np.array([-1, -1, -1]), y)
+
+
+def test_affinity_propagation_non_convergence_regressiontest():
+    X = np.array([[1, 0, 0, 0, 0, 0],
+                  [0, 1, 1, 1, 0, 0],
+                  [0, 0, 1, 0, 0, 1]])
+    af = AffinityPropagation(affinity='euclidean', max_iter=2).fit(X)
+    assert_array_equal(np.array([-1, -1, -1]), af.labels_)
 
 
 def test_equal_similarities_and_preferences():

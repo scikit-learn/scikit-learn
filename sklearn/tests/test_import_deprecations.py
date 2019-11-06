@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from sklearn.utils.testing import assert_run_python_script
+from sklearn.utils._testing import assert_run_python_script
 from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 
@@ -36,7 +36,7 @@ def test_import_is_deprecated(deprecated_path, importee):
     script = """
     import pytest
 
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="{expected_message}"):
         from {deprecated_path} import {importee}
     """.format(

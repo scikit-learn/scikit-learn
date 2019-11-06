@@ -3,9 +3,9 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_almost_equal, assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.exceptions import NotFittedError
@@ -85,7 +85,7 @@ def test_notfitted():
                             voting='soft')
     ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
-           " with appropriate arguments before using this method.")
+           " with appropriate arguments before using this estimator.")
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
                          eclf.predict, X)
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
@@ -181,21 +181,21 @@ def test_predict_on_toy_problem():
 
     y = np.array([1, 1, 1, 2, 2, 2])
 
-    assert all(clf1.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
-    assert all(clf2.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
-    assert all(clf3.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf1.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf2.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
+    assert_array_equal(clf3.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='hard',
                             weights=[1, 1, 1])
-    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(eclf.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
     eclf = VotingClassifier(estimators=[
                             ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
                             voting='soft',
                             weights=[1, 1, 1])
-    assert all(eclf.fit(X, y).predict(X)) == all([1, 1, 1, 2, 2, 2])
+    assert_array_equal(eclf.fit(X, y).predict(X), [1, 1, 1, 2, 2, 2])
 
 
 def test_predict_proba_on_toy_problem():
@@ -558,5 +558,23 @@ def test_deprecate_none_transformer(Voter, BaseEstimator):
     msg = ("Using 'None' to drop an estimator from the ensemble is "
            "deprecated in 0.22 and support will be dropped in 0.24. "
            "Use the string 'drop' instead.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         est.fit(X, y)
+
+
+# TODO: Remove drop parametrize in 0.24 when None is removed in Voting*
+@pytest.mark.parametrize(
+    "Voter, BaseEstimator",
+    [(VotingClassifier, DecisionTreeClassifier),
+     (VotingRegressor, DecisionTreeRegressor)]
+)
+@pytest.mark.parametrize("drop", [None, 'drop'])
+def test_correct_named_estimator_with_drop(Voter, BaseEstimator, drop):
+    est = Voter(estimators=[('lr', drop),
+                            ('tree', BaseEstimator(random_state=0))])
+
+    with pytest.warns(None) as rec:
+        est.fit(X, y)
+    assert rec if drop is None else not rec
+
+    assert est.named_estimators_['lr'] == drop

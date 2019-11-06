@@ -287,6 +287,15 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
+        if not shuffle and random_state is not None:  # None is the default
+            # TODO 0.24: raise a ValueError instead of a warning
+            warnings.warn(
+                'Setting a random_state has no effect since shuffle is '
+                'False. This will raise an error in 0.24. You should leave '
+                'random_state to its default (None), or set shuffle=True.',
+                FutureWarning
+            )
+
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
@@ -374,7 +383,8 @@ class KFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -579,7 +589,8 @@ class StratifiedKFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -1702,7 +1713,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -2157,13 +2168,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", FutureWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, 'cvargs'):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            if len(w) and w[0].category == FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:
