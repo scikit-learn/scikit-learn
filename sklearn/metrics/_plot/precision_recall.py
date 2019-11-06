@@ -142,8 +142,8 @@ def plot_precision_recall_curve(estimator, X, y,
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")
 
-    classificaiton_error = ("{} should solve a binary classification "
-                            "problem".format(estimator.__class__.__name__))
+    classificaiton_error = ("{} should be a binary classifer".format(
+        estimator.__class__.__name__))
     if is_classifier(estimator):
         if len(estimator.classes_) != 2:
             raise ValueError(classificaiton_error)
