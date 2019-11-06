@@ -12,10 +12,12 @@ from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.pipeline import Pipeline
 
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
@@ -448,3 +450,16 @@ def test_rfe_allow_nan_inf_in_x(cv):
         rfe = RFE(estimator=clf)
     rfe.fit(X, y)
     rfe.transform(X)
+
+
+def test_w_pipeline_2d_coef_():
+    pipeline = Pipeline([('clf', LogisticRegression(C=0.1))])
+
+    iris = load_iris()
+    data, y = iris.data, iris.target
+    sfm = RFE(pipeline, n_features_to_select=2,
+              importance_getter='named_steps.clf.coef_')
+
+    sfm.fit(data, y)
+    print(sfm.estimator_['clf'].coef_.shape)
+    assert sfm.transform(data).shape[1] == 2
