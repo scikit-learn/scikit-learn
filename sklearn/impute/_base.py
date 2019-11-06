@@ -120,7 +120,7 @@ class SimpleImputer(_BaseImputer):
 
     Read more in the :ref:`User Guide <impute>`.
 
-    .. versionadded:: 0.14
+    .. versionadded:: 0.20
 
     Parameters
     ----------
