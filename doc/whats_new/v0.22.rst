@@ -427,6 +427,11 @@ Changelog
 - |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
   computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
 
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+  imputed in the reverse desired order with ``imputation_order`` either
+  ``"ascending"`` or ``"descending"``. :pr:`15393` by
+  :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.inspection`
 .........................
 
