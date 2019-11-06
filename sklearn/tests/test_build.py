@@ -14,7 +14,7 @@ def test_openmp_supported():
         pytest.skip("test explicitly disabled (SKLEARN_SKIP_OPENMP_TEST)")
 
     base_url = "dev" if __version__.endswith(".dev0") else "stable"
-    message = textwrap.dedent(
+    err_msg = textwrap.dedent(
             """
             This test fails because scikit-learn has been built without OpenMP
             support. This is not recommended since some estimators will run in
@@ -29,4 +29,4 @@ def test_openmp_supported():
             SKLEARN_SKIP_OPENMP_TEST to any value.
             """).format(base_url)
 
-    assert _openmp_supported(), message
+    assert _openmp_supported(), err_msg
