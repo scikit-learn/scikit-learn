@@ -35,7 +35,8 @@ def test_plot_roc_curve_error_invalid_response_shape(pyplot, data):
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    # Forcibly make classifier look like a binary classifier a
+    # Forcibly make classifier look like a binary classifier while actually
+    # being trained with 3 classes.
     clf.classes_ = np.array([0, 1])
 
     msg = (r"Predictions by DecisionTreeClassifier\.predict_proba should have"
