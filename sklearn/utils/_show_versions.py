@@ -9,6 +9,8 @@ import platform
 import sys
 import importlib
 
+from ._openmp_helpers import _openmp_supported
+
 
 def _get_sys_info():
     """System information
@@ -71,15 +73,20 @@ def _get_deps_info():
 
 
 def show_versions():
-    "Print useful debugging information"
+    """Print useful debugging information"""
 
     sys_info = _get_sys_info()
     deps_info = _get_deps_info()
 
-    print('\nSystem:')
+    print('\nSystem')
+    print('------')
     for k, stat in sys_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nPython deps:')
+    print('\nPython deps')
+    print('-----------')
     for k, stat in deps_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
+
+    print("\n{k:>10}: {stat}".format(k="Built with OpenMP",
+                                     stat=_openmp_supported()))
