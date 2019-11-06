@@ -1297,7 +1297,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Returns
         -------
         feature_names : list
-            A list of feature name.
+            A list of feature names.
         """
 
         self._check_vocabulary()
