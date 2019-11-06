@@ -44,14 +44,14 @@ def test_error_on_regressor(pyplot, data):
 
 def test_error_on_invalid_option(pyplot, fitted_clf, data):
     X, y = data
-    msg = (r"normalize must be one of \{'truth', 'predicted', 'all', "
+    msg = (r"normalize must be one of \{'true', 'pred', 'all', "
            r"None\}")
 
     with pytest.raises(ValueError, match=msg):
         plot_confusion_matrix(fitted_clf, X, y, normalize='invalid')
 
 
-@pytest.mark.parametrize("normalize", ['truth', 'predicted', 'all', None])
+@pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("cmap", ['viridis', 'plasma'])
@@ -88,9 +88,9 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     if with_custom_axes:
         assert disp.ax_ == ax
 
-    if normalize == 'truth':
+    if normalize == 'true':
         cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
-    elif normalize == 'predicted':
+    elif normalize == 'pred':
         cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
         cm = cm.astype('float') / cm.sum()

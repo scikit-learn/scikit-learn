@@ -153,7 +153,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     include_values : bool, default=True
         Includes values in confusion matrix.
 
-    normalize : {'truth', 'predicted', 'all'}, default=None
+    normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true, predicited conditions or
         the 'all' the population. If None, confusion matrix will not be
         normalized.
@@ -183,17 +183,17 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
 
-    if normalize not in {'truth', 'predicted', 'all', None}:
-        raise ValueError("normalize must be one of {'truth', 'predicted', "
+    if normalize not in {'true', 'pred', 'all', None}:
+        raise ValueError("normalize must be one of {'true', 'pred', "
                          "'all', None}")
 
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels)
 
-    if normalize == 'truth':
+    if normalize == 'true':
         cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
-    elif normalize == 'predicted':
+    elif normalize == 'pred':
         cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
         cm = cm.astype('float') / cm.sum()
