@@ -21,6 +21,8 @@ from sklearn.utils._testing import assert_no_warnings
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
+from sklearn.naive_bayes import BaseNB, BaseDiscreteNB
+
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -819,3 +821,19 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
+
+
+# TODO: remove in 0.24
+def test_deprecations():
+
+    class A(BaseNB, GaussianNB):
+        pass
+
+    class B(BaseDiscreteNB, CategoricalNB):
+        pass
+
+    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
+        A()
+
+    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
+        B()

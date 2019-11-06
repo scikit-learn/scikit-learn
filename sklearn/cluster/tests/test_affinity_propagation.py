@@ -152,6 +152,14 @@ def test_affinity_propagation_predict_non_convergence():
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
+def test_affinity_propagation_non_convergence_regressiontest():
+    X = np.array([[1, 0, 0, 0, 0, 0],
+                  [0, 1, 1, 1, 0, 0],
+                  [0, 0, 1, 0, 0, 1]])
+    af = AffinityPropagation(affinity='euclidean', max_iter=2).fit(X)
+    assert_array_equal(np.array([-1, -1, -1]), af.labels_)
+
+
 def test_equal_similarities_and_preferences():
     # Unequal distances
     X = np.array([[0, 0], [1, 1], [-2, -2]])

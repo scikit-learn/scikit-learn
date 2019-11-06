@@ -98,8 +98,8 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         # but we are not allowed to set attributes
         self._validate_params()
 
-    def set_params(self, *args, **kwargs):
-        super().set_params(*args, **kwargs)
+    def set_params(self, **kwargs):
+        super().set_params(**kwargs)
         self._validate_params()
         return self
 
