@@ -42,7 +42,16 @@ def test_error_on_regressor(pyplot, data):
         plot_confusion_matrix(est, X, y)
 
 
-@pytest.mark.parametrize("normalize", [True, False])
+def test_error_on_invalid_option(pyplot, fitted_clf, data):
+    X, y = data
+    msg = (r"normalize must be one of \{'truth', 'predicted', 'all', "
+           r"None\}")
+
+    with pytest.raises(ValueError, match=msg):
+        plot_confusion_matrix(fitted_clf, X, y, normalize='invalid')
+
+
+@pytest.mark.parametrize("normalize", ['truth', 'predicted', 'all', None])
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("cmap", ['viridis', 'plasma'])
@@ -79,8 +88,12 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     if with_custom_axes:
         assert disp.ax_ == ax
 
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, None]
+    if normalize == 'truth':
+        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+    elif normalize == 'predicted':
+        cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
+    elif normalize == 'all':
+        cm = cm.astype('float') / cm.sum()
 
     assert_allclose(disp.confusion_matrix, cm)
     import matplotlib as mpl
@@ -127,7 +140,7 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     X, y = data
 
     cm = confusion_matrix(y, y_pred)
-    disp = plot_confusion_matrix(fitted_clf, X, y, normalize=False,
+    disp = plot_confusion_matrix(fitted_clf, X, y, normalize=None,
                                  include_values=True, cmap='viridis',
                                  xticks_rotation=45.0)
 

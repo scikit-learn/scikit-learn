@@ -118,13 +118,13 @@ class ConfusionMatrixDisplay:
 
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
                           labels=None, display_labels=None,
-                          include_values=True, normalize=False,
+                          include_values=True, normalize=None,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
     """Plot Confusion Matrix.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
     ----------
@@ -153,15 +153,17 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     include_values : bool, default=True
         Includes values in confusion matrix.
 
-    normalize : bool, default=False
-        Normalizes confusion matrix.
+    normalize : {'truth', 'predicted', 'all'}, default=None
+        Normalizes confusion matrix over the true, predicited conditions or
+        the 'all' the population. If None, confusion matrix will not be
+        normalized.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
                         default='vertical'
         Rotation of xtick labels.
 
     values_format : str, default=None
-        Format specification for values in confusion matrix. If None,
+        Format specification for values in confusion matrix. If `None`,
         the format specification is '.2f' for a normalized matrix, and
         'd' for a unnormalized matrix.
 
@@ -181,11 +183,20 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
 
+    if normalize not in {'truth', 'predicted', 'all', None}:
+        raise ValueError("normalize must be one of {'truth', 'predicted', "
+                         "'all', None}")
+
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels)
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, None]
+
+    if normalize == 'truth':
+        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+    elif normalize == 'predicted':
+        cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
+    elif normalize == 'all':
+        cm = cm.astype('float') / cm.sum()
 
     if display_labels is None:
         if labels is None:
