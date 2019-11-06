@@ -1047,9 +1047,9 @@ def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
       it raises a ``PositiveSpectrumWarning``. All negative eigenvalues
       (even smaller ones) are set to zero in all cases.
 
-    - that the eigenvalues are well conditioned. That means, that the
+    - that the eigenvalues are well conditioned. That means, that the non-zero
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-      If this check fails and ``warn_on_zeros=True``, it raises a
+      If this check fails and ``bad_conditioning_warning=True``, it raises a
       ``PositiveSpectrumWarning``. All the eigenvalues that are too small are
       then set to zero.
 
