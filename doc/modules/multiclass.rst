@@ -39,11 +39,11 @@ regression is also supported.
   with a **set** of target labels. This can be thought of as predicting
   properties of a sample that are not mutually exclusive. Formally, a value of
   0 or 1 is assigned to each label, for every sample. It is thus comparable
-  to running 'n' binary classification tasks, for example with
+  to running 'n_labels' binary classification tasks, for example with
   :class:`sklearn.multiclass.OneVsRestClassifier`. Multilabel classification
-  differs in that only one classification model is trained whereas 'n'
-  classification models would be trained using the 'n' binary classification
-  tasks approach.
+  differs in that only one classification model is trained whereas 'n_labels'
+  classification models would be trained using the 'n_labels' binary
+  classification tasks approach.
 
   For example, prediction of taste using features extracted from a set of
   images of fruit, where the possible taste labels are 'sour', 'sweet',
@@ -54,27 +54,26 @@ regression is also supported.
   about 'religion', 'politics', 'finance' or 'education', or a subset of these
   topic labels or even all of these topic labels.
 
-  Valid representation :term:`multilabel` `y` is:
-
-    - either dense (or sparse) :term:`binary` matrix of shape
-      ``(n_samples, n_classes)`` with multiple active elements per row to denote
-      that the sample belongs to multiple classes. Each column represents a 
-      class.
+  Valid representation :term:`multilabel` `y` is either dense (or sparse)
+  :term:`binary` matrix of shape ``(n_samples, n_classes)`` with multiple
+  active elements per row to denote that the sample belongs to multiple classes.
+  Each column represents a class.
 
 
 - **Multioutput regression**: predicts multiple numerical properties for each
   sample. Each property is a numerical variable and the number of properties
-  to be predicted for each sample is greater or equal to 2.
+  to be predicted for each sample is greater or equal to 2. Some estimators
+  that support multioutput regression are faster than just running ``n_output``
+  estimators.
 
-  For example, prediction of the surface area and volume fruit, using features
-  extracted from images of fruit. Each sample is one image of a piece of fruit
-  and for each sample a numerical value for surface area and volume are
-  predicted.
+  For example, prediction of both wind speed and wind direction, in degrees,
+  using data obtained at a certain location. Each sample would be data
+  obtained at one location and both wind speed and directtion would be
+  output for each sample.
 
-  Valid representation :term:`multilabel` `y` is:
-  
-    - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
-      concatenation of :term:`continuous` variables.
+  Valid representation :term:`multilabel` `y` is dense matrix of shape
+  ``(n_samples, n_classes)`` of floats. A column wise concatenation of
+  :term:`continuous` variables.
 
 
 - **Multioutput-multiclass classification**
@@ -94,17 +93,15 @@ regression is also supported.
   image of a fruit, a label is output for both properties and each label is
   one of the possible classes of the corresponding property.
 
-  Valid representation :term:`multilabel` `y` is:
+  Valid representation :term:`multilabel` `y` is dense matrix of shape
+  ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
+  :term:`multiclass` variables.
 
-    - dense matrix of shape ``(n_samples, n_classes)`` of floats. A column wise
-      concatenation of 1d :term:`multiclass` variables.
-
-  - Note that any classifiers handling multioutput-multiclass
-    (also known as multitask classification) tasks,
-    support the multilabel classification task as a special case.
-    Multitask classification is similar to the multioutput
-    classification task with different model formulations. For
-    more information, see the relevant estimator documentation.
+  Note that any classifiers handling multioutput-multiclass (also known as
+  multitask classification) tasks, support the multilabel classification task
+  as a special case. Multitask classification is similar to the multioutput
+  classification task with different model formulations. For more information,
+  see the relevant estimator documentation.
 
 
 All scikit-learn classifiers are capable of multiclass classification,
