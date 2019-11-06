@@ -23,7 +23,7 @@ CYTHON_MIN_VERSION = '0.28.5'
 
 
 def cythonize_extensions(top_path, config):
-    """Tweaks for building extensions between release and development mode."""
+    """Check that a recent Cython is available and cythonize extensions"""
     with_openmp = check_openmp_support()
 
     # Could be due to a too old pip version and build isolation, check that
@@ -39,7 +39,7 @@ def cythonize_extensions(top_path, config):
         raise RuntimeError("pip not installed!")
 
     message = ('Please install cython with a version >= {0} in order '
-               'to build a scikit-learn development version.').format(
+               'to build a scikit-learn from source.').format(
                     CYTHON_MIN_VERSION)
     try:
         import Cython
@@ -59,7 +59,7 @@ def cythonize_extensions(top_path, config):
             # earlier joblib versions don't account for CPU affinity
             # constraints, and may over-estimate the number of available
             # CPU particularly in CI (cf loky#114)
-            n_jobs = joblib.effective_n_jobs()
+            n_jobs = joblib.cpu_count()
 
     config.ext_modules = cythonize(
         config.ext_modules,
