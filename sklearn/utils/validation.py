@@ -1077,16 +1077,16 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
-        of the maximum real part). The matrix is maybe not PSD, or something
-        went wrong with the eigenvalues decomposition.
+        of the maximum real part). Either the matrix is not PSD, or there was
+        an issue while computing the eigendecomposition of the matrix.
     >>> _check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
     array([5., 0.])
     >>> _check_psd_eigenvalues([-5, -1])    # all negative
     Traceback (most recent call last):
         ...
-    ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
-        is maybe not PSD, or something went wrong with the eigenvalues
-        decomposition.
+    ValueError: All eigenvalues are negative (maximum is -1.000000). Either the
+        matrix is not PSD, or there was an issue while computing the
+        eigendecomposition of the matrix.
     >>> _check_psd_eigenvalues([5, -1])     # significant negative
     array([5, 0])
     >>> _check_psd_eigenvalues([5, -5e-5])  # insignificant negative
@@ -1117,8 +1117,9 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         if max_imag_abs > significant_imag_ratio * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%f "
-                "of the maximum real part). The matrix is maybe not PSD, or "
-                "something went wrong with the eigenvalues decomposition."
+                "of the maximum real part). Either the matrix is not PSD, or "
+                "there was an issue while computing the eigendecomposition of "
+                "the matrix."
                 % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
@@ -1130,7 +1131,7 @@ def _check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         raise ValueError("All eigenvalues are negative (maximum is %f). "
                          "Either the matrix is not PSD, or there was an "
                          "issue while computing the eigendecomposition of "
-                         "the matrix" % max_eig)
+                         "the matrix." % max_eig)
 
     else:
         min_eig = lambdas.min()
