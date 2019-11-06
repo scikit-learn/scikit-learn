@@ -5,6 +5,10 @@ requires = [
     "wheel",
     "numpy>=1.11",
     # on conda, this is the latest for python 3.5
-    # keep synced with circleci config and advanced installation
+    # The following places need to be in sync with regard to Cython version:
+    # - pyproject.toml
+    # - .circleci config file
+    # - sklearn/_build_utils/__init__.py
+    # - advanced installation guide
     "Cython>=0.28.5",
 ]

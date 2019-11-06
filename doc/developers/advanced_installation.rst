@@ -101,6 +101,13 @@ Build dependencies
 
 Building Scikit-learn also requires:
 
+..
+    # The following places need to be in sync with regard to Cython version:
+    # - pyproject.toml
+    # - .circleci config file
+    # - sklearn/_build_utils/__init__.py
+    # - advanced installation guide
+
 - Cython >= 0.28.5
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions

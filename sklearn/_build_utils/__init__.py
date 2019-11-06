@@ -15,30 +15,12 @@ from .openmp_helpers import check_openmp_support
 
 DEFAULT_ROOT = 'sklearn'
 
-
-def get_cython_version():
-    # Try to find pyproject.toml
-    pyproject_toml = join(dirname(__file__), '..', '..', 'pyproject.toml')
-    print("----debuging")
-    print(__file__)
-    print(pyproject_toml)
-    print("----debuging")
-    if not os.path.exists(pyproject_toml):
-        raise ImportError("Unable to locate file pyproject.toml")
-
-    # Try to find the minimum version from pyproject.toml
-    with open(pyproject_toml) as pt:
-        for line in pt:
-            if "cython" not in line.lower():
-                continue
-            _, line = line.split('=')
-            required_version, _ = line.split('"')
-            return required_version
-        else:
-            raise KeyError("Can't find cython min version in pyproject.toml")
-
-
-CYTHON_MIN_VERSION = get_cython_version()
+# The following places need to be in sync with regard to Cython version:
+# - pyproject.toml
+# - .circleci config file
+# - sklearn/_build_utils/__init__.py
+# - advanced installation guide
+CYTHON_MIN_VERSION = '0.28.5'
 
 
 def cythonize_extensions(top_path, config):
