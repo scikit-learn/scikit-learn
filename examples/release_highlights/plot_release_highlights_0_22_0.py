@@ -31,6 +31,9 @@ or with conda::
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.metrics import plot_roc_curve
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+import matplotlib.pyplot as plt
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -64,7 +67,6 @@ plt.show()
 # Read more in the :ref:`User Guide <stacking>`.
 
 from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
@@ -94,9 +96,7 @@ clf.fit(X_train, y_train).score(X_test, y_test)
 # estimate of the importance of each feature, for any fitted estimator:
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
 from sklearn.inspection import permutation_importance
-import matplotlib.pyplot as plt
 
 X, y = make_classification(random_state=0, n_features=5, n_informative=3)
 rf = RandomForestClassifier(random_state=0).fit(X, y)
