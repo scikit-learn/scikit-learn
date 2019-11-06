@@ -66,8 +66,14 @@ get_build_type() {
           page_image=$(grep image $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
         done
     fi
-    changed_examples+=$(echo ${page_figure::-1} | sed 's/_ /|/g')
-    changed_examples+=$(echo ${page_image::-1} | sed 's/_ /|/g')
+    if [ -n "$page_figure" ]
+    then
+        changed_examples+=$(echo ${page_figure::-1} | sed 's/_ /|/g')
+    fi
+    if [ -n "$page_image" ]
+    then
+        changed_examples+=$(echo ${page_image::-1} | sed 's/_ /|/g')
+    fi
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
