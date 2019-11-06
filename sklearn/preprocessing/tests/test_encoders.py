@@ -773,3 +773,19 @@ def test_ordinal_encoder_pd_categories_mixed(dtype):
     X_inverse = oe.inverse_transform(expected_trans)
 
     assert_array_equal(X_inverse, X_df.values)
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_does_not_support_missing_values_in_pd_categories(Encoder):
+    pd = pytest.importorskip('pandas')
+
+    X_df = pd.DataFrame(
+        {'col_str': pd.Categorical(['a', 'b', 'b', 'a', np.nan],
+                                   categories=['b', 'a'], ordered=True),
+         'col_int': pd.Categorical([3, 2, 1, 2, np.nan],
+                                   categories=[3, 1, 2], ordered=True)},
+        columns=['col_str', 'col_int'])
+
+    enc = Encoder(categories="dtypes")
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        enc.fit(X_df)
