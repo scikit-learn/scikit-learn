@@ -62,8 +62,11 @@ get_build_type() {
     then
         for af in ${filenames[@]}
         do
-          page_figure=$(grep figure $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
-          page_image=$(grep image $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
+            if [ $af != "build_tools/circle/build_doc.sh" ]
+            then
+                page_figure=$(grep figure $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
+                page_image=$(grep image $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
+            fi
         done
     fi
     if [ -n "$page_figure" ]
