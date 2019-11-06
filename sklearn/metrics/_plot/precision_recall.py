@@ -2,7 +2,6 @@ from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...utils import check_matplotlib_support
-from ...utils.multiclass import type_of_target
 from ...utils.validation import check_is_fitted
 from ...base import is_classifier
 
@@ -143,9 +142,14 @@ def plot_precision_recall_curve(estimator, X, y,
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")
 
-    if not is_classifier(estimator):
-        raise ValueError("{} should solve a binary classification "
-                         "problem".format(estimator.__class__.__name__))
+    classificaiton_error = ("{} should solve a binary classification "
+                            "problem".format(estimator.__class__.__name__))
+    if is_classifier(estimator):
+        if len(estimator.classes_) != 2:
+            raise ValueError(classificaiton_error)
+        pos_label = estimator.classes_[1]
+    else:
+        raise ValueError(classificaiton_error)
 
     error_msg = "response method {} not defined for estimator {}"
     if response_method != "auto":
@@ -170,6 +174,7 @@ def plot_precision_recall_curve(estimator, X, y,
         y_pred = y_pred[:, 1]
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
+                                                  pos_label=pos_label,
                                                   sample_weight=sample_weight)
     average_precision = average_precision_score(y, y_pred,
                                                 sample_weight=sample_weight)

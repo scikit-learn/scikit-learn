@@ -2,12 +2,12 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
 
@@ -27,9 +27,19 @@ def test_errors(pyplot):
     multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
 
     # Fitted multiclass classifier with binary data
-    msg = "Estimator should solve a binary classification problem"
+    msg = "DecisionTreeClassifier should solve a binary classification problem"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(multi_clf, X, y_binary)
+
+    # Fitted binary classifier with multiclass data
+    msg = "DecisionTreeClassifier should solve a binary classification problem"
+    with pytest.raises(ValueError, match=msg):
+        plot_precision_recall_curve(binary_clf, X, y_multiclass)
+
+    reg = DecisionTreeRegressor().fit(X, y_multiclass)
+    msg = "DecisionTreeRegressor should solve a binary classification problem"
+    with pytest.raises(ValueError, match=msg):
+        plot_precision_recall_curve(reg, X, y_binary)
 
 
 @pytest.mark.parametrize(
@@ -45,9 +55,10 @@ def test_errors(pyplot):
 def test_error_bad_response(pyplot, response_method, msg):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    class MyClassifier(BaseEstimator):
+    class MyClassifier(BaseEstimator, ClassifierMixin):
         def fit(self, X, y):
             self.fitted_ = True
+            self.classes_ = [0, 1]
             return self
 
     clf = MyClassifier().fit(X, y)
