@@ -212,7 +212,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 maxiter=self.max_iter,
                                                 v0=v0)
 
-        # make sure that there are no numerical or conditioning issues
+        # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
                                                bad_conditioning_warning=False)
 
