@@ -47,7 +47,8 @@ def maybe_cythonize_extensions(top_path, config):
     basic_check_build()
 
     # check simple compilation with OpenMP. If it fails scikit-learn will be
-    # built without OpenMP and scikit-learn will warn the user when imported.
+    # built without OpenMP and the test test_openmp_supported in the test suite
+    # will fail.
     # `check_openmp_support` compiles a small test program to see if the
     # compilers are properly configured to build with OpenMP. This is expensive
     # and we only want to call this function once.
