@@ -165,7 +165,8 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
          'stacking-regressor', 'voting-regressor']
 )
 def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
-    # check that we raise a consistent error when all estimators are dropped
+    # check that we raise a consistent error when all estimators are
+    # dropped
     estimator.set_params(lr='drop')
     with pytest.raises(ValueError, match="All estimators are dropped."):
         estimator.fit(X, y)
