@@ -23,10 +23,10 @@ from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
-from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
+from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -60,8 +60,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
-                           metaclass=ABCMeta):
+class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+                            metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
@@ -89,7 +89,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -134,7 +134,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -193,7 +193,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         X = check_array(X, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
-            delayed(parallel_helper)(e, 'predict', X)
+            delayed(e.predict)(X)
             for e in self.estimators_)
 
         return np.asarray(y).T
@@ -202,7 +202,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
+class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -246,7 +246,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
         y : (sparse) array-like, shape (n_samples, n_outputs)
             Multi-output targets.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -297,7 +297,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
+class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -321,6 +321,18 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+
+    >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
+    >>> clf.predict(X[-2:])
+    array([[1, 1, 0], [1, 1, 1]])
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -362,7 +374,7 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
 
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs \
+        p : array of shape (n_samples, n_classes), or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -525,12 +537,14 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <classifierchain>`.
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
@@ -690,7 +704,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     base_estimator : estimator
         The base estimator from which the classifier chain is built.
 
-    order : array-like, shape=[n_outputs] or 'random', optional
+    order : array-like of shape (n_outputs,) or 'random', optional
         By default the order will be determined by the order of columns in
         the label matrix Y.::
 
@@ -760,3 +774,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
+
+
+# TODO: remove in 0.24
+@deprecated("MultiOutputEstimator is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class MultiOutputEstimator(_MultiOutputEstimator):
+    pass

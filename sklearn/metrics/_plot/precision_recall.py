@@ -4,15 +4,14 @@ from .. import precision_recall_curve
 from ...utils import check_matplotlib_support
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_is_fitted
+from ...base import is_classifier
 
 
 class PrecisionRecallDisplay:
     """Precision Recall visualization.
 
-    It is recommend to use `sklearn.metrics.plot_precision_recall_curve` to
-    create a visualizer. All parameters are stored as attributes.
-
-    Read more in the :ref:`User Guide <visualizations>`.
+    It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
+    to create a visualizer. All parameters are stored as attributes.
 
     Parameters
     -----------
@@ -94,14 +93,12 @@ class PrecisionRecallDisplay:
         return self
 
 
-def plot_precision_recall_curve(estimator, X, y, pos_label=None,
+def plot_precision_recall_curve(estimator, X, y,
                                 sample_weight=None, response_method="auto",
                                 label_name=None, ax=None, **kwargs):
     """Plot Precision Recall Curve for binary classifers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
-
-    Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     ----------
@@ -113,11 +110,6 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
 
     y : array-like of shape (n_samples,)
         Binary target values.
-
-    pos_label : int or str, default=None
-        The label of the positive class.
-        When `pos_label=None`, if y_true is in {-1, 1} or {0, 1},
-        `pos_label` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -151,10 +143,9 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")
 
-    type_y = type_of_target(y)
-    if type_y != 'binary':
-        raise ValueError(
-            "Only binary format is supported, got {}".format(type_y))
+    if not is_classifier(estimator):
+        raise ValueError("{} should solve a binary classification "
+                         "problem".format(estimator.__class__.__name__))
 
     error_msg = "response method {} not defined for estimator {}"
     if response_method != "auto":
@@ -176,13 +167,9 @@ def plot_precision_recall_curve(estimator, X, y, pos_label=None,
     y_pred = prediction_method(X)
 
     if is_predict_proba:
-        if y_pred.shape[1] > 2:
-            raise ValueError("Estimator should solve a "
-                             "binary classification problem")
         y_pred = y_pred[:, 1]
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
                                                   sample_weight=sample_weight)
     average_precision = average_precision_score(y, y_pred,
                                                 sample_weight=sample_weight)

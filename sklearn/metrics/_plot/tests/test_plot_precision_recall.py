@@ -13,8 +13,10 @@ from sklearn.exceptions import NotFittedError
 
 
 def test_errors(pyplot):
-    X, y_binary = make_classification(n_classes=2, n_samples=50,
-                                      random_state=0)
+    X, y_multiclass = make_classification(n_classes=3, n_samples=50,
+                                          n_informative=3,
+                                          random_state=0)
+    y_binary = y_multiclass == 0
 
     # Unfitted classifer
     binary_clf = DecisionTreeClassifier()
@@ -22,20 +24,12 @@ def test_errors(pyplot):
         plot_precision_recall_curve(binary_clf, X, y_binary)
     binary_clf.fit(X, y_binary)
 
-    _, y_multiclass = make_classification(n_samples=X.shape[0],
-                                          n_informative=3,
-                                          n_classes=3)
     multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
 
     # Fitted multiclass classifier with binary data
     msg = "Estimator should solve a binary classification problem"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(multi_clf, X, y_binary)
-
-    # Fitted binary classifier with multiclass data
-    msg = "Only binary format is supported, got multiclass"
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(binary_clf, X, y_multiclass)
 
 
 @pytest.mark.parametrize(

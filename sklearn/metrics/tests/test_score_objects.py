@@ -4,31 +4,33 @@ import shutil
 import os
 import numbers
 from unittest.mock import Mock
+from functools import partial
 
 import numpy as np
 import pytest
 import joblib
 
 from numpy.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer, _MultimetricScorer)
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
+                                     _MultimetricScorer,
+                                     _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
@@ -558,7 +560,7 @@ def test_deprecated_scorer():
     clf.fit(X_train, y_train)
 
     deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         deprecated_scorer(clf, X_test, y_test)
 
 
@@ -669,3 +671,51 @@ def test_multimetric_scorer_sanity_check():
     for key, value in result.items():
         score_name = scorers[key]
         assert_allclose(value, seperate_scores[score_name])
+
+
+@pytest.mark.parametrize('scorer_name, metric', [
+    ('roc_auc_ovr', partial(roc_auc_score, multi_class='ovr')),
+    ('roc_auc_ovo', partial(roc_auc_score, multi_class='ovo')),
+    ('roc_auc_ovr_weighted', partial(roc_auc_score, multi_class='ovr',
+                                     average='weighted')),
+    ('roc_auc_ovo_weighted', partial(roc_auc_score, multi_class='ovo',
+                                     average='weighted'))])
+def test_multiclass_roc_proba_scorer(scorer_name, metric):
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    y_proba = lr.predict_proba(X)
+    expected_score = metric(y, y_proba)
+
+    assert scorer(lr, X, y) == pytest.approx(expected_score)
+
+
+def test_multiclass_roc_proba_scorer_label():
+    scorer = make_scorer(roc_auc_score, multi_class='ovo',
+                         labels=[0, 1, 2], needs_proba=True)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    y_proba = lr.predict_proba(X)
+
+    y_binary = y == 0
+    expected_score = roc_auc_score(y_binary, y_proba,
+                                   multi_class='ovo',
+                                   labels=[0, 1, 2])
+
+    assert scorer(lr, X, y_binary) == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize('scorer_name', [
+    'roc_auc_ovr', 'roc_auc_ovo',
+    'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted'])
+def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
+    # Perceptron has no predict_proba
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = Perceptron().fit(X, y)
+    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=msg):
+        scorer(lr, X, y)

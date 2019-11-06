@@ -12,7 +12,7 @@ import pytest
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
     assert_raises,
     assert_less,
     assert_greater,
@@ -34,31 +34,35 @@ from sklearn.utils.testing import (
     create_memmap_backed_data,
     _delete_folder)
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_less():
     assert 0 < 1
     assert_raises(AssertionError, assert_less, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_greater():
     assert 1 > 0
     assert_raises(AssertionError, assert_greater, 0, 1)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_less_equal():
     assert 0 <= 1
     assert 1 <= 1
     assert_raises(AssertionError, assert_less_equal, 1, 0)
 
 
-@pytest.mark.filterwarnings("ignore", category=DeprecationWarning)  # 0.24
+@pytest.mark.filterwarnings("ignore",
+                            category=FutureWarning)  # 0.24
 def test_assert_greater_equal():
     assert 1 >= 0
     assert 1 >= 1
@@ -146,7 +150,7 @@ def test_ignore_warning():
                                                      category=UserWarning))
     assert_warns(UserWarning,
                  ignore_warnings(_multiple_warning_function,
-                                 category=DeprecationWarning))
+                                 category=FutureWarning))
     assert_warns(DeprecationWarning,
                  ignore_warnings(_multiple_warning_function,
                                  category=UserWarning))
@@ -253,7 +257,7 @@ class TestWarns(unittest.TestCase):
 
     def test_warn_wrong_warning(self):
         def f():
-            warnings.warn("yo", DeprecationWarning)
+            warnings.warn("yo", FutureWarning)
 
         failed = False
         filters = sys.modules['warnings'].filters[:]
@@ -668,5 +672,5 @@ def test_create_memmap_backed_data(monkeypatch):
 def test_deprecated_helpers(callable, args):
     msg = ('is deprecated in version 0.22 and will be removed in version '
            '0.24. Please use "assert" instead')
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         callable(*args)

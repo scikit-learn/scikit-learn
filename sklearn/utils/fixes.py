@@ -155,20 +155,6 @@ else:
             return arr_or_matrix.argmax(axis=axis)
 
 
-def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods
-
-    Parameters
-    ----------
-    obj
-    methodname
-    *args
-    **kwargs
-
-    """
-    return getattr(obj, methodname)(*args, **kwargs)
-
-
 if np_version < (1, 12):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
