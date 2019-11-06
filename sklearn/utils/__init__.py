@@ -1193,7 +1193,8 @@ def all_estimators(include_meta_estimators=None,
         for importer, modname, ispkg in pkgutil.walk_packages(
                 path=[root], prefix='sklearn.'):
             mod_parts = modname.split(".")
-            if modules_to_ignore & set(mod_parts) or "._" in modname:
+            if (any(part in modules_to_ignore for part in mod_parts)
+                    or '._' in modname):
                 continue
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
