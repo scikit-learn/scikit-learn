@@ -1185,8 +1185,8 @@ def all_estimators(include_meta_estimators=None,
 
     all_classes = []
     # get parent folder
-    modules_to_ignore = set(["tests", "externals", "setup"])
-    root = str(Path(__file__).parent.parent)
+    modules_to_ignore = {"tests", "externals", "setup"}
+    root = str(Path(__file__).parent.parent)  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
     with ignore_warnings(category=FutureWarning):
@@ -1200,7 +1200,8 @@ def all_estimators(include_meta_estimators=None,
             classes = [(name, est_cls) for name, est_cls in classes
                        if not name.startswith("_")]
 
-            # remove FeatureHasher
+            # TODO: Remove when FeatureHasher is implemented in PYPY
+            # Skips FeatureHasher for PYPY
             if IS_PYPY and 'feature_extraction' in modname:
                 classes = [(name, est_cls) for name, est_cls in classes
                            if name == "FeatureHasher"]
