@@ -22,7 +22,7 @@ from ..metrics import pairwise_distances
 
 
 class OPTICS(ClusterMixin, BaseEstimator):
-    """Estimate clustering structure from vector array
+    """Estimate clustering structure from vector array.
 
     OPTICS (Ordering Points To Identify the Clustering Structure), closely
     related to DBSCAN, finds core sample of high density and expands clusters
@@ -57,7 +57,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         identify clusters across all scales; reducing ``max_eps`` will result
         in shorter run times.
 
-    metric : string or callable, optional (default='minkowski')
+    metric : str or callable, optional (default='minkowski')
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -82,7 +82,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : integer, optional (default=2)
+    p : int, optional (default=2)
         Parameter for the Minkowski metric from
         :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -91,7 +91,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    cluster_method : string, optional (default='xi')
+    cluster_method : str, optional (default='xi')
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "xi" and "dbscan".
 
@@ -177,7 +177,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         ``X[ordering_][start:end + 1]`` form a cluster.
         Only available when ``cluster_method='xi'``.
 
-    See also
+    See Also
     --------
     DBSCAN
         A similar clustering for a specified neighborhood radius (eps).
@@ -192,6 +192,16 @@ class OPTICS(ClusterMixin, BaseEstimator):
     .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import OPTICS
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 5], [3, 6],
+    ...               [8, 7], [8, 8], [7, 3]])
+    >>> clustering = OPTICS(min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
@@ -213,7 +223,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
-        """Perform OPTICS clustering
+        """Perform OPTICS clustering.
 
         Extracts an ordered list of points and reachability distances, and
         performs initial clustering using ``max_eps`` distance specified at
@@ -222,11 +232,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’.
+        if metric=’precomputed’
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
         y : ignored
+            Ignored.
 
         Returns
         -------

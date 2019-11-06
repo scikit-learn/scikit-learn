@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, metrics
+from sklearn.model_selection import train_test_split
 
 # The digits dataset
 digits = datasets.load_digits()
@@ -45,12 +46,15 @@ data = digits.images.reshape((n_samples, -1))
 # Create a classifier: a support vector classifier
 classifier = svm.SVC(gamma=0.001)
 
+# Split data into train and test subsets
+X_train, X_test, y_train, y_test = train_test_split(
+    data, digits.target, test_size=0.5, shuffle=False)
+
 # We learn the digits on the first half of the digits
-classifier.fit(data[:n_samples // 2], digits.target[:n_samples // 2])
+classifier.fit(X_train, y_train)
 
 # Now predict the value of the digit on the second half:
-expected = digits.target[n_samples // 2:]
-predicted = classifier.predict(data[n_samples // 2:])
+predicted = classifier.predict(X_test)
 
 images_and_predictions = list(zip(digits.images[n_samples // 2:], predicted))
 for ax, (image, prediction) in zip(axes[1, :], images_and_predictions[:4]):
@@ -59,12 +63,9 @@ for ax, (image, prediction) in zip(axes[1, :], images_and_predictions[:4]):
     ax.set_title('Prediction: %i' % prediction)
 
 print("Classification report for classifier %s:\n%s\n"
-      % (classifier, metrics.classification_report(expected, predicted)))
-fig, ax = plt.subplots()
-disp = metrics.plot_confusion_matrix(classifier, data[n_samples // 2:],
-                                     expected, ax=ax)
-fig.suptitle("Confusion Matrix")
+      % (classifier, metrics.classification_report(y_test, predicted)))
+disp = metrics.plot_confusion_matrix(classifier, X_test, y_test)
+disp.figure_.suptitle("Confusion Matrix")
 print("Confusion matrix:\n%s" % disp.confusion_matrix)
-
 
 plt.show()
