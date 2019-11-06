@@ -26,18 +26,6 @@ def cythonize_extensions(top_path, config):
     """Check that a recent Cython is available and cythonize extensions"""
     with_openmp = check_openmp_support()
 
-    # Could be due to a too old pip version and build isolation, check that
-    try:
-        # Note, pip may not be installed or not have been used
-        import pip
-        if LooseVersion(pip.__version__) < LooseVersion('18.0.0'):
-            raise RuntimeError("Cannot cythonize, possibly due "
-                               "to `pip` being too old, found version {}, "
-                               "needed is >= 18.0.0.".format(
-                                   pip.__version__))
-    except ImportError:
-        raise RuntimeError("pip not installed!")
-
     message = ('Please install cython with a version >= {0} in order '
                'to build a scikit-learn from source.').format(
                     CYTHON_MIN_VERSION)
