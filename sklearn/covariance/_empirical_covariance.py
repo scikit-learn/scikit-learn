@@ -40,7 +40,8 @@ def log_likelihood(emp_cov, precision):
     sample mean of the log-likelihood
     """
     p = precision.shape[0]
-    log_likelihood_ = - np.sum(emp_cov * precision) + fast_logdet(precision)
+    log_likelihood_ = fast_logdet(precision)
+    log_likelihood_ -= np.sum(np.dot(emp_cov, precision))
     log_likelihood_ -= p * np.log(2 * np.pi)
     log_likelihood_ /= 2.
     return log_likelihood_
