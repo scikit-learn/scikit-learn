@@ -6,7 +6,6 @@ Utilities useful during the build.
 
 
 import os
-from os.path import join, dirname
 from distutils.version import LooseVersion
 import contextlib
 
