@@ -1807,6 +1807,8 @@ def test_search_cv__pairwise_property_delegated_to_base_estimator():
     Test implementation of BaseSearchCV has the _pairwise property
     which matches the _pairwise property of its estimator.
     This test make sure _pairwise is delegated to the base estimator.
+
+    Non-regression test for issue #13920.
     """
     est = BaseEstimator()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
@@ -1822,6 +1824,8 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
     Test implementation of BaseSearchCV has the _pairwise property
     which matches the _pairwise property of its estimator.
     This test ensures the equivalence of 'precomputed'.
+
+    Non-regression test for issue #13920.
     """
     n_samples = 50
     n_splits = 2

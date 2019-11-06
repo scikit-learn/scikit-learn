@@ -636,7 +636,7 @@ Changelog
   for estimators with pairwise inputs (such as
   :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
   'precomputed').
-  :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and
+  :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
   :user:`Xun Tang <xun-tang>`.
 
 
