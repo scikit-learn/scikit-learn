@@ -202,7 +202,6 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
                                  y_pred.shape[0], y_pred.shape))
         y_pred = y_pred[:, 1]
     if pos_label is None:
-        assert estimator.classes_.shape == (2,)
         pos_label = estimator_classes[1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             sample_weight=sample_weight,
