@@ -187,7 +187,9 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     if (pos_label is not None
             and hasattr(estimator, "classes_")
-            and pos_label not in estimator.classes_):
+            and pos_label not in set(estimator.classes_)):
+        # Note: set(estimator.classes_) is required to compare str and
+        # int/float values without raising a numpy FutureWarning.
         estimator_name = estimator.__class__.__name__
         expected_classes = set(estimator.classes_)
         raise ValueError("pos_label={} is not a valid class label for {}. "

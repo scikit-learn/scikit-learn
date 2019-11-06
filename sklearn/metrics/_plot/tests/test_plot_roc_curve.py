@@ -103,14 +103,3 @@ def test_invalid_pos_label(pyplot, data_binary):
            "LogisticRegression. Expected one of {0, 1}.")
     with pytest.raises(ValueError, match=msg):
         plot_roc_curve(lr, X, y, pos_label="invalid")
-
-
-def test_implicit_pos_label(pyplot, data_binary):
-    X, y = data_binary
-    y = y.astype(str)
-    lr = LogisticRegression()
-    lr.fit(X, y)
-    msg = ("make y_true take integer value in {0, 1} or {-1, 1}"
-           " or pass pos_label explicitly.")
-    with pytest.raises(ValueError, match=msg):
-        plot_roc_curve(lr, X, y)
