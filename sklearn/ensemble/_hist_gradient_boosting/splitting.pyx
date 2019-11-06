@@ -705,7 +705,8 @@ cdef inline Y_DTYPE_C _split_gain(
     if ((monotonic_cst == 1 and left_value > right_value) or  # INC
             (monotonic_cst == 2 and left_value < right_value)):  # DEC
         # don't consider this split since it does not respect the monotonic
-        # constraints
+        # constraints. These comparisons need to be done on values that are
+        # already bounded.
         return -1
 
     gain = negative_loss(sum_gradient_left, sum_hessian_left,
@@ -736,11 +737,8 @@ cdef inline Y_DTYPE_C compute_value(
     cdef:
         Y_DTYPE_C value
 
-    # TODO:
-    #  - refactor code to use the leaf values when computing the negative_loss
-    #  - zero div error
-
-    value = - gradient / (hessian + l2_regularization)
+    # TODO: refactor to use the leaf values when computing the negative_loss
+    value = -gradient / (hessian + l2_regularization + 1e-15)
 
     if value < lower_bound:
         value = lower_bound

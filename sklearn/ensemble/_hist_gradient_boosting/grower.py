@@ -346,13 +346,15 @@ class TreeGrower:
                                    node.split_info.sum_gradient_left,
                                    node.split_info.sum_hessian_left,
                                    parent=node,
-                                   value=node.split_info.value_left)
+                                   value=node.split_info.value_left,
+                                   )
         right_child_node = TreeNode(depth,
                                     sample_indices_right,
                                     node.split_info.sum_gradient_right,
                                     node.split_info.sum_hessian_right,
-                                   parent=node,
-                                   value=node.split_info.value_right)
+                                    parent=node,
+                                    value=node.split_info.value_right,
+                                   )
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node
         node.right_child = right_child_node
@@ -394,6 +396,9 @@ class TreeGrower:
             left_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
             right_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
         else:
+            # Note: using here the value set in the splitter, not in finalize
+            # leaf. node.value will be overridden later. they better be the
+            # same
             middle = (left_child_node.value + right_child_node.value) / 2
             if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
                 left_child_node.set_children_bounds(node.children_lower_bound, middle)
@@ -442,17 +447,25 @@ class TreeGrower:
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
-        # """Compute the prediction value that minimizes the objective function.
+        """Compute the prediction value that minimizes the objective function.
 
-        # This sets the node.value attribute (node is a leaf iff node.value is
-        # not None).
+        This sets the node.value attribute (node is a leaf iff node.value is
+        not None).
 
-        # See Equation 5 of:
-        # XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-        # https://arxiv.org/abs/1603.02754
-        # """
-        # node.value = -self.shrinkage * node.sum_gradients / (
-        #     node.sum_hessians + self.splitter.l2_regularization + EPS)
+        See Equation 5 of:
+        XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
+        https://arxiv.org/abs/1603.02754
+        """
+        # TODO: duplicated... not great. Still leaving this here for now.
+        node.value = -self.shrinkage * node.sum_gradients / (
+            node.sum_hessians + self.splitter.l2_regularization + EPS)
+
+        if node.parent is not None:
+            lower_bound = node.parent.children_lower_bound
+            upper_bound = node.parent.children_upper_bound
+            node.value = min(upper_bound, node.value)
+            node.value = max(lower_bound, node.value)
+
         node.is_leaf = True
         self.finalized_leaves.append(node)
 
@@ -480,14 +493,13 @@ class TreeGrower:
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         _fill_predictor_node_array(predictor_nodes, self.root,
                                    bin_thresholds,
-                                   self.n_bins_non_missing,
-                                   self.shrinkage)
+                                   self.n_bins_non_missing)
         return TreePredictor(predictor_nodes)
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
                                bin_thresholds, n_bins_non_missing,
-                               shrinkage, next_free_idx=0):
+                               next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
     node['count'] = grower_node.n_samples
@@ -500,7 +512,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        node['value'] = grower_node.value * shrinkage
+        node['value'] = grower_node.value
         return next_free_idx + 1
     else:
         # Decision node
@@ -524,7 +536,6 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
-            shrinkage=shrinkage,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
@@ -532,5 +543,4 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
-            shrinkage=shrinkage,
             next_free_idx=next_free_idx)
