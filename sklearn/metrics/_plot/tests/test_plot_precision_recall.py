@@ -31,11 +31,6 @@ def test_errors(pyplot):
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(multi_clf, X, y_binary)
 
-    # Fitted binary classifier with multiclass data
-    msg = "DecisionTreeClassifier should solve a binary classification problem"
-    with pytest.raises(ValueError, match=msg):
-        plot_precision_recall_curve(binary_clf, X, y_multiclass)
-
     reg = DecisionTreeRegressor().fit(X, y_multiclass)
     msg = "DecisionTreeRegressor should solve a binary classification problem"
     with pytest.raises(ValueError, match=msg):
@@ -86,7 +81,7 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
                                        sample_weight=sample_weight)
 
     y_score = getattr(lr, response_method)(X)
-    if y_score.ndim == 2:
+    if response_method == 'predict_proba':
         y_score = y_score[:, 1]
 
     prec, recall, _ = precision_recall_curve(y, y_score,
