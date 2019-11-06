@@ -120,3 +120,15 @@ def test_plot_roc_curve_pos_label(pyplot, data_binary):
     assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
     viz = plot_roc_curve(lr, X, y, pos_label="pos")
     assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
+
+
+def test_plot_roc_curve_pos_label_non_standard_integers(pyplot, data_binary):
+    X, y = data_binary
+    y = np.array([1, 2])[y]
+    lr = LogisticRegression()
+    lr.fit(X, y)
+    y_pred = lr.predict_proba(X)[:, 1]
+    viz = plot_roc_curve(lr, X, y)
+    assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
+    viz = plot_roc_curve(lr, X, y, pos_label=2)
+    assert_allclose(viz.roc_auc, roc_auc_score(y, y_pred))
