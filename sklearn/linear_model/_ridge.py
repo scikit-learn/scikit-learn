@@ -1421,17 +1421,17 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        if np.any(self.alphas <= 0):
-            raise ValueError(
-                "alphas must be positive. Got {} containing some "
-                "negative or null value instead.".format(self.alphas))
-
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
                          multi_output=True, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
                                                  dtype=X.dtype)
+
+        if np.any(self.alphas <= 0):
+            raise ValueError(
+                "alphas must be positive. Got {} containing some "
+                "negative or null value instead.".format(self.alphas))
 
         n_samples, n_features = X.shape
 
