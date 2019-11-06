@@ -717,23 +717,21 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 if sparse.issparse(X):
                     raise ValueError("Sample weights do not (yet) support "
                                      "sparse matrices.")
-                sample_weight = _check_sample_weight(sample_weight, X)
-                if np.any(sample_weight < 0) or np.sum(sample_weight) <= 0:
-                    raise ValueError("Sample weights must be non-negative and "
-                                     "at least one value must be larger than "
-                                     "zero.")
+                sample_weight = _check_sample_weight(sample_weight, X,
+                                                     dtype=X.dtype)
             # simplify things by rescaling sw to sum up to n_samples
             # => np.average(x, weights=sw) = np.mean(sw * x)
-            sample_weight = sample_weight * (n_samples / np.sum(sample_weight))
+            sample_weight *= (n_samples / np.sum(sample_weight))
             # Objective function is:
             # 1/2 * np.average(squared error, weights=sw) + alpha * penalty
             # but coordinate descent minimizes:
-            # 1/2 * sum(squared error) + alpha * panelty
+            # 1/2 * sum(squared error) + alpha * penalty
             # enet_path therefore sets alpha = n_samples * alpha
             # With sw, enet_path should set alpha = sum(sw) * alpha
             # Therefore, we rescale alpha = sum(sw) / n_samples * alpha
-            # alternative: rescale sample_weights to sum up to n_samples.
-            alpha *= np.sum(sample_weight) / n_samples
+            # Note: As we rescaled sample_weights to sum up to n_samples,
+            #       we don't need this
+            # alpha *= np.sum(sample_weight) / n_samples
 
         # Ensure copying happens only once, don't do it again if done above
         should_copy = self.copy_X and not X_copied
