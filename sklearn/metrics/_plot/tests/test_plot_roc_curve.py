@@ -25,7 +25,21 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    msg = "Estimator should solve a binary classification problem"
+    msg = "Estimator DecisionTreeClassifier is not a binary classifier"
+    with pytest.raises(ValueError, match=msg):
+        plot_roc_curve(clf, X, y)
+
+
+def test_plot_roc_curve_error_invalid_response_shape(pyplot, data):
+    X, y = data
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    # Forcibly make classifier look like a binary classifier a
+    clf.classes_ = np.array([0, 1])
+
+    msg = ("Predictions by DecisionTreeClassifier\.predict_proba should have"
+           " shape \(150, 2\), got \(150, 3\)\.")
     with pytest.raises(ValueError, match=msg):
         plot_roc_curve(clf, X, y)
 

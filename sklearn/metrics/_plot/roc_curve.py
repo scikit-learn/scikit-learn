@@ -113,7 +113,7 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Trained binary classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -123,7 +123,8 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
 
     pos_label : int or str, default=None
         Label of the positive class.
-        By default, pos_label is inferred automatically.
+        By default, pos_label is inferred automatically by taking the last
+        class label from the estimator.classes_ attribute.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -185,17 +186,27 @@ def plot_roc_curve(estimator, X, y, pos_label=None, sample_weight=None,
             raise ValueError('response methods not defined')
 
     y_pred = prediction_method(X)
+    estimator_name = estimator.__class__.__name__
+    estimator_classes = getattr(estimator, "classes_", [])
+
+    if len(estimator_classes) != 2:
+        raise ValueError("Estimator {} is not a binary classifier: "
+                         "its classes_ attribute is set to: {}".format(
+                             estimator_name, estimator_classes))
 
     if y_pred.ndim != 1:
         if y_pred.shape[1] > 2:
-            raise ValueError("Estimator should solve a "
-                             "binary classification problem")
+            raise ValueError("Predictions by {}.{} should have shape ({}, 2),"
+                             " got {}.".format(
+                                 estimator_name, prediction_method.__name__,
+                                 y_pred.shape[0], y_pred.shape))
         y_pred = y_pred[:, 1]
     if pos_label is None:
-        pos_label = estimator.classes_[1]
+        assert estimator.classes_.shape == (2,)
+        pos_label = estimator_classes[1]
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
-    viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator.__class__.__name__)
+    viz = RocCurveDisplay(fpr, tpr, roc_auc, estimator_name)
     return viz.plot(ax=ax, name=name, **kwargs)
