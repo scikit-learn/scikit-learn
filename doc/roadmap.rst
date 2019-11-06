@@ -79,7 +79,7 @@ the document up to date as we work on these issues.
 #. Improved handling of categorical features
 
    * Tree-based models should be able to handle both continuous and categorical
-     features :issue:`12866`
+     features :issue:`12866` and :issue:`15550`.
    * |ss| In dataset loaders :issue:`13902` |se|
    * As generic transformers to be used with ColumnTransforms (e.g. ordinal
      encoding supervised by correlation with target variable) :issue:`5853`,
@@ -137,7 +137,7 @@ the document up to date as we work on these issues.
 #. Better interfaces for interactive development
 
    * |ss| __repr__ |se| and HTML visualisations of estimators
-     |ss| :issue:`6323` |se|
+     |ss| :issue:`6323` |se| and :pr:`14180`.
    * Include plotting tools, not just as examples. :issue:`9173`
 
 #. Improved tools for model diagnostics and basic inference
@@ -209,7 +209,9 @@ the document up to date as we work on these issues.
        recover the previous predictive performance: if this is not the case
        there is probably a bug in scikit-learn that needs to be reported.
 
-#. Everything in Scikit-learn should conform to our API contract
+#. Everything in Scikit-learn should probably conform to our API contract.
+   We are still in the process of making decisions on some of these related
+   issues.
 
    * `Pipeline <pipeline.Pipeline>` and `FeatureUnion` modify their input
      parameters in fit. Fixing this requires making sure we have a good
