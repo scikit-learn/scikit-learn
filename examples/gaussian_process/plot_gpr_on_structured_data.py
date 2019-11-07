@@ -32,9 +32,9 @@ sequences and make predictions on another 5 sequences. The ground truth here is
 simply  whether there is at least one 'A' in the sequence. Here the model makes
 four correct classifications and fails on one.
 
-.. [1] Haussler, D. (1999). Convolution kernels on discrete structures (Vol. 646).
-Technical report, Department of Computer Science, University of California at
-Santa Cruz.
+.. [1] Haussler, D. (1999). Convolution kernels on discrete structures
+(Vol. 646). Technical report, Department of Computer Science, University of
+California at Santa Cruz.
 """
 print(__doc__)
 
@@ -49,8 +49,8 @@ from sklearn.base import clone
 
 class SequenceKernel(GenericKernelMixin, Kernel):
     '''
-    A minimal (but valid) convolutional kernel for sequences of variable length.
-    '''
+    A minimal (but valid) convolutional kernel for sequences of variable
+    lengths.'''
     def __init__(self,
                  baseline_similarity=0.5,
                  baseline_similarity_bounds=(1e-5, 1)):
