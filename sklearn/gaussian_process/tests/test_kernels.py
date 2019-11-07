@@ -14,22 +14,22 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation, Kernel)
+            Exponentiation, Kernel, CompoundKernel)
 from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
-                                   assert_array_almost_equal,
-                                   assert_raise_message)
+                                    assert_array_almost_equal,
+                                    assert_raise_message)
 
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
 
-kernel_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
+kernel_rbf_plus_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ConstantKernel(constant_value=10.0),
            2.0 * RBF(length_scale=0.33, length_scale_bounds="fixed"),
-           2.0 * RBF(length_scale=0.5), kernel_white,
+           2.0 * RBF(length_scale=0.5), kernel_rbf_plus_white,
            2.0 * RBF(length_scale=[0.5, 2.0]),
            2.0 * Matern(length_scale=0.33, length_scale_bounds="fixed"),
            2.0 * Matern(length_scale=0.5, nu=0.5),
@@ -92,8 +92,7 @@ def test_kernel_theta(kernel):
     # Check that values returned in theta are consistent with
     # hyperparameter values (being their logarithms)
     for i, hyperparameter in enumerate(kernel.hyperparameters):
-        assert (theta[i] ==
-                     np.log(getattr(kernel, hyperparameter.name)))
+        assert (theta[i] == np.log(getattr(kernel, hyperparameter.name)))
 
     # Fixed kernel parameters must be excluded from theta and gradient.
     for i, hyperparameter in enumerate(kernel.hyperparameters):
@@ -129,7 +128,7 @@ def test_kernel_theta(kernel):
 @pytest.mark.parametrize('kernel',
                          [kernel for kernel in kernels
                           # Identity is not satisfied on diagonal
-                          if kernel != kernel_white])
+                          if kernel != kernel_rbf_plus_white])
 def test_auto_vs_cross(kernel):
     # Auto-correlation and cross-correlation should be consistent.
     K_auto = kernel(X)
@@ -186,6 +185,27 @@ def test_kernel_stationary(kernel):
     assert_almost_equal(K[0, 0], np.diag(K))
 
 
+@pytest.mark.parametrize('kernel',  kernels)
+def test_kernel_input_type(kernel):
+    # Test whether kernels is for vectors or structured data
+    if isinstance(kernel, Exponentiation):
+        assert(kernel.requires_vector_input() ==
+               kernel.kernel.requires_vector_input())
+    if isinstance(kernel, KernelOperator):
+        assert(kernel.requires_vector_input() ==
+               (kernel.k1.requires_vector_input() or
+                kernel.k2.requires_vector_input()))
+
+
+def test_compound_kernel_input_type():
+    kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
+    assert(kernel.requires_vector_input() is not True)
+
+    kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
+                             RBF(length_scale=2.0)])
+    assert(kernel.requires_vector_input())
+
+
 def check_hyperparameters_equal(kernel1, kernel2):
     # Check that hyperparameters of two kernels are equal
     for attr in set(dir(kernel1) + dir(kernel2)):
@@ -236,8 +256,7 @@ def test_kernel_clone_after_set_params(kernel):
             params['length_scale_bounds'] = bounds * 2
         kernel_cloned.set_params(**params)
         kernel_cloned_clone = clone(kernel_cloned)
-        assert (kernel_cloned_clone.get_params() ==
-                     kernel_cloned.get_params())
+        assert (kernel_cloned_clone.get_params() == kernel_cloned.get_params())
         assert id(kernel_cloned_clone) != id(kernel_cloned)
         check_hyperparameters_equal(kernel_cloned, kernel_cloned_clone)
 
@@ -266,7 +285,7 @@ def test_kernel_versus_pairwise(kernel):
     # Check that GP kernels can also be used as pairwise kernels.
 
     # Test auto-kernel
-    if kernel != kernel_white:
+    if kernel != kernel_rbf_plus_white:
         # For WhiteKernel: k(X) != k(X,X). This is assumed by
         # pairwise_kernels
         K1 = kernel(X)
@@ -338,6 +357,9 @@ def test_warns_on_get_params_non_attribute():
 
         def is_stationary(self):
             return False
+
+        def requires_vector_input(self):
+            return True
 
     est = MyKernel()
     with pytest.warns(FutureWarning, match='AttributeError'):

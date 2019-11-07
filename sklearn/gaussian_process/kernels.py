@@ -368,7 +368,8 @@ class Kernel(metaclass=ABCMeta):
 
     @abstractmethod
     def requires_vector_input(self):
-        """Returns whether the kernel is defined on discrete structures. """
+        """Returns whether the kernel is defined on fixed-length feature
+        vectors or generic objects."""
 
 
 class NormalizedKernelMixin:
@@ -409,7 +410,7 @@ class StationaryKernelMixin:
 
 
 class VectorKernelMixin:
-    """Mixin for kernels which operate on fixed-length feature vectors
+    """Mixin for kernels which operate on fixed-length feature vectors.
 
     .. versionadded:: TBD
     """
@@ -418,9 +419,9 @@ class VectorKernelMixin:
         return True
 
 
-class StructuredKernelMixin:
-    """Mixin for kernels which operate on discrete structures
-       such as sequences, trees, and graphs
+class GenericKernelMixin:
+    """Mixin for kernels which operate on generic objects such as variable-
+    length sequences, trees, and graphs.
 
     .. versionadded:: TBD
     """
@@ -1009,7 +1010,7 @@ class Exponentiation(Kernel):
         return self.kernel.requires_vector_input()
 
 
-class ConstantKernel(StationaryKernelMixin, StructuredKernelMixin,
+class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
                      Kernel):
     """Constant kernel.
 
@@ -1111,7 +1112,7 @@ class ConstantKernel(StationaryKernelMixin, StructuredKernelMixin,
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
-class WhiteKernel(StationaryKernelMixin, StructuredKernelMixin,
+class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
                   Kernel):
     """White kernel.
 
