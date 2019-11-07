@@ -358,9 +358,6 @@ def test_warns_on_get_params_non_attribute():
         def is_stationary(self):
             return False
 
-        def requires_vector_input(self):
-            return True
-
     est = MyKernel()
     with pytest.warns(FutureWarning, match='AttributeError'):
         params = est.get_params()

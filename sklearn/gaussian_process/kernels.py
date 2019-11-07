@@ -366,10 +366,11 @@ class Kernel(metaclass=ABCMeta):
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
 
-    @abstractmethod
     def requires_vector_input(self):
         """Returns whether the kernel is defined on fixed-length feature
-        vectors or generic objects."""
+        vectors or generic objects. Defaults to True for backward
+        compatibility."""
+        return True
 
 
 class NormalizedKernelMixin:
@@ -406,16 +407,6 @@ class StationaryKernelMixin:
 
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
-        return True
-
-
-class VectorKernelMixin:
-    """Mixin for kernels which operate on fixed-length feature vectors.
-
-    .. versionadded:: TBD
-    """
-    def requires_vector_input(self):
-        """whether the kernel works only on fixed-length feature vectors."""
         return True
 
 
@@ -1213,8 +1204,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
                                                  self.noise_level)
 
 
-class RBF(StationaryKernelMixin, NormalizedKernelMixin, VectorKernelMixin,
-          Kernel):
+class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
@@ -1478,8 +1468,7 @@ class Matern(RBF):
                 self.nu)
 
 
-class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin,
-                        VectorKernelMixin, Kernel):
+class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Rational Quadratic kernel.
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
@@ -1595,8 +1584,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin,
             self.__class__.__name__, self.alpha, self.length_scale)
 
 
-class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin,
-                     VectorKernelMixin, Kernel):
+class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     r"""Exp-Sine-Squared kernel.
 
     The ExpSineSquared kernel allows modeling periodic functions. It is
@@ -1709,7 +1697,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin,
             self.__class__.__name__, self.length_scale, self.periodicity)
 
 
-class DotProduct(VectorKernelMixin, Kernel):
+class DotProduct(Kernel):
     r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
@@ -1831,7 +1819,7 @@ def _approx_fprime(xk, f, epsilon, args=()):
     return grad
 
 
-class PairwiseKernel(VectorKernelMixin, Kernel):
+class PairwiseKernel(Kernel):
     """Wrapper for kernels in sklearn.metrics.pairwise.
 
     A thin wrapper around the functionality of the kernels in
