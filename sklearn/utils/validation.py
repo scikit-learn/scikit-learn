@@ -1021,7 +1021,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_psd_eigenvalues(lambdas, small_nonzeros_warning=True):
+def _check_psd_eigenvalues(lambdas, small_nonzeros_warning=False):
     """Check the eigenvalues of a positive semidefinite (PSD) matrix.
 
     Checks the provided array of PSD matrix eigenvalues for numerical or
@@ -1058,7 +1058,7 @@ def _check_psd_eigenvalues(lambdas, small_nonzeros_warning=True):
     lambdas : array-like of shape (n_eigenvalues,)
         Array of eigenvalues to check / fix.
 
-    small_nonzeros_warning : bool, default=True
+    small_nonzeros_warning : bool, default=False
         When this is set to ``True``, a ``PositiveSpectrumWarning`` will be
         raised when there are extremely small non-zero eigenvalues (positive or
         negative). Otherwise no warning will be raised in this case. Note that
