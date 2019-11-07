@@ -86,14 +86,12 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
 
 
 @pytest.mark.parametrize(
-    "input_type, feature_names",
-    [('dataframe', None),
-     ('dataframe', load_boston().feature_names),
-     ('list', load_boston().feature_names),
-     ('array', load_boston().feature_names)]
+    "input_type, use_feature_names",
+    [('dataframe', False), ('dataframe', True),
+     ('list', True), ('array', True)]
 )
 def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
-                                              input_type, feature_names):
+                                              input_type, use_feature_names):
     if input_type == 'dataframe':
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(boston.data, columns=boston.feature_names)
@@ -101,6 +99,7 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
         X = boston.data.tolist()
     else:
         X = boston.data
+    feature_names = boston.feature_names if use_feature_names else None
 
     grid_resolution = 25
     # check with str features and array feature names and single column
