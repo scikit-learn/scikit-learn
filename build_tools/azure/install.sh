@@ -88,8 +88,12 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # Since conda main channel usually lacks behind on the latest releases,
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
+    # We let pip install the latest version of the build dependencies from
+    # pyproject.toml and the runtime dependencies from the dist-info metadata
+    # that results from the scikit-learn setup.py file.
+    # The optional test are installed separately:
     make_conda "python=$PYTHON_VERSION"
-    python -m pip install numpy scipy joblib cython
+    python -m pip install -U pip
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
 fi
@@ -117,5 +121,14 @@ except ImportError:
     print('pandas not installed')
 "
 python -m pip list
-python setup.py build_ext --inplace -j 3
-python setup.py develop
+
+if [[ "$DISTRIB" == "conda-pip-latest" ]]; then
+    # Check that pip can automatically install the build dependencies from
+    # pyproject.toml using an isolated build environment:
+    pip install --verbose --editable .
+else
+    # Use the pre-installed build dependencies and build directly in the
+    # current environment.
+    python setup.py build_ext --inplace -j 3
+    python setup.py develop
+fi

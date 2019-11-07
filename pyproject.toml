@@ -4,6 +4,7 @@ requires = [
     "setuptools",
     "wheel",
     "numpy>=1.11",
+    "scipy>=0.17.0",
     # on conda, this is the latest for python 3.5
     # The following places need to be in sync with regard to Cython version:
     # - pyproject.toml
