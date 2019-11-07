@@ -189,21 +189,21 @@ def test_kernel_stationary(kernel):
 def test_kernel_input_type(kernel):
     # Test whether kernels is for vectors or structured data
     if isinstance(kernel, Exponentiation):
-        assert(kernel.requires_vector_input() ==
-               kernel.kernel.requires_vector_input())
+        assert(kernel.requires_vector_input ==
+               kernel.kernel.requires_vector_input)
     if isinstance(kernel, KernelOperator):
-        assert(kernel.requires_vector_input() ==
-               (kernel.k1.requires_vector_input() or
-                kernel.k2.requires_vector_input()))
+        assert(kernel.requires_vector_input ==
+               (kernel.k1.requires_vector_input or
+                kernel.k2.requires_vector_input))
 
 
 def test_compound_kernel_input_type():
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
-    assert(kernel.requires_vector_input() is not True)
+    assert(kernel.requires_vector_input is not True)
 
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
                              RBF(length_scale=2.0)])
-    assert(kernel.requires_vector_input())
+    assert(kernel.requires_vector_input)
 
 
 def check_hyperparameters_equal(kernel1, kernel2):

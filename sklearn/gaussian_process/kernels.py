@@ -366,6 +366,7 @@ class Kernel(metaclass=ABCMeta):
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
 
+    @property
     def requires_vector_input(self):
         """Returns whether the kernel is defined on fixed-length feature
         vectors or generic objects. Defaults to True for backward
@@ -416,6 +417,7 @@ class GenericKernelMixin:
 
     .. versionadded:: TBD
     """
+    @property
     def requires_vector_input(self):
         """whether the kernel works only on fixed-length feature vectors."""
         return False
@@ -545,9 +547,10 @@ class CompoundKernel(Kernel):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
+    @property
     def requires_vector_input(self):
         """Returns whether the kernel is defined on discrete structures. """
-        return np.any([kernel.requires_vector_input()
+        return np.any([kernel.requires_vector_input
                        for kernel in self.kernels])
 
     def diag(self, X):
@@ -673,10 +676,11 @@ class KernelOperator(Kernel):
         """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
+    @property
     def requires_vector_input(self):
         """Returns whether the kernel is stationary. """
-        return (self.k1.requires_vector_input() or
-                self.k2.requires_vector_input())
+        return (self.k1.requires_vector_input or
+                self.k2.requires_vector_input)
 
 
 class Sum(KernelOperator):
@@ -996,9 +1000,10 @@ class Exponentiation(Kernel):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
+    @property
     def requires_vector_input(self):
         """Returns whether the kernel is defined on discrete structures. """
-        return self.kernel.requires_vector_input()
+        return self.kernel.requires_vector_input
 
 
 class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,

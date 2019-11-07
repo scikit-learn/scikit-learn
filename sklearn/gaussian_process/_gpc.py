@@ -624,7 +624,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        if self.kernel is None or self.kernel.requires_vector_input():
+        if self.kernel is None or self.kernel.requires_vector_input:
             X, y = check_X_y(X, y, multi_output=False,
                              ensure_2d=True, dtype="numeric")
         else:
@@ -685,7 +685,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        if self.kernel is None or self.kernel.requires_vector_input():
+        if self.kernel is None or self.kernel.requires_vector_input:
             X = check_array(X, ensure_2d=True, dtype="numeric")
         else:
             X = check_array(X, ensure_2d=False, dtype=None)
@@ -715,7 +715,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                              "predicting probability estimates. Use "
                              "one_vs_rest mode instead.")
 
-        if self.kernel is None or self.kernel.requires_vector_input():
+        if self.kernel is None or self.kernel.requires_vector_input:
             X = check_array(X, ensure_2d=True, dtype="numeric")
         else:
             X = check_array(X, ensure_2d=False, dtype=None)
