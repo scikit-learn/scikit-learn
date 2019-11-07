@@ -16,6 +16,7 @@ import sys
 import os
 import warnings
 import re
+from distutils.version import StrictVersion
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -85,7 +86,8 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 #
 # The short X.Y version.
 import sklearn
-version = sklearn.__version__
+version = '.'.join([str(x) for x in
+                    StrictVersion(sklearn.__version__).version])
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 
