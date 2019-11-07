@@ -503,14 +503,6 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             # _n_support has size 2, we make it size 1
             return np.array([self._n_support[0]])
 
-    @property
-    def probA_(self):
-        return self._probA
-
-    @property
-    def probB_(self):
-        return self._probB
-
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
@@ -697,7 +689,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA, self._probB,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
@@ -723,7 +715,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
@@ -739,6 +731,14 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
                 coef = np.vstack(coef)
 
         return coef
+
+    @property
+    def probA_(self):
+        return self._probA
+
+    @property
+    def probB_(self):
+        return self._probB
 
 
 def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
