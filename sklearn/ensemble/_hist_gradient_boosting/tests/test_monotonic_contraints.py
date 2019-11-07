@@ -119,7 +119,9 @@ def test_grower(monotonic_cst, seed):
     # Build a single tree with only one feature, and make sure the predictor
     # respects the monotonic constraints.
 
-    # Considering a monotonic INC constraint, we should have:
+    # Considering the following tree with a monotonic INC constraint, we
+    # should have:
+    #
     #       root
     #      /    \
     #     5     10    # middle = 7.5
@@ -127,7 +129,7 @@ def test_grower(monotonic_cst, seed):
     #   a  b  c  d
     #
     # a < b and c < d  (assert_children_values_monotonic)
-    # b < 7.5 < c (assert_children_values_bounded)
+    # a, b < middle < c, d (assert_children_values_bounded)
     # a < b < c < d (assert_leaves_values_monotonic)
     #
     # The last one is a consequence of the others, but can't hurt to check
