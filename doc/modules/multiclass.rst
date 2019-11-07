@@ -27,6 +27,7 @@ regression is also supported.
   to one and only one label - one sample cannot, for example, be both a pear
   and an apple. An example of ``y`` for 3 samples:
 
+    >>> import numpy as np
     >>> y = np.array(['apple', 'pear', 'apple', 'orange'])                               
     >>> print(y)                                                                         
     ['apple' 'pear' 'apple' 'orange']
@@ -37,6 +38,7 @@ regression is also supported.
     - 1d or column vector containing more than two discrete values.
     - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
       single element per row, where each column represents one class.
+
 
 - **Multilabel classification**: classification task labelling each sample with
   ``x`` labels from ``n_classes`` possible classes, where ``x`` can be 0 to
