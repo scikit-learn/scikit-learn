@@ -564,10 +564,12 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
+        # TODO: those split_info attribute might just never have been set
         split_info.value_left = compute_value(
             split_info.sum_gradient_left, split_info.sum_hessian_left,
             lower_bound, upper_bound, self.l2_regularization)
 
+        # TODO: those split_info attribute might just never have been set
         split_info.value_right = compute_value(
             split_info.sum_gradient_right, split_info.sum_hessian_right,
             lower_bound, upper_bound, self.l2_regularization)
@@ -663,10 +665,12 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
+        # TODO: those split_info attribute might just never have been set
         split_info.value_left = compute_value(
             split_info.sum_gradient_left, split_info.sum_hessian_left,
             lower_bound, upper_bound, self.l2_regularization)
 
+        # TODO: those split_info attribute might just never have been set
         split_info.value_right = compute_value(
             split_info.sum_gradient_right, split_info.sum_hessian_right,
             lower_bound, upper_bound, self.l2_regularization)
@@ -722,7 +726,7 @@ cdef inline Y_DTYPE_C negative_loss(
         Y_DTYPE_C l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)
 
-cdef inline Y_DTYPE_C compute_value(
+cpdef inline Y_DTYPE_C compute_value(
         Y_DTYPE_C gradient,
         Y_DTYPE_C hessian,
         Y_DTYPE_C lower_bound,
@@ -732,6 +736,7 @@ cdef inline Y_DTYPE_C compute_value(
 
     The value is capped in the [lower_bound, upper_bound] interval to respect
     monotonic constraints.
+    Shrinkage is ignored.
     """
 
     cdef:

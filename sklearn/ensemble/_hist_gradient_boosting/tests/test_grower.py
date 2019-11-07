@@ -383,5 +383,105 @@ def test_split_on_nan_with_infinite_values():
     predictions = predictor.predict(X)
     predictions_binned = predictor.predict_binned(
         X_binned, missing_values_bin_idx=bin_mapper.missing_values_bin_idx_)
-    assert np.all(predictions == -gradients)
-    assert np.all(predictions_binned == -gradients)
+    assert np.all(predictions.astype(G_H_DTYPE) == -gradients)
+    assert np.all(predictions_binned.astype(G_H_DTYPE) == -gradients)
+
+
+def assert_leaves_values_monotonic(predictor, monotonic_cst):
+    # make sure leaves values (from left to right) are either all increasing
+    # or all decreasing (or neither) depending on the monotonic constraint.
+    nodes = predictor.nodes
+    def get_leaves_values():
+        """get leaves values from left to right"""
+
+        values = []
+        def dfs(node_idx):
+            node = nodes[node_idx]
+            if node['is_leaf']:
+                values.append(node['value'])
+                return
+            dfs(node['left'])
+            dfs(node['right'])
+
+        dfs(0)  # start at root (0)
+        return values
+
+    values = get_leaves_values()
+
+
+    if monotonic_cst == 0:  # NO_CST
+        # some increasing, some decreasing
+        assert (any(v1 < v2 for (v1, v2) in zip(values, values[1:])) and
+                any(v1 > v2 for (v1, v2) in zip(values, values[1:])))
+    elif monotonic_cst == 1:  # INC
+        # all increasing
+        assert all(v1 < v2 for (v1, v2) in zip(values, values[1:]))
+    else:  # DEC
+        # all decreasing
+        assert all(v1 > v2 for (v1, v2) in zip(values, values[1:]))
+
+
+def assert_children_values_monotonic(predictor, monotonic_cst):
+    # Make sure siblings values respect the monotonic constraints. Left should
+    # be lower (resp greater) then right child if constraint is INC (resp.
+    # DEC).
+    # Note that this property alone isn't enough to ensure full monotonicity,
+    # since we also need to guanrantee that all the descendents of the left
+    # child won't be greater (resp. lower) than the right child, or its
+    # descendents. That's why we need to bound the predicted values (not
+    # tested here)
+    nodes = predictor.nodes
+
+    left_lower = []
+    left_greater = []
+    def dfs(node_idx):
+        node = nodes[node_idx]
+        if node['is_leaf']:
+            return
+
+        left_idx = node['left']
+        right_idx = node['right']
+
+        if nodes[left_idx]['value'] < nodes[right_idx]['value']:
+            left_lower.append(node)
+        else:
+            left_greater.append(node)
+        dfs(left_idx)
+        dfs(right_idx)
+    dfs(0)  # start at root (0)
+
+    if monotonic_cst == 0:  # NO_CST
+        assert left_lower and left_greater
+    elif monotonic_cst == 1:  # INC
+        assert left_lower and not left_greater
+    else:  # DEC
+        assert not left_lower and left_greater
+
+
+@pytest.mark.parametrize('seed', range(3))
+@pytest.mark.parametrize('monotonic_cst', (
+    0, # NO_CST
+    1, # INC
+    2, # DEC
+))
+def test_monotone(monotonic_cst, seed):
+    # Build a single tree with only one feature, and make sure the predictor
+    # respects the monotonic constraints (see sub-functions)
+
+    rng = np.random.RandomState(seed)
+    n_samples = 1000
+    n_features = 1
+    X_binned = rng.randint(0, 256, size=(n_samples, n_features),
+                           dtype=np.uint8)
+    X_binned = np.asfortranarray(X_binned)
+
+    gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
+    hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+
+    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=1,
+                        monotonic_cst=[monotonic_cst])
+    grower.grow()
+
+    predictor = grower.make_predictor()
+    assert_leaves_values_monotonic(predictor, monotonic_cst)
+    assert_children_values_monotonic(predictor, monotonic_cst)

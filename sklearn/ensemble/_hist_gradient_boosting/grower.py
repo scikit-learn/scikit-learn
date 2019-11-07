@@ -12,6 +12,7 @@ from timeit import default_timer as time
 import numbers
 
 from .splitting import Splitter
+from .splitting import compute_value
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
@@ -456,15 +457,20 @@ class TreeGrower:
         XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
         https://arxiv.org/abs/1603.02754
         """
-        # TODO: duplicated... not great. Still leaving this here for now.
-        node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitter.l2_regularization + EPS)
+        if node.value is None:
 
-        if node.parent is not None:
-            lower_bound = node.parent.children_lower_bound
-            upper_bound = node.parent.children_upper_bound
-            node.value = min(upper_bound, node.value)
-            node.value = max(lower_bound, node.value)
+            if node.parent is not None:
+                lower_bound = node.parent.children_lower_bound
+                upper_bound = node.parent.children_upper_bound
+            else:
+                lower_bound = float('-inf')
+                upper_bound = float('+inf')
+
+            node.value = compute_value(
+                node.sum_gradients, node.sum_hessians, lower_bound, upper_bound,
+                self.splitter.l2_regularization)
+
+        node.value *= self.shrinkage
 
         node.is_leaf = True
         self.finalized_leaves.append(node)
@@ -509,10 +515,11 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     else:
         node['gain'] = -1
 
+    node['value'] = grower_node.value
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        node['value'] = grower_node.value
+        # node['value'] = grower_node.value
         return next_free_idx + 1
     else:
         # Decision node
