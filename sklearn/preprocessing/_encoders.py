@@ -74,9 +74,12 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _check_pandas_categories(self, cats, pd_category):
         """Checks cats is lexicographic consistent with categories in fitted X.
         """
-        msg = ("'auto' categories is used, but the Categorical dtype provided "
-               "is not consistent with the automatic lexicographic ordering")
         if not np.array_equal(cats, pd_category):
+            msg = ("'auto' categories is used, but the Categorical dtype "
+                   "provided is not consistent with the automatic "
+                   "lexicographic ordering, lexicon order: {}, dtype order: "
+                   "{}. Please pass a custom list of categories to the "
+                   "categories parameter.".format(cats, pd_category))
             warnings.warn(msg, UserWarning)
 
     def _fit(self, X, handle_unknown='error'):
@@ -96,7 +99,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _encode(Xi)
                 if X_dtypes is not None and hasattr(X_dtypes.iloc[i],
                                                     'categories'):
-                    pd_category = X_dtypes.iloc[i].categories
+                    pd_category = list(X_dtypes.iloc[i].categories)
                     self._check_pandas_categories(cats, pd_category)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)

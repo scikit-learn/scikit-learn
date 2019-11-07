@@ -683,8 +683,10 @@ def test_encoders_has_categorical_tags(Encoder):
 def test_pandas_category_not_ordered(Encoder):
     pd = pytest.importorskip('pandas')
 
-    msg = ("'auto' categories is used, but the Categorical dtype provided "
-           "is not consistent with the automatic lexicographic ordering")
+    msg = (r"'auto' categories is used, but the Categorical dtype provided "
+           r"is not consistent with the automatic lexicographic ordering, "
+           r"lexicon order: {}, dtype order: {}. Please pass a custom list of "
+           r"categories to the categories parameter.")
 
     df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1],
                        'str_col': ['z', 'd', 'z', 'd', 'u'],
@@ -698,10 +700,14 @@ def test_pandas_category_not_ordered(Encoder):
                   pd.api.types.CategoricalDtype(categories=[1.0, 3.1, 2.3]))
 
     for case in [num_case, str_case, float_case]:
-        with pytest.warns(UserWarning, match=msg):
-            col, dtype = case
+        col, dtype = case
+        categories = dtype.categories
+        custom_msg = msg.format(np.asarray(sorted(categories)),
+                                list(categories))
+        with pytest.warns(UserWarning) as record:
             df_copy = df.assign(**{col: df[col].astype(dtype)})
             Encoder().fit(df_copy)
+        assert str(record[0].message) == custom_msg
 
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
