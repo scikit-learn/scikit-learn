@@ -116,8 +116,8 @@ D = kernel.diag(X)
 
 plt.figure(figsize=(8, 5))
 plt.imshow(np.diag(D**-0.5).dot(K).dot(np.diag(D**-0.5)))
-plt.xticks(ticks=np.arange(len(X)), labels=X)
-plt.yticks(ticks=np.arange(len(X)), labels=X)
+plt.xticks(np.arange(len(X)), X)
+plt.yticks(np.arange(len(X)), X)
 plt.title('Sequence similarity under the kernel')
 
 '''
@@ -133,7 +133,7 @@ plt.figure(figsize=(8, 5))
 plt.bar(np.arange(len(X)), gp.predict(X), color='b', label='prediction')
 plt.bar(training_idx, y[training_idx], width=0.2, color='r',
         alpha=0.5, label='training')
-plt.xticks(ticks=np.arange(len(X)), labels=X)
+plt.xticks(np.arange(len(X)), X)
 plt.title('Regression on sequences')
 plt.legend()
 
@@ -163,9 +163,9 @@ plt.scatter(len(X) + np.arange(len(seqs_test)),
             [1.0 if c else -1.0 for c in gp.predict(seqs_test)],
             s=100, marker='x', edgecolor=(0, 1.0, 0.3), linewidth=2,
             label='prediction')
-plt.xticks(ticks=np.arange(len(X) + len(seqs_test)),
-           labels=np.concatenate((X, seqs_test)))
-plt.yticks(ticks=[-1, 1], labels=[False, True])
+plt.xticks(np.arange(len(X) + len(seqs_test)),
+           np.concatenate((X, seqs_test)))
+plt.yticks([-1, 1], [False, True])
 plt.title('Classification on sequences')
 plt.legend()
 
