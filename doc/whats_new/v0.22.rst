@@ -506,7 +506,7 @@ Changelog
   ``multioutput`` parameter.
   :pr:`14732` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
-- |Fix| FIxed a bug where :func:`metrics.brier_score_loss` will raise an error
+- |Fix| Fixed a bug where :func:`metrics.brier_score_loss` will raise an error
   when ``y_true`` is string and ``pos_label`` is not specified.
   :pr:`15412` by `Hanmin Qin`_.
 

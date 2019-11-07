@@ -2185,10 +2185,10 @@ def test_brier_score_loss():
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     score1 = brier_score_loss(y_true, y_pred, pos_label=1)
     score2 = brier_score_loss(y_true, y_pred)
-    assert_almost_equal(score1, score2)
+    assert score1 == pytest.approx(score2)
     y_true = np.array(["neg", "pos", "pos", "neg"])
     score2 = brier_score_loss(y_true, y_pred)
-    assert_almost_equal(score1, score2)
+    assert score1 == pytest.approx(score2)
 
 
 def test_balanced_accuracy_score_unseen():
