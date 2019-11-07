@@ -149,6 +149,8 @@ from sklearn.neighbors import KNeighborsTransformer
 from sklearn.manifold import Isomap
 from sklearn.pipeline import make_pipeline
 
+X, y = make_classification(random_state=0)
+
 with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
     estimator = make_pipeline(
         KNeighborsTransformer(n_neighbors=10, mode='distance'),
