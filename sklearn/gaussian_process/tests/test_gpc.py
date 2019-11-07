@@ -18,6 +18,8 @@ from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 def f(x):
     return np.sin(x)
+
+
 X = np.atleast_2d(np.linspace(0, 10, 30)).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
@@ -60,7 +62,7 @@ def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
     assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
-                   gpc.log_marginal_likelihood(kernel.theta))
+            gpc.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -150,7 +152,7 @@ def test_custom_optimizer(kernel):
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
     assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
-                   gpc.log_marginal_likelihood(kernel.theta))
+            gpc.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)

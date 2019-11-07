@@ -73,7 +73,7 @@ def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(kernel.theta))
+            gpr.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -81,7 +81,7 @@ def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
-                 gpr.log_marginal_likelihood())
+            gpr.log_marginal_likelihood())
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -194,7 +194,7 @@ def test_anisotropic_kernel():
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (np.exp(gpr.kernel_.theta[1]) >
-                   np.exp(gpr.kernel_.theta[0]) * 5)
+            np.exp(gpr.kernel_.theta[0]) * 5)
 
 
 def test_random_starts():
@@ -312,7 +312,7 @@ def test_custom_optimizer(kernel):
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(gpr.kernel.theta))
+            gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 
 def test_gpr_correct_error_message():
