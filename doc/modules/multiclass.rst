@@ -35,34 +35,31 @@ regression is also supported.
       single element per row, where each column represents one class.
 
 
-- **Multilabel classification**: classification task which labels each sample
-  with a **set** of target labels. This can be thought of as predicting
-  properties of a sample that are not mutually exclusive. Formally, a value of
-  0 or 1 is assigned to each label, for every sample. It is thus comparable
-  to running 'n_labels' binary classification tasks, for example with
-  :class:`sklearn.multiclass.OneVsRestClassifier`. Multilabel classification
-  differs in that only one classification model is trained whereas 'n_labels'
-  classification models would be trained using the 'n_labels' binary
-  classification tasks approach.
+- **Multilabel classification**: classification task labelling each sample with
+  ``x`` labels from ``n_classes`` possible classes, where ``x`` can be 0 to
+  ``n_classes`` inclusive. This can be thought of as predicting properties of a
+  sample that are not mutually exclusive. Formally, a binary output is assigned
+  to each class, for every sample. Positive classes are indicated with 1 and
+  negative classes with 0 or -1. It is thus comparable to running ``n_classes``
+  binary classification tasks, for example with
+  :class:`sklearn.multioutput.MultiOutputClassifier`. This approach treats
+  each label independently whereas multilabel classifiers *may* treat the
+  multiple classes simultaneously, accounting for correlated behaviour amoung
+  them.
 
-  For example, prediction of taste using features extracted from a set of
-  images of fruit, where the possible taste labels are 'sour', 'sweet',
-  'juicy' and 'bitter'. Each image is one sample and is labelled with a
-  set of target labels, where the set can be any number of labels, ranging from
-  all 4 labels to none of the labels. A good 'real-world' example is predicting
-  the topics relevant to a text document or video. The document or video may be
-  about 'religion', 'politics', 'finance' or 'education', or a subset of these
-  topic labels or even all of these topic labels.
+  For example, prediction of the topics relevant to a text document or video.
+  The document or video may be about one of 'religion', 'politics', 'finance'
+  or 'education', several of the topic classes or all of the topic classes.
 
-  Valid representation :term:`multilabel` `y` is either dense (or sparse)
-  :term:`binary` matrix of shape ``(n_samples, n_classes)`` with multiple
-  active elements per row to denote that the sample belongs to multiple classes.
-  Each column represents a class.
+  Valid representation of :term:`multilabel` `y` is either dense (or sparse)
+  :term:`binary` matrix of shape ``(n_samples, n_classes)``. Each column
+  represents a class. The ``1``'s in each row denote the positive classes a
+  sample has been labelled with. 
 
 
 - **Multioutput regression**: predicts multiple numerical properties for each
   sample. Each property is a numerical variable and the number of properties
-  to be predicted for each sample is greater or equal to 2. Some estimators
+  to be predicted for each sample is greater than or equal to 2. Some estimators
   that support multioutput regression are faster than just running ``n_output``
   estimators.
 
@@ -71,7 +68,7 @@ regression is also supported.
   obtained at one location and both wind speed and directtion would be
   output for each sample.
 
-  Valid representation :term:`multilabel` `y` is dense matrix of shape
+  Valid representation of :term:`multilabel` `y` is dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
   :term:`continuous` variables.
 
@@ -93,7 +90,7 @@ regression is also supported.
   image of a fruit, a label is output for both properties and each label is
   one of the possible classes of the corresponding property.
 
-  Valid representation :term:`multilabel` `y` is dense matrix of shape
+  Valid representation of :term:`multilabel` `y` is dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
   :term:`multiclass` variables.
 
