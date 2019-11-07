@@ -32,8 +32,8 @@ def cythonize_extensions(top_path, config):
     try:
         import Cython
         if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-            message += ' Your version of Cython was {0}.'.format(
-                Cython.__version__)
+            message += (' The current version of Cython is {} installed in {}.'
+                        .format(Cython.__version__, Cython.__path__))
             raise ValueError(message)
         from Cython.Build import cythonize
     except ImportError as exc:
