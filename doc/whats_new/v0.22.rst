@@ -405,6 +405,16 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+- |Feature| The Gaussian process models, i.e. :class:`gaussian_process.GaussianProcessRegressor`
+  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
+  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
+  of their training/prediction methods.
+  A user-defined kernel should be provided for computing the kernel matrix among
+  the objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  to notify the GPR/GPC model about its capability in handling non-vectorial
+  samples.
+  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
+
 :mod:`sklearn.impute`
 .....................
 
