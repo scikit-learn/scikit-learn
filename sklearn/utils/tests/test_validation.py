@@ -958,6 +958,10 @@ _psd_cases_valid = {
                                   PositiveSpectrumWarning,
                                   "There are negative eigenvalues \\(1e\\-10 "
                                   "of the maximum positive"),
+    'insignificant pos': ((5, 4e-12), np.array([5, 0]),
+                          PositiveSpectrumWarning,
+                          "the largest eigenvalue is more than 1e\\+12 "
+                          "times the smallest"),
 }
 
 
