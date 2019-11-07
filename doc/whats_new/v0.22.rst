@@ -302,6 +302,11 @@ Changelog
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
+- |Fix| The `named_estimators_` attribute in :class:`ensemble.VotingClassifier`
+  and :class:`ensemble.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
+
 - |Fix| Run by default
   :func:`utils.estimator_checks.check_estimator` on both
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
@@ -411,7 +416,7 @@ Changelog
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
-- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+- |Enhancement| Adds parameter `add_indicator` to :class:`impute.KNNImputer`
   to get indicator of missing data.
   :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -469,7 +474,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
@@ -554,8 +559,9 @@ Changelog
   Dockès <jeromedockes>`.
 
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
-  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
-  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
+  `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
+  :pr:`12789` and :pr:`15274` by 
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 
@@ -835,14 +841,6 @@ Changelog
   - ``mocking.CheckingClassifier``
   - ``optimize.newton_cg``
   - ``random.random_choice_csc``
-
-:mod:`sklearn.voting`
-.....................
-
-- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
-  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
-  Previously, the `named_estimators_` mapping was incorrect whenever one of the
-  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 ..................................
