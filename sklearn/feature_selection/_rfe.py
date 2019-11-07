@@ -7,6 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+import math
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils import check_X_y, safe_sqr
@@ -56,13 +57,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    n_features_to_select : int, float or None (default=None)
+    n_features_to_select : int, float, default=None
         The number of features to select.
-        - If int: the integer is taken as the number of features to select.
         - If `None`, half of the features are selected.
-        - If float between 0.0 and 1.0: it is taken as the percentage
-        of the available features. For example if you want to select
-        25% of the available features, you would specify 0.25.
+        - If int: the integer is taken as the number of features to select.
+        - If float between 0.0 and 1.0: percentage of the available features.
+            For example, to select 25% of the available features, specify 0.25.
 
 
     step : int or float, optional (default=1)
@@ -162,14 +162,14 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             n_features_to_select = n_features // 2
         elif type(self.n_features_to_select).__name__=='float':
             if 0.0 < self.n_features_to_select < 1.0:
-                n_features_to_select = int(n_features *
+                n_features_to_select = math.ceil(n_features *
                                            self.n_features_to_select)
             else:
                 raise ValueError('n_features_to_select must be integer'
-                                 ' or float between 0.0 to 1.0.')
+                                 ' or float between 0.0 to 1.0.'
+                                 .format(self.n_features_to_select))
         else:
             n_features_to_select = self.n_features_to_select
-
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
