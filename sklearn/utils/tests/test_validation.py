@@ -942,72 +942,60 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
 _psd_cases_valid = {
     'nominal': ((1, 2), np.array([1, 2]), None, ""),
     'nominal_np_array': (np.array([1, 2]), np.array([1, 2]), None, ""),
-    'insignificant_imag': ((5, 5e-5j), np.array([5, 0]), None, ""),
-    'significant neg': ((5, -1), np.array([5, 0]), PositiveSpectrumWarning,
-                        "There are significant negative eigenvalues"),
-    'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
-                                np.array([3e-4, 0], dtype=np.float32),
-                                PositiveSpectrumWarning,
-                                "There are significant negative eigenvalues"),
-    'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
-                                np.array([1e-5, 0], dtype=np.float64),
-                                PositiveSpectrumWarning,
-                                "There are significant negative eigenvalues"),
-    'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, ""),
+    'insignificant_imag': ((5, 5e-5j), np.array([5, 0]),
+                           PositiveSpectrumWarning,
+                           "There are imaginary parts in eigenvalues "
+                           "\\(1e\\-05 of the maximum real part"),
+    'insignificant neg': ((5, -5e-5), np.array([5, 0]),
+                          PositiveSpectrumWarning, ""),
     'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
                                   np.array([1, 0], dtype=np.float32),
-                                  None, ""),
+                                  PositiveSpectrumWarning,
+                                  "There are negative eigenvalues \\(1e\\-06 "
+                                  "of the maximum positive"),
     'insignificant neg float64': (np.array([1, -1e-10], dtype=np.float64),
                                   np.array([1, 0], dtype=np.float64),
-                                  None, ""),
+                                  PositiveSpectrumWarning,
+                                  "There are negative eigenvalues \\(1e\\-10 "
+                                  "of the maximum positive"),
 }
 
 
 @pytest.mark.parametrize("lambdas, expected_lambdas, w_type, w_msg",
                          list(_psd_cases_valid.values()),
                          ids=list(_psd_cases_valid.keys()))
-@pytest.mark.parametrize("small_nonzeros_warning", [True, False])
+@pytest.mark.parametrize("enable_warnings", [True, False])
 def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
-                                     small_nonzeros_warning):
+                                     enable_warnings):
     # Test that ``_check_psd_eigenvalues`` returns the right output for valid
     # input, possibly raising the right warning
 
+    if not enable_warnings:
+        w_type = None
+        w_msg = ""
+
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
-            _check_psd_eigenvalues(
-                lambdas,
-                small_nonzeros_warning=small_nonzeros_warning
-            ),
+            _check_psd_eigenvalues(lambdas, enable_warnings=enable_warnings),
             expected_lambdas
         )
-    if w_type is None:
+    if w_type is None or not enable_warnings:
         assert not w
-
-
-def test_check_psd_eigenvalues_small_nonzeros_warning():
-    # Test that ``_check_psd_eigenvalues`` raises a warning for bad
-    # conditioning when small_nonzeros_warning is set to True, and does not
-    # when it is set to False
-
-    input = (5, 4e-12)
-    output = np.array([5, 0])
-
-    with pytest.warns(None) as w:
-        checked = _check_psd_eigenvalues(input, small_nonzeros_warning=False)
-        assert_array_equal(checked, output)
-    assert not w
-
-    w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
-    with pytest.warns(PositiveSpectrumWarning, match=w_msg) as w:
-        checked = _check_psd_eigenvalues(input, small_nonzeros_warning=True)
-        assert_array_equal(checked, output)
 
 
 _psd_cases_invalid = {
     'significant_imag': ((5, 5j), ValueError,
                          "There are significant imaginary parts in eigenv"),
     'all negative': ((-5, -1), ValueError,
-                     "All eigenvalues are negative \\(maximum is -1.000")
+                     "All eigenvalues are negative \\(maximum is -1"),
+    'significant neg': ((5, -1), ValueError,
+                        "There are significant negative eigenvalues"),
+    'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
+                                ValueError,
+                                "There are significant negative eigenvalues"),
+    'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
+                                ValueError,
+                                "There are significant negative eigenvalues"),
 }
 
 
