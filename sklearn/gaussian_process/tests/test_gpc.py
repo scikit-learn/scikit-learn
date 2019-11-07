@@ -11,6 +11,7 @@ import pytest
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
@@ -39,6 +40,16 @@ non_fixed_kernels = [kernel for kernel in kernels
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_consistent(kernel):
     # Check binary predict decision has also predicted probability above 0.5.
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    assert_array_equal(gpc.predict(X),
+                       gpc.predict_proba(X)[:, 1] >= 0.5)
+
+
+def test_predict_consistent_structured():
+    # Check binary predict decision has also predicted probability above 0.5.
+    X = ['A', 'AB', 'B']
+    y = np.array([True, False, True])
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
     assert_array_equal(gpc.predict(X),
                        gpc.predict_proba(X)[:, 1] >= 0.5)
