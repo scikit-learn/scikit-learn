@@ -675,8 +675,8 @@ class KernelOperator(Kernel):
 
     def requires_vector_input(self):
         """Returns whether the kernel is stationary. """
-        return np.any([self.k1.requires_vector_input(),
-                       self.k2.requires_vector_input()])
+        return (self.k1.requires_vector_input() or
+                self.k2.requires_vector_input())
 
 
 class Sum(KernelOperator):
