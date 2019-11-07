@@ -28,7 +28,7 @@ regression is also supported.
   and an apple. An example of ``y`` for 3 samples:
 
     >>> import numpy as np
-    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])                               
+    >>> y = np.array(['apple', 'pear', 'apple'])                               
     >>> print(y)                                                                         
     ['apple' 'pear' 'apple' 'orange']
 
