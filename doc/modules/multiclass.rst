@@ -25,15 +25,18 @@ regression is also supported.
   Each image is one sample and is labelled as one of the 3 possible classes.
   Multiclass classification makes the assumption that each sample is assigned
   to one and only one label - one sample cannot, for example, be both a pear
-  and an apple.
-  
+  and an apple. An example of ``y`` for 3 samples:
+
+    >>> y = np.array(['apple', 'pear', 'apple', 'orange'])                               
+    >>> print(y)                                                                         
+    ['apple' 'pear' 'apple' 'orange']
+
   Valid :term:`multiclass` representations for
   :func:`~utils.multiclass.type_of_target` (`y`) are:
 
     - 1d or column vector containing more than two discrete values.
     - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
       single element per row, where each column represents one class.
-
 
 - **Multilabel classification**: classification task labelling each sample with
   ``x`` labels from ``n_classes`` possible classes, where ``x`` can be 0 to
@@ -50,6 +53,13 @@ regression is also supported.
   For example, prediction of the topics relevant to a text document or video.
   The document or video may be about one of 'religion', 'politics', 'finance'
   or 'education', several of the topic classes or all of the topic classes.
+  An example of ``y`` for 3 samples:
+
+    >>> y = np.array([[1,0,0,1], [0,0,1,1], [0,0,0,0]])                                  
+    >>> print(y)                                                                         
+    [[1 0 0 1]
+    [0 0 1 1]
+    [0 0 0 0]]
 
   Valid representation of :term:`multilabel` `y` is either dense (or sparse)
   :term:`binary` matrix of shape ``(n_samples, n_classes)``. Each column
@@ -66,7 +76,13 @@ regression is also supported.
   For example, prediction of both wind speed and wind direction, in degrees,
   using data obtained at a certain location. Each sample would be data
   obtained at one location and both wind speed and directtion would be
-  output for each sample.
+  output for each sample. An example of ``y`` for 3 samples:
+
+    >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])                              
+    >>> print(y)                                                                         
+    [[ 31.4  94. ]
+    [ 40.5 109. ]
+    [ 25.   30. ]]
 
   Valid representation of :term:`multilabel` `y` is dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
@@ -88,7 +104,14 @@ regression is also supported.
   classes: "apple", "pear" and "orange". The property "colour" has the
   possible classes: "green", "red", "yellow" and "orange". Each sample is an
   image of a fruit, a label is output for both properties and each label is
-  one of the possible classes of the corresponding property.
+  one of the possible classes of the corresponding property. An example of
+  ``y`` for 3 samples:
+
+    >>> y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])      
+    >>> print(y)                                                                         
+    [['apple' 'green']
+    ['orange' 'orange']
+    ['pear' 'green']]
 
   Valid representation of :term:`multilabel` `y` is dense matrix of shape
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
