@@ -974,8 +974,10 @@ def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
 
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
-            _check_psd_eigenvalues(lambdas,
-                                   small_nonzeros_warning=small_nonzeros_warning),
+            _check_psd_eigenvalues(
+                lambdas,
+                small_nonzeros_warning=small_nonzeros_warning
+            ),
             expected_lambdas
         )
     if w_type is None:
