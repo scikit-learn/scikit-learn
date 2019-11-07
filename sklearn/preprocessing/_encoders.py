@@ -171,7 +171,7 @@ class OneHotEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionadded:: 0.13
+    .. versionchanged:: 0.20
 
     Parameters
     ----------
