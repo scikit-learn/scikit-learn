@@ -60,7 +60,7 @@ class ConfusionMatrixDisplay:
             Rotation of xtick labels.
 
         values_format : str, default=None
-            Format specification for values in confusion matrix. If None,
+            Format specification for values in confusion matrix. If `None`,
             the format specification is '.2f' for a normalized matrix, and
             'd' for a unnormalized matrix.
 
@@ -82,7 +82,6 @@ class ConfusionMatrixDisplay:
 
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
-        normalized = np.issubdtype(cm.dtype, np.float_)
         self.im_ = ax.imshow(cm, interpolation='nearest', cmap=cmap)
         self.text_ = None
 
@@ -91,7 +90,9 @@ class ConfusionMatrixDisplay:
         if include_values:
             self.text_ = np.empty_like(cm, dtype=object)
             if values_format is None:
-                values_format = '.2f' if normalized else 'd'
+                values_format = '.2g'
+
+            # print text with appropriate color depending on background
             thresh = (cm.max() - cm.min()) / 2.
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
@@ -154,8 +155,8 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
         Includes values in confusion matrix.
 
     normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes confusion matrix over the true, predicited conditions or
-        the 'all' the population. If None, confusion matrix will not be
+        Normalizes confusion matrix over the true (rows), predicited (columns)
+        conditions or all the population. If None, confusion matrix will not be
         normalized.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
@@ -192,11 +193,11 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
                           labels=labels)
 
     if normalize == 'true':
-        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+        cm = cm / cm.sum(axis=1, keepdims=True)
     elif normalize == 'pred':
-        cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
+        cm = cm / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
-        cm = cm.astype('float') / cm.sum()
+        cm = cm / cm.sum()
 
     if display_labels is None:
         if labels is None:

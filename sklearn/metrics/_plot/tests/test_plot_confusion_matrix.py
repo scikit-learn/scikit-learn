@@ -8,6 +8,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
+from sklearn.base import ClassifierMixin
 
 
 @pytest.fixture(scope="module")
@@ -52,41 +53,29 @@ def test_error_on_invalid_option(pyplot, fitted_clf, data):
 
 
 @pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
-@pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize("with_labels", [True, False])
-@pytest.mark.parametrize("cmap", ['viridis', 'plasma'])
-@pytest.mark.parametrize("with_custom_axes", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 @pytest.mark.parametrize("include_values", [True, False])
 def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
-                               normalize, with_sample_weight, with_labels,
-                               cmap, with_custom_axes, with_display_labels,
+                               normalize, with_labels,
+                               with_display_labels,
                                include_values):
     X, y = data
-
-    if with_sample_weight:
-        rng = np.random.RandomState(42)
-        sample_weight = rng.randint(1, 4, size=X.shape[0])
-    else:
-        sample_weight = None
-
-    ax = pyplot.gca() if with_custom_axes else None
+    ax = pyplot.gca()
+    cmap = 'plasma'
 
     labels = [2, 1, 0, 3, 4] if with_labels else None
     display_labels = ['b', 'd', 'a', 'e', 'f'] if with_display_labels else None
 
-    cm = confusion_matrix(y, y_pred, sample_weight=sample_weight,
-                          labels=labels)
+    cm = confusion_matrix(y, y_pred, labels=labels)
 
     disp = plot_confusion_matrix(fitted_clf, X, y,
-                                 sample_weight=sample_weight,
                                  normalize=normalize, labels=labels,
                                  cmap=cmap, ax=ax,
                                  display_labels=display_labels,
                                  include_values=include_values)
 
-    if with_custom_axes:
-        assert disp.ax_ == ax
+    assert disp.ax_ == ax
 
     if normalize == 'true':
         cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
@@ -127,7 +116,7 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
 
     if include_values:
         assert disp.text_.shape == (n_classes, n_classes)
-        fmt = '.2f' if normalize else 'd'
+        fmt = '.2g'
         expected_text = np.array([format(v, fmt) for v in cm.ravel(order="C")])
         text_text = np.array([
             t.get_text() for t in disp.text_.ravel(order="C")])
@@ -171,6 +160,8 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
 
 
 def test_confusion_matrix_contrast(pyplot):
+    # make sure text color is appropriate depending on background
+
     cm = np.eye(2) / 2
     disp = ConfusionMatrixDisplay(cm, display_labels=[0, 1])
 
