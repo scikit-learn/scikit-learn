@@ -107,7 +107,8 @@ X = np.array(['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA'])
 y = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
 
 '''
-Visualize sequence similarity matrix under the kernel
+Sequence similarity matrix under the kernel
+===========================================
 '''
 
 K = kernel(X)
@@ -123,6 +124,7 @@ plt.title('Sequence similarity under the kernel')
 
 '''
 Regression
+==========
 '''
 
 training_idx = [0, 1, 3, 4]
@@ -140,6 +142,7 @@ plt.legend()
 
 '''
 Classification
+==============
 '''
 
 X = np.array(['AGCT', 'CGA', 'TAAC', 'TCG', 'CTTT', 'TGCT'])
