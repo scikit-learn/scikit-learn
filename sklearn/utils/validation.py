@@ -1128,7 +1128,7 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                 "of the matrix."
                 % (max_imag_abs / max_real_abs))
 
-        # Remove all imaginary parts and warn about it
+        # warn about imaginary parts being removed
         if enable_warnings:
             warnings.warn("There are imaginary parts in eigenvalues (%g "
                           "of the maximum real part). Either the matrix is not"
@@ -1136,7 +1136,9 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                           "eigendecomposition of the matrix."
                           % (max_imag_abs / max_real_abs),
                           PositiveSpectrumWarning)
-        lambdas = np.real(lambdas)
+
+    # Remove all imaginary parts (even if zero)
+    lambdas = np.real(lambdas)
 
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
