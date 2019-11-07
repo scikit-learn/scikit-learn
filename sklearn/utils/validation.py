@@ -1021,7 +1021,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
+def _check_psd_eigenvalues(lambdas, small_nonzeros_warning=True):
     """Check the eigenvalues of a positive semidefinite (PSD) matrix.
 
     Checks the provided array of PSD matrix eigenvalues for numerical or
@@ -1049,7 +1049,7 @@ def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
 
     - that the eigenvalues are well conditioned. That means, that the non-zero
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-      If this check fails and ``bad_conditioning_warning=True``, it raises a
+      If this check fails and ``small_nonzeros_warning=True``, it raises a
       ``PositiveSpectrumWarning``. All the eigenvalues that are too small are
       then set to zero.
 
@@ -1058,11 +1058,11 @@ def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
     lambdas : array-like of shape (n_eigenvalues,)
         Array of eigenvalues to check / fix.
 
-    bad_conditioning_warning : bool, default=True
+    small_nonzeros_warning : bool, default=True
         When this is set to ``True``, a ``PositiveSpectrumWarning`` will be
-        raised when there are extremely small eigenvalues. Otherwise no warning
-        will be raised. Note that in both cases, extremely small eigenvalues
-        will be set to zero.
+        raised when there are extremely small non-zero eigenvalues (positive or
+        negative). Otherwise no warning will be raised in this case. Note that
+        in both cases, extremely small eigenvalues will be set to zero.
 
     Returns
     -------
@@ -1144,19 +1144,20 @@ def _check_psd_eigenvalues(lambdas, bad_conditioning_warning=True):
                           "zero." % (-min_eig / max_eig),
                           PositiveSpectrumWarning)
 
-    # Remove all negative values in all cases
-    lambdas[lambdas < 0] = 0
-
-    # Finally check for conditioning
-    too_small_lambdas = (0 < lambdas) & (lambdas < small_pos_ratio * max_eig)
+    # Check for conditioning (both positive and negative small non-zeros)
+    too_small_lambdas = ((0 != lambdas)
+                         & (np.abs(lambdas) < small_pos_ratio * max_eig))
     if too_small_lambdas.any():
-        if bad_conditioning_warning:
+        if small_nonzeros_warning:
             warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
                           "Small eigenvalues will be replaced with 0."
                           "" % (1 / small_pos_ratio),
                           PositiveSpectrumWarning)
         lambdas[too_small_lambdas] = 0
+
+    # Finally remove all negative values (the big ones were remaining)
+    lambdas[lambdas < 0] = 0
 
     return lambdas
 

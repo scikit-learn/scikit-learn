@@ -966,38 +966,38 @@ _psd_cases_valid = {
 @pytest.mark.parametrize("lambdas, expected_lambdas, w_type, w_msg",
                          list(_psd_cases_valid.values()),
                          ids=list(_psd_cases_valid.keys()))
-@pytest.mark.parametrize("warn_on_zeros", [True, False])
+@pytest.mark.parametrize("small_nonzeros_warning", [True, False])
 def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
-                                     warn_on_zeros):
+                                     small_nonzeros_warning):
     # Test that ``_check_psd_eigenvalues`` returns the right output for valid
     # input, possibly raising the right warning
 
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
             _check_psd_eigenvalues(lambdas,
-                                   bad_conditioning_warning=warn_on_zeros),
+                                   small_nonzeros_warning=small_nonzeros_warning),
             expected_lambdas
         )
     if w_type is None:
         assert not w
 
 
-def test_check_psd_eigenvalues_bad_conditioning_warning():
+def test_check_psd_eigenvalues_small_nonzeros_warning():
     # Test that ``_check_psd_eigenvalues`` raises a warning for bad
-    # conditioning when warn_on_zeros is set to True, and does not when it is
-    # set to False
+    # conditioning when small_nonzeros_warning is set to True, and does not
+    # when it is set to False
 
     input = (5, 4e-12)
     output = np.array([5, 0])
 
     with pytest.warns(None) as w:
-        checked = _check_psd_eigenvalues(input, bad_conditioning_warning=False)
+        checked = _check_psd_eigenvalues(input, small_nonzeros_warning=False)
         assert_array_equal(checked, output)
     assert not w
 
     w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
     with pytest.warns(PositiveSpectrumWarning, match=w_msg) as w:
-        checked = _check_psd_eigenvalues(input, bad_conditioning_warning=True)
+        checked = _check_psd_eigenvalues(input, small_nonzeros_warning=True)
         assert_array_equal(checked, output)
 
 

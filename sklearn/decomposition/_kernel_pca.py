@@ -214,7 +214,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
-                                               bad_conditioning_warning=False)
+                                               small_nonzeros_warning=False)
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,
