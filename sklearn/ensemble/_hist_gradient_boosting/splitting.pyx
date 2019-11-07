@@ -358,8 +358,8 @@ cdef class Splitter:
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians,
-            const Y_DTYPE_C lower_bound,
-            const Y_DTYPE_C upper_bound,
+            const Y_DTYPE_C lower_bound=-np.inf,
+            const Y_DTYPE_C upper_bound=np.inf,
             ):
         """For each feature, find the best bin to split on at a given node.
 

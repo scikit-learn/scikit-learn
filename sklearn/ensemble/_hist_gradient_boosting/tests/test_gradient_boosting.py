@@ -100,12 +100,12 @@ def test_early_stopping_regression(scoring, validation_fraction,
 @pytest.mark.parametrize(
     'scoring, validation_fraction, n_iter_no_change, tol', [
         ('accuracy', .1, 5, 1e-7),  # use scorer
-        # ('accuracy', None, 5, 1e-1),  # use scorer on training data
-        # (None, .1, 5, 1e-7),  # same with default scorer
-        # (None, None, 5, 1e-1),
-        # ('loss', .1, 5, 1e-7),  # use loss
-        # ('loss', None, 5, 1e-1),  # use loss on training data
-        # (None, None, None, None),  # no early stopping
+        ('accuracy', None, 5, 1e-1),  # use scorer on training data
+        (None, .1, 5, 1e-7),  # same with default scorer
+        (None, None, 5, 1e-1),
+        ('loss', .1, 5, 1e-7),  # use loss
+        ('loss', None, 5, 1e-1),  # use loss on training data
+        (None, None, None, None),  # no early stopping
         ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
