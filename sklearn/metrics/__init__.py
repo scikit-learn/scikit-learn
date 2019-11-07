@@ -79,8 +79,8 @@ from ._scorer import get_scorer
 
 from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
-from ._plot.precision_recall import plot_precision_recall_curve
-from ._plot.precision_recall import PrecisionRecallDisplay
+from ._plot.precision_recall_curve import plot_precision_recall_curve
+from ._plot.precision_recall_curve import PrecisionRecallDisplay
 
 
 __all__ = [

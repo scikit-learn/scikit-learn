@@ -109,6 +109,6 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     assert_allclose(disp.ax_.get_ylim(), [0.0, 1.05])
 
     # draw again with another label
-    disp.plot(label_name="MySpecialEstimator")
+    disp.plot(name="MySpecialEstimator")
     expected_label = "MySpecialEstimator (AP = {:0.2f})".format(avg_prec)
     assert disp.line_.get_label() == expected_label

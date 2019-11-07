@@ -12,12 +12,14 @@ class PrecisionRecallDisplay:
     It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
     to create a visualizer. All parameters are stored as attributes.
 
+    Read more in the :ref:`User Guide <visualizations>`.
+
     Parameters
     -----------
-    precision : ndarray of shape (n_thresholds + 1,)
+    precision : ndarray
         Precision values.
 
-    recall : ndarray of shape (n_thresholds + 1,)
+    recall : ndarray
         Recall values.
 
     average_precision : float
@@ -44,7 +46,7 @@ class PrecisionRecallDisplay:
         self.average_precision = average_precision
         self.estimator_name = estimator_name
 
-    def plot(self, ax=None, label_name=None, **kwargs):
+    def plot(self, ax=None, name=None, **kwargs):
         """Plot visualization.
 
         Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -55,7 +57,7 @@ class PrecisionRecallDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        label_name : str, default=None
+        name : str, default=None
             Name of precision recall curve for labeling. If `None`, use the
             name of the estimator.
 
@@ -73,18 +75,17 @@ class PrecisionRecallDisplay:
         if ax is None:
             fig, ax = plt.subplots()
 
-        label_name = self.estimator_name if label_name is None else label_name
+        name = self.estimator_name if name is None else name
 
         line_kwargs = {
-            "label": "{} (AP = {:0.2f})".format(label_name,
+            "label": "{} (AP = {:0.2f})".format(name,
                                                 self.average_precision),
             "drawstyle": "steps-post"
         }
         line_kwargs.update(**kwargs)
 
         self.line_, = ax.plot(self.recall, self.precision, **line_kwargs)
-        ax.set(xlabel="Recall", ylabel="Precision", ylim=[0.0, 1.05],
-               xlim=[0.0, 1.0])
+        ax.set(xlabel="Recall", ylabel="Precision")
         ax.legend(loc='lower left')
 
         self.ax_ = ax
@@ -94,10 +95,12 @@ class PrecisionRecallDisplay:
 
 def plot_precision_recall_curve(estimator, X, y,
                                 sample_weight=None, response_method="auto",
-                                label_name=None, ax=None, **kwargs):
+                                name=None, ax=None, **kwargs):
     """Plot Precision Recall Curve for binary classifers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
@@ -120,7 +123,7 @@ def plot_precision_recall_curve(estimator, X, y,
         :term:`predict_proba` is tried first and if it does not exist
         :term:`decision_function` is tried next.
 
-    label_name : str, default=None
+    name : str, default=None
         Name for labeling curve. If `None`, the name of the
         estimator is used.
 
@@ -180,4 +183,4 @@ def plot_precision_recall_curve(estimator, X, y,
                                                 sample_weight=sample_weight)
     viz = PrecisionRecallDisplay(precision, recall, average_precision,
                                  estimator.__class__.__name__)
-    return viz.plot(ax=ax, label_name=label_name, **kwargs)
+    return viz.plot(ax=ax, name=name, **kwargs)
