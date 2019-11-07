@@ -8,7 +8,6 @@ from sklearn.svm import SVC, SVR
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
-from sklearn.base import ClassifierMixin
 
 
 @pytest.fixture(scope="module")
