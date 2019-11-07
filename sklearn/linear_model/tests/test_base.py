@@ -737,7 +737,7 @@ def test_fused_types_make_dataset():
                 ])
 @pytest.mark.parametrize('fit_intercept', [False, True])
 @pytest.mark.parametrize('normalize', [False, True])
-def test_linear_regression_glm_sample_weight_consistentcy(
+def test_linear_regression_sample_weight_consistentcy(
         sparseX, fit_intercept, normalize):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
@@ -755,6 +755,8 @@ def test_linear_regression_glm_sample_weight_consistentcy(
         intercept = reg.intercept_
 
     # sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # same check is done as check_sample_weights_invariance in
+    # sklearn.utils.estimator_checks.py, at least for dense input
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
@@ -762,6 +764,7 @@ def test_linear_regression_glm_sample_weight_consistentcy(
         assert_allclose(reg.intercept_, intercept)
 
     # scaling of sample_weight should have no effect
+    # Note: For models with penalty, scaling the penalty term might work.
     sample_weight = np.pi * np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
     assert_allclose(reg.coef_, coef, rtol=1e-6)
@@ -769,7 +772,7 @@ def test_linear_regression_glm_sample_weight_consistentcy(
         assert_allclose(reg.intercept_, intercept)
 
     # setting one element of sample_weight to 0 is equivalent to removing
-    # the corresponding sample
+    # the corresponding sample, see PR #15015
     sample_weight = np.ones_like(y)
     sample_weight[-1] = 0
     reg.fit(X, y, sample_weight=sample_weight)
