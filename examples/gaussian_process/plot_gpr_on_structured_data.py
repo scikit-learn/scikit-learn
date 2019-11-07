@@ -13,7 +13,7 @@ variable-length strings consisting of letters 'A', 'T', 'C', and 'G',
 while the output variables are floating point numbers and True/False labels
 in the regression and classification tasks, respectively.
 
-A kernel between the gene sequences is defined using R-convolution [1] by
+A kernel between the gene sequences is defined using R-convolution [1]_ by
 integrating a binary letter-wise kernel over all pairs of letters among a pair
 of strings.
 
@@ -32,7 +32,7 @@ sequences and make predictions on another 5 sequences. The ground truth here is
 simply  whether there is at least one 'A' in the sequence. Here the model makes
 four correct classifications and fails on one.
 
-[1] Haussler, D. (1999). Convolution kernels on discrete structures (Vol. 646).
+.. [1] Haussler, D. (1999). Convolution kernels on discrete structures (Vol. 646).
 Technical report, Department of Computer Science, University of California at
 Santa Cruz.
 """
