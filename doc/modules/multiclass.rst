@@ -30,7 +30,7 @@ regression is also supported.
     >>> import numpy as np
     >>> y = np.array(['apple', 'pear', 'apple'])                               
     >>> print(y)                                                                         
-    ['apple' 'pear' 'apple' 'orange']
+    ['apple' 'pear' 'apple']
 
   Valid :term:`multiclass` representations for
   :func:`~utils.multiclass.type_of_target` (`y`) are:
