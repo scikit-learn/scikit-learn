@@ -8,6 +8,7 @@ from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils.deprecation import deprecated
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -991,6 +992,20 @@ class SVR(RegressorMixin, BaseLibSVM):
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
 
+    @deprecated(
+        "The probA_ attribute is deprecated in version 0.22 and will be "
+        "removed in version 0.24.")
+    @property
+    def probA_(self):
+        return self._probA
+
+    @deprecated(
+        "The probB_ attribute is deprecated in version 0.22 and will be "
+        "removed in version 0.24.")
+    @property
+    def probB_(self):
+        return self._probB
+
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1309,3 +1324,17 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         """
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
+
+    @deprecated(
+        "The probA_ attribute is deprecated in version 0.22 and will be "
+        "removed in version 0.24.")
+    @property
+    def probA_(self):
+        return self._probA
+
+    @deprecated(
+        "The probB_ attribute is deprecated in version 0.22 and will be "
+        "removed in version 0.24.")
+    @property
+    def probB_(self):
+        return self._probB

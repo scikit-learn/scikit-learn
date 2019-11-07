@@ -246,8 +246,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self._n_support, \
-            self.dual_coef_, self.intercept_, self.probA_, \
-            self.probB_, self.fit_status_ = libsvm.fit(
+            self.dual_coef_, self.intercept_, self._probA, \
+            self._probB, self.fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
                 class_weight=self.class_weight_, kernel=kernel, C=self.C,
@@ -270,7 +270,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         self.support_, self.support_vectors_, dual_coef_data, \
             self.intercept_, self._n_support, \
-            self.probA_, self.probB_, self.fit_status_ = \
+            self._probA, self._probB, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -334,7 +334,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            self._probA, self._probB, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
 
@@ -359,7 +359,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
@@ -413,7 +413,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self._n_support,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_,
+            self._probA, self._probB,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
@@ -438,7 +438,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self._n_support,
-            self.probA_, self.probB_)
+            self._probA, self._probB)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self)
@@ -502,6 +502,14 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             # SVR and OneClass
             # _n_support has size 2, we make it size 1
             return np.array([self._n_support[0]])
+
+    @property
+    def probA_(self):
+        return self._probA
+
+    @property
+    def probB_(self):
+        return self._probB
 
 
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
