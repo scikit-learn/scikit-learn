@@ -1093,8 +1093,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
     Traceback (most recent call last):
         ...
     ValueError: There are significant negative eigenvalues (0.2 of the
-        maximum positive). The matrix is maybe not PSD, or something went wrong
-        with the eigenvalues decomposition.
+        maximum positive). Either the matrix is not PSD, or there was an issue
+        while computing the eigendecomposition of the matrix.
     >>> _check_psd_eigenvalues([5, -5e-5])  # insignificant negative
     array([5., 0.])
     >>> _check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
@@ -1123,8 +1123,9 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
         if max_imag_abs > significant_imag_ratio * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%g "
-                "of the maximum real part). The matrix is maybe not PSD, or "
-                "something went wrong with the eigenvalues decomposition."
+                "of the maximum real part). Either the matrix is not PSD, or "
+                "there was an issue while computing the eigendecomposition "
+                "of the matrix."
                 % (max_imag_abs / max_real_abs))
 
         # Remove all imaginary parts and warn about it
