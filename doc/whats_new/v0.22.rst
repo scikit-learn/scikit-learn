@@ -733,7 +733,8 @@ Changelog
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
-  `probB_`, are now deprecated. :pr:`15558` by `Thomas Fan`_.
+  `probB_`, are now deprecated as they were not useful. :pr:`15558` by
+  `Thomas Fan`_.
 
 - |Fix| :class:`svm.SVC`, :class:`svm.SVR`, :class:`svm.NuSVR` and
   :class:`svm.OneClassSVM` when received values negative or zero
