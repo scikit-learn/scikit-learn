@@ -415,7 +415,7 @@ class GenericKernelMixin:
     """Mixin for kernels which operate on generic objects such as variable-
     length sequences, trees, and graphs.
 
-    .. versionadded:: TBD
+    .. versionadded:: 0.22
     """
     @property
     def requires_vector_input(self):
