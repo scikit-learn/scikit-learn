@@ -657,6 +657,10 @@ Changelog
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has `predict_proba`
+  as property and can be checked with `hasattr`.
+  :issue:`15488` :pr:`15490` by :user:`Rebekah Kim <rebekahkim>`
+
 :mod:`sklearn.naive_bayes`
 ...............................
 
