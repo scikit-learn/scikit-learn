@@ -220,8 +220,8 @@ clf.fit(X_train, y_train).score(X_test, y_test)
 # estimators using :func:`~utils.estimator_checks.check_estimator`. For
 # instance, the ``check_estimator(LinearSVC)`` passes.
 #
-# We now provide a ``pytest`` specific decorator which allows the ``pytest``
-# ro run all checks independently and report the checks that are failing.
+# We now provide a ``pytest`` specific decorator which allows ``pytest``
+# to run all checks independently and report the checks that are failing.
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -231,3 +231,28 @@ from sklearn.utils.estimator_checks import parametrize_with_checks
 @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
+
+############################################################################
+# ROC AUC now supports multiclass classification
+# ----------------------------------------------
+# The :func:`roc_auc_score` function can also be used in multi-class
+# classification. Two averaging strategies are currently supported: the
+# one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
+# the one-vs-rest algorithm computes the average of the ROC AUC scores for each
+# class against all other classes. In both cases, the predicted labels are
+# provided in an array with values from 0 to ``n_classes``, and the scores
+# correspond to the probability estimates that a sample belongs to a particular
+# class. The OvO and OvR algorithms supports weighting uniformly
+# (``average='macro'``) and weighting by the prevalence
+# (``average='weighted'``).
+#
+# Read more in the :ref:`User Guide <roc_metrics>`.
+
+
+from sklearn.datasets import make_classification
+from sklearn.svm import SVC
+from sklearn.metrics import roc_auc_score
+
+X, y = make_classification(n_classes=4, n_informative=16)
+clf = SVC(decision_function_shape='ovo', probability=True).fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class='ovo'))

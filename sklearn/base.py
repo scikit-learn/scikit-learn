@@ -167,11 +167,12 @@ class BaseEstimator:
         return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
+        """
+        Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -198,16 +199,23 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """Set the parameters of this estimator.
+        """
+        Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 
+        Parameters
+        ----------
+        **params : dict
+            Estimator parameters.
+
         Returns
         -------
-        self
+        self : object
+            Estimator instance.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)
@@ -329,7 +337,8 @@ class ClassifierMixin:
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """
+        Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -350,7 +359,6 @@ class ClassifierMixin:
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
@@ -361,7 +369,7 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
@@ -427,7 +435,8 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Perform clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -435,12 +444,12 @@ class ClusterMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -498,7 +507,7 @@ class BiclusterMixin:
         return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
-        """Returns the submatrix corresponding to bicluster `i`.
+        """Return the submatrix corresponding to bicluster `i`.
 
         Parameters
         ----------
@@ -527,7 +536,8 @@ class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it.
+        """
+        Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
@@ -540,11 +550,13 @@ class TransformerMixin:
         y : numpy array of shape [n_samples]
             Target values.
 
+        **fit_params : dict
+            Additional fit parameters.
+
         Returns
         -------
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
-
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -561,7 +573,7 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Returns the score of the model on the data X
+        """Return the score of the model on the data X
 
         Parameters
         ----------
@@ -579,7 +591,7 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs fit on X and returns labels for X.
+        """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -589,7 +601,7 @@ class OutlierMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -619,7 +631,7 @@ class _UnstableArchMixin:
 
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier.
+    """Return True if the given estimator is (probably) a classifier.
 
     Parameters
     ----------
@@ -635,7 +647,7 @@ def is_classifier(estimator):
 
 
 def is_regressor(estimator):
-    """Returns True if the given estimator is (probably) a regressor.
+    """Return True if the given estimator is (probably) a regressor.
 
     Parameters
     ----------
@@ -651,7 +663,7 @@ def is_regressor(estimator):
 
 
 def is_outlier_detector(estimator):
-    """Returns True if the given estimator is (probably) an outlier detector.
+    """Return True if the given estimator is (probably) an outlier detector.
 
     Parameters
     ----------
