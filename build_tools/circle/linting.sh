@@ -143,3 +143,19 @@ else
         --config ./examples/.flake8
 fi
 echo -e "No problem detected by flake8\n"
+
+# For docstrings and warnings of deprecated attributes to be rendered
+# properly, the property decorator must come before the deprecated decorator
+# (else they are treated as functions)
+
+# do not error when grep -B1 "@property" finds nothing
+set +e
+bad_deprecation_property_order=`git grep -A 10 "@property"  -- "*.py" | awk '/@property/,/def /' | grep -B1 "@deprecated"`
+
+if [ ! -z "$bad_deprecation_property_order" ]
+then
+    echo "property decorator should come before deprecated decorator"
+    echo "found the following occurrencies:"
+    echo $bad_deprecation_property_order
+    exit 1
+fi
