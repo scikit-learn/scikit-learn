@@ -417,6 +417,7 @@ class GenericKernelMixin:
 
     .. versionadded:: 0.22
     """
+
     @property
     def requires_vector_input(self):
         """whether the kernel works only on fixed-length feature vectors."""
