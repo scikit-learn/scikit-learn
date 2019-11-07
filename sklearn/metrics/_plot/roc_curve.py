@@ -170,15 +170,15 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
         raise ValueError("response_method must be 'predict_proba', "
                          "'decision_function' or 'auto'")
 
-    classificaiton_error = ("{} should be a binary classifer".format(
+    classification_error = ("{} should be a binary classifer".format(
         estimator.__class__.__name__))
 
     if is_classifier(estimator):
         if len(estimator.classes_) != 2:
-            raise ValueError(classificaiton_error)
+            raise ValueError(classification_error)
         pos_label = estimator.classes_[1]
     else:
-        raise ValueError(classificaiton_error)
+        raise ValueError(classification_error)
 
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
