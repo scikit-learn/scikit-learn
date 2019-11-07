@@ -259,6 +259,11 @@ Changelog
 :mod:`sklearn.dummy`
 ....................
 
+- |API| The default value of the `strategy` parameter in
+  :class:`dummy.DummyClassifier` will change from `'stratified'` in version
+  0.22 to `'prior'` in 0.24. A FutureWarning is raised when the default value
+  is used. :pr:`15382` by `Thomas Fan`_.
+
 - |Fix| :class:`dummy.DummyClassifier` now handles checking the existence
   of the provided constant in multiouput cases.
   :pr:`14908` by :user:`Martina G. Vilas <martinagvilas>`.
@@ -431,6 +436,11 @@ Changelog
 
 - |Efficiency| :meth:`impute.MissingIndicator.fit_transform` avoid repeated
   computation of the masked matrix. :pr:`14356` by :user:`Harsh Soni <harsh020>`.
+
+- |Fix| Fixed a bug in :class:`impute.IterativeImputer` where features where
+  imputed in the reverse desired order with ``imputation_order`` either
+  ``"ascending"`` or ``"descending"``. :pr:`15393` by
+  :user:`Venkatachalam N <venkyyuvy>`.
 
 :mod:`sklearn.inspection`
 .........................

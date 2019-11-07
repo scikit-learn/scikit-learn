@@ -113,16 +113,26 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.ccp_alpha = ccp_alpha
 
     def get_depth(self):
-        """Returns the depth of the decision tree.
+        """Return the depth of the decision tree.
 
         The depth of a tree is the maximum distance between the root
         and any leaf.
+
+        Returns
+        -------
+        self.tree_.max_depth : int
+            The maximum depth of the tree.
         """
         check_is_fitted(self)
         return self.tree_.max_depth
 
     def get_n_leaves(self):
-        """Returns the number of leaves of the decision tree.
+        """Return the number of leaves of the decision tree.
+
+        Returns
+        -------
+        self.tree_.n_leaves : int
+            Number of leaves.
         """
         check_is_fitted(self)
         return self.tree_.n_leaves
@@ -396,7 +406,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -436,7 +446,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
     def apply(self, X, check_input=True):
         """
-        Returns the index of the leaf that each sample is predicted as.
+        Return the index of the leaf that each sample is predicted as.
 
         .. versionadded:: 0.17
 
@@ -447,7 +457,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -464,7 +474,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
-        """Return the decision path in the tree
+        """Return the decision path in the tree.
 
         .. versionadded:: 0.18
 
@@ -475,7 +485,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -484,7 +494,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         indicator : sparse csr array, shape = [n_samples, n_nodes]
             Return a node indicator matrix where non zero elements
             indicates that the samples goes through the nodes.
-
         """
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
@@ -562,6 +571,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape = [n_features]
+            Normalized total reduction of critera by feature (Gini importance).
         """
         check_is_fitted(self)
 
@@ -843,7 +853,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ignored if they would result in any single class carrying a
             negative weight in either child node.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -856,6 +866,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
 
         super().fit(
@@ -887,7 +898,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
+        proba : array of shape (n_samples, n_classes), or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -928,7 +939,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Returns
         -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
+        proba : array of shape (n_samples, n_classes), or a list of n_outputs \
             such arrays if n_outputs > 1.
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
@@ -952,7 +963,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : string, optional (default="mse")
+    criterion : str, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
@@ -964,7 +975,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : string, optional (default="best")
+    splitter : str, optional (default="best")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1005,7 +1016,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, str or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1097,6 +1108,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
+    See Also
+    --------
+    DecisionTreeClassifier : A decision tree classifier.
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1111,10 +1126,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
-
-    See also
-    --------
-    DecisionTreeClassifier
 
     References
     ----------
@@ -1192,7 +1203,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             that would create child nodes with net zero or negative weight are
             ignored while searching for a split in each node.
 
-        check_input : boolean, (default=True)
+        check_input : bool, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -1205,6 +1216,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Returns
         -------
         self : object
+            Fitted estimator.
         """
 
         super().fit(
@@ -1247,11 +1259,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : string, optional (default="gini")
+    criterion : str, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : string, optional (default="random")
+    splitter : str, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1292,7 +1304,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1406,7 +1418,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    See also
+    See Also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
     sklearn.ensemble.ExtraTreesRegressor
@@ -1471,7 +1483,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : string, optional (default="mse")
+    criterion : str, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
@@ -1480,7 +1492,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : string, optional (default="random")
+    splitter : str, optional (default="random")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1521,7 +1533,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, str or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1601,7 +1613,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
         for basic usage of these attributes.
 
-    See also
+    See Also
     --------
     ExtraTreeClassifier, sklearn.ensemble.ExtraTreesClassifier,
     sklearn.ensemble.ExtraTreesRegressor
