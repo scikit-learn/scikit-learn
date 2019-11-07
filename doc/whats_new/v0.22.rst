@@ -15,6 +15,12 @@ refer to
 
 .. include:: changelog_legend.inc
 
+Website update
+--------------
+
+`Our website <https://scikit-learn.org/>`_ was revamped and given a fresh
+new look. :pr:`14849` by `Thomas Fan`_.
+
 Clear definition of the public API
 ----------------------------------
 
@@ -50,6 +56,10 @@ been moved to ``_birch.py``).
     find a public tool (without leading underscore) that isn't in the API
     reference, that means it should either be private or documented. Please
     let us know by opening an issue!
+
+This work was tracked in `issue 9250
+<https://github.com/scikit-learn/scikit-learn/issues/9250>`_ and `issue
+12927 <https://github.com/scikit-learn/scikit-learn/issues/12927>`_.
 
 
 Deprecations: using ``FutureWarning`` from now on
