@@ -398,8 +398,7 @@ class TreeGrower:
             right_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
         else:
             # Note: using here the value set in the splitter, not in finalize
-            # leaf. node.value will be overridden later. they better be the
-            # same
+            # leaf. they better be the same
             middle = (left_child_node.value + right_child_node.value) / 2
             if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
                 left_child_node.set_children_bounds(node.children_lower_bound, middle)
