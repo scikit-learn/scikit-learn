@@ -60,19 +60,21 @@ if [[ "$DISTRIB" == "conda" ]]; then
         conda config --set restore_free_channel true
     fi
 
+	make_conda $TO_INSTALL
+
     if [[ "$PYTEST_VERSION" == "*" ]]; then
-        pip install pytest
+        python -m pip install pytest
     else
-        pip install pytest=="$PYTEST_VERSION"
+        python -m pip install pytest=="$PYTEST_VERSION"
     fi
 
-	make_conda $TO_INSTALL
     if [[ "$PYTHON_VERSION" == "*" ]]; then
-        pip install pytest-xdist
+        python -m pip install pytest-xdist
     fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
     sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -115,6 +117,6 @@ try:
 except ImportError:
     print('pandas not installed')
 "
-pip list
+python -m pip list
 python setup.py build_ext --inplace -j 3
 python setup.py develop

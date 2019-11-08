@@ -171,7 +171,9 @@ html_static_path = ['images']
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html'}
+html_additional_pages = {
+    'index': 'index.html',
+    'documentation': 'documentation.html'}  # redirects to index
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -196,6 +198,8 @@ html_use_index = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'scikit-learndoc'
 
+# If true, the reST sources are included in the HTML build as _sources/name.
+html_copy_source = True
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -254,6 +258,36 @@ else:
     major, minor = match.groups()
     binder_branch = '{}.{}.X'.format(major, minor)
 
+
+class SubSectionTitleOrder:
+    """Sort example gallery by title of subsection.
+
+    Assumes README.txt exists for all subsections and uses the subsection with
+    dashes, '---', as the adornment.
+    """
+    def __init__(self, src_dir):
+        self.src_dir = src_dir
+        self.regex = re.compile(r"^([\w ]+)\n-", re.MULTILINE)
+
+    def __repr__(self):
+        return '<%s>' % (self.__class__.__name__,)
+
+    def __call__(self, directory):
+        src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+        readme = os.path.join(src_path, "README.txt")
+
+        try:
+            with open(readme, 'r') as f:
+                content = f.read()
+        except FileNotFoundError:
+            return directory
+
+        title_match = self.regex.search(content)
+        if title_match is not None:
+            return title_match.group(1)
+        return directory
+
+
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
@@ -262,6 +296,7 @@ sphinx_gallery_conf = {
         'sklearn': None},
     'examples_dirs': ['../examples'],
     'gallery_dirs': ['auto_examples'],
+    'subsection_order': SubSectionTitleOrder('../examples'),
     'binder': {
         'org': 'scikit-learn',
         'repo': 'scikit-learn',
@@ -300,6 +335,27 @@ def make_carousel_thumbs(app, exception):
             sphinx_gallery.gen_rst.scale_image(image, c_thumb, max_width, 190)
 
 
+def filter_search_index(app, exception):
+    if exception is not None:
+        return
+
+    # searchindex only exist when generating html
+    if app.builder.name != 'html':
+        return
+
+    print('Removing methods from search index')
+
+    searchindex_path = os.path.join(app.builder.outdir, 'searchindex.js')
+    with open(searchindex_path, 'r') as f:
+        searchindex_text = f.read()
+
+    searchindex_text = re.sub(r'{__init__.+?}', '{}', searchindex_text)
+    searchindex_text = re.sub(r'{__call__.+?}', '{}', searchindex_text)
+
+    with open(searchindex_path, 'w') as f:
+        f.write(searchindex_text)
+
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -309,6 +365,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 def setup(app):
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
+    app.connect('build-finished', filter_search_index)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
