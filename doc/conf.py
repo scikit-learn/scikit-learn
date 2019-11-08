@@ -16,7 +16,7 @@ import sys
 import os
 import warnings
 import re
-from distutils.version import StrictVersion
+from pkg_resources import parse_version
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -86,8 +86,7 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 #
 # The short X.Y version.
 import sklearn
-version = '.'.join([str(x) for x in
-                    StrictVersion(sklearn.__version__).version])
+version = parse_version(sklearn.__version__).base_version
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 
@@ -247,17 +246,16 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
-if 'dev' in version:
+v = parse_version(release)
+if v.release is None:
+    raise ValueError(
+        'Ill-formed version: {!r}. Version should follow '
+        'PEP440'.format(version))
+
+if v.is_devrelease:
     binder_branch = 'master'
 else:
-    match = re.match(r'^(\d+)\.(\d+)(?:\.\d+)?$', version)
-    if match is None:
-        raise ValueError(
-            'Ill-formed version: {!r}. Expected either '
-            "a version containing 'dev' "
-            'or a version like X.Y or X.Y.Z.'.format(version))
-
-    major, minor = match.groups()
+    major, minor = v.release[:2]
     binder_branch = '{}.{}.X'.format(major, minor)
 
 
