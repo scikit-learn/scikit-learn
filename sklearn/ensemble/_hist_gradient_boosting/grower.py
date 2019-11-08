@@ -268,6 +268,12 @@ class TreeGrower:
         while self.splittable_nodes:
             self.split_next()
 
+        self._apply_shrinkage()
+
+    def _apply_shrinkage(self):
+        for leaf in self.finalized_leaves:
+            leaf.value *= self.shrinkage
+
     def _intilialize_root(self, gradients, hessians, hessians_are_constant):
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
@@ -475,8 +481,6 @@ class TreeGrower:
                 node.sum_gradients, node.sum_hessians, lower_bound, upper_bound,
                 self.splitter.l2_regularization)
 
-        node.value *= self.shrinkage
-
         node.is_leaf = True
         self.finalized_leaves.append(node)
 
@@ -523,10 +527,11 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     else:
         node['gain'] = -1
 
+    node['value'] = grower_node.value
+
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        node['value'] = grower_node.value
         return next_free_idx + 1
     else:
         # Decision node
@@ -535,15 +540,6 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['feature_idx'] = feature_idx
         node['bin_threshold'] = bin_idx
         node['missing_go_to_left'] = split_info.missing_go_to_left
-        if grower_node.value is not None:
-            # multiply by shrinkage for non-leaves which didnt go thought
-            # finalize_leaf
-            grower_node.value *= shrinkage
-            node['value'] = grower_node.value
-            if abs(grower_node.value - -0.11484) < 0.0001:
-                print(grower_node.children_lower_bound)
-                print(grower_node.children_upper_bound)
-                print()
 
         if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
             # Split is on the last non-missing bin: it's a "split on nans". All

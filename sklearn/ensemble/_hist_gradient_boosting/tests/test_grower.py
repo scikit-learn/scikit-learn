@@ -134,6 +134,8 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     # All the leafs are pure, it is not possible to split any further:
     assert not grower.splittable_nodes
 
+    grower._apply_shrinkage()
+
     # Check the values of the leaves:
     assert grower.root.left_child.value == approx(shrinkage)
     assert grower.root.right_child.left_child.value == approx(shrinkage)
