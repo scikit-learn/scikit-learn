@@ -172,7 +172,7 @@ class BaseEstimator:
 
         Parameters
         ----------
-        deep : bool, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -436,14 +436,14 @@ class ClusterMixin:
 
     def fit_predict(self, X, y=None):
         """
-        Performs clustering on X and returns cluster labels.
+        Perform clustering on X and returns cluster labels.
 
         Parameters
         ----------
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
-        y : Ignored
+        y : None
             Not used, present for API consistency by convention.
 
         Returns
@@ -537,7 +537,9 @@ class TransformerMixin:
 
     def fit_transform(self, X, y=None, **fit_params):
         """
-        Fit to data, then transform it. Fits transformer to X and y with
+        Fit to data, then transform it.
+
+        Fits transformer to X and y with
         optional parameters fit_params and returns a transformed
         version of X.
 
@@ -588,7 +590,8 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs fit on X and returns labels for X.
+        """
+        Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -597,7 +600,7 @@ class OutlierMixin:
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
-        y : Ignored
+        y : None
             not used, present for API consistency by convention.
 
         Returns

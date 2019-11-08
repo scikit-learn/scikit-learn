@@ -90,9 +90,9 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         If passed, uniques are not determined from passed values (this
         can be because the user specified categories, or because they
         already have been determined in fit).
-    encode : bool, default False
+    encode : bool, default=False
         If True, also encode the values into integer codes based on `uniques`.
-    check_unknown : bool, default True
+    check_unknown : bool, default=True
         If True, check for values in ``values`` that are not in ``unique``
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
@@ -131,7 +131,7 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         Values to check for unknowns.
     uniques : array
         Allowed uniques values.
-    return_mask : bool, default False
+    return_mask : bool, default=False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
 
@@ -215,7 +215,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
     >>> le.transform(["tokyo", "tokyo", "paris"])
     array([2, 2, 1]...)
     >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris'].
+    ['tokyo', 'tokyo', 'paris']
     """
 
     def fit(self, y):
@@ -247,7 +247,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y : array-like of shape [n_samples].
+        y : array-like of shape (n_samples,)
         """
         y = column_or_1d(y, warn=True)
         self.classes_, y = _encode(y, encode=True)
@@ -264,7 +264,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y : array-like of shape [n_samples].
+        y : array-like of shape (n_samples,)
         """
         check_is_fitted(self)
         y = column_or_1d(y, warn=True)
@@ -336,7 +336,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
-    sparse_output : bool (default: False)
+    sparse_output : bool, default=False
         True if the returned array from transform is desired to be in sparse
         CSR format.
 
@@ -395,7 +395,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     array([[1, 0, 0],
            [0, 1, 0],
            [0, 0, 1],
-           [0, 1, 0]]).
+           [0, 1, 0]])
     """
 
     def __init__(self, neg_label=0, pos_label=1, sparse_output=False):
@@ -449,6 +449,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
+
         y : array or sparse matrix of shape [n_samples,] or
             [n_samples, n_classes]. Target values. The 2-d matrix
             should only contain 0 and 1, represents multilabel
@@ -575,7 +576,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
-    sparse_output : bool (default: False),
+    sparse_output : bool, default=False
         Set to true if output binary array is desired in CSR sparse format
 
     Returns
@@ -607,7 +608,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     array([[1],
            [0],
            [0],
-           [1]]).
+           [1]])
     """
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
@@ -860,7 +861,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     >>> mlb.fit([['sci-fi', 'thriller', 'comedy']])
     MultiLabelBinarizer()
     >>> mlb.classes_
-    array(['comedy', 'sci-fi', 'thriller'], dtype=object).
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
     def __init__(self, classes=None, sparse_output=False):
@@ -987,7 +988,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        y_indicator : sparse CSR matrix, shape (n_samples, n_classes)
+        y_indicator : sparse matrix of shape (n_samples, n_classes)
             Label indicator matrix.
         """
         indices = array.array('i')
