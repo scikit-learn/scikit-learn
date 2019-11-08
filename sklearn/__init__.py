@@ -91,7 +91,7 @@ else:
                'show_versions']
 
     # Allow distributors to run custom init code
-    from . import _distributor_init # noqa: F401
+    from . import _distributor_init  # noqa: F401
 
 
 def setup_module(module):
