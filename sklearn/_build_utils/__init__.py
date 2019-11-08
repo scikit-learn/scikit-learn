@@ -27,7 +27,8 @@ def _check_cython_version():
                     CYTHON_MIN_VERSION)
     try:
         import Cython
-    except ModuleNotFoundError as exc:
+    except ModuleNotFoundError:
+        # Re-raise with more informative error message instead:
         raise ModuleNotFoundError(message)
 
     if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
