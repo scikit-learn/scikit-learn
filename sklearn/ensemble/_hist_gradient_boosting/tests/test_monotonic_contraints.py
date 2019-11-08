@@ -152,3 +152,85 @@ def test_grower(monotonic_cst, seed):
     assert_children_values_monotonic(predictor, monotonic_cst)
     assert_children_values_bounded(grower, monotonic_cst)
     assert_leaves_values_monotonic(predictor, monotonic_cst)
+
+def is_increasing(y):
+    return (np.diff(y) >= 0.0).all()
+
+def is_decreasing(y):
+    return (np.diff(y) <= 0.0).all()
+
+# @pytest.mark.parametrize('seed', range(1))
+# def test_light(seed):
+
+#     def is_correctly_constrained(learner):
+#         n = 10
+#         variable_x = np.linspace(0, 1, n).reshape((n, 1))
+#         fixed_xs_values = np.linspace(0, 1, n)
+#         for i in range(n):
+#             fixed_x = fixed_xs_values[i] * np.ones((n, 1))
+#             monotonically_increasing_x = np.column_stack((variable_x, fixed_x))
+#             monotonically_increasing_y = learner.predict(monotonically_increasing_x)
+#             print(monotonically_increasing_y)
+#             # monotonically_decreasing_x = np.column_stack((fixed_x, variable_x))
+#             # monotonically_decreasing_y = learner.predict(monotonically_decreasing_x)
+#             if not (is_increasing(monotonically_increasing_y)): # and is_decreasing(monotonically_decreasing_y)):
+#                 return False
+#             break
+#         return True
+#     np.random.seed(seed)
+
+#     number_of_dpoints = 3000
+#     x1_positively_correlated_with_y = np.random.random(size=number_of_dpoints)
+#     x2_negatively_correlated_with_y = np.random.random(size=number_of_dpoints)
+#     x = np.column_stack((x1_positively_correlated_with_y, x2_negatively_correlated_with_y))
+#     zs = np.random.normal(loc=0.0, scale=0.01, size=number_of_dpoints)
+#     y = (5 * x1_positively_correlated_with_y
+#             + np.sin(10 * np.pi * x1_positively_correlated_with_y)
+#             - 5 * x2_negatively_correlated_with_y
+#             - np.cos(10 * np.pi * x2_negatively_correlated_with_y)
+#             + zs)
+#     from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+#     from sklearn.ensemble import HistGradientBoostingRegressor
+#     # trainset = lgb.Dataset(x, label=y)
+#     # params = {
+#     #     'min_data': 20,
+#     #     'num_leaves': 20,
+#     #     'monotone_constraints': '1,-1'
+#     # }
+#     # constrained_model = lgb.train(params, trainset)
+#     from sklearn.ensemble._hist_gradient_boosting.utils import (
+#         get_equivalent_estimator)
+#     gbdt = HistGradientBoostingRegressor(max_iter=42, max_leaf_nodes=20)
+#     gbdt.monotonic_cst = [1, 0]
+#     gbdt.fit(x, y)
+#     l = get_equivalent_estimator(gbdt)
+#     l.set_params(monotone_constraints='1,0')
+#     l.fit(x, y)
+
+#     assert is_correctly_constrained(l)
+#     assert is_correctly_constrained(gbdt)
+
+
+def test_zob():
+
+    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.ensemble import HistGradientBoostingRegressor
+    from sklearn.datasets import make_regression
+
+    rng = np.random.RandomState(0)
+
+    n_samples = 1000
+    n_features = 2
+    X = rng.normal(size=(n_samples, n_features))
+    y = X[:, 0]
+
+    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
+    gbdt.monotone_constraints = [1, 0]
+    gbdt.fit(X, y)
+
+    X_0 = np.linspace(-2, 2, n_samples)
+    X = np.c_[X_0, rng.normal(size=n_samples)]
+    X = np.c_[X_0, np.zeros(n_samples)]
+    pred = gbdt.predict(X)
+
+    assert is_increasing(pred)
