@@ -293,7 +293,7 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                 'Setting a random_state has no effect since shuffle is '
                 'False. This will raise an error in 0.24. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                DeprecationWarning
+                FutureWarning
             )
 
         self.n_splits = n_splits
@@ -1713,7 +1713,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -2168,13 +2168,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", FutureWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
                 if value is None and hasattr(self, 'cvargs'):
                     value = self.cvargs.get(key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            if len(w) and w[0].category == FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

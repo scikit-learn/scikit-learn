@@ -71,8 +71,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             )
 
         self.named_estimators_ = Bunch()
-        for k, e in zip(self.estimators, self.estimators_):
-            self.named_estimators_[k[0]] = e
+
+        # Uses None or 'drop' as placeholder for dropped estimators
+        est_iter = iter(self.estimators_)
+        for name, est in self.estimators:
+            current_est = est if est in (None, 'drop') else next(est_iter)
+            self.named_estimators_[name] = current_est
+
         return self
 
 

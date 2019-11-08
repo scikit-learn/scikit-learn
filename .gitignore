@@ -99,6 +99,7 @@ sklearn/neural_network/multilayer_perceptron.py
 sklearn/utils/weight_vector.py
 sklearn/utils/seq_dataset.py
 sklearn/utils/fast_dict.py
+sklearn/utils/testing.py
 
 sklearn/cluster/affinity_propagation_.py
 sklearn/cluster/bicluster.py
@@ -129,6 +130,20 @@ sklearn/svm/bounds.py
 sklearn/svm/libsvm.py
 sklearn/svm/libsvm_sparse.py
 sklearn/svm/liblinear.py
+
+sklearn/decomposition/base.py
+sklearn/decomposition/dict_learning.py
+sklearn/decomposition/cdnmf_fast.py
+sklearn/decomposition/factor_analysis.py
+sklearn/decomposition/fastica_.py
+sklearn/decomposition/incremental_pca.py
+sklearn/decomposition/kernel_pca.py
+sklearn/decomposition/nmf.py
+sklearn/decomposition/online_lda.py
+sklearn/decomposition/online_lda_fast.py
+sklearn/decomposition/pca.py
+sklearn/decomposition/sparse_pca.py
+sklearn/decomposition/truncated_svd.py
 
 sklearn/gaussian_process/gpr.py
 sklearn/gaussian_process/gpc.py
@@ -208,3 +223,10 @@ sklearn/semi_supervised/label_propagation.py
 
 sklearn/preprocessing/data.py
 sklearn/preprocessing/label.py
+
+sklearn/feature_selection/base.py
+sklearn/feature_selection/from_model.py
+sklearn/feature_selection/mutual_info.py
+sklearn/feature_selection/rfe.py
+sklearn/feature_selection/univariate_selection.py
+sklearn/feature_selection/variance_threshold.py

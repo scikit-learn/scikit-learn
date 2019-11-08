@@ -4,7 +4,7 @@
 import numpy as np
 import numbers
 
-from .base import SelectorMixin
+from ._base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 
 from ..exceptions import NotFittedError
@@ -131,6 +131,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     threshold_ : float
         The threshold value used for feature selection.
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
     Examples
     --------
     >>> from sklearn.feature_selection import SelectFromModel
@@ -249,3 +253,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
+
+    def _more_tags(self):
+        estimator_tags = self.estimator._get_tags()
+        return {'allow_nan': estimator_tags.get('allow_nan', True)}

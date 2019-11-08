@@ -100,7 +100,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         ``weights`` exceeds 1.
 
     flip_y : float, optional (default=0.01)
-        The fraction of samples whose class are randomly exchanged. Larger
+        The fraction of samples whose class is assigned randomly. Larger
         values introduce noise in the labels and make the classification
         task harder.
 

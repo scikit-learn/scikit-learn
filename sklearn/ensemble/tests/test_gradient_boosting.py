@@ -25,14 +25,15 @@ from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils._mocking import NoSampleWeightWrapper
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1087,7 +1088,8 @@ def test_min_impurity_split(GBEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     est = GBEstimator(min_impurity_split=0.1)
-    est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+    est = assert_warns_message(FutureWarning,
+                               "min_impurity_decrease",
                                est.fit, X, y)
     for tree in est.estimators_.flat:
         assert tree.min_impurity_split == 0.1
@@ -1297,6 +1299,8 @@ def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),
@@ -1400,6 +1404,6 @@ def test_presort_deprecated(Cls, presort):
     X = np.zeros((10, 10))
     y = np.r_[[0] * 5, [1] * 5]
     gb = Cls(presort=presort)
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)

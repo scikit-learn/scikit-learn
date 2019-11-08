@@ -12,14 +12,14 @@ from scipy.special import expit
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
@@ -648,7 +648,7 @@ def test_stable_cumsum():
 def test_safe_min():
     msg = ("safe_min is deprecated in version 0.22 and will be removed "
            "in version 0.24.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         safe_min(np.ones(10))
 
 

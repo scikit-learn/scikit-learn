@@ -16,11 +16,11 @@ from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score

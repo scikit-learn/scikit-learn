@@ -9,14 +9,14 @@ from sklearn import svm
 
 from sklearn.utils.extmath import softmax
 from sklearn.datasets import make_multilabel_classification
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -1076,7 +1076,7 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                                n_samples=n_samples)
 
     # Score with ties
-    y_score = sparse_random_matrix(n_components=y_true.shape[0],
+    y_score = _sparse_random_matrix(n_components=y_true.shape[0],
                                    n_features=y_true.shape[1],
                                    random_state=random_state)
 

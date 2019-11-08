@@ -7,7 +7,7 @@
 import numpy as np
 from scipy import linalg, sparse
 
-from .base import _BasePCA
+from ._base import _BasePCA
 from ..utils import check_array, gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
 
@@ -36,6 +36,8 @@ class IncrementalPCA(_BasePCA):
     complexity ``O(n_samples * n_features ** 2)`` for PCA.
 
     Read more in the :ref:`User Guide <IncrementalPCA>`.
+
+    .. versionadded:: 0.16
 
     Parameters
     ----------

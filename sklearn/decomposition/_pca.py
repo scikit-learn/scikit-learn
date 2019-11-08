@@ -19,7 +19,7 @@ from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from .base import _BasePCA
+from ._base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
@@ -28,7 +28,7 @@ from ..utils.validation import check_is_fitted
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
-    """Compute the likelihood of a rank ``rank`` dataset
+    """Compute the likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
     dimf) having spectrum ``spectrum``.
@@ -102,7 +102,7 @@ def _infer_dimension_(spectrum, n_samples, n_features):
 
 
 class PCA(_BasePCA):
-    """Principal component analysis (PCA)
+    """Principal component analysis (PCA).
 
     Linear dimensionality reduction using Singular Value Decomposition of the
     data to project it to a lower dimensional space. The input data is centered
@@ -122,7 +122,7 @@ class PCA(_BasePCA):
 
     Parameters
     ----------
-    n_components : int, float, None or string
+    n_components : int, float, None or str
         Number of components to keep.
         if n_components is not set all components are kept::
 
@@ -143,7 +143,7 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features) - 1
 
-    copy : bool (default True)
+    copy : bool, default=True
         If False, data passed to fit are overwritten and running
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
@@ -158,22 +158,22 @@ class PCA(_BasePCA):
         improve the predictive accuracy of the downstream estimators by
         making their data respect some hard-wired assumptions.
 
-    svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
-        auto :
-            the solver is selected by a default policy based on `X.shape` and
+    svd_solver : str {'auto', 'full', 'arpack', 'randomized'}
+        If auto :
+            The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
             dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
-        full :
+        If full :
             run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
-        arpack :
+        If arpack :
             run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
             0 < n_components < min(X.shape)
-        randomized :
+        If randomized :
             run randomized SVD by the method of Halko et al.
 
         .. versionadded:: 0.18.0
@@ -253,6 +253,13 @@ class PCA(_BasePCA):
         Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
 
+    See Also
+    --------
+    KernelPCA : Kernel Principal Component Analysis.
+    SparsePCA : Sparse Principal Component Analysis.
+    TruncatedSVD : Dimensionality reduction using truncated SVD.
+    IncrementalPCA : Incremental Principal Component Analysis.
+
     References
     ----------
     For n_components == 'mle', this class uses the method of *Minka, T. P.
@@ -275,7 +282,6 @@ class PCA(_BasePCA):
     *Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
     Applied and Computational Harmonic Analysis, 30(1), 47-68.*
-
 
     Examples
     --------
@@ -305,13 +311,6 @@ class PCA(_BasePCA):
     [0.99244...]
     >>> print(pca.singular_values_)
     [6.30061...]
-
-    See also
-    --------
-    KernelPCA
-    SparsePCA
-    TruncatedSVD
-    IncrementalPCA
     """
 
     def __init__(self, n_components=None, copy=True, whiten=False,
@@ -334,7 +333,8 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : Ignored
+        y : None
+            Ignored variable.
 
         Returns
         -------
@@ -353,11 +353,13 @@ class PCA(_BasePCA):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : Ignored
+        y : None
+            Ignored variable.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
+            Transformed values.
 
         Notes
         -----
@@ -567,7 +569,7 @@ class PCA(_BasePCA):
         Returns
         -------
         ll : array, shape (n_samples,)
-            Log-likelihood of each sample under the current model
+            Log-likelihood of each sample under the current model.
         """
         check_is_fitted(self)
 
@@ -592,11 +594,12 @@ class PCA(_BasePCA):
         X : array, shape(n_samples, n_features)
             The data.
 
-        y : Ignored
+        y : None
+            Ignored variable.
 
         Returns
         -------
         ll : float
-            Average log-likelihood of the samples under the current model
+            Average log-likelihood of the samples under the current model.
         """
         return np.mean(self.score_samples(X))
