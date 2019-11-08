@@ -234,7 +234,7 @@ def _check_optimize_result(solver, result, max_iter=None):
     if solver == "lbfgs":
         if result.status != 0:
             warnings.warn("{} failed to converge (status={}): {}. "
-                          "Increase the number of iterations."
+                          "Increase the number of iterations or scale the data"
                           .format(solver, result.status, result.message),
                           ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
