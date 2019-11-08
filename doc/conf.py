@@ -16,7 +16,7 @@ import sys
 import os
 import warnings
 import re
-from pkg_resources import parse_version
+from packaging.version import parse
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -86,7 +86,7 @@ copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 #
 # The short X.Y version.
 import sklearn
-version = parse_version(sklearn.__version__).base_version
+version = parse(sklearn.__version__).base_version
 # The full version, including alpha/beta/rc tags.
 release = sklearn.__version__
 
@@ -246,7 +246,7 @@ intersphinx_mapping = {
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
-v = parse_version(release)
+v = parse(release)
 if v.release is None:
     raise ValueError(
         'Ill-formed version: {!r}. Version should follow '
