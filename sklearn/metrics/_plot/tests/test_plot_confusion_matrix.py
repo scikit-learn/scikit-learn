@@ -51,37 +51,62 @@ def test_error_on_invalid_option(pyplot, fitted_clf, data):
         plot_confusion_matrix(fitted_clf, X, y, normalize='invalid')
 
 
-@pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
-@pytest.mark.parametrize("include_values", [True, False])
-def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
-                               normalize, with_labels,
-                               with_display_labels,
-                               include_values):
+def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
+                                             n_classes, with_labels,
+                                             with_display_labels):
     X, y = data
     ax = pyplot.gca()
-    cmap = 'plasma'
-
     labels = [2, 1, 0, 3, 4] if with_labels else None
     display_labels = ['b', 'd', 'a', 'e', 'f'] if with_display_labels else None
 
     cm = confusion_matrix(y, y_pred, labels=labels)
-
     disp = plot_confusion_matrix(fitted_clf, X, y,
-                                 normalize=normalize, labels=labels,
+                                 ax=ax, display_labels=display_labels,
+                                 labels=labels)
+
+    assert_allclose(disp.confusion_matrix, cm)
+
+    if with_display_labels:
+        expected_display_labels = display_labels
+    elif with_labels:
+        expected_display_labels = labels
+    else:
+        expected_display_labels = list(range(n_classes))
+
+    expected_display_labels_str = [str(name)
+                                   for name in expected_display_labels]
+
+    x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
+    y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
+
+    assert_array_equal(disp.display_labels, expected_display_labels)
+    assert_array_equal(x_ticks, expected_display_labels_str)
+    assert_array_equal(y_ticks, expected_display_labels_str)
+
+
+@pytest.mark.parametrize("normalize", ['true', 'pred', 'all', None])
+@pytest.mark.parametrize("include_values", [True, False])
+def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
+                               normalize, include_values):
+    X, y = data
+    ax = pyplot.gca()
+    cmap = 'plasma'
+    cm = confusion_matrix(y, y_pred)
+    disp = plot_confusion_matrix(fitted_clf, X, y,
+                                 normalize=normalize,
                                  cmap=cmap, ax=ax,
-                                 display_labels=display_labels,
                                  include_values=include_values)
 
     assert disp.ax_ == ax
 
     if normalize == 'true':
-        cm = cm.astype('float') / cm.sum(axis=1, keepdims=True)
+        cm = cm / cm.sum(axis=1, keepdims=True)
     elif normalize == 'pred':
-        cm = cm.astype('float') / cm.sum(axis=0, keepdims=True)
+        cm = cm / cm.sum(axis=0, keepdims=True)
     elif normalize == 'all':
-        cm = cm.astype('float') / cm.sum()
+        cm = cm / cm.sum()
 
     assert_allclose(disp.confusion_matrix, cm)
     import matplotlib as mpl
@@ -96,12 +121,7 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
 
-    if with_display_labels:
-        expected_display_labels = display_labels
-    elif with_labels:
-        expected_display_labels = labels
-    else:
-        expected_display_labels = list(range(n_classes))
+    expected_display_labels = list(range(n_classes))
 
     expected_display_labels_str = [str(name)
                                    for name in expected_display_labels]

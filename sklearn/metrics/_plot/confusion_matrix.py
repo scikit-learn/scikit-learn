@@ -14,7 +14,7 @@ class ConfusionMatrixDisplay:
     create a :class:`ConfusionMatrixDisplay`. All parameters are stored as
     attributes.
 
-    Read more in the :ref:`User Guide <confusion_matrix>`.
+    Read more in the :ref:`User Guide <visualizations>`.
 
     Parameters
     ----------
