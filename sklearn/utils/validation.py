@@ -1133,7 +1133,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
             warnings.warn("There are imaginary parts in eigenvalues (%g "
                           "of the maximum real part). Either the matrix is not"
                           " PSD, or there was an issue while computing the "
-                          "eigendecomposition of the matrix."
+                          "eigendecomposition of the matrix. Only the real "
+                          "parts will be kept."
                           % (max_imag_abs / max_real_abs),
                           PositiveSpectrumWarning)
 
@@ -1163,7 +1164,8 @@ def _check_psd_eigenvalues(lambdas, enable_warnings=False):
                 warnings.warn("There are negative eigenvalues (%g of the "
                               "maximum positive). Either the matrix is not "
                               "PSD, or there was an issue while computing the"
-                              " eigendecomposition of the matrix."
+                              " eigendecomposition of the matrix. Negative "
+                              "eigenvalues will be replaced with 0."
                               % (-min_eig / max_eig),
                               PositiveSpectrumWarning)
             lambdas[lambdas < 0] = 0
