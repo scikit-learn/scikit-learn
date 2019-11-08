@@ -385,7 +385,7 @@ def test_consistency_path():
                                   err_msg="with solver = %s" % solver)
 
 
-def test_logistic_regression_path_convergence_fail(capsys):
+def test_logistic_regression_path_convergence_fail():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
