@@ -3,16 +3,12 @@ from numpy.testing import assert_array_almost_equal
 
 import pytest
 
-from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
-                                       simultaneous_sort, kernel_norm,
-                                       nodeheap_sort, DTYPE, ITYPE)
-from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.neighbors._kd_tree import (KDTree, NeighborsHeap,
+                                        simultaneous_sort, kernel_norm,
+                                        nodeheap_sort, DTYPE, ITYPE)
+from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_allclose
-
-rng = np.random.RandomState(42)
-V = rng.random_sample((3, 3))
-V = np.dot(V, V.T)
+from sklearn.utils._testing import assert_allclose
 
 DIMENSION = 3
 
@@ -20,37 +16,6 @@ METRICS = {'euclidean': {},
            'manhattan': {},
            'chebyshev': {},
            'minkowski': dict(p=3)}
-
-
-def brute_force_neighbors(X, Y, k, metric, **kwargs):
-    D = DistanceMetric.get_metric(metric, **kwargs).pairwise(Y, X)
-    ind = np.argsort(D, axis=1)[:, :k]
-    dist = D[np.arange(Y.shape[0])[:, None], ind]
-    return dist, ind
-
-
-def check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs):
-    kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
-    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
-                            breadth_first=breadth_first)
-    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
-
-    # don't check indices here: if there are any duplicate distances,
-    # the indices may not match.  Distances should not have this problem.
-    assert_array_almost_equal(dist1, dist2)
-
-
-@pytest.mark.parametrize('metric', METRICS)
-@pytest.mark.parametrize('k', (1, 3, 5))
-@pytest.mark.parametrize('dualtree', (True, False))
-@pytest.mark.parametrize('breadth_first', (True, False))
-def test_kd_tree_query(metric, k, dualtree, breadth_first):
-    rng = check_random_state(0)
-    X = rng.random_sample((40, DIMENSION))
-    Y = rng.random_sample((10, DIMENSION))
-
-    kwargs = METRICS[metric]
-    check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs)
 
 
 def test_kd_tree_query_radius(n_samples=100, n_features=10):
@@ -173,27 +138,9 @@ def test_kd_tree_two_point(dualtree):
     assert_array_almost_equal(counts, counts_true)
 
 
-@pytest.mark.parametrize('protocol', (0, 1, 2))
-def test_kd_tree_pickle(protocol):
-    import pickle
-    rng = check_random_state(0)
-    X = rng.random_sample((10, 3))
-    kdt1 = KDTree(X, leaf_size=1)
-    ind1, dist1 = kdt1.query(X)
-
-    def check_pickle_protocol(protocol):
-        s = pickle.dumps(kdt1, protocol=protocol)
-        kdt2 = pickle.loads(s)
-        ind2, dist2 = kdt2.query(X)
-        assert_array_almost_equal(ind1, ind2)
-        assert_array_almost_equal(dist1, dist2)
-        assert isinstance(kdt2, KDTree)
-
-    check_pickle_protocol(protocol)
-
-
 def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
+    rng = np.random.RandomState(42)
 
     for row in range(n_pts):
         d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
@@ -212,6 +159,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
+    rng = np.random.RandomState(42)
     vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
     i1 = np.argsort(vals)
@@ -222,6 +170,7 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
+    rng = np.random.RandomState(42)
     dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
     ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
 

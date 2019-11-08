@@ -456,7 +456,7 @@ trees.
   Scikit-learn 0.21 introduces two new experimental implementations of
   gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
   and :class:`HistGradientBoostingRegressor`, inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`__.
+  `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
 
   These histogram-based estimators can be **orders of magnitude faster**
   than :class:`GradientBoostingClassifier` and
@@ -825,7 +825,7 @@ Histogram-Based Gradient Boosting
 Scikit-learn 0.21 introduces two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
-`LightGBM <https://github.com/Microsoft/LightGBM>`__.
+`LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
 
 These histogram-based estimators can be **orders of magnitude faster**
 than :class:`GradientBoostingClassifier` and
@@ -946,10 +946,8 @@ Low-level parallelism
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` have implementations that use OpenMP
-for parallelization through Cython. The number of threads that is used can
-be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
-all available cores are used. Please refer to the OpenMP documentation for
-details.
+for parallelization through Cython. For more details on how to control the
+number of threads, please refer to our :ref:`parallelism` notes.
 
 The following parts are parallelized:
 
@@ -996,10 +994,15 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, "XGBoost: A Scalable Tree
-     Boosting System". https://arxiv.org/abs/1603.02754
-  .. [LightGBM] Ke et. al. "LightGBM: A Highly Efficient Gradient
-     BoostingDecision Tree"
+  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
+  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
+     package", 2007
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
+     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
+     BoostingDecision Tree" <https://papers.nips.cc/paper/
+     6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
 
 .. _voting_classifier:
 

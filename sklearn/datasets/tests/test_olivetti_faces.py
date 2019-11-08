@@ -3,10 +3,10 @@ import pytest
 import numpy as np
 
 from sklearn import datasets
-from sklearn.datasets.base import Bunch
+from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
 
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils._testing import assert_array_equal
 
 
 def _is_olivetti_faces_not_available():

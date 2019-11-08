@@ -161,6 +161,7 @@ def configuration(parent_package='', top_path=None):
         os.remove('MANIFEST')
 
     from numpy.distutils.misc_util import Configuration
+    from sklearn._build_utils import _check_cython_version
 
     config = Configuration(None, parent_package, top_path)
 
@@ -170,6 +171,12 @@ def configuration(parent_package='', top_path=None):
                        assume_default_configuration=True,
                        delegate_options_to_subpackages=True,
                        quiet=True)
+
+    # Cython is required by config.add_subpackage for templated extensions
+    # that need the tempita sub-submodule. So check that we have the correct
+    # version of Cython so as to be able to raise a more informative error
+    # message from the start if it's not the case.
+    _check_cython_version()
 
     config.add_subpackage('sklearn')
 
@@ -240,6 +247,7 @@ def setup_package():
             len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
                                     sys.argv[1] in ('--help-commands',
                                                     'egg_info',
+                                                    'dist_info',
                                                     '--version',
                                                     'clean'))):
         # For these actions, NumPy is not required

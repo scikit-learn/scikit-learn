@@ -8,13 +8,14 @@ from copy import deepcopy
 
 import numpy as np
 from joblib import Parallel, delayed
+import scipy.sparse as sparse
 
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
-from ..base import MetaEstimatorMixin
 
-from .base import _parallel_fit_estimator
+from ._base import _parallel_fit_estimator
+from ._base import _BaseHeterogeneousEnsemble
 
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
@@ -25,38 +26,27 @@ from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
-from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 
 
-class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
+class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
-    _required_parameters = ['estimators']
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0):
-        self.estimators = estimators
+                 stack_method='auto', n_jobs=None, verbose=0,
+                 passthrough=False):
+        super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
         self.cv = cv
         self.stack_method = stack_method
         self.n_jobs = n_jobs
         self.verbose = verbose
-
-    @abstractmethod
-    def _validate_estimators(self):
-        if self.estimators is None or len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a list"
-                " of (string, estimator) tuples."
-            )
-        names, estimators = zip(*self.estimators)
-        self._validate_names(names)
-        return names, estimators
+        self.passthrough = passthrough
 
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
@@ -64,44 +54,14 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         else:
             self.final_estimator_ = clone(default)
 
-    def set_params(self, **params):
-        """Set the parameters for the stacking estimator.
+    def _concatenate_predictions(self, X, predictions):
+        """Concatenate the predictions of each first layer learner and
+        possibly the input dataset `X`.
 
-        Valid parameter keys can be listed with `get_params()`.
-
-        Parameters
-        ----------
-        params : keyword arguments
-            Specific parameters using e.g.
-            `set_params(parameter_name=new_value)`. In addition, to setting the
-            parameters of the stacking estimator, the individual estimator of
-            the stacking estimators can also be set, or can be removed by
-            setting them to 'drop'.
-
-        Examples
-        --------
-        # In this example, the RandomForestClassifier is removed
-        clf1 = LogisticRegression()
-        clf2 = RandomForestClassifier()
-        eclf = StackingClassifier(estimators=[('lr', clf1), ('rf', clf2)]
-        eclf.set_params(rf='drop')
-        """
-        super()._set_params('estimators', **params)
-        return self
-
-    def get_params(self, deep=True):
-        """Get the parameters of the stacking estimator.
-
-        Parameters
-        ----------
-        deep : bool
-            Setting it to True gets the various classifiers and the parameters
-            of the classifiers as well.
-        """
-        return super()._get_params('estimators', deep=deep)
-
-    def _concatenate_predictions(self, predictions):
-        """Concatenate the predictions of each first layer learner.
+        If `X` is sparse and `self.passthrough` is False, the output of
+        `transform` will be dense (the predictions). If `X` is sparse
+        and `self.passthrough` is True, the output of `transform` will
+        be sparse.
 
         This helper is in charge of ensuring the preditions are 2D arrays and
         it will drop one of the probability column when using probabilities
@@ -121,7 +81,12 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
                     X_meta.append(preds[:, 1:])
                 else:
                     X_meta.append(preds)
-        return np.concatenate(X_meta, axis=1)
+        if self.passthrough:
+            X_meta.append(X)
+            if sparse.issparse(X):
+                return sparse.hstack(X_meta, format=X.format)
+
+        return np.hstack(X_meta)
 
     @staticmethod
     def _method_name(name, estimator, method):
@@ -166,13 +131,6 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
         names, all_estimators = self._validate_estimators()
         self._validate_final_estimator()
 
-        has_estimator = any(est != 'drop' for est in all_estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
-
         stack_method = [self.stack_method] * len(all_estimators)
 
         # Fit the base estimators on the whole training data. Those
@@ -190,6 +148,8 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
                 self.named_estimators_[name_est] = self.estimators_[
                     est_fitted_idx]
                 est_fitted_idx += 1
+            else:
+                self.named_estimators_[name_est] = 'drop'
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
@@ -221,7 +181,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
             if est != 'drop'
         ]
 
-        X_meta = self._concatenate_predictions(predictions)
+        X_meta = self._concatenate_predictions(X, predictions)
         if sample_weight is not None:
             try:
                 self.final_estimator_.fit(
@@ -248,7 +208,7 @@ class _BaseStacking(TransformerMixin, MetaEstimatorMixin, _BaseComposition,
             for est, meth in zip(self.estimators_, self.stack_method_)
             if est != 'drop'
         ]
-        return self._concatenate_predictions(predictions)
+        return self._concatenate_predictions(X, predictions)
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict(self, X, **predict_params):
@@ -336,13 +296,19 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
           `'predict_proba'`, `'decision_function'` or `'predict'` in that
           order.
         * otherwise, one of `'predict_proba'`, `'decision_function'` or
-         `'predict'`. If the method is not implemented by the estimator, it
-         will raise an error.
+          `'predict'`. If the method is not implemented by the estimator, it
+          will raise an error.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel all `estimators` `fit`.
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
+
+    passthrough : bool, default=False
+        When False, only the predictions of estimators will be used as
+        training data for `final_estimator`. When True, the
+        `final_estimator` is trained on the predictions as well as the
+        original training data.
 
     Attributes
     ----------
@@ -400,25 +366,17 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0):
+                 stack_method='auto', n_jobs=None, passthrough=False,
+                 verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             stack_method=stack_method,
             n_jobs=n_jobs,
+            passthrough=passthrough,
             verbose=verbose
         )
-
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_classifier(est):
-                raise ValueError(
-                    "The estimator {} should be a classifier."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=LogisticRegression())
@@ -591,6 +549,12 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         `None` means 1 unless in a `joblib.parallel_backend` context. -1 means
         using all processors. See Glossary for more details.
 
+    passthrough : bool, default=False
+        When False, only the predictions of estimators will be used as
+        training data for `final_estimator`. When True, the
+        `final_estimator` is trained on the predictions as well as the
+        original training data.
+
     Attributes
     ----------
     estimators_ : list of estimator
@@ -635,25 +599,16 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 verbose=0):
+                 passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
             stack_method="predict",
             n_jobs=n_jobs,
+            passthrough=passthrough,
             verbose=verbose
         )
-
-    def _validate_estimators(self):
-        names, estimators = super()._validate_estimators()
-        for est in estimators:
-            if est != 'drop' and not is_regressor(est):
-                raise ValueError(
-                    "The estimator {} should be a regressor."
-                    .format(est.__class__.__name__)
-                )
-        return names, estimators
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=RidgeCV())

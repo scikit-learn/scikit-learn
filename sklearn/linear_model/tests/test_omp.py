@@ -3,11 +3,11 @@
 
 import numpy as np
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
