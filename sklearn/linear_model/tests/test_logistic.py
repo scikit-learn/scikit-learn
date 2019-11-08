@@ -1266,7 +1266,6 @@ def test_saga_vs_liblinear():
 
     X_sparse, y_sparse = make_classification(n_samples=50, n_features=20,
                                              random_state=0)
-
     X_sparse = sparse.csr_matrix(X_sparse)
 
     for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
