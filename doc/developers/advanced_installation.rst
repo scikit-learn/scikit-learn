@@ -101,6 +101,12 @@ Build dependencies
 
 Building Scikit-learn also requires:
 
+..
+    # The following places need to be in sync with regard to Cython version:
+    # - .circleci config file
+    # - sklearn/_build_utils/__init__.py
+    # - advanced installation guide
+
 - Cython >= 0.28.5
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
@@ -221,6 +227,10 @@ If you use the conda package manager, you can install the ``compilers``
 meta-package from the conda-forge channel, which provides OpenMP-enabled C/C++
 compilers based on the llvm toolchain.
 
+First install the macOS command line tools::
+
+    xcode-select --install
+
 It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
@@ -264,11 +274,17 @@ macOS compilers from Homebrew
 Another solution is to enable OpenMP support for the clang compiler shipped
 by default on macOS.
 
-You first need to install the OpenMP library using Homebrew_::
+First install the macOS command line tools::
+
+    xcode-select --install
+
+Install the Homebrew_ package manager for macOS.
+
+Install the LLVM OpenMP library::
 
     brew install libomp
 
-Then you need to set the following environment variables::
+Set the following environment variables::
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
