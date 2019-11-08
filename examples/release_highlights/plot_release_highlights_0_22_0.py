@@ -30,8 +30,8 @@ or with conda::
 # but other plots utilities are supported like
 # :class:`~inspection.plot_partial_dependence`,
 # :class:`~metrics.plot_precision_recall_curve`, and
-# :class:`~metrics.plot_confusion_matrix`. Read more in the :ref:`User Guide
-# <visualizations>`.
+# :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
+# :ref:`User Guide <visualizations>`.
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
