@@ -144,7 +144,7 @@ def test_grower(monotonic_cst, seed):
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
-    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=1,
+    grower = TreeGrower(X_binned, gradients, hessians,
                         monotonic_cst=[monotonic_cst])
     grower.grow()
 
@@ -211,26 +211,38 @@ def is_decreasing(y):
 #     assert is_correctly_constrained(gbdt)
 
 
-def test_zob():
+@pytest.mark.parametrize('seed', range(1))
+def test_zob(seed):
+    print()
 
     from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     from sklearn.ensemble import HistGradientBoostingRegressor
     from sklearn.datasets import make_regression
 
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
 
     n_samples = 1000
-    n_features = 2
+    n_features = 1
     X = rng.normal(size=(n_samples, n_features))
     y = X[:, 0]
 
-    gbdt = HistGradientBoostingRegressor(min_samples_leaf=1)
-    gbdt.monotone_constraints = [1, 0]
+    gbdt = HistGradientBoostingRegressor(max_iter=100, min_samples_leaf=20)
+    gbdt.monotone_constraints = [1]
+    # gbdt.monotone_constraints = [1, 0]
     gbdt.fit(X, y)
 
-    X_0 = np.linspace(-2, 2, n_samples)
-    X = np.c_[X_0, rng.normal(size=n_samples)]
-    X = np.c_[X_0, np.zeros(n_samples)]
-    pred = gbdt.predict(X)
+    # increasing X_0 (X_1 must be constant)
+    n_samples = 10
+    X = np.c_[np.linspace(-2, 2, n_samples)]
+    # X = np.c_[np.linspace(-2, 2, n_samples), np.zeros(n_samples)]
+    for i, predictor in enumerate(gbdt._predictors):
+        predictor = predictor[0]
+        pred = predictor.predict(X)
+        if not is_increasing(pred):
+            print(i)
+            print(np.diff(pred))
+            print(pred)
+            assert 0
 
-    assert is_increasing(pred)
+    # pred = gbdt.predict(X)
+    # assert is_increasing(pred)
