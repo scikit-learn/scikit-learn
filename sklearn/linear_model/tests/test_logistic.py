@@ -1268,11 +1268,6 @@ def test_saga_vs_liblinear():
                                              random_state=0)
 
     X_sparse = sparse.csr_matrix(X_sparse)
-    lr = LogisticRegression()
-    lr.fit(X_sparse, y_sparse)
-    assert False
-
-    X_sparse = sparse.csr_matrix(X_sparse)
 
     for (X, y) in ((X_bin, y_bin), (X_sparse, y_sparse)):
         for penalty in ['l1', 'l2']:
