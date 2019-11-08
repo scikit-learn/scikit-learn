@@ -309,7 +309,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Build `n_trees_per_iteration` trees.
             for k in range(self.n_trees_per_iteration_):
-
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
                     n_bins=n_bins,
@@ -322,6 +321,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate)
                 grower.grow()
+
+                self.grower = grower
 
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time

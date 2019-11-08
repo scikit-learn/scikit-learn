@@ -393,6 +393,10 @@ class TreeGrower:
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
+        # TODO: THIS IS WRONG
+        # and this is what is messing up the tests
+        # if one of the children is a leaf its value would have used the
+        # shrinkage, while the other one would not and the bound isn't correct.
         if self.monotonic_cst[node.split_info.feature_idx] == 0:  # No cst
             left_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
             right_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
@@ -456,7 +460,9 @@ class TreeGrower:
         XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
         https://arxiv.org/abs/1603.02754
         """
+        in_grow = False
         if node.value is None:
+            in_grow = True
 
             if node.parent is not None:
                 lower_bound = node.parent.children_lower_bound
@@ -498,12 +504,15 @@ class TreeGrower:
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         _fill_predictor_node_array(predictor_nodes, self.root,
                                    bin_thresholds,
-                                   self.n_bins_non_missing)
+                                   self.n_bins_non_missing,
+                                   self.shrinkage,
+                                   )
         return TreePredictor(predictor_nodes)
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
                                bin_thresholds, n_bins_non_missing,
+                               shrinkage,
                                next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
@@ -514,11 +523,10 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
     else:
         node['gain'] = -1
 
-    node['value'] = grower_node.value
     if grower_node.is_leaf:
         # Leaf node
         node['is_leaf'] = True
-        # node['value'] = grower_node.value
+        node['value'] = grower_node.value
         return next_free_idx + 1
     else:
         # Decision node
@@ -527,6 +535,15 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['feature_idx'] = feature_idx
         node['bin_threshold'] = bin_idx
         node['missing_go_to_left'] = split_info.missing_go_to_left
+        if grower_node.value is not None:
+            # multiply by shrinkage for non-leaves which didnt go thought
+            # finalize_leaf
+            grower_node.value *= shrinkage
+            node['value'] = grower_node.value
+            if abs(grower_node.value - -0.11484) < 0.0001:
+                print(grower_node.children_lower_bound)
+                print(grower_node.children_upper_bound)
+                print()
 
         if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
             # Split is on the last non-missing bin: it's a "split on nans". All
@@ -542,6 +559,7 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
+            shrinkage=shrinkage,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
@@ -549,4 +567,5 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
+            shrinkage=shrinkage,
             next_free_idx=next_free_idx)

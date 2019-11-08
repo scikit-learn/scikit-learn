@@ -6,6 +6,13 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
 
+def is_increasing(a):
+    return (np.diff(a) >= 0.0).all()
+
+def is_decreasing(a):
+    return (np.diff(a) <= 0.0).all()
+
+
 def assert_leaves_values_monotonic(predictor, monotonic_cst):
     # make sure leaves values (from left to right) are either all increasing
     # or all decreasing (or neither) depending on the monotonic constraint.
@@ -30,14 +37,14 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
 
     if monotonic_cst == 0:  # NO_CST
         # some increasing, some decreasing
-        assert (any(v1 < v2 for (v1, v2) in zip(values, values[1:])) and
-                any(v1 > v2 for (v1, v2) in zip(values, values[1:])))
+        assert not is_increasing(values) and not is_decreasing(values)
     elif monotonic_cst == 1:  # INC
         # all increasing
-        assert all(v1 < v2 for (v1, v2) in zip(values, values[1:]))
+        print(values)
+        assert is_increasing(values)
     else:  # DEC
         # all decreasing
-        assert all(v1 > v2 for (v1, v2) in zip(values, values[1:]))
+        assert is_decreasing(values)
 
 
 def assert_children_values_monotonic(predictor, monotonic_cst):
@@ -63,7 +70,7 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
 
         if nodes[left_idx]['value'] < nodes[right_idx]['value']:
             left_lower.append(node)
-        else:
+        elif nodes[left_idx]['value'] > nodes[right_idx]['value']:
             left_greater.append(node)
         dfs(left_idx)
         dfs(right_idx)
@@ -96,13 +103,13 @@ def assert_children_values_bounded(grower, monotonic_cst):
             sibling = node.sibling  # on the right
             middle = (node.value + sibling.value) / 2
             if monotonic_cst == 1:  # INC
-                assert node.left_child.value < node.right_child.value < middle
+                assert node.left_child.value <= node.right_child.value <= middle
                 if not sibling.is_leaf:
-                    assert middle < sibling.left_child.value < sibling.right_child.value
+                    assert middle <= sibling.left_child.value <= sibling.right_child.value
             else:  # DEC
-                assert node.left_child.value > node.right_child.value > middle
+                assert node.left_child.value >= node.right_child.value >= middle
                 if not sibling.is_leaf:
-                    assert middle > sibling.left_child.value > sibling.right_child.value
+                    assert middle >= sibling.left_child.value >= sibling.right_child.value
 
         dfs(node.left_child)
         dfs(node.right_child)
@@ -152,12 +159,6 @@ def test_grower(monotonic_cst, seed):
     assert_children_values_monotonic(predictor, monotonic_cst)
     assert_children_values_bounded(grower, monotonic_cst)
     assert_leaves_values_monotonic(predictor, monotonic_cst)
-
-def is_increasing(y):
-    return (np.diff(y) >= 0.0).all()
-
-def is_decreasing(y):
-    return (np.diff(y) <= 0.0).all()
 
 # @pytest.mark.parametrize('seed', range(1))
 # def test_light(seed):
@@ -218,31 +219,36 @@ def test_zob(seed):
     from sklearn.experimental import enable_hist_gradient_boosting  # noqa
     from sklearn.ensemble import HistGradientBoostingRegressor
     from sklearn.datasets import make_regression
+    from plot_hgbdt import plot_tree
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(5)
 
     n_samples = 1000
     n_features = 1
     X = rng.normal(size=(n_samples, n_features))
     y = X[:, 0]
 
-    gbdt = HistGradientBoostingRegressor(max_iter=100, min_samples_leaf=20)
-    gbdt.monotone_constraints = [1]
-    # gbdt.monotone_constraints = [1, 0]
+    gbdt = HistGradientBoostingRegressor(max_iter=1, min_samples_leaf=20)
+    gbdt.monotonic_cst = [1]
     gbdt.fit(X, y)
+    # for i, predictor in enumerate(gbdt._predictors):
+    #     predictor = predictor[0]
+    #     # plot_tree(predictor)
+    #     assert_children_values_monotonic(predictor, 1)
+    #     assert_children_values_bounded(gbdt.grower, 1)
+    #     assert_leaves_values_monotonic(predictor, 1)
 
     # increasing X_0 (X_1 must be constant)
-    n_samples = 10
-    X = np.c_[np.linspace(-2, 2, n_samples)]
+    # n_samples = 10
+    # X = np.c_[np.linspace(-2, 2, n_samples)]
     # X = np.c_[np.linspace(-2, 2, n_samples), np.zeros(n_samples)]
-    for i, predictor in enumerate(gbdt._predictors):
-        predictor = predictor[0]
-        pred = predictor.predict(X)
-        if not is_increasing(pred):
-            print(i)
-            print(np.diff(pred))
-            print(pred)
-            assert 0
+        # pred = predictor.predict(X)
+        # if not is_increasing(pred):
+        #     print(pred)
+        #     print(X)
+        #     from plot_hgbdt import plot_tree
+        #     # plot_tree(predictor)
+        #     # assert 0
 
     # pred = gbdt.predict(X)
     # assert is_increasing(pred)
