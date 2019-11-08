@@ -39,12 +39,12 @@ def test_errors(pyplot):
 
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response method predict_proba not defined for "
-                       "estimator MyClassifier"),
-     ("decision_function", "response method decision_function not defined for "
-                           "estimator MyClassifier"),
-     ("auto", "response method decision_function or predict_proba not defined "
-              "for estimator MyClassifier"),
+    [("predict_proba", "response method predict_proba is not defined in "
+                       "MyClassifier"),
+     ("decision_function", "response method decision_function is not defined "
+                           "in MyClassifier"),
+     ("auto", "response method decision_function or predict_proba is not "
+              "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
 def test_error_bad_response(pyplot, response_method, msg):
@@ -105,8 +105,6 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     assert disp.line_.get_label() == expected_label
     assert disp.ax_.get_xlabel() == "Recall"
     assert disp.ax_.get_ylabel() == "Precision"
-    assert_allclose(disp.ax_.get_xlim(), [0.0, 1.0])
-    assert_allclose(disp.ax_.get_ylim(), [0.0, 1.05])
 
     # draw again with another label
     disp.plot(name="MySpecialEstimator")

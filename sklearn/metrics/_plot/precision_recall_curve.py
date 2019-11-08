@@ -1,5 +1,6 @@
 from .. import average_precision_score
 from .. import precision_recall_curve
+from . import _check_classifer_response_method
 
 from ...utils import check_matplotlib_support
 from ...utils.validation import check_is_fitted
@@ -141,10 +142,6 @@ def plot_precision_recall_curve(estimator, X, y,
     check_matplotlib_support("plot_precision_recall_curve")
     check_is_fitted(estimator)
 
-    if response_method not in ("predict_proba", "decision_function", "auto"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function' or 'auto'")
-
     classificaiton_error = ("{} should be a binary classifer".format(
         estimator.__class__.__name__))
     if is_classifier(estimator):
@@ -154,26 +151,11 @@ def plot_precision_recall_curve(estimator, X, y,
     else:
         raise ValueError(classificaiton_error)
 
-    error_msg = "response method {} not defined for estimator {}"
-    if response_method != "auto":
-        prediction_method = getattr(estimator, response_method, None)
-        if prediction_method is None:
-            raise ValueError(error_msg.format(response_method,
-                                              estimator.__class__.__name__))
-        is_predict_proba = response_method == 'predict_proba'
-    else:
-        predict_proba = getattr(estimator, 'predict_proba', None)
-        decision_function = getattr(estimator, 'decision_function', None)
-        prediction_method = predict_proba or decision_function
-        if prediction_method is None:
-            raise ValueError(error_msg.format(
-                "decision_function or predict_proba",
-                estimator.__class__.__name__))
-        is_predict_proba = prediction_method == predict_proba
-
+    prediction_method = _check_classifer_response_method(estimator,
+                                                         response_method)
     y_pred = prediction_method(X)
 
-    if is_predict_proba:
+    if y_pred.ndim != 1:
         y_pred = y_pred[:, 1]
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
