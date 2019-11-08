@@ -26,7 +26,12 @@ or with conda::
 # A new plotting API is available for creating visualizations. This new API
 # allows for quickly adjusting the visuals of a plot without involving any
 # recomputation. It is also possible to add different plots to the same
-# figure. See more examples in the :ref:`User Guide <visualizations>`.
+# figure. The following example illustrates :class:`~metrics.plot_roc_curve`,
+# but other plots utilities are supported like
+# :class:`~inspection.plot_partial_dependence`,
+# :class:`~metrics.plot_precision_recall_curve`, and
+# :class:`~metrics.plot_confusion_matrix`. Read more in the :ref:`User Guide
+# <visualizations>`.
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
