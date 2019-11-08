@@ -983,7 +983,7 @@ def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
             _check_psd_eigenvalues(lambdas, enable_warnings=enable_warnings),
             expected_lambdas
         )
-    if w_type is None or not enable_warnings:
+    if w_type is None:
         assert not w
 
 
