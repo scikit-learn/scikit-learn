@@ -91,6 +91,17 @@ tree_disp.plot(ax=ax1)
 ax1.set_title("Decision Tree")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
 ax2.set_title("Multi-layer Perceptron")
+plt.show()
+
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10))
+ax1.set_title("Decision Tree")
+tree_disp.plot(ax=ax1)
+ax2.set_title("Multi-layer Perceptron")
+mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
+
+plt.show()
+import sys
+sys.exit(1)
 
 ##############################################################################
 # Another way to compare the curves is to plot them on top of each other. Here,
