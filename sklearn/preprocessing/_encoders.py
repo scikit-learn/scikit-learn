@@ -20,6 +20,11 @@ __all__ = [
 ]
 
 
+def _is_subsequence(seq, super_seq):
+    if len(seq) > len(super_seq):
+        return False
+
+
 class _BaseEncoder(TransformerMixin, BaseEstimator):
     """
     Base class for encoders that includes the code to categorize and
@@ -71,15 +76,18 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _check_pandas_categories(self, cats, pd_category):
-        """Checks cats is lexicographic consistent with categories in fitted X.
+    def _check_pandas_categories(self, categories, pd_categories, column):
+        """Checks categories is lexicographic consistent with categories in fitted X.
+
         """
-        if not np.array_equal(cats, pd_category):
+
+        if not np.array_equal(categories, pd_categories):
             msg = ("'auto' categories is used, but the Categorical dtype "
-                   "provided is not consistent with the automatic "
-                   "lexicographic ordering, lexicon order: {}, dtype order: "
-                   "{}. Please pass a custom list of categories to the "
-                   "categories parameter.".format(cats, pd_category))
+                   "provided for column, {}, is not consistent with the "
+                   "automatic lexicographic ordering, lexicon order: {}, "
+                   "dtype order: {}. Consider passing a custom list of "
+                   "categories to the categories parameter.".format(
+                       column, categories, pd_categories))
             warnings.warn(msg, UserWarning)
 
     def _fit(self, X, handle_unknown='error'):
@@ -91,16 +99,19 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
-        X_dtypes = getattr(X, 'dtypes', None)
+        X_dtypes = getattr(X, 'dtypes', None)  # only exists for dataframes
 
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
                 cats = _encode(Xi)
-                if X_dtypes is not None and hasattr(X_dtypes.iloc[i],
-                                                    'categories'):
-                    pd_category = list(X_dtypes.iloc[i].categories)
-                    self._check_pandas_categories(cats, pd_category)
+                if (X_dtypes is not None and
+                        X_dtypes.iloc[i].name == 'category'):
+                    # X is a dataframe
+                    column = X.columns[i]
+                    categories = list(X_dtypes.iloc[i].categories)
+                    self._check_pandas_categories(cats, categories,
+                                                  column)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:

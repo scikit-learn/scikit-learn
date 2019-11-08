@@ -640,43 +640,63 @@ def test_encoders_has_categorical_tags(Encoder):
 
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_pandas_category_not_ordered(Encoder):
+@pytest.mark.parametrize('col, categories', [
+    ('int_col', [3, 1, 2]),
+    ('str_col', ['d', 'z', 'u']),
+    ('float_col', [1.0, 3.1, 2.3]),
+])
+def test_pandas_category_not_ordered(Encoder, col, categories):
+    # order pandas categories will warn for ordered categories
     pd = pytest.importorskip('pandas')
 
     msg = (r"'auto' categories is used, but the Categorical dtype provided "
-           r"is not consistent with the automatic lexicographic ordering, "
-           r"lexicon order: {}, dtype order: {}. Please pass a custom list of "
-           r"categories to the categories parameter.")
+           r"for column, {}, is not consistent with the automatic "
+           r"lexicographic ordering, lexicon order: {}, dtype order: {}. "
+           r"Consider passing a custom list of categories to the categories "
+           r"parameter.")
 
     df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1],
                        'str_col': ['z', 'd', 'z', 'd', 'u'],
-                       'float_col':  [1, 2.3, 3.1, 1, 1]})
-    # numerical category
-    num_case = ('int_col',
-                pd.api.types.CategoricalDtype(categories=[3, 1, 2]))
-    str_case = ('str_col',
-                pd.api.types.CategoricalDtype(categories=['d', 'z', 'u']))
-    float_case = ('float_col',
-                  pd.api.types.CategoricalDtype(categories=[1.0, 3.1, 2.3]))
+                       'float_col':  [1, 2.3, 3.1, 1, 1]},
+                      columns=['int_col', 'str_col', 'float_col'])
 
-    for case in [num_case, str_case, float_case]:
-        col, dtype = case
-        categories = dtype.categories
-        custom_msg = msg.format(np.asarray(sorted(categories)),
-                                list(categories))
-        with pytest.warns(UserWarning) as record:
-            df_copy = df.assign(**{col: df[col].astype(dtype)})
-            Encoder().fit(df_copy)
-        assert str(record[0].message) == custom_msg
+    cat_dtype = pd.api.types.CategoricalDtype(categories=categories,
+                                              ordered=True)
+    categories = cat_dtype.categories
+    custom_msg = msg.format(col,
+                            np.unique(df[col]),
+                            list(categories))
+    with pytest.warns(UserWarning) as record:
+        df_copy = df.assign(**{col: df[col].astype(cat_dtype)})
+        Encoder().fit(df_copy)
+    assert str(record[0].message) == custom_msg
 
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_pandas_category_same_lexicon_order(Encoder):
+@pytest.mark.parametrize('cat_kwargs', [
+    {'categories': [1, 2, 3]},
+    {'categories': [1, 2, 3], 'ordered': True},
+])
+def test_pandas_category_same_lexicon_order(Encoder, cat_kwargs):
+    # does not warn when the order in the categories are the same as the
+    # lexicon ordering
+
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1]})
-    # correct order does not warn
-    ordered_dtype = pd.api.types.CategoricalDtype(categories=[1, 2, 3])
-    df_copy = df.assign(int_col=df['int_col'].astype(ordered_dtype))
+    cat_dtype = pd.api.types.CategoricalDtype(**cat_kwargs)
+    df_copy = df.assign(int_col=df['int_col'].astype(cat_dtype))
 
     # does not warn
-    Encoder().fit(df_copy)
+    with pytest.warns(None) as record:
+        Encoder().fit(df_copy)
+    assert not record
+
+    # dataframe without all the encoded categories
+    df = pd.DataFrame({'int_col': [1, 2, 2, 2]})
+    cat_dtype = pd.api.types.CategoricalDtype(**cat_kwargs)
+    df_copy = df.assign(int_col=df['int_col'].astype(cat_dtype))
+
+    # does not warn
+    with pytest.warns(None) as record:
+        Encoder().fit(df_copy)
+    assert not record
