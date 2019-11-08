@@ -43,7 +43,7 @@ regression is also supported.
       example of a sparse :term:`binary` matrix ``y`` for 3 samples, where
       the columns, in order, are orange, apple and pear:
 
-        >>> from scipy import y_sparse
+        >>> from scipy import sparse
         >>> row_ind = np.array([0,1,2])                                                      
         >>> col_ind = np.array([1,2,1])  
         >>> y_sparse = sparse.csr_matrix((np.ones(3), (row_ind, col_ind)))                   
