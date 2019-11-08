@@ -2432,8 +2432,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     pos_label : int or str, default=None
         Label of the positive class.
-        Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1.
+        Defaults to the greater label according to lexicographic order, unless
+        y_true is all 0 or all -1 in which case pos_label defaults to 1.
 
     Returns
     -------
