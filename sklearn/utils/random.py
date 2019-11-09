@@ -37,8 +37,8 @@ def _random_choice_csc(n_samples, classes, class_probability=None,
         uniform distribution is assumed.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls the randomness of the sampled classes. See 
-	    term:`random_state` for details.
+        Controls the randomness of the sampled classes. See
+        term:`random_state` for details.
 
     Returns
     -------
