@@ -630,7 +630,7 @@ cdef class Splitter:
             Y_DTYPE_C best_sum_gradient_left
             unsigned int best_bin_idx
             unsigned int best_n_samples_left
-            Y_DTYPE_C best_gain = split_info.gain
+            Y_DTYPE_C best_gain = split_info.gain  # computed during previous scan
 
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0

@@ -304,6 +304,10 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
+        self.root.value = compute_value(
+            sum_gradients, sum_hessians, float('-inf'), float('+inf'),
+            self.splitter.l2_regularization)
+
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
@@ -414,22 +418,22 @@ class TreeGrower:
         # Set value bounds for respecting monotonic constraints
         # See test_nodes_values() for details
         if self.monotonic_cst[node.split_info.feature_idx] == 0:  # No cst
-            left_child_node.set_children_bounds(node.children_lower_bound,
-                                                node.children_upper_bound)
-            right_child_node.set_children_bounds(node.children_lower_bound,
-                                                 node.children_upper_bound)
+            left_child_node.set_children_bounds(
+                node.children_lower_bound, node.children_upper_bound)
+            right_child_node.set_children_bounds(
+                node.children_lower_bound, node.children_upper_bound)
         else:
             middle = (left_child_node.value + right_child_node.value) / 2
             if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
-                left_child_node.set_children_bounds(node.children_lower_bound,
-                                                    middle)
-                right_child_node.set_children_bounds(middle,
-                                                     node.children_upper_bound)
+                left_child_node.set_children_bounds(
+                    node.children_lower_bound, middle)
+                right_child_node.set_children_bounds(
+                    middle, node.children_upper_bound)
             else:  # DEC
-                left_child_node.set_children_bounds(middle,
-                                                    node.children_upper_bound)
-                right_child_node.set_children_bounds(node.children_lower_bound,
-                                                     middle)
+                left_child_node.set_children_bounds(
+                    middle, node.children_upper_bound)
+                right_child_node.set_children_bounds(
+                    node.children_lower_bound, middle)
 
         # Compute histograms of childs, and compute their best possible split
         # (if needed)
@@ -474,18 +478,6 @@ class TreeGrower:
         """Compute the prediction value that minimizes the objective function.
 
         """
-        if node.value is None:
-
-            if node.parent is not None:
-                lower_bound = node.parent.children_lower_bound
-                upper_bound = node.parent.children_upper_bound
-            else:
-                lower_bound = float('-inf')
-                upper_bound = float('+inf')
-
-            node.value = compute_value(
-                node.sum_gradients, node.sum_hessians, lower_bound, upper_bound,
-                self.splitter.l2_regularization)
 
         node.is_leaf = True
         self.finalized_leaves.append(node)
