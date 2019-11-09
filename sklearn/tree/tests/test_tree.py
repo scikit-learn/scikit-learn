@@ -43,7 +43,7 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
-CLF_CRITERIONS = ("gini", "entropy")
+CLF_CRITERIONS = ("gini", "entropy", "absolute_error")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
 CLF_TREES = {
@@ -1163,16 +1163,16 @@ def check_class_weights(name):
     sample_weight[iris.target == 1] *= 100
     class_weight = {0: 1., 1: 100., 2: 1.}
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight)
+    clf1.fit(iris.data, iris.target, sample_weight=sample_weight)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight ** 2)
+    clf1.fit(iris.data, iris.target, sample_weight=sample_weight ** 2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
-    clf2.fit(iris.data, iris.target, sample_weight)
+    clf2.fit(iris.data, iris.target, sample_weight=sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 

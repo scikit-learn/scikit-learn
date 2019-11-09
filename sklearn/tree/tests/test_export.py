@@ -448,3 +448,21 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+def test_plot_tree_abolute_error(pyplot):
+    # mostly smoke tests
+    # Check correctness of export_graphviz for criterion = absolute_error
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=2,
+                                 criterion="absolute_error",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    feature_names = ['first feat', 'sepal_width']
+    nodes = plot_tree(clf, feature_names=feature_names)
+    assert len(nodes) == 3
+    assert nodes[0].get_text() == ("first feat <= 0.0\nabsolute_error = 3.0\n"
+                                   "samples = 6\nvalue = [3, 3]")
+    assert nodes[1].get_text() == "absolute_error = 0.0\nsamples = 3\nvalue = [3, 0]"
+    assert nodes[2].get_text() == "absolute_error = 0.0\nsamples = 3\nvalue = [0, 3]"

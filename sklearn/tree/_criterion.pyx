@@ -26,6 +26,8 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+cdef double INFINITY = np.inf
+
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
@@ -675,6 +677,92 @@ cdef class Gini(ClassificationCriterion):
 
         impurity_left[0] = gini_left / self.n_outputs
         impurity_right[0] = gini_right / self.n_outputs
+
+
+cdef class AbsoluteErrorRate(ClassificationCriterion):
+    r"""Absolute Error Rate impurity criterion
+    This handles cases where the target is a classification taking values
+    0, 1, ... K-2, K-1. If node m represents a region Rm with Nm observations,
+    then let
+
+        count_k = Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the number of class k observations in node m. And
+
+    The absolute error rate is then defined as
+
+        absolute_error = weighted_n_node_samples - \max_{count_k}
+    """
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+        samples[start:end], using the absolute error rate criterion."""
+
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef double* sum_total = self.sum_total
+        cdef double error_rate = 0.0
+        cdef double min_error_rate
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(self.n_outputs):
+            min_error_rate = INFINITY
+            for c in range(n_classes[k]):
+                count_k = sum_total[c]
+                if self.weighted_n_node_samples - count_k < min_error_rate:
+                    min_error_rate = self.weighted_n_node_samples - count_k
+
+            error_rate += min_error_rate
+            sum_total += self.sum_stride
+
+        return error_rate / self.n_outputs
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes
+
+        i.e. the impurity of the left child (samples[start:pos]) and the
+        impurity the right child (samples[pos:end]).
+
+        Parameters
+        ----------
+        impurity_left : double pointer
+            The memory address to save the impurity of the left node
+        impurity_right : double pointer
+            The memory address to save the impurity of the right node
+        """
+
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double error_rate_left = 0.0
+        cdef double error_rate_right = 0.0
+        cdef double min_error_rate_left
+        cdef double min_error_rate_right
+        cdef double count_k
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k in range(self.n_outputs):
+            min_error_rate_left = INFINITY
+            min_error_rate_right = INFINITY
+            for c in range(n_classes[k]):
+                count_k = sum_left[c]
+                if self.weighted_n_left - count_k < min_error_rate_left:
+                    min_error_rate_left = self.weighted_n_left - count_k
+
+                count_k = sum_right[c]
+                if self.weighted_n_right - count_k < min_error_rate_right:
+                    min_error_rate_right = self.weighted_n_right - count_k
+
+            error_rate_left += min_error_rate_left
+            error_rate_right += min_error_rate_right
+            sum_left += self.sum_stride
+            sum_right += self.sum_stride
+
+        impurity_left[0] = error_rate_left / self.n_outputs
+        impurity_right[0] = error_rate_right / self.n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
