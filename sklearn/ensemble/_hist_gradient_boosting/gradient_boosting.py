@@ -290,8 +290,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # 0 = None
         # 1 = INC
         # 2 = DEC
-        # TODO: Obvisouly not this
-        monotonic_cst = getattr(self, 'monotonic_cst', None)
+        # TODO: Obviously not this
+        monotonic_cst = getattr(self, '_monotonic_cst', None)
 
         for iteration in range(begin_at_stage, self.max_iter):
 

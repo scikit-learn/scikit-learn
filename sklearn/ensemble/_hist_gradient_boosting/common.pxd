@@ -38,3 +38,9 @@ cpdef Y_DTYPE_C compute_value(
     Y_DTYPE_C lower_bound,
     Y_DTYPE_C upper_bound,
     Y_DTYPE_C l2_regularization) nogil
+
+
+cpdef enum MonotonicConstraint:
+    NO_CST = 0
+    INC = 1
+    DEC = -1

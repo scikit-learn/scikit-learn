@@ -6,6 +6,7 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 
 
 def is_increasing(a):
@@ -37,10 +38,10 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
 
     values = get_leaves_values()
 
-    if monotonic_cst == 0:  # NO_CST
+    if monotonic_cst == MonotonicConstraint.NO_CST:
         # some increasing, some decreasing
         assert not is_increasing(values) and not is_decreasing(values)
-    elif monotonic_cst == 1:  # INC
+    elif monotonic_cst == MonotonicConstraint.INC:
         # all increasing
         assert is_increasing(values)
     else:  # DEC
@@ -77,9 +78,9 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
         dfs(right_idx)
     dfs(0)  # start at root (0)
 
-    if monotonic_cst == 0:  # NO_CST
+    if monotonic_cst == MonotonicConstraint.NO_CST:
         assert left_lower and left_greater
-    elif monotonic_cst == 1:  # INC
+    elif monotonic_cst == MonotonicConstraint.INC:
         assert left_lower and not left_greater
     else:  # DEC
         assert not left_lower and left_greater
@@ -94,7 +95,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
     # this check is done on the grower nodes whereas
     # assert_children_values_monotonic is done on the predictor nodes)
 
-    if monotonic_cst == 0:  # NO_CST
+    if monotonic_cst == MonotonicConstraint.NO_CST:
         return
 
     def dfs(node):
@@ -103,7 +104,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
         if node is not grower.root and node is node.parent.left_child:
             sibling = node.sibling  # on the right
             middle = (node.value + sibling.value) / 2
-            if monotonic_cst == 1:  # INC
+            if monotonic_cst == MonotonicConstraint.INC:
                 assert (node.left_child.value <=
                         node.right_child.value <=
                         middle)
@@ -128,9 +129,9 @@ def assert_children_values_bounded(grower, monotonic_cst):
 
 @pytest.mark.parametrize('seed', range(3))
 @pytest.mark.parametrize('monotonic_cst', (
-    0, # NO_CST
-    1, # INC
-    2, # DEC
+    MonotonicConstraint.NO_CST,
+    MonotonicConstraint.INC,
+    MonotonicConstraint.DEC,
 ))
 def test_nodes_values(monotonic_cst, seed):
     # Build a single tree with only one feature, and make sure the nodes
@@ -200,7 +201,7 @@ def test_predictions(seed):
          noise)
 
     gbdt = HistGradientBoostingRegressor()
-    gbdt.monotonic_cst = [1, 2]
+    gbdt._monotonic_cst = [1, -1]  # INC, DEC
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)

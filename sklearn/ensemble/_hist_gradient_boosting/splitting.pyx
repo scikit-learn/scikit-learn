@@ -26,6 +26,7 @@ from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
 from .common cimport compute_value
+from .common cimport MonotonicConstraint
 
 
 cdef struct split_info_struct:
@@ -132,7 +133,7 @@ cdef class Splitter:
         const unsigned int [::1] n_bins_non_missing
         unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
-        const unsigned char [::1] monotonic_cst
+        const char [::1] monotonic_cst
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -148,7 +149,7 @@ cdef class Splitter:
                  const unsigned int [::1] n_bins_non_missing,
                  const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
-                 const unsigned char [::1] monotonic_cst,
+                 const char [::1] monotonic_cst,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -474,7 +475,7 @@ cdef class Splitter:
             Splitter self,
             unsigned int feature_idx,
             unsigned char has_missing_values,
-            unsigned char monotonic_cst,
+            char monotonic_cst,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
@@ -591,7 +592,7 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_right_to_left(
             self,
             unsigned int feature_idx,
-            unsigned char monotonic_cst,
+            char monotonic_cst,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
@@ -712,7 +713,7 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
         Y_DTYPE_C loss_current_node,
-        unsigned char monotonic_cst,
+        char monotonic_cst,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
         Y_DTYPE_C l2_regularization) nogil:
@@ -738,8 +739,8 @@ cdef inline Y_DTYPE_C _split_gain(
                                 lower_bound, upper_bound,
                                 l2_regularization)
 
-    if ((monotonic_cst == 1 and value_left > value_right) or  # INC
-            (monotonic_cst == 2 and value_left < value_right)):  # DEC
+    if ((monotonic_cst == MonotonicConstraint.INC and value_left > value_right) or
+            (monotonic_cst == MonotonicConstraint.DEC and value_left < value_right)):
         # don't consider this split since it does not respect the monotonic
         # constraints. Note that these comparisons need to be done on values
         # that are already bounded.

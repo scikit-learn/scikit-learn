@@ -202,9 +202,9 @@ class TreeGrower:
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
         if monotonic_cst is None:
-            monotonic_cst = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
+            monotonic_cst = np.zeros(shape=X_binned.shape[1], dtype=np.int8)
         else:
-            monotonic_cst = np.asarray(monotonic_cst, dtype=np.uint8)
+            monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
