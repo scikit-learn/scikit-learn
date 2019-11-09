@@ -12,12 +12,12 @@ from timeit import default_timer as time
 import numbers
 
 from .splitting import Splitter
-from .splitting import compute_value
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
+from .common import compute_value
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -100,8 +100,11 @@ class TreeNode:
         self.set_children_bounds(float('-inf'), float('+inf'))
 
     def set_children_bounds(self, lower, upper):
+        """Set children values bounds to respect monotonic constraints."""
+
         # These are bounds for the node's *children* values, not the node's
-        # value.
+        # value. The bounds are used in the splitter when considering potential
+        # left and right child.
         self.children_lower_bound = lower
         self.children_upper_bound = upper
 
@@ -271,6 +274,14 @@ class TreeGrower:
         self._apply_shrinkage()
 
     def _apply_shrinkage(self):
+        """Multiply leaves values by shrinkage parameter.
+
+        This must be done at the very end of the growing process. If this were
+        done durint the growing process e.g. in finalize_leaf(), then a leaf
+        would be shrunk but its sibling would potentially not be (if it's a
+        non-leaf), which would lead to a wrong computation of the 'middle'
+        value needed to enforce the monotonic constraints.
+        """
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
@@ -362,6 +373,7 @@ class TreeGrower:
                                     parent=node,
                                     value=node.split_info.value_right,
                                    )
+
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node
         node.right_child = right_child_node
@@ -399,23 +411,25 @@ class TreeGrower:
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
 
-        # TODO: THIS IS WRONG
-        # and this is what is messing up the tests
-        # if one of the children is a leaf its value would have used the
-        # shrinkage, while the other one would not and the bound isn't correct.
+        # Set value bounds for respecting monotonic constraints
+        # See test_nodes_values() for details
         if self.monotonic_cst[node.split_info.feature_idx] == 0:  # No cst
-            left_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
-            right_child_node.set_children_bounds(node.children_lower_bound, node.children_upper_bound)
+            left_child_node.set_children_bounds(node.children_lower_bound,
+                                                node.children_upper_bound)
+            right_child_node.set_children_bounds(node.children_lower_bound,
+                                                 node.children_upper_bound)
         else:
-            # Note: using here the value set in the splitter, not in finalize
-            # leaf. they better be the same
             middle = (left_child_node.value + right_child_node.value) / 2
             if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
-                left_child_node.set_children_bounds(node.children_lower_bound, middle)
-                right_child_node.set_children_bounds(middle, node.children_upper_bound)
+                left_child_node.set_children_bounds(node.children_lower_bound,
+                                                    middle)
+                right_child_node.set_children_bounds(middle,
+                                                     node.children_upper_bound)
             else:  # DEC
-                left_child_node.set_children_bounds(middle, node.children_upper_bound)
-                right_child_node.set_children_bounds(node.children_lower_bound, middle)
+                left_child_node.set_children_bounds(middle,
+                                                    node.children_upper_bound)
+                right_child_node.set_children_bounds(node.children_lower_bound,
+                                                     middle)
 
         # Compute histograms of childs, and compute their best possible split
         # (if needed)
@@ -459,16 +473,8 @@ class TreeGrower:
     def _finalize_leaf(self, node):
         """Compute the prediction value that minimizes the objective function.
 
-        This sets the node.value attribute (node is a leaf iff node.value is
-        not None).
-
-        See Equation 5 of:
-        XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
-        https://arxiv.org/abs/1603.02754
         """
-        in_grow = False
         if node.value is None:
-            in_grow = True
 
             if node.parent is not None:
                 lower_bound = node.parent.children_lower_bound

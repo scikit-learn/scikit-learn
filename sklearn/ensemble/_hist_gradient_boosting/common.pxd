@@ -30,3 +30,11 @@ cdef packed struct node_struct:
     unsigned int depth
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
+
+
+cpdef Y_DTYPE_C compute_value(
+        Y_DTYPE_C sum_gradient,
+        Y_DTYPE_C sum_hessian,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
+        Y_DTYPE_C l2_regularization) nogil

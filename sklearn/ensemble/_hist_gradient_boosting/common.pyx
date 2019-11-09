@@ -29,4 +29,34 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('bin_threshold', X_BINNED_DTYPE),
 ])
 
+
+cpdef inline Y_DTYPE_C compute_value(
+        Y_DTYPE_C sum_gradient,
+        Y_DTYPE_C sum_hessian,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
+        Y_DTYPE_C l2_regularization) nogil:
+    """Compute node value.
+
+    The value is capped in the [lower_bound, upper_bound] interval to respect
+    monotonic constraints. Shrinkage is ignored.
+
+    See Equation 5 of:
+    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
+    https://arxiv.org/abs/1603.02754
+    """
+
+    cdef:
+        Y_DTYPE_C value
+
+    value = -sum_gradient / (sum_hessian + l2_regularization + 1e-15)
+
+    if value < lower_bound:
+        value = lower_bound
+    elif value > upper_bound:
+        value = upper_bound
+
+    return value
+
+
 ALMOST_INF = 1e300  # see LightGBM AvoidInf()

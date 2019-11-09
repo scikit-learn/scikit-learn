@@ -19,11 +19,13 @@ IF SKLEARN_OPENMP_SUPPORTED:
     from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
+from numpy.math cimport INFINITY
 
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
+from .common cimport compute_value
 
 
 cdef struct split_info_struct:
@@ -502,15 +504,17 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
-            Y_DTYPE_C negative_loss_current_node
+            Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
 
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
-        negative_loss_current_node = negative_loss(sum_gradients,
-                                                   sum_hessians,
-                                                   self.l2_regularization)
 
+        loss_current_node = _loss_from_value(
+            compute_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
+                          self.l2_regularization),
+            sum_gradients
+        )
 
         for bin_idx in range(end):
             n_samples_left += histograms[feature_idx, bin_idx].count
@@ -540,7 +544,7 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               negative_loss_current_node,
+                               loss_current_node,
                                monotonic_cst,
                                lower_bound,
                                upper_bound,
@@ -564,12 +568,14 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
-        # TODO: those split_info attribute might just never have been set
+        # Note: we compute the values of the left and right child even if no
+        # split has been found (i.e. gain is still -1).
+        # It's OK, the node will be made into a leaf in the grower anyway (and
+        # its children are discareded).
         split_info.value_left = compute_value(
             split_info.sum_gradient_left, split_info.sum_hessian_left,
             lower_bound, upper_bound, self.l2_regularization)
 
-        # TODO: those split_info attribute might just never have been set
         split_info.value_right = compute_value(
             split_info.sum_gradient_right, split_info.sum_hessian_right,
             lower_bound, upper_bound, self.l2_regularization)
@@ -607,15 +613,18 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
-            Y_DTYPE_C negative_loss_current_node
+            Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
             unsigned int start = self.n_bins_non_missing[feature_idx] - 2
 
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
-        negative_loss_current_node = negative_loss(sum_gradients,
-                                                   sum_hessians,
-                                                   self.l2_regularization)
+
+        loss_current_node = _loss_from_value(
+            compute_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
+                          self.l2_regularization),
+            sum_gradients
+        )
 
         for bin_idx in range(start, -1, -1):
             n_samples_right += histograms[feature_idx, bin_idx + 1].count
@@ -646,7 +655,7 @@ cdef class Splitter:
 
             gain = _split_gain(sum_gradient_left, sum_hessian_left,
                                sum_gradient_right, sum_hessian_right,
-                               negative_loss_current_node,
+                               loss_current_node,
                                monotonic_cst,
                                lower_bound,
                                upper_bound,
@@ -665,12 +674,14 @@ cdef class Splitter:
                 split_info.n_samples_left = n_samples_left
                 split_info.n_samples_right = n_samples_right
 
-        # TODO: those split_info attribute might just never have been set
+        # Note: we compute the values of the left and right child even if no
+        # split has been found (i.e. gain is still -1).
+        # It's OK, the node will be made into a leaf in the grower anyway (and
+        # its children are discareded).
         split_info.value_left = compute_value(
             split_info.sum_gradient_left, split_info.sum_hessian_left,
             lower_bound, upper_bound, self.l2_regularization)
 
-        # TODO: those split_info attribute might just never have been set
         split_info.value_right = compute_value(
             split_info.sum_gradient_right, split_info.sum_hessian_right,
             lower_bound, upper_bound, self.l2_regularization)
@@ -680,7 +691,7 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_hessian_left,
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
-        Y_DTYPE_C negative_loss_current_node,
+        Y_DTYPE_C loss_current_node,
         unsigned char monotonic_cst,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
@@ -696,61 +707,43 @@ cdef inline Y_DTYPE_C _split_gain(
     """
     cdef:
         Y_DTYPE_C gain
-        Y_DTYPE_C left_value
-        Y_DTYPE_C right_value
+        Y_DTYPE_C value_left
+        Y_DTYPE_C value_right
 
-    left_value = compute_value(sum_gradient_left, sum_hessian_left,
+    # Compute values of potential left and right children
+    value_left = compute_value(sum_gradient_left, sum_hessian_left,
                                lower_bound, upper_bound,
                                l2_regularization)
-    right_value = compute_value(sum_gradient_right, sum_hessian_right,
+    value_right = compute_value(sum_gradient_right, sum_hessian_right,
                                 lower_bound, upper_bound,
                                 l2_regularization)
 
-    if ((monotonic_cst == 1 and left_value > right_value) or  # INC
-            (monotonic_cst == 2 and left_value < right_value)):  # DEC
+    if ((monotonic_cst == 1 and value_left > value_right) or  # INC
+            (monotonic_cst == 2 and value_left < value_right)):  # DEC
         # don't consider this split since it does not respect the monotonic
-        # constraints. These comparisons need to be done on values that are
-        # already bounded.
+        # constraints. Note that these comparisons need to be done on values
+        # that are already bounded.
         return -1
 
-    gain = negative_loss(sum_gradient_left, sum_hessian_left,
-                         l2_regularization)
-    gain += negative_loss(sum_gradient_right, sum_hessian_right,
-                          l2_regularization)
-    gain -= negative_loss_current_node
+    gain = loss_current_node # without bounds
+    gain -= _loss_from_value(value_left, sum_gradient_left)  # with bounds
+    gain -= _loss_from_value(value_right, sum_gradient_right)  # with bounds
+    # Note that the losses for both children are computed with bounded values,
+    # while the loss of the current node isn't. Not sure that's strictly
+    # correct but that's what lightgbm does. Might be worth asking them.
+
     return gain
 
-cdef inline Y_DTYPE_C negative_loss(
-        Y_DTYPE_C gradient,
-        Y_DTYPE_C hessian,
-        Y_DTYPE_C l2_regularization) nogil:
-    return (gradient * gradient) / (hessian + l2_regularization)
+cdef inline Y_DTYPE_C _loss_from_value(
+        Y_DTYPE_C value,
+        Y_DTYPE_C sum_gradient) nogil:
+    """Return loss of a node form its value
 
-cpdef inline Y_DTYPE_C compute_value(
-        Y_DTYPE_C gradient,
-        Y_DTYPE_C hessian,
-        Y_DTYPE_C lower_bound,
-        Y_DTYPE_C upper_bound,
-        Y_DTYPE_C l2_regularization) nogil:
-    """Compute (potential) leaf value.
-
-    The value is capped in the [lower_bound, upper_bound] interval to respect
-    monotonic constraints.
-    Shrinkage is ignored.
+    See Equation 6 of:
+    XGBoost: A Scalable Tree Boosting System, T. Chen, C. Guestrin, 2016
+    https://arxiv.org/abs/1603.02754
     """
-
-    cdef:
-        Y_DTYPE_C value
-
-    # TODO: refactor to use the leaf values when computing the negative_loss
-    value = -gradient / (hessian + l2_regularization + 1e-15)
-
-    if value < lower_bound:
-        value = lower_bound
-    elif value > upper_bound:
-        value = upper_bound
-
-    return value
+    return sum_gradient * value
 
 cdef inline unsigned char sample_goes_left(
         unsigned char missing_go_to_left,

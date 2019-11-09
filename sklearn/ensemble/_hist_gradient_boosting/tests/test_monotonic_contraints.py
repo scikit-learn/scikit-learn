@@ -37,7 +37,6 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
 
     values = get_leaves_values()
 
-
     if monotonic_cst == 0:  # NO_CST
         # some increasing, some decreasing
         assert not is_increasing(values) and not is_decreasing(values)
@@ -105,16 +104,25 @@ def assert_children_values_bounded(grower, monotonic_cst):
             sibling = node.sibling  # on the right
             middle = (node.value + sibling.value) / 2
             if monotonic_cst == 1:  # INC
-                assert node.left_child.value <= node.right_child.value <= middle
+                assert (node.left_child.value <=
+                        node.right_child.value <=
+                        middle)
                 if not sibling.is_leaf:
-                    assert middle <= sibling.left_child.value <= sibling.right_child.value
+                    assert (middle <=
+                            sibling.left_child.value <=
+                            sibling.right_child.value)
             else:  # DEC
-                assert node.left_child.value >= node.right_child.value >= middle
+                assert (node.left_child.value >=
+                        node.right_child.value >=
+                        middle)
                 if not sibling.is_leaf:
-                    assert middle >= sibling.left_child.value >= sibling.right_child.value
+                    assert (middle >=
+                            sibling.left_child.value >=
+                            sibling.right_child.value)
 
         dfs(node.left_child)
         dfs(node.right_child)
+
     dfs(grower.root)
 
 
@@ -124,9 +132,9 @@ def assert_children_values_bounded(grower, monotonic_cst):
     1, # INC
     2, # DEC
 ))
-def test_grower(monotonic_cst, seed):
-    # Build a single tree with only one feature, and make sure the nodes values
-    # respect the monotonic constraints.
+def test_nodes_values(monotonic_cst, seed):
+    # Build a single tree with only one feature, and make sure the nodes
+    # values respect the monotonic constraints.
 
     # Considering the following tree with a monotonic INC constraint, we
     # should have:
@@ -172,7 +180,7 @@ def test_grower(monotonic_cst, seed):
 
 
 @pytest.mark.parametrize('seed', range(3))
-def test_light(seed):
+def test_predictions(seed):
     # Train a model with an INC constraint on the first feature and a DEC
     # constraint on the second feature, and make sure the constraints are
     # respected by looking at the predictions.
