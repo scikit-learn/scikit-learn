@@ -380,12 +380,13 @@ class KFold(_BaseKFold):
         Whether to shuffle the data before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
+    random_state : int, RandomState instance or None, optional, default=None
+        When ``shuffle`` is True, random_state affects the ordering of the indices,
+        which controls the randomness of each fold.
+        When ``shuffle`` is False, leave as None.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
