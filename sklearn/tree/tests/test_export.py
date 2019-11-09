@@ -449,6 +449,7 @@ def test_plot_tree_gini(pyplot):
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
 
+
 def test_plot_tree_abolute_error(pyplot):
     # mostly smoke tests
     # Check correctness of export_graphviz for criterion = absolute_error
@@ -464,5 +465,7 @@ def test_plot_tree_abolute_error(pyplot):
     assert len(nodes) == 3
     assert nodes[0].get_text() == ("first feat <= 0.0\nabsolute_error = 3.0\n"
                                    "samples = 6\nvalue = [3, 3]")
-    assert nodes[1].get_text() == "absolute_error = 0.0\nsamples = 3\nvalue = [3, 0]"
-    assert nodes[2].get_text() == "absolute_error = 0.0\nsamples = 3\nvalue = [0, 3]"
+    assert nodes[1].get_text() == ("absolute_error = 0.0\nsamples = 3\n"
+                                   "value = [3, 0]")
+    assert nodes[2].get_text() == ("absolute_error = 0.0\nsamples = 3\n"
+                                   "value = [0, 3]")
