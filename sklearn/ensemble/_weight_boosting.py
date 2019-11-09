@@ -646,7 +646,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         y : generator of array, shape = [n_samples]
             The predicted classes.
         """
