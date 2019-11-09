@@ -11,6 +11,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 def is_increasing(a):
     return (np.diff(a) >= 0.0).all()
 
+
 def is_decreasing(a):
     return (np.diff(a) <= 0.0).all()
 
@@ -42,7 +43,6 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
         assert not is_increasing(values) and not is_decreasing(values)
     elif monotonic_cst == 1:  # INC
         # all increasing
-        print(values)
         assert is_increasing(values)
     else:  # DEC
         # all decreasing
@@ -125,8 +125,8 @@ def assert_children_values_bounded(grower, monotonic_cst):
     2, # DEC
 ))
 def test_grower(monotonic_cst, seed):
-    # Build a single tree with only one feature, and make sure the predictor
-    # respects the monotonic constraints.
+    # Build a single tree with only one feature, and make sure the nodes values
+    # respect the monotonic constraints.
 
     # Considering the following tree with a monotonic INC constraint, we
     # should have:
@@ -153,13 +153,17 @@ def test_grower(monotonic_cst, seed):
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
-    # We don't set the shrinkage to 1 for extra security (some bugs weren't
-    # caught during development because of this)
     grower = TreeGrower(X_binned, gradients, hessians,
                         monotonic_cst=[monotonic_cst],
                         shrinkage=.1)
     grower.grow()
-    # TODO un apply shrinkage
+
+    # grow() will shrink the leaves values at the very end. For our comparison
+    # tests, we need to revert the shrinkage of the leaves, else we would
+    # compare the value of a leaf (shrunk) with a node (not shrunk) and the
+    # test would not be correct.
+    for leave in grower.finalized_leaves:
+        leave.value /= grower.shrinkage
 
     predictor = grower.make_predictor()
     assert_children_values_monotonic(predictor, monotonic_cst)
@@ -167,7 +171,7 @@ def test_grower(monotonic_cst, seed):
     assert_leaves_values_monotonic(predictor, monotonic_cst)
 
 
-@pytest.mark.parametrize('seed', range(1))
+@pytest.mark.parametrize('seed', range(3))
 def test_light(seed):
     # Train a model with an INC constraint on the first feature and a DEC
     # constraint on the second feature, and make sure the constraints are
@@ -198,8 +202,8 @@ def test_light(seed):
     # We now assert the predictions properly respect the constraints, on each
     # feature. When testing for a feature we need to set the other one to a
     # constant, because the monotonic constraints are only a "all else being
-    # equal" type of constraints.
-    # A constraint on the first feature only means that
+    # equal" type of constraints:
+    # a constraint on the first feature only means that
     # x0 < x0' => f(x0, x1) < f(x0', x1)
     # while x1 stays constant.
     # The constraint does not guanrantee that
