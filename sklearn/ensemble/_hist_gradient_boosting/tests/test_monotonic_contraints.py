@@ -148,9 +148,9 @@ def test_nodes_values(monotonic_cst, seed):
     #    / \   / \
     #   a  b  c  d
     #
-    # a < b and c < d  (assert_children_values_monotonic)
-    # a, b < middle < c, d (assert_children_values_bounded)
-    # a < b < c < d (assert_leaves_values_monotonic)
+    # a <= b and c <= d  (assert_children_values_monotonic)
+    # a, b <= middle <= c, d (assert_children_values_bounded)
+    # a <= b <= c <= d (assert_leaves_values_monotonic)
     #
     # The last one is a consequence of the others, but can't hurt to check
 
