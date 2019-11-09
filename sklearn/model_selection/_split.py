@@ -381,8 +381,8 @@ class KFold(_BaseKFold):
         Note that the samples within each split will not be shuffled.
 
     random_state : int, RandomState instance or None, optional, default=None
-        When ``shuffle`` is True, random_state affects the ordering of the indices,
-        which controls the randomness of each fold.
+        When ``shuffle`` is True, random_state affects the ordering of the
+        indices, which controls the randomness of each fold.
         When ``shuffle`` is False, leave as None.
         Pass an int for reproducible output across multiple
         function calls.
