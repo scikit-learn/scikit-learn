@@ -588,12 +588,13 @@ class StratifiedKFold(_BaseKFold):
         Whether to shuffle each class's samples before splitting into batches.
         Note that the samples within each split will not be shuffled.
 
-    random_state : int, RandomState instance or None, default=None
-        Only used when ``shuffle`` is True. This should be left
-        to None if ``shuffle`` is False.
+    random_state : int, RandomState instance or None, optional, default=None
+        When ``shuffle`` is True, random_state affects the ordering of the
+        indices, which controls the randomness of each fold for each class.
+        When ``shuffle`` is False, leave as None.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1091,10 +1092,11 @@ class _RepeatedSplits(metaclass=ABCMeta):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional, default=None
+        Passes random_state to the arbitrary repeating cross validator.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1195,9 +1197,12 @@ class RepeatedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional, default=None
+        Random state to be used to generate random state for each
+        repetition.
         Pass an int for reproducible output across multiple
-        function calls.See :term:`Glossary <random_state>`.
+        function calls.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1247,10 +1252,12 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     n_repeats : int, default=10
         Number of times cross-validator needs to be repeated.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : None, int or RandomState, default=None
+        Random state to be used to generate random state for each
+        repetition.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1388,10 +1395,11 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
+        Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1489,10 +1497,12 @@ class GroupShuffleSplit(ShuffleSplit):
         int, represents the absolute number of train groups. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
+        Controls the randomness of the training and testing indices produced
+        in ShuffleSplit.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -1601,10 +1611,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
+        Controls the randomness of the training and testing indices produced.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -2044,10 +2055,13 @@ def train_test_split(*arrays, **options):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
+        Controls the randomness of the training and testing indexables
+        produced.
         Pass an int for reproducible output across multiple
         function calls.
-        See :term:`Glossary <random_state>`.
+        See term:`Glossary <random_state>`.
+
 
     shuffle : boolean, optional (default=True)
         Whether or not to shuffle the data before splitting. If shuffle=False
