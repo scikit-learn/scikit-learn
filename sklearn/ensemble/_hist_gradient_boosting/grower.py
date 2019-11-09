@@ -376,7 +376,7 @@ class TreeGrower:
                                     node.split_info.sum_hessian_right,
                                     parent=node,
                                     value=node.split_info.value_right,
-                                   )
+                                    )
 
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node

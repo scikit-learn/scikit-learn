@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-from pytest import approx
 
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
@@ -21,10 +20,11 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
     # make sure leaves values (from left to right) are either all increasing
     # or all decreasing (or neither) depending on the monotonic constraint.
     nodes = predictor.nodes
+
     def get_leaves_values():
         """get leaves values from left to right"""
-
         values = []
+
         def dfs(node_idx):
             node = nodes[node_idx]
             if node['is_leaf']:
@@ -62,6 +62,7 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
 
     left_lower = []
     left_greater = []
+
     def dfs(node_idx):
         node = nodes[node_idx]
         if node['is_leaf']:
@@ -76,6 +77,7 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
             left_greater.append(node)
         dfs(left_idx)
         dfs(right_idx)
+
     dfs(0)  # start at root (0)
 
     if monotonic_cst == MonotonicConstraint.NO_CST:
@@ -184,10 +186,9 @@ def test_nodes_values(monotonic_cst, seed):
 def test_predictions(seed):
     # Train a model with an INC constraint on the first feature and a DEC
     # constraint on the second feature, and make sure the constraints are
-    # respected by looking at the predictions.
+    # respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
     # by https://xgboost.readthedocs.io/en/latest//tutorials/monotonic.html
-
 
     rng = np.random.RandomState(seed)
 
