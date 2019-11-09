@@ -398,6 +398,8 @@ cdef class Splitter:
                 self.n_features * sizeof(split_info_struct))
 
             for feature_idx in prange(n_features, schedule='static'):
+                split_infos[feature_idx].feature_idx = feature_idx
+
                 # For each feature, find best bin to split on
                 # Start with a gain of -1 (if no better split is found, that
                 # means one of the constraints isn't respected
@@ -506,6 +508,13 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradient_right
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
+            unsigned char found_better_split = False
+
+            Y_DTYPE_C best_sum_hessian_left
+            Y_DTYPE_C best_sum_gradient_left
+            unsigned int best_bin_idx
+            unsigned int best_n_samples_left
+            Y_DTYPE_C best_gain = -1
 
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
@@ -550,35 +559,34 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
-            # TODO: this could be slightly optimized, we don't need to update
-            # all the split_info attributes now, we can update some of them
-            # after the for loop. For example we can infer n_samples_right
-            # from n_samples_left, etc (see lightgbm
-            # FindBestThresholdSequence)
-            if gain > split_info.gain and gain > self.min_gain_to_split:
-                split_info.gain = gain
-                split_info.feature_idx = feature_idx
-                split_info.bin_idx = bin_idx
-                # we scan from left to right so missing values go to the right
-                split_info.missing_go_to_left = False
-                split_info.sum_gradient_left = sum_gradient_left
-                split_info.sum_gradient_right = sum_gradient_right
-                split_info.sum_hessian_left = sum_hessian_left
-                split_info.sum_hessian_right = sum_hessian_right
-                split_info.n_samples_left = n_samples_left
-                split_info.n_samples_right = n_samples_right
+            if gain > best_gain and gain > self.min_gain_to_split:
+                found_better_split = True
+                best_gain = gain
+                best_bin_idx = bin_idx
+                best_sum_gradient_left = sum_gradient_left
+                best_sum_hessian_left = sum_hessian_left
+                best_n_samples_left = n_samples_left
 
-        # Note: we compute the values of the left and right child even if no
-        # split has been found (i.e. gain is still -1).
-        # It's OK, the node will be made into a leaf in the grower anyway (and
-        # its children are discareded).
-        split_info.value_left = compute_value(
-            split_info.sum_gradient_left, split_info.sum_hessian_left,
-            lower_bound, upper_bound, self.l2_regularization)
+        if found_better_split:
+            split_info.gain = best_gain
+            split_info.bin_idx = best_bin_idx
+            # we scan from left to right so missing values go to the right
+            split_info.missing_go_to_left = False
+            split_info.sum_gradient_left = best_sum_gradient_left
+            split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
+            split_info.sum_hessian_left = best_sum_hessian_left
+            split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.n_samples_left = best_n_samples_left
+            split_info.n_samples_right = n_samples - best_n_samples_left
 
-        split_info.value_right = compute_value(
-            split_info.sum_gradient_right, split_info.sum_hessian_right,
-            lower_bound, upper_bound, self.l2_regularization)
+            # We recompute best values here but it's cheap
+            split_info.value_left = compute_value(
+                split_info.sum_gradient_left, split_info.sum_hessian_left,
+                lower_bound, upper_bound, self.l2_regularization)
+
+            split_info.value_right = compute_value(
+                split_info.sum_gradient_right, split_info.sum_hessian_right,
+                lower_bound, upper_bound, self.l2_regularization)
 
     cdef void _find_best_bin_to_split_right_to_left(
             self,
@@ -616,6 +624,13 @@ cdef class Splitter:
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
             unsigned int start = self.n_bins_non_missing[feature_idx] - 2
+            unsigned char found_better_split = False
+
+            Y_DTYPE_C best_sum_hessian_left
+            Y_DTYPE_C best_sum_gradient_left
+            unsigned int best_bin_idx
+            unsigned int best_n_samples_left
+            Y_DTYPE_C best_gain = split_info.gain
 
         sum_gradient_right, sum_hessian_right = 0., 0.
         n_samples_right = 0
@@ -661,30 +676,35 @@ cdef class Splitter:
                                upper_bound,
                                self.l2_regularization)
 
-            if gain > split_info.gain and gain > self.min_gain_to_split:
-                split_info.gain = gain
-                split_info.feature_idx = feature_idx
-                split_info.bin_idx = bin_idx
-                # we scan from right to left so missing values go to the left
-                split_info.missing_go_to_left = True
-                split_info.sum_gradient_left = sum_gradient_left
-                split_info.sum_gradient_right = sum_gradient_right
-                split_info.sum_hessian_left = sum_hessian_left
-                split_info.sum_hessian_right = sum_hessian_right
-                split_info.n_samples_left = n_samples_left
-                split_info.n_samples_right = n_samples_right
+            if gain > best_gain and gain > self.min_gain_to_split:
+                found_better_split = True
+                best_gain = gain
+                best_bin_idx = bin_idx
+                best_sum_gradient_left = sum_gradient_left
+                best_sum_hessian_left = sum_hessian_left
+                best_n_samples_left = n_samples_left
 
-        # Note: we compute the values of the left and right child even if no
-        # split has been found (i.e. gain is still -1).
-        # It's OK, the node will be made into a leaf in the grower anyway (and
-        # its children are discareded).
-        split_info.value_left = compute_value(
-            split_info.sum_gradient_left, split_info.sum_hessian_left,
-            lower_bound, upper_bound, self.l2_regularization)
+        if found_better_split:
+            split_info.gain = best_gain
+            split_info.bin_idx = best_bin_idx
+            # we scan from right to left so missing values go to the left
+            split_info.missing_go_to_left = True
+            split_info.sum_gradient_left = best_sum_gradient_left
+            split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
+            split_info.sum_hessian_left = best_sum_hessian_left
+            split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.n_samples_left = best_n_samples_left
+            split_info.n_samples_right = n_samples - best_n_samples_left
 
-        split_info.value_right = compute_value(
-            split_info.sum_gradient_right, split_info.sum_hessian_right,
-            lower_bound, upper_bound, self.l2_regularization)
+            # We recompute best values here but it's cheap
+            split_info.value_left = compute_value(
+                split_info.sum_gradient_left, split_info.sum_hessian_left,
+                lower_bound, upper_bound, self.l2_regularization)
+
+            split_info.value_right = compute_value(
+                split_info.sum_gradient_right, split_info.sum_hessian_right,
+                lower_bound, upper_bound, self.l2_regularization)
+
 
 cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_left,

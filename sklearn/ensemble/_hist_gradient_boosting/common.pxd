@@ -33,8 +33,8 @@ cdef packed struct node_struct:
 
 
 cpdef Y_DTYPE_C compute_value(
-        Y_DTYPE_C sum_gradient,
-        Y_DTYPE_C sum_hessian,
-        Y_DTYPE_C lower_bound,
-        Y_DTYPE_C upper_bound,
-        Y_DTYPE_C l2_regularization) nogil
+    Y_DTYPE_C sum_gradient,
+    Y_DTYPE_C sum_hessian,
+    Y_DTYPE_C lower_bound,
+    Y_DTYPE_C upper_bound,
+    Y_DTYPE_C l2_regularization) nogil
