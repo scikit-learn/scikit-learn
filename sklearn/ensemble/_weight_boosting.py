@@ -224,7 +224,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
             Sample weights.
 
         Yields
-        -------
+        ------
         z : float
         """
         X = self._validate_data(X)
