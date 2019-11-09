@@ -717,7 +717,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             DOK, or LIL. COO, DOK, and LIL are converted to CSR.
 
         Yields
-        -------
+        ------
         score : generator of array, shape = [n_samples, k]
             The decision function of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
