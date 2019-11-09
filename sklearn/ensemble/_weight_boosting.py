@@ -426,7 +426,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         Returns
         -------
         self : object
-            A fitted estimator.
+            Fitted estimator.
         """
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
