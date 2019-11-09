@@ -18,6 +18,7 @@ from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
 from .common import compute_value
+from .common import MonotonicConstraint
 
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
@@ -202,7 +203,9 @@ class TreeGrower:
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
         if monotonic_cst is None:
-            monotonic_cst = np.zeros(shape=X_binned.shape[1], dtype=np.int8)
+            monotonic_cst = np.full(shape=X_binned.shape[1],
+                                    fill_value=MonotonicConstraint.NO_CST,
+                                    dtype=np.int8)
         else:
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
 
@@ -277,11 +280,12 @@ class TreeGrower:
         """Multiply leaves values by shrinkage parameter.
 
         This must be done at the very end of the growing process. If this were
-        done durint the growing process e.g. in finalize_leaf(), then a leaf
+        done during the growing process e.g. in finalize_leaf(), then a leaf
         would be shrunk but its sibling would potentially not be (if it's a
         non-leaf), which would lead to a wrong computation of the 'middle'
         value needed to enforce the monotonic constraints.
         """
+
         for leaf in self.finalized_leaves:
             leaf.value *= self.shrinkage
 
@@ -417,14 +421,16 @@ class TreeGrower:
 
         # Set value bounds for respecting monotonic constraints
         # See test_nodes_values() for details
-        if self.monotonic_cst[node.split_info.feature_idx] == 0:  # No cst
+        if (self.monotonic_cst[node.split_info.feature_idx] ==
+                MonotonicConstraint.NO_CST):
             left_child_node.set_children_bounds(
                 node.children_lower_bound, node.children_upper_bound)
             right_child_node.set_children_bounds(
                 node.children_lower_bound, node.children_upper_bound)
         else:
             middle = (left_child_node.value + right_child_node.value) / 2
-            if self.monotonic_cst[node.split_info.feature_idx] == 1:  # INC
+            if (self.monotonic_cst[node.split_info.feature_idx] ==
+                    MonotonicConstraint.INC):
                 left_child_node.set_children_bounds(
                     node.children_lower_bound, middle)
                 right_child_node.set_children_bounds(
@@ -475,8 +481,7 @@ class TreeGrower:
         return left_child_node, right_child_node
 
     def _finalize_leaf(self, node):
-        """Compute the prediction value that minimizes the objective function.
-
+        """Set is_leaf attibute and add node to the finalized_leaves attribute.
         """
 
         node.is_leaf = True
@@ -505,16 +510,12 @@ class TreeGrower:
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds,
-                                   self.n_bins_non_missing,
-                                   self.shrinkage,
-                                   )
+                                   bin_thresholds, self.n_bins_non_missing)
         return TreePredictor(predictor_nodes)
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
                                bin_thresholds, n_bins_non_missing,
-                               shrinkage,
                                next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
@@ -553,7 +554,6 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
-            shrinkage=shrinkage,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
@@ -561,5 +561,4 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
             predictor_nodes, grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
-            shrinkage=shrinkage,
             next_free_idx=next_free_idx)

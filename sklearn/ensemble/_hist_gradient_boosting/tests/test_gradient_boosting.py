@@ -93,9 +93,9 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
 
 @pytest.mark.parametrize('data', (
-    # make_classification(n_samples=30, random_state=0),
+    make_classification(n_samples=30, random_state=0),
     make_classification(n_samples=30, n_classes=3, n_clusters_per_class=1,
-                        random_state=0),
+                        random_state=0)
 ))
 @pytest.mark.parametrize(
     'scoring, validation_fraction, n_iter_no_change, tol', [

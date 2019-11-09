@@ -418,8 +418,8 @@ cdef class Splitter:
 
                 self._find_best_bin_to_split_left_to_right(
                     feature_idx, has_missing_values[feature_idx],
-                    self.monotonic_cst[feature_idx],
                     histograms, n_samples, sum_gradients, sum_hessians,
+                    self.monotonic_cst[feature_idx],
                     lower_bound, upper_bound,
                     &split_infos[feature_idx])
 
@@ -428,10 +428,9 @@ cdef class Splitter:
                     # sending the nans to the left child would lead to a higher
                     # gain
                     self._find_best_bin_to_split_right_to_left(
-                        feature_idx,
-                        self.monotonic_cst[feature_idx],
-                        histograms, n_samples,
+                        feature_idx, histograms, n_samples,
                         sum_gradients, sum_hessians,
+                        self.monotonic_cst[feature_idx],
                         lower_bound, upper_bound,
                         &split_infos[feature_idx])
 
@@ -475,11 +474,11 @@ cdef class Splitter:
             Splitter self,
             unsigned int feature_idx,
             unsigned char has_missing_values,
-            char monotonic_cst,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT
@@ -592,11 +591,11 @@ cdef class Splitter:
     cdef void _find_best_bin_to_split_right_to_left(
             self,
             unsigned int feature_idx,
-            char monotonic_cst,
             const hist_struct [:, ::1] histograms,  # IN
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT

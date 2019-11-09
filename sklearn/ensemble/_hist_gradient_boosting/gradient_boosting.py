@@ -289,7 +289,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # 0 = None
         # 1 = INC
-        # 2 = DEC
+        # -1 = DEC
         # TODO: Obviously not this
         monotonic_cst = getattr(self, '_monotonic_cst', None)
 
@@ -321,8 +321,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate)
                 grower.grow()
-
-                self.grower = grower
 
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
