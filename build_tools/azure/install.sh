@@ -90,7 +90,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
     make_conda "python=$PYTHON_VERSION"
-    python -m pip install numpy scipy joblib cython
+    python -m pip install -U pip
+    python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
 fi
@@ -118,5 +119,8 @@ except ImportError:
     print('pandas not installed')
 "
 python -m pip list
+
+# Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+# to speed-up the building multicore CI machines.
 python setup.py build_ext --inplace -j 3
 python setup.py develop
