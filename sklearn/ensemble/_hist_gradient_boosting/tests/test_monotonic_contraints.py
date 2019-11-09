@@ -4,6 +4,8 @@ from pytest import approx
 
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
 
 
 def is_increasing(a):
@@ -151,104 +153,74 @@ def test_grower(monotonic_cst, seed):
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
+    # We don't set the shrinkage to 1 for extra security (some bugs weren't
+    # caught during development because of this)
     grower = TreeGrower(X_binned, gradients, hessians,
-                        monotonic_cst=[monotonic_cst])
+                        monotonic_cst=[monotonic_cst],
+                        shrinkage=.1)
     grower.grow()
+    # TODO un apply shrinkage
 
     predictor = grower.make_predictor()
     assert_children_values_monotonic(predictor, monotonic_cst)
     assert_children_values_bounded(grower, monotonic_cst)
     assert_leaves_values_monotonic(predictor, monotonic_cst)
 
-# @pytest.mark.parametrize('seed', range(1))
-# def test_light(seed):
-
-#     def is_correctly_constrained(learner):
-#         n = 10
-#         variable_x = np.linspace(0, 1, n).reshape((n, 1))
-#         fixed_xs_values = np.linspace(0, 1, n)
-#         for i in range(n):
-#             fixed_x = fixed_xs_values[i] * np.ones((n, 1))
-#             monotonically_increasing_x = np.column_stack((variable_x, fixed_x))
-#             monotonically_increasing_y = learner.predict(monotonically_increasing_x)
-#             print(monotonically_increasing_y)
-#             # monotonically_decreasing_x = np.column_stack((fixed_x, variable_x))
-#             # monotonically_decreasing_y = learner.predict(monotonically_decreasing_x)
-#             if not (is_increasing(monotonically_increasing_y)): # and is_decreasing(monotonically_decreasing_y)):
-#                 return False
-#             break
-#         return True
-#     np.random.seed(seed)
-
-#     number_of_dpoints = 3000
-#     x1_positively_correlated_with_y = np.random.random(size=number_of_dpoints)
-#     x2_negatively_correlated_with_y = np.random.random(size=number_of_dpoints)
-#     x = np.column_stack((x1_positively_correlated_with_y, x2_negatively_correlated_with_y))
-#     zs = np.random.normal(loc=0.0, scale=0.01, size=number_of_dpoints)
-#     y = (5 * x1_positively_correlated_with_y
-#             + np.sin(10 * np.pi * x1_positively_correlated_with_y)
-#             - 5 * x2_negatively_correlated_with_y
-#             - np.cos(10 * np.pi * x2_negatively_correlated_with_y)
-#             + zs)
-#     from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-#     from sklearn.ensemble import HistGradientBoostingRegressor
-#     # trainset = lgb.Dataset(x, label=y)
-#     # params = {
-#     #     'min_data': 20,
-#     #     'num_leaves': 20,
-#     #     'monotone_constraints': '1,-1'
-#     # }
-#     # constrained_model = lgb.train(params, trainset)
-#     from sklearn.ensemble._hist_gradient_boosting.utils import (
-#         get_equivalent_estimator)
-#     gbdt = HistGradientBoostingRegressor(max_iter=42, max_leaf_nodes=20)
-#     gbdt.monotonic_cst = [1, 0]
-#     gbdt.fit(x, y)
-#     l = get_equivalent_estimator(gbdt)
-#     l.set_params(monotone_constraints='1,0')
-#     l.fit(x, y)
-
-#     assert is_correctly_constrained(l)
-#     assert is_correctly_constrained(gbdt)
-
 
 @pytest.mark.parametrize('seed', range(1))
-def test_zob(seed):
-    print()
+def test_light(seed):
+    # Train a model with an INC constraint on the first feature and a DEC
+    # constraint on the second feature, and make sure the constraints are
+    # respected by looking at the predictions.
+    # test adapted from lightgbm's test_monotone_constraint(), itself inspired
+    # by https://xgboost.readthedocs.io/en/latest//tutorials/monotonic.html
 
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    from sklearn.ensemble import HistGradientBoostingRegressor
-    from sklearn.datasets import make_regression
-    from plot_hgbdt import plot_tree
 
-    rng = np.random.RandomState(5)
+    rng = np.random.RandomState(seed)
 
     n_samples = 1000
-    n_features = 1
-    X = rng.normal(size=(n_samples, n_features))
-    y = X[:, 0]
+    f_0 = rng.random(size=n_samples)  # positive correlation with y
+    f_1 = rng.random(size=n_samples)  # negative correslation with y
+    X = np.c_[f_0, f_1]
+    noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
+    y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
+         5 * f_1 - np.cos(10 * np.pi * f_1) +
+         noise)
 
-    gbdt = HistGradientBoostingRegressor(max_iter=1, min_samples_leaf=20)
-    gbdt.monotonic_cst = [1]
+    gbdt = HistGradientBoostingRegressor()
+    gbdt.monotonic_cst = [1, 2]
     gbdt.fit(X, y)
-    # for i, predictor in enumerate(gbdt._predictors):
-    #     predictor = predictor[0]
-    #     # plot_tree(predictor)
-    #     assert_children_values_monotonic(predictor, 1)
-    #     assert_children_values_bounded(gbdt.grower, 1)
-    #     assert_leaves_values_monotonic(predictor, 1)
 
-    # increasing X_0 (X_1 must be constant)
-    # n_samples = 10
-    # X = np.c_[np.linspace(-2, 2, n_samples)]
-    # X = np.c_[np.linspace(-2, 2, n_samples), np.zeros(n_samples)]
-        # pred = predictor.predict(X)
-        # if not is_increasing(pred):
-        #     print(pred)
-        #     print(X)
-        #     from plot_hgbdt import plot_tree
-        #     # plot_tree(predictor)
-        #     # assert 0
+    linspace = np.linspace(0, 1, 100)
+    sin = np.sin(linspace)
+    constant = np.full_like(linspace, fill_value=.5)
 
-    # pred = gbdt.predict(X)
-    # assert is_increasing(pred)
+    # We now assert the predictions properly respect the constraints, on each
+    # feature. When testing for a feature we need to set the other one to a
+    # constant, because the monotonic constraints are only a "all else being
+    # equal" type of constraints.
+    # A constraint on the first feature only means that
+    # x0 < x0' => f(x0, x1) < f(x0', x1)
+    # while x1 stays constant.
+    # The constraint does not guanrantee that
+    # x0 < x0' => f(x0, x1) < f(x0', x1')
+
+    # First feature
+    # assert pred is all increasing when f_0 is all increasing
+    X = np.c_[linspace, constant]
+    pred = gbdt.predict(X)
+    assert is_increasing(pred)
+    # assert pred actually follows the variations of f_0
+    X = np.c_[sin, constant]
+    pred = gbdt.predict(X)
+    assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
+
+    # Second feature
+    # assert pred is all decreasing when f_1 is all decreasing
+    X = np.c_[constant, linspace]
+    pred = gbdt.predict(X)
+    assert is_decreasing(pred)
+    # assert pred actually follows the inverse variations of f_1
+    X = np.c_[constant, sin]
+    pred = gbdt.predict(X)
+    assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
