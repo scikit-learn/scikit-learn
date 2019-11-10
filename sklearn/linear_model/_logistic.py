@@ -649,7 +649,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                               intercept_scaling=1., multi_class='auto',
                               random_state=None, check_input=True,
                               max_squared_sum=None, sample_weight=None,
-                              l1_ratio=None):
+                              l1_ratio=None, precondition=False):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -908,6 +908,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
+        # binary logistic regression
         target = y_bin
         if solver == 'lbfgs':
             func = _logistic_loss_and_grad
@@ -919,17 +920,24 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
+    X_pre = X
+    if precondition:
+        X_mean = X.mean(axis=0)
+        X_pre = X - X_mean
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             opt_res = optimize.minimize(
                 func, w0, method="L-BFGS-B", jac=True,
-                args=(X, target, 1. / C, sample_weight),
+                args=(X_pre, target, 1. / C, sample_weight),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
             w0, loss = opt_res.x, opt_res.fun
+            if precondition:
+                # adjust intercept for mean subtraction
+                w0[-1] = w0[-1] - np.inner(w0[:-1], X_mean)
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = _newton_cg(hess, func, grad, w0, args=args,
@@ -1428,7 +1436,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
-                 l1_ratio=None):
+                 l1_ratio=None, precondition=False):
 
         self.penalty = penalty
         self.dual = dual
@@ -1445,6 +1453,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.warm_start = warm_start
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
+        self.precondition = precondition
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -1587,7 +1596,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       penalty=penalty, max_squared_sum=max_squared_sum,
-                      sample_weight=sample_weight)
+                      sample_weight=sample_weight,
+                      precondition=self.precondition)
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
