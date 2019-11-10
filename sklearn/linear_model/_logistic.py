@@ -291,8 +291,6 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
     Bishop, C. M. (2006). Pattern recognition and machine learning.
     Springer. (Chapter 4.3.4)
     """
-    if X_scale is not None:
-        raise NotImplementedError
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
@@ -303,7 +301,10 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
         w = w[:, :-1]
     else:
         intercept = 0
-    p = safe_sparse_dot(X, w.T)
+    v = w
+    if X_scale is not None:
+        v = w / X_scale
+    p = safe_sparse_dot(X, v.T)
     p += intercept
     p -= logsumexp(p, axis=1)[:, np.newaxis]
     loss = -(sample_weight * Y * p).sum()
@@ -954,7 +955,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
             w0, loss = opt_res.x, opt_res.fun
-            if precondition:
+            if precondition and multi_class != 'multinomial':
+                # adjust weight scale for rescaling
                 w0[:-1] = w0[:-1] / X_scale
                 # adjust intercept for mean subtraction
                 w0[-1] = w0[-1] - np.inner(w0[:-1], X_mean)
@@ -1002,6 +1004,15 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if multi_class == 'multinomial':
             n_classes = max(2, classes.size)
             multi_w0 = np.reshape(w0, (n_classes, -1))
+            if solver == 'lbfgs' and precondition:
+                if fit_intercept:
+                    multi_w0[:, :-1] = multi_w0[:, :-1] / X_scale
+                    # adjust intercept for preconditioning
+                    multi_w0[:, -1] = (multi_w0[:, -1]
+                                       - np.dot(multi_w0[:, :-1], X_mean))
+                else:
+                    multi_w0 = multi_w0 / X_scale
+
             if n_classes == 2:
                 multi_w0 = multi_w0[1][np.newaxis, :]
             coefs.append(multi_w0.copy())
