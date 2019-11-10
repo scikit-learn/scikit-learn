@@ -211,7 +211,7 @@ df["Exposure"] = df["Exposure"].clip(upper=1)
 df["ClaimAmount"] = df["ClaimAmount"].clip(upper=200000)
 
 log_scale_transformer = make_pipeline(
-    FunctionTransformer(np.log, validate=False),
+    FunctionTransformer(func=np.log),
     StandardScaler()
 )
 
