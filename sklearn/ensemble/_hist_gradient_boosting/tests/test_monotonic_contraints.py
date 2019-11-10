@@ -193,8 +193,8 @@ def test_predictions(seed):
     rng = np.random.RandomState(seed)
 
     n_samples = 1000
-    f_0 = rng.random(size=n_samples)  # positive correlation with y
-    f_1 = rng.random(size=n_samples)  # negative correslation with y
+    f_0 = rng.rand(n_samples)  # positive correlation with y
+    f_1 = rng.rand(n_samples)  # negative correslation with y
     X = np.c_[f_0, f_1]
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
