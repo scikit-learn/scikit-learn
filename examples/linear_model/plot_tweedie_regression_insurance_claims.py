@@ -240,7 +240,8 @@ df["PurePremium"] = df["ClaimAmount"] / df["Exposure"]
 df["Frequency"] = df["ClaimNb"] / df["Exposure"]
 df["AvgClaimAmount"] = df["ClaimAmount"] / np.fmax(df["ClaimNb"], 1)
 
-print(df[df.ClaimAmount > 0].head())
+with pd.option_context("display.max_columns", 15):
+    print(df[df.ClaimAmount > 0].head())
 
 ##############################################################################
 #
