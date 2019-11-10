@@ -20,7 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
-from ..preprocessing import LabelEncoder, LabelBinarizer, normalize
+from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
@@ -34,6 +34,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
+from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 
@@ -669,7 +670,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                               intercept_scaling=1., multi_class='auto',
                               random_state=None, check_input=True,
                               max_squared_sum=None, sample_weight=None,
-                              l1_ratio=None, precondition=False):
+                              l1_ratio=None, precondition=True):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -943,9 +944,29 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     X_pre = X
     X_scale = None
     if precondition:
-        X_mean = X.mean(axis=0)
-        X_pre = X - X_mean
-        X_pre, X_scale = normalize(X_pre, axis=0, copy=False, return_norm=True)
+        # FIXME this duplicates come code from _preprocess_data
+        # and should be refactored
+        if sparse.issparse(X):
+            X_mean, X_var = mean_variance_axis(X, axis=0)
+            X_scale = np.sqrt(X_var, X_var)
+            X_scale[X_scale == 0] = 1
+
+            del X_var
+            X_pre = X.toarray()
+            if fit_intercept:
+                X_pre = X_pre - X_mean  # FIXME
+            # can we actually do inplace here?
+            # inplace_column_scale(X_pre, 1 / X_scale)
+            X_pre = X_pre / X_scale
+
+        else:
+            X_mean = X.mean(axis=0)
+            if fit_intercept:
+                X_pre = X - X_mean
+            X_scale = X.std(axis=0)
+            X_scale[X_scale == 0] = 1
+            X_pre = X_pre / X_scale
+
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
@@ -959,9 +980,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             w0, loss = opt_res.x, opt_res.fun
             if precondition and multi_class != 'multinomial':
                 # adjust weight scale for rescaling
-                w0[:-1] = w0[:-1] / X_scale
+                w0[:n_features] = w0[:n_features] / X_scale
                 # adjust intercept for mean subtraction
-                w0[-1] = w0[-1] - np.inner(w0[:-1], X_mean)
+                if fit_intercept:
+                    w0[-1] = w0[-1] - np.inner(w0[:-1], X_mean)
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
             w0, n_iter_i = _newton_cg(hess, func, grad, w0, args=args,
@@ -1034,7 +1056,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           dual=False, intercept_scaling=1.,
                           multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
-                          l1_ratio=None, precondition=None):
+                          l1_ratio=None, precondition=True):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -1470,7 +1492,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
-                 l1_ratio=None, precondition=False):
+                 l1_ratio=None, precondition=True):
 
         self.penalty = penalty
         self.dual = dual
