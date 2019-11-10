@@ -124,7 +124,7 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
     z = expit(yz)
     z0 = sample_weight * (z - 1) * y
     if X_scale is not None:
-        grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * (w / X_scale ** 2)
+        grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * (w / X_scale**2)
     else:
         grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
