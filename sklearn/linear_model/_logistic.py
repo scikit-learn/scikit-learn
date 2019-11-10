@@ -886,6 +886,34 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
 
+    # preconditioning
+    X_pre = X
+    X_scale = None
+    if precondition and solver == 'lbfgs':
+        # FIXME this duplicates come code from _preprocess_data
+        # and should be refactored
+        if sparse.issparse(X):
+            X_mean, X_var = mean_variance_axis(X, axis=0)
+            X_scale = np.sqrt(X_var, X_var)
+            X_scale[X_scale == 0] = 1
+
+            del X_var
+            X_pre = X.toarray()
+            if fit_intercept:
+                X_pre = X_pre - X_mean  # FIXME
+            # can we actually do inplace here?
+            # inplace_column_scale(X_pre, 1 / X_scale)
+            X_pre = X_pre / X_scale
+
+        else:
+            X_mean = X.mean(axis=0)
+            if fit_intercept:
+                X_pre = X - X_mean
+            X_scale = X.std(axis=0)
+            X_scale[X_scale == 0] = 1
+            X_pre = X_pre / X_scale
+
+    # warm starting
     if coef is not None:
         # it must work both giving the bias term and not
         if multi_class == 'ovr':
@@ -894,6 +922,11 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'Initialization coef is of shape %d, expected shape '
                     '%d or %d' % (coef.size, n_features, w0.size))
             w0[:coef.size] = coef
+            if solver == 'lbfgs' and precondition:
+                if fit_intercept:
+                    w0[-1] += np.inner(w0[:n_features], X_mean)
+                w0[:n_features] *= X_scale
+
         else:
             # For binary problems coef.shape[0] should be 1, otherwise it
             # should be classes.size.
@@ -914,6 +947,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0[1, :coef.shape[1]] = coef
             else:
                 w0[:, :coef.shape[1]] = coef
+            if solver == 'lbfgs' and precondition:
+                if fit_intercept:
+                    w0[:, -1] += np.dot(w0[:, :n_features], X_mean)
+                w0[:, :n_features] *= X_scale
 
     if multi_class == 'multinomial':
         # scipy.optimize.minimize and newton-cg accepts only
@@ -941,31 +978,6 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
-    X_pre = X
-    X_scale = None
-    if precondition:
-        # FIXME this duplicates come code from _preprocess_data
-        # and should be refactored
-        if sparse.issparse(X):
-            X_mean, X_var = mean_variance_axis(X, axis=0)
-            X_scale = np.sqrt(X_var, X_var)
-            X_scale[X_scale == 0] = 1
-
-            del X_var
-            X_pre = X.toarray()
-            if fit_intercept:
-                X_pre = X_pre - X_mean  # FIXME
-            # can we actually do inplace here?
-            # inplace_column_scale(X_pre, 1 / X_scale)
-            X_pre = X_pre / X_scale
-
-        else:
-            X_mean = X.mean(axis=0)
-            if fit_intercept:
-                X_pre = X - X_mean
-            X_scale = X.std(axis=0)
-            X_scale[X_scale == 0] = 1
-            X_pre = X_pre / X_scale
 
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
