@@ -4,9 +4,9 @@ from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
@@ -17,7 +17,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
-from sklearn.metrics.regression import _check_reg_targets
+from sklearn.metrics._regression import _check_reg_targets
 
 from ...exceptions import UndefinedMetricWarning
 
@@ -73,6 +73,9 @@ def test_multioutput_regression():
     # it is a binary problem.
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
+
+    error = median_absolute_error(y_true, y_pred)
+    assert_almost_equal(error, (1. + 1.) / 4.)
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
