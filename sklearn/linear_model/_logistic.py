@@ -352,18 +352,19 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None):
     Bishop, C. M. (2006). Pattern recognition and machine learning.
     Springer. (Chapter 4.3.4)
     """
-    if X_scale is not None:
-        raise NotImplementedError
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
     grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
                     dtype=X.dtype)
-    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
+    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=X_scale)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
-    grad[:, :n_features] += alpha * w
+    if X_scale is not None:
+        grad[:, :n_features] += alpha * (w / X_scale**2)
+    else:
+        grad[:, :n_features] += alpha * w
     if fit_intercept:
         grad[:, -1] = diff.sum(axis=0)
     return loss, grad.ravel(), p
