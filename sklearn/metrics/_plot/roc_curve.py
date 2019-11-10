@@ -167,10 +167,6 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     check_matplotlib_support('plot_roc_curve')
     check_is_fitted(estimator)
 
-    if response_method not in ("predict_proba", "decision_function", "auto"):
-        raise ValueError("response_method must be 'predict_proba', "
-                         "'decision_function' or 'auto'")
-
     classification_error = ("{} should be a binary classifer".format(
         estimator.__class__.__name__))
 
