@@ -128,7 +128,6 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
     else:
         grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
-
     # Case where we fit the intercept.
     if grad.shape[0] > n_features:
         grad[-1] = z0.sum()
@@ -357,7 +356,8 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None):
     fit_intercept = (w.size == n_classes * (n_features + 1))
     grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
                     dtype=X.dtype)
-    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=X_scale)
+    loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight,
+                                   X_scale=X_scale)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
