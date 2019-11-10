@@ -62,7 +62,7 @@ def inplace_csr_row_scale(X, scale):
 
 
 def mean_variance_axis(X, axis):
-    """Compute mean and variance along an axix on a CSR or CSC matrix
+    """Compute mean and variance along an axis on a CSR or CSC matrix
 
     Parameters
     ----------

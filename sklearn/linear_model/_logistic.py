@@ -1001,7 +1001,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           dual=False, intercept_scaling=1.,
                           multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
-                          l1_ratio=None):
+                          l1_ratio=None, precondition=None):
     """Computes scores across logistic_regression_path
 
     Parameters
@@ -1147,7 +1147,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         multi_class=multi_class, tol=tol, verbose=verbose, dual=dual,
         penalty=penalty, intercept_scaling=intercept_scaling,
         random_state=random_state, check_input=False,
-        max_squared_sum=max_squared_sum, sample_weight=sample_weight)
+        max_squared_sum=max_squared_sum, sample_weight=sample_weight,
+        precondition=precondition)
 
     log_reg = LogisticRegression(solver=solver, multi_class=multi_class)
 
