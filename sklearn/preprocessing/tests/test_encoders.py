@@ -645,7 +645,7 @@ def test_encoders_has_categorical_tags(Encoder):
     ('str_col', ['d', 'z', 'u']),
     ('float_col', [1.0, 3.1, 2.3]),
 ])
-def test_pandas_category_not_ordered(Encoder, col, categories):
+def test_multiple_pandas_category_no_order(Encoder, col, categories):
     # order pandas categories will warn for ordered categories
     pd = pytest.importorskip('pandas')
 
@@ -673,30 +673,36 @@ def test_pandas_category_not_ordered(Encoder, col, categories):
 
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-@pytest.mark.parametrize('cat_kwargs', [
-    {'categories': [1, 2, 3]},
-    {'categories': [1, 2, 3], 'ordered': True},
-])
-def test_pandas_category_same_lexicon_order(Encoder, cat_kwargs):
+def test_pandas_category_same_lexicon_order(Encoder, ordered):
     # does not warn when the order in the categories are the same as the
     # lexicon ordering
 
     pd = pytest.importorskip('pandas')
-    df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1]})
-    cat_dtype = pd.api.types.CategoricalDtype(**cat_kwargs)
-    df_copy = df.assign(int_col=df['int_col'].astype(cat_dtype))
+    cat_series = pd.Categorical([1, 2, 3, 1, 1], categories=[1, 2, 3])
+    df = pd.DataFrame({'int_col': cat_series})
 
     # does not warn
     with pytest.warns(None) as record:
-        Encoder().fit(df_copy)
+        Encoder().fit(df)
     assert not record
 
-    # dataframe without all the encoded categories
-    df = pd.DataFrame({'int_col': [1, 2, 2, 2]})
-    cat_dtype = pd.api.types.CategoricalDtype(**cat_kwargs)
-    df_copy = df.assign(int_col=df['int_col'].astype(cat_dtype))
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+@pytest.mark.parametrize('ordered', [True, False])
+@pytest.mark.parametrize('df_categories, warns', [
+    ([1, 1, 1, 1], False),
+    ([2, 1, 2, 2], True),
+    ([3, 2, 2, 2], False),
+    ([1, 3, 1, 1], False),
+])
+def test_pandas_category_in_encoders(
+        Encoder, known, series, warns, ordered):
+    pd = pytest.importorskip('pandas')
+
+    cat_series = pd.Categorical(series, categories=[2, 1, 3], ordered=ordered)
+    df = pd.DataFrame({'int_col': cat_series})
 
     # does not warn
     with pytest.warns(None) as record:
-        Encoder().fit(df_copy)
-    assert not record
+        Encoder().fit(df)
+    assert record if warns else not record
