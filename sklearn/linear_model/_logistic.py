@@ -301,14 +301,15 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
         w = w[:, :-1]
     else:
         intercept = 0
-    v = w
-    if X_scale is not None:
-        v = w / X_scale
-    p = safe_sparse_dot(X, v.T)
+
+    p = safe_sparse_dot(X, w.T)
     p += intercept
     p -= logsumexp(p, axis=1)[:, np.newaxis]
     loss = -(sample_weight * Y * p).sum()
-    loss += 0.5 * alpha * squared_norm(w)
+    v = w
+    if X_scale is not None:
+        v = w / X_scale
+    loss += 0.5 * alpha * squared_norm(v)
     p = np.exp(p, p)
     return loss, p, w
 
