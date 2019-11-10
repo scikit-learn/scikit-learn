@@ -6,6 +6,7 @@ Multi-dimensional Scaling (MDS)
 # License: BSD
 
 import numpy as np
+from scipy import linalg
 from joblib import Parallel, delayed, effective_n_jobs
 
 import warnings
@@ -120,7 +121,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         if verbose >= 2:
             print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
-            if(old_stress - stress / dis) < eps:
+            if (old_stress - stress / dis) < eps:
                 if verbose:
                     print('breaking at iteration %d with stress %s' % (it,
                                                                        stress))
@@ -274,6 +275,67 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         return best_pos, best_stress
 
 
+def svd(dissimilarities, n_components=2):
+    """
+    Computes multidimensional scaling using SVD algorithm
+
+    Parameters
+    ----------
+    dissimilarities : ndarray, shape (n_samples, n_samples)
+        Pairwise dissimilarities between the points. Must be euclidean.
+    n_components : int, optional, default: 2
+        Number of dimension in which to immerse the dissimilarities.
+
+    Returns
+    ----------
+    X : ndarray, shape (n_samples, n_components)
+        Coordinates of the points in a ``n_components``-space.
+
+    stress : float
+        The final value of the stress (sum of squared distance of the
+        disparities and the distances for all constrained points).
+
+    References
+    ----------
+    "An Introduction to MDS" Florian Wickelmaier
+    Sound Quality Research Unit, Aalborg University, Denmark (2003)
+
+    "Multidimensional Scaling" Chapman Hall
+    2nd edition, Boca Raton (2001)
+
+    """
+
+    dissimilarities = check_symmetric(dissimilarities, raise_exception=True)
+
+    n_samples = dissimilarities.shape[0]
+
+    # Centering matrix
+    H = np.eye(*dissimilarities.shape) - (1. / n_samples) * \
+        np.ones(dissimilarities.shape)
+
+    # Double centered matrix
+    K = -0.5 * np.dot(H, np.dot(dissimilarities ** 2, H))
+
+    w, V = linalg.eigh(K, check_finite=False)
+
+    # ``dissimilarities`` is Euclidean iff ``K`` is positive semi-definite.
+    # For detail see "Multidimensional Scaling" Chapman Hall p 397
+    if not np.all(w >= -1e-8):
+        raise ValueError("Dissimilarity matrix must be euclidean")
+
+    # Get ``n_compontent`` greatest eigenvalues and corresponding eigenvectors.
+    # Eigenvalues should be in descending order by convention.
+    w = w[:-n_components-1:-1]
+    V = V[:, :-n_components-1:-1]
+
+    X = np.sqrt(w) * V
+
+    dist = euclidean_distances(X)
+    stress = ((dissimilarities.ravel() - dist.ravel()) ** 2).sum() * 0.5
+
+    return X, stress
+
+
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
@@ -284,25 +346,33 @@ class MDS(BaseEstimator):
     n_components : int, optional, default: 2
         Number of dimensions in which to immerse the dissimilarities.
 
+    method: string, optional, default: smacof
+        Methods for solving the MDS problem are "smacof" and "svd".
+
     metric : boolean, optional, default: True
+        If  ``method=='svd'``, metric must be set to True.
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
 
     n_init : int, optional, default: 4
+        Ignored if  ``method=='svd'``.
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
 
     max_iter : int, optional, default: 300
+        Ignored if  ``method=='svd'``.
         Maximum number of iterations of the SMACOF algorithm for a single run.
 
     verbose : int, optional, default: 0
         Level of verbosity.
 
     eps : float, optional, default: 1e-3
+        Ignored if  ``method=='svd'``.
         Relative tolerance with respect to stress at which to declare
         convergence.
 
     n_jobs : int or None, optional (default=None)
+        Ignored if  ``method=='svd'``.
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
@@ -312,6 +382,7 @@ class MDS(BaseEstimator):
         for more details.
 
     random_state : int, RandomState instance or None, optional, default: None
+        Ignored if  ``method=='svd'``.
         The generator used to initialize the centers.  If int, random_state is
         the seed used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random number
@@ -360,12 +431,15 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
+
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
-                 random_state=None, dissimilarity="euclidean"):
+                 random_state=None, dissimilarity="euclidean",
+                 method="smacof"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
+        self.method = method
         self.n_init = n_init
         self.max_iter = max_iter
         self.eps = eps
@@ -390,6 +464,7 @@ class MDS(BaseEstimator):
         y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
+            Ignored if  ``method=='svd'``.
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
@@ -410,10 +485,12 @@ class MDS(BaseEstimator):
         y : Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
+            Ignored if  ``method=='svd'``.
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
+
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
@@ -429,11 +506,21 @@ class MDS(BaseEstimator):
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
                              " Got %s instead" % str(self.dissimilarity))
 
-        self.embedding_, self.stress_, self.n_iter_ = smacof(
-            self.dissimilarity_matrix_, metric=self.metric,
-            n_components=self.n_components, init=init, n_init=self.n_init,
-            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state,
-            return_n_iter=True)
+        if self.method == "smacof":
+            self.embedding_, self.stress_, self.n_iter_ = smacof(
+                self.dissimilarity_matrix_, metric=self.metric,
+                n_components=self.n_components, init=init,
+                n_init=self.n_init, n_jobs=self.n_jobs,
+                max_iter=self.max_iter, verbose=self.verbose,
+                eps=self.eps, random_state=self.random_state,
+                return_n_iter=True)
+        elif self.method == "svd":
+            if not self.metric:
+                raise ValueError("Using SVD requires metric=True")
+            self.embedding_, self.stress_ = svd(self.dissimilarity_matrix_,
+                                                n_components=self.n_components)
+        else:
+            raise ValueError("Method must be 'smacof' or 'svd'."
+                             " Got %s instead" % str(self.method))
 
         return self.embedding_
