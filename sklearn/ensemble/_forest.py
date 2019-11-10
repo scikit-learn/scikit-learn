@@ -558,7 +558,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                          'differs from the full dataset. In order to use '
                          '"balanced" weights, use compute_class_weight '
                          '("balanced", classes, y). In place of y you can use '
-                         'a large enough sample of the full training set ' 
+                         'a large enough sample of the full training set '
                          'target to properly estimate the class frequency '
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
