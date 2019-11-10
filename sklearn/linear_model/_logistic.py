@@ -116,7 +116,6 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
 
     # Logistic loss is the negative of the log of the logistic function.
     v = w
-    grad_scale = 1
     if X_scale is not None:
         v = w / X_scale
 
