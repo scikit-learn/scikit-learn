@@ -1,6 +1,7 @@
+from .base import _check_classifer_response_method
+
 from .. import average_precision_score
 from .. import precision_recall_curve
-from . import _check_classifer_response_method
 
 from ...utils import check_matplotlib_support
 from ...utils.validation import check_is_fitted
