@@ -182,7 +182,7 @@ def score_estimator(
         pd.DataFrame(res)
         .set_index(["metric", "subset"])
         .score.unstack(-1)
-        .round(2)
+        .round(4)
         .loc[:, ['train', 'test']]
     )
     return res
