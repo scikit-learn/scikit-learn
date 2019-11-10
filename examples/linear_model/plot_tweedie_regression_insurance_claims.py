@@ -260,7 +260,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 # The parameters of the model are estimated by minimizing the Poisson deviance
 # on the training set via a quasi-Newton solver: l-BFGS. Some of the features
 # are collinear, we use a weak penalization to avoid numerical issues.
-glm_freq = PoissonRegressor(alpha=1e-3)
+glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
 glm_freq.fit(X_train, df_train["Frequency"],
              sample_weight=df_train["Exposure"])
 
