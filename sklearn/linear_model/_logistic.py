@@ -20,7 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
-from ..preprocessing import LabelEncoder, LabelBinarizer
+from ..preprocessing import LabelEncoder, LabelBinarizer, normalize
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
@@ -77,7 +77,7 @@ def _intercept_dot(w, X, y):
     return w, c, yz
 
 
-def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
+def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
     """Computes the logistic loss and gradient.
 
     Parameters
@@ -115,12 +115,20 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
         sample_weight = np.ones(n_samples)
 
     # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
+    v = w
+    grad_scale = 1
+    if X_scale is not None:
+        v = w / X_scale
+
+    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(v, v)
 
     z = expit(yz)
     z0 = sample_weight * (z - 1) * y
+    if X_scale is not None:
+        grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * (w / X_scale ** 2)
+    else:
+        grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
-    grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
     # Case where we fit the intercept.
     if grad.shape[0] > n_features:
@@ -128,7 +136,7 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None):
     return out, grad
 
 
-def _logistic_loss(w, X, y, alpha, sample_weight=None):
+def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None):
     """Computes the logistic loss.
 
     Parameters
@@ -149,6 +157,9 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    X_scale : array-like, shape (n_features,) optional
+        When using preconditioning, rescaling of features.
+
     Returns
     -------
     out : float
@@ -160,7 +171,10 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None):
         sample_weight = np.ones(y.shape[0])
 
     # Logistic loss is the negative of the log of the logistic function.
-    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(w, w)
+    v = w
+    if X_scale is not None:
+        v = w / X_scale
+    out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(v, v)
     return out
 
 
@@ -241,7 +255,7 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     return grad, Hs
 
 
-def _multinomial_loss(w, X, Y, alpha, sample_weight):
+def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
     """Computes multinomial loss and class probabilities.
 
     Parameters
@@ -278,6 +292,8 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     Bishop, C. M. (2006). Pattern recognition and machine learning.
     Springer. (Chapter 4.3.4)
     """
+    if X_scale is not None:
+        raise NotImplementedError
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
@@ -297,7 +313,7 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     return loss, p, w
 
 
-def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
+def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None):
     """Computes the multinomial loss, gradient and class probabilities.
 
     Parameters
@@ -335,6 +351,8 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     Bishop, C. M. (2006). Pattern recognition and machine learning.
     Springer. (Chapter 4.3.4)
     """
+    if X_scale is not None:
+        raise NotImplementedError
     n_classes = Y.shape[1]
     n_features = X.shape[1]
     fit_intercept = (w.size == n_classes * (n_features + 1))
@@ -921,21 +939,24 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     X_pre = X
+    X_scale = None
     if precondition:
         X_mean = X.mean(axis=0)
         X_pre = X - X_mean
+        X_pre, X_scale = normalize(X_pre, axis=0, copy=False, return_norm=True)
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             opt_res = optimize.minimize(
                 func, w0, method="L-BFGS-B", jac=True,
-                args=(X_pre, target, 1. / C, sample_weight),
+                args=(X_pre, target, 1. / C, sample_weight, X_scale),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
             w0, loss = opt_res.x, opt_res.fun
             if precondition:
+                w0[:-1] = w0[:-1] / X_scale
                 # adjust intercept for mean subtraction
                 w0[-1] = w0[-1] - np.inner(w0[:-1], X_mean)
         elif solver == 'newton-cg':

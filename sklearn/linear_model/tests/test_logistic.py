@@ -1830,16 +1830,34 @@ def test_illconditioned_lbfgs():
     # check that lbfgs converges even with ill-conditioned X
     X, y = make_classification(n_samples=100, n_features=60, random_state=0)
     X[:, 1] += 10000
+    X[:, 0] *= 10000
     lr_pre = LogisticRegression(random_state=0, precondition=True)
     with pytest.warns(None) as record:
         lr_pre.fit(X, y)
     assert len(record) == 0
-    loss_pre = _logistic_loss(np.hstack([lr_pre.coef_.ravel(), lr_pre.intercept_]),
-                              X, 2 * y - 1, 1)
+    loss_pre = _logistic_loss(
+        np.hstack([lr_pre.coef_.ravel(), lr_pre.intercept_]),
+        X, 2 * y - 1, 1)
 
     lr = LogisticRegression(random_state=0, precondition=False)
     with pytest.warns(ConvergenceWarning):
         lr.fit(X, y)
-    loss = _logistic_loss(np.hstack([lr.coef_.ravel(), lr_pre.intercept_]),
-                            X, 2 * y - 1, 1)
+    loss = _logistic_loss(np.hstack([lr.coef_.ravel(), lr.intercept_]),
+                          X, 2 * y - 1, 1)
     assert loss_pre < loss
+
+
+def test_logistic_loss_preconditioning():
+    # check _logistic_loss and _logistic_loss_grad with preconditioning
+    X, y = make_classification(n_samples=100, n_features=60, random_state=0)
+    X[:, 1] += 10000
+    lr = LogisticRegression(random_state=0, precondition=False, max_iter=1000)
+    lr.fit(X, y)
+    loss = _logistic_loss(np.hstack([lr.coef_.ravel(), lr.intercept_]),
+                          X, 2 * y - 1, 1)
+    X_std = X.std(axis=0)
+    X_pre = X / X_std
+    loss_pre = _logistic_loss(
+        np.hstack([lr.coef_.ravel() * X_std, lr.intercept_]),
+        X_pre, 2 * y - 1, 1, X_scale=X_std)
+    assert_almost_equal(loss, loss_pre)
