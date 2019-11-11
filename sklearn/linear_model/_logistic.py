@@ -34,7 +34,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils.sparsefuncs import mean_variance_axis
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 
@@ -905,10 +905,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             X_mean, X_var = mean_variance_axis(X, axis=0)
             X_scale = np.sqrt(X_var, X_var)
             X_scale[X_scale == 0] = 1
-
             del X_var
             if fit_intercept:
-                X_offset = -X_mean
+                X_offset = -X_mean/X_scale
             X_pre = X_pre.multiply(1 / X_scale)
 
         else:
