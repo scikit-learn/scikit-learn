@@ -218,8 +218,7 @@ class TreeGrower:
             )
         if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
             raise ValueError(
-                "monotonic_cst must be None or an array-like of -1, 0 or 1."
-        )
+                "monotonic_cst must be None or an array-like of -1, 0 or 1.")
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
