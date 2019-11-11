@@ -201,8 +201,7 @@ def test_predictions(seed):
          5 * f_1 - np.cos(10 * np.pi * f_1) +
          noise)
 
-    gbdt = HistGradientBoostingRegressor()
-    gbdt._monotonic_cst = [1, -1]  # POS, NEG
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
