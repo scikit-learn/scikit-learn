@@ -662,7 +662,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                             pre_dispatch=self.pre_dispatch)
 
         fit_and_score_kwargs = dict(scorer=scorers,
-                                    fit_params=fit_params,
                                     return_train_score=self.return_train_score,
                                     return_n_test_samples=True,
                                     return_times=True,
@@ -686,6 +685,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                           " totalling {2} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
+                fit_and_score_kwargs['fit_params'] = fit_params
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),
                                                        X, y,
                                                        train=train, test=test,
@@ -1161,7 +1161,7 @@ class GridSearchCV(BaseSearchCV):
 
     def _run_search(self, evaluate_candidates, X, y, **fit_params):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid), X, y)
+        evaluate_candidates(ParameterGrid(self.param_grid), X, y, **fit_params)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1494,4 +1494,4 @@ class RandomizedSearchCV(BaseSearchCV):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state), X, y)
+            random_state=self.random_state), X, y, **fit_params)
