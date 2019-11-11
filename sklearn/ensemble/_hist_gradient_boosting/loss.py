@@ -161,11 +161,7 @@ class LeastSquares(BaseLoss):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
         # equal to sample weights.
-
-        hessians_are_constant = True
-        if sample_weight is not None:
-            hessians_are_constant = False
-        super().__init__(hessians_are_constant=hessians_are_constant)
+        super().__init__(hessians_are_constant=sample_weight is None)
 
     def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -207,11 +203,7 @@ class LeastAbsoluteDeviation(BaseLoss):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
         # equal to sample weights.
-
-        hessians_are_constant = True
-        if sample_weight is not None:
-            hessians_are_constant = False
-        super().__init__(hessians_are_constant=hessians_are_constant)
+        super().__init__(hessians_are_constant=sample_weight is None)
 
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
