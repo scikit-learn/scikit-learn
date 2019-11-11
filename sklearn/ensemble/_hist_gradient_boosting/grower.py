@@ -430,12 +430,12 @@ class TreeGrower:
         else:
             middle = (left_child_node.value + right_child_node.value) / 2
             if (self.monotonic_cst[node.split_info.feature_idx] ==
-                    MonotonicConstraint.INC):
+                    MonotonicConstraint.POS):
                 left_child_node.set_children_bounds(
                     node.children_lower_bound, middle)
                 right_child_node.set_children_bounds(
                     middle, node.children_upper_bound)
-            else:  # DEC
+            else:  # NEG
                 left_child_node.set_children_bounds(
                     middle, node.children_upper_bound)
                 right_child_node.set_children_bounds(

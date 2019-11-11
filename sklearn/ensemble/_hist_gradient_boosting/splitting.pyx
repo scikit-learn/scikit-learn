@@ -738,8 +738,8 @@ cdef inline Y_DTYPE_C _split_gain(
                                 lower_bound, upper_bound,
                                 l2_regularization)
 
-    if ((monotonic_cst == MonotonicConstraint.INC and value_left > value_right) or
-            (monotonic_cst == MonotonicConstraint.DEC and value_left < value_right)):
+    if ((monotonic_cst == MonotonicConstraint.POS and value_left > value_right) or
+            (monotonic_cst == MonotonicConstraint.NEG and value_left < value_right)):
         # don't consider this split since it does not respect the monotonic
         # constraints. Note that these comparisons need to be done on values
         # that are already bounded.

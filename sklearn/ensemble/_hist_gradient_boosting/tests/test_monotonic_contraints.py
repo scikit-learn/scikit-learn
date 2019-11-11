@@ -41,18 +41,18 @@ def assert_leaves_values_monotonic(predictor, monotonic_cst):
     if monotonic_cst == MonotonicConstraint.NO_CST:
         # some increasing, some decreasing
         assert not is_increasing(values) and not is_decreasing(values)
-    elif monotonic_cst == MonotonicConstraint.INC:
+    elif monotonic_cst == MonotonicConstraint.POS:
         # all increasing
         assert is_increasing(values)
-    else:  # DEC
+    else:  # NEG
         # all decreasing
         assert is_decreasing(values)
 
 
 def assert_children_values_monotonic(predictor, monotonic_cst):
     # Make sure siblings values respect the monotonic constraints. Left should
-    # be lower (resp greater) than right child if constraint is INC (resp.
-    # DEC).
+    # be lower (resp greater) than right child if constraint is POS (resp.
+    # NEG).
     # Note that this property alone isn't enough to ensure full monotonicity,
     # since we also need to guanrantee that all the descendents of the left
     # child won't be greater (resp. lower) than the right child, or its
@@ -82,9 +82,9 @@ def assert_children_values_monotonic(predictor, monotonic_cst):
 
     if monotonic_cst == MonotonicConstraint.NO_CST:
         assert left_lower and left_greater
-    elif monotonic_cst == MonotonicConstraint.INC:
+    elif monotonic_cst == MonotonicConstraint.POS:
         assert left_lower and not left_greater
-    else:  # DEC
+    else:  # NEG
         assert not left_lower and left_greater
 
 
@@ -106,7 +106,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
         if node is not grower.root and node is node.parent.left_child:
             sibling = node.sibling  # on the right
             middle = (node.value + sibling.value) / 2
-            if monotonic_cst == MonotonicConstraint.INC:
+            if monotonic_cst == MonotonicConstraint.POS:
                 assert (node.left_child.value <=
                         node.right_child.value <=
                         middle)
@@ -114,7 +114,7 @@ def assert_children_values_bounded(grower, monotonic_cst):
                     assert (middle <=
                             sibling.left_child.value <=
                             sibling.right_child.value)
-            else:  # DEC
+            else:  # NEG
                 assert (node.left_child.value >=
                         node.right_child.value >=
                         middle)
@@ -132,14 +132,14 @@ def assert_children_values_bounded(grower, monotonic_cst):
 @pytest.mark.parametrize('seed', range(3))
 @pytest.mark.parametrize('monotonic_cst', (
     MonotonicConstraint.NO_CST,
-    MonotonicConstraint.INC,
-    MonotonicConstraint.DEC,
+    MonotonicConstraint.POS,
+    MonotonicConstraint.NEG,
 ))
 def test_nodes_values(monotonic_cst, seed):
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
 
-    # Considering the following tree with a monotonic INC constraint, we
+    # Considering the following tree with a monotonic POS constraint, we
     # should have:
     #
     #       root
@@ -184,7 +184,7 @@ def test_nodes_values(monotonic_cst, seed):
 
 @pytest.mark.parametrize('seed', range(3))
 def test_predictions(seed):
-    # Train a model with an INC constraint on the first feature and a DEC
+    # Train a model with a POS constraint on the first feature and a NEG
     # constraint on the second feature, and make sure the constraints are
     # respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
@@ -202,7 +202,7 @@ def test_predictions(seed):
          noise)
 
     gbdt = HistGradientBoostingRegressor()
-    gbdt._monotonic_cst = [1, -1]  # INC, DEC
+    gbdt._monotonic_cst = [1, -1]  # POS, NEG
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
@@ -219,7 +219,7 @@ def test_predictions(seed):
     # The constraint does not guanrantee that
     # x0 < x0' => f(x0, x1) < f(x0', x1')
 
-    # First feature
+    # First feature (POS)
     # assert pred is all increasing when f_0 is all increasing
     X = np.c_[linspace, constant]
     pred = gbdt.predict(X)
@@ -229,7 +229,7 @@ def test_predictions(seed):
     pred = gbdt.predict(X)
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
-    # Second feature
+    # Second feature (NEG)
     # assert pred is all decreasing when f_1 is all decreasing
     X = np.c_[constant, linspace]
     pred = gbdt.predict(X)

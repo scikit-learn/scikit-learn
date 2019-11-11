@@ -42,5 +42,5 @@ cpdef Y_DTYPE_C compute_value(
 
 cpdef enum MonotonicConstraint:
     NO_CST = 0
-    INC = 1
-    DEC = -1
+    POS = 1
+    NEG = -1
