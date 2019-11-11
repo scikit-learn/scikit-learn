@@ -132,6 +132,9 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None,
     else:
         grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
 
+    if X_offset is not None:
+        grad[:n_features] += X_offset * z0.sum()
+
     # Case where we fit the intercept.
     if grad.shape[0] > n_features:
         grad[-1] = z0.sum()
