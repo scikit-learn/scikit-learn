@@ -40,7 +40,7 @@ logger.setLevel(logging.INFO)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.22.dev0'
+__version__ = '0.22rc1'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
