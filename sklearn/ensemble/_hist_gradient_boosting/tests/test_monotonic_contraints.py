@@ -238,3 +238,20 @@ def test_predictions(seed):
     X = np.c_[constant, sin]
     pred = gbdt.predict(X)
     assert ((np.diff(pred) <= 0) == (np.diff(sin) >= 0)).all()
+
+
+def test_input_error():
+    X = [[1, 2], [2, 3]]
+    y = [0, 1]
+
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, 0, -1])
+    with pytest.raises(ValueError,
+                       match='monotonic_cst has shape 3 but the input data'):
+        gbdt.fit(X, y)
+
+    for monotonic_cst in ([1, 3], [1, -3]):
+        gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+        with pytest.raises(ValueError,
+                           match='must be None or an array-like of '
+                                 '-1, 0 or 1'):
+            gbdt.fit(X, y)

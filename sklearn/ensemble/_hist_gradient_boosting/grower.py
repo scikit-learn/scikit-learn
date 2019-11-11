@@ -209,6 +209,18 @@ class TreeGrower:
         else:
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
 
+        if monotonic_cst.shape[0] != X_binned.shape[1]:
+            raise ValueError(
+                "monotonic_cst has shape {} but the input data "
+                "X has {} features.".format(
+                    monotonic_cst.shape[0], X_binned.shape[1]
+                )
+            )
+        if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
+            raise ValueError(
+                "monotonic_cst must be None or an array-like of -1, 0 or 1."
+        )
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, n_bins, gradients, hessians, hessians_are_constant)

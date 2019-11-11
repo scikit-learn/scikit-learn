@@ -941,6 +941,13 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
+.. _monotonic_cst_gbdt:
+
+Monotonic Constraints
+---------------------
+
+TODO
+
 Low-level parallelism
 ---------------------
 
