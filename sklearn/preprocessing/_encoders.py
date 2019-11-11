@@ -26,13 +26,13 @@ def _is_subsequence(seq, super_seq):
     Examples
     --------
 
-    >> _is_subsequence([1], [2, 1, 4, 3]) == True
-    >> _is_subsequence([1, 2], [2, 1, 4, 3]) == False
-    >> _is_subsequence([2, 3], [2, 1, 4, 3]) == True
-    >> _is_subsequence([1, 3], [2, 1, 4, 3]) == True
-    >> _is_subsequence([1, 3, 4], [2, 1, 4, 3]) == False
-    >> _is_subsequence(['cat', 'dog', 'zebra'],
-    ..                 ['cat', 'dog', 'horse, 'zebra']) == True
+    >>> _is_subsequence([1], [2, 1, 4, 3]) == True
+    >>> _is_subsequence([1, 2], [2, 1, 4, 3]) == False
+    >>> _is_subsequence([2, 3], [2, 1, 4, 3]) == True
+    >>> _is_subsequence([1, 3], [2, 1, 4, 3]) == True
+    >>> _is_subsequence([1, 3, 4], [2, 1, 4, 3]) == False
+    >>> _is_subsequence(['cat', 'dog', 'zebra'],
+    ...                 ['cat', 'dog', 'horse, 'zebra']) == True
 
     """
     if len(seq) > len(super_seq):
