@@ -25,127 +25,100 @@ class FastClassifier(DummyClassifier):
         return params
 
 
-def test_aggressive_elimination():
+@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize(
+    ('aggressive_elimination,'
+     'max_resources,'
+     'expected_n_iterations,'
+     'expected_n_required_iterations,'
+     'expected_n_possible_iterations,'
+     'expected_n_remaining_candidates,'
+     'expected_r_i_list,'), [
+         # notice how it loops at the beginning
+         (True, 'small', 4, 4, 3, 1, [20, 20, 60, 180]),
+         # no aggressive elimination: we end up with less iterations and more
+         # candidates at the end
+         (False, 'small', 3, 4, 3, 3, [20, 60, 180]),
+         # When the amount of resource isn't limited, aggressive_elimination
+         # doesn't matter.
+         (True, 'high', 4, 4, 4, 1, [20, 60, 180, 540]),
+         (False, 'high', 4, 4, 4, 1, [20, 60, 180, 540]),
+     ]
+)
+def test_aggressive_elimination(
+        klass, aggressive_elimination, max_resources, expected_n_iterations,
+        expected_n_required_iterations, expected_n_possible_iterations,
+        expected_n_remaining_candidates, expected_r_i_list):
     # Test the aggressive_elimination parameter.
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': ('l1', 'l2'), 'b': list(range(30))}
     base_estimator = FastClassifier()
-    ratio = 3
 
-    # aggressive_elimination is only really relevant when there is not enough
-    # resources.
-    max_resources = 180
+    if max_resources == 'small':
+        max_resources = 180
+    else:
+        max_resources = n_samples
 
-    # aggressive_elimination=True
-    # In this case, the first iterations only use min_resources_ resources
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             aggressive_elimination=True,
-                             max_resources=max_resources, ratio=ratio)
-    sh.fit(X, y)
-    assert sh.n_iterations_ == 4
-    assert sh.n_required_iterations_ == 4
-    assert sh.n_possible_iterations_ == 3
-    assert sh._r_i_list == [20, 20, 60, 180]  # see how it loops at the start
-    assert sh.n_remaining_candidates_ == 1
+    sh = klass(base_estimator, parameters,
+               aggressive_elimination=aggressive_elimination,
+               max_resources=max_resources, ratio=3)
 
-    # Make sure we get the same results with randomized search
-    sh = HalvingRandomSearchCV(base_estimator, parameters,
-                               n_candidates=60, cv=5,
-                               aggressive_elimination=True,
-                               max_resources=max_resources, ratio=ratio)
-    sh.fit(X, y)
-    assert sh.n_iterations_ == 4
-    assert sh.n_required_iterations_ == 4
-    assert sh.n_possible_iterations_ == 3
-    assert sh._r_i_list == [20, 20, 60, 180]  # see how it loops at the start
-    assert sh.n_remaining_candidates_ == 1
+    if klass is HalvingRandomSearchCV:
+        sh.set_params(n_candidates=2 * 30)  # same number as with the grid
 
-    # aggressive_elimination=False
-    # In this case we don't loop at the start, and might end up with a lot of
-    # candidates at the last iteration
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             aggressive_elimination=False,
-                             max_resources=max_resources, ratio=ratio)
     sh.fit(X, y)
 
-    assert sh.n_iterations_ == 3
-    assert sh.n_required_iterations_ == 4
-    assert sh.n_possible_iterations_ == 3
-    assert sh._r_i_list == [20, 60, 180]
-    assert sh.n_remaining_candidates_ == 3
-
-    max_resources = n_samples
-    # with enough resources, aggressive_elimination has no effect since it is
-    # not needed
-
-    # aggressive_elimination=True
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             aggressive_elimination=True,
-                             max_resources=max_resources, ratio=ratio)
-    sh.fit(X, y)
-
-    assert sh.n_iterations_ == 4
-    assert sh.n_required_iterations_ == 4
-    assert sh.n_possible_iterations_ == 4
-    assert sh._r_i_list == [20, 60, 180, 540]
-    assert sh.n_remaining_candidates_ == 1
-
-    # aggressive_elimination=False
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             aggressive_elimination=False,
-                             max_resources=max_resources, ratio=ratio)
-    sh.fit(X, y)
-
-    assert sh.n_iterations_ == 4
-    assert sh.n_required_iterations_ == 4
-    assert sh.n_possible_iterations_ == 4
-    assert sh._r_i_list == [20, 60, 180, 540]
-    assert sh.n_remaining_candidates_ == 1
+    assert sh.n_iterations_ == expected_n_iterations
+    assert sh.n_required_iterations_ == expected_n_required_iterations
+    assert sh.n_possible_iterations_ == expected_n_possible_iterations
+    assert sh._r_i_list == expected_r_i_list
+    assert sh.n_remaining_candidates_ == expected_n_remaining_candidates
 
 
-def test_force_exhaust_resources_false():
+@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize(
+    ('min_resources,'
+     'max_resources,'
+     'expected_n_iterations,'
+     'expected_n_required_iterations,'
+     'expected_n_possible_iterations,'
+     'expected_r_i_list,'), [
+         # with enough resources
+         ('auto', 'auto', 2, 2, 4, [20, 60]),
+         # with enough resources but min_resources!='auto': ignored
+         (50, 'auto', 2, 2, 3, [50, 150]),
+         # without enough resources (resources are exhausted anyway)
+         ('auto', 30, 1, 2, 1, [20]),
+     ]
+)
+def test_force_exhaust_resources_false(
+        klass, min_resources, max_resources, expected_n_iterations,
+        expected_n_required_iterations, expected_n_possible_iterations,
+        expected_r_i_list):
     # Test the force_exhaust_resources parameter when it's false or ignored.
     # This is the default case: we start at the beginning no matter what since
     # we do not overwrite min_resources_
-
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
-    ratio = 3
 
-    # with enough resources
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             force_exhaust_resources=False, ratio=ratio)
+    sh = klass(base_estimator, parameters, force_exhaust_resources=False,
+               ratio=3, min_resources=min_resources,
+               max_resources=max_resources)
+    if klass is HalvingRandomSearchCV:
+        sh.set_params(n_candidates=6)  # same number as with the grid
+
     sh.fit(X, y)
-    assert sh.n_iterations_ == 2
-    assert sh.n_required_iterations_ == 2
-    assert sh.n_possible_iterations_ == 4
-    assert sh._r_i_list == [20, 60]
-
-    # with enough resources but min_resources!='auto': ignored
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             force_exhaust_resources=False, ratio=ratio,
-                             min_resources=50)
-    sh.fit(X, y)
-    assert sh.n_iterations_ == 2
-    assert sh.n_required_iterations_ == 2
-    assert sh.n_possible_iterations_ == 3
-    assert sh._r_i_list == [50, 150]
-
-    # without enough resources (resources are exhausted anyway)
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             force_exhaust_resources=False, ratio=ratio,
-                             max_resources=30)
-    sh.fit(X, y)
-    assert sh.n_iterations_ == 1
-    assert sh.n_required_iterations_ == 2
-    assert sh.n_possible_iterations_ == 1
-    assert sh._r_i_list == [20]
+    assert sh.n_iterations_ == expected_n_iterations
+    assert sh.n_required_iterations_ == expected_n_required_iterations
+    assert sh.n_possible_iterations_ == expected_n_possible_iterations
+    assert sh._r_i_list == expected_r_i_list
 
 
+@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
 @pytest.mark.parametrize('max_resources, r_i_list', [
     ('auto', [333, 999]),
     (1000, [333, 999]),
@@ -157,7 +130,7 @@ def test_force_exhaust_resources_false():
     (50, [20]),
     (20, [20]),
 ])
-def test_force_exhaust_resources_true(max_resources, r_i_list):
+def test_force_exhaust_resources_true(klass, max_resources, r_i_list):
     # Test the force_exhaust_resources parameter when it's true
     # in this case we need to change min_resources so that the last iteration
     # uses as much resources as possible
@@ -166,25 +139,18 @@ def test_force_exhaust_resources_true(max_resources, r_i_list):
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
-    ratio = 3
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=5,
-                             force_exhaust_resources=True, ratio=ratio,
-                             max_resources=max_resources)
-    sh.fit(X, y)
 
-    assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
-    assert sh._r_i_list == r_i_list
-
-    # Test same for randomized search
-    sh = HalvingRandomSearchCV(base_estimator, parameters, n_candidates=6,
-                               cv=5, force_exhaust_resources=True,
-                               ratio=ratio, max_resources=max_resources)
+    sh = klass(base_estimator, parameters, force_exhaust_resources=True,
+               ratio=3, max_resources=max_resources)
+    if klass is HalvingRandomSearchCV:
+        sh.set_params(n_candidates=6)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
 
     assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
     assert sh._r_i_list == r_i_list
 
 
+@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
 @pytest.mark.parametrize(
     'max_resources, n_iterations, n_possible_iterations', [
         ('auto', 5, 9),  # all resources are used
@@ -198,7 +164,8 @@ def test_force_exhaust_resources_true(max_resources, r_i_list):
         (4, 1, 1),  # max_resources == min_resources, only one iteration is
                     # possible
     ])
-def test_n_iterations(max_resources, n_iterations, n_possible_iterations):
+def test_n_iterations(klass, max_resources, n_iterations,
+                      n_possible_iterations):
     # test the number of actual iterations that were run depending on
     # max_resources
 
@@ -208,23 +175,26 @@ def test_n_iterations(max_resources, n_iterations, n_possible_iterations):
     base_estimator = FastClassifier()
     ratio = 2
 
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=2, ratio=ratio,
-                             max_resources=max_resources, min_resources=4)
+    sh = klass(base_estimator, parameters, cv=2, ratio=ratio,
+               max_resources=max_resources, min_resources=4)
+    if klass is HalvingRandomSearchCV:
+        sh.set_params(n_candidates=20)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
     assert sh.n_required_iterations_ == 5
     assert sh.n_iterations_ == n_iterations
     assert sh.n_possible_iterations_ == n_possible_iterations
 
 
-def test_resource_parameter():
+@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
+def test_resource_parameter(klass):
     # Test the resource parameter
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
-    sh = HalvingGridSearchCV(base_estimator, parameters, cv=2,
-                             resource='c', max_resources=10, ratio=3)
+    sh = klass(base_estimator, parameters, cv=2, resource='c',
+               max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
     for r_i, params, param_c in zip(sh.cv_results_['resource_iter'],
@@ -258,8 +228,8 @@ def test_resource_parameter():
         (32, 9, 9),  # ask for more than 'reasonable'
     ])
 def test_random_search(max_resources, n_candidates, expected_n_candidates_):
-    # Test random search and make sure the number of generated candidates is as
-    # expected
+    # Test random search and make sure the number of generated candidates is
+    # as expected
 
     n_samples = 1024
     X, y = make_classification(n_samples=n_samples, random_state=0)
@@ -277,10 +247,11 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
         assert sh._r_i_list[-1] == max_resources
 
 
-def test_groups_not_supported():
+@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
+def test_groups_not_supported(klass):
     base_estimator = FastClassifier()
     param_grid = {'a': [1]}
-    sh = HalvingRandomSearchCV(base_estimator, param_grid)
+    sh = klass(base_estimator, param_grid)
     X, y = make_classification(n_samples=10)
     groups = [0] * 10
 

@@ -596,6 +596,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     amount of resources and iteratively selects the best candidates, using more
     and more resources.
 
+    The candidates are sampled at random from the parameter space and the
+    number of sampled candidates is determined by ``n_candidates``.
+
     Read more in the :ref:`User guide<successive_halving_user_guide>`.
 
     Parameters
@@ -612,10 +615,10 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         If a list is given, it is sampled uniformly.
 
     n_candidates: int, default='auto'
-        The number of candidate parameters to sample. By default this will
-        sample enough candidates so that the last iteration uses as many
-        resources as possible. Note that ``force_exhaust_resources`` has no
-        effect in this case.
+        The number of candidate parameters to sample, at the first
+        iteration. By default this will sample enough candidates so that the
+        last iteration uses as many resources as possible. Note that
+        ``force_exhaust_resources`` has no effect in this case.
 
     scoring : string, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -730,7 +733,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     force_exhaust_resources : bool, default=False
         If True, then ``min_resources`` is set to a specific value such that
-        the last iteration uses as much resousrces as possible. Namely, the
+        the last iteration uses as much resources as possible. Namely, the
         last iteration uses the highest value smaller than ``max_resources``
         that is a multiple of both ``min_resources`` and ``ratio``.
 

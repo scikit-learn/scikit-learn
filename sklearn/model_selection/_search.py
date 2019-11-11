@@ -566,7 +566,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, **fit_params):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -591,12 +591,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         ::
 
-            def _run_search(self, evaluate_candidates, X, y):
+            def _run_search(self, evaluate_candidates, X, y, **fit_params):
                 'Try C=0.1 only if C=1 is better than C=10'
-                all_results = evaluate_candidates([{'C': 1}, {'C': 10}], X, y)
+                all_results = evaluate_candidates([{'C': 1}, {'C': 10}], X, y,
+                                                  **fit_params)
                 score = all_results['mean_test_score']
                 if score[0] < score[1]:
-                    evaluate_candidates([{'C': 0.1}], X, y)
+                    evaluate_candidates([{'C': 0.1}], X, y,
+                                        **fit_params)
         """
         raise NotImplementedError("_run_search not implemented.")
 

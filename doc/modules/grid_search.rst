@@ -199,6 +199,10 @@ The ``ratio`` parameter controls the rate at which the resources grow, and
 the rate at which the number of candidate decreases (more details in
 :ref:`amount_of_resource_and_number_of_candidates`)
 
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
 Choosing ``min_resources`` and the number of candidates
 -------------------------------------------------------
@@ -238,7 +242,7 @@ the distinction is clear even with a small amount of samples, then a small
 
 By default, ``min_resources`` is set to a small value (see docstrings for
 details) that depends on the number of folds, and the number of classes for
-classification problems. Depending on the setting, the default valueof
+classification problems. Depending on the setting, the default value of
 ``min_resources`` might not be ideal.
 
 .. note::
@@ -254,27 +258,29 @@ classification problems. Depending on the setting, the default valueof
 Amount of resource and number of candidates at each iteration
 -------------------------------------------------------------
 
-The amount of resources ``resource_iter`` (e.g. the number of samples) allocated for
-each candidate at iteration ``i`` is controlled by the parameters ``ratio``
-and ``min_resources`` as follows::
+The amount of resources ``resource_iter`` (e.g. the number of samples)
+allocated for each candidate at iteration ``i`` is controlled by the
+parameters ``ratio`` and ``min_resources`` as follows::
 
     resource_iter = ratio**i * min_resources
 
 ``min_resources`` is the amount of resources used at the first iteration and
 ``ratio`` defines the proportions of candidates that will be selected for
-the next iteration::
+the next iteration (``ratio`` must be greater than 1)::
 
     n_candidates_to_keep = n_candidates_at_i // ratio
 
-So in the first iteration, we use ``min_resources`` resources ``n_candidates``
-times. In the second iteration, we use ``min_resources * ratio`` resources
-``n_candidates // ratio`` times. The third again multiplies the resources
-per candidate and divides the number of candidates. This process stops when
-the maximum amount of resource per candidate is reached, or when less than
-``ratio`` candidates are left.
+So in the first iteration, we use ``min_resources`` resources
+``n_candidates`` times. In the second iteration, we use ``min_resources *
+ratio`` resources ``n_candidates // ratio`` times. The third again
+multiplies the resources per candidate and divides the number of candidates.
+This process stops when the maximum amount of resource per candidate is
+reached, or when we have identified the best candidate. The best candidate
+is identified at the iteration that is evaluating `ratio` or less candidates
+(see below).
 
-Here is an example with ``min_resources=3`` and ``ratio=2``, starting with 70
-candidates:
+Here is an example with ``min_resources=3`` and ``ratio=2``, starting with
+70 candidates:
 
 +-------------+-----------------------+
 | ``resource_iter``     | ``n_candidates_at_i`` |
@@ -292,13 +298,20 @@ candidates:
 | 48 * 2 = 96 | 4 // 2 = 2            |
 +-------------+-----------------------+
 
-Ideally, at the last iteration, ``ratio`` candidates are evaluated, and we
-can pick the best one. Note that each ``resource_iter`` is a multiple of both
-``ratio`` and ``min_resources``.
+We can note that:
 
-The amount of resource that is used at each iteration can be found using the
-`cv_results_` after converting it to a dataframe:
-`results.groupby('iter')['resource_iter'].unique()`
+- the process stops at the first iteration which evaluates `ratio=2`
+  candidates: the best candidate is the best out of these 2 candidates. It
+  is not necessary to run an additional iteration, since it would only
+  evaluate one candidate (namely the best one, which we have already
+  identified).
+- each ``resource_iter`` is a multiple of both ``ratio`` and
+  ``min_resources`` (which is confirmed by its definition above).
+
+The amount of resources that is used at each iteration can be found using
+the `cv_results_` attribute after converting it to a dataframe:
+`results.groupby('iter')['resource_iter'].unique()`, as done e.g. in
+:ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
 
 Choosing a resource to budget
 -----------------------------
@@ -333,7 +346,7 @@ Exhausting the available resources
 ----------------------------------
 
 As mentioned above, the first iteration uses ``min_resources`` resources. If
-you have a lots of resources available, some of them might be wasted (not
+you have a lot of resources available, some of them might be wasted (not
 used)::
 
     >>> from sklearn.datasets import make_classification
@@ -379,10 +392,11 @@ to 'auto' (default).
 Aggressive elimination of candidates
 ------------------------------------
 
-Ideally, we want the last iteration to evaluate ``ratio`` candidates. We then
-just have to pick the best one. When the number of available resources is
-small with respect to the number of candidates, the last iteration may have
-to evaluate more than ``ratio`` candidates::
+Ideally, we want the last iteration to evaluate ``ratio`` candidates (see
+:ref:`amount_of_resource_and_number_of_candidates`). We then just have to
+pick the best one. When the number of available resources is small with
+respect to the number of candidates, the last iteration may have to evaluate
+more than ``ratio`` candidates::
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.svm import SVC
@@ -409,8 +423,9 @@ to evaluate more than ``ratio`` candidates::
     1    3
     Name: resource_iter, dtype: int64
 
-Since we cannot use more than ``max_resources=40`` resources, the process has to
-stop at the second iteration which evaluates more than ``ratio=2`` candidates.
+Since we cannot use more than ``max_resources=40`` resources, the process
+has to stop at the second iteration which evaluates more than ``ratio=2``
+candidates.
 
 Using the ``aggressive_elimination`` parameter, you can force the search
 process to end up with less than ``ratio`` candidates at the last
@@ -447,7 +462,10 @@ Analysing results with the cv_results_ attribute
 
 The ``cv_results_`` attribute contains useful information for analysing the
 results of a search. It can be converted to a pandas dataframe with ``df =
-pd.DataFrame(est.cv_results_)``.
+pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
+:class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
+to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`>, with
+additional information related to the successive halving process.
 
 Here is an example with some of the columns of a (truncated) dataframe:
 
@@ -474,9 +492,6 @@ In the example above, the best parameter combination is ``{'criterion':
 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
 since it has reached the last iteration (3) with the highest score:
 0.96.
-
-Please note that the ``cv_results_`` attributes has much more columns that what
-is shown here.
 
 .. topic:: References:
 

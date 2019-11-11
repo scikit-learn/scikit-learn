@@ -14,11 +14,10 @@ combinations marked as ``0`` were only evaluated at the first iteration, while
 the ones with ``5`` are the parameter combinations that are considered the
 best ones.
 
-The
-:class:`HalvingGridSearchCV <sklearn.model_selection.HalvingGridSearchCV>`
-class is able to find parameter combinations that are just as accurate as
-:class:`GridSearchCV <sklearn.model_selection.GridSearchCV>`, in much less
-time.
+We can see that the :class:`HalvingGridSearchCV
+<sklearn.model_selection.HalvingGridSearchCV>` class is able to find
+parameter combinations that are just as accurate as :class:`GridSearchCV
+<sklearn.model_selection.GridSearchCV>`, in much less time.
 """
 from time import time
 
