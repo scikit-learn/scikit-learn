@@ -21,8 +21,32 @@ __all__ = [
 
 
 def _is_subsequence(seq, super_seq):
+    """Return True when `seq` is a subsequence of `super_seq`.
+
+    Examples
+    --------
+
+    >> _is_subsequence([1], [2, 1, 4, 3]) == True
+    >> _is_subsequence([1, 2], [2, 1, 4, 3]) == False
+    >> _is_subsequence([2, 3], [2, 1, 4, 3]) == True
+    >> _is_subsequence([1, 3], [2, 1, 4, 3]) == True
+    >> _is_subsequence([1, 3, 4], [2, 1, 4, 3]) == False
+    >> _is_subsequence(['cat', 'dog', 'zebra'],
+    ..                 ['cat', 'dog', 'horse, 'zebra']) == True
+
+    """
     if len(seq) > len(super_seq):
         return False
+
+    j = 0
+    for i, elm in enumerate(seq):
+        while j < len(super_seq):
+            j += 1
+            if elm == super_seq[j-1]:
+                break
+        else:  # no break
+            return False
+    return True
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -77,11 +101,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X[:, feature_idx]
 
     def _check_pandas_categories(self, categories, pd_categories, column):
-        """Checks categories is lexicographic consistent with categories in fitted X.
-
+        """Checks categories is lexicographic consistent with categories
+        in fitted X.
         """
 
-        if not np.array_equal(categories, pd_categories):
+        if not _is_subsequence(categories, pd_categories):
             msg = ("'auto' categories is used, but the Categorical dtype "
                    "provided for column, {}, is not consistent with the "
                    "automatic lexicographic ordering, lexicon order: {}, "

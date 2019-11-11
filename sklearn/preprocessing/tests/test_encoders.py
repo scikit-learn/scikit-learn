@@ -646,7 +646,8 @@ def test_encoders_has_categorical_tags(Encoder):
     ('float_col', [1.0, 3.1, 2.3]),
 ])
 def test_multiple_pandas_category_no_order(Encoder, col, categories):
-    # order pandas categories will warn for ordered categories
+    # Make sure warning is raised when pandas category ordering isn't
+    # consistent with the encoder's
     pd = pytest.importorskip('pandas')
 
     msg = (r"'auto' categories is used, but the Categorical dtype provided "
@@ -671,36 +672,31 @@ def test_multiple_pandas_category_no_order(Encoder, col, categories):
         Encoder().fit(df_copy)
     assert str(record[0].message) == custom_msg
 
-
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_pandas_category_same_lexicon_order(Encoder, ordered):
-    # does not warn when the order in the categories are the same as the
-    # lexicon ordering
-
-    pd = pytest.importorskip('pandas')
-    cat_series = pd.Categorical([1, 2, 3, 1, 1], categories=[1, 2, 3])
-    df = pd.DataFrame({'int_col': cat_series})
-
-    # does not warn
-    with pytest.warns(None) as record:
-        Encoder().fit(df)
-    assert not record
-
-
-@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-@pytest.mark.parametrize('ordered', [True, False])
-@pytest.mark.parametrize('df_categories, warns', [
-    ([1, 1, 1, 1], False),
-    ([2, 1, 2, 2], True),
-    ([3, 2, 2, 2], False),
-    ([1, 3, 1, 1], False),
+@pytest.mark.parametrize('series, warns', [
+    ([0, 0, 0, 0], False),  # encoding: [0]
+    ([1, 0, 1, 1], True),  # encoding: [0, 1]
+    ([2, 1, 1, 1], False),  # encoding: [1, 2]
+    ([0, 2, 0, 0], False),  # encoding: [0, 2]
+    ([0, 2, 3, 0], True),  # encoding: [0, 2, 3]
+    ([1, 2, 3, 1], True),  # encoding: [1, 2, 3]
+    ([0, 0, 0, 3], False),  # encoding: [0, 3]
 ])
-def test_pandas_category_in_encoders(
-        Encoder, known, series, warns, ordered):
+@pytest.mark.parametrize("as_strings", [True, False])
+def test_pandas_category_in_encoders_with_unknown(
+        Encoder, series, warns, as_strings):
+    # The pandas series contains elements that are not seen during fit. `fit`
+    # will warn when the catgorical encoding is not subsequence of
+    # the pandas encoding.
     pd = pytest.importorskip('pandas')
+    categories = [1, 0, 3, 2]
+    if as_strings:
+        str_categories = np.array(['cat', 'dog', 'horse', 'zebra'])
+        categories = str_categories[categories]
+        series = str_categories[series]
 
-    cat_series = pd.Categorical(series, categories=[2, 1, 3], ordered=ordered)
-    df = pd.DataFrame({'int_col': cat_series})
+    cat_series = pd.Categorical(series, categories=categories)
+    df = pd.DataFrame({'col': cat_series})
 
     # does not warn
     with pytest.warns(None) as record:
