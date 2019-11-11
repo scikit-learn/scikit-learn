@@ -15,8 +15,9 @@ rng = np.random.RandomState(0)
 
 n_samples = 5000
 f_0 = rng.rand(n_samples)  # positive correlation with y
-f_1 = rng.rand(n_samples)  # negative correslation with y
+f_1 = rng.rand(n_samples)  # negative correlation with y
 X = np.c_[f_0, f_1]
+print(X.shape)
 noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
 y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
      5 * f_1 - np.cos(10 * np.pi * f_1) +
@@ -37,8 +38,9 @@ gbdt._monotonic_cst = [1, -1]  # INC, DEC
 gbdt.fit(X, y)
 plot_partial_dependence(
     gbdt, X, features=[0, 1],
-    feature_names=('POS constraint', 'NEG constraint'),
-    line_kw={'linewidth': 4, 'label': 'unconstrained'},
+    feature_names=('First feature\nPositive constraint',
+                   'Second feature\nNegtive constraint'),
+    line_kw={'linewidth': 4, 'label': 'constrained'},
     ax=disp.axes_)
 
 for f_idx in (0, 1):
@@ -47,4 +49,5 @@ for f_idx in (0, 1):
 
 plt.legend()
 fig.suptitle("Monotonic constraints illustration")
+
 plt.show()
