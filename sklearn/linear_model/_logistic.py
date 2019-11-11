@@ -909,8 +909,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             del X_var
             if fit_intercept:
                 X_offset = -X_mean
-            # can we actually do inplace here?
-            inplace_column_scale(X_pre, 1 / X_scale)
+            X_pre = X_pre.multiply(1 / X_scale)
 
         else:
             X_mean = X.mean(axis=0)
