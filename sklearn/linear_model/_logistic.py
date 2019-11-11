@@ -40,7 +40,7 @@ from ..metrics import get_scorer
 
 
 # .. some helper functions for logistic_regression_path ..
-def _intercept_dot(w, X, y):
+def _intercept_dot(w, X, y, X_offset=None):
     """Computes y * np.dot(X, w).
 
     It takes into consideration if the intercept should be fit or not.
@@ -74,11 +74,14 @@ def _intercept_dot(w, X, y):
         w = w[:-1]
 
     z = safe_sparse_dot(X, w) + c
+    if X_offset is not None:
+        z += np.dot(X_offset, w)
     yz = y * z
     return w, c, yz
 
 
-def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
+def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None,
+                            X_offset=None):
     """Computes the logistic loss and gradient.
 
     Parameters
@@ -110,7 +113,7 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
 
-    w, c, yz = _intercept_dot(w, X, y)
+    w, c, yz = _intercept_dot(w, X, y, X_offset)
 
     if sample_weight is None:
         sample_weight = np.ones(n_samples)
@@ -135,7 +138,8 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None):
     return out, grad
 
 
-def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None):
+def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None,
+                   X_offset=None):
     """Computes the logistic loss.
 
     Parameters
@@ -164,7 +168,7 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None):
     out : float
         Logistic loss.
     """
-    w, c, yz = _intercept_dot(w, X, y)
+    w, c, yz = _intercept_dot(w, X, y, X_offset)
 
     if sample_weight is None:
         sample_weight = np.ones(y.shape[0])
@@ -254,7 +258,8 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     return grad, Hs
 
 
-def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
+def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None,
+                      X_offset=None):
     """Computes multinomial loss and class probabilities.
 
     Parameters
@@ -304,6 +309,8 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
 
     p = safe_sparse_dot(X, w.T)
     p += intercept
+    if X_offset is not None:
+        p += np.dot(X_offset, w.T)
     p -= logsumexp(p, axis=1)[:, np.newaxis]
     loss = -(sample_weight * Y * p).sum()
     v = w
@@ -314,7 +321,8 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None):
     return loss, p, w
 
 
-def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None):
+def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None,
+                           X_offset=None):
     """Computes the multinomial loss, gradient and class probabilities.
 
     Parameters
@@ -358,7 +366,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None):
     grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
                     dtype=X.dtype)
     loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight,
-                                   X_scale=X_scale)
+                                   X_scale=X_scale, X_offset=X_offset)
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
@@ -889,6 +897,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # preconditioning
     X_pre = X
     X_scale = None
+    X_offset = None
     if precondition and solver == 'lbfgs':
         # FIXME this duplicates come code from _preprocess_data
         # and should be refactored
@@ -898,12 +907,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             X_scale[X_scale == 0] = 1
 
             del X_var
-            X_pre = X.toarray()
             if fit_intercept:
-                X_pre = X_pre - X_mean  # FIXME
+                X_offset = -X_mean
             # can we actually do inplace here?
-            # inplace_column_scale(X_pre, 1 / X_scale)
-            X_pre = X_pre / X_scale
+            inplace_column_scale(X_pre, 1 / X_scale)
 
         else:
             X_mean = X.mean(axis=0)
@@ -985,7 +992,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             opt_res = optimize.minimize(
                 func, w0, method="L-BFGS-B", jac=True,
-                args=(X_pre, target, 1. / C, sample_weight, X_scale),
+                args=(X_pre, target, 1. / C, sample_weight, X_scale, X_offset),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
