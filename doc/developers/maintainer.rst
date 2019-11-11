@@ -8,7 +8,8 @@ Before a release
 
     $ cd build_tools; make authors; cd ..
 
-   and commit.
+   and commit. This is only needed if the authors have changed since the last
+   release. This step is sometimes done independent of the release.
 
 2. Confirm any blockers tagged for the milestone are resolved, and that other
    issues tagged for the milestone can be postponed.
@@ -17,7 +18,7 @@ Before a release
    change log is reasonably well curated. Some tools for these tasks include:
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
-     sections.
+     sections. It's not perfect, and requires manual checking of the changes.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
@@ -45,7 +46,8 @@ while preparing the release.
 Making a release
 ----------------
 
-1. Update docs:
+1. Update docs. Note that this is for the final release, not necessarily for
+   the RC releases.
 
    - Edit the doc/whats_new.rst file to add release title and commit
      statistics. You can retrieve commit statistics with::
@@ -62,10 +64,10 @@ Making a release
 2. On the branch for releasing, update the version number in
    sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
    when ready to release.
-   On master, increment the verson in the same place (when branching for
+   On master, increment the version in the same place (when branching for
    release).
 
-3. Create the tag and push it::
+3. Create the tag and push it (if it's an RC, it can be 0.xxrc1)::
 
     $ git tag -a 0.999
 
