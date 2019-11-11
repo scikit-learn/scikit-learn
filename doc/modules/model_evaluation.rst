@@ -2,9 +2,9 @@
 
 .. _model_evaluation:
 
-========================================================
-Model evaluation: quantifying the quality of predictions
-========================================================
+===========================================================
+Metrics and scoring: quantifying the quality of predictions
+===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
@@ -307,7 +307,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -315,6 +314,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    cohen_kappa_score
    confusion_matrix
    hinge_loss
@@ -744,8 +744,14 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary classification and multilabel indicator format. The
+:func:`plot_precision_recall_curve` function plots the precision recall as
+follows.
 
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
+        :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
+        :scale: 75
+        :align: center
 
 .. topic:: Examples:
 
@@ -1329,7 +1335,7 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly 
+class. The OvO and OvR algorithms supports weighting uniformly
 (``average='macro'``) and weighting by the prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
@@ -1358,7 +1364,7 @@ prevalence:
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
@@ -1398,16 +1404,16 @@ to the given limit.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
 
-    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
-       `An Experimental Comparison of Performance Measures for Classification. 
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+       `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-       Pattern Recognition Letters. 30. 27-38. 
+       Pattern Recognition Letters. 30. 27-38.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
-    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
        ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.

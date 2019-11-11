@@ -13,13 +13,13 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -898,6 +898,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
+# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
 @pytest.mark.parametrize('drop', ['drop', None])
 def test_set_feature_union_step_drop(drop):
     mult2 = Mult(2)
@@ -911,25 +912,33 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
-    ft.set_params(m2=drop)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m2=drop)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else not record
 
-    ft.set_params(m3=drop)
-    assert_array_equal([[]], ft.fit(X).transform(X))
-    assert_array_equal([[]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m3=drop)
+        assert_array_equal([[]], ft.fit(X).transform(X))
+        assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert record if drop is None else not record
 
-    # check we can change back
-    ft.set_params(m3=mult3)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
+    with pytest.warns(None) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert record if drop is None else not record
 
-    # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert record if drop is None else not record
 
 
 def test_step_name_validation():
@@ -1127,7 +1136,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
       r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
@@ -1173,3 +1182,16 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+# TODO: Remove in 0.24 when None is removed
+def test_feature_union_warns_with_none():
+    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
+           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
+    with pytest.warns(FutureWarning, match=msg):
+        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
+
+    X = [[1, 2, 3], [4, 5, 6]]
+
+    with pytest.warns(FutureWarning, match=msg):
+        union.fit_transform(X)
