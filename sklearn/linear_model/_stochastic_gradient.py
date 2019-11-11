@@ -99,8 +99,7 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self._validate_params()
 
     def set_params(self, **kwargs):
-        """
-        Set and validate the parameters of estimator.
+        """Set and validate the parameters of estimator.
 
         Parameters
         ----------
@@ -1053,7 +1052,7 @@ class SGDClassifier(BaseSGDClassifier):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data for prediction.
 
         Returns
