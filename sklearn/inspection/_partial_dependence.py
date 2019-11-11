@@ -425,6 +425,17 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
 
+    .. note::
+
+        :func:`plot_partial_dependence` does not support using the same axes
+        with multiple calls. To plot the the partial dependence for multiple
+        estimators, please pass the axes created by the first call to the
+        second call::
+
+          >>> from sklearn.inspection import plot_partial_dependence
+          >>> disp1 = plot_partial_dependence(...)
+          >>> disp2 = plot_partial_dependence(..., ax=disp1.axes_)
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
