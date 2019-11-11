@@ -11,6 +11,7 @@ import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
+import importlib
 try:
     import builtins
 except ImportError:
@@ -183,24 +184,24 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-def get_numpy_status():
+def get_package_status(package, min_version):
     """
-    Returns a dictionary containing a boolean specifying whether NumPy
+    Returns a dictionary containing a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
     not installed).
     """
-    numpy_status = {}
+    package_status = {}
     try:
-        import numpy
-        numpy_version = numpy.__version__
-        numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
-        numpy_status['version'] = numpy_version
+        p = importlib.import_module(package)
+        package_version = p.__version__
+        package_status['up_to_date'] = parse_version(
+            package_version) >= parse_version(min_version)
+        package_status['version'] = package_version
     except ImportError:
         traceback.print_exc()
-        numpy_status['up_to_date'] = False
-        numpy_status['version'] = ""
-    return numpy_status
+        package_status['up_to_date'] = False
+        package_status['version'] = ""
+    return package_status
 
 
 def setup_package():
@@ -268,7 +269,7 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        numpy_status = get_numpy_status()
+        numpy_status = get_package_status('numpy', NUMPY_MIN_VERSION)
         numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
             NUMPY_MIN_VERSION)
 
@@ -286,6 +287,21 @@ def setup_package():
                 raise ImportError("Numerical Python (NumPy) is not "
                                   "installed.\n{}{}"
                                   .format(numpy_req_str, instructions))
+
+        scipy_status = get_package_status('scipy', SCIPY_MIN_VERSION)
+        scipy_req_str = "scikit-learn requires scipy >= {}.\n".format(
+            SCIPY_MIN_VERSION)
+
+        if scipy_status['up_to_date'] is False:
+            if scipy_status['version']:
+                raise ImportError("Your installation of "
+                                  "scipy {} is out-of-date.\n{}{}"
+                                  .format(numpy_status['version'],
+                                          numpy_req_str, instructions))
+            else:
+                raise ImportError("scipy is not "
+                                  "installed.\n{}{}"
+                                  .format(scipy_req_str, instructions))
 
         from numpy.distutils.core import setup
 
