@@ -47,7 +47,7 @@ disp = plot_partial_dependence(
     line_kw={'linewidth': 4, 'label': 'unconstrained'},
     ax=ax)
 
-# With postivive and negative constraints
+# With positive and negative constraints
 gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
 gbdt.fit(X, y)
 

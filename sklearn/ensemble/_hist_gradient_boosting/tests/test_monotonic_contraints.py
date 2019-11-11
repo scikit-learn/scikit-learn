@@ -260,6 +260,6 @@ def test_input_error():
     with pytest.raises(
             ValueError,
             match='monotonic constraints are not supported '
-                'for multiclass classification'
+                  'for multiclass classification'
             ):
         gbdt.fit(X, y)
