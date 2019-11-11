@@ -229,7 +229,16 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
 
 
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
-    # The first call to `plot_*` will plot the axes
+    # The first call to plot_partial_dependence will create two new axes to
+    # place in the space of the passed in axes, which results in a total of
+    # three axes in the figure.
+    # Currently the API does not allow for the second call to
+    # plot_partial_dependence to use the same axes again, because it will
+    # create two new axes in the space resulting in five axes. To get the
+    # expected behavior one needs to pass the generated axes into the second
+    # call:
+    # disp1 = plot_partial_dependence(...)
+    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
 
     grid_resolution = 25
     fig, ax = pyplot.subplots()
