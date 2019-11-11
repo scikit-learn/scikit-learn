@@ -62,7 +62,7 @@ def test_derivatives(loss, x0, y_true):
     # using Halley's method with the first and second order derivatives
     # computed by the Loss instance.
 
-    loss = _LOSSES[loss]()
+    loss = _LOSSES[loss](sample_weight=None)
     y_true = np.array([y_true], dtype=Y_DTYPE)
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
@@ -105,7 +105,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
     raw_predictions = rng.normal(
         size=(prediction_dim, n_samples)
     ).astype(Y_DTYPE)
-    loss = _LOSSES[loss]()
+    loss = _LOSSES[loss](sample_weight=None)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
     # only take gradients and hessians of first tree / class.
@@ -139,7 +139,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
 def test_baseline_least_squares():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_squares']()
+    loss = _LOSSES['least_squares'](sample_weight=None)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -153,7 +153,7 @@ def test_baseline_least_squares():
 def test_baseline_least_absolute_deviation():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['least_absolute_deviation']()
+    loss = _LOSSES['least_absolute_deviation'](sample_weight=None)
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
     assert baseline_prediction.shape == tuple()  # scalar
@@ -167,7 +167,7 @@ def test_baseline_least_absolute_deviation():
 def test_baseline_binary_crossentropy():
     rng = np.random.RandomState(0)
 
-    loss = _LOSSES['binary_crossentropy']()
+    loss = _LOSSES['binary_crossentropy'](sample_weight=None)
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, None, 1)
@@ -192,7 +192,7 @@ def test_baseline_categorical_crossentropy():
     rng = np.random.RandomState(0)
 
     prediction_dim = 4
-    loss = _LOSSES['categorical_crossentropy']()
+    loss = _LOSSES['categorical_crossentropy'](sample_weight=None)
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, None,
@@ -240,7 +240,7 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
     else:
         sample_weight = rng.normal(size=n_samples).astype(Y_DTYPE)
 
-    loss_ = _LOSSES[loss]()
+    loss_ = _LOSSES[loss](sample_weight=sample_weight)
 
     baseline_prediction = loss_.get_baseline_prediction(
         y_true, None, prediction_dim
@@ -268,23 +268,20 @@ def test_init_gradient_and_hessians_sample_weight():
     # hessians_are_constant attribute, and consequently the shape of the
     # hessians array.
 
-    loss = _LOSSES['least_squares']()
-    assert loss.hessians_are_constant
-
     prediction_dim = 2
     n_samples = 5
-
+    sample_weight = None
+    loss = _LOSSES['least_squares'](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
         sample_weight=None)
     assert loss.hessians_are_constant
     assert hessians.shape == (1, 1)
 
+    sample_weight = np.ones(n_samples)
+    loss = _LOSSES['least_squares'](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=prediction_dim,
-        sample_weight=np.ones(n_samples))
-    # the `hessians_are_constant` is true for the class, but not for the
-    # instance.
-    assert _LOSSES['least_squares'].hessians_are_constant  # still true
+        sample_weight=sample_weight)
     assert not loss.hessians_are_constant
     assert hessians.shape == (prediction_dim, n_samples)

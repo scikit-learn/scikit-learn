@@ -138,7 +138,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # data.
         self._in_fit = True
 
-        self.loss_ = self._get_loss()
+        self.loss_ = self._get_loss(sample_weight=sample_weight)
 
         self.do_early_stopping_ = (self.n_iter_no_change is not None and
                                    self.n_iter_no_change > 0)
@@ -694,7 +694,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return {'allow_nan': True}
 
     @abstractmethod
-    def _get_loss(self):
+    def _get_loss(self, sample_weight):
         pass
 
     @abstractmethod
@@ -882,8 +882,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         y = y.astype(Y_DTYPE, copy=False)
         return y
 
-    def _get_loss(self):
-        return _LOSSES[self.loss]()
+    def _get_loss(self, sample_weight):
+        return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
 class HistGradientBoostingClassifier(BaseHistGradientBoosting,
@@ -1111,7 +1111,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
-    def _get_loss(self):
+    def _get_loss(self, sample_weight):
         if (self.loss == 'categorical_crossentropy' and
                 self.n_trees_per_iteration_ == 1):
             raise ValueError("'categorical_crossentropy' is not suitable for "
@@ -1120,8 +1120,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
-                return _LOSSES['binary_crossentropy']()
+                return _LOSSES['binary_crossentropy'](
+                    sample_weight=sample_weight)
             else:
-                return _LOSSES['categorical_crossentropy']()
+                return _LOSSES['categorical_crossentropy'](
+                    sample_weight=sample_weight)
 
-        return _LOSSES[self.loss]()
+        return _LOSSES[self.loss](sample_weight=sample_weight)

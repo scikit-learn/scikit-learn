@@ -28,6 +28,8 @@ from ...utils.stats import _weighted_percentile
 
 class BaseLoss(ABC):
     """Base class for a loss."""
+    def __init__(self, hessians_are_constant):
+        self.hessians_are_constant = hessians_are_constant
 
     def __call__(self, y_true, raw_predictions, sample_weight):
         """Return the weighted average loss"""
@@ -80,12 +82,6 @@ class BaseLoss(ABC):
         """
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
-
-        if sample_weight is not None:
-            # If sample weights are provided, the hessians and gradients
-            # are multiplied by sample_weight, which means the hessians are
-            # equal to sample weights.
-            self.hessians_are_constant = False
 
         if self.hessians_are_constant:
             # If the hessians are constant, we consider they are equal to 1.
@@ -161,8 +157,15 @@ class LeastSquares(BaseLoss):
     the computation of the gradients and get a unit hessian (and be consistent
     with what is done in LightGBM).
     """
+    def __init__(self, sample_weight):
+        # If sample weights are provided, the hessians and gradients
+        # are multiplied by sample_weight, which means the hessians are
+        # equal to sample weights.
 
-    hessians_are_constant = True
+        hessians_are_constant = True
+        if sample_weight is not None:
+            hessians_are_constant = False
+        super().__init__(hessians_are_constant=hessians_are_constant)
 
     def pointwise_loss(self, y_true, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -200,8 +203,16 @@ class LeastAbsoluteDeviation(BaseLoss):
 
         loss(x_i) = |y_true_i - raw_pred_i|
     """
+    def __init__(self, sample_weight):
+        # If sample weights are provided, the hessians and gradients
+        # are multiplied by sample_weight, which means the hessians are
+        # equal to sample weights.
 
-    hessians_are_constant = True
+        hessians_are_constant = True
+        if sample_weight is not None:
+            hessians_are_constant = False
+        super().__init__(hessians_are_constant=hessians_are_constant)
+
     # This variable indicates whether the loss requires the leaves values to
     # be updated once the tree has been trained. The trees are trained to
     # predict a Newton-Raphson step (see grower._finalize_leaf()). But for
@@ -278,7 +289,9 @@ class BinaryCrossEntropy(BaseLoss):
     section 4.4.1 (about logistic regression).
     """
 
-    hessians_are_constant = False
+    def __init__(self, sample_weight):
+        super().__init__(hessians_are_constant=False)
+
     inverse_link_function = staticmethod(expit)
 
     def pointwise_loss(self, y_true, raw_predictions):
@@ -330,7 +343,8 @@ class CategoricalCrossEntropy(BaseLoss):
     cross-entropy to more than 2 classes.
     """
 
-    hessians_are_constant = False
+    def __init__(self, sample_weight):
+        super().__init__(hessians_are_constant=False)
 
     def pointwise_loss(self, y_true, raw_predictions):
         one_hot_true = np.zeros_like(raw_predictions)

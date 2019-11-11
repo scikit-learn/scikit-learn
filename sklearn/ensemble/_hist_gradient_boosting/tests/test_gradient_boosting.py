@@ -580,7 +580,7 @@ def test_sum_hessians_are_sample_weight(loss_name):
 
     sample_weight = rng.normal(size=n_samples)
 
-    loss = _LOSSES[loss_name]()
+    loss = _LOSSES[loss_name](sample_weight=sample_weight)
     gradients, hessians = loss.init_gradients_and_hessians(
         n_samples=n_samples, prediction_dim=1, sample_weight=sample_weight)
     raw_predictions = rng.normal(size=(1, n_samples))
