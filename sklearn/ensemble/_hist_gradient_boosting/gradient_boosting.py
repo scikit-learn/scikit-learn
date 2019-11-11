@@ -82,6 +82,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('max_bins={} should be no smaller than 2 '
                              'and no larger than 255.'.format(self.max_bins))
 
+        if self.monotonic_cst is not None and self.n_trees_per_iteration_ != 1:
+            raise ValueError(
+                'monotonic constraints are not supported for '
+                'multiclass classification.'
+                )
+
     def fit(self, X, y):
         """Fit the gradient boosting model.
 

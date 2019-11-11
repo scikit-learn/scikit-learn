@@ -5,6 +5,7 @@ from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 
 
@@ -240,8 +241,8 @@ def test_predictions(seed):
 
 
 def test_input_error():
-    X = [[1, 2], [2, 3]]
-    y = [0, 1]
+    X = [[1, 2], [2, 3], [3, 4]]
+    y = [0, 1, 2]
 
     gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, 0, -1])
     with pytest.raises(ValueError,
@@ -254,3 +255,11 @@ def test_input_error():
                            match='must be None or an array-like of '
                                  '-1, 0 or 1'):
             gbdt.fit(X, y)
+
+    gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
+    with pytest.raises(
+            ValueError,
+            match='monotonic constraints are not supported '
+                'for multiclass classification'
+            ):
+        gbdt.fit(X, y)
