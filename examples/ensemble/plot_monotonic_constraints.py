@@ -1,8 +1,22 @@
 """
-Example reproducing
-https://xgboost.readthedocs.io/en/latest//tutorials/monotonic.html
+=====================
+Monotonic Constraints
+=====================
 
-Mostly for my beloved reviewers.
+This example illustrates the effect of monotonic constraints on a gradient
+boosting estimator.
+
+We build an artificial dataset where the target value is in general
+positively correlated with the first feature (with some random and
+non-random variations), and in general negatively correlated with the second
+feature.
+
+By imposing a positive and negative constraint on the features during the
+learning process, the estimator is able to properly follow the general trend
+instead of being subject to the variations.
+
+This example was inspired by the `XGBoost documentation
+<https://xgboost.readthedocs.io/en/latest//tutorials/monotonic.html>`_
 """
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -25,6 +39,7 @@ y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
 fig, ax = plt.subplots()
 
 
+# Without any constraint
 gbdt = HistGradientBoostingRegressor()
 gbdt.fit(X, y)
 disp = plot_partial_dependence(
@@ -32,9 +47,10 @@ disp = plot_partial_dependence(
     line_kw={'linewidth': 4, 'label': 'unconstrained'},
     ax=ax)
 
-gbdt = HistGradientBoostingRegressor()
-gbdt._monotonic_cst = [1, -1]  # INC, DEC
+# With postivive and negative constraints
+gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
 gbdt.fit(X, y)
+
 plot_partial_dependence(
     gbdt, X, features=[0, 1],
     feature_names=('First feature\nPositive constraint',
