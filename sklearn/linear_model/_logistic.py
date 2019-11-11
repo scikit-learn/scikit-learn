@@ -899,7 +899,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     X_scale = None
     X_offset = None
     if precondition and solver == 'lbfgs':
-        # FIXME this duplicates come code from _preprocess_data
+        # FIXME this duplicates some code from _preprocess_data
         # and should be refactored
         if sparse.issparse(X):
             X_mean, X_var = mean_variance_axis(X, axis=0)
