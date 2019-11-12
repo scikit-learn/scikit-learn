@@ -4,7 +4,6 @@ from .. import average_precision_score
 from .. import precision_recall_curve
 
 from ...utils import check_matplotlib_support
-from ...utils.validation import check_is_fitted
 from ...base import is_classifier
 
 
@@ -141,24 +140,23 @@ def plot_precision_recall_curve(estimator, X, y,
         Object that stores computed values.
     """
     check_matplotlib_support("plot_precision_recall_curve")
-    check_is_fitted(estimator)
 
-    classificaiton_error = ("{} should be a binary classifer".format(
+    classification_error = ("{} should be a binary classifer".format(
         estimator.__class__.__name__))
-    if is_classifier(estimator):
-        if len(estimator.classes_) != 2:
-            raise ValueError(classificaiton_error)
-        pos_label = estimator.classes_[1]
-    else:
-        raise ValueError(classificaiton_error)
+    if not is_classifier(estimator):
+        raise ValueError(classification_error)
 
     prediction_method = _check_classifer_response_method(estimator,
                                                          response_method)
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:
-        y_pred = y_pred[:, 1]
+        if y_pred.shape[1] != 2:
+            raise ValueError(classification_error)
+        else:
+            y_pred = y_pred[:, 1]
 
+    pos_label = estimator.classes_[1]
     precision, recall, _ = precision_recall_curve(y, y_pred,
                                                   pos_label=pos_label,
                                                   sample_weight=sample_weight)
