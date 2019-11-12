@@ -528,7 +528,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # ensure binary classification if pos_label is not specified
     # _determine_key_type(classes) == 'str' is required to avoid
     # triggering a FutureWarning by calling np.array_equal(a, b)
-    # where a has string values and b has integer values.
+    # when elements in the two arrays are not comparable.
     classes = np.unique(y_true)
     if (pos_label is None and (
             _determine_key_type(classes) == 'str' or
