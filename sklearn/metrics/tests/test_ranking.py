@@ -667,8 +667,12 @@ def test_binary_clf_curve_multiclass_error():
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
     msg = "multiclass format is not supported"
+
     with pytest.raises(ValueError, match=msg):
         precision_recall_curve(y_true, y_pred)
+
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(y_true, y_pred)
 
 
 def test_binary_clf_curve_implicit_pos_label():
@@ -676,8 +680,12 @@ def test_binary_clf_curve_implicit_pos_label():
     y_pred = [0., 1.]
     msg = ("make y_true take integer value in {0, 1} or {-1, 1}"
            " or pass pos_label explicitly.")
+
     with pytest.raises(ValueError, match=msg):
         precision_recall_curve(y_true, y_pred)
+
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(y_true, y_pred)
 
 
 def test_precision_recall_curve():
