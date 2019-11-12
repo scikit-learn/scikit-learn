@@ -14,7 +14,7 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler, label_binarize
 from sklearn.utils import compute_class_weight, _IS_32BIT
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -38,7 +38,7 @@ from sklearn.linear_model._logistic import (
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
-    _log_reg_scoring_path)
+    _log_reg_scoring_path, _multinomial_loss_grad)
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -417,13 +417,12 @@ def test_liblinear_dual_random_state():
 
 def test_logistic_loss_and_grad():
     X_ref, y = make_classification(n_samples=20, random_state=0)
-    n_features = X_ref.shape[1]
-
     X_sp = X_ref.copy()
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
+    clf = LogisticRegression(random_state=0).fit(X_ref, y)
     for X in (X_ref, X_sp):
-        w = np.zeros(n_features)
+        w = clf.coef_.copy().ravel()
 
         # First check that our derivation of the grad is correct
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
@@ -433,12 +432,10 @@ def test_logistic_loss_and_grad():
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
-        w = np.zeros(n_features + 1)
+        w = np.hstack([clf.coef_.copy().ravel(), clf.intercept_])
         loss_interp, grad_interp = _logistic_loss_and_grad(
             w, X, y, alpha=1.
         )
-        assert_array_almost_equal(loss, loss_interp)
-
         approx_grad = optimize.approx_fprime(
             w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
         )
@@ -492,6 +489,31 @@ def test_logistic_grad_hess():
         grad_interp_2, hess = _logistic_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(loss_interp, loss_interp_2)
         assert_array_almost_equal(grad_interp, grad_interp_2)
+
+
+def test_multinomial_loss_grad():
+    n_features = 10
+    n_classes = 3
+    X_ref, y = make_classification(n_features=n_features, n_classes=n_classes,
+                                   random_state=0, n_informative=6)
+
+    X_sp = X_ref.copy()
+    X_sp[X_sp < .1] = 0
+    X_sp = sp.csr_matrix(X_sp)
+    sample_weight = np.ones(X_ref.shape[0])
+    Y = label_binarize(y, [0, 1, 2])
+    lr = LogisticRegression(random_state=0).fit(X_ref, y)
+    for X in (X_ref, X_sp):
+
+        w = np.hstack([lr.coef_, lr.intercept_.reshape(-1, 1)])
+        loss, grad, p = _multinomial_loss_grad(
+            w, X, Y, alpha=1., X_scale=None, sample_weight=sample_weight)
+        approx_grad = optimize.approx_fprime(
+            w.ravel(), lambda w: _multinomial_loss_grad(
+                w, X, Y, alpha=1., X_scale=None,
+                sample_weight=sample_weight)[0], 1e-5
+        )
+        assert_array_almost_equal(grad, approx_grad, decimal=3)
 
 
 def test_logistic_cv():
