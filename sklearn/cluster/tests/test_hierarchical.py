@@ -319,8 +319,8 @@ def test_vector_scikit_single_vs_scipy_single():
     rng = np.random.RandomState(0)
 
     for i in range(5):
-        X = .1 * rng.normal(size=(n, p))
-        X -= 4. * np.arange(n)[:, np.newaxis]
+        X = .1 * rng.normal(size=(n_samples, n_features))
+        X -= 4. * np.arange(n_samples)[:, np.newaxis]
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out = hierarchy.linkage(X, method='single')
@@ -334,8 +334,8 @@ def test_vector_scikit_single_vs_scipy_single():
                                                 ' from scipy impl for'
                                                 ' single linkage.')
 
-        cut = _hc_cut(k, children, n_leaves)
-        cut_ = _hc_cut(k, children_, n_leaves)
+        cut = _hc_cut(n_clusters, children, n_leaves)
+        cut_ = _hc_cut(n_clusters, children_, n_leaves)
         assess_same_labelling(cut, cut_)
 
 
