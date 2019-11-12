@@ -16,32 +16,35 @@ from .openmp_helpers import check_openmp_support
 
 
 DEFAULT_ROOT = 'sklearn'
-# on conda, this is the latest for python 3.5
+
+# The following places need to be in sync with regard to Cython version:
+# - .circleci config file
+# - sklearn/_build_utils/__init__.py
+# - advanced installation guide
 CYTHON_MIN_VERSION = '0.28.5'
 
 
-def build_from_c_and_cpp_files(extensions):
-    """Modify the extensions to build from the .c and .cpp files.
+def _check_cython_version():
+    message = ('Please install Cython with a version >= {0} in order '
+               'to build a scikit-learn from source.').format(
+                    CYTHON_MIN_VERSION)
+    try:
+        import Cython
+    except ModuleNotFoundError:
+        # Re-raise with more informative error message instead:
+        raise ModuleNotFoundError(message)
 
-    This is useful for releases, this way cython is not required to
-    run python setup.py install.
-    """
-    for extension in extensions:
-        sources = []
-        for sfile in extension.sources:
-            path, ext = os.path.splitext(sfile)
-            if ext in ('.pyx', '.py'):
-                if extension.language == 'c++':
-                    ext = '.cpp'
-                else:
-                    ext = '.c'
-                sfile = path + ext
-            sources.append(sfile)
-        extension.sources = sources
+    if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
+        message += (' The current version of Cython is {} installed in {}.'
+                    .format(Cython.__version__, Cython.__path__))
+        raise ValueError(message)
 
 
-def maybe_cythonize_extensions(top_path, config):
-    """Tweaks for building extensions between release and development mode."""
+def cythonize_extensions(top_path, config):
+    """Check that a recent Cython is available and cythonize extensions"""
+    _check_cython_version()
+    from Cython.Build import cythonize
+
     # Fast fail before cythonization if compiler fails compiling basic test
     # code even without OpenMP
     basic_check_build()
@@ -60,40 +63,21 @@ def maybe_cythonize_extensions(top_path, config):
     #   to actually build the compiled extensions with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
 
-    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
+    n_jobs = 1
+    with contextlib.suppress(ImportError):
+        import joblib
+        if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
+            # earlier joblib versions don't account for CPU affinity
+            # constraints, and may over-estimate the number of available
+            # CPU particularly in CI (cf loky#114)
+            n_jobs = joblib.cpu_count()
 
-    if is_release:
-        build_from_c_and_cpp_files(config.ext_modules)
-    else:
-        message = ('Please install cython with a version >= {0} in order '
-                   'to build a scikit-learn development version.').format(
-                       CYTHON_MIN_VERSION)
-        try:
-            import Cython
-            if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-                message += ' Your version of Cython was {0}.'.format(
-                    Cython.__version__)
-                raise ValueError(message)
-            from Cython.Build import cythonize
-        except ImportError as exc:
-            exc.args += (message,)
-            raise
-
-        n_jobs = 1
-        with contextlib.suppress(ImportError):
-            import joblib
-            if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
-                # earlier joblib versions don't account for CPU affinity
-                # constraints, and may over-estimate the number of available
-                # CPU particularly in CI (cf loky#114)
-                n_jobs = joblib.effective_n_jobs()
-
-        config.ext_modules = cythonize(
-            config.ext_modules,
-            nthreads=n_jobs,
-            compile_time_env={
-                'SKLEARN_OPENMP_SUPPORTED': sklearn._OPENMP_SUPPORTED},
-            compiler_directives={'language_level': 3})
+    config.ext_modules = cythonize(
+        config.ext_modules,
+        nthreads=n_jobs,
+        compile_time_env={
+            'SKLEARN_OPENMP_SUPPORTED': sklearn._OPENMP_SUPPORTED},
+        compiler_directives={'language_level': 3})
 
 
 def gen_from_templates(templates, top_path):

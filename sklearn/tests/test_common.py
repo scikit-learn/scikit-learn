@@ -125,6 +125,10 @@ def test_check_estimator_generate_only():
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
+    # This test requires Cython which is not necessarily there when running
+    # the tests of an installed version of scikit-learn or when scikit-learn
+    # is installed in editable mode by pip build isolation enabled.
+    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')

@@ -17,6 +17,8 @@ DOCSTRING_WHITELIST = [
     "LinearDiscriminantAnalysis.decision_function",
     "LinearSVC.decision_function",
     "LogisticRegressionCV.decision_function",
+    "OPTICS",
+    "OPTICS.fit",
     "PassiveAggressiveClassifier.decision_function",
     "Perceptron.decision_function",
     "RidgeClassifier.decision_function",

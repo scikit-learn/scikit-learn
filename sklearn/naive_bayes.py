@@ -21,18 +21,17 @@ from abc import ABCMeta, abstractmethod
 
 
 import numpy as np
-from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, check_consistent_length
+from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
-from .utils import deprecated
+from .utils.validation import _check_sample_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -360,8 +359,7 @@ class GaussianNB(_BaseNB):
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            check_consistent_length(y, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
@@ -910,7 +908,7 @@ class BernoulliNB(_BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean, optional (default=True)
+    fit_prior : bool, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
@@ -944,6 +942,24 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : array of shape (n_classes,)
         The classes labels.
 
+    See Also
+    ----------
+    MultinomialNB: The multinomial Naive Bayes classifier is \
+        suitable for classification with discrete features.
+
+    References
+    ----------
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
+    https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+
+    A. McCallum and K. Nigam (1998). A comparison of event models for naive
+    Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
+    Text Categorization, pp. 41-48.
+
+    V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
+    naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
     Examples
     --------
     >>> import numpy as np
@@ -956,20 +972,6 @@ class BernoulliNB(_BaseDiscreteNB):
     BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-
-    References
-    ----------
-
-    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234-265.
-    https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
-
-    A. McCallum and K. Nigam (1998). A comparison of event models for naive
-    Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
-    Text Categorization, pp. 41-48.
-
-    V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
-    naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
