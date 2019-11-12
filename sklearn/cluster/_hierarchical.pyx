@@ -474,7 +474,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
     Parameters
     ----------
     raw_data: array of shape (n_samples, n_features)
-        The array of feature data to be clustered.
+        The array of feature data to be clustered. Must be C-aligned
 
     dist_metric: DistanceMetric
         A distance metric function (from sklearn.neighbors.dist_metrics)
