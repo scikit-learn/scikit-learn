@@ -995,16 +995,20 @@ def _detect_categorical_features(X, categorical_features=None):
     categorical_features_mask : ndarray, shape (n_features)
 
     """
+    raise ValueError("should not be running")
     # Automatic detection of categorical features
     if categorical_features is None:
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
-
         def detect_cat(x):
-            return x != np.nan and not np.issubdtype(type(x), np.number)
-
+            if x != np.nan and not np.issubdtype(type(x), np.number):
+                raise ValueError()
+            else:
+                return False
+        f_test = np.frompyfunc(detect_cat, 1, 1)
         for col in range(np.shape(X)[1]):
-            f_test = np.frompyfunc(detect_cat, 1, 1)
-            if np.any(f_test(X[:, col])):
+            try:
+                f_test(X[:, col])
+            except ValueError:
                 categorical_features[col] = True
     else:
         categorical_features = np.asarray(categorical_features)
