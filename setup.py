@@ -184,7 +184,7 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-def get_package_status(package, min_version):
+def check_package_status(package, min_version):
     """
     Returns a dictionary containing a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
@@ -192,8 +192,8 @@ def get_package_status(package, min_version):
     """
     package_status = {}
     try:
-        p = importlib.import_module(package)
-        package_version = p.__version__
+        module = importlib.import_module(package)
+        package_version = module.__version__
         package_status['up_to_date'] = parse_version(
             package_version) >= parse_version(min_version)
         package_status['version'] = package_version
@@ -201,7 +201,24 @@ def get_package_status(package, min_version):
         traceback.print_exc()
         package_status['up_to_date'] = False
         package_status['version'] = ""
-    return package_status
+
+    req_str = "scikit-learn requires {} >= {}.\n".format(
+        package, min_version)
+
+    instructions = ("Installation instructions are available on the "
+                    "scikit-learn website: "
+                    "http://scikit-learn.org/stable/install.html\n")
+
+    if package_status['up_to_date'] is False:
+        if package_status['version']:
+            raise ImportError("Your installation of {} "
+                              "{} is out-of-date.\n{}{}"
+                              .format(package, package_status['version'],
+                                      req_str, instructions))
+        else:
+            raise ImportError("{} is not "
+                              "installed.\n{}{}"
+                              .format(package, req_str, instructions))
 
 
 def setup_package():
@@ -269,39 +286,9 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        numpy_status = get_package_status('numpy', NUMPY_MIN_VERSION)
-        numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
-            NUMPY_MIN_VERSION)
+        check_package_status('numpy', NUMPY_MIN_VERSION)
 
-        instructions = ("Installation instructions are available on the "
-                        "scikit-learn website: "
-                        "http://scikit-learn.org/stable/install.html\n")
-
-        if numpy_status['up_to_date'] is False:
-            if numpy_status['version']:
-                raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {} is out-of-date.\n{}{}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
-            else:
-                raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{}{}"
-                                  .format(numpy_req_str, instructions))
-
-        scipy_status = get_package_status('scipy', SCIPY_MIN_VERSION)
-        scipy_req_str = "scikit-learn requires scipy >= {}.\n".format(
-            SCIPY_MIN_VERSION)
-
-        if scipy_status['up_to_date'] is False:
-            if scipy_status['version']:
-                raise ImportError("Your installation of "
-                                  "scipy {} is out-of-date.\n{}{}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
-            else:
-                raise ImportError("scipy is not "
-                                  "installed.\n{}{}"
-                                  .format(scipy_req_str, instructions))
+        check_package_status('scipy', SCIPY_MIN_VERSION)
 
         from numpy.distutils.core import setup
 
