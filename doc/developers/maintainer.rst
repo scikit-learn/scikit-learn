@@ -67,13 +67,7 @@ Making a release
    On master, increment the version in the same place (when branching for
    release).
 
-3. Create the tag and push it (if it's an RC, it can be 0.xxrc1)::
-
-    $ git tag -a 0.999
-
-    $ git push git@github.com:scikit-learn/scikit-learn.git --tags
-
-4. Create the source tarball:
+3. Create the source tarball:
 
    - Wipe clean your repo::
 
@@ -86,6 +80,12 @@ Making a release
    The result should be in the `dist/` folder. We will upload it later
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
+
+4. Create the tag and push it (if it's an RC, it can be 0.xxrc1)::
+
+    $ git tag -a 0.999
+
+    $ git push git@github.com:scikit-learn/scikit-learn.git --tags
 
 5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
    release tag at:
