@@ -918,8 +918,11 @@ class PartialDependenceDisplay:
             ylim = axi.get_ylim()
             axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
                        color='k')
-            axi.set_xlabel(self.feature_names[fx[0]])
             axi.set_ylim(ylim)
+
+            # Set xlabel if it is not already set
+            if not axi.get_xlabel():
+                axi.set_xlabel(self.feature_names[fx[0]])
 
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:
