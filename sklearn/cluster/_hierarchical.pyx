@@ -461,7 +461,7 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         np.ndarray[DTYPE_t, ndim=2, mode='c'] raw_data,
         DistanceMetric dist_metric):
     """
-    Compute the the necessary elements of a minimum spanning
+    Compute the necessary elements of a minimum spanning
     tree for computation of single linkage clustering. This
     represents the MST-LINKAGE-CORE algorithm (Figure 6) from
     *Modern hierarchical, agglomerative clustering algorithms*
