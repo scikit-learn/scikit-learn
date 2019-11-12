@@ -26,7 +26,7 @@ from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
-from ..utils.extmath import row_norms
+from ..utils.extmath import row_norms, _weighted_mean_std
 from ..utils.fixes import logsumexp
 from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_X_y
@@ -34,7 +34,6 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils import deprecated
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.sparsefuncs import mean_variance_axis
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 
@@ -951,10 +950,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if precondition and solver == 'lbfgs':
         # FIXME this duplicates some code from _preprocess_data
         # and should be refactored
-        X_mean, X_scale = _weighted_mean_var(X, sample_weight)
+        X_mean, X_scale = _weighted_mean_std(X, sample_weight)
         if sparse.issparse(X):
             X_scale[X_scale == 0] = 1
-            del X_var
             if fit_intercept:
                 X_offset = -X_mean/X_scale
             # FIXME old scipy requires conversion to sparse matrix
