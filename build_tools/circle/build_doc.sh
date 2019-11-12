@@ -58,32 +58,45 @@ get_build_type() {
         return
     fi
     changed_examples=$(echo "$filenames" | grep -E "^examples/(.*/)*plot_")
-    if [ -n "$filenames" ]
+
+    if [[ -n "$filenames" ]]
     then
-        for af in ${filenames[@]}
-        do
-            if [ $af != "build_tools/circle/build_doc.sh" ]
-            then
-                page_figure=$(grep figure $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
-                page_image=$(grep image $af | grep auto_example | awk -F "/" '{print $NF}' | sed 's/sphx_glr_//' | awk -F "_" '{OFS="_";$NF=""; print $0}')
-            fi
-        done
+        # get rst files
+        rst_files="$(echo "$filenames" | grep -E "rst$")"
+
+        # get lines with figure or images
+        img_fig_lines="$(echo "$rst_files" | xargs grep -shE "(figure|image)::")"
+
+        # get only auto_examples
+        auto_example_files="$(echo "$img_fig_lines" | grep auto_examples | awk -F "/" '{print $NF}')"
+
+        # remove "sphx_glr_" from path and accept replace _\d\d\d.png with .py
+        image_paths="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_[[:digit:]][[:digit:]][[:digit:]].png/.py/')"
+
+        # get unique values
+        examples_in_rst="$(echo "$image_paths" | uniq | paste -sd '|')"
     fi
-    if [ -n "$page_figure" ]
-    then
-        changed_examples+=$(echo ${page_figure::-1} | sed 's/_ /|/g')
-    fi
-    if [ -n "$page_image" ]
-    then
-        changed_examples+=$(echo ${page_image::-1} | sed 's/_ /|/g')
-    fi
+
     if [[ -n "$changed_examples" ]]
     then
-        echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
-        pattern=$(echo "$changed_examples" | paste -sd '|')
+        if [[ -n "$examples_in_rst" ]]
+        then
+            pattern=$(echo "$changed_examples" | paste -sd '|')"|"$examples_in_rst
+        else
+            pattern=$(echo "$changed_examples" | paste -sd '|')
+        fi
         # pattern for examples to run is the last line of output
-        echo "$pattern"
+        echo BUILD: detected examples/ filename modified in $git_range: $pattern
+        echo $pattern
         return
+    else
+        if [[ -n "$examples_in_rst" ]]
+        then
+            # pattern for examples to run is the last line of output
+            echo BUILD: detected examples/ filename modified in $git_range: $pattern
+            echo $pattern
+            return
+        fi
     fi
     echo QUICK BUILD: no examples/ filename modified in $git_range:
     echo "$filenames"
