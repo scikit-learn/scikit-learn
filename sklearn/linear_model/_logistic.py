@@ -951,9 +951,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if precondition and solver == 'lbfgs':
         # FIXME this duplicates some code from _preprocess_data
         # and should be refactored
+        X_mean, X_scale = _weighted_mean_var(X, sample_weight)
         if sparse.issparse(X):
-            X_mean, X_var = mean_variance_axis(X, axis=0)
-            X_scale = np.sqrt(X_var, X_var)
             X_scale[X_scale == 0] = 1
             del X_var
             if fit_intercept:
@@ -963,12 +962,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             X_pre = X_pre.multiply(sparse.csr_matrix(1 / X_scale))
 
         else:
-            X_mean = np.average(X, weights=sample_weight, axis=0)
             if fit_intercept:
                 X_pre = X - X_mean
-            # weighted version of std
-            X_scale = np.sqrt(np.average((X_pre)**2, weights=sample_weight,
-                                         axis=0))
             X_scale[X_scale == 0] = 1
             X_pre = X_pre / X_scale
 

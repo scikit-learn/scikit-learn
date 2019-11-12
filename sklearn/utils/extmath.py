@@ -830,3 +830,31 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
                       'its last element does not correspond to sum',
                       RuntimeWarning)
     return out
+
+
+def _weighted_mean_std(X, sample_weight):
+    """Compute weighted mean and standard deviation for ndarrays and sparse matrices.
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix, shape (n_samples, n_features)
+        input array.
+    sample_weight : ndarray, shape (n_samples,)
+        Weights.
+
+    Returns
+    -------
+    mean : ndarray, shape (n_features,)
+        Weighted mean.
+    std : ndarray, shape (n_features,)
+        Weighted std.
+    """
+    if sparse.issparse(X):
+        normed_weights = sample_weight / sample_weight.sum()
+        sq_sum = safe_sparse_dot(normed_weights, X.multiply(X))
+        mean = safe_sparse_dot(normed_weights, X)
+        var = sq_sum - mean ** 2
+    else:
+        mean = np.average(X, weights=sample_weight, axis=0)
+        var = np.average(X**2, weights=sample_weight, axis=0) - mean ** 2
+    return mean, np.sqrt(var)

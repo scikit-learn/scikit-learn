@@ -34,6 +34,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
 from sklearn.utils.extmath import safe_min
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.extmath import _weighted_mean_std
 from sklearn.datasets import make_low_rank_matrix
 
 
@@ -727,3 +728,25 @@ def test_safe_sparse_dot_dense_output(dense_output):
     if dense_output:
         expected = expected.toarray()
     assert_allclose_dense_sparse(actual, expected)
+
+
+def test_weighted_mean_std():
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(100, 10))
+    weights = rng.uniform(size=(100,))
+    mean_dense, std_dense = _weighted_mean_std(X, weights)
+    mean_sparse, std_sparse = _weighted_mean_std(
+        sparse.csr_matrix(X), weights)
+    assert_allclose_dense_sparse(mean_dense, mean_sparse)
+    assert_allclose_dense_sparse(std_dense, std_sparse)
+    # with ones
+    weights = np.ones(100)
+    mean_dense, std_dense = _weighted_mean_std(X, weights)
+    mean_sparse, std_sparse = _weighted_mean_std(
+        sparse.csr_matrix(X), weights)
+    mean_expected = X.mean(axis=0)
+    std_expected = X.std(axis=0)
+    assert_allclose_dense_sparse(mean_dense, mean_expected)
+    assert_allclose_dense_sparse(std_dense, std_expected)
+    assert_allclose_dense_sparse(mean_sparse, mean_expected)
+    assert_allclose_dense_sparse(std_sparse, std_expected)
