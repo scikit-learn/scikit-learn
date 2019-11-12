@@ -306,7 +306,7 @@ def test_sparse_scikit_vs_scipy():
 
 
 def test_vector_scikit_single_vs_scipy_single():
-    n, p, k = 10, 5, 3
+    n_samples, n_features, n_clusters = 10, 5, 3
     rng = np.random.RandomState(0)
 
     for i in range(5):
