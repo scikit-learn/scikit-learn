@@ -61,14 +61,8 @@ def cythonize_extensions(top_path, config):
 
 def gen_from_templates(templates, top_path):
     """Generate cython files from a list of templates"""
-    is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
-    # Files are already cythonized, nothing to do.
-    if is_release:
-        return
-
-    # Lazy import because cython is not a dependency when building from
-    # source distribution.
-    from Cython import Tempita # noqa
+    # Lazy import because cython is not a runtime dependency.
+    from Cython import Tempita
 
     for template in templates:
         outfile = template.replace('.tp', '')
