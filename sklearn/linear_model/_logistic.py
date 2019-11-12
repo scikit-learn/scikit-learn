@@ -373,6 +373,8 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None,
     sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
+    if X_offset is not None:
+        grad[:, :n_features] += np.outer(diff.T.sum(axis=1), X_offset)
     if X_scale is not None:
         grad[:, :n_features] += alpha * (w / X_scale**2)
     else:

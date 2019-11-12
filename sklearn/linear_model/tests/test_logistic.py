@@ -504,16 +504,18 @@ def test_multinomial_loss_grad():
     Y = label_binarize(y, [0, 1, 2])
     lr = LogisticRegression(random_state=0).fit(X_ref, y)
     for X in (X_ref, X_sp):
+        for X_offset in (None, X.mean(axis=0)):
 
-        w = np.hstack([lr.coef_, lr.intercept_.reshape(-1, 1)])
-        loss, grad, p = _multinomial_loss_grad(
-            w, X, Y, alpha=1., X_scale=None, sample_weight=sample_weight)
-        approx_grad = optimize.approx_fprime(
-            w.ravel(), lambda w: _multinomial_loss_grad(
-                w, X, Y, alpha=1., X_scale=None,
-                sample_weight=sample_weight)[0], 1e-5
-        )
-        assert_array_almost_equal(grad, approx_grad, decimal=3)
+            w = np.hstack([lr.coef_, lr.intercept_.reshape(-1, 1)])
+            loss, grad, p = _multinomial_loss_grad(
+                w, X, Y, alpha=1., X_scale=None, sample_weight=sample_weight,
+                X_offset=X_offset)
+            approx_grad = optimize.approx_fprime(
+                w.ravel(), lambda w: _multinomial_loss_grad(
+                    w, X, Y, alpha=1., X_scale=None, X_offset=X_offset,
+                    sample_weight=sample_weight)[0], 1e-5
+            )
+            assert_array_almost_equal(grad, approx_grad, decimal=3)
 
 
 def test_logistic_cv():
