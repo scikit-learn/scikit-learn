@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |PythonVersion|_ |PyPi|_ |DOI|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
@@ -14,8 +14,8 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
-.. _Python35: https://badge.fury.io/py/scikit-learn
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
+.. _PythonVersion: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
@@ -52,18 +52,13 @@ scikit-learn requires:
 - SciPy (>= 0.17.0)
 - joblib (>= 0.11)
 
-**Scikit-learn 0.20 was the last version to support Python 2.7.**
+**Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.21 and later require Python 3.5 or newer.
 
-For running the examples Matplotlib >= 1.5.1 is required. A few examples
-require scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
-
-scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
-Subprograms library. scikit-learn comes with a reference implementation, but
-the system CBLAS will be detected by the build system and used if present.
-CBLAS exists in many implementations; see `Linear algebra libraries
-<http://scikit-learn.org/stable/modules/computing#linear-algebra-libraries>`_
-for known issues.
+Scikit-learn plotting capabilities (i.e., functions start with "plot_"
+and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
+examples Matplotlib >= 1.5.1 is required. A few examples require
+scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
 
 User installation
 ~~~~~~~~~~~~~~~~~

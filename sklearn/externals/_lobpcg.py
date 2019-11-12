@@ -21,9 +21,8 @@ References
 """
 
 from __future__ import division, print_function, absolute_import
-import warnings
 import numpy as np
-from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
+from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky, orth,
                           LinAlgError)
 from scipy.sparse.linalg import aslinearoperator
 
@@ -31,6 +30,7 @@ __all__ = ['lobpcg']
 
 
 def bmat(*args, **kwargs):
+    import warnings
     with warnings.catch_warnings(record=True):
         warnings.filterwarnings(
             'ignore', '.*the matrix subclass is not the recommended way.*')
@@ -42,19 +42,20 @@ def _save(ar, fileName):
     np.savetxt(fileName, ar)
 
 
-def _report_nonhermitian(M, a, b, name):
+def _report_nonhermitian(M, name):
     """
-    Report if `M` is not a hermitian matrix given the tolerances `a`, `b`.
+    Report if `M` is not a hermitian matrix given its type.
     """
     from scipy.linalg import norm
 
     md = M - M.T.conj()
 
     nmd = norm(md, 1)
-    tol = np.spacing(max(10**a, (10**b)*norm(M, 1)))
+    tol = 10 * np.finfo(M.dtype).eps
+    tol = max(tol, tol * norm(M, 1))
     if nmd > tol:
-        print('matrix %s is not sufficiently Hermitian for a=%d, b=%d:'
-              % (name, a, b))
+        print('matrix %s of the type %s is not sufficiently Hermitian:'
+              % (name, M.dtype))
         print('condition: %.e < %e' % (nmd, tol))
 
 
@@ -88,29 +89,42 @@ def _makeOperator(operatorInput, expectedShape):
 
 def _applyConstraints(blockVectorV, factYBY, blockVectorBY, blockVectorY):
     """Changes blockVectorV in place."""
-    gramYBV = np.dot(blockVectorBY.T.conj(), blockVectorV)
-    tmp = cho_solve(factYBY, gramYBV)
+    YBV = np.dot(blockVectorBY.T.conj(), blockVectorV)
+    tmp = cho_solve(factYBY, YBV)
     blockVectorV -= np.dot(blockVectorY, tmp)
 
 
 def _b_orthonormalize(B, blockVectorV, blockVectorBV=None, retInvR=False):
+    """B-orthonormalize the given block vector using Cholesky."""
+    normalization = blockVectorV.max(axis=0)+np.finfo(blockVectorV.dtype).eps
+    blockVectorV = blockVectorV / normalization
     if blockVectorBV is None:
         if B is not None:
             blockVectorBV = B(blockVectorV)
         else:
             blockVectorBV = blockVectorV  # Shared data!!!
-    gramVBV = np.dot(blockVectorV.T.conj(), blockVectorBV)
-    gramVBV = cholesky(gramVBV)
-    gramVBV = inv(gramVBV, overwrite_a=True)
-    # gramVBV is now R^{-1}.
-    blockVectorV = np.dot(blockVectorV, gramVBV)
-    if B is not None:
-        blockVectorBV = np.dot(blockVectorBV, gramVBV)
     else:
+        blockVectorBV = blockVectorBV / normalization
+    VBV = np.matmul(blockVectorV.T.conj(), blockVectorBV)
+    try:
+        # VBV is a Cholesky factor from now on...
+        VBV = cholesky(VBV, overwrite_a=True)
+        VBV = inv(VBV, overwrite_a=True)
+        blockVectorV = np.matmul(blockVectorV, VBV)
+        # blockVectorV = (cho_solve((VBV.T, True), blockVectorV.T)).T
+        if B is not None:
+            blockVectorBV = np.matmul(blockVectorBV, VBV)
+            # blockVectorBV = (cho_solve((VBV.T, True), blockVectorBV.T)).T
+        else:
+            blockVectorBV = None
+    except LinAlgError:
+        # raise ValueError('Cholesky has failed')
+        blockVectorV = None
         blockVectorBV = None
+        VBV = None
 
     if retInvR:
-        return blockVectorV, blockVectorBV, gramVBV
+        return blockVectorV, blockVectorBV, VBV, normalization
     else:
         return blockVectorV, blockVectorBV
 
@@ -141,113 +155,65 @@ def lobpcg(A, X,
     A : {sparse matrix, dense matrix, LinearOperator}
         The symmetric linear operator of the problem, usually a
         sparse matrix.  Often called the "stiffness matrix".
-    X : array_like
-        Initial approximation to the k eigenvectors. If A has
-        shape=(n,n) then X should have shape shape=(n,k).
+    X : ndarray, float32 or float64
+        Initial approximation to the ``k`` eigenvectors (non-sparse). If `A`
+        has ``shape=(n,n)`` then `X` should have shape ``shape=(n,k)``.
     B : {dense matrix, sparse matrix, LinearOperator}, optional
-        the right hand side operator in a generalized eigenproblem.
-        by default, B = Identity
-        often called the "mass matrix"
+        The right hand side operator in a generalized eigenproblem.
+        By default, ``B = Identity``.  Often called the "mass matrix".
     M : {dense matrix, sparse matrix, LinearOperator}, optional
-        preconditioner to A; by default M = Identity
-        M should approximate the inverse of A
-    Y : array_like, optional
-        n-by-sizeY matrix of constraints, sizeY < n
+        Preconditioner to `A`; by default ``M = Identity``.
+        `M` should approximate the inverse of `A`.
+    Y : ndarray, float32 or float64, optional
+        n-by-sizeY matrix of constraints (non-sparse), sizeY < n
         The iterations will be performed in the B-orthogonal complement
         of the column-space of Y. Y must be full rank.
     tol : scalar, optional
-        Solver tolerance (stopping criterion)
-        by default: tol=n*sqrt(eps)
-    maxiter : integer, optional
-        maximum number of iterations
-        by default: maxiter=min(n,20)
+        Solver tolerance (stopping criterion).
+        The default is ``tol=n*sqrt(eps)``.
+    maxiter : int, optional
+        Maximum number of iterations.  The default is ``maxiter=min(n, 20)``.
     largest : bool, optional
-        when True, solve for the largest eigenvalues, otherwise the smallest
-    verbosityLevel : integer, optional
-        controls solver output.  default: verbosityLevel = 0.
-    retLambdaHistory : boolean, optional
-        whether to return eigenvalue history
-    retResidualNormsHistory : boolean, optional
-        whether to return history of residual norms
+        When True, solve for the largest eigenvalues, otherwise the smallest.
+    verbosityLevel : int, optional
+        Controls solver output.  The default is ``verbosityLevel=0``.
+    retLambdaHistory : bool, optional
+        Whether to return eigenvalue history.  Default is False.
+    retResidualNormsHistory : bool, optional
+        Whether to return history of residual norms.  Default is False.
 
     Returns
     -------
-    w : array
-        Array of k eigenvalues
-    v : array
-        An array of k eigenvectors.  V has the same shape as X.
-    lambdas : list of arrays, optional
+    w : ndarray
+        Array of ``k`` eigenvalues
+    v : ndarray
+        An array of ``k`` eigenvectors.  `v` has the same shape as `X`.
+    lambdas : list of ndarray, optional
         The eigenvalue history, if `retLambdaHistory` is True.
-    rnorms : list of arrays, optional
+    rnorms : list of ndarray, optional
         The history of residual norms, if `retResidualNormsHistory` is True.
-
-    Examples
-    --------
-
-    Solve A x = lambda B x with constraints and preconditioning.
-
-    >>> from scipy.sparse import spdiags, issparse
-    >>> from scipy.sparse.linalg import lobpcg, LinearOperator
-    >>> n = 100
-    >>> vals = [np.arange(n, dtype=np.float64) + 1]
-    >>> A = spdiags(vals, 0, n, n)
-    >>> A.toarray()
-    array([[  1.,   0.,   0., ...,   0.,   0.,   0.],
-           [  0.,   2.,   0., ...,   0.,   0.,   0.],
-           [  0.,   0.,   3., ...,   0.,   0.,   0.],
-           ...,
-           [  0.,   0.,   0., ...,  98.,   0.,   0.],
-           [  0.,   0.,   0., ...,   0.,  99.,   0.],
-           [  0.,   0.,   0., ...,   0.,   0., 100.]])
-
-    Constraints.
-
-    >>> Y = np.eye(n, 3)
-
-    Initial guess for eigenvectors, should have linearly independent
-    columns. Column dimension = number of requested eigenvalues.
-
-    >>> X = np.random.rand(n, 3)
-
-    Preconditioner -- inverse of A (as an abstract linear operator).
-
-    >>> invA = spdiags([1./vals[0]], 0, n, n)
-    >>> def precond( x ):
-    ...     return invA  * x
-    >>> M = LinearOperator(matvec=precond, shape=(n, n), dtype=float)
-
-    Here, ``invA`` could of course have been used directly as a preconditioner.
-    Let us then solve the problem:
-
-    >>> eigs, vecs = lobpcg(A, X, Y=Y, M=M, largest=False)
-    >>> eigs
-    array([4., 5., 6.])
-
-    Note that the vectors passed in Y are the eigenvectors of the 3 smallest
-    eigenvalues. The results returned are orthogonal to those.
 
     Notes
     -----
-    If both retLambdaHistory and retResidualNormsHistory are True,
+    If both ``retLambdaHistory`` and ``retResidualNormsHistory`` are True,
     the return tuple has the following format
-    (lambda, V, lambda history, residual norms history).
+    ``(lambda, V, lambda history, residual norms history)``.
 
     In the following ``n`` denotes the matrix size and ``m`` the number
     of required eigenvalues (smallest or largest).
 
-    The LOBPCG code internally solves eigenproblems of the size 3``m`` on every
+    The LOBPCG code internally solves eigenproblems of the size ``3m`` on every
     iteration by calling the "standard" dense eigensolver, so if ``m`` is not
     small enough compared to ``n``, it does not make sense to call the LOBPCG
-    code, but rather one should use the "standard" eigensolver,
-    e.g. numpy or scipy function in this case.
-    If one calls the LOBPCG algorithm for 5``m``>``n``,
-    it will most likely break internally, so the code tries to call
-    the standard function instead.
+    code, but rather one should use the "standard" eigensolver, e.g. numpy or
+    scipy function in this case.
+    If one calls the LOBPCG algorithm for ``5m > n``, it will most likely break
+    internally, so the code tries to call the standard function instead.
 
-    It is not that n should be large for the LOBPCG to work, but rather the
-    ratio ``n``/``m`` should be large. It you call LOBPCG with ``m``=1
-    and ``n``=10, it works though ``n`` is small. The method is intended
-    for extremely large ``n``/``m``, see e.g., reference [28] in
+    It is not that ``n`` should be large for the LOBPCG to work, but rather the
+    ratio ``n / m`` should be large. It you call LOBPCG with ``m=1``
+    and ``n=10``, it works though ``n`` is small. The method is intended
+    for extremely large ``n / m``, see e.g., reference [28] in
     https://arxiv.org/abs/0705.2626
 
     The convergence speed depends basically on two factors:
@@ -260,13 +226,7 @@ def lobpcg(A, X,
        directory) is ill-conditioned for large ``n``, so convergence will be
        slow, unless efficient preconditioning is used. For this specific
        problem, a good simple preconditioner function would be a linear solve
-       for A, which is easy to code since A is tridiagonal.
-
-    *Acknowledgements*
-
-    lobpcg.py code was written by Robert Cimrman.
-    Many thanks belong to Andrew Knyazev, the author of the algorithm,
-    for lots of advice and support.
+       for `A`, which is easy to code since A is tridiagonal.
 
     References
     ----------
@@ -282,6 +242,62 @@ def lobpcg(A, X,
 
     .. [3] A. V. Knyazev's C and MATLAB implementations:
            https://bitbucket.org/joseroman/blopex
+
+    Examples
+    --------
+
+    Solve ``A x = lambda x`` with constraints and preconditioning.
+
+    >>> import numpy as np
+    >>> from scipy.sparse import spdiags, issparse
+    >>> from scipy.sparse.linalg import lobpcg, LinearOperator
+    >>> n = 100
+    >>> vals = np.arange(1, n + 1)
+    >>> A = spdiags(vals, 0, n, n)
+    >>> A.toarray()
+    array([[  1.,   0.,   0., ...,   0.,   0.,   0.],
+           [  0.,   2.,   0., ...,   0.,   0.,   0.],
+           [  0.,   0.,   3., ...,   0.,   0.,   0.],
+           ...,
+           [  0.,   0.,   0., ...,  98.,   0.,   0.],
+           [  0.,   0.,   0., ...,   0.,  99.,   0.],
+           [  0.,   0.,   0., ...,   0.,   0., 100.]])
+
+    Constraints:
+
+    >>> Y = np.eye(n, 3)
+
+    Initial guess for eigenvectors, should have linearly independent
+    columns. Column dimension = number of requested eigenvalues.
+
+    >>> X = np.random.rand(n, 3)
+
+    Preconditioner in the inverse of A in this example:
+
+    >>> invA = spdiags([1./vals], 0, n, n)
+
+    The preconditiner must be defined by a function:
+
+    >>> def precond( x ):
+    ...     return invA @ x
+
+    The argument x of the preconditioner function is a matrix inside `lobpcg`,
+    thus the use of matrix-matrix product ``@``.
+
+    The preconditioner function is passed to lobpcg as a `LinearOperator`:
+
+    >>> M = LinearOperator(matvec=precond, matmat=precond,
+    ...                    shape=(n, n), dtype=float)
+
+    Let us now solve the eigenvalue problem for the matrix A:
+
+    >>> eigenvalues, _ = lobpcg(A, X, Y=Y, M=M, largest=False)
+    >>> eigenvalues
+    array([4., 5., 6.])
+
+    Note that the vectors passed in Y are the eigenvectors of the 3 smallest
+    eigenvalues. The results returned are orthogonal to those.
+
     """
     blockVectorX = X
     blockVectorY = Y
@@ -411,6 +427,8 @@ def lobpcg(A, X,
     blockVectorBP = None
 
     iterationNumber = -1
+    restart = True
+    explicitGramFlag = False
     while iterationNumber < maxIterations:
         iterationNumber += 1
         if verbosityLevel > 0:
@@ -418,13 +436,12 @@ def lobpcg(A, X,
 
         if B is not None:
             aux = blockVectorBX * _lambda[np.newaxis, :]
-
         else:
             aux = blockVectorX * _lambda[np.newaxis, :]
 
         blockVectorR = blockVectorAX - aux
 
-        aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
+        aux = np.sum(blockVectorR.conj() * blockVectorR, 0)
         residualNorms = np.sqrt(aux)
 
         residualNormsHistory.append(residualNorms)
@@ -468,8 +485,20 @@ def lobpcg(A, X,
                               gramYBY, blockVectorBY, blockVectorY)
 
         ##
-        # B-orthonormalize the preconditioned residuals.
+        # B-orthogonalize the preconditioned residuals to X.
+        if B is not None:
+            activeBlockVectorR = activeBlockVectorR - \
+                np.matmul(blockVectorX,
+                          np.matmul(blockVectorBX.T.conj(),
+                                    activeBlockVectorR))
+        else:
+            activeBlockVectorR = activeBlockVectorR - \
+                np.matmul(blockVectorX,
+                          np.matmul(blockVectorX.T.conj(),
+                                    activeBlockVectorR))
 
+        ##
+        # B-orthonormalize the preconditioned residuals.
         aux = _b_orthonormalize(B, activeBlockVectorR)
         activeBlockVectorR, activeBlockVectorBR = aux
 
@@ -479,80 +508,112 @@ def lobpcg(A, X,
             if B is not None:
                 aux = _b_orthonormalize(B, activeBlockVectorP,
                                         activeBlockVectorBP, retInvR=True)
-                activeBlockVectorP, activeBlockVectorBP, invR = aux
-                activeBlockVectorAP = np.dot(activeBlockVectorAP, invR)
-
+                activeBlockVectorP, activeBlockVectorBP, invR, normal = aux
             else:
                 aux = _b_orthonormalize(B, activeBlockVectorP, retInvR=True)
-                activeBlockVectorP, _, invR = aux
+                activeBlockVectorP, _, invR, normal = aux
+            # Function _b_orthonormalize returns None if Cholesky fails
+            if activeBlockVectorP is not None:
+                activeBlockVectorAP = activeBlockVectorAP / normal
                 activeBlockVectorAP = np.dot(activeBlockVectorAP, invR)
+                restart = False
+            else:
+                restart = True
 
         ##
         # Perform the Rayleigh Ritz Procedure:
         # Compute symmetric Gram matrices:
 
-        if B is not None:
-            xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
-            waw = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
-            xbw = np.dot(blockVectorX.T.conj(), activeBlockVectorBR)
-
-            if iterationNumber > 0:
-                xap = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
-                wap = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
-                pap = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
-                xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
-                wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
-
-                gramA = bmat([[np.diag(_lambda), xaw, xap],
-                              [xaw.T.conj(), waw, wap],
-                              [xap.T.conj(), wap.T.conj(), pap]])
-
-                gramB = bmat([[ident0, xbw, xbp],
-                              [xbw.T.conj(), ident, wbp],
-                              [xbp.T.conj(), wbp.T.conj(), ident]])
-            else:
-                gramA = bmat([[np.diag(_lambda), xaw],
-                              [xaw.T.conj(), waw]])
-                gramB = bmat([[ident0, xbw],
-                              [xbw.T.conj(), ident]])
-
+        if activeBlockVectorAR.dtype == 'float32':
+            myeps = 1
+        elif activeBlockVectorR.dtype == 'float32':
+            myeps = 1e-4
         else:
-            xaw = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
-            waw = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
-            xbw = np.dot(blockVectorX.T.conj(), activeBlockVectorR)
+            myeps = 1e-8
 
-            if iterationNumber > 0:
-                xap = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
-                wap = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
-                pap = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
-                xbp = np.dot(blockVectorX.T.conj(), activeBlockVectorP)
-                wbp = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorP)
+        if residualNorms.max() > myeps and not explicitGramFlag:
+            explicitGramFlag = False
+        else:
+            # Once explicitGramFlag, forever explicitGramFlag.
+            explicitGramFlag = True
 
-                gramA = bmat([[np.diag(_lambda), xaw, xap],
-                              [xaw.T.conj(), waw, wap],
-                              [xap.T.conj(), wap.T.conj(), pap]])
+        # Shared memory assingments to simplify the code
+        if B is None:
+            blockVectorBX = blockVectorX
+            activeBlockVectorBR = activeBlockVectorR
+            if not restart:
+                activeBlockVectorBP = activeBlockVectorP
 
-                gramB = bmat([[ident0, xbw, xbp],
-                              [xbw.T.conj(), ident, wbp],
-                              [xbp.T.conj(), wbp.T.conj(), ident]])
+        # Common submatrices:
+        gramXAR = np.dot(blockVectorX.T.conj(), activeBlockVectorAR)
+        gramRAR = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAR)
+
+        if explicitGramFlag:
+            gramRAR = (gramRAR + gramRAR.T.conj())/2
+            gramXAX = np.dot(blockVectorX.T.conj(), blockVectorAX)
+            gramXAX = (gramXAX + gramXAX.T.conj())/2
+            gramXBX = np.dot(blockVectorX.T.conj(), blockVectorBX)
+            gramRBR = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBR)
+            gramXBR = np.dot(blockVectorX.T.conj(), activeBlockVectorBR)
+        else:
+            gramXAX = np.diag(_lambda)
+            gramXBX = ident0
+            gramRBR = ident
+            gramXBR = np.zeros((sizeX, currentBlockSize), dtype=A.dtype)
+
+        def _handle_gramA_gramB_verbosity(gramA, gramB):
+            if verbosityLevel > 0:
+                _report_nonhermitian(gramA, 'gramA')
+                _report_nonhermitian(gramB, 'gramB')
+            if verbosityLevel > 10:
+                # Note: not documented, but leave it in here for now
+                np.savetxt('gramA.txt', gramA)
+                np.savetxt('gramB.txt', gramB)
+
+        if not restart:
+            gramXAP = np.dot(blockVectorX.T.conj(), activeBlockVectorAP)
+            gramRAP = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorAP)
+            gramPAP = np.dot(activeBlockVectorP.T.conj(), activeBlockVectorAP)
+            gramXBP = np.dot(blockVectorX.T.conj(), activeBlockVectorBP)
+            gramRBP = np.dot(activeBlockVectorR.T.conj(), activeBlockVectorBP)
+            if explicitGramFlag:
+                gramPAP = (gramPAP + gramPAP.T.conj())/2
+                gramPBP = np.dot(activeBlockVectorP.T.conj(),
+                                 activeBlockVectorBP)
             else:
-                gramA = bmat([[np.diag(_lambda), xaw],
-                              [xaw.T.conj(), waw]])
-                gramB = bmat([[ident0, xbw],
-                              [xbw.T.conj(), ident]])
+                gramPBP = ident
 
-        if verbosityLevel > 0:
-            _report_nonhermitian(gramA, 3, -1, 'gramA')
-            _report_nonhermitian(gramB, 3, -1, 'gramB')
+            gramA = bmat([[gramXAX, gramXAR, gramXAP],
+                          [gramXAR.T.conj(), gramRAR, gramRAP],
+                          [gramXAP.T.conj(), gramRAP.T.conj(), gramPAP]])
+            gramB = bmat([[gramXBX, gramXBR, gramXBP],
+                          [gramXBR.T.conj(), gramRBR, gramRBP],
+                          [gramXBP.T.conj(), gramRBP.T.conj(), gramPBP]])
 
-        if verbosityLevel > 10:
-            _save(gramA, 'gramA')
-            _save(gramB, 'gramB')
+            _handle_gramA_gramB_verbosity(gramA, gramB)
 
-        # Solve the generalized eigenvalue problem.
-        _lambda, eigBlockVector = eigh(gramA, gramB, check_finite=False)
+            try:
+                _lambda, eigBlockVector = eigh(gramA, gramB,
+                                               check_finite=False)
+            except LinAlgError:
+                # try again after dropping the direction vectors P from RR
+                restart = True
+
+        if restart:
+            gramA = bmat([[gramXAX, gramXAR],
+                          [gramXAR.T.conj(), gramRAR]])
+            gramB = bmat([[gramXBX, gramXBR],
+                          [gramXBR.T.conj(), gramRBR]])
+
+            _handle_gramA_gramB_verbosity(gramA, gramB)
+
+            try:
+                _lambda, eigBlockVector = eigh(gramA, gramB,
+                                               check_finite=False)
+            except LinAlgError:
+                raise ValueError('eigh has failed in lobpcg iterations')
+
         ii = _get_indx(_lambda, sizeX, largest)
-
         if verbosityLevel > 10:
             print(ii)
             print(_lambda)
@@ -565,7 +626,7 @@ def lobpcg(A, X,
         if verbosityLevel > 10:
             print('lambda:', _lambda)
 #         # Normalize eigenvectors!
-#         aux = np.sum( eigBlockVector.conjugate() * eigBlockVector, 0 )
+#         aux = np.sum( eigBlockVector.conj() * eigBlockVector, 0 )
 #         eigVecNorms = np.sqrt( aux )
 #         eigBlockVector = eigBlockVector / eigVecNorms[np.newaxis, :]
 #         eigBlockVector, aux = _b_orthonormalize( B, eigBlockVector )
@@ -575,7 +636,7 @@ def lobpcg(A, X,
 
         # Compute Ritz vectors.
         if B is not None:
-            if iterationNumber > 0:
+            if not restart:
                 eigBlockVectorX = eigBlockVector[:sizeX]
                 eigBlockVectorR = eigBlockVector[sizeX:sizeX+currentBlockSize]
                 eigBlockVectorP = eigBlockVector[sizeX+currentBlockSize:]
@@ -608,7 +669,7 @@ def lobpcg(A, X,
             blockVectorP, blockVectorAP, blockVectorBP = pp, app, bpp
 
         else:
-            if iterationNumber > 0:
+            if not restart:
                 eigBlockVectorX = eigBlockVector[:sizeX]
                 eigBlockVectorR = eigBlockVector[sizeX:sizeX+currentBlockSize]
                 eigBlockVectorP = eigBlockVector[sizeX+currentBlockSize:]
@@ -642,8 +703,13 @@ def lobpcg(A, X,
 
     blockVectorR = blockVectorAX - aux
 
-    aux = np.sum(blockVectorR.conjugate() * blockVectorR, 0)
+    aux = np.sum(blockVectorR.conj() * blockVectorR, 0)
     residualNorms = np.sqrt(aux)
+
+    # Future work: Need to add Postprocessing here:
+    # Making sure eigenvectors "exactly" satisfy the blockVectorY constrains?
+    # Making sure eigenvecotrs are "exactly" othonormalized by final "exact" RR
+    # Computing the actual true residuals
 
     if verbosityLevel > 0:
         print('final eigenvalue:', _lambda)

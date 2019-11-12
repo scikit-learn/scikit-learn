@@ -5,15 +5,15 @@ from itertools import product
 
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -22,17 +22,17 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.ridge import ridge_regression
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.ridge import _RidgeGCV
-from sklearn.linear_model.ridge import RidgeCV
-from sklearn.linear_model.ridge import RidgeClassifier
-from sklearn.linear_model.ridge import RidgeClassifierCV
-from sklearn.linear_model.ridge import _solve_cholesky
-from sklearn.linear_model.ridge import _solve_cholesky_kernel
-from sklearn.linear_model.ridge import _check_gcv_mode
-from sklearn.linear_model.ridge import _X_CenterStackOp
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model import Ridge
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model._ridge import _solve_cholesky
+from sklearn.linear_model._ridge import _solve_cholesky_kernel
+from sklearn.linear_model._ridge import _check_gcv_mode
+from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -466,6 +466,33 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
+def test_ridge_loo_cv_asym_scoring():
+    # checking on asymmetric scoring
+    scoring = 'explained_variance'
+    n_samples, n_features = 10, 5
+    n_targets = 1
+    X, y = _make_sparse_offset_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets,
+        random_state=0, shuffle=False, noise=1, n_informative=5
+    )
+
+    alphas = [1e-3, .1, 1., 10., 1e3]
+    loo_ridge = RidgeCV(cv=n_samples, fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    gcv_ridge = RidgeCV(fit_intercept=True,
+                        alphas=alphas, scoring=scoring,
+                        normalize=True)
+
+    loo_ridge.fit(X, y)
+    gcv_ridge.fit(X, y)
+
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('n_features', [8, 20])
@@ -495,10 +522,10 @@ def test_ridge_gcv_sample_weights(
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
-    # ignore warning from GridSearchCV: DeprecationWarning: The default of the
-    # `iid` parameter will change from True to False in version 0.22 and will
-    # be removed in 0.24
-    with ignore_warnings(category=DeprecationWarning):
+    # ignore warning from GridSearchCV: FutureWarning: The default
+    # of the `iid` parameter will change from True to False in version 0.22
+    # and will be removed in 0.24
+    with ignore_warnings(category=FutureWarning):
         kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
@@ -1008,26 +1035,61 @@ def test_n_iter():
         assert reg.n_iter_ is None
 
 
-def test_ridge_fit_intercept_sparse():
-    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
-                           bias=10., random_state=42)
-
+@pytest.mark.parametrize('solver', ['sparse_cg', 'auto'])
+def test_ridge_fit_intercept_sparse(solver):
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['sag', 'sparse_cg']:
-        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        dense.fit(X, y)
-        with pytest.warns(None) as record:
-            sparse.fit(X_csr, y)
-        assert len(record) == 0
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
-        assert_array_almost_equal(dense.coef_, sparse.coef_)
+    # for now only sparse_cg can correctly fit an intercept with sparse X with
+    # default tol and max_iter.
+    # sag is tested separately in test_ridge_fit_intercept_sparse_sag
+    # because it requires more iterations and should raise a warning if default
+    # max_iter is used.
+    # other solvers raise an exception, as checked in
+    # test_ridge_fit_intercept_sparse_error
+    #
+    # "auto" should switch to "sparse_cg" when X is sparse
+    # so the reference we use for both ("auto" and "sparse_cg") is
+    # Ridge(solver="sparse_cg"), fitted using the dense representation (note
+    # that "sparse_cg" can fit sparse or dense data)
+    dense_ridge = Ridge(solver='sparse_cg')
+    sparse_ridge = Ridge(solver=solver)
+    dense_ridge.fit(X, y)
+    with pytest.warns(None) as record:
+        sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_)
 
-    # test the solver switch and the corresponding warning
-    for solver in ['saga', 'lsqr']:
-        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        assert_raises_regex(ValueError, "In Ridge,", sparse.fit, X_csr, y)
+
+@pytest.mark.parametrize('solver', ['saga', 'lsqr', 'svd', 'cholesky'])
+def test_ridge_fit_intercept_sparse_error(solver):
+    X, y = _make_sparse_offset_regression(n_features=20, random_state=0)
+    X_csr = sp.csr_matrix(X)
+    sparse_ridge = Ridge(solver=solver)
+    err_msg = "solver='{}' does not support".format(solver)
+    with pytest.raises(ValueError, match=err_msg):
+        sparse_ridge.fit(X_csr, y)
+
+
+def test_ridge_fit_intercept_sparse_sag():
+    X, y = _make_sparse_offset_regression(
+        n_features=5, n_samples=20, random_state=0, X_offset=5.)
+    X_csr = sp.csr_matrix(X)
+
+    params = dict(alpha=1., solver='sag', fit_intercept=True,
+                  tol=1e-10, max_iter=100000)
+    dense_ridge = Ridge(**params)
+    sparse_ridge = Ridge(**params)
+    dense_ridge.fit(X, y)
+    with pytest.warns(None) as record:
+        sparse_ridge.fit(X_csr, y)
+    assert len(record) == 0
+    assert np.allclose(dense_ridge.intercept_, sparse_ridge.intercept_,
+                       rtol=1e-4)
+    assert np.allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
+    with pytest.warns(UserWarning, match='"sag" solver requires.*'):
+        Ridge(solver='sag').fit(X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])
@@ -1113,7 +1175,7 @@ def test_dtype_match(solver):
     assert coef_64.dtype == X_64.dtype
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
-    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-4)
+    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-4, atol=5e-4)
 
 
 def test_dtype_match_cholesky():
@@ -1175,3 +1237,13 @@ def test_ridge_regression_dtype_stability(solver, seed):
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
     assert_allclose(results[np.float32], results[np.float64], atol=atol)
+
+
+def test_ridge_sag_with_X_fortran():
+    # check that Fortran array are converted when using SAG solver
+    X, y = make_regression(random_state=42)
+    # for the order of X and y to not be C-ordered arrays
+    X = np.asfortranarray(X)
+    X = X[::2, :]
+    y = y[::2]
+    Ridge(solver='sag').fit(X, y)

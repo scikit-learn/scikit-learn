@@ -23,6 +23,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
+from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -122,7 +123,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -176,8 +177,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 base_estimator_sample_weight = None
             else:
                 if sample_weight is not None:
-                    sample_weight = check_array(sample_weight, ensure_2d=False)
-                    check_consistent_length(y, sample_weight)
+                    sample_weight = _check_sample_weight(sample_weight, X)
                 base_estimator_sample_weight = sample_weight
             for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
@@ -216,7 +216,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples, n_classes)
             The predicted probas.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
@@ -244,7 +244,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         C : array, shape (n_samples,)
             The predicted class.
         """
-        check_is_fitted(self, ["classes_", "calibrated_classifiers_"])
+        check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
@@ -326,7 +326,7 @@ class _CalibratedClassifier:
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns
@@ -413,7 +413,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y : ndarray, shape (n_samples,)
         The targets.
 
-    sample_weight : array-like, shape = [n_samples] or None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
 
     Returns
@@ -452,9 +452,8 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def grad(AB):
         # gradient of the objective function
-        E = np.exp(AB[0] * F + AB[1])
-        P = 1. / (1. + E)
-        TEP_minus_T1P = P * (T * E - T1)
+        P = expit(-(AB[0] * F + AB[1]))
+        TEP_minus_T1P = T - P
         if sample_weight is not None:
             TEP_minus_T1P *= sample_weight
         dA = np.dot(TEP_minus_T1P, F)
@@ -466,7 +465,7 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     return AB_[0], AB_[1]
 
 
-class _SigmoidCalibration(BaseEstimator, RegressorMixin):
+class _SigmoidCalibration(RegressorMixin, BaseEstimator):
     """Sigmoid regression model.
 
     Attributes
@@ -488,7 +487,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         y : array-like, shape (n_samples,)
             Training target.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
 
         Returns

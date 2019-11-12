@@ -6,13 +6,13 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -20,7 +20,7 @@ from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
-from sklearn.linear_model import sgd_fast
+from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -1603,13 +1603,13 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     y = random_state.choice(20, 500)
 
     # Begin by fitting a SGD classifier sequentially
-    clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
+    clf_sequential = SGDClassifier(max_iter=1000, n_jobs=1,
                                    random_state=42)
     clf_sequential.fit(X, y)
 
     # Fit a SGDClassifier using the specified backend, and make sure the
     # coefficients are equal to those obtained using a sequential fit
-    clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+    clf_parallel = SGDClassifier(max_iter=1000, n_jobs=4,
                                  random_state=42)
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)

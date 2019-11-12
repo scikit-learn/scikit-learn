@@ -9,28 +9,30 @@ import pytest
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
 from sklearn.metrics import log_loss
-from sklearn.metrics.scorer import get_scorer
+from sklearn.metrics import get_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
-from sklearn.utils.testing import skip_if_no_parallel
+from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import ChangedBehaviorWarning
-from sklearn.linear_model.logistic import (
+from sklearn.linear_model._logistic import (
     LogisticRegression,
     logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
@@ -128,8 +130,7 @@ def test_logistic_cv_mock_scorer():
 
     # reset mock_scorer
     mock_scorer.calls = 0
-    with pytest.warns(ChangedBehaviorWarning):
-        custom_score = lr.score(X, lr.predict(X))
+    custom_score = lr.score(X, lr.predict(X))
 
     assert custom_score == mock_scorer.scores[0]
     assert mock_scorer.calls == 1
@@ -373,9 +374,9 @@ def test_consistency_path():
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
+            X, y, Cs=Cs, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0, multi_class='ovr')
-        lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
+        lr = LogisticRegression(C=Cs[0], tol=1e-4,
                                 intercept_scaling=10000., random_state=0,
                                 multi_class='ovr', solver=solver)
         lr.fit(X, y)
@@ -596,9 +597,9 @@ def test_logistic_cv_sparse():
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
-    clf = LogisticRegressionCV(fit_intercept=True)
+    clf = LogisticRegressionCV()
     clf.fit(X, y)
-    clfs = LogisticRegressionCV(fit_intercept=True)
+    clfs = LogisticRegressionCV()
     clfs.fit(csr, y)
     assert_array_almost_equal(clfs.coef_, clf.coef_)
     assert_array_almost_equal(clfs.intercept_, clf.intercept_)
@@ -1295,34 +1296,48 @@ def test_saga_vs_liblinear():
 
 
 @pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
-@pytest.mark.parametrize('solver', ['newton-cg', 'saga'])
-def test_dtype_match(solver, multi_class):
+@pytest.mark.parametrize('solver', ['newton-cg', 'liblinear', 'saga'])
+@pytest.mark.parametrize('fit_intercept', [False, True])
+def test_dtype_match(solver, multi_class, fit_intercept):
     # Test that np.float32 input data is not cast to np.float64 when possible
+    # and that the output is approximately the same no matter the input format.
+
+    if solver == 'liblinear' and multi_class == 'multinomial':
+        pytest.skip('liblinear does not support multinomial logistic')
+
+    out32_type = np.float64 if solver == 'liblinear' else np.float32
 
     X_32 = np.array(X).astype(np.float32)
     y_32 = np.array(Y1).astype(np.float32)
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
+    X_sparse_64 = sp.csr_matrix(X, dtype=np.float64)
     solver_tol = 5e-4
 
     lr_templ = LogisticRegression(
         solver=solver, multi_class=multi_class,
-        random_state=42, tol=solver_tol, fit_intercept=True)
-    # Check type consistency
+        random_state=42, tol=solver_tol, fit_intercept=fit_intercept)
+
+    # Check 32-bit type consistency
     lr_32 = clone(lr_templ)
     lr_32.fit(X_32, y_32)
-    assert lr_32.coef_.dtype == X_32.dtype
+    assert lr_32.coef_.dtype == out32_type
 
-    # check consistency with sparsity
+    # Check 32-bit type consistency with sparsity
     lr_32_sparse = clone(lr_templ)
     lr_32_sparse.fit(X_sparse_32, y_32)
-    assert lr_32_sparse.coef_.dtype == X_sparse_32.dtype
+    assert lr_32_sparse.coef_.dtype == out32_type
 
-    # Check accuracy consistency
+    # Check 64-bit type consistency
     lr_64 = clone(lr_templ)
     lr_64.fit(X_64, y_64)
-    assert lr_64.coef_.dtype == X_64.dtype
+    assert lr_64.coef_.dtype == np.float64
+
+    # Check 64-bit type consistency with sparsity
+    lr_64_sparse = clone(lr_templ)
+    lr_64_sparse.fit(X_sparse_64, y_64)
+    assert lr_64_sparse.coef_.dtype == np.float64
 
     # solver_tol bounds the norm of the loss gradient
     # dw ~= inv(H)*grad ==> |dw| ~= |inv(H)| * solver_tol, where H - hessian
@@ -1339,7 +1354,16 @@ def test_dtype_match(solver, multi_class):
         # FIXME
         atol = 1e-2
 
+    # Check accuracy consistency
     assert_allclose(lr_32.coef_, lr_64.coef_.astype(np.float32), atol=atol)
+
+    if solver == 'saga' and fit_intercept:
+        # FIXME: SAGA on sparse data fits the intercept inaccurately with the
+        # default tol and max_iter parameters.
+        atol = 1e-1
+
+    assert_allclose(lr_32.coef_, lr_32_sparse.coef_, atol=atol)
+    assert_allclose(lr_64.coef_, lr_64_sparse.coef_, atol=atol)
 
 
 def test_warm_start_converge_LR():
@@ -1473,7 +1497,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
         X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
                                    random_state=0)
 
-    cv = StratifiedKFold(5, random_state=0)
+    cv = StratifiedKFold(5)
 
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
@@ -1504,7 +1528,7 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
     X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
                                random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    cv = StratifiedKFold(5, random_state=0)
+    cv = StratifiedKFold(5)
 
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
@@ -1705,7 +1729,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 def test_logistic_regression_path_deprecation():
 
-    assert_warns_message(DeprecationWarning,
+    assert_warns_message(FutureWarning,
                          "logistic_regression_path was deprecated",
                          logistic_regression_path, X, Y1)
 
@@ -1737,3 +1761,66 @@ def test_penalty_none(solver):
         "LogisticRegressionCV",
         lr.fit, X, y
     )
+
+
+@pytest.mark.parametrize(
+    "params",
+    [{'penalty': 'l1', 'dual': False, 'tol': 1e-12, 'max_iter': 1000},
+     {'penalty': 'l2', 'dual': True, 'tol': 1e-12, 'max_iter': 1000},
+     {'penalty': 'l2', 'dual': False, 'tol': 1e-12, 'max_iter': 1000}]
+)
+def test_logisticregression_liblinear_sample_weight(params):
+    # check that we support sample_weight with liblinear in all possible cases:
+    # l1-primal, l2-primal, l2-dual
+    X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                  [2, 1], [2, 1], [2, 1], [2, 1],
+                  [3, 3], [3, 3], [3, 3], [3, 3],
+                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+
+    X2 = np.vstack([X, X])
+    y2 = np.hstack([y, 3 - y])
+    sample_weight = np.ones(shape=len(y) * 2)
+    sample_weight[len(y):] = 0
+    X2, y2, sample_weight = shuffle(X2, y2, sample_weight, random_state=0)
+
+    base_clf = LogisticRegression(solver='liblinear', random_state=42)
+    base_clf.set_params(**params)
+    clf_no_weight = clone(base_clf).fit(X, y)
+    clf_with_weight = clone(base_clf).fit(X2, y2, sample_weight=sample_weight)
+
+    for method in ("predict", "predict_proba", "decision_function"):
+        X_clf_no_weight = getattr(clf_no_weight, method)(X)
+        X_clf_with_weight = getattr(clf_with_weight, method)(X)
+        assert_allclose(X_clf_no_weight, X_clf_with_weight)
+
+
+def test_scores_attribute_layout_elasticnet():
+    # Non regression test for issue #14955.
+    # when penalty is elastic net the scores_ attribute has shape
+    # (n_classes, n_Cs, n_l1_ratios)
+    # We here make sure that the second dimension indeed corresponds to Cs and
+    # the third dimension corresponds to l1_ratios.
+
+    X, y = make_classification(n_samples=1000, random_state=0)
+    cv = StratifiedKFold(n_splits=5)
+
+    l1_ratios = [.1, .9]
+    Cs = [.1, 1, 10]
+
+    lrcv = LogisticRegressionCV(penalty='elasticnet', solver='saga',
+                                l1_ratios=l1_ratios, Cs=Cs, cv=cv,
+                                random_state=0)
+    lrcv.fit(X, y)
+
+    avg_scores_lrcv = lrcv.scores_[1].mean(axis=0)  # average over folds
+
+    for i, C in enumerate(Cs):
+        for j, l1_ratio in enumerate(l1_ratios):
+
+            lr = LogisticRegression(penalty='elasticnet', solver='saga', C=C,
+                                    l1_ratio=l1_ratio, random_state=0)
+
+            avg_score_lr = cross_val_score(lr, X, y, cv=cv).mean()
+            assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)

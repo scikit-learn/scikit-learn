@@ -87,7 +87,7 @@ print()
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
     ('tfidf', TfidfTransformer()),
-    ('clf', SGDClassifier(tol=1e-3)),
+    ('clf', SGDClassifier()),
 ])
 
 # uncommenting more parameters will give better exploring power but will
