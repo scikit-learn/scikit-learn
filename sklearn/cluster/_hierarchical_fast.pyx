@@ -13,7 +13,7 @@ ctypedef np.int8_t INT8
 
 np.import_array()
 
-from sklearn.neighbors.dist_metrics cimport DistanceMetric
+from ..neighbors.dist_metrics cimport DistanceMetric
 from ..utils.fast_dict cimport IntFloatDict
 
 # C++
