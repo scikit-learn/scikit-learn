@@ -8,6 +8,9 @@ from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, auc
 from sklearn.base import ClassifierMixin
+from sklearn.exceptions import NotFittedError
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 
 @pytest.fixture(scope="module")
@@ -108,3 +111,23 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.line_.get_label() == expected_label
     assert viz.ax_.get_ylabel() == "True Positive Rate"
     assert viz.ax_.get_xlabel() == "False Positive Rate"
+
+
+def test_roc_curve_errors(pyplot, data_binary):
+    X, y = data_binary
+    clf = LogisticRegression()
+    with pytest.raises(NotFittedError):
+        plot_roc_curve(clf, X, y)
+    clf.fit(X, y)
+    disp = plot_roc_curve(clf, X, y)
+    assert disp.estimator_name == "LogisticRegression"
+
+
+def test_roc_curve_pipeline(pyplot, data_binary):
+    X, y = data_binary
+    clf = make_pipeline(StandardScaler(), LogisticRegression())
+    with pytest.raises(NotFittedError):
+        plot_roc_curve(clf, X, y)
+    clf.fit(X, y)
+    disp = plot_roc_curve(clf, X, y)
+    assert disp.estimator_name == "Pipeline"
