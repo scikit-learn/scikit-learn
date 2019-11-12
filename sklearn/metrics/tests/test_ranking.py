@@ -1086,8 +1086,8 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
 
     # Score with ties
     y_score = _sparse_random_matrix(n_components=y_true.shape[0],
-                                   n_features=y_true.shape[1],
-                                   random_state=random_state)
+                                    n_features=y_true.shape[1],
+                                    random_state=random_state)
 
     if hasattr(y_score, "toarray"):
         y_score = y_score.toarray()
