@@ -15,6 +15,12 @@ refer to
 
 .. include:: changelog_legend.inc
 
+Website update
+--------------
+
+`Our website <https://scikit-learn.org/>`_ was revamped and given a fresh
+new look. :pr:`14849` by `Thomas Fan`_.
+
 Clear definition of the public API
 ----------------------------------
 
@@ -50,6 +56,10 @@ been moved to ``_birch.py``).
     find a public tool (without leading underscore) that isn't in the API
     reference, that means it should either be private or documented. Please
     let us know by opening an issue!
+
+This work was tracked in `issue 9250
+<https://github.com/scikit-learn/scikit-learn/issues/9250>`_ and `issue
+12927 <https://github.com/scikit-learn/scikit-learn/issues/12927>`_.
 
 
 Deprecations: using ``FutureWarning`` from now on
@@ -157,13 +167,12 @@ Changelog
   `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
   :user:`mthorrell`.
 
-
 :mod:`sklearn.compose`
 ......................
 
 - |Feature|  Adds :func:`compose.make_column_selector` which is used with
   :class:`compose.ColumnTransformer` to select DataFrame columns on the basis
-  of name and dtype. :pr:`12303` by `Thomas Fan `_.
+  of name and dtype. :pr:`12303` by `Thomas Fan`_.
 
 - |Fix| Fixed a bug in :class:`compose.ColumnTransformer` which failed to
   select the proper columns when using a boolean list, with NumPy older than
@@ -303,6 +312,11 @@ Changelog
 - |Fix| :func:`ensemble.VotingClassifier.predict_proba` will no longer be
   present when `voting='hard'`. :pr:`14287` by `Thomas Fan`_.
 
+- |Fix| The `named_estimators_` attribute in :class:`ensemble.VotingClassifier`
+  and :class:`ensemble.VotingRegressor` now correctly maps to dropped estimators.
+  Previously, the `named_estimators_` mapping was incorrect whenever one of the
+  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
+
 - |Fix| Run by default
   :func:`utils.estimator_checks.check_estimator` on both
   :class:`ensemble.VotingClassifier` and :class:`ensemble.VotingRegressor`. It
@@ -412,7 +426,7 @@ Changelog
   k-Nearest Neighbors. :issue:`12852` by :user:`Ashim Bhattarai <ashimb9>` and
   `Thomas Fan`_.
 
-- |Enhancement| Adds parameter `add_indicator` to :class:`imputer.KNNImputer`
+- |Enhancement| Adds parameter `add_indicator` to :class:`impute.KNNImputer`
   to get indicator of missing data.
   :pr:`15010` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -451,7 +465,9 @@ Changelog
 
 - |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
-  :pr:`14028` by :user:`Guillaume Lemaitre <glemaitre>`.
+  In addition :func:`inspection.plot_partial_dependence` will use the column
+  names by default when a dataframe is passed.
+  :pr:`14028` and :pr:`15429` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -470,7 +486,7 @@ Changelog
 
 - |Efficiency| The 'liblinear' logistic regression solver is now faster and
   requires less memory.
-  :pr:`14108`, pr:`14170`, pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
@@ -554,9 +570,13 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
+- |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
+  precision recall curves. :pr:`14936` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
-  corresponding scorers 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 
-  and 'roc_auc_ovo_weighted'. :pr:`12789` and :pr:`15274` by 
+  corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
+  `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
+  :pr:`12789` and :pr:`15274` by 
   :user:`Kathy Chen <kathyxchen>`, :user:`Mohamed Maskani <maskani-moh>`, and
   `Thomas Fan`_.
 
@@ -640,6 +660,10 @@ Changelog
 - |Fix| :class:`multioutput.MultiOutputClassifier` now has attribute
   ``classes_``. :pr:`14629` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
+- |Fix| :class:`multioutput.MultiOutputClassifier` now has `predict_proba`
+  as property and can be checked with `hasattr`.
+  :issue:`15488` :pr:`15490` by :user:`Rebekah Kim <rebekahkim>`
+
 :mod:`sklearn.naive_bayes`
 ...............................
 
@@ -718,6 +742,19 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  `model_selection.RandomizedSearchCV` now supports the
+  :term:`_pairwise` property, which prevents an error during cross-validation
+  for estimators with pairwise inputs (such as
+  :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
+  'precomputed').
+  :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
+  :user:`Xun Tang <xun-tang>`.
+
 
 :mod:`sklearn.svm`
 ..................
@@ -836,14 +873,6 @@ Changelog
   - ``mocking.CheckingClassifier``
   - ``optimize.newton_cg``
   - ``random.random_choice_csc``
-
-:mod:`sklearn.voting`
-.....................
-
-- |Fix| The `named_estimators_` attribute in :class:`voting.VotingClassifier`
-  and :class:`voting.VotingRegressor` now correctly maps to dropped estimators.
-  Previously, the `named_estimators_` mapping was incorrect whenever one of the
-  estimators was dropped. :pr:`15375` by `Thomas Fan`_.
 
 :mod:`sklearn.isotonic`
 ..................................

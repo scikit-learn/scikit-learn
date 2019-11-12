@@ -33,9 +33,12 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
 
 @pytest.mark.parametrize(
     "response_method, msg",
-    [("predict_proba", "response method predict_proba is not defined"),
-     ("decision_function", "response method decision_function is not defined"),
-     ("auto", "response methods not defined"),
+    [("predict_proba", "response method predict_proba is not defined in "
+                       "MyClassifier"),
+     ("decision_function", "response method decision_function is not defined "
+                           "in MyClassifier"),
+     ("auto", "response method decision_function or predict_proba is not "
+              "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
                     "'decision_function' or 'auto'")])
 def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,

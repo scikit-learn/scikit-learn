@@ -175,6 +175,22 @@ def test_multi_output_classification_partial_fit_parallelism():
         assert est1 is not est2
 
 
+# check multioutput has predict_proba
+def test_hasattr_multi_output_predict_proba():
+    # default SGDClassifier has loss='hinge'
+    # which does not expose a predict_proba method
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    assert not hasattr(multi_target_linear, "predict_proba")
+
+    # case where predict_proba attribute exists
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    assert hasattr(multi_target_linear, "predict_proba")
+
+
 # check predict_proba passes
 def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
@@ -199,7 +215,7 @@ def test_multi_output_predict_proba():
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     err_msg = "The base estimator should implement predict_proba method"
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(AttributeError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
 
@@ -378,7 +394,8 @@ def test_multi_output_exceptions():
     # and predict_proba are called
     moc = MultiOutputClassifier(LinearSVC(random_state=0))
     assert_raises(NotFittedError, moc.predict, y)
-    assert_raises(NotFittedError, moc.predict_proba, y)
+    with pytest.raises(NotFittedError):
+        moc.predict_proba
     assert_raises(NotFittedError, moc.score, X, y)
     # ValueError when number of outputs is different
     # for fit and score

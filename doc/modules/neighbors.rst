@@ -460,7 +460,7 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
+similar to the label updating phase of the :class:`sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
@@ -572,7 +572,7 @@ implementation with special data types. The precomputed neighbors
 .. note::
   When a specific number of neighbors is queried (using
   :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
-  since it can either include each training point as its own neighbor, or 
+  since it can either include each training point as its own neighbor, or
   exclude them. Neither choice is perfect, since including them leads to a
   different number of non-self neighbors during training and testing, while
   excluding them leads to a difference between `fit(X).transform(X)` and
