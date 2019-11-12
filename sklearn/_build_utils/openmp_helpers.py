@@ -41,8 +41,7 @@ def get_openmp_flag(compiler):
         #                          -L/usr/local/opt/libomp/lib -lomp"
         return []
     # Default flag for GCC and clang:
-    # return ['-fopenmp']
-    return []
+    return ['-fopenmp']
 
 
 def check_openmp_support():
