@@ -914,10 +914,12 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             X_pre = X_pre.multiply(1 / X_scale)
 
         else:
-            X_mean = X.mean(axis=0)
+            X_mean = np.average(X, weights=sample_weight, axis=0)
             if fit_intercept:
                 X_pre = X - X_mean
-            X_scale = X.std(axis=0)
+            # weighted version of std
+            X_scale = np.sqrt(np.average((X_pre)**2, weights=sample_weight,
+                                         axis=0))
             X_scale[X_scale == 0] = 1
             X_pre = X_pre / X_scale
 
