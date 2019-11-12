@@ -11,6 +11,7 @@ from sklearn.base import ClassifierMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
 
 
 @pytest.fixture(scope="module")
@@ -113,21 +114,15 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.ax_.get_xlabel() == "False Positive Rate"
 
 
-def test_roc_curve_errors(pyplot, data_binary):
+@pytest.mark.parametrize(
+    "clf", [LogisticRegression(),
+            make_pipeline(StandardScaler(), LogisticRegression()),
+            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
+                          LogisticRegression())])
+def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
     X, y = data_binary
-    clf = LogisticRegression()
     with pytest.raises(NotFittedError):
         plot_roc_curve(clf, X, y)
     clf.fit(X, y)
     disp = plot_roc_curve(clf, X, y)
-    assert disp.estimator_name == "LogisticRegression"
-
-
-def test_roc_curve_pipeline(pyplot, data_binary):
-    X, y = data_binary
-    clf = make_pipeline(StandardScaler(), LogisticRegression())
-    with pytest.raises(NotFittedError):
-        plot_roc_curve(clf, X, y)
-    clf.fit(X, y)
-    disp = plot_roc_curve(clf, X, y)
-    assert disp.estimator_name == "Pipeline"
+    assert disp.estimator_name == clf.__class__.__name__
