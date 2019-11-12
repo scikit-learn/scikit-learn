@@ -416,30 +416,34 @@ def test_liblinear_dual_random_state():
 
 
 def test_logistic_loss_and_grad():
-    X_ref, y = make_classification(n_samples=20, random_state=0)
+    X_ref, y = make_classification(n_samples=21, random_state=0)
     X_sp = X_ref.copy()
     X_sp[X_sp < .1] = 0
     X_sp = sp.csr_matrix(X_sp)
     clf = LogisticRegression(random_state=0).fit(X_ref, y)
     for X in (X_ref, X_sp):
-        w = clf.coef_.copy().ravel()
+        for X_offset in (None, np.asarray(X.mean(axis=0)).squeeze()):
+            w = clf.coef_.copy().ravel()
 
-        # First check that our derivation of the grad is correct
-        loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
-        approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-        )
-        assert_array_almost_equal(grad, approx_grad, decimal=2)
+            # First check that our derivation of the grad is correct
+            loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.,
+                                                 X_offset=X_offset)
+            approx_grad = optimize.approx_fprime(
+                w, lambda w: _logistic_loss_and_grad(
+                    w, X, y, alpha=1., X_offset=X_offset)[0], 1e-3
+            )
+            assert_array_almost_equal(grad, approx_grad, decimal=2)
 
-        # Second check that our intercept implementation is good
-        w = np.hstack([clf.coef_.copy().ravel(), clf.intercept_])
-        loss_interp, grad_interp = _logistic_loss_and_grad(
-            w, X, y, alpha=1.
-        )
-        approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-        )
-        assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
+            # Second check that our intercept implementation is good
+            w = np.hstack([clf.coef_.copy().ravel(), clf.intercept_])
+            loss_interp, grad_interp = _logistic_loss_and_grad(
+                w, X, y, alpha=1., X_offset=X_offset
+            )
+            approx_grad = optimize.approx_fprime(
+                w, lambda w: _logistic_loss_and_grad(
+                    w, X, y, alpha=1., X_offset=X_offset)[0], 1e-3
+            )
+            assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
 def test_logistic_grad_hess():

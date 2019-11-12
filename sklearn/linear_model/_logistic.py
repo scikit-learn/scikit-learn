@@ -75,7 +75,7 @@ def _intercept_dot(w, X, y, X_offset=None):
 
     z = safe_sparse_dot(X, w) + c
     if X_offset is not None:
-        z += np.dot(X_offset, w)
+        z += np.inner(X_offset, w)
     yz = y * z
     return w, c, yz
 
