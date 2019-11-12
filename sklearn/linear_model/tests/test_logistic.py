@@ -966,9 +966,10 @@ def test_logistic_regression_multinomial():
         assert clf_w.coef_.shape == (n_classes, n_features)
 
         # Compare solutions between lbfgs and the other solvers
-        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-2)
-        assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-2)
-        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-2)
+        assert_allclose(ref_i.coef_, clf_i.coef_, rtol=1e-1, atol=1e-4)
+        assert_allclose(ref_w.coef_, clf_w.coef_, rtol=1e-1, atol=1e-4)
+        assert_allclose(ref_i.intercept_, clf_i.intercept_, rtol=1e-1,
+                        atol=1e-4)
 
     # Test that the path give almost the same results. However since in this
     # case we take the average of the coefs after fitting across all the
