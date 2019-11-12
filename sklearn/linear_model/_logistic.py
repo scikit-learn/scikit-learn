@@ -56,6 +56,11 @@ def _intercept_dot(w, X, y, X_offset=None):
     y : ndarray, shape (n_samples,)
         Array of labels.
 
+    X_offset : ndarray, shape (n_features,) or None
+        Offset to use for X to avoid subtracting mean from sparse
+        matrices if preconditioning. Should be None in the dense case
+         as the mean was actually subtracted.
+
     Returns
     -------
     w : ndarray, shape (n_features,)
@@ -102,6 +107,15 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
+    X_scale : ndarray, shape (n_features,) or None
+        Rescaling that was applied to X for preconditioning.
+        Needed to correctly compute penalty term.
+
+    X_offset : ndarray, shape (n_features,) or None
+        Offset to use for X to avoid subtracting mean from sparse
+        matrices if preconditioning. Should be None in the dense case
+         as the mean was actually subtracted.
+
     Returns
     -------
     out : float
@@ -118,11 +132,11 @@ def _logistic_loss_and_grad(w, X, y, alpha, sample_weight=None, X_scale=None,
     if sample_weight is None:
         sample_weight = np.ones(n_samples)
 
-    # Logistic loss is the negative of the log of the logistic function.
     v = w
     if X_scale is not None:
         v = w / X_scale
 
+    # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(sample_weight * log_logistic(yz)) + .5 * alpha * np.dot(v, v)
 
     z = expit(yz)
@@ -163,8 +177,14 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None,
         Array of weights that are assigned to individual samples.
         If not provided, then each sample is given unit weight.
 
-    X_scale : array-like, shape (n_features,) optional
-        When using preconditioning, rescaling of features.
+    X_scale : ndarray, shape (n_features,) or None
+        Rescaling that was applied to X for preconditioning.
+        Needed to correctly compute penalty term.
+
+    X_offset : ndarray, shape (n_features,) or None
+        Offset to use for X to avoid subtracting mean from sparse
+        matrices if preconditioning. Should be None in the dense case
+         as the mean was actually subtracted.
 
     Returns
     -------
@@ -283,6 +303,15 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None,
     sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
 
+    X_scale : ndarray, shape (n_features,) or None
+        Rescaling that was applied to X for preconditioning.
+        Needed to correctly compute penalty term.
+
+    X_offset : ndarray, shape (n_features,) or None
+        Offset to use for X to avoid subtracting mean from sparse
+        matrices if preconditioning. Should be None in the dense case
+         as the mean was actually subtracted.
+
     Returns
     -------
     loss : float
@@ -345,6 +374,15 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight, X_scale=None,
 
     sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
+
+    X_scale : ndarray, shape (n_features,) or None
+        Rescaling that was applied to X for preconditioning.
+        Needed to correctly compute penalty term.
+
+    X_offset : ndarray, shape (n_features,) or None
+        Offset to use for X to avoid subtracting mean from sparse
+        matrices if preconditioning. Should be None in the dense case
+         as the mean was actually subtracted.
 
     Returns
     -------
@@ -899,7 +937,14 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
 
-    # preconditioning
+    # preconditioning for lbfgs
+    # Subtract mean, divide by standard deviation but keep scaling and
+    # mean to allow solving the original problem.
+    # The scaling is required in the gradient computation for the penalty
+    # Both scaling and mean are used later used to transform
+    # optimization results back to the original space.
+    # In the sparse case, the mean can not be subtracted and the
+    # correction is carried along as X_offset.
     X_pre = X
     X_scale = None
     X_offset = None
@@ -1575,8 +1620,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
-                        raise ValueError("l1_ratio must be between 0 and 1;"
-                                         " got (l1_ratio=%r)" % self.l1_ratio)
+                raise ValueError("l1_ratio must be between 0 and 1;"
+                                 " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
