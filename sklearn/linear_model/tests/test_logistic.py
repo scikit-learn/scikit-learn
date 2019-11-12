@@ -358,7 +358,7 @@ def test_consistency_path():
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ['sag', 'saga']:
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _, _ = f(_logistic_regression_path)(
             X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
             max_iter=1000, multi_class='ovr', random_state=0)
         for i, C in enumerate(Cs):
@@ -373,7 +373,7 @@ def test_consistency_path():
     # test for fit_intercept=True
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
-        coefs, Cs, _ = f(_logistic_regression_path)(
+        coefs, Cs, _, _ = f(_logistic_regression_path)(
             X, y, Cs=Cs, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0, multi_class='ovr')
         lr = LogisticRegression(C=Cs[0], tol=1e-4,
@@ -1689,7 +1689,7 @@ def test_logistic_regression_path_coefs_multinomial():
                                n_redundant=0, n_clusters_per_class=1,
                                random_state=0, n_features=2)
     Cs = [.00001, 1, 10000]
-    coefs, _, _ = _logistic_regression_path(X, y, penalty='l1', Cs=Cs,
+    coefs, _, _, _ = _logistic_regression_path(X, y, penalty='l1', Cs=Cs,
                                             solver='saga', random_state=0,
                                             multi_class='multinomial')
 

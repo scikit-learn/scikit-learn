@@ -671,7 +671,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         tol=1e-4, verbose=0, solver='lbfgs', coef=None, class_weight=None,
         dual=False, penalty='l2', intercept_scaling=1., multi_class='auto',
         random_state=None, check_input=True, max_squared_sum=None,
-        sample_weight=None, l1_ratio=None)
+        sample_weight=None, l1_ratio=None)[:3]
 
 
 def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
@@ -989,6 +989,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
 
+    loss_value = None
     for i, C in enumerate(Cs):
         if solver == 'lbfgs':
             iprint = [-1, 50, 1, 100, 101][
@@ -999,7 +1000,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
             n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
-            w0, loss = opt_res.x, opt_res.fun
+            w0, loss_value = opt_res.x, opt_res.fun
             if precondition and multi_class != 'multinomial':
                 # adjust weight scale for rescaling
                 w0[:n_features] = w0[:n_features] / X_scale
@@ -1067,7 +1068,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         n_iter[i] = n_iter_i
 
-    return np.array(coefs), np.array(Cs), n_iter
+    return np.array(coefs), np.array(Cs), n_iter, loss_value
 
 
 # helper function for LogisticCV
@@ -1217,7 +1218,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         sample_weight = _check_sample_weight(sample_weight, X)
         sample_weight = sample_weight[train]
 
-    coefs, Cs, n_iter = _logistic_regression_path(
+    coefs, Cs, n_iter, loss_value = _logistic_regression_path(
         X_train, y_train, Cs=Cs, l1_ratio=l1_ratio,
         fit_intercept=fit_intercept, solver=solver, max_iter=max_iter,
         class_weight=class_weight, pos_class=pos_class,
@@ -1678,15 +1679,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       precondition=self.precondition)
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
-        fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
+        fold_coefs_, _, n_iter_, loss_values_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
         if multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
+            self.loss_values_ = loss_values_[0]
         else:
             self.coef_ = np.asarray(fold_coefs_)
             self.coef_ = self.coef_.reshape(n_classes, n_features +
                                             int(self.fit_intercept))
+            self.loss_values_ = loss_values_[0]
 
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
@@ -2246,7 +2249,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
                 # Note that y is label encoded and hence pos_class must be
                 # the encoded label / None (for 'multinomial')
-                w, _, _ = _logistic_regression_path(
+                w, _, _, _ = _logistic_regression_path(
                     X, y, pos_class=encoded_label, Cs=[C_], solver=solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
