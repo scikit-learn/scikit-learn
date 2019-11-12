@@ -1,18 +1,18 @@
-IF SKLEARN_OPENMP_SUPPORTED:
+IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     import os
     cimport openmp
     from joblib import cpu_count
 
 
-def _openmp_supported():
-    """Determines whether scikit-learn has been built with OpenMP support
+def _openmp_parallelism_enabled():
+    """Determines whether scikit-learn has been built with OpenMP
     
     It allows to retrieve at runtime the information gathered at compile time.
     """
-    # SKLEARN_OPENMP_SUPPORTED is resolved at compile time during cythonization
-    # It is defined via the `compile_time_env` kwarg of the `cythonize` call
-    # and behaves like the `-D` option of the C preprocessor.
-    return SKLEARN_OPENMP_SUPPORTED
+    # SKLEARN_OPENMP_PARALLELISM_ENABLED is resolved at compile time during
+    # cythonization. It is defined via the `compile_time_env` kwarg of the
+    # `cythonize` call and behaves like the `-D` option of the C preprocessor.
+    return SKLEARN_OPENMP_PARALLELISM_ENABLED
 
 
 cpdef _openmp_effective_n_threads(n_threads=None):
@@ -41,7 +41,7 @@ cpdef _openmp_effective_n_threads(n_threads=None):
     if n_threads == 0:
         raise ValueError("n_threads = 0 is invalid")
 
-    IF SKLEARN_OPENMP_SUPPORTED:
+    IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
         if os.getenv("OMP_NUM_THREADS"):
             # Fall back to user provided number of threads making it possible
             # to exceed the number of cpus.

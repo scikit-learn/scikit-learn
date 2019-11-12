@@ -332,16 +332,16 @@ memory alignment, direct blas calls...
 Using OpenMP
 ------------
 
-Since scikit-learn can be built without OpenMP support, it's necessary to
+Since scikit-learn can be built without OpenMP, it's necessary to
 protect each direct call to OpenMP. This can be done using the following
 syntax::
 
   # importing OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       cimport openmp
 
   # calling OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       max_threads = openmp.omp_get_max_threads()
   ELSE:
       max_threads = 1

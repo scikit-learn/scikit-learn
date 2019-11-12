@@ -9,7 +9,7 @@ import platform
 import sys
 import importlib
 
-from ._openmp_helpers import _openmp_supported
+from ._openmp_helpers import _openmp_parallelism_enabled
 
 
 def _get_sys_info():
@@ -87,4 +87,4 @@ def show_versions():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
     print("\n{k:>10}: {stat}".format(k="Built with OpenMP",
-                                     stat=_openmp_supported()))
+                                     stat=_openmp_parallelism_enabled()))

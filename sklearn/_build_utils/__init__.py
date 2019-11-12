@@ -57,8 +57,8 @@ def cythonize_extensions(top_path, config):
     # and we only want to call this function once.
     # The result of this check is cached as a private attribute on the sklearn
     # module (only at build-time) to be used twice:
-    # - First to set the value of SKLEARN_OPENMP_SUPPORTED, the cython
-    #   build-time variable passed to the cythonize() call.
+    # - First to set the value of SKLEARN_OPENMP_PARALLELISM_ENABLED, the
+    #   cython build-time variable passed to the cythonize() call.
     # - Then in the build_ext subclass defined in the top-level setup.py file
     #   to actually build the compiled extensions with OpenMP flags if needed.
     sklearn._OPENMP_SUPPORTED = check_openmp_support()
@@ -76,7 +76,7 @@ def cythonize_extensions(top_path, config):
         config.ext_modules,
         nthreads=n_jobs,
         compile_time_env={
-            'SKLEARN_OPENMP_SUPPORTED': sklearn._OPENMP_SUPPORTED},
+            'SKLEARN_OPENMP_PARALLELISM_ENABLED': sklearn._OPENMP_SUPPORTED},
         compiler_directives={'language_level': 3})
 
 

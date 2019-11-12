@@ -41,7 +41,8 @@ def get_openmp_flag(compiler):
         #                          -L/usr/local/opt/libomp/lib -lomp"
         return []
     # Default flag for GCC and clang:
-    return ['-fopenmp']
+    # return ['-fopenmp']
+    return []
 
 
 def check_openmp_support():
@@ -80,35 +81,35 @@ def check_openmp_support():
     except (CompileError, LinkError, subprocess.CalledProcessError):
         openmp_supported = False
 
-    message = textwrap.dedent(
-        """
-
-                        ***********
-                        * WARNING *
-                        ***********
-
-        It seems that scikit-learn cannot be built with OpenMP support.
-
-        - Make sure you have followed the installation instructions:
-
-            https://scikit-learn.org/dev/developers/advanced_installation.html
-
-        - If your compiler supports OpenMP but you still see this message,
-          please submit a bug report at:
-
-            https://github.com/scikit-learn/scikit-learn/issues
-
-        - The build will continue without OpenMP support. Note however that
-          some estimators will run in sequential mode instead of leveraging
-          thread-based parallelism.
-
-                            ***
-        """)
-
     if not openmp_supported:
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
             raise CompileError("Failed to build with OpenMP")
         else:
+            message = textwrap.dedent(
+                """
+
+                                ***********
+                                * WARNING *
+                                ***********
+
+                It seems that scikit-learn cannot be built with OpenMP.
+
+                - Make sure you have followed the installation instructions:
+
+                    https://scikit-learn.org/dev/developers/advanced_installation.html
+
+                - If your compiler supports OpenMP but you still see this
+                  message, please submit a bug report at:
+
+                    https://github.com/scikit-learn/scikit-learn/issues
+
+                - The build will continue with OpenMP-based parallelism
+                  disabled. Note however that some estimators will run in
+                  sequential mode instead of leveraging thread-based
+                  parallelism.
+
+                                    ***
+                """)
             warnings.warn(message)
 
     return openmp_supported
