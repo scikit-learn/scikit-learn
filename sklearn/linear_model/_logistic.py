@@ -913,7 +913,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             del X_var
             if fit_intercept:
                 X_offset = -X_mean/X_scale
-            X_pre = X_pre.multiply(1 / X_scale)
+            # FIXME old scipy requires conversion to sparse matrix
+            # before calling multiply
+            X_pre = X_pre.multiply(sparse.csr_matrix(1 / X_scale))
 
         else:
             X_mean = np.average(X, weights=sample_weight, axis=0)
