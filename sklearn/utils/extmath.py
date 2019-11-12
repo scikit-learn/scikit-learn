@@ -833,7 +833,7 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
 
 
 def _weighted_mean_std(X, sample_weight):
-    """Compute weighted mean and standard deviation for ndarrays and sparse matrices.
+    """Compute weighted mean and standard deviation.
 
     Parameters
     ----------
