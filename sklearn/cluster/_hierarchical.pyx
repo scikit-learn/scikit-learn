@@ -26,7 +26,7 @@ ctypedef np.float64_t DTYPE_t
 ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
 
-from libc.float cimport DBL_MAX
+from numpy.math cimport INFINITY
 
 # Reimplementation for MSVC support
 cdef inline double fmax(double a, double b):
@@ -457,7 +457,7 @@ def single_linkage_label(L):
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 @cython.boundscheck(False)
 @cython.nonecheck(False)
-cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
+def mst_linkage_core(
         DTYPE_t [:, ::1] raw_data,
         DistanceMetric dist_metric):
     """
@@ -488,43 +488,31 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
         very efficiently. See https://arxiv.org/abs/1109.2378
         algorithm MST-LINKAGE-CORE for more details.
     """
+    cdef:
+        np.int8_t[:] in_tree = np.zeros(dim, dtype=np.int8)
+        DTYPE_t * raw_data_ptr = (<DTYPE_t *> &raw_data[0, 0])
+        DTYPE_t[:, ::1] result = np.zeros((dim - 1, 3))
 
-    cdef DTYPE_t[:] current_distances
-    cdef DTYPE_t * raw_data_ptr
-    cdef np.int8_t[:] in_tree
-    cdef DTYPE_t[:, ::1] raw_data_view
-    cdef DTYPE_t[:, ::1] result
+        np.ndarray label_filter
 
-    cdef np.ndarray label_filter
+        ITYPE_t current_node = 0
+        ITYPE_t new_node
+        ITYPE_t i
+        ITYPE_t j
+        ITYPE_t dim = raw_data.shape[0]
+        ITYPE_t num_features = raw_data.shape[1]
 
-    cdef ITYPE_t current_node
-    cdef ITYPE_t new_node
-    cdef ITYPE_t i
-    cdef ITYPE_t j
-    cdef ITYPE_t dim
-    cdef ITYPE_t num_features
+        DTYPE_t right_value
+        DTYPE_t left_value
+        DTYPE_t new_distance
 
-    cdef DTYPE_t right_value
-    cdef DTYPE_t left_value
-    cdef DTYPE_t new_distance
-
-    dim = raw_data.shape[0]
-    num_features = raw_data.shape[1]
-
-    raw_data_view = (<DTYPE_t[:raw_data.shape[0], :raw_data.shape[1]:1]> (
-        <DTYPE_t *> raw_data.data))
-    raw_data_ptr = (<DTYPE_t *> &raw_data_view[0, 0])
-
-    result = np.zeros((dim - 1, 3))
-    in_tree = np.zeros(dim, dtype=np.int8)
-    current_node = 0
-    current_distances = np.infty * np.ones(dim)
+        DTYPE_t[:] current_distances = np.full(dim, INFINITY)
 
     for i in range(1, dim):
 
         in_tree[current_node] = 1
 
-        new_distance = DBL_MAX
+        new_distance = INFINITY
         new_node = 0
 
         for j in range(dim):
@@ -541,9 +529,8 @@ cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
                 if right_value < new_distance:
                     new_distance = right_value
                     new_node = j
-                continue
 
-            if left_value < right_value:
+            elif left_value < right_value:
                 current_distances[j] = left_value
                 if left_value < new_distance:
                     new_distance = left_value
