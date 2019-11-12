@@ -437,8 +437,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           >>> from sklearn.linear_model import LinearRegression
           >>> X, y = make_friedman1()
           >>> est = LinearRegression().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est, )  #doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(...,
+          >>> disp1 = plot_partial_dependence(est, X)  #doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est, X,
           ...                                 ax=disp1.axes_)  #doctest: +SKIP
 
     Read more in the :ref:`User Guide <partial_dependence>`.
