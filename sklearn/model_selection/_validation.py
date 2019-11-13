@@ -533,8 +533,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, format_exception(type(e), e,
-                                                         exc_info()[2])[0]),
+                          (error_score, ''.join(format_exception(type(e), e,
+                                                              exc_info()[2]))),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
