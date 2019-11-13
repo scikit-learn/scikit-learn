@@ -77,11 +77,17 @@ Making a release
 
        $ python setup.py sdist
 
+   - You can also test a binary dist build using::
+
+       $ python setup.py bdist_wheel
+
    The result should be in the `dist/` folder. We will upload it later
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
 
-4. Create the tag and push it (if it's an RC, it can be 0.xxrc1)::
+4. Create the tag and push it (if it's an RC, it can be 0.xxrc1). Note that
+   you want to tag when you're sure it's working. Therefore tagging after the
+   CI in scikit-learn-wheels passes is not a bad idea::
 
     $ git tag -a 0.999
 
