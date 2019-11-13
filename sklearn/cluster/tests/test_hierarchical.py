@@ -316,7 +316,7 @@ def test_sparse_scikit_vs_scipy():
 
 # Make sure our custom mst_linkage_core gives the same results as scipy's builtin
 @pytest.mark.parametrize('seed', range(5))
-def test_vector_scikit_single_vs_scipy_single():
+def test_vector_scikit_single_vs_scipy_single(seed):
     n_samples, n_features, n_clusters = 10, 5, 3
     rng = np.random.RandomState(seed)
     X = .1 * rng.normal(size=(n_samples, n_features))
