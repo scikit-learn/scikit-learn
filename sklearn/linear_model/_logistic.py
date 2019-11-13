@@ -2311,7 +2311,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     sample_weight=sample_weight,
                     l1_ratio=l1_ratio_)
                 w = w[0]
-                self.objective_value_ = objective_value[0]
+                self.objective_value_ = objective_value
 
             else:
                 # Take the best scores across every fold and the average of
