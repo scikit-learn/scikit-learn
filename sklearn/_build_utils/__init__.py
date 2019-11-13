@@ -6,9 +6,12 @@ Utilities useful during the build.
 
 
 import os
-from distutils.version import LooseVersion
+import sklearn
 import contextlib
 
+from distutils.version import LooseVersion
+
+from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
 
 
@@ -42,7 +45,24 @@ def cythonize_extensions(top_path, config):
     _check_cython_version()
     from Cython.Build import cythonize
 
-    with_openmp = check_openmp_support()
+    # Fast fail before cythonization if compiler fails compiling basic test
+    # code even without OpenMP
+    basic_check_build()
+
+    # check simple compilation with OpenMP. If it fails scikit-learn will be
+    # built without OpenMP and the test test_openmp_supported in the test suite
+    # will fail.
+    # `check_openmp_support` compiles a small test program to see if the
+    # compilers are properly configured to build with OpenMP. This is expensive
+    # and we only want to call this function once.
+    # The result of this check is cached as a private attribute on the sklearn
+    # module (only at build-time) to be used twice:
+    # - First to set the value of SKLEARN_OPENMP_PARALLELISM_ENABLED, the
+    #   cython build-time variable passed to the cythonize() call.
+    # - Then in the build_ext subclass defined in the top-level setup.py file
+    #   to actually build the compiled extensions with OpenMP flags if needed.
+    sklearn._OPENMP_SUPPORTED = check_openmp_support()
+
     n_jobs = 1
     with contextlib.suppress(ImportError):
         import joblib
@@ -55,7 +75,8 @@ def cythonize_extensions(top_path, config):
     config.ext_modules = cythonize(
         config.ext_modules,
         nthreads=n_jobs,
-        compile_time_env={'SKLEARN_OPENMP_SUPPORTED': with_openmp},
+        compile_time_env={
+            'SKLEARN_OPENMP_PARALLELISM_ENABLED': sklearn._OPENMP_SUPPORTED},
         compiler_directives={'language_level': 3})
 
 
