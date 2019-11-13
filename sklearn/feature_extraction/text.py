@@ -876,14 +876,15 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
-        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
-        only bigrams.
+        word n-grams or char n-grams to be extracted. All values of n such
+        such that min_n <= n <= max_n will be used. For example an
+        ``ngram_range`` of ``(1, 1)`` means only unigrams, ``(1, 2)`` means
+        unigrams and bigrams, and ``(2, 2)`` means only bigrams.
         Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
-        Whether the feature should be made of word or character n-grams.
+        Whether the feature should be made of word n-gram or character
+        n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
 
@@ -969,6 +970,17 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 2 0 1 0 1 1 0 1]
      [1 0 0 1 1 0 1 1 1]
      [0 1 1 1 0 0 1 0 1]]
+    >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
+    >>> X2 = vectorizer2.fit_transform(corpus)
+    >>> print(vectorizer2.get_feature_names())
+    ['and this', 'document is', 'first document', 'is the', 'is this',
+    'second document', 'the first', 'the second', 'the third', 'third one',
+     'this document', 'this is', 'this the']
+     >>> print(X2.toarray())
+     [[0 0 1 1 0 0 1 0 0 0 0 1 0]
+     [0 1 0 1 0 1 0 1 0 0 1 0 0]
+     [1 0 0 1 0 0 0 0 1 1 0 1 0]
+     [0 0 1 0 1 0 1 0 0 0 0 0 1]]
 
     See also
     --------

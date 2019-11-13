@@ -10,6 +10,9 @@ from sklearn.datasets import make_classification
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
 
 
 def test_errors(pyplot):
@@ -110,3 +113,16 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     disp.plot(name="MySpecialEstimator")
     expected_label = "MySpecialEstimator (AP = {:0.2f})".format(avg_prec)
     assert disp.line_.get_label() == expected_label
+
+
+@pytest.mark.parametrize(
+    "clf", [make_pipeline(StandardScaler(), LogisticRegression()),
+            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
+                          LogisticRegression())])
+def test_precision_recall_curve_pipeline(pyplot, clf):
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    with pytest.raises(NotFittedError):
+        plot_precision_recall_curve(clf, X, y)
+    clf.fit(X, y)
+    disp = plot_precision_recall_curve(clf, X, y)
+    assert disp.estimator_name == clf.__class__.__name__
