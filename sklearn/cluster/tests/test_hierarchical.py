@@ -314,7 +314,8 @@ def test_sparse_scikit_vs_scipy():
         _hc_cut(n_leaves + 1, children, n_leaves)
 
 
-# Make sure our custom mst_linkage_core gives the same results as scipy's builtin
+# Make sure our custom mst_linkage_core gives
+# the same results as scipy's builtin
 @pytest.mark.parametrize('seed', range(5))
 def test_vector_scikit_single_vs_scipy_single(seed):
     n_samples, n_features, n_clusters = 10, 5, 3
@@ -330,13 +331,14 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 
     # Sort the order of child nodes per row for consistency
     children.sort(axis=1)
-    assert_array_equal(children, children_, 'linkage tree differs'
-                                            ' from scipy impl for'
-                                            ' single linkage.')
+    assert_array_equal(children, children_scipy,
+                       'linkage tree differs'
+                       ' from scipy impl for'
+                       ' single linkage.')
 
     cut = _hc_cut(n_clusters, children, n_leaves)
-    cut_ = _hc_cut(n_clusters, children_, n_leaves)
-    assess_same_labelling(cut, cut_)
+    cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
+    assess_same_labelling(cut, cut_scipy)
 
 
 def test_identical_points():
