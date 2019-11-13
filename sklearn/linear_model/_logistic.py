@@ -520,7 +520,6 @@ def _check_solver(solver, penalty, dual):
         raise ValueError(
             "penalty='none' is not supported for the liblinear solver"
         )
-
     return solver
 
 
@@ -847,6 +846,12 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
+    precondition : boolean or 'auto', default='auto'
+        Whether to use preconditioning for solving the optimization problem.
+        A diagonal preconditioning based on the data standard deviation is
+        used. If 'auto', preconditioning is used when ``solver='lbfgs'``, which
+        is the only solver that currently supports it.
+
     Returns
     -------
     coefs : ndarray, shape (n_cs, n_features) or (n_cs, n_features + 1)
@@ -874,6 +879,12 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         Cs = np.logspace(-4, 4, Cs)
 
     solver = _check_solver(solver, penalty, dual)
+
+    if precondition == 'auto':
+        precondition = solver == 'lbfgs'
+    if precondition == 'True' and solver != 'lbfgs':
+        raise ValueError("precondition=True only supported with"
+                         " solver='lbfgs'")
 
     # Preprocessing.
     if check_input:
@@ -947,7 +958,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     X_pre = X
     X_scale = None
     X_offset = None
-    if precondition and solver == 'lbfgs':
+    if precondition:
         # FIXME this duplicates some code from _preprocess_data
         # and should be refactored
         X_mean, X_scale = _weighted_mean_std(X, sample_weight)
@@ -974,7 +985,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     'Initialization coef is of shape %d, expected shape '
                     '%d or %d' % (coef.size, n_features, w0.size))
             w0[:coef.size] = coef
-            if solver == 'lbfgs' and precondition:
+            if precondition:
                 if fit_intercept:
                     w0[-1] += np.inner(w0[:n_features], X_mean)
                 w0[:n_features] *= X_scale
@@ -999,7 +1010,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 w0[1, :coef.shape[1]] = coef
             else:
                 w0[:, :coef.shape[1]] = coef
-            if solver == 'lbfgs' and precondition:
+            if precondition:
                 if fit_intercept:
                     w0[:, -1] += np.dot(w0[:, :n_features], X_mean)
                 w0[:, :n_features] *= X_scale
@@ -1093,7 +1104,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if multi_class == 'multinomial':
             n_classes = max(2, classes.size)
             multi_w0 = np.reshape(w0, (n_classes, -1))
-            if solver == 'lbfgs' and precondition:
+            if precondition:
                 if fit_intercept:
                     multi_w0[:, :-1] = multi_w0[:, :-1] / X_scale
                     # adjust intercept for preconditioning
@@ -1465,6 +1476,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
+    precondition : boolean or 'auto', default='auto'
+        Whether to use preconditioning for solving the optimization problem.
+        A diagonal preconditioning based on the data standard deviation is
+        used. If 'auto', preconditioning is used when ``solver='lbfgs'``, which
+        is the only solver that currently supports it.
+
     Attributes
     ----------
 
@@ -1560,7 +1577,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
-                 l1_ratio=None, precondition=True):
+                 l1_ratio=None, precondition='auto'):
 
         self.penalty = penalty
         self.dual = dual
@@ -1968,6 +1985,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a combination
         of L1 and L2.
 
+    precondition : boolean or 'auto', default='auto'
+        Whether to use preconditioning for solving the optimization problem.
+        A diagonal preconditioning based on the data standard deviation is
+        used. If 'auto', preconditioning is used when ``solver='lbfgs'``, which
+        is the only solver that currently supports it.
+
     Attributes
     ----------
     classes_ : array, shape (n_classes, )
@@ -2060,7 +2083,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='auto',
-                 random_state=None, l1_ratios=None):
+                 random_state=None, l1_ratios=None, precondition='auto'):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -2078,6 +2101,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.multi_class = multi_class
         self.random_state = random_state
         self.l1_ratios = l1_ratios
+        self.precondition = precondition
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
