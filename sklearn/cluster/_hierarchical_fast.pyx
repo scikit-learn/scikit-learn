@@ -13,7 +13,7 @@ ctypedef np.int8_t INT8
 
 np.import_array()
 
-from ..neighbors._dist_metrics cimport DistanceMetric
+from ..neighbors cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
 
 # C++
