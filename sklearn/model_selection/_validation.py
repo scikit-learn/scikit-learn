@@ -534,7 +534,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
                           (error_score, format_exception(type(e), e,
-                                                         exc_info()[2])),
+                                                         exc_info()[2])[0]),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
