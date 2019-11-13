@@ -479,7 +479,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
             mst = _hierarchical.mst_linkage_core(X, dist_metric)
             # Sort edges of the min_spanning_tree by weight
-            mst = mst[np.argsort(mst.T[2], kind='stable'), :]
+            mst = mst[np.argsort(mst.T[2], kind='mergesort'), :]
 
             # Convert edge list into standard hierarchical clustering format
             out = _hierarchical.single_linkage_label(mst)
