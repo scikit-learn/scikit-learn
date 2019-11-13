@@ -65,7 +65,7 @@ var Search = {
     _index: null,
     _queued_query: null,
     _pulse_status: -1,
-    _total_non_object_results: 5,
+    _total_non_object_results: 10,
 
     htmlToText: function (htmlString) {
         var htmlString = htmlString.replace(/<img[\s\S]+?>/g, "");
