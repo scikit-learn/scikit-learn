@@ -672,6 +672,7 @@ def test_multiple_pandas_category_no_order(Encoder, col, categories):
         Encoder().fit(df_copy)
     assert str(record[0].message) == custom_msg
 
+
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 @pytest.mark.parametrize('series, warns', [
     ([0, 0, 0, 0], False),  # encoding: [0]
