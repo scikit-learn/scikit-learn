@@ -13,7 +13,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from traceback import format_exception_only
+from traceback import format_exception_only, extract_stack
 from contextlib import suppress
 
 import numpy as np
