@@ -1880,13 +1880,16 @@ def test_logistic_loss_preconditioning():
     # check that _logistic_loss is invariant wrt whether we precondition.
     X, y = make_classification(n_samples=100, n_features=60, random_state=0)
     X[:, 1] += 10000
-    lr = LogisticRegression(random_state=0, precondition=False, max_iter=1000)
+    lr = LogisticRegression(random_state=0, precondition=True, max_iter=1000)
     lr.fit(X, y)
     loss = _logistic_loss(np.hstack([lr.coef_.ravel(), lr.intercept_]),
                           X, 2 * y - 1, 1)
+    assert_almost_equal(loss, lr.objective_value_)
+    # do full preconditioning
+    X_mean = X.mean(axis=0)
     X_std = X.std(axis=0)
-    X_pre = X / X_std
-    loss_pre = _logistic_loss(
-        np.hstack([lr.coef_.ravel() * X_std, lr.intercept_]),
-        X_pre, 2 * y - 1, 1, X_scale=X_std)
+    X_pre = (X - X_mean) / X_std
+    w_scaled = lr.coef_.ravel() * X_std
+    w_pre = np.hstack([w_scaled, lr.intercept_ + np.inner(lr.coef_, X_mean)])
+    loss_pre = _logistic_loss(w_pre, X_pre, 2 * y - 1, 1, X_scale=X_std)
     assert_almost_equal(loss, loss_pre)
