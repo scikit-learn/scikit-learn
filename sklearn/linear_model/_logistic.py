@@ -719,7 +719,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                               intercept_scaling=1., multi_class='auto',
                               random_state=None, check_input=True,
                               max_squared_sum=None, sample_weight=None,
-                              l1_ratio=None, precondition=True):
+                              l1_ratio=None, precondition='auto'):
     """Compute a Logistic Regression model for a list of regularization
     parameters.
 
@@ -1132,7 +1132,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           dual=False, intercept_scaling=1.,
                           multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
-                          l1_ratio=None, precondition=True):
+                          l1_ratio=None, precondition='auto'):
     """Computes scores across logistic_regression_path
 
     Parameters
