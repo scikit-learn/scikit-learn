@@ -744,7 +744,7 @@ Changelog
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 :mod:`sklearn.model_selection`
-..................
+..............................
 
 - |Fix| :class:`model_selection.GridSearchCV` and
   `model_selection.RandomizedSearchCV` now supports the
