@@ -570,6 +570,9 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
+- |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
+  precision recall curves. :pr:`14936` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
@@ -739,6 +742,19 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+:mod:`sklearn.model_selection`
+..................
+
+- |Fix| :class:`model_selection.GridSearchCV` and
+  `model_selection.RandomizedSearchCV` now supports the
+  :term:`_pairwise` property, which prevents an error during cross-validation
+  for estimators with pairwise inputs (such as
+  :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
+  'precomputed').
+  :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
+  :user:`Xun Tang <xun-tang>`.
+
 
 :mod:`sklearn.svm`
 ..................

@@ -15,7 +15,7 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
-IF SKLEARN_OPENMP_SUPPORTED:
+IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
@@ -266,7 +266,7 @@ cdef class Splitter:
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
 
-            IF SKLEARN_OPENMP_SUPPORTED:
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
                 int n_threads = 1
