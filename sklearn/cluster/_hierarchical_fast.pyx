@@ -486,6 +486,7 @@ def mst_linkage_core(
         algorithm MST-LINKAGE-CORE for more details.
     """
     cdef:
+        ITYPE_t dim = raw_data.shape[0]
         np.int8_t[:] in_tree = np.zeros(dim, dtype=np.int8)
         DTYPE_t * raw_data_ptr = (<DTYPE_t *> &raw_data[0, 0])
         DTYPE_t[:, ::1] result = np.zeros((dim - 1, 3))
@@ -496,7 +497,6 @@ def mst_linkage_core(
         ITYPE_t new_node
         ITYPE_t i
         ITYPE_t j
-        ITYPE_t dim = raw_data.shape[0]
         ITYPE_t num_features = raw_data.shape[1]
 
         DTYPE_t right_value
