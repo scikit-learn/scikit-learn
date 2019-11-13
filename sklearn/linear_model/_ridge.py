@@ -262,7 +262,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         number.
 
     sample_weight : float or array-like of shape (n_samples,), default=None
-        Individual weights for each sample. If sample_weight is not None and
+        Individual weights for each sample. If given a float, every sample
+        will have the same weight. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
         .. versionadded:: 0.17
@@ -753,7 +754,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             Target values
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Individual weights for each sample
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -911,8 +913,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : {float, array-like of shape (n_samples,)}, default=None
-            Sample weight.
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
             .. versionadded:: 0.17
                *sample_weight* support to Classifier.
@@ -1409,13 +1412,14 @@ class _RidgeGCV(LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Will be cast to float64 if necessary
+            Training data. Will be cast to float64 if necessary.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to float64 if necessary
+            Target values. Will be cast to float64 if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -1533,10 +1537,11 @@ class _BaseRidgeCV(LinearModel):
             if necessary.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -1825,10 +1830,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             will be cast to float64 if necessary.
 
         y : array-like of shape (n_samples,)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
         sample_weight : float or array-like of shape (n_samples,), default=None
-            Sample weight.
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
