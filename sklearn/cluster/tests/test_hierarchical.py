@@ -324,7 +324,7 @@ def test_vector_scikit_single_vs_scipy_single():
     X -= X.mean(axis=1)[:, np.newaxis]
 
     out = hierarchy.linkage(X, method='single')
-    children_ = out[:, :2].astype(np.int)
+    children_scipy = out[:, :2].astype(np.int)
 
     children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
 
