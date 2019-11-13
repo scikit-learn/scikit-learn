@@ -109,7 +109,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     mst_array = np.vstack([mst.row, mst.col, mst.data]).T
 
     # Sort edges of the min_spanning_tree by weight
-    mst_array = mst_array[np.argsort(mst_array.T[2]), :]
+    mst_array = mst_array[np.argsort(mst_array.T[2], kind='mergesort'), :]
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = _hierarchical.single_linkage_label(mst_array)

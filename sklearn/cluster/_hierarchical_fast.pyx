@@ -449,7 +449,7 @@ def single_linkage_label(L):
         raise ValueError("Input MST array must be sorted by weight")
 
     return _single_linkage_label(L)
-  
+
 
 # Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
 @cython.boundscheck(False)
@@ -486,10 +486,9 @@ def mst_linkage_core(
         algorithm MST-LINKAGE-CORE for more details.
     """
     cdef:
-        ITYPE_t dim = raw_data.shape[0]
-        np.int8_t[:] in_tree = np.zeros(dim, dtype=np.int8)
-        DTYPE_t * raw_data_ptr = (<DTYPE_t *> &raw_data[0, 0])
-        DTYPE_t[:, ::1] result = np.zeros((dim - 1, 3))
+        ITYPE_t n_samples = raw_data.shape[0]
+        np.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
+        DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
 
         np.ndarray label_filter
 
@@ -503,43 +502,34 @@ def mst_linkage_core(
         DTYPE_t left_value
         DTYPE_t new_distance
 
-        DTYPE_t[:] current_distances = np.full(dim, INFINITY)
+        DTYPE_t[:] current_distances = np.full(n_samples, INFINITY)
 
-    for i in range(1, dim):
+    for i in range(n_samples - 1):
 
         in_tree[current_node] = 1
 
         new_distance = INFINITY
         new_node = 0
 
-        for j in range(dim):
+        for j in range(n_samples):
             if in_tree[j]:
                 continue
 
             right_value = current_distances[j]
-            left_value = dist_metric.dist(&raw_data_ptr[num_features *
-                                                        current_node],
-                                          &raw_data_ptr[num_features * j],
+            left_value = dist_metric.dist(&raw_data[current_node, 0],
+                                          &raw_data[j, 0],
                                           num_features)
 
-            if left_value > right_value:
-                if right_value < new_distance:
-                    new_distance = right_value
-                    new_node = j
-
-            elif left_value < right_value:
+            if left_value < right_value:
                 current_distances[j] = left_value
-                if left_value < new_distance:
-                    new_distance = left_value
-                    new_node = j
-            else:
-                if right_value < new_distance:
-                    new_distance = right_value
-                    new_node = j
 
-        result[i - 1, 0] = <double> current_node
-        result[i - 1, 1] = <double> new_node
-        result[i - 1, 2] = new_distance
+            if current_distances[j] < new_distance:
+                new_distance = current_distances[j]
+                new_node = j
+
+        result[i, 0] = current_node
+        result[i, 1] = new_node
+        result[i, 2] = new_distance
         current_node = new_node
 
     return np.array(result)

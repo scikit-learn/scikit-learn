@@ -314,29 +314,29 @@ def test_sparse_scikit_vs_scipy():
         _hc_cut(n_leaves + 1, children, n_leaves)
 
 
+# Make sure our custom mst_linkage_core gives the same results as scipy's builtin
+@pytest.mark.parametrize('seed', range(5))
 def test_vector_scikit_single_vs_scipy_single():
     n_samples, n_features, n_clusters = 10, 5, 3
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(seed)
+    X = .1 * rng.normal(size=(n_samples, n_features))
+    X -= 4. * np.arange(n_samples)[:, np.newaxis]
+    X -= X.mean(axis=1)[:, np.newaxis]
 
-    for i in range(5):
-        X = .1 * rng.normal(size=(n_samples, n_features))
-        X -= 4. * np.arange(n_samples)[:, np.newaxis]
-        X -= X.mean(axis=1)[:, np.newaxis]
+    out = hierarchy.linkage(X, method='single')
+    children_ = out[:, :2].astype(np.int)
 
-        out = hierarchy.linkage(X, method='single')
-        children_ = out[:, :2].astype(np.int)
+    children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
 
-        children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
+    # Sort the order of child nodes per row for consistency
+    children.sort(axis=1)
+    assert_array_equal(children, children_, 'linkage tree differs'
+                                            ' from scipy impl for'
+                                            ' single linkage.')
 
-        # Sort the order of child nodes per row for consistency
-        children.sort(axis=1)
-        assert_array_equal(children, children_, 'linkage tree differs'
-                                                ' from scipy impl for'
-                                                ' single linkage.')
-
-        cut = _hc_cut(n_clusters, children, n_leaves)
-        cut_ = _hc_cut(n_clusters, children_, n_leaves)
-        assess_same_labelling(cut, cut_)
+    cut = _hc_cut(n_clusters, children, n_leaves)
+    cut_ = _hc_cut(n_clusters, children_, n_leaves)
+    assess_same_labelling(cut, cut_)
 
 
 def test_identical_points():
