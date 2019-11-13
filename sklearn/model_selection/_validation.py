@@ -13,7 +13,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from traceback import format_exception_only, extract_stack
+from traceback import format_exception
 from contextlib import suppress
 
 import numpy as np
@@ -532,8 +532,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, format_exception_only(type(e), e)[0],
-                           extract_stack(e)),
+                          (error_score, format_exception(type(e), e,
+                                                         sys.exc_info()[2])),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
