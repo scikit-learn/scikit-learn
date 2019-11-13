@@ -4,6 +4,7 @@ import pytest
 from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.utils._testing import skip_if_32bit
@@ -43,8 +44,9 @@ def test_histogram_split(n_bins):
                                           dtype=np.uint32)
             has_missing_values = np.array([False] * X_binned.shape[1],
                                           dtype=np.uint8)
-            monotonic_cst = np.array([False] * X_binned.shape[1],
-                                     dtype=np.int8)
+            monotonic_cst = np.array(
+                [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+                dtype=np.int8)
             missing_values_bin_idx = n_bins - 1
             splitter = Splitter(X_binned,
                                 n_bins_non_missing,
@@ -109,7 +111,9 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
-    monotonic_cst = np.array([False] * X_binned.shape[1], dtype=np.int8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+        dtype=np.int8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
                         has_missing_values, monotonic_cst, l2_regularization,
@@ -210,7 +214,9 @@ def test_split_indices():
     n_bins_non_missing = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
-    monotonic_cst = np.array([False] * X_binned.shape[1], dtype=np.int8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+        dtype=np.int8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
                         has_missing_values, monotonic_cst, l2_regularization,
@@ -268,7 +274,9 @@ def test_min_gain_to_split():
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
-    monotonic_cst = np.array([False] * X_binned.shape[1], dtype=np.int8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+        dtype=np.int8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing, missing_values_bin_idx,
                         has_missing_values, monotonic_cst, l2_regularization,
@@ -406,7 +414,9 @@ def test_splitting_missing_values(X_binned, all_gradients,
                                hessians_are_constant)
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
-    monotonic_cst = np.array([False] * X_binned.shape[1], dtype=np.int8)
+    monotonic_cst = np.array(
+        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
+        dtype=np.int8)
     missing_values_bin_idx = n_bins - 1
     splitter = Splitter(X_binned, n_bins_non_missing,
                         missing_values_bin_idx, has_missing_values,

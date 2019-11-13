@@ -25,7 +25,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
-from .common cimport compute_value
+from .common cimport compute_node_value
 from .common cimport MonotonicConstraint
 
 
@@ -520,7 +520,7 @@ cdef class Splitter:
         n_samples_left = 0
 
         loss_current_node = _loss_from_value(
-            compute_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
+            compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
                           self.l2_regularization),
             sum_gradients
         )
@@ -580,11 +580,11 @@ cdef class Splitter:
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left = compute_value(
+            split_info.value_left = compute_node_value(
                 split_info.sum_gradient_left, split_info.sum_hessian_left,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right = compute_value(
+            split_info.value_right = compute_node_value(
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
@@ -636,7 +636,7 @@ cdef class Splitter:
         n_samples_right = 0
 
         loss_current_node = _loss_from_value(
-            compute_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
+            compute_node_value(sum_gradients, sum_hessians, -INFINITY, INFINITY,
                           self.l2_regularization),
             sum_gradients
         )
@@ -697,11 +697,11 @@ cdef class Splitter:
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left = compute_value(
+            split_info.value_left = compute_node_value(
                 split_info.sum_gradient_left, split_info.sum_hessian_left,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right = compute_value(
+            split_info.value_right = compute_node_value(
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
@@ -731,10 +731,10 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C value_right
 
     # Compute values of potential left and right children
-    value_left = compute_value(sum_gradient_left, sum_hessian_left,
+    value_left = compute_node_value(sum_gradient_left, sum_hessian_left,
                                lower_bound, upper_bound,
                                l2_regularization)
-    value_right = compute_value(sum_gradient_right, sum_hessian_right,
+    value_right = compute_node_value(sum_gradient_right, sum_hessian_right,
                                 lower_bound, upper_bound,
                                 l2_regularization)
 

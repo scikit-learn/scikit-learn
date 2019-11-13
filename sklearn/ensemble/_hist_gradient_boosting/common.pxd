@@ -32,7 +32,7 @@ cdef packed struct node_struct:
     X_BINNED_DTYPE_C bin_threshold
 
 
-cpdef Y_DTYPE_C compute_value(
+cpdef Y_DTYPE_C compute_node_value(
     Y_DTYPE_C sum_gradient,
     Y_DTYPE_C sum_hessian,
     Y_DTYPE_C lower_bound,

@@ -17,7 +17,7 @@ from .predictor import TreePredictor
 from .utils import sum_parallel
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
-from .common import compute_value
+from .common import compute_node_value
 from .common import MonotonicConstraint
 
 
@@ -319,7 +319,7 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        self.root.value = compute_value(
+        self.root.value = compute_node_value(
             sum_gradients, sum_hessians, float('-inf'), float('+inf'),
             self.splitter.l2_regularization)
 

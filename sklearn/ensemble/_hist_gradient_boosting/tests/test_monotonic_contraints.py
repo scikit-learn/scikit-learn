@@ -158,7 +158,7 @@ def test_nodes_values(monotonic_cst, seed):
     rng = np.random.RandomState(seed)
     n_samples = 1000
     n_features = 1
-    X_binned = rng.randint(0, 256, size=(n_samples, n_features),
+    X_binned = rng.randint(0, 255, size=(n_samples, n_features),
                            dtype=np.uint8)
     X_binned = np.asfortranarray(X_binned)
 
@@ -230,7 +230,7 @@ def test_predictions(seed):
     assert np.all((np.diff(pred) >= 0) == (np.diff(sin) >= 0))
 
     # Second feature (NEG)
-    # assert pred is all decreasing when f_1 is all decreasing
+    # assert pred is all decreasing when f_1 is all increasing
     X = np.c_[constant, linspace]
     pred = gbdt.predict(X)
     assert is_decreasing(pred)

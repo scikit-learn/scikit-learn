@@ -30,13 +30,13 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
 ])
 
 
-cpdef inline Y_DTYPE_C compute_value(
+cpdef inline Y_DTYPE_C compute_node_value(
         Y_DTYPE_C sum_gradient,
         Y_DTYPE_C sum_hessian,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
         Y_DTYPE_C l2_regularization) nogil:
-    """Compute node value.
+    """Compute a node's value.
 
     The value is capped in the [lower_bound, upper_bound] interval to respect
     monotonic constraints. Shrinkage is ignored.
