@@ -1877,7 +1877,7 @@ def test_illconditioned_lbfgs():
 
 
 def test_logistic_loss_preconditioning():
-    # check _logistic_loss and _logistic_loss_grad with preconditioning
+    # check that _logistic_loss is invariant wrt whether we precondition or not.
     X, y = make_classification(n_samples=100, n_features=60, random_state=0)
     X[:, 1] += 10000
     lr = LogisticRegression(random_state=0, precondition=False, max_iter=1000)
