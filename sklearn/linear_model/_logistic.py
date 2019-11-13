@@ -183,7 +183,7 @@ def _logistic_loss(w, X, y, alpha, sample_weight=None, X_scale=None,
     X_offset : ndarray, shape (n_features,) or None
         Offset to use for X to avoid subtracting mean from sparse
         matrices if preconditioning. Should be None in the dense case
-         as the mean was actually subtracted.
+        as the mean was actually subtracted.
 
     Returns
     -------
@@ -309,7 +309,7 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight, X_scale=None,
     X_offset : ndarray, shape (n_features,) or None
         Offset to use for X to avoid subtracting mean from sparse
         matrices if preconditioning. Should be None in the dense case
-         as the mean was actually subtracted.
+        as the mean was actually subtracted.
 
     Returns
     -------
