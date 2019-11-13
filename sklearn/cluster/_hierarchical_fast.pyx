@@ -14,7 +14,7 @@ ctypedef np.int8_t INT8
 np.import_array()
 
 from ..neighbors._dist_metrics cimport DistanceMetric
-from ..utils.fast_dict cimport IntFloatDict
+from ..utils._fast_dict cimport IntFloatDict
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
