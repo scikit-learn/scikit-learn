@@ -882,7 +882,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     if precondition == 'auto':
         precondition = solver == 'lbfgs'
-    if precondition == 'True' and solver != 'lbfgs':
+    if precondition and solver != 'lbfgs':
         raise ValueError("precondition=True only supported with"
                          " solver='lbfgs'")
 
