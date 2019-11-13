@@ -1487,6 +1487,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         corresponds to outcome 1 (True) and `-intercept_` corresponds to
         outcome 0 (False).
 
+    objective_value_ : float
+        Objective function value (penalized loss). Lower is better.
+
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
@@ -1721,17 +1724,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       precondition=self.precondition)
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
-        fold_coefs_, _, n_iter_, loss_values_ = zip(*fold_coefs_)
+        fold_coefs_, _, n_iter_, objective_value_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
         if multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
-            self.loss_values_ = loss_values_[0]
+            self.objective_value_ = objective_value_[0]
         else:
             self.coef_ = np.asarray(fold_coefs_)
             self.coef_ = self.coef_.reshape(n_classes, n_features +
                                             int(self.fit_intercept))
-            self.loss_values_ = loss_values_[0]
+            self.objective_value_ = objective_value_[0]
 
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
@@ -2002,6 +2005,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         intercept is fit or not. If ``penalty='elasticnet'``, the shape is
         ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
         ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
+
+    objective_value_ : float
+        Objective function value (penalized loss). Lower is better.
+        Only present if `refit=True`.
 
     scores_ : dict
         dict with classes as the keys, and the values as the
@@ -2291,7 +2298,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
                 # Note that y is label encoded and hence pos_class must be
                 # the encoded label / None (for 'multinomial')
-                w, _, _, _ = _logistic_regression_path(
+                w, _, _, objective_value = _logistic_regression_path(
                     X, y, pos_class=encoded_label, Cs=[C_], solver=solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
@@ -2304,6 +2311,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     sample_weight=sample_weight,
                     l1_ratio=l1_ratio_)
                 w = w[0]
+                self.objective_value_ = objective_value[0]
 
             else:
                 # Take the best scores across every fold and the average of
