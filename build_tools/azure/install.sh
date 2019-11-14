@@ -47,8 +47,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
-        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
-        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
+        if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
+            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+                        conda-forge::llvm-openmp"
+        fi
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
