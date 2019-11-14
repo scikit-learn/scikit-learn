@@ -135,7 +135,12 @@ class FitFailedWarning(RuntimeWarning):
     ...         gs.fit(X, y)  # This will raise a ValueError since C is < 0
     ...     except ValueError:
     ...         pass
-    ...     print(repr(w[-1].message))
+    ...     msg = repr(w[-1].message)
+    ...     # if msg.find('Traceback (most recent call last):\n') > -1:
+    ...     if msg.count('\n') > 1:  # has stacktrace in middle of string
+    ...         split = msg.splitlines()  # note: handles more than '\n'
+    ...         msg = split[0] + '\n' + split[-1] + '\n'
+    ...     print(msg)
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
     Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
