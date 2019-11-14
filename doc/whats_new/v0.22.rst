@@ -90,6 +90,10 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- Any model using the :func:`svm.libsvm` or the :func:`svm.liblinear` solver,
+  including :class:`svm.LinearSVC`, :class:`svm.LinearSVR`,
+  :class:`svm.NuSVC`, :class:`svm.NuSVR`, :class:`svm.OneClassSVM`,
+  :class:`svm.SVC`, :class:`svm.SVR`. |Fix|
 
 Details are listed in the changelog below.
 
@@ -734,6 +738,17 @@ Changelog
 - |FIX| The liblinear solver now supports ``sample_weight``.
   :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Fixed a convergence issue in ``libsvm`` and ``liblinear`` on Windows
+  platforms impacting all related classifiers and regressors. The random number
+  generator used to randomly select coordinates in the coordinate descent
+  algorithm was C ``rand()``, that is only able to generate numbers up to
+  ``32767`` on windows platform. It was replaced with C++11 ``mt19937``, a
+  Mersenne Twister that correctly generates 31bits/63bits random numbers on all
+  platforms. In addition, the crude "modulo" postprocessor used to get a random
+  number in a bounded interval was replaced by the tweaked Lemire method as
+  suggested by `this blog post
+<http://www.pcg-random.org/posts/bounded-rands.html>`
+  :pr:`13511` by :user:`Sylvain Marié <smarie>`.
 
 :mod:`sklearn.tree`
 ...................
