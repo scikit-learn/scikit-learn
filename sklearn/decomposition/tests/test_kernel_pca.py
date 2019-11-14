@@ -274,8 +274,8 @@ def test_nested_circles():
 
 
 def test_kernel_conditioning():
-    """ Test that ``_check_psd_eigenvalues`` is correctly called (see 
-    :issue:`12140`)."""
+    """ Test that ``_check_psd_eigenvalues`` is correctly called
+    Non-regression test for issue #12140 (PR #12145)"""
 
     # create a pathological X leading to small non-zero eigenvalue
     X = [[5, 1],
