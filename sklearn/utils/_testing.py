@@ -192,7 +192,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
             if msg.count('\n') > 1:  # has stacktrace in middle of string
                 split = msg.splitlines()  # note: handles more than '\n'
-                msg = split[0] + '\n' split[-1]
+                msg = split[0] + '\n' + split[-1]
             if callable(message):  # add support for certain tests
                 check_in_message = message
             else:
