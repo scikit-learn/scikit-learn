@@ -534,7 +534,7 @@ def test_confusion_matrix_normalize_single_class():
     cm_true = confusion_matrix(y_test, y_pred, normalize='true')
     assert cm_true.sum() == pytest.approx(2.0)
 
-    # additionally check that not warning is raised due to a division by zero
+    # additionally check that no warnings are raised due to a division by zero
     with pytest.warns(None) as rec:
         cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
     assert not len(rec)
