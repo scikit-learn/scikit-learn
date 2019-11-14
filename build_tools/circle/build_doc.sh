@@ -59,6 +59,14 @@ get_build_type() {
     fi
     changed_examples=$(echo "$filenames" | grep -E "^examples/(.*/)*plot_")
 
+    # The following is used to extract the list of filenames of example python
+    # files that sphinx-gallery needs to run to generate png files used as
+    # figures or images in the .rst files  from the documentation.
+    # If the contributor changes a .rst file in a PR we need to run all
+    # the examples mentioned in that file to get sphinx build the
+    # documentation without generating spurious warnings related to missing
+    # png files.
+
     if [[ -n "$filenames" ]]
     then
         # get rst files
@@ -71,33 +79,34 @@ get_build_type() {
         auto_example_files="$(echo "$img_fig_lines" | grep auto_examples | awk -F "/" '{print $NF}')"
 
         # remove "sphx_glr_" from path and accept replace _\d\d\d.png with .py
-        image_paths="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_[[:digit:]][[:digit:]][[:digit:]].png/.py/')"
+        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_[[:digit:]][[:digit:]][[:digit:]].png/.py/')"
 
         # get unique values
-        examples_in_rst="$(echo "$image_paths" | uniq | paste -sd '|')"
+        examples_in_rst="$(echo "$scripts_names" | uniq )"
     fi
 
+    pattern=""
+    if [[ -n "$examples_in_rst" ]]
+    then
+        pattern=$($pattern)$(echo "$examples_in_rst" | paste -sd '|' )
+    fi
     if [[ -n "$changed_examples" ]]
     then
-        if [[ -n "$examples_in_rst" ]]
-        then
-            pattern=$(echo "$changed_examples" | paste -sd '|')"|"$examples_in_rst
-        else
-            pattern=$(echo "$changed_examples" | paste -sd '|')
-        fi
-        # pattern for examples to run is the last line of output
+        pattern=$(echo $pattern)"|"$(echo "$changed_examples" | paste -sd '|')
+    fi
+    if [[ $pattern="|" ]]
+    then
+       pattern=$(echo "$pattern" | cut -c 2-)
+    fi
+
+    # pattern for examples to run is the last line of output
+    if [[  -n "$pattern" ]]
+    then
         echo BUILD: detected examples/ filename modified in $git_range: $pattern
         echo $pattern
         return
-    else
-        if [[ -n "$examples_in_rst" ]]
-        then
-            # pattern for examples to run is the last line of output
-            echo BUILD: detected examples/ filename modified in $git_range: $pattern
-            echo $pattern
-            return
-        fi
     fi
+
     echo QUICK BUILD: no examples/ filename modified in $git_range:
     echo "$filenames"
 }
@@ -241,7 +250,7 @@ then
 
     if [ $check ]
     then
-        echo "There are Sphinx Warnings in the documentation!"
+        echo "Sphinx generated warnings when building the documentation related to files modified in this PR."
         echo "Please check doc/_build/html/stable/_changed.html"
         exit 1
     fi
