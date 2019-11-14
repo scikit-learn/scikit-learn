@@ -627,7 +627,7 @@ Changelog
 - |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
   `normalize` allowing to normalize the confusion matrix by column, rows, or
   overall.
-  :pr:`xxx` by `Guillaume Lemaitre <glemaitre>`.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
