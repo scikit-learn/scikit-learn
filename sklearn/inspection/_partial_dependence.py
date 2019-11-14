@@ -859,15 +859,14 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            # If ax has visible==False, it has most likely been set to False
+            # If ax was set off, it has most likely been set to off
             # by a previous call to plot.
-            if not ax.get_visible():
+            if not ax.axison:
                 raise ValueError("The ax was already used in another plot "
                                  "function, please set ax=display.axes_ "
                                  "instead")
 
             ax.set_axis_off()
-            ax.set_visible(False)
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
 
