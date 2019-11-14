@@ -823,6 +823,10 @@ div.body img {
     height: unset!important; /* Needed because sphinx sets the height */
 }
 
+div.body dd > p {
+    hyphens: none;
+}
+
 img.align-center, .figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
