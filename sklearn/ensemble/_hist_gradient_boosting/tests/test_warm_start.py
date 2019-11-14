@@ -102,7 +102,7 @@ def test_warm_start_early_stopping(GradientBoosting, X, y):
     n_iter_no_change = 5
     gb = GradientBoosting(
         n_iter_no_change=n_iter_no_change, max_iter=200,
-        random_state=42, warm_start=True, tol=1e-3, early_stopping=False
+        random_state=42, warm_start=True, tol=1e-3, early_stopping=True
     )
     gb.fit(X, y)
     n_iter_first_fit = gb.n_iter_

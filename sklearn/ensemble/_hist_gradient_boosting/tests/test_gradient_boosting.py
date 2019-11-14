@@ -290,7 +290,7 @@ def test_small_trainset():
     y = [[class_] * int(prop * n_samples) for (class_, prop)
          in original_distrib.items()]
     y = shuffle(np.concatenate(y))
-    gb = HistGradientBoostingClassifier(early_stopping=False)
+    gb = HistGradientBoostingClassifier()
 
     # Compute the small training set
     X_small, y_small = gb._get_small_trainset(X, y, seed=42)
