@@ -85,15 +85,22 @@ get_build_type() {
         examples_in_rst="$(echo "$scripts_names" | uniq )"
     fi
 
+    #initialize pattern
     pattern=""
+
+    # executed only if there are examples in the modified rst files
     if [[ -n "$examples_in_rst" ]]
     then
         pattern=$($pattern)$(echo "$examples_in_rst" | paste -sd '|' )
     fi
+
+    # executed only if some examples have been modified
     if [[ -n "$changed_examples" ]]
     then
         pattern=$(echo $pattern)"|"$(echo "$changed_examples" | paste -sd '|')
     fi
+
+    # cut trailing initial "|" if only examples in rst need to be built
     if [[ $pattern="|" ]]
     then
        pattern=$(echo "$pattern" | cut -c 2-)
