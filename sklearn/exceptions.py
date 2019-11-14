@@ -136,7 +136,7 @@ class FitFailedWarning(RuntimeWarning):
     ...     except ValueError:
     ...         pass
     ...     msg = repr(w[-1].message)
-    ...     if msg.count('\n') > 1:
+    ...     if msg.count('\n')>1:
     ...         split = msg.splitlines()  # note: handles more than '\n'
     ...         msg = split[0] + '\n' + split[-1] + '\n'
     ...     print(msg)
