@@ -19,7 +19,7 @@ from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
 from ..neighbors import DistanceMetric
-from ..neighbors.dist_metrics import METRIC_MAPPING
+from ..neighbors._dist_metrics import METRIC_MAPPING
 
 from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
