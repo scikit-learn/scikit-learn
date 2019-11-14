@@ -313,7 +313,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
             cm = cm / cm.sum(axis=0, keepdims=True)
         elif normalize == 'all':
             cm = cm / cm.sum()
-        cm = np.nan_to_num(cm, copy=False)
+        cm = np.nan_to_num(cm)
 
     return cm
 
