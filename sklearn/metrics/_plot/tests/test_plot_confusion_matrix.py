@@ -3,8 +3,14 @@ import numpy as np
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
+from sklearn.compose import make_column_transformer
 from sklearn.datasets import make_classification
+from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
+
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
@@ -201,3 +207,22 @@ def test_confusion_matrix_contrast(pyplot):
     # oof-diagonal text is black
     assert_allclose(disp.text_[0, 0].get_color(), [1.0, 1.0, 1.0, 1.0])
     assert_allclose(disp.text_[1, 1].get_color(), [1.0, 1.0, 1.0, 1.0])
+
+
+@pytest.mark.parametrize(
+    "clf", [LogisticRegression(),
+            make_pipeline(StandardScaler(), LogisticRegression()),
+            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
+                          LogisticRegression())])
+def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
+    X, y = data
+    with pytest.raises(NotFittedError):
+        plot_confusion_matrix(clf, X, y)
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+
+    disp = plot_confusion_matrix(clf, X, y)
+    cm = confusion_matrix(y, y_pred)
+
+    assert_allclose(disp.confusion_matrix, cm)
+    assert disp.text_.shape == (n_classes, n_classes)
