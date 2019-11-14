@@ -127,6 +127,10 @@ Changelog
     training loss or score is now monitored on a class-wise stratified
     subsample to preserve the class balance of the original training set.
     :pr:`14194` by :user:`Johann Faouzi <johannfaouzi>`.
+  - |Feature| Early stopping is now determined with a new `early_stopping`
+    parameter instead of `n_iter_no_change`. Default value is 'auto', which
+    enables early stopping if there are at least 10,000 samples in the
+    training set. :pr:`14516` by :user:`Johann Faouzi <johannfaouzi>`.
   - |Feature| :func:`inspection.partial_dependence` and
     :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
@@ -298,19 +302,19 @@ Changelog
 - |Enhancement| SVM now throws more specific error when fit on non-square data
   and kernel = precomputed.  :class:`svm.BaseLibSVM`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
-  
+
 :mod:`sklearn.tree`
 ...................
 
 - |Feature| Adds minimal cost complexity pruning, controlled by ``ccp_alpha``,
   to :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
   :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
-  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
-  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`, 
-  :class:`ensemble.GradientBoostingClassifier`, 
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
 
