@@ -1640,7 +1640,7 @@ def test_fit_and_score_failing():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
-    
+
     # check traceback is included
     def testwarntrace(msg):
         assert(msg.find('Traceback (most recent call last):\n') > -1)
