@@ -1,30 +1,30 @@
 """Testing for Spectral Biclustering methods"""
 
 import numpy as np
+import pytest
 from scipy.sparse import csr_matrix, issparse
 
 from sklearn.model_selection import ParameterGrid
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import SkipTest
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 
-from sklearn.cluster.bicluster import SpectralCoclustering
-from sklearn.cluster.bicluster import SpectralBiclustering
-from sklearn.cluster.bicluster import _scale_normalize
-from sklearn.cluster.bicluster import _bistochastic_normalize
-from sklearn.cluster.bicluster import _log_normalize
+from sklearn.cluster import SpectralCoclustering
+from sklearn.cluster import SpectralBiclustering
+from sklearn.cluster._bicluster import _scale_normalize
+from sklearn.cluster._bicluster import _bistochastic_normalize
+from sklearn.cluster._bicluster import _log_normalize
 
 from sklearn.metrics import (consensus_score, v_measure_score)
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
 
-class MockBiclustering(BaseEstimator, BiclusterMixin):
+class MockBiclustering(BiclusterMixin, BaseEstimator):
     # Mock object for testing get_submatrix.
     def __init__(self):
         pass
@@ -114,7 +114,8 @@ def test_spectral_biclustering():
 
                 if issparse(mat) and model.get_params().get('method') == 'log':
                     # cannot take log of sparse matrix
-                    assert_raises(ValueError, model.fit, mat)
+                    with pytest.raises(ValueError):
+                        model.fit(mat)
                     continue
                 else:
                     model.fit(mat)
@@ -231,33 +232,27 @@ def test_perfect_checkerboard():
                            (rows, cols)) == 1
 
 
-def test_errors():
+@pytest.mark.parametrize(
+    "args",
+    [{'n_clusters': (3, 3, 3)},
+     {'n_clusters': 'abc'},
+     {'n_clusters': (3, 'abc')},
+     {'method': 'unknown'},
+     {'n_components': 0},
+     {'n_best': 0},
+     {'svd_method': 'unknown'},
+     {'n_components': 3, 'n_best': 4}]
+)
+def test_errors(args):
     data = np.arange(25).reshape((5, 5))
 
-    model = SpectralBiclustering(n_clusters=(3, 3, 3))
-    assert_raises(ValueError, model.fit, data)
+    model = SpectralBiclustering(**args)
+    with pytest.raises(ValueError):
+        model.fit(data)
 
-    model = SpectralBiclustering(n_clusters='abc')
-    assert_raises(ValueError, model.fit, data)
 
-    model = SpectralBiclustering(n_clusters=(3, 'abc'))
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(method='unknown')
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(svd_method='unknown')
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(n_components=0)
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(n_best=0)
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(n_components=3, n_best=4)
-    assert_raises(ValueError, model.fit, data)
-
+def test_wrong_shape():
     model = SpectralBiclustering()
     data = np.arange(27).reshape((3, 3, 3))
-    assert_raises(ValueError, model.fit, data)
+    with pytest.raises(ValueError):
+        model.fit(data)
