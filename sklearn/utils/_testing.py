@@ -190,6 +190,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             # substring will match, the entire message with typo won't
             msg = w[index].message  # For Python 3 compatibility
             msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
+            # if msg.find('Traceback (most recent call last):\n') > -1:
             if msg.count('\n') > 1:  # has stacktrace in middle of string
                 split = msg.splitlines()  # note: handles more than '\n'
                 msg = split[0] + '\n' + split[-1]
