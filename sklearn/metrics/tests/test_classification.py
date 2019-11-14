@@ -514,17 +514,17 @@ def test_multilabel_confusion_matrix_errors():
 
 @pytest.mark.parametrize(
     "normalize, cm_dtype, expected_results",
-    [('true', float, 0.333333333),
-     ('pred', float, 0.333333333),
-     ('all', float, 0.1111111111),
-     (None, int, 2)]
+    [('true', 'f', 0.333333333),
+     ('pred', 'f', 0.333333333),
+     ('all', 'f', 0.1111111111),
+     (None, 'i', 2)]
 )
 def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     y_test = [0, 1, 2] * 6
     y_pred = list(chain(*permutations([0, 1, 2])))
     cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     assert_allclose(cm, expected_results)
-    assert cm.dtype == cm_dtype
+    assert cm.dtype.kind == cm_dtype
 
 
 def test_confusion_matrix_normalize_single_class():
