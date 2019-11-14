@@ -1640,6 +1640,15 @@ def test_fit_and_score_failing():
     # check if the same warning is triggered
     assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
+    
+    # check traceback is included
+    def testwarntrace(msg):
+        assert(msg.find('Traceback (most recent call last):\n') > -1)
+        split = msg.splitlines()  # note: handles more than '\n' 
+        mtb = split[0] + '\n' + split[-1]
+        return warning_message in mtb
+    assert_warns_message(FitFailedWarning, testwarntrace, _fit_and_score,
+                         *fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
     # check if exception was raised, with default error_score='raise'
