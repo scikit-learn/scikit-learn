@@ -537,12 +537,12 @@ def test_confusion_matrix_normalize_single_class():
     # additionally check that no warnings are raised due to a division by zero
     with pytest.warns(None) as rec:
         cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
-    assert not len(rec)
+    assert not rec
     assert cm_pred.sum() == pytest.approx(1.0)
 
     with pytest.warns(None) as rec:
         cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
-    assert not len(rec)
+    assert not rec
 
 
 def test_cohen_kappa():

@@ -583,6 +583,17 @@ example, which creates the following figure:
    :scale: 75
    :align: center
 
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
+
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
 
@@ -591,18 +602,6 @@ false negatives and true positives as follows::
   >>> tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
   >>> tn, fp, fn, tp
   (2, 1, 2, 3)
-
-The parameter ``normalize`` allows to report ratios instead of counts. The
-confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
-and ``'all'`` which will divide the counts by the sum of each columns, rows, or
-the entire matrix, respectively.
-
-  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
-  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
-  >>> tn, fp, fn, tp = confusion_matrix(
-  ...     y_true, y_pred, normalize='all').ravel()
-  >>> tn, fp, fn, tp
-  (0.25, 0.125, 0.25, 0.375)
 
 .. topic:: Example:
 
