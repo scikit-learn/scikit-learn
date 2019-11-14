@@ -573,8 +573,10 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the 
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
