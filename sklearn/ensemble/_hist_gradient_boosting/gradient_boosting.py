@@ -186,11 +186,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._baseline_prediction = self.loss_.get_baseline_prediction(
                 y_train, self.n_trees_per_iteration_
             )
-            raw_predictions = np.zeros(
+            self._raw_predictions = np.zeros(
                 shape=(self.n_trees_per_iteration_, n_samples),
                 dtype=self._baseline_prediction.dtype
             )
-            raw_predictions += self._baseline_prediction
+            self._raw_predictions += self._baseline_prediction
 
             # initialize gradients and hessians (empty arrays).
             # shape = (n_trees_per_iteration, n_samples).
@@ -205,7 +205,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Initialize structures and attributes related to early stopping
             self.scorer_ = None  # set if scoring != loss
-            raw_predictions_val = None  # set if scoring == loss and use val
+            # set if scoring == loss and use val
+            self._raw_predictions_val = None
             self.train_score_ = []
             self.validation_score_ = []
 
@@ -224,16 +225,18 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the validation data.
 
                     if self._use_validation_data:
-                        raw_predictions_val = np.zeros(
+                        self._raw_predictions_val = np.zeros(
                             shape=(self.n_trees_per_iteration_,
                                    X_binned_val.shape[0]),
                             dtype=self._baseline_prediction.dtype
                         )
 
-                        raw_predictions_val += self._baseline_prediction
+                        self._raw_predictions_val += self._baseline_prediction
 
-                    self._check_early_stopping_loss(raw_predictions, y_train,
-                                                    raw_predictions_val, y_val)
+                    self._check_early_stopping_loss(
+                        self._raw_predictions, y_train,
+                        self._raw_predictions_val, y_val
+                    )
                 else:
                     self.scorer_ = check_scoring(self, self.scoring)
                     # scorer_ is a callable with signature (est, X, y) and
@@ -273,7 +276,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.validation_score_ = self.validation_score_.tolist()
 
             # Compute raw predictions
-            raw_predictions = self._raw_predict(X_binned_train)
+            self._raw_predictions = self._raw_predict(X_binned_train)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
@@ -299,8 +302,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
-            self.loss_.update_gradients_and_hessians(gradients, hessians,
-                                                     y_train, raw_predictions)
+            self.loss_.update_gradients_and_hessians(
+                gradients, hessians, y_train, self._raw_predictions)
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -332,7 +335,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[k, :], grower)
+                _update_raw_predictions(self._raw_predictions[k, :], grower)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -342,7 +345,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # Update raw_predictions_val with the newest tree(s)
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
-                            raw_predictions_val[k, :] += (
+                            self._raw_predictions_val[k, :] += (
                                 pred.predict_binned(
                                     X_binned_val,
                                     self.bin_mapper_.missing_values_bin_idx_
@@ -350,8 +353,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions, y_train,
-                        raw_predictions_val, y_val
+                        self._raw_predictions, y_train,
+                        self._raw_predictions_val, y_val
                     )
 
                 else:
