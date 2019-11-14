@@ -1,6 +1,8 @@
 
 from functools import partial
 from itertools import product
+from itertools import chain
+from itertools import permutations
 import warnings
 import re
 
@@ -17,6 +19,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
@@ -507,6 +510,39 @@ def test_multilabel_confusion_matrix_errors():
     with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
                                     [[1, 2, 0], [1, 0, 2]])
+
+
+@pytest.mark.parametrize(
+    "normalize, cm_dtype, expected_results",
+    [('true', float, 0.333333333),
+     ('pred', float, 0.333333333),
+     ('all', float, 0.1111111111),
+     (None, int, 2)]
+)
+def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
+    y_test = [0, 1, 2] * 6
+    y_pred = list(chain(*permutations([0, 1, 2])))
+    cm = confusion_matrix(y_test, y_pred, normalize=normalize)
+    assert_allclose(cm, expected_results)
+    assert cm.dtype == cm_dtype
+
+
+def test_confusion_matrix_normalize_single_class():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+
+    cm_true = confusion_matrix(y_test, y_pred, normalize='true')
+    assert cm_true.sum() == pytest.approx(2.0)
+
+    # additionally check that not warning is raised due to a division by zero
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
+    assert not len(rec)
+    assert cm_pred.sum() == pytest.approx(1.0)
+
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
+    assert not len(rec)
 
 
 def test_cohen_kappa():
