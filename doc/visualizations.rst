@@ -59,6 +59,7 @@ values of the curves.
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
+    * :ref:`sphx_glr_auto_examples_plot_partial_dependence_visualization_api.py`
 
 Available Plotting Utilities
 ============================
@@ -70,6 +71,8 @@ Functions
 
 .. autosummary::
 
+   inspection.plot_partial_dependence
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 
@@ -80,4 +83,6 @@ Display Objects
 
 .. autosummary::
 
+   inspection.PartialDependenceDisplay
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
