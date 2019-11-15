@@ -6,25 +6,25 @@ from scipy.sparse import csr_matrix, issparse
 
 from sklearn.model_selection import ParameterGrid
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import SkipTest
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 
-from sklearn.cluster.bicluster import SpectralCoclustering
-from sklearn.cluster.bicluster import SpectralBiclustering
-from sklearn.cluster.bicluster import _scale_normalize
-from sklearn.cluster.bicluster import _bistochastic_normalize
-from sklearn.cluster.bicluster import _log_normalize
+from sklearn.cluster import SpectralCoclustering
+from sklearn.cluster import SpectralBiclustering
+from sklearn.cluster._bicluster import _scale_normalize
+from sklearn.cluster._bicluster import _bistochastic_normalize
+from sklearn.cluster._bicluster import _log_normalize
 
 from sklearn.metrics import (consensus_score, v_measure_score)
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
 
-class MockBiclustering(BaseEstimator, BiclusterMixin):
+class MockBiclustering(BiclusterMixin, BaseEstimator):
     # Mock object for testing get_submatrix.
     def __init__(self):
         pass

@@ -25,11 +25,11 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.datasets.samples_generator import make_regression
-from sklearn.ensemble.forest import RandomForestRegressor
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.stochastic_gradient import SGDRegressor
-from sklearn.svm.classes import SVR
+from sklearn.datasets import make_regression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import SGDRegressor
+from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 
