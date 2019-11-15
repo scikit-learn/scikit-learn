@@ -206,8 +206,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Initialize structures and attributes related to early stopping
             self.scorer_ = None  # set if scoring != loss
-            # set if scoring == loss and use val
-            raw_predictions_val = None
+            raw_predictions_val = None  # set if scoring == loss and use val
             self.train_score_ = []
             self.validation_score_ = []
 
@@ -234,10 +233,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                         raw_predictions_val += self._baseline_prediction
 
-                    self._check_early_stopping_loss(
-                        raw_predictions, y_train,
-                        raw_predictions_val, y_val
-                    )
+                    self._check_early_stopping_loss(raw_predictions, y_train,
+                                                    raw_predictions_val, y_val)
                 else:
                     self.scorer_ = check_scoring(self, self.scoring)
                     # scorer_ is a callable with signature (est, X, y) and
@@ -300,8 +297,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
-            self.loss_.update_gradients_and_hessians(
-                gradients, hessians, y_train, raw_predictions)
+            self.loss_.update_gradients_and_hessians(gradients, hessians,
+                                                     y_train, raw_predictions)
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -355,9 +352,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions, y_train,
-                        raw_predictions_val, y_val
-                    )
+                        raw_predictions, y_train, raw_predictions_val, y_val)
 
                 else:
                     should_early_stop = self._check_early_stopping_scorer(
