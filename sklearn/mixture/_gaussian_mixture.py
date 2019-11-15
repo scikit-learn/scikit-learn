@@ -750,3 +750,9 @@ class GaussianMixture(BaseMixture):
             The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()
+
+
+class ConditionalGaussianMixture():
+
+    def __init__(self, gmm):
+        pass
