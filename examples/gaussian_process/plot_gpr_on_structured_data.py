@@ -103,13 +103,12 @@ class SequenceKernel(GenericKernelMixin, Kernel):
 
 kernel = SequenceKernel()
 
-X = np.array(['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA'])
-y = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
-
 '''
 Sequence similarity matrix under the kernel
 ===========================================
 '''
+
+X = np.array(['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA'])
 
 K = kernel(X)
 D = kernel.diag(X)
@@ -125,13 +124,16 @@ Regression
 ==========
 '''
 
+X = np.array(['AGCT', 'AGC', 'AACT', 'TAA', 'AAA', 'GAACA'])
+Y = np.array([1.0, 1.0, 2.0, 2.0, 3.0, 3.0])
+
 training_idx = [0, 1, 3, 4]
 gp = GaussianProcessRegressor(kernel=kernel)
-gp.fit(X[training_idx], y[training_idx])
+gp.fit(X[training_idx], Y[training_idx])
 
 plt.figure(figsize=(8, 5))
 plt.bar(np.arange(len(X)), gp.predict(X), color='b', label='prediction')
-plt.bar(training_idx, y[training_idx], width=0.2, color='r',
+plt.bar(training_idx, Y[training_idx], width=0.2, color='r',
         alpha=1, label='training')
 plt.xticks(np.arange(len(X)), X)
 plt.title('Regression on sequences')
@@ -142,29 +144,29 @@ Classification
 ==============
 '''
 
-X = np.array(['AGCT', 'CGA', 'TAAC', 'TCG', 'CTTT', 'TGCT'])
+X_train = np.array(['AGCT', 'CGA', 'TAAC', 'TCG', 'CTTT', 'TGCT'])
 # whether there are 'A's in the sequence
-t = np.array([True, True, True, False, False, False])
+Y_train = np.array([True, True, True, False, False, False])
 
 gp = GaussianProcessClassifier(kernel)
-gp.fit(X, t)
+gp.fit(X_train, Y_train)
 
-seqs_test = ['AAA', 'ATAG', 'CTC', 'CT', 'C']
-clss_test = [True, True, False, False, False]
+X_test = ['AAA', 'ATAG', 'CTC', 'CT', 'C']
+Y_test = [True, True, False, False, False]
 
 plt.figure(figsize=(8, 5))
-plt.scatter(np.arange(len(X)), [1.0 if c else -1.0 for c in t],
+plt.scatter(np.arange(len(X_train)), [1.0 if c else -1.0 for c in Y_train],
             s=100, marker='o', edgecolor='none', facecolor=(1, 0.75, 0),
             label='training')
-plt.scatter(len(X) + np.arange(len(seqs_test)),
-            [1.0 if c else -1.0 for c in clss_test],
+plt.scatter(len(X_train) + np.arange(len(X_test)),
+            [1.0 if c else -1.0 for c in Y_test],
             s=100, marker='o', edgecolor='none', facecolor='r', label='truth')
-plt.scatter(len(X) + np.arange(len(seqs_test)),
-            [1.0 if c else -1.0 for c in gp.predict(seqs_test)],
+plt.scatter(len(X_train) + np.arange(len(X_test)),
+            [1.0 if c else -1.0 for c in gp.predict(X_test)],
             s=100, marker='x', edgecolor=(0, 1.0, 0.3), linewidth=2,
             label='prediction')
-plt.xticks(np.arange(len(X) + len(seqs_test)),
-           np.concatenate((X, seqs_test)))
+plt.xticks(np.arange(len(X_train) + len(X_test)),
+           np.concatenate((X_train, X_test)))
 plt.yticks([-1, 1], [False, True])
 plt.title('Classification on sequences')
 plt.legend()
