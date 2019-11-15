@@ -2429,12 +2429,10 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        The label of the positive class
+        Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class.
-        Defaults to the greater label according to lexicographic order, unless
-        y_true is all 0 or all -1 in which case pos_label defaults to 1.
+        The label of the positive class.
 
     Returns
     -------
