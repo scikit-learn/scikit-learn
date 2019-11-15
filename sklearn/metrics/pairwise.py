@@ -1000,7 +1000,7 @@ def _detect_categorical_features(X, categorical_features=None):
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
 
         def detect_cat(x):
-            if not _object_dtype_isnan(x):
+            if not np.isnan(x):
                 if np.issubdtype(type(x), np.number):
                     raise ValueError(False)
                 else:
@@ -1012,6 +1012,9 @@ def _detect_categorical_features(X, categorical_features=None):
                 f_test(X[:, col])
             except ValueError as e:
                 categorical_features[col] = e.args[0]
+            except TypeError:
+                categorical_features[col] = True
+
     else:
         categorical_features = np.asarray(categorical_features)
         if np.issubdtype(categorical_features.dtype, np.integer):
