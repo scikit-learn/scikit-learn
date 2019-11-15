@@ -193,8 +193,9 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
-    """Compute confusion matrix to evaluate the accuracy of a classification
+def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
+                     normalize=None):
+    """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
     is equal to the number of observations known to be in group :math:`i` and
@@ -208,25 +209,30 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_classes], optional
+    labels : array-like of shape (n_classes), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
-        If none is given, those that appear at least once
+        If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes confusion matrix over the true (rows), predicted (columns)
+        conditions or all the population. If None, confusion matrix will not be
+        normalized.
+
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix
+        Confusion matrix.
 
     References
     ----------
@@ -296,11 +302,20 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     else:
         dtype = np.float64
 
-    CM = coo_matrix((sample_weight, (y_true, y_pred)),
+    cm = coo_matrix((sample_weight, (y_true, y_pred)),
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
-    return CM
+    with np.errstate(all='ignore'):
+        if normalize == 'true':
+            cm = cm / cm.sum(axis=1, keepdims=True)
+        elif normalize == 'pred':
+            cm = cm / cm.sum(axis=0, keepdims=True)
+        elif normalize == 'all':
+            cm = cm / cm.sum()
+        cm = np.nan_to_num(cm)
+
+    return cm
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
