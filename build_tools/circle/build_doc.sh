@@ -88,12 +88,12 @@ get_build_type() {
     # executed only if there are examples in the modified rst files
     if [[ -n "$examples_in_rst" ]]
     then
-	if [[ -n "$changed_examples" ]]
-	then
-		changed_examples="$changed_examples|$examples_in_rst"
-	else
-		changed_examples="$examples_in_rst"
-	fi
+        if [[ -n "$changed_examples" ]]
+        then
+            changed_examples="$changed_examples|$examples_in_rst"
+        else
+            changed_examples="$examples_in_rst"
+        fi
     fi
 
     if [[ -n "$changed_examples" ]]
@@ -104,7 +104,6 @@ get_build_type() {
         echo "$pattern"
         return
     fi
-
     echo QUICK BUILD: no examples/ filename modified in $git_range:
     echo "$filenames"
 }
