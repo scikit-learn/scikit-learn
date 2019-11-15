@@ -132,7 +132,7 @@ gp.fit(X[training_idx], y[training_idx])
 plt.figure(figsize=(8, 5))
 plt.bar(np.arange(len(X)), gp.predict(X), color='b', label='prediction')
 plt.bar(training_idx, y[training_idx], width=0.2, color='r',
-        alpha=0.5, label='training')
+        alpha=1, label='training')
 plt.xticks(np.arange(len(X)), X)
 plt.title('Regression on sequences')
 plt.legend()
