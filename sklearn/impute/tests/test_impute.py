@@ -25,7 +25,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_union
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.exceptions import ConvergenceWarning
 
 
 def _check_statistics(X, X_true,
@@ -476,7 +477,7 @@ def test_iterative_imputer_one_feature(X):
 
 def test_imputation_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
-    X = sparse_random_matrix(100, 100, density=0.10)
+    X = _sparse_random_matrix(100, 100, density=0.10)
     missing_values = X.data[0]
 
     pipeline = Pipeline([('imputer',
@@ -488,14 +489,14 @@ def test_imputation_pipeline_grid_search():
         'imputer__strategy': ["mean", "median", "most_frequent"]
     }
 
-    Y = sparse_random_matrix(100, 1, density=0.10).toarray()
+    Y = _sparse_random_matrix(100, 1, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
 
 def test_imputation_copy():
     # Test imputation with copy
-    X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
+    X_orig = _sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy
     X = X_orig.copy().toarray()
@@ -544,7 +545,7 @@ def test_iterative_imputer_zero_iters():
 
     n = 100
     d = 10
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     missing_flag = X == 0
     X[missing_flag] = np.nan
 
@@ -570,7 +571,7 @@ def test_iterative_imputer_verbose():
 
     n = 100
     d = 3
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=1)
     imputer.fit(X)
     imputer.transform(X)
@@ -597,7 +598,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
     n = 100
     d = 10
     max_iter = 2
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
     imputer = IterativeImputer(missing_values=0,
@@ -637,7 +638,7 @@ def test_iterative_imputer_estimators(estimator):
 
     n = 100
     d = 10
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
                                max_iter=1,
@@ -661,7 +662,7 @@ def test_iterative_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
-    X = sparse_random_matrix(n, d, density=0.10,
+    X = _sparse_random_matrix(n, d, density=0.10,
                              random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
@@ -680,7 +681,7 @@ def test_iterative_imputer_clip_truncnorm():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
-    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X = _sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     X[:, 0] = 1
 
     imputer = IterativeImputer(missing_values=0,
@@ -767,7 +768,7 @@ def test_iterative_imputer_transform_stochasticity():
     rng2 = np.random.RandomState(1)
     n = 100
     d = 10
-    X = sparse_random_matrix(n, d, density=0.10,
+    X = _sparse_random_matrix(n, d, density=0.10,
                              random_state=rng1).toarray()
 
     # when sample_posterior=True, two transforms shouldn't be equal
@@ -863,6 +864,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test = X_missing[n:]
 
     imputer = IterativeImputer(max_iter=5,
+                               imputation_order='descending',
                                verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
@@ -1271,3 +1273,27 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose(X_trans.toarray(), X_true)
+
+
+@pytest.mark.parametrize(
+    "order, idx_order",
+    [
+        ("ascending", [3, 4, 2, 0, 1]),
+        ("descending", [1, 0, 2, 4, 3])
+    ]
+)
+def test_imputation_order(order, idx_order):
+    # regression test for #15393
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 5)
+    X[:50, 1] = np.nan
+    X[:30, 0] = np.nan
+    X[:20, 2] = np.nan
+    X[:10, 4] = np.nan
+
+    with pytest.warns(ConvergenceWarning):
+        trs = IterativeImputer(max_iter=1,
+                               imputation_order=order,
+                               random_state=0).fit(X)
+        idx = [x.feat_idx for x in trs.imputation_sequence_]
+        assert idx == idx_order

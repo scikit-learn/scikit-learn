@@ -17,18 +17,29 @@ DOCSTRING_WHITELIST = [
     "LinearDiscriminantAnalysis.decision_function",
     "LinearSVC.decision_function",
     "LogisticRegressionCV.decision_function",
+    "OPTICS",
+    "OPTICS.fit",
     "PassiveAggressiveClassifier.decision_function",
     "Perceptron.decision_function",
     "RidgeClassifier.decision_function",
     "RidgeClassifier.fit",
     "RidgeClassifierCV.decision_function",
-    "SGDClassifier.decision_function",
     "KernelDensity",
     "KernelDensity.fit",
     "KernelDensity.score",
     "DecisionTreeClassifier",
     "DecisionTreeRegressor",
-    "VotingClassifier$"
+    "VotingClassifier$",
+    "LinearRegression$",
+    "SGDClassifier.decision_function",
+    "SGDClassifier.set_params",
+    "SGDClassifier.get_params",
+    "SGDClassifier.fit",
+    "SGDClassifier.partial_fit",
+    "SGDClassifier.predict$",  # $ to avoid match w/ predict_proba (regex)
+    "SGDClassifier.score",
+    "SGDClassifier.sparsify",
+    "SGDClassifier.densify",
 ]
 
 

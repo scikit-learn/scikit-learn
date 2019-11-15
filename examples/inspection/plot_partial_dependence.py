@@ -107,7 +107,6 @@ tic = time()
 # with the brute method.
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
 plot_partial_dependence(est, X_train, features,
-                        feature_names=X_train.columns.tolist(),
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
@@ -148,7 +147,6 @@ tic = time()
 features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms',
             ('AveOccup', 'HouseAge')]
 plot_partial_dependence(est, X_train, features,
-                        feature_names=X_train.columns.tolist(),
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()

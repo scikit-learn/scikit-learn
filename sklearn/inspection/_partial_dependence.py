@@ -425,6 +425,22 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
 
+    .. note::
+
+        :func:`plot_partial_dependence` does not support using the same axes
+        with multiple calls. To plot the the partial dependence for multiple
+        estimators, please pass the axes created by the first call to the
+        second call::
+
+          >>> from sklearn.inspection import plot_partial_dependence
+          >>> from sklearn.datasets import make_friedman1
+          >>> from sklearn.linear_model import LinearRegression
+          >>> X, y = make_friedman1()
+          >>> est = LinearRegression().fit(X, y)
+          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est, X,
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -445,10 +461,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
-    feature_names : seq of str, shape (n_features,), optional
+    feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
-        with index i. By default, the name of the feature corresponds to
-        their numerical index.
+        with index i.
+        By default, the name of the feature corresponds to their numerical
+        index for NumPy array and their column name for pandas dataframe.
 
     target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
@@ -592,13 +609,20 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         # regression and binary classification
         target_idx = 0
 
-    X = check_array(X)
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
+    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
     n_features = X.shape[1]
 
     # convert feature_names to list
     if feature_names is None:
-        # if feature_names is None, use feature indices as name
-        feature_names = [str(i) for i in range(n_features)]
+        if hasattr(X, "loc"):
+            # get the column names for a pandas dataframe
+            feature_names = X.columns.tolist()
+        else:
+            # define a list of numbered indices for a numpy array
+            feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
@@ -679,7 +703,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles = {}
     for fx in chain.from_iterable(features):
         if fx not in deciles:
-            deciles[fx] = mquantiles(X[:, fx], prob=np.arange(0.1, 1.0, 0.1))
+            X_col = _safe_indexing(X, fx, axis=1)
+            deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
     if fig is not None:
         warnings.warn("The fig parameter is deprecated in version "
@@ -834,15 +859,14 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            # If ax has visible==False, it has most likely been set to False
+            # If ax was set off, it has most likely been set to off
             # by a previous call to plot.
-            if not ax.get_visible():
+            if not ax.axison:
                 raise ValueError("The ax was already used in another plot "
                                  "function, please set ax=display.axes_ "
                                  "instead")
 
             ax.set_axis_off()
-            ax.set_visible(False)
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
 

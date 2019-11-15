@@ -10,9 +10,27 @@ from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import (RandomForestClassifier,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class NaNTagRandomForest(RandomForestClassifier):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
@@ -320,3 +338,40 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert X_transform.shape[1] > model.transform(data).shape[1]
+
+
+def test_fit_accepts_nan_inf():
+    # Test that fit doesn't check for np.inf and np.nan values.
+    clf = HistGradientBoostingClassifier(random_state=0)
+
+    model = SelectFromModel(estimator=clf)
+
+    nan_data = data.copy()
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.fit(data, y)
+
+
+def test_transform_accepts_nan_inf():
+    # Test that transform doesn't check for np.inf and np.nan values.
+    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    nan_data = data.copy()
+
+    model = SelectFromModel(estimator=clf)
+    model.fit(nan_data, y)
+
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.transform(nan_data)
+
+
+def test_allow_nan_tag_comes_from_estimator():
+    allow_nan_est = NaNTag()
+    model = SelectFromModel(estimator=allow_nan_est)
+    assert model._get_tags()['allow_nan'] is True
+
+    no_nan_est = NoNaNTag()
+    model = SelectFromModel(estimator=no_nan_est)
+    assert model._get_tags()['allow_nan'] is False
