@@ -229,8 +229,6 @@ then
     if [ -z "$warnings" ]
     then
         warnings="/home/circleci/project/ no warnings"
-    else
-        check=1
     fi
     echo "$warnings"
 
@@ -246,7 +244,7 @@ then
     echo '</ul></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
 
-    if [ $check ]
+    if [ "$warnings" != "/home/circleci/project/ no warnings" ]
     then
         echo "Sphinx generated warnings when building the documentation related to files modified in this PR."
         echo "Please check doc/_build/html/stable/_changed.html"
