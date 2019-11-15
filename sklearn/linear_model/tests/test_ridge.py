@@ -590,8 +590,10 @@ def test_ridge_gcv_equivalence_prediction_metric(fit_intercept):
     ridge_cv_no_score.fit(X, y)
     ridge_cv_score.fit(X, y)
 
-    assert (ridge_cv_no_score.cv_values_.mean(),
+    assert (
+        ridge_cv_no_score.cv_values_.mean() == pytest.approx(
             mean_squared_error(y, ridge_cv_score.cv_values_.ravel()))
+    )
 
 
 def test_ridge_gcv_cv_values_not_stored():
