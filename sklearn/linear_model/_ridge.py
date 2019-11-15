@@ -17,8 +17,8 @@ from scipy import linalg
 from scipy import sparse
 from scipy.sparse import linalg as sp_linalg
 
-from .base import LinearClassifierMixin, LinearModel, _rescale_data
-from .sag import sag_solver
+from ._base import LinearClassifierMixin, LinearModel, _rescale_data
+from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
@@ -30,7 +30,7 @@ from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
-from ..metrics.scorer import check_scoring
+from ..metrics import check_scoring
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -567,7 +567,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if ((sample_weight is not None) and
-                np.atleast_1d(sample_weight).ndim > 1):
+                np.asarray(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
         # when X is sparse we only remove offset from y
@@ -767,6 +767,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     """Classifier using Ridge regression.
 
+    This classifier first converts the target values into ``{-1, 1}`` and
+    then treats the problem as a regression task (multi-output regression in
+    the multiclass case).
+
     Read more in the :ref:`User Guide <ridge_regression>`.
 
     Parameters
@@ -807,7 +811,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -868,6 +872,17 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     classes_ : array of shape (n_classes,)
         The classes labels.
 
+    See Also
+    --------
+    Ridge : Ridge regression.
+    RidgeClassifierCV :  Ridge classifier with built-in cross validation.
+
+    Notes
+    -----
+    For multi-class classification, n_class classifiers are trained in
+    a one-versus-all approach. Concretely, this is implemented by taking
+    advantage of the multi-variate response support in Ridge.
+
     Examples
     --------
     >>> from sklearn.datasets import load_breast_cancer
@@ -876,17 +891,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     >>> clf = RidgeClassifier().fit(X, y)
     >>> clf.score(X, y)
     0.9595...
-
-    See also
-    --------
-    Ridge : Ridge regression
-    RidgeClassifierCV :  Ridge classifier with built-in cross validation
-
-    Notes
-    -----
-    For multi-class classification, n_class classifiers are trained in
-    a one-versus-all approach. Concretely, this is implemented by taking
-    advantage of the multi-variate response support in Ridge.
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -904,10 +908,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data
+            Training data.
 
         y : array-like of shape (n_samples,)
-            Target values
+            Target values.
 
         sample_weight : {float, array-like of shape (n_samples,)}, default=None
             Sample weight.
@@ -917,7 +921,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            Instance of the estimator.
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)

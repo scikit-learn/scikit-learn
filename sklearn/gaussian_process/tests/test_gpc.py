@@ -12,7 +12,7 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
-from sklearn.utils.testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 
 def f(x):
