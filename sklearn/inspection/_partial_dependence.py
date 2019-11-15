@@ -12,13 +12,18 @@ from collections.abc import Iterable
 import warnings
 
 import numpy as np
+from scipy import sparse
 from scipy.stats.mstats import mquantiles
 from joblib import Parallel, delayed
 
 from ..base import is_classifier, is_regressor
+from ..pipeline import Pipeline
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
+from ..utils import _safe_indexing
+from ..utils import _determine_key_type
+from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
@@ -44,9 +49,11 @@ def _grid_from_X(X, percentiles, grid_resolution):
     ----------
     X : ndarray, shape (n_samples, n_target_features)
         The data
+
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
+
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
         feature.
@@ -56,6 +63,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
     grid : ndarray, shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
+
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
         array ``values[j]`` is either ``grid_resolution``, or the number of
@@ -74,16 +82,16 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
     values = []
     for feature in range(X.shape[1]):
-        uniques = np.unique(X[:, feature])
+        uniques = np.unique(_safe_indexing(X, feature, axis=1))
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(X[:, feature], prob=percentiles,
-                                         axis=0)
-            if np.allclose(emp_percentiles[0],
-                           emp_percentiles[1]):
+            emp_percentiles = mquantiles(
+                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+            )
+            if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
                     'percentiles are too close to each other, '
                     'unable to build the grid. Please choose percentiles '
@@ -130,7 +138,10 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     for new_values in grid:
         X_eval = X.copy()
         for i, variable in enumerate(features):
-            X_eval[:, variable] = new_values[i]
+            if hasattr(X_eval, 'iloc'):
+                X_eval.iloc[:, variable] = new_values[i]
+            else:
+                X_eval[:, variable] = new_values[i]
 
         try:
             predictions = prediction_method(X_eval)
@@ -142,7 +153,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         # (n_points,) for non-multioutput regressors
         # (n_points, n_tasks) for multioutput regressors
         # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2)  for binary classifaction
+        # (n_points, 2) for binary classification
         # (n_points, n_classes) for multiclass classification
 
         # average over samples
@@ -183,13 +194,16 @@ def partial_dependence(estimator, X, features, response_method='auto',
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
-    X : array-like, shape (n_samples, n_features)
+
+    X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
-    features : list or array-like of int
-        The target features for which the partial dependency should be
-        computed.
+
+    features : array-like of {int, str}
+        The feature (e.g. `[0]`) or pair of interacting features
+        (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
+
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
@@ -199,12 +213,15 @@ def partial_dependence(estimator, X, features, response_method='auto',
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
+
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
+
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the grid, for each target
         feature.
+
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
@@ -216,7 +233,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
           but is more efficient in terms of speed.
           With this method, ``X`` is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the ``init`` predictor of
           the boosting process, which may lead to incorrect values (see
           warning below). With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -248,6 +265,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         regression. For classical regression and binary classification
         ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
         ``values[j]``.
+
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
         is a cartesian product of the arrays in ``values``. ``len(values) ==
@@ -284,22 +302,32 @@ def partial_dependence(estimator, X, features, response_method='auto',
     <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
     ``init`` parameter.
     """
-
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(
-            "'estimator' must be a fitted regressor or classifier.")
+            "'estimator' must be a fitted regressor or classifier."
+        )
 
-    if is_classifier(estimator):
-        if not hasattr(estimator, 'classes_'):
-            raise ValueError(
-                "'estimator' parameter must be a fitted estimator"
-            )
-        if isinstance(estimator.classes_[0], np.ndarray):
-            raise ValueError(
-                'Multiclass-multioutput estimators are not supported'
-            )
+    if isinstance(estimator, Pipeline):
+        # TODO: to be removed if/when pipeline get a `steps_` attributes
+        # assuming Pipeline is the only estimator that does not store a new
+        # attribute
+        for est in estimator:
+            # FIXME: remove the None option when it will be deprecated
+            if est not in (None, 'drop'):
+                check_is_fitted(est)
+    else:
+        check_is_fitted(estimator)
 
-    X = check_array(X)
+    if (is_classifier(estimator) and
+            isinstance(estimator.classes_[0], np.ndarray)):
+        raise ValueError(
+            'Multiclass-multioutput estimators are not supported'
+        )
+
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
+    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
     if response_method not in accepted_responses:
@@ -312,6 +340,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
         )
+
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
         raise ValueError(
@@ -349,21 +378,32 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "'decision_function'. Got {}.".format(response_method)
             )
 
-    n_features = X.shape[1]
-    features = np.asarray(features, dtype=np.int32, order='C').ravel()
-    if any(not (0 <= f < n_features) for f in features):
-        raise ValueError('all features must be in [0, %d]'
-                         % (n_features - 1))
+    if _determine_key_type(features, accept_slice=False) == 'int':
+        # _get_column_indices() supports negative indexing. Here, we limit
+        # the indexing to be positive. The upper bound will be checked
+        # by _get_column_indices()
+        if np.any(np.less(features, 0)):
+            raise ValueError(
+                'all features must be in [0, {}]'.format(X.shape[1] - 1)
+            )
 
-    grid, values = _grid_from_X(X[:, features], percentiles,
-                                grid_resolution)
+    features_indices = np.asarray(
+        _get_column_indices(X, features), dtype=np.int32, order='C'
+    ).ravel()
+
+    grid, values = _grid_from_X(
+        _safe_indexing(X, features_indices, axis=1), percentiles,
+        grid_resolution
+    )
+
     if method == 'brute':
-        averaged_predictions = _partial_dependence_brute(estimator, grid,
-                                                         features, X,
-                                                         response_method)
+        averaged_predictions = _partial_dependence_brute(
+            estimator, grid, features_indices, X, response_method
+        )
     else:
-        averaged_predictions = _partial_dependence_recursion(estimator, grid,
-                                                             features)
+        averaged_predictions = _partial_dependence_recursion(
+            estimator, grid, features_indices
+        )
 
     # reshape averaged_predictions to
     # (n_outputs, n_values_feature_0, n_values_feature_1, ...)
@@ -385,6 +425,22 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
 
+    .. note::
+
+        :func:`plot_partial_dependence` does not support using the same axes
+        with multiple calls. To plot the the partial dependence for multiple
+        estimators, please pass the axes created by the first call to the
+        second call::
+
+          >>> from sklearn.inspection import plot_partial_dependence
+          >>> from sklearn.datasets import make_friedman1
+          >>> from sklearn.linear_model import LinearRegression
+          >>> X, y = make_friedman1()
+          >>> est = LinearRegression().fit(X, y)
+          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est, X,
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -394,7 +450,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
 
-    X : array-like, shape (n_samples, n_features)
+    X : {array-like or dataframe} of shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
 
@@ -405,10 +461,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
-    feature_names : seq of str, shape (n_features,), optional
+    feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
-        with index i. By default, the name of the feature corresponds to
-        their numerical index.
+        with index i.
+        By default, the name of the feature corresponds to their numerical
+        index for NumPy array and their column name for pandas dataframe.
 
     target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
@@ -452,7 +509,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
           grid and the partial dependences are computed using the training
-          data. This method does not account for the ``init`` predicor of
+          data. This method does not account for the ``init`` predictor of
           the boosting process, which may lead to incorrect values (see
           warning below. With this method, the target response of a
           classifier is always the decision function, not the predicted
@@ -491,7 +548,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
-            and a grid of partial depedendence plots will be drawn within
+            and a grid of partial dependence plots will be drawn within
             these bounds. The `n_cols` parameter controls the number of
             columns in the grid.
         - If an array-like of axes are passed in, the partial dependence
@@ -552,13 +609,20 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         # regression and binary classification
         target_idx = 0
 
-    X = check_array(X)
+    # Use check_array only on lists and other non-array-likes / sparse. Do not
+    # convert DataFrame into a NumPy array.
+    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
     n_features = X.shape[1]
 
     # convert feature_names to list
     if feature_names is None:
-        # if feature_names is None, use feature indices as name
-        feature_names = [str(i) for i in range(n_features)]
+        if hasattr(X, "loc"):
+            # get the column names for a pandas dataframe
+            feature_names = X.columns.tolist()
+        else:
+            # define a list of numbered indices for a numpy array
+            feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
@@ -582,7 +646,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         except TypeError:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-        if not (1 <= np.size(fxs) <= 2):
+        if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
 
@@ -639,7 +703,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles = {}
     for fx in chain.from_iterable(features):
         if fx not in deciles:
-            deciles[fx] = mquantiles(X[:, fx], prob=np.arange(0.1, 1.0, 0.1))
+            X_col = _safe_indexing(X, fx, axis=1)
+            deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
     if fig is not None:
         warnings.warn("The fig parameter is deprecated in version "
@@ -680,7 +745,7 @@ class PartialDependenceDisplay:
         plot a two-way partial dependence curve as a contour plot.
 
     feature_names : list of str
-        Feature names corrsponding to the indicies in ``features``.
+        Feature names corresponding to the indices in ``features``.
 
     target_idx : int
 
@@ -748,7 +813,7 @@ class PartialDependenceDisplay:
         ----------
         ax : Matplotlib axes or array-like of Matplotlib axes, default=None
             - If a single axis is passed in, it is treated as a bounding axes
-                and a grid of partial depedendence plots will be drawn within
+                and a grid of partial dependence plots will be drawn within
                 these bounds. The `n_cols` parameter controls the number of
                 columns in the grid.
             - If an array-like of axes are passed in, the partial dependence
@@ -794,15 +859,14 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            # If ax has visible==False, it has most likely been set to False
+            # If ax was set off, it has most likely been set to off
             # by a previous call to plot.
-            if not ax.get_visible():
+            if not ax.axison:
                 raise ValueError("The ax was already used in another plot "
                                  "function, please set ax=display.axes_ "
                                  "instead")
 
             ax.set_axis_off()
-            ax.set_visible(False)
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
 

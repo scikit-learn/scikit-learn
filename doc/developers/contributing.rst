@@ -537,9 +537,12 @@ Building the documentation
 First, make sure you have :ref:`properly installed <install_bleeding_edge>`
 the development version.
 
+..
+    packaging is not needed once setuptools starts shipping packaging>=17.0
+
 Building the documentation requires installing some additional packages::
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas scikit-image packaging
 
 To build the documentation, you need to be in the ``doc`` folder::
 

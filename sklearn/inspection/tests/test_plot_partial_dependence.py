@@ -85,13 +85,28 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston):
+@pytest.mark.parametrize(
+    "input_type, use_feature_names",
+    [('dataframe', False), ('dataframe', True),
+     ('list', True), ('array', True)]
+)
+def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
+                                              input_type, use_feature_names):
+    if input_type == 'dataframe':
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(boston.data, columns=boston.feature_names)
+    elif input_type == 'list':
+        X = boston.data.tolist()
+    else:
+        X = boston.data
+    feature_names = boston.feature_names if use_feature_names else None
+
     grid_resolution = 25
     # check with str features and array feature names and single column
-    disp = plot_partial_dependence(clf_boston, boston.data,
+    disp = plot_partial_dependence(clf_boston, X,
                                    [('CRIM', 'ZN'), 'ZN'],
                                    grid_resolution=grid_resolution,
-                                   feature_names=boston.feature_names,
+                                   feature_names=feature_names,
                                    n_cols=1, line_kw={"alpha": 0.8})
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -214,7 +229,16 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
 
 
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
-    # The first call to `plot_*` will plot the axes
+    # The first call to plot_partial_dependence will create two new axes to
+    # place in the space of the passed in axes, which results in a total of
+    # three axes in the figure.
+    # Currently the API does not allow for the second call to
+    # plot_partial_dependence to use the same axes again, because it will
+    # create two new axes in the space resulting in five axes. To get the
+    # expected behavior one needs to pass the generated axes into the second
+    # call:
+    # disp1 = plot_partial_dependence(...)
+    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
 
     grid_resolution = 25
     fig, ax = pyplot.subplots()
@@ -305,6 +329,18 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_label[i]
         assert ax.get_xlabel() == "{}".format(i)
+
+
+def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+    grid_resolution = 25
+
+    plot_partial_dependence(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
 
 
 dummy_classification_data = make_classification(random_state=0)
