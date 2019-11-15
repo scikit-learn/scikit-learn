@@ -155,7 +155,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
         Includes values in confusion matrix.
 
     normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes confusion matrix over the true (rows), predicited (columns)
+        Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
         normalized.
 
@@ -190,14 +190,7 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
 
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
-                          labels=labels)
-
-    if normalize == 'true':
-        cm = cm / cm.sum(axis=1, keepdims=True)
-    elif normalize == 'pred':
-        cm = cm / cm.sum(axis=0, keepdims=True)
-    elif normalize == 'all':
-        cm = cm / cm.sum()
+                          labels=labels, normalize=normalize)
 
     if display_labels is None:
         if labels is None:
