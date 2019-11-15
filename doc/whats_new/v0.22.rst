@@ -99,7 +99,7 @@ random sampling procedures.
 - :class:`impute.IterativeImputer` when `X` has features with no missing
   values. |Feature|
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
-- :class:`linear_model.RidgeCV` when `cv` is `None`. |Efficiency|
+- :class:`linear_model.RidgeCV` when `cv` is `None`. |Efficiency| |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
 
@@ -496,11 +496,15 @@ Changelog
   requires less memory.
   :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
-- |Efficiency| :class:`linear_model.RidgeCV` now does not allocate a potentially
-  large array to store dual coefficients for all hyperparameters during its
-  `fit`, nor an array to store all LOO predictions unless `store_cv_values` is
-  `True`.
+- |Efficiency| :class:`linear_model.RidgeCV` now does not allocate a
+  potentially large array to store dual coefficients for all hyperparameters
+  during its `fit`, nor an array to store all LOO predictions unless
+  `store_cv_values` is `True`.
   :pr:`15183` by :user:`Jérôme Dockès <jeromedockes>`.
+
+- |Fix| In :class:`linear_model.RidgeCV`, the predicitons reported by
+  `cv_values_` are now rescaled in the original space when `scoring` is not
+  `None`. :pr:`13995` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| :class:`linear_model.Ridge` now correctly fits an intercept when `X` is
   sparse, `solver="auto"` and `fit_intercept=True`, because the default solver
