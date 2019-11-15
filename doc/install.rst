@@ -1,8 +1,8 @@
 .. _installation-instructions:
 
-======================
+=======================
 Installing scikit-learn
-======================
+=======================
 
 There are different ways to install scikit-learn:
 
