@@ -638,7 +638,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Returns
         -------
-        Y_prob : List of n_outputs arrays of shape (n_samples, n_classes)
+        Y_prob : list of n_outputs ndarray of shape (n_samples, n_classes)
             The class probabilities of the input samples. The order of the
             classes for each output corresponds to the respective entry of
             the attribute `classes_`.
@@ -670,7 +670,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         Returns
         -------
-        Y_decision : List of n_outputs arrays of shape (n_samples, n_classes)
+        Y_decision : list of n_outputs ndarray of shape (n_samples, n_classes)
             Decision function of the input samples for each model
             in the chain.  The order of the classes for each output corresponds
             to the respective entry of the attribute `classes_`.

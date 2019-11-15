@@ -679,7 +679,7 @@ Changelog
 
 - |Fix| :func:`multioutput.ClassifierChain.decision_function` and
   :func:`multioutput.ClassifierChain.predict_proba` now both return a list of
-  ``n_outputs`` arrays of shape `(n_samples, n_classes).` :pr:`14654` by
+  ``n_outputs`` arrays of shape `(n_samples, n_classes)`. :pr:`14654` by
   :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 :mod:`sklearn.naive_bayes`
