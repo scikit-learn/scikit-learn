@@ -270,6 +270,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
+            if self.do_early_stopping_ and self._use_validation_data:
+                raw_predictions_val = self._raw_predict(X_binned_val)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
