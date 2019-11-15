@@ -605,17 +605,22 @@ def test_ridge_gcv_cv_values_not_stored():
     assert not hasattr(ridge_cv, "cv_values_")
 
 
-def test_ridge_gcv_decision_function_scoring():
+@pytest.mark.parametrize("fit_intercept", [True, False])
+def test_ridge_gcv_decision_function_scoring(fit_intercept):
+    # check that the passing a scorer computing the mean squared error is
+    # equivalent to `scoring=None`
 
     def scorer(estimator, X, Y):
         pred = estimator.decision_function(X)
-        return np.sum((pred - Y)**2)
+        return - np.mean((Y - pred)**2)
 
-    X, y = make_regression()
+    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
     ridge_1 = _RidgeGCV(
-        fit_intercept=False, scoring=scorer, store_cv_values=True).fit(X, y)
+        fit_intercept=fit_intercept, scoring=None, store_cv_values=True,
+        alphas=[1.0]).fit(X, y)
     ridge_2 = _RidgeGCV(
-        fit_intercept=False, scoring=scorer, store_cv_values=True).fit(X, y)
+        fit_intercept=fit_intercept, scoring=scorer, store_cv_values=True,
+        alphas=[1.0]).fit(X, y)
     assert ridge_1.best_score_ == pytest.approx(ridge_2.best_score_)
 
 
