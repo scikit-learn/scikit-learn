@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -117,7 +117,6 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
     """
-
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
     if sample_weight is not None:
@@ -183,7 +182,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
-    sample_weight = np.array(sample_weight)
+    sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight,
                                 dtype=sample_weight.dtype)
@@ -408,7 +407,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features, ) or (n_targets, n_features)
+    coef_ : array of shape (n_features, ) or (n_targets, n_features)
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
@@ -417,10 +416,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     rank_ : int
         Rank of matrix `X`. Only available when `X` is dense.
 
-    singular_ : array, shape (min(X, y),)
+    singular_ : array of shape (min(X, y),)
         Singular values of `X`. Only available when `X` is dense.
 
-    intercept_ : float | array, shape = (n_targets,)
+    intercept_ : float or array of shape of (n_targets,)
         Independent term in the linear model. Set to 0.0 if
         `fit_intercept = False`.
 
@@ -471,13 +470,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data
 
-        y : array_like, shape (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : array-like of shape (n_samples,), default=None
             Individual weights for each sample
 
             .. versionadded:: 0.17
@@ -492,8 +491,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          y_numeric=True, multi_output=True)
 
-        if sample_weight is not None and np.asarray(sample_weight).ndim > 1:
-            raise ValueError("Sample weights must be 1D array or scalar")
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
