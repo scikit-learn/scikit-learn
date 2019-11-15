@@ -995,7 +995,6 @@ def _detect_categorical_features(X, categorical_features=None):
     categorical_features_mask : ndarray, shape (n_features)
 
     """
-    raise ValueError("should not be running")
     # Automatic detection of categorical features
     if categorical_features is None:
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
