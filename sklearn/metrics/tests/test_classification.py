@@ -2152,10 +2152,6 @@ def test_brier_score_loss():
 
     assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
     assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
-    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
-                        true_score)
-    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
-                        true_score)
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred[1:])
     with pytest.raises(ValueError):
@@ -2175,19 +2171,17 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
-    assert_almost_equal(
-        brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
-    assert_almost_equal(
-        brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
 
-    # correctly infer pos_label
+    # raise error when y_true is str and pos_label is not specified
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     score1 = brier_score_loss(y_true, y_pred, pos_label=1)
     score2 = brier_score_loss(y_true, y_pred)
     assert score1 == pytest.approx(score2)
     y_true = np.array(["neg", "pos", "pos", "neg"])
-    score2 = brier_score_loss(y_true, y_pred)
+    with pytest.raises(ValueError, match="y_true takes value"):
+        brier_score_loss(y_true, y_pred)
+    score2 = brier_score_loss(y_true, y_pred, pos_label="pos")
     assert score1 == pytest.approx(score2)
 
 

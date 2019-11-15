@@ -631,10 +631,6 @@ Changelog
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
 
-- |Fix| Fixed a bug where :func:`metrics.brier_score_loss` would raise an error
-  when ``y_true`` is string and ``pos_label`` is not specified.
-  :pr:`15412` by `Hanmin Qin`_.
-
 :mod:`sklearn.model_selection`
 ..............................
 

@@ -34,6 +34,7 @@ from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
+from ..utils import _determine_key_type
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
@@ -2428,7 +2429,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Probabilities of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
+        The label of the positive class
 
     pos_label : int or str, default=None
         Label of the positive class.
@@ -2477,15 +2478,20 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
-    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve),
-    # otherwise pos_label is set to the greater label
-    # (different from precision_recall_curve/roc_curve,
-    # the purpose is to keep backward compatibility).
-    if pos_label is None:
-        if (np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1])):
-            pos_label = 1
-        else:
-            pos_label = labels[-1]
+    # pos_label is set to 1 (consistent with precision_recall_curve/roc_curve)
+    if (pos_label is None and (
+            _determine_key_type(labels) == 'str' or
+            not (np.array_equal(labels, [0, 1]) or
+                 np.array_equal(labels, [-1, 1]) or
+                 np.array_equal(labels, [0]) or
+                 np.array_equal(labels, [-1]) or
+                 np.array_equal(labels, [1])))):
+        raise ValueError("y_true takes value in {classes} and pos_label is "
+                         "not specified: either make y_true take integer "
+                         "value in {{0, 1}} or {{-1, 1}} or pass pos_label "
+                         "explicitly.".format(classes=labels))
+    elif pos_label is None:
+        pos_label = 1.
+
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
