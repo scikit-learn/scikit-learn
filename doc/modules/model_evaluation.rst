@@ -573,13 +573,26 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
 
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
