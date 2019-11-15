@@ -126,7 +126,7 @@ Regression
 '''
 
 training_idx = [0, 1, 3, 4]
-gp = GaussianProcessRegressor(kernel)
+gp = GaussianProcessRegressor(kernel=kernel)
 gp.fit(X[training_idx], y[training_idx])
 
 plt.figure(figsize=(8, 5))

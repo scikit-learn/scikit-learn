@@ -117,7 +117,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
     X_train_ : sequence of length n_samples
         Feature vectors or other representations of training data (also
         required for prediction). Could either be array-like with shape =
-        (n_samples, n_features) or a list of objects
+        (n_samples, n_features) or a list of objects.
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)

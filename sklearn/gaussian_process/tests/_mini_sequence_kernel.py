@@ -9,7 +9,7 @@ class MiniSeqKernel(GenericKernelMixin,
                     StationaryKernelMixin,
                     Kernel):
     '''
-    a mimimal (but valid) convolutional kernel for sequences of variable length
+    A mimimal (but valid) convolutional kernel for sequences of variable length.
     '''
     def __init__(self,
                  baseline_similarity=0.5,

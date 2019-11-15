@@ -199,11 +199,11 @@ def test_kernel_input_type(kernel):
 
 def test_compound_kernel_input_type():
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
-    assert(kernel.requires_vector_input is not True)
+    assert not kernel.requires_vector_input
 
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
                              RBF(length_scale=2.0)])
-    assert(kernel.requires_vector_input)
+    assert kernel.requires_vector_input
 
 
 def check_hyperparameters_equal(kernel1, kernel2):

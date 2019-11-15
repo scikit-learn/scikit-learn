@@ -420,7 +420,7 @@ class GenericKernelMixin:
 
     @property
     def requires_vector_input(self):
-        """whether the kernel works only on fixed-length feature vectors."""
+        """Whether the kernel works only on fixed-length feature vectors."""
         return False
 
 
