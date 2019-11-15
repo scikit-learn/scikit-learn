@@ -352,7 +352,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             )
 
                     should_early_stop = self._check_early_stopping_loss(
-                        raw_predictions, y_train, raw_predictions_val, y_val)
+                        raw_predictions, y_train,
+                        raw_predictions_val, y_val
+                    )
 
                 else:
                     should_early_stop = self._check_early_stopping_scorer(
