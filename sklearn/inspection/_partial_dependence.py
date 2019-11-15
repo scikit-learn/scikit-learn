@@ -623,7 +623,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         else:
             # define a list of numbered indices for a numpy array
             feature_names = [str(i) for i in range(n_features)]
-    elif isinstance(feature_names, np.ndarray):
+    elif hasattr(feature_names, "tolist"):
+        # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
