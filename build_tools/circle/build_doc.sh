@@ -78,8 +78,8 @@ get_build_type() {
         # get only auto_examples
         auto_example_files="$(echo "$img_fig_lines" | grep auto_examples | awk -F "/" '{print $NF}')"
 
-        # remove "sphx_glr_" from path and accept replace _\d\d\d.png with .py
-        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_[[:digit:]][[:digit:]][[:digit:]].png/.py/')"
+        # remove "sphx_glr_" from path and accept replace _(\d\d\d|thumb).png with .py
+        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -e 's/_([[:digit:]][[:digit:]][[:digit:]]|thumb).png/.py/')"
 
         # get unique values
         examples_in_rst="$(echo "$scripts_names" | uniq )"
