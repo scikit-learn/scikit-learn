@@ -137,9 +137,9 @@ class FitFailedWarning(RuntimeWarning):
     ...         pass
     ...     msg = repr(w[-1].message)
     ...     # if msg.find('Traceback (most recent call last):\\n') > -1:
-    ...     print(msg.count('\\n'), msg.splitlines())
-    ...     if msg.count('\\n') > 1:  # has stacktrace in middle of string
-    ...         split = msg.splitlines() # note: handles more than '\\n'
+    ...     ct = msg.count('\\n')
+    ...     if ct > 1 or msg.count('\\\\n') > 1:  # has stacktrace
+    ...         split = msg.splitlines() if ct > 1 else msg.split('\\\\n')
     ...         msg = split[0] + '\\n' + split[-1] + '\\n'
     ...     print(msg)
     FitFailedWarning('Estimator fit failed. The score on this train-test
