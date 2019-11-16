@@ -668,7 +668,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
             Target. Will be cast to X's dtype if necessary
 
-        sample_weight : {float, array-like of shape (n_samples,)}, default=None
+        sample_weight : float or array-like of shape (n_samples,), default=None
             Sample weight.
 
         check_input : boolean, (default=True)
