@@ -34,7 +34,6 @@ from ..utils import assert_all_finite
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import column_or_1d
-from ..utils import _determine_key_type
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
@@ -2435,7 +2434,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Label of the positive class.
         Defaults to the greater label unless y_true is all 0 or all -1
         in which case pos_label defaults to 1. If `y_true` is str and
-        `pos_label` is not specified, an error will be raised.        
+        `pos_label` is not specified, an error will be raised.
 
     Returns
     -------
