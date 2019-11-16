@@ -256,6 +256,24 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
                                 feature_names=boston.feature_names, ax=ax)
 
 
+def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
+                                                    boston):
+    # second call to plot does not change the feature names from the first
+    # call
+
+    feature_names = boston.feature_names
+    disp = plot_partial_dependence(clf_boston, boston.data,
+                                   [0, 1],
+                                   grid_resolution=10,
+                                   feature_names=feature_names)
+
+    plot_partial_dependence(clf_boston, boston.data, [0, 1],
+                            grid_resolution=10, ax=disp.axes_)
+
+    for i, ax in enumerate(disp.axes_.ravel()):
+        assert ax.get_xlabel() == feature_names[i]
+
+
 def test_plot_partial_dependence_multiclass(pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)
