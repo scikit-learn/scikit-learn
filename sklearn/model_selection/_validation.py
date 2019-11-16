@@ -14,7 +14,7 @@ import warnings
 import numbers
 import time
 from sys import exc_info
-from traceback import format_exception
+from traceback import format_exc
 from contextlib import suppress
 
 import numpy as np
@@ -533,8 +533,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, ''.join(format_exception(
-                            type(e), e, exc_info()[2]))),
+                          (error_score, format_exc()),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
