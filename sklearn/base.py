@@ -383,8 +383,9 @@ class RegressorMixin:
         ----------
         X : array-like of shape (n_samples, n_features)
             Test samples. For some estimators this may be a
-            precomputed kernel matrix instead, shape = (n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
+            precomputed kernel matrix or a list of generic objects instead,
+            shape = (n_samples, n_samples_fitted),
+            where n_samples_fitted is the number of
             samples used in the fitting for the estimator.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)

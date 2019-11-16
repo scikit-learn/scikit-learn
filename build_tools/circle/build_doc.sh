@@ -125,12 +125,13 @@ if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
     conda config --set restore_free_channel true
 fi
 
+# packaging won't be needed once setuptools starts shipping packaging>=17.0
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
   cython="${CYTHON_VERSION:-*}" pytest coverage \
   matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler
+  joblib memory_profiler packaging
 
 source activate testenv
 pip install sphinx-gallery==0.3.1

@@ -467,19 +467,19 @@ with a :func:`~sklearn.compose.make_column_selector`. The
 :func:`~sklearn.compose.make_column_selector` is used to select columns based
 on data type or column name::
 
->>> from sklearn.preprocessing import StandardScaler
->>> from sklearn.compose import make_column_selector
->>> ct = ColumnTransformer([
-...       ('scale', StandardScaler(),
-...       make_column_selector(dtype_include=np.number)),
-...       ('onehot',
-...       OneHotEncoder(),
-...       make_column_selector(pattern='city', dtype_include=object))])
->>> ct.fit_transform(X)
-array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
-       [-1.507...,  1.414...,  1. ,  0. ,  0. ],
-       [-0.301...,  0.      ,  0. ,  1. ,  0. ],
-       [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+  >>> from sklearn.preprocessing import StandardScaler
+  >>> from sklearn.compose import make_column_selector
+  >>> ct = ColumnTransformer([
+  ...       ('scale', StandardScaler(),
+  ...       make_column_selector(dtype_include=np.number)),
+  ...       ('onehot',
+  ...       OneHotEncoder(),
+  ...       make_column_selector(pattern='city', dtype_include=object))])
+  >>> ct.fit_transform(X)
+  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
+         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
 
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.

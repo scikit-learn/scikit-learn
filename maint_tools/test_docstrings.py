@@ -24,13 +24,21 @@ DOCSTRING_WHITELIST = [
     "RidgeClassifier.decision_function",
     "RidgeClassifier.fit",
     "RidgeClassifierCV.decision_function",
-    "SGDClassifier.decision_function",
     "KernelDensity",
     "KernelDensity.fit",
     "KernelDensity.score",
     "DecisionTreeClassifier",
     "DecisionTreeRegressor",
-    "LinearRegression$"
+    "LinearRegression$",
+    "SGDClassifier.decision_function",
+    "SGDClassifier.set_params",
+    "SGDClassifier.get_params",
+    "SGDClassifier.fit",
+    "SGDClassifier.partial_fit",
+    "SGDClassifier.predict$",  # $ to avoid match w/ predict_proba (regex)
+    "SGDClassifier.score",
+    "SGDClassifier.sparsify",
+    "SGDClassifier.densify",
 ]
 
 

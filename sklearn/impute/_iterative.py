@@ -420,11 +420,11 @@ class IterativeImputer(_BaseImputer):
         elif self.imputation_order == 'ascending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
             ordered_idx = np.argsort(frac_of_missing_values,
-                                     kind='mergesort')[n:][::-1]
+                                     kind='mergesort')[n:]
         elif self.imputation_order == 'descending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
             ordered_idx = np.argsort(frac_of_missing_values,
-                                     kind='mergesort')[n:]
+                                     kind='mergesort')[n:][::-1]
         elif self.imputation_order == 'random':
             ordered_idx = missing_values_idx
             self.random_state_.shuffle(ordered_idx)

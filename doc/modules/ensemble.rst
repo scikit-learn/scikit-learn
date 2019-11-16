@@ -895,12 +895,13 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-Note that **early-stopping is enabled by default**. The early-stopping
-behaviour is controlled via the ``scoring``, ``validation_fraction``,
-``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
-using an arbitrary :term:`scorer`, or just the training or validation loss. By
-default, early-stopping is performed using the default :term:`scorer` of
-the estimator on a validation set.
+The early-stopping behaviour is controlled via the ``scoring``,
+``validation_fraction``, ``n_iter_no_change``, and ``tol`` parameters. It is
+possible to early-stop using an arbitrary :term:`scorer`, or just the
+training or validation loss. By default, early-stopping is performed using
+the default :term:`scorer` of the estimator on a validation set but it is
+also possible to perform early-stopping based on the loss value, which is
+significantly faster.
 
 Missing values support
 ----------------------
