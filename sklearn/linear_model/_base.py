@@ -181,7 +181,21 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 # sample_weight makes the refactoring tricky.
 
 def _rescale_data(X, y, sample_weight, order='C'):
-    """Rescale data so as to support sample_weight"""
+    """Rescale data sample-wise by square root of sample_weight.
+
+    For many linear models, this enables easy support for sample_weight.
+
+    Parameters
+    ----------
+    order : {'C', 'F'}, default='C'
+        Whether an array will be forced to be fortran or c-style.
+
+    Returns
+    -------
+    X_rescaled : {array-like, sparse matrix}
+
+    y_rescaled : {array-like, sparse matrix}
+    """
     n_samples = X.shape[0]
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)
@@ -196,6 +210,7 @@ def _rescale_data(X, y, sample_weight, order='C'):
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
 
+    sparse_format = "csc" if order == "F" else "csr"
     if sparse_X:
         if order == 'F':
             X = sparse.csc_matrix(X)
