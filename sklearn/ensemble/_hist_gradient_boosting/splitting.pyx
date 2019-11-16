@@ -749,8 +749,8 @@ cdef inline Y_DTYPE_C _split_gain(
     gain -= _loss_from_value(value_left, sum_gradient_left)  # with bounds
     gain -= _loss_from_value(value_right, sum_gradient_right)  # with bounds
     # Note that the losses for both children are computed with bounded values,
-    # while the loss of the current node isn't. Not sure that's strictly
-    # correct but that's what lightgbm does. Might be worth asking them.
+    # while the loss of the current node isn't. It's OK since all the gain
+    # comparisons will be made with the same loss_current_node anyway.
 
     return gain
 
