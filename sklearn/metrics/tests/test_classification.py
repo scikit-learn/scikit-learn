@@ -2152,6 +2152,10 @@ def test_brier_score_loss():
 
     assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
     assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
     with pytest.raises(ValueError):
         brier_score_loss(y_true, y_pred[1:])
     with pytest.raises(ValueError):
