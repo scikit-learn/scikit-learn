@@ -434,13 +434,17 @@ def test_dtype_preprocess_data():
 
 
 @pytest.mark.parametrize('order', [None, 'C', 'F'])
-def test_rescale_data_dense(order):
+@pytest.mark.parametrize('n_targets', [None, 2])
+def test_rescale_data_dense(order, n_targets):
     n_samples = 200
     n_features = 2
 
     sample_weight = 1.0 + rng.rand(n_samples)
     X = rng.rand(n_samples, n_features)
-    y = rng.rand(n_samples)
+    if n_targets is None:
+        y = rng.rand(n_samples)
+    else:
+        y = rng.rand(n_samples, n_targets)
     rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight, order=order)
     if order == 'C':
         assert rescaled_X.flags['C_CONTIGUOUS']
@@ -449,7 +453,10 @@ def test_rescale_data_dense(order):
         assert rescaled_X.flags['F_CONTIGUOUS']
         assert rescaled_y.flags['F_CONTIGUOUS']
     rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
-    rescaled_y2 = y * np.sqrt(sample_weight)
+    if n_targets is None:
+        rescaled_y2 = y * np.sqrt(sample_weight)
+    else:
+        rescaled_y2 = y * np.sqrt(sample_weight)[:, np.newaxis]
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
 
