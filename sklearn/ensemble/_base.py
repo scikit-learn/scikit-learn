@@ -1,6 +1,4 @@
-"""
-Base class for ensemble-based estimators.
-"""
+"""Base class for ensemble-based estimators."""
 
 # Authors: Gilles Louppe
 # License: BSD 3 clause
@@ -42,14 +40,13 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
 
 
 def _set_random_states(estimator, random_state=None):
-    """Sets fixed random_state parameters for an estimator
+    """Set fixed random_state parameters for an estimator.
 
     Finds all parameters ending ``random_state`` and sets them to integers
     derived from ``random_state``.
 
     Parameters
     ----------
-
     estimator : estimator supporting get/set_params
         Estimator with potential randomness managed by random_state
         parameters.
@@ -106,6 +103,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+
     # overwrite _required_parameters from MetaEstimatorMixin
     _required_parameters = []
 
@@ -122,8 +120,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute, set the
-        `base_estimator_` attribute."""
+        """Check the estimator and the n_estimator attribute.
+        
+        Sets the base_estimator_` attributes.
+        """
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
@@ -159,15 +159,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return estimator
 
     def __len__(self):
-        """Returns the number of estimators in the ensemble."""
+        """Return the number of estimators in the ensemble."""
         return len(self.estimators_)
 
     def __getitem__(self, index):
-        """Returns the index'th estimator in the ensemble."""
+        """Return the index'th estimator in the ensemble."""
         return self.estimators_[index]
 
     def __iter__(self):
-        """Returns iterator over estimators in the ensemble."""
+        """Return iterator over estimators in the ensemble."""
         return iter(self.estimators_)
 
 
@@ -204,6 +204,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         training data. If an estimator has been set to `'drop'`, it will not
         appear in `estimators_`.
     """
+
     _required_parameters = ['estimators']
 
     @property
