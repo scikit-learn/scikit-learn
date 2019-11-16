@@ -433,7 +433,7 @@ def test_dtype_preprocess_data():
             assert_array_almost_equal(X_norm_32, X_norm_64)
 
 
-@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('order', [None, 'C', 'F'])
 def test_rescale_data_dense(order):
     n_samples = 200
     n_features = 2
@@ -454,7 +454,7 @@ def test_rescale_data_dense(order):
     assert_array_almost_equal(rescaled_y, rescaled_y2)
 
 
-@pytest.mark.parametrize('order', ['C', 'F'])
+@pytest.mark.parametrize('order', [None, 'C', 'F'])
 def test_rescale_data_sparse(order):
     n_samples = 200
     n_features = 2
@@ -474,6 +474,17 @@ def test_rescale_data_sparse(order):
     rescaled_y2 = y.toarray() * np.sqrt(sample_weight)[:, np.newaxis]
     assert_array_almost_equal(rescaled_X.toarray(), rescaled_X2)
     assert_array_almost_equal(rescaled_y.toarray(), rescaled_y2)
+
+
+@pytest.mark.parametrize('order', ['', 'f', 2])
+def test_rescale_data_order(order):
+    """Test valid order argument in _rescale_data"""
+    n_samples, n_feature = 3, 2
+    X = np.arange(n_samples, n_feature)
+    y = np.arange(n_samples)
+    sw = np.arange(n_samples)
+    with pytest.raises(ValueError, match="Unknown value for order*"):
+        _rescale_data(X, y, sw, order=order)
 
 
 def test_fused_types_make_dataset():
