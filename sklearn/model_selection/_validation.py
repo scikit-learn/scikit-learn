@@ -13,7 +13,6 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from sys import exc_info
 from traceback import format_exc
 from contextlib import suppress
 
