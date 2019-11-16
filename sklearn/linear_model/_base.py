@@ -187,7 +187,7 @@ def _rescale_data(X, y, sample_weight, order=None):
 
     Parameters
     ----------
-    order : 'F', 'C' or None (default=None)
+    order : 'F', 'C' or None, default=None
         Whether an array will be forced to be fortran or c-style.
 
     Returns
@@ -572,8 +572,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
 
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
-             check_input=True, sample_weight=None, order='C'):
-    """Aux function used at beginning of fit in linear models"""
+             check_input=True, sample_weight=None, order=None):
+    """Aux function used at beginning of fit in linear models
+
+    Parameters
+    ----------
+    order : 'F', 'C' or None, default=None
+        Whether X and y will be forced to be fortran or c-style. Only relevant
+        if sample_weight is not None.
+    """
     n_samples, n_features = X.shape
 
     if sparse.isspmatrix(X):

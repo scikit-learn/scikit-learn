@@ -733,7 +733,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             #       we don't need this
             # alpha *= np.sum(sample_weight) / n_samples
 
-        # Ensure copying happens only once, don't do it again if done above
+        # Ensure copying happens only once, don't do it again if done above.
+        # X and y will be rescaled if sample_weight is not None, order='F'
+        # ensures that the returned X and y are still F-contiguous.
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, self.precompute, self.normalize,
