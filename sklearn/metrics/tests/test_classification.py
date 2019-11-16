@@ -2183,7 +2183,7 @@ def test_brier_score_loss():
     score2 = brier_score_loss(y_true, y_pred)
     assert score1 == pytest.approx(score2)
     y_true = np.array(["neg", "pos", "pos", "neg"])
-    with pytest.raises(ValueError, match="y_true takes value"):
+    with pytest.raises(ValueError, match="y_true takes str values"):
         brier_score_loss(y_true, y_pred)
     score2 = brier_score_loss(y_true, y_pred, pos_label="pos")
     assert score1 == pytest.approx(score2)

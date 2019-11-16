@@ -2478,11 +2478,10 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         raise ValueError("y_prob contains values less than 0.")
 
     if pos_label is None:
-        if labels.dtype.kind == 'U':
-            raise ValueError("y_true takes value in {classes} and pos_label "
-                             "is not specified: either make y_true take "
-                             "integer value or pass pos_label "
-                             "explicitly.".format(classes=labels))
+        if labels.dtype.kind in ('O', 'S', 'U'):
+            raise ValueError("y_true takes str values in {classes} "
+                             "and pos_label is not "
+                             "specified".format(classes=labels))
         elif (np.array_equal(labels, [0]) or
                 np.array_equal(labels, [-1])):
             pos_label = 1
