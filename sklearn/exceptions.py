@@ -142,7 +142,7 @@ class FitFailedWarning(RuntimeWarning):
     ...     if ct > 1 or msg.count('\\\\n') > 1:  # has stacktrace
     ...         split = msg.splitlines() if ct > 1 else msg.split('\\\\n')
     ...         msg = split[0] + ('\\n' + split[-1] + '\\n' if ct > 1
-    ...                           else '\\\\n' + split[-2] + '\\\\n\'...)')
+    ...                           else '\\\\n' + split[-2] + '\\\\n\\'...)')
     ...     print(msg)
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
