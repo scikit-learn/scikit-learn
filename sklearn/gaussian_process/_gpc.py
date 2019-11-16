@@ -115,8 +115,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Attributes
     ----------
-    X_train_ : array-like of shape (n_samples, n_features)
-        Feature values in training data (also required for prediction)
+    X_train_ : sequence of length n_samples
+        Feature vectors or other representations of training data (also
+        required for prediction). Could either be array-like with shape =
+        (n_samples, n_features) or a list of objects.
 
     y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
@@ -160,8 +162,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data
+        X : sequence of length n_samples
+            Feature vectors or other representations of training data.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -248,7 +252,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : sequence of length n_samples
+            Query points where the GP is evaluated for classification.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         Returns
         -------
@@ -270,7 +277,10 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : sequence of length n_samples
+            Query points where the GP is evaluated for classification.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         Returns
         -------
@@ -602,8 +612,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data
+        X : sequence of length n_samples
+            Feature vectors or other representations of training data.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -612,7 +624,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, multi_output=False)
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X, y = check_X_y(X, y, multi_output=False,
+                             ensure_2d=True, dtype="numeric")
+        else:
+            X, y = check_X_y(X, y, multi_output=False,
+                             ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
             self.kernel, self.optimizer, self.n_restarts_optimizer,
@@ -656,7 +673,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : sequence of length n_samples
+            Query points where the GP is evaluated for classification.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         Returns
         -------
@@ -664,7 +684,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             Predicted target values for X, values are from ``classes_``
         """
         check_is_fitted(self)
-        X = check_array(X)
+
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X = check_array(X, ensure_2d=True, dtype="numeric")
+        else:
+            X = check_array(X, ensure_2d=False, dtype=None)
+
         return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
@@ -672,7 +697,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : sequence of length n_samples
+            Query points where the GP is evaluated for classification.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         Returns
         -------
@@ -686,7 +714,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             raise ValueError("one_vs_one multi-class mode does not support "
                              "predicting probability estimates. Use "
                              "one_vs_rest mode instead.")
-        X = check_array(X)
+
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X = check_array(X, ensure_2d=True, dtype="numeric")
+        else:
+            X = check_array(X, ensure_2d=False, dtype=None)
+
         return self.base_estimator_.predict_proba(X)
 
     @property
