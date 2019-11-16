@@ -180,14 +180,14 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 # Currently, the fact that sag implements its own way to deal with
 # sample_weight makes the refactoring tricky.
 
-def _rescale_data(X, y, sample_weight, order='C'):
+def _rescale_data(X, y, sample_weight, order=None):
     """Rescale data sample-wise by square root of sample_weight.
 
     For many linear models, this enables easy support for sample_weight.
 
     Parameters
     ----------
-    order : {'C', 'F'}, default='C'
+    order : 'F', 'C' or None (default=None)
         Whether an array will be forced to be fortran or c-style.
 
     Returns
@@ -196,10 +196,12 @@ def _rescale_data(X, y, sample_weight, order='C'):
 
     y_rescaled : {array-like, sparse matrix}
     """
+    if order not in [None, 'C', 'F']:
+        raise ValueError("Unknown value for order. Got {} instead of "
+                         "None, 'C' or 'F'.".format(order))
     n_samples = X.shape[0]
     sparse_X = sparse.issparse(X)
     sparse_y = sparse.issparse(y)
-    sample_weight = np.asarray(sample_weight)
     sample_weight = np.asarray(sample_weight)
     if sample_weight.ndim == 0:
         sample_weight = np.full(n_samples, sample_weight,
@@ -210,26 +212,17 @@ def _rescale_data(X, y, sample_weight, order='C'):
     X = safe_sparse_dot(sw_matrix, X)
     y = safe_sparse_dot(sw_matrix, y)
 
-    sparse_format = "csc" if order == "F" else "csr"
-    if sparse_X:
-        if order == 'F':
-            X = sparse.csc_matrix(X)
+    if order is not None:
+        sparse_format = "csc" if order == "F" else "csr"
+        if sparse_X:
+            X = X.asformat(sparse_format, copy=False)
         else:
-            X = sparse.csr_matrix(X)
-    elif order == 'F':
-        X = np.asfortranarray(X)
-    else:
-        X = np.ascontiguousarray(X)
+            X = np.asarray(X, order=order)
+        if sparse_y:
+            y = y.asformat(sparse_format, copy=False)
+        else:
+            y = np.asarray(y, order=order)
 
-    if sparse_y:
-        if order == 'F':
-            y = sparse.csc_matrix(y)
-        else:
-            y = sparse.csr_matrix(y)
-    elif order == 'F':
-        y = np.asfortranarray(y)
-    else:
-        y = np.ascontiguousarray(y)
     return X, y
 
 
