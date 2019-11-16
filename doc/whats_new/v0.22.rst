@@ -426,6 +426,15 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+- |Feature| Gaussian process models on structured data: :class:`gaussian_process.GaussianProcessRegressor`
+  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
+  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
+  to their training/prediction methods.
+  A user-defined kernel should be provided for computing the kernel matrix among
+  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  to notify the GPR/GPC model that it handles non-vectorial samples.
+  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -630,6 +639,11 @@ Changelog
 - |Enhancement| 'roc_auc_ovr_weighted' and 'roc_auc_ovo_weighted' can now be
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
+
+- |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
+  `normalize` allowing to normalize the confusion matrix by column, rows, or
+  overall.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
