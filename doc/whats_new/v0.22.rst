@@ -192,6 +192,13 @@ Changelog
 :mod:`sklearn.cross_decomposition`
 ..................................
 
+- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
+  eigenvalues found by the solver for numerical or conditioning issues. This
+  ensures consistency of results across solvers (different choices for
+  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
+  ``'lobpcg'`` (see :issue:`12068`).
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
+
 - |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
   with a target matrix `Y` in which the first column was constant.
@@ -419,6 +426,15 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+- |Feature| Gaussian process models on structured data: :class:`gaussian_process.GaussianProcessRegressor`
+  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
+  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
+  to their training/prediction methods.
+  A user-defined kernel should be provided for computing the kernel matrix among
+  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  to notify the GPR/GPC model that it handles non-vectorial samples.
+  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -623,6 +639,11 @@ Changelog
 - |Enhancement| 'roc_auc_ovr_weighted' and 'roc_auc_ovo_weighted' can now be
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
+
+- |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
+  `normalize` allowing to normalize the confusion matrix by column, rows, or
+  overall.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
