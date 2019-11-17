@@ -60,19 +60,6 @@ from .pairwise import pairwise_distances_argmin_min
 from .pairwise import pairwise_kernels
 from .pairwise import pairwise_distances_chunked
 
-<<<<<<< HEAD
-from .regression import explained_variance_score
-from .regression import max_error
-from .regression import mean_absolute_error
-from .regression import mean_squared_error
-from .regression import mean_squared_log_error
-from .regression import median_absolute_error
-from .regression import mean_absolute_percentage_error
-from .regression import r2_score
-from .regression import mean_tweedie_deviance
-from .regression import mean_poisson_deviance
-from .regression import mean_gamma_deviance
-=======
 from ._regression import explained_variance_score
 from ._regression import max_error
 from ._regression import mean_absolute_error
@@ -83,7 +70,6 @@ from ._regression import r2_score
 from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
->>>>>>> upstream/master
 
 
 from ._scorer import check_scoring
