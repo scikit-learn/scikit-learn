@@ -204,7 +204,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         Returns
         -------
         self : object
-        
+
         """
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
@@ -223,7 +223,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     def predict(self, X):
         """Predict class labels for X.
-        
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)

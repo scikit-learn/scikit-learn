@@ -121,7 +121,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute.
-        
+
         Sets the base_estimator_` attributes.
         """
         if not isinstance(self.n_estimators, numbers.Integral):
