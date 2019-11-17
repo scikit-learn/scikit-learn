@@ -39,6 +39,7 @@ __ALL__ = [
     "mean_squared_error",
     "mean_squared_log_error",
     "median_absolute_error",
+    "mean_absolute_percentage_error",
     "r2_score",
     "explained_variance_score",
     "mean_tweedie_deviance",
