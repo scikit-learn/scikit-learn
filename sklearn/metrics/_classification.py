@@ -2433,8 +2433,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     pos_label : int or str, default=None
         Label of the positive class.
         Defaults to the greater label unless y_true is all 0 or all -1
-        in which case pos_label defaults to 1. If `y_true` is str and
-        `pos_label` is not specified, an error will be raised.
+        in which case pos_label defaults to 1. If `y_true` contains strings
+        and `pos_label` is not specified, an error will be raised.
 
     Returns
     -------
@@ -2477,16 +2477,22 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
+    # Default behavior when pos_label=None:
+    # When y_true contains strings, an error will be raised.
+    # (differ from other functions to keep backward compatibility)
+    # When y_true is in {-1, 1} or {0, 1}, pos_label is set to 1.
+    # (consistent with precision_recall_curve/roc_curve)
+    # Otherwise pos_label is set to the greater label.
+    # (differ from other functions to keep backward compatibility)
     if pos_label is None:
-        if labels.dtype.kind in ('O', 'S', 'U'):
-            raise ValueError("y_true takes str values in {classes} "
-                             "and pos_label is not "
-                             "specified".format(classes=labels))
+        if labels.dtype.kind in ('S', 'U'):
+            raise ValueError("pos_label must be specified when y_true "
+                             "contains strings.")
         elif (np.array_equal(labels, [0]) or
                 np.array_equal(labels, [-1])):
             pos_label = 1
         else:
-            pos_label = y_true.max()
+            pos_label = labels.max()
 
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)

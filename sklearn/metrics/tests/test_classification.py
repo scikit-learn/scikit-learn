@@ -2176,14 +2176,15 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
 
-    # raise error when y_true is str and pos_label is not specified
+    # make sure the positive class is correctly inferred
     y_true = np.array([0, 1, 1, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
     score1 = brier_score_loss(y_true, y_pred, pos_label=1)
     score2 = brier_score_loss(y_true, y_pred)
     assert score1 == pytest.approx(score2)
     y_true = np.array(["neg", "pos", "pos", "neg"])
-    with pytest.raises(ValueError, match="y_true takes str values"):
+    # raise error when y_true contains strings and pos_label is not specified
+    with pytest.raises(ValueError, match="pos_label must be specified"):
         brier_score_loss(y_true, y_pred)
     score2 = brier_score_loss(y_true, y_pred, pos_label="pos")
     assert score1 == pytest.approx(score2)
