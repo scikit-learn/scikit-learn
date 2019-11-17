@@ -3,53 +3,12 @@
 
 import numpy as np
 import numbers
-from operator import attrgetter
 
-from ._base import SelectorMixin
+from ._base import SelectorMixin, _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
-
-
-def _get_importances_auto(estimator):
-    if hasattr(estimator, 'coef_'):
-        getter = attrgetter('coef_')
-    elif hasattr(estimator, 'feature_importances_'):
-        getter = attrgetter('feature_importances_')
-    else:
-        raise ValueError("when `importance_getter=='auto'`, "
-                         "the underlying estimator %s should have `coef_` or "
-                         "`feature_importances_` attribute. "
-                         " Either pass a fitted estimator to SelectFromModel"
-                         "  or call fit before calling transform."
-                         % estimator.__class__.__name__)
-    return getter
-
-
-def _get_feature_importances(importance_getter,
-                             estimator, norm_order=1):
-    """Retrieve or aggregate feature importances from estimator"""
-    # Get coefs
-    getter = importance_getter
-    if isinstance(getter, str):
-        if getter == 'auto':
-            getter = _get_importances_auto(estimator)
-        else:
-            getter = attrgetter(getter)
-    elif not callable(getter):
-        raise ValueError('`importance_getter` has to be a string'
-                         ' or `callable`')
-    importances = getter(estimator)
-
-    if importances.ndim == 1:
-        importances = np.abs(importances)
-
-    else:
-        importances = np.linalg.norm(importances, axis=0,
-                                     ord=norm_order)
-
-    return importances
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -210,8 +169,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise ValueError('Either fit the model before transform or set'
                              ' "prefit=True" while passing the fitted'
                              ' estimator to the constructor.')
-        scores = _get_feature_importances(self.importance_getter,
-                                          estimator, self.norm_order)
+        scores = _get_feature_importances(estimator,
+                                          self.importance_getter,
+                                          self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -260,8 +220,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def threshold_(self):
-        scores = _get_feature_importances(self.importance_getter,
-                                          self.estimator_, self.norm_order)
+        scores = _get_feature_importances(self.estimator_,
+                                          self.importance_getter,
+                                          self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')
