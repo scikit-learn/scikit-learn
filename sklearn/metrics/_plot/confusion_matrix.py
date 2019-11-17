@@ -118,8 +118,8 @@ class ConfusionMatrixDisplay:
 
 
 def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
-                          labels=None, display_labels=None,
-                          include_values=True, normalize=None,
+                          labels=None, normalize=None,
+                          display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
