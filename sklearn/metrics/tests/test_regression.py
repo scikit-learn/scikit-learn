@@ -79,14 +79,11 @@ def test_multioutput_regression():
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
 
-<<<<<<< HEAD
     error = np.around(mean_absolute_percentage_error(y_true, y_pred),
                       decimals=2)
     assert_almost_equal(error, 375e+14, decimal=-14)
-=======
     error = median_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 1.) / 4.)
->>>>>>> upstream/master
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
