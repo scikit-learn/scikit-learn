@@ -2,9 +2,9 @@
 
 .. _model_evaluation:
 
-========================================================
-Model evaluation: quantifying the quality of predictions
-========================================================
+===========================================================
+Metrics and scoring: quantifying the quality of predictions
+===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
@@ -61,7 +61,7 @@ Scoring                           Function                                      
 'accuracy'                        :func:`metrics.accuracy_score`
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
+'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -101,8 +105,7 @@ Usage examples:
 
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import cross_val_score
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data, iris.target
+    >>> X, y = datasets.load_iris(return_X_y=True)
     >>> clf = svm.SVC(random_state=0)
     >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
@@ -304,7 +307,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -312,6 +314,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    cohen_kappa_score
    confusion_matrix
    hinge_loss
@@ -570,13 +573,26 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
 
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
@@ -741,8 +757,14 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary classification and multilabel indicator format. The
+:func:`plot_precision_recall_curve` function plots the precision recall as
+follows.
 
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
+        :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
+        :scale: 75
+        :align: center
 
 .. topic:: Examples:
 
@@ -1326,7 +1348,7 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly 
+class. The OvO and OvR algorithms supports weighting uniformly
 (``average='macro'``) and weighting by the prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
@@ -1355,7 +1377,7 @@ prevalence:
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
@@ -1395,16 +1417,16 @@ to the given limit.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
 
-    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
-       `An Experimental Comparison of Performance Measures for Classification. 
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+       `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-       Pattern Recognition Letters. 30. 27-38. 
+       Pattern Recognition Letters. 30. 27-38.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
-    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
        ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
@@ -2029,18 +2051,19 @@ Mean Poisson, Gamma, and Tweedie deviances
 The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
 deviance error
 <https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
-with power parameter `p`. This is a metric that elicits predicted expectation
-values of regression targets.
+with a ``power`` parameter (:math:`p`). This is a metric that elicits
+predicted expectation values of regression targets.
 
 Following special cases exist,
 
-- when `p=0` it is equivalent to :func:`mean_squared_error`.
-- when `p=1` it is equivalent to :func:`mean_poisson_deviance`.
-- when `p=2` it is equivalent to :func:`mean_gamma_deviance`.
+- when ``power=0`` it is equivalent to :func:`mean_squared_error`.
+- when ``power=1`` it is equivalent to :func:`mean_poisson_deviance`.
+- when ``power=2`` it is equivalent to :func:`mean_gamma_deviance`.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
 and :math:`y_i` is the corresponding true value, then the mean Tweedie
-deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
+deviance error (D) for power :math:`p`, estimated over :math:`n_{\text{samples}}`
+is defined as
 
 .. math::
 
@@ -2048,47 +2071,48 @@ deviance error (D) estimated over :math:`n_{\text{samples}}` is defined as
   \sum_{i=0}^{n_\text{samples} - 1}
   \begin{cases}
   (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
-  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for }p=1\text{ (Poisson)}\\
-  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for }p=2\text{ (Gamma)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
   2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
   \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
   & \text{otherwise}
   \end{cases}
 
-Tweedie deviance is a homogeneous function of degree ``2-p``.
-Thus, Gamma distribution with `p=2` means that simultaneously scaling `y_true`
-and `y_pred` has no effect on the deviance. For Poisson distribution `p=1`
-the deviance scales linearly, and for Normal distribution (`p=0`),
-quadratically.  In general, the higher `p` the less weight is given to extreme
-deviations between true and predicted targets.
+Tweedie deviance is a homogeneous function of degree ``2-power``.
+Thus, Gamma distribution with ``power=2`` means that simultaneously scaling
+``y_true`` and ``y_pred`` has no effect on the deviance. For Poisson
+distribution ``power=1`` the deviance scales linearly, and for Normal
+distribution (``power=0``), quadratically.  In general, the higher
+``power`` the less weight is given to extreme deviations between true
+and predicted targets.
 
 For instance, let's compare the two predictions 1.0 and 100 that are both
 50% of their corresponding true value.
 
-The mean squared error (``p=0``) is very sensitive to the
+The mean squared error (``power=0``) is very sensitive to the
 prediction difference of the second point,::
 
     >>> from sklearn.metrics import mean_tweedie_deviance
-    >>> mean_tweedie_deviance([1.0], [1.5], p=0)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=0)
     0.25
-    >>> mean_tweedie_deviance([100.], [150.], p=0)
+    >>> mean_tweedie_deviance([100.], [150.], power=0)
     2500.0
 
-If we increase ``p`` to 1,::
+If we increase ``power`` to 1,::
 
-    >>> mean_tweedie_deviance([1.0], [1.5], p=1)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=1)
     0.18...
-    >>> mean_tweedie_deviance([100.], [150.], p=1)
+    >>> mean_tweedie_deviance([100.], [150.], power=1)
     18.9...
 
-the difference in errors decreases. Finally, by setting, ``p=2``::
+the difference in errors decreases. Finally, by setting, ``power=2``::
 
-    >>> mean_tweedie_deviance([1.0], [1.5], p=2)
+    >>> mean_tweedie_deviance([1.0], [1.5], power=2)
     0.14...
-    >>> mean_tweedie_deviance([100.], [150.], p=2)
+    >>> mean_tweedie_deviance([100.], [150.], power=2)
     0.14...
 
-we would get identical errors. The deviance when `p=2` is thus only
+we would get identical errors. The deviance when ``power=2`` is thus only
 sensitive to relative errors.
 
 .. _clustering_metrics:
@@ -2134,8 +2158,7 @@ dataset::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
