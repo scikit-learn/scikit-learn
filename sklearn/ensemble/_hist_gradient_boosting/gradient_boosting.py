@@ -85,10 +85,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -270,6 +270,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
+            if self.do_early_stopping_ and self._use_validation_data:
+                raw_predictions_val = self._raw_predict(X_binned_val)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
@@ -557,7 +559,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
         Returns
@@ -671,6 +673,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
@@ -849,6 +853,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
