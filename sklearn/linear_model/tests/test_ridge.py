@@ -664,12 +664,13 @@ def _test_ridge_cv(filter_):
 
 @pytest.mark.parametrize(
     "ridge, make_dataset",
-    [(RidgeCV(store_cv_values=False), make_regression),
-     (RidgeClassifierCV(store_cv_values=False), make_classification)]
+    [(RidgeCV(), make_regression),
+     (RidgeClassifierCV(), make_classification)]
 )
 def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
     # Check that `cv_values_` is not stored when store_cv_values is False
     X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.set_params(store_cv_values=False)
     ridge.fit(X, y)
     assert not hasattr(ridge, "cv_values_")
 
@@ -831,7 +832,8 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
-def test_ridgecv_store_cv_values():
+@pytest.mark.parametrize("scoring", [None, 'neg_mean_squared_error'])
+def test_ridgecv_store_cv_values(scoring):
     rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -840,7 +842,7 @@ def test_ridgecv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True)
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True, scoring=scoring)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
@@ -853,7 +855,7 @@ def test_ridgecv_store_cv_values():
     r.fit(x, y)
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
-    r = RidgeCV(cv=3, store_cv_values=True)
+    r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
     assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
                         r.fit, x, y)
 
