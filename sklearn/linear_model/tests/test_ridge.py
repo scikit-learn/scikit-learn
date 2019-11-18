@@ -34,6 +34,7 @@ from sklearn.linear_model._ridge import _solve_cholesky_kernel
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
@@ -659,6 +660,18 @@ def _test_ridge_cv(filter_):
 
     assert len(ridge_cv.coef_.shape) == 1
     assert type(ridge_cv.intercept_) == np.float64
+
+
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(store_cv_values=False), make_regression),
+     (RidgeClassifierCV(store_cv_values=False), make_classification)]
+)
+def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
+    # Check that `cv_values_` is not stored when store_cv_values is False
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.fit(X, y)
+    assert not hasattr(ridge, "cv_values_")
 
 
 def _test_ridge_diabetes(filter_):
