@@ -1695,6 +1695,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     alpha_ : float
         Estimated regularization parameter.
 
+    best_score_ : float
+        Score of best_estimator_ on the hold out data.
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1798,6 +1801,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     alpha_ : float
         Estimated regularization parameter
+
+    best_score_ : float
+        Score of best_estimator_ on the hold out data.
 
     classes_ : array of shape (n_classes,)
         The classes labels.
