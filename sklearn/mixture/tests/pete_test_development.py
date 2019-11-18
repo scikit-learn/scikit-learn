@@ -1,0 +1,4 @@
+from matplotlib import pyplot as plt
+from test_gaussian_mixture import test_conditional_gaussian_mixture_fit
+
+test_conditional_gaussian_mixture_fit()
