@@ -539,6 +539,10 @@ Changelog
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
 
+- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV`.
+  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
+
 :mod:`sklearn.manifold`
 .......................
 
