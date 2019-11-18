@@ -1063,6 +1063,7 @@ class _IdentityRegressor:
     def predict(self, y_predict):
         return y_predict
 
+
 class _IdentityClassifier(LinearClassifierMixin):
     """Fake classifier which will directly output the prediction.
 
