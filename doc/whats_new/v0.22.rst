@@ -589,6 +589,9 @@ Changelog
 - |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
   precision recall curves. :pr:`14936` by `Thomas Fan`_.
 
+- |Feature| :func:`metrics.plot_confusion_matrix` has been added to plot
+  confusion matrices. :pr:`15083` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
