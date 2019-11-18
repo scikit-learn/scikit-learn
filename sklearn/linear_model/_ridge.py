@@ -1597,7 +1597,7 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
-            self.best_score = gs.best_score_
+            self.best_score_ = gs.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
