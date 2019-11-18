@@ -1509,7 +1509,7 @@ class _RidgeGCV(LinearModel):
                 alpha_score = scorer(
                     _IdentityEstimator(), y_true, y_pred)
                 if self.store_cv_values:
-                    self.cv_values_[:, i] = y_pred
+                    self.cv_values_[:, i] = y_pred.ravel()
             if (best_score is None) or (alpha_score > best_score):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
 
