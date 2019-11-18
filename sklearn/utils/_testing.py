@@ -912,3 +912,25 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
+
+
+def _convert_container(container, constructor_name, columns_name=None):
+    if constructor_name == 'list':
+        return list(container)
+    elif constructor_name == 'tuple':
+        return tuple(container)
+    elif constructor_name == 'array':
+        return np.asarray(container)
+    elif constructor_name == 'sparse':
+        return sp.sparse.csr_matrix(container)
+    elif constructor_name == 'dataframe':
+        pd = pytest.importorskip('pandas')
+        return pd.DataFrame(container, columns=columns_name)
+    elif constructor_name == 'series':
+        pd = pytest.importorskip('pandas')
+        return pd.Series(container)
+    elif constructor_name == 'index':
+        pd = pytest.importorskip('pandas')
+        return pd.Index(container)
+    elif constructor_name == 'slice':
+        return slice(container[0], container[1])
