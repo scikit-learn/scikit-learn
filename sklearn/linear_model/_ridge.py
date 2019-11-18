@@ -245,15 +245,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, LinearOperator},
-        shape = [n_samples, n_features]
+    X : {array-like, sparse matrix, LinearOperator} of shape \
+        (n_samples, n_features)
         Training data
 
     y : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values
 
-    alpha : {float, array-like},
-        shape = [n_targets] if array-like
+    alpha : float or array-like of shape (n_targets,)
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
@@ -262,8 +261,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    sample_weight : float or numpy array of shape (n_samples,), default=None
-        Individual weights for each sample. If sample_weight is not None and
+    sample_weight : float or array-like of shape (n_samples,), default=None
+        Individual weights for each sample. If given a float, every sample
+        will have the same weight. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
 
         .. versionadded:: 0.17
@@ -349,14 +349,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     Returns
     -------
-    coef : array, shape = [n_features] or [n_targets, n_features]
+    coef : array of shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
     n_iter : int, optional
         The actual number of iteration performed by the solver.
         Only returned if `return_n_iter` is True.
 
-    intercept : float or array, shape = [n_targets]
+    intercept : float or array of shape (n_targets,)
         The intercept of the model. Only returned if `return_intercept`
         is True and if X is a scipy sparse array.
 
@@ -364,7 +364,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
-
     return _ridge_regression(X, y, alpha,
                              sample_weight=sample_weight,
                              solver=solver,
@@ -566,9 +565,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         else:
             solver = self.solver
 
-        if ((sample_weight is not None) and
-                np.asarray(sample_weight).ndim > 1):
-            raise ValueError("Sample weights must be 1D array or scalar")
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -613,7 +612,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
     This estimator has built-in support for multi-variate regression
-    (i.e., when y is a 2d-array of shape [n_samples, n_targets]).
+    (i.e., when y is a 2d-array of shape (n_samples, n_targets)).
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
@@ -701,14 +700,14 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_targets, n_features)
+    coef_ : array of shape (n_features,) or (n_targets, n_features)
         Weight vector(s).
 
-    intercept_ : float | array, shape = (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    n_iter_ : array or None, shape (n_targets,)
+    n_iter_ : None or array of shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
@@ -732,8 +731,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y)
     Ridge()
-
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
@@ -744,7 +743,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
             random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Ridge regression model
+        """Fit Ridge regression model.
 
         Parameters
         ----------
@@ -754,8 +753,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or numpy array of shape [n_samples]
-            Individual weights for each sample
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -856,16 +856,16 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features) or (n_classes, n_features)
+    coef_ : array of shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
-    intercept_ : float | array, shape = (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    n_iter_ : array or None, shape (n_targets,)
+    n_iter_ : None or array of shape (n_targets,)
         Actual number of iterations for each target. Available only for
         sag and lsqr solvers. Other solvers will return None.
 
@@ -903,7 +903,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Ridge regression model.
+        """Fit Ridge classifier model.
 
         Parameters
         ----------
@@ -913,8 +913,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like of shape (n_samples,)
             Target values.
 
-        sample_weight : {float, array-like of shape (n_samples,)}, default=None
-            Sample weight.
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
             .. versionadded:: 0.17
                *sample_weight* support to Classifier.
@@ -926,7 +927,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True,
+                         y_numeric=False)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -939,8 +942,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
                     self.__class__.__name__))
 
         if self.class_weight:
-            if sample_weight is None:
-                sample_weight = 1.
             # modify the sample weights with the corresponding class weight
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
@@ -976,10 +977,10 @@ def _find_smallest_angle(query, vectors):
 
     Parameters
     ----------
-    query : ndarray, shape (n_samples,)
+    query : ndarray of shape (n_samples,)
         Normalized query vector.
 
-    vectors : ndarray, shape (n_samples, n_features)
+    vectors : ndarray of shape (n_samples, n_features)
         Vectors to which we compare query, as columns. Must be normalized.
     """
     abs_cosine = np.abs(query.dot(vectors))
@@ -1134,17 +1135,17 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The preprocessed design matrix.
 
-        sqrt_sw : ndarray, shape (n_samples,)
+        sqrt_sw : ndarray of shape (n_samples,)
             square roots of sample weights
 
         Returns
         -------
-        gram : ndarray, shape (n_samples, n_samples)
+        gram : ndarray of shape (n_samples, n_samples)
             The Gram matrix.
-        X_mean : ndarray, shape (n_feature,)
+        X_mean : ndarray of shape (n_feature,)
             The weighted mean of ``X`` for each feature.
 
         Notes
@@ -1184,17 +1185,17 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : sparse matrix, shape (n_samples, n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             The preprocessed design matrix.
 
-        sqrt_sw : ndarray, shape (n_samples,)
+        sqrt_sw : ndarray of shape (n_samples,)
             square roots of sample weights
 
         Returns
         -------
-        covariance : ndarray, shape (n_features, n_features)
+        covariance : ndarray of shape (n_features, n_features)
             The covariance matrix.
-        X_mean : ndarray, shape (n_feature,)
+        X_mean : ndarray of shape (n_feature,)
             The weighted mean of ``X`` for each feature.
 
         Notes
@@ -1233,16 +1234,16 @@ class _RidgeGCV(LinearModel):
         ----------
         X : sparse matrix of shape (n_samples, n_features)
 
-        A : np.ndarray, shape = (n_features, n_features)
+        A : ndarray of shape (n_features, n_features)
 
-        X_mean : np.ndarray, shape = (n_features,)
+        X_mean : ndarray of shape (n_features,)
 
-        sqrt_sw : np.ndarray, shape = (n_features,)
+        sqrt_sw : ndarray of shape (n_features,)
             square roots of sample weights
 
         Returns
         -------
-        diag : np.ndarray, shape = (n_samples,)
+        diag : np.ndarray, shape (n_samples,)
             The computed diagonal.
         """
         intercept_col = scale = sqrt_sw
@@ -1263,7 +1264,7 @@ class _RidgeGCV(LinearModel):
         return diag
 
     def _eigen_decompose_gram(self, X, y, sqrt_sw):
-        """Eigendecomposition of X.X^T, used when n_samples <= n_features"""
+        """Eigendecomposition of X.X^T, used when n_samples <= n_features."""
         # if X is dense it has already been centered in preprocessing
         K, X_mean = self._compute_gram(X, sqrt_sw)
         if self.fit_intercept:
@@ -1277,7 +1278,7 @@ class _RidgeGCV(LinearModel):
         return X_mean, eigvals, Q, QT_y
 
     def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, eigvals, Q, QT_y):
-        """Compute dual coefficients and diagonal of G^-1
+        """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X.X^T (n_samples <= n_features).
         """
@@ -1343,7 +1344,7 @@ class _RidgeGCV(LinearModel):
 
     def _solve_eigen_covariance_intercept(
             self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
-        """Compute dual coefficients and diagonal of G^-1
+        """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse),
@@ -1373,7 +1374,7 @@ class _RidgeGCV(LinearModel):
 
     def _solve_eigen_covariance(
             self, alpha, y, sqrt_sw, X_mean, eigvals, V, X):
-        """Compute dual coefficients and diagonal of G^-1
+        """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have a decomposition of X^T.X
         (n_samples > n_features and X is sparse).
@@ -1400,7 +1401,7 @@ class _RidgeGCV(LinearModel):
 
     def _solve_svd_design_matrix(
             self, alpha, y, sqrt_sw, X_mean, singvals_sq, U, UT_y):
-        """Compute dual coefficients and diagonal of G^-1
+        """Compute dual coefficients and diagonal of G^-1.
 
         Used when we have an SVD decomposition of X
         (n_samples > n_features and X is dense).
@@ -1420,33 +1421,35 @@ class _RidgeGCV(LinearModel):
         return G_inverse_diag, c
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Ridge regression model
+        """Fit Ridge regression model with gcv.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data. Will be cast to float64 if necessary
+            Training data. Will be cast to float64 if necessary.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to float64 if necessary
+            Target values. Will be cast to float64 if necessary.
 
-        sample_weight : float or array-like of shape [n_samples]
-            Sample weight
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
-                         dtype=[np.float64],
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
                          multi_output=True, y_numeric=True)
+
+        if sample_weight is not None:
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         if np.any(self.alphas <= 0):
             raise ValueError(
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
-
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         n_samples, n_features = X.shape
 
@@ -1537,7 +1540,7 @@ class _BaseRidgeCV(LinearModel):
         self.store_cv_values = store_cv_values
 
     def fit(self, X, y, sample_weight=None):
-        """Fit Ridge regression model
+        """Fit Ridge regression model with cv.
 
         Parameters
         ----------
@@ -1546,10 +1549,11 @@ class _BaseRidgeCV(LinearModel):
             if necessary.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to X's dtype if necessary.
 
-        sample_weight : float or array-like of shape [n_samples]
-            Sample weight
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -1607,7 +1611,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -1673,17 +1677,17 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    cv_values_ : array, shape = [n_samples, n_alphas] or \
-        shape = [n_samples, n_targets, n_alphas], optional
+    cv_values_ : array of shape (n_samples, n_alphas) or \
+        shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (if ``store_cv_values=True``\
         and ``cv=None``). After ``fit()`` has been called, this attribute \
         will contain the mean squared errors (by default) or the values \
         of the ``{loss,score}_func`` function (if provided in the constructor).
 
-    coef_ : array, shape = [n_features] or [n_targets, n_features]
+    coef_ : array of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
 
-    intercept_ : float | array, shape = (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
@@ -1721,7 +1725,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : numpy array of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -1775,19 +1779,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     Attributes
     ----------
-    cv_values_ : array, shape = [n_samples, n_targets, n_alphas], optional
+    cv_values_ : array of shape (n_samples, n_targets, n_alphas), optional
         Cross-validation values for each alpha (if ``store_cv_values=True`` and
         ``cv=None``). After ``fit()`` has been called, this attribute will
         contain the mean squared errors (by default) or the values of the
         ``{loss,score}_func`` function (if provided in the constructor). This
         attribute exists only when ``store_cv_values`` is True.
 
-    coef_ : array, shape (1, n_features) or (n_targets, n_features)
+    coef_ : array of shape (1, n_features) or (n_targets, n_features)
         Coefficient of the features in the decision function.
 
         ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
-    intercept_ : float | array, shape = (n_targets,)
+    intercept_ : float or array of shape (n_targets,)
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
@@ -1828,27 +1832,29 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the ridge classifier.
+        """Fit Ridge classifier with cv.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features. When using GCV,
             will be cast to float64 if necessary.
 
-        y : array-like, shape (n_samples,)
-            Target values. Will be cast to X's dtype if necessary
+        y : array-like of shape (n_samples,)
+            Target values. Will be cast to X's dtype if necessary.
 
-        sample_weight : {float, array-like of shape (n_samples,)}, default=None
-            Sample weight.
+        sample_weight : float or array-like of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
         self : object
         """
-        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                  multi_output=True)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         multi_output=True, y_numeric=False)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -1856,8 +1862,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
-            if sample_weight is None:
-                sample_weight = 1.
             # modify the sample weights with the corresponding class weight
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))

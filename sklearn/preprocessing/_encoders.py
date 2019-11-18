@@ -171,6 +171,8 @@ class OneHotEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
+    .. versionchanged:: 0.20
+
     Parameters
     ----------
     categories : 'auto' or a list of array-like, default='auto'
@@ -550,6 +552,8 @@ class OrdinalEncoder(_BaseEncoder):
     a single column of integers (0 to n_categories - 1) per feature.
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
+
+    .. versionchanged:: 0.20.1
 
     Parameters
     ----------

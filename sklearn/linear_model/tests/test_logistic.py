@@ -390,8 +390,13 @@ def test_logistic_regression_path_convergence_fail():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
     Cs = [1e3]
-    assert_warns(ConvergenceWarning, _logistic_regression_path,
-                 X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=1)
+
+    msg = (r"lbfgs failed to converge.+Increase the number of iterations or "
+           r"scale the data")
+
+    with pytest.warns(ConvergenceWarning, match=msg):
+        _logistic_regression_path(
+            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
 
 
 def test_liblinear_dual_random_state():
