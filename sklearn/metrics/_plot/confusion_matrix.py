@@ -117,8 +117,8 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
-                          labels=None, normalize=None,
+def plot_confusion_matrix(estimator, X, y_true, labels=None,
+                          sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
@@ -138,13 +138,13 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     y : array-like of shape (n_samples,)
         Target values.
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder or
         select a subset of labels. If `None` is given, those that appear at
         least once in `y_true` or `y_pred` are used in sorted order.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
 
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true (rows), predicted (columns)
