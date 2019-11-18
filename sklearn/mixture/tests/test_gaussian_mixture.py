@@ -652,6 +652,9 @@ def test_gaussian_mixture_fit():
             # the accuracy depends on the number of data and randomness, rng
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
+def test_conditional_gaussian_mixture_fit():
+
+    pass
 
 def test_gaussian_mixture_fit_best_params():
     rng = np.random.RandomState(0)
