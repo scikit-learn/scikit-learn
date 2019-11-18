@@ -82,9 +82,14 @@ def test_lda_predict():
         y_proba_pred1 = clf.predict_proba(X1)
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
                            'solver %s' % solver)
-        y_log_proba_pred1 = clf.predict_log_proba(X1)
-        assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
-                        rtol=1e-6, err_msg='solver %s' % solver)
+
+        # Some classes are predicted with probability 0
+        # so this causes issues when taking the log.
+        # We remove the associated warnings.
+        with ignore_warnings():
+            y_log_proba_pred1 = clf.predict_log_proba(X1)
+            assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
+                            rtol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)
@@ -574,21 +579,23 @@ def test_qda_ledoitwolf():
             solver="svd",
             covariance_estimator=LedoitWolf()
     )
-    assert_raises(NotImplementedError, clf.fit, X, y)
+    with pytest.raises(NotImplementedError, match="covariance estimator "
+                       "is not supported with svd solver. Try another solver"):
+        clf.fit(X, y)
 
     # test with unkwown solver
     clf = QuadraticDiscriminantAnalysis(
             solver="dummy",
             covariance_estimator=LedoitWolf()
     )
-    assert_raises(ValueError, clf.fit, X, y)
+    with pytest.raises(ValueError, match="unknown solver"):
+        clf.fit(X, y)
 
     clf = QuadraticDiscriminantAnalysis(
             solver="lsqr",
             covariance_estimator=LedoitWolf()
     )
-    with ignore_warnings():
-        clf.fit(X2, y6)
+    clf.fit(X2, y6)
     y_pred = clf.predict(X2)
     assert_array_equal(y_pred, y6)
 
@@ -597,8 +604,7 @@ def test_qda_ledoitwolf():
             solver="lsqr",
             covariance_estimator=LedoitWolf()
     )
-    with ignore_warnings():
-        clf.fit(X5, y5)
+    clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
 
