@@ -69,16 +69,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     importance_getter : string or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
+        
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
-        If `callable`, overrides the default feature importance getter.
-        The callable is passed with the fitted estimator and it should
-        return importance for each feature.
-
         For example, give `regressor_.coef_` in case of
         `TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        `Pipeline` with its last step named `clf`
+        `Pipeline` with its last step named `clf`.
+
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -399,8 +400,14 @@ class RFECV(RFE):
     importance_getter : string or callable, optional (default='auto')
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
+        
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
+        For example, give `regressor_.coef_` in case of
+        `TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        `Pipeline` with its last step named `clf`.
+
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
