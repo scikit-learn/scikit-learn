@@ -1471,7 +1471,7 @@ class _RidgeGCV(LinearModel):
             X, y = _rescale_data(X, y, sample_weight)
             sqrt_sw = np.sqrt(sample_weight)
         else:
-            sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
+            sample_weight = sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
 
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
 
@@ -1491,16 +1491,25 @@ class _RidgeGCV(LinearModel):
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
+                if y.ndim == 2:
+                    squared_errors /= sample_weight[:, np.newaxis]
+                else:
+                    squared_errors /= sample_weight
                 alpha_score = -squared_errors.mean()
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
+                if y.ndim == 2:
+                    y_true = y / sqrt_sw[:, np.newaxis] + y_offset
+                    y_pred = predictions / sqrt_sw[:, np.newaxis] + y_offset
+                else:
+                    y_true = y / sqrt_sw + y_offset
+                    y_pred = predictions / sqrt_sw + y_offset
                 alpha_score = scorer(
-                    _IdentityEstimator(), predictions.ravel(), y.ravel())
+                    _IdentityEstimator(), y_true, y_pred)
                 if self.store_cv_values:
-                    self.cv_values_[:, i] = \
-                        predictions.ravel() / sqrt_sw + y_offset
+                    self.cv_values_[:, i] = y_pred
             if (best_score is None) or (alpha_score > best_score):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
 
@@ -1572,6 +1581,7 @@ class _BaseRidgeCV(LinearModel):
                                   store_cv_values=self.store_cv_values)
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
+            self.best_score_ = estimator.best_score_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -1587,6 +1597,7 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
+            self.best_score = gs.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
