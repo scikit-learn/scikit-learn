@@ -114,8 +114,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
     Attributes
     ----------
-    X_train_ : array-like of shape (n_samples, n_features)
-        Feature values in training data (also required for prediction)
+    X_train_ : sequence of length n_samples
+        Feature vectors or other representations of training data (also
+        required for prediction). Could either be array-like with shape =
+        (n_samples, n_features) or a list of objects.
 
     y_train_ : array-like of shape (n_samples,) or (n_samples, n_targets)
         Target values in training data (also required for prediction)
@@ -164,8 +166,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Training data
+        X : sequence of length n_samples
+            Feature vectors or other representations of training data.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
@@ -182,7 +186,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         self._rng = check_random_state(self.random_state)
 
-        X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
+        if self.kernel_.requires_vector_input:
+            X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
+                             ensure_2d=True, dtype="numeric")
+        else:
+            X, y = check_X_y(X, y, multi_output=True, y_numeric=True,
+                             ensure_2d=False, dtype=None)
 
         # Normalize target value
         if self.normalize_y:
@@ -273,8 +282,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
-            Query points where the GP is evaluated
+        X : sequence of length n_samples
+            Query points where the GP is evaluated.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         return_std : bool, default: False
             If True, the standard-deviation of the predictive distribution at
@@ -302,7 +313,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 "Not returning standard deviation of predictions when "
                 "returning full covariance.")
 
-        X = check_array(X)
+        if self.kernel is None or self.kernel.requires_vector_input:
+            X = check_array(X, ensure_2d=True, dtype="numeric")
+        else:
+            X = check_array(X, ensure_2d=False, dtype=None)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
             if self.kernel is None:
@@ -357,8 +371,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         Parameters
         ----------
-        X : array-like of shape (n_samples_X, n_features)
-            Query points where the GP samples are evaluated
+        X : sequence of length n_samples
+            Query points where the GP is evaluated.
+            Could either be array-like with shape = (n_samples, n_features)
+            or a list of objects.
 
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
