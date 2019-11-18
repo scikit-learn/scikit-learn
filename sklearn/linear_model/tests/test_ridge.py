@@ -36,7 +36,7 @@ from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
+from sklearn.model_selection import KFold, cross_val_predict
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -549,7 +549,7 @@ def test_ridge_gcv_sample_weights(
         gcv_errors = gcv_ridge.cv_values_[:, alphas.index(kfold.alpha_)]
 
     assert kfold.alpha_ == pytest.approx(gcv_ridge.alpha_)
-    assert_allclose(gcv_errors, kfold_errors, rtol=1e-3) 
+    assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
     assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 """
@@ -575,7 +575,8 @@ def test_ridge_gcv_stored_predictions(fit_intercept):
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("use_sample_weight", [True, False])
-def test_ridge_gcv_equivalence_prediction_metric(fit_intercept, use_sample_weight):
+def test_ridge_gcv_equivalence_prediction_metric(fit_intercept,
+                                                 use_sample_weight):
     # Check the consistency between the cv_values_ obtained with and without
     # a score. The default score being the mean squared error, we can compute
     # the error from the prediction with `scoring='neg_mean_squared_error`
