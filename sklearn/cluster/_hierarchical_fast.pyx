@@ -474,7 +474,8 @@ def mst_linkage_core(
         The array of feature data to be clustered. Must be C-aligned
 
     dist_metric: DistanceMetric
-        A distance metric function (from sklearn.neighbors.dist_metrics)
+        A DistanceMetric object conforming to the API from
+        ``sklearn.neighbors._dist_metrics.pxd`` that will be
         used to compute distances.
 
     Returns
