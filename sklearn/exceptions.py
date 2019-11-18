@@ -136,7 +136,7 @@ class FitFailedWarning(RuntimeWarning):
     ...     except ValueError:
     ...         pass
     ...     msg = repr(w[-1].message)
-    ...     # if msg.find(r'Traceback (most recent call last):\n') > -1:
+    ...     # if msg.find(r'Traceback (most recent call last):\\n') > -1:
     ...     ct = msg.count('\\n')
     ...     if ct > 1 or msg.count('\\\\n') > 1:  # has stacktrace
     ...         split = msg.splitlines() if ct > 1 else msg.split('\\\\n')
