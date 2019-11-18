@@ -759,43 +759,43 @@ class ConditionalGaussianMixture():
     # Author: Peter L Green <p.l.green@liverpool.ac.uk>
 
     """  Conditional Gaussian Mixture.
-    
-    This class is used to define the conditional distributions of a 
+
+    This class is used to define the conditional distributions of a
     Gaussian mixture model that has already been trained on some data.
-    Writing the Gaussian mixture model as p(xa, xb), the code will 
-    evaluate p(xa | xb). 
-    
+    Writing the Gaussian mixture model as p(xa, xb), the code will
+    evaluate p(xa | xb).
+
     Read more in (still to be added)
-    
+
     Parameters
     ----------
     gmm : an instance of a (trained) Gaussian mixture model.
-    
+
     i_cond : a numpy array of True or False values. If the ith value of
         i_cond is True then xi will be considered as fixed equal to
         some conditional value. If the jth value of i_cond is False then
         xj will be considered as a random variable.
-        
+
     Attributes
     ----------
-    mu_aa_list : means of marginal distributions, p(xa), for each Gaussian 
+    mu_aa_list : means of marginal distributions, p(xa), for each Gaussian
     in the mixture.
-    
-    mu_bb_list : means of marginal distributions, p(xb), for each Gaussian 
+
+    mu_bb_list : means of marginal distributions, p(xb), for each Gaussian
     in the mixture.
-    
-    Sigma_aa_list : partitioned covariance matrices, with respect to 
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
         (xa, xa), for each Gaussian in the mixture.
-       
-    Sigma_ab_list : partitioned covariance matrices, with respect to 
+
+    Sigma_ab_list : partitioned covariance matrices, with respect to
         (xa, xb), for each Gaussian in the mixture.
-    
-    Sigma_aa_list : partitioned covariance matrices, with respect to 
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
         (xb, xa), for each Gaussian in the mixture.
-        
-    Sigma_aa_list : partitioned covariance matrices, with respect to 
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
         (xb, xb), for each Gaussian in the mixture.
-        
+
     p_aa : marginal probability distributions, for xa, for each Gaussian in
         the mixture.
 
@@ -855,19 +855,19 @@ class ConditionalGaussianMixture():
 
     def mu_a_b(self, xb, mu_aa, Sigma_ab, Sigma_bb, mu_bb):
         """ Expression for the mean of each Gaussian that makes up p(xa | xb)
-        
+
         Parameters
         ----------
         xb : array of conditional values
-        
+
         mu_aa : mean of marginal distribution, p(xa)
-        
+
         Sigma_ab : partitioned covariance matrix with respect to (xa, xb)
-        
+
         Sigma_bb : partitioned covariance matrix with respect to (xb, xb)
-        
+
         mu_bb : mean of marginal distribution, p(xb)
-        
+
         Returns
         -------
         mu : array
@@ -882,19 +882,19 @@ class ConditionalGaussianMixture():
     def Sigma_a_b(self, xb, Sigma_aa, Sigma_ab, Sigma_ba, Sigma_bb):
         """ Expression for the covariance matrix of each Gaussian
             that makes up p(xa | xb)
-            
+
         Parameters
         ----------
         xb : array of conditional values
-        
+
         Sigma_aa : partitioned covariance matrix with respect to (xa, xa)
-        
+
         Sigma_ab : partitioned covariance matrix with respect to (xa, xb)
-        
+
         Sigma_ba : partitioned covariance matrix with respect to (xb, xa)
-        
+
         Sigma_bb : partitioned covariance matrix with respect to (xb, xb)
-        
+
         Returns
         -------
         Sigma : array
@@ -907,11 +907,11 @@ class ConditionalGaussianMixture():
 
     def w_a_b(self, xb):
         """ Computes mixture weights of p(xa | xb), conditional on xb.
-        
+
         Parameters
         ----------
         xb : array of conditional values
-        
+
         Returns
         -------
             new_weights : list
@@ -939,13 +939,13 @@ class ConditionalGaussianMixture():
 
     def pdf_xa_cond_xb(self, xa, xb):
         """ Compute the probability density of xa, given xb.
-        
+
         Parameters
         ----------
         xa : point where p(xa | xb) is to be evaluated
-        
+
         xb : conditional values for p(xa | xb)
-        
+
         Returns
         -------
         pdf : float
