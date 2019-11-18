@@ -18,8 +18,8 @@ from sklearn.metrics import ConfusionMatrixDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
-    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning")
-
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
 
 @pytest.fixture(scope="module")
 def n_classes():
