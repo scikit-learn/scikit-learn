@@ -1054,6 +1054,28 @@ class _XT_CenterStackOp(sparse.linalg.LinearOperator):
         return res
 
 
+class _IdentityRegressor:
+    """Fake regressor which will directly output the prediction."""
+
+    def decision_function(self, y_predict):
+        return y_predict
+
+    def predict(self, y_predict):
+        return y_predict
+
+class _IdentityClassifier(LinearClassifierMixin):
+    """Fake classifier which will directly output the prediction.
+
+    We inherit from LinearClassifierMixin to get the proper shape for the
+    predictions.
+    """
+    def __init__(self, classes):
+        self.classes_ = classes
+
+    def decision_function(self, y_predict):
+        return y_predict
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1086,6 +1108,10 @@ class _RidgeGCV(LinearModel):
     when the model was fitted with all examples but this example.
 
     looe = y - loov = c / diag(G^-1)
+
+    The best score (negative mean squared error or user-provided scoring) is
+    stored in the `best_score_` attribute, and the selected hyperparameter in
+    `alpha_`.
 
     References
     ----------
@@ -1464,62 +1490,47 @@ class _RidgeGCV(LinearModel):
         else:
             sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
 
+        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)),
-                             dtype=X.dtype)
-        C = []
-        X_mean, *decomposition = decompose(X, y, sqrt_sw)
+
+        if self.store_cv_values:
+            self.cv_values_ = np.empty(
+                (n_samples * n_y, len(self.alphas)), dtype=X.dtype)
+
+        best_coef, best_score, best_alpha = None, None, None
+
         for i, alpha in enumerate(self.alphas):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
-                cv_values[:, i] = squared_errors.ravel()
+                alpha_score = -squared_errors.mean()
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
-                cv_values[:, i] = predictions.ravel()
-            C.append(c)
+                if self.store_cv_values:
+                    self.cv_values_[:, i] = predictions.ravel()
 
-        if error:
-            best = cv_values.mean(axis=0).argmin()
-        else:
+                if self.is_clf:
+                    identity_estimator = _IdentityClassifier(np.arange(n_y))
+                    predictions_, y_ = predictions, y.argmax(axis=1)
+                else:
+                    identity_estimator = _IdentityRegressor()
+                    predictions_, y_ = predictions.ravel(), y.ravel()
 
-            if not self.is_clf:
-                # The scorer want an object that will make the predictions but
-                # they are already computed efficiently by _RidgeGCV. This
-                # identity_estimator will just return them
-                def identity_estimator():
-                    pass
-                identity_estimator.decision_function = lambda \
-                    y_predict: y_predict
-                identity_estimator.predict = lambda y_predict: y_predict
+                alpha_score = scorer(identity_estimator, predictions_, y_)
 
-                out = [scorer(identity_estimator, cv_values[:, i], y.ravel())
-                       for i in range(len(self.alphas))]
+            if (best_score is None) or (alpha_score > best_score):
+                best_coef, best_score, best_alpha = c, alpha_score, alpha
 
-            else:
-                scorer.needs_threshold = True
-                y = y.argmax(axis=1)
-
-                class identity_classifier(LinearClassifierMixin):
-                    def decision_function(self, X):
-                        return X
-
-                    @property
-                    def classes_(self):
-                        return np.arange(n_y)
-
-                out = [scorer(identity_classifier(),
-                              cv_values[:, i].reshape(n_samples, n_y), y)
-                       for i in range(len(self.alphas))]
-
-            best = np.argmax(out)
-
-        self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
+        self.alpha_ = best_alpha
+        self.best_score_ = best_score
+        self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
         X_offset += X_mean * X_scale
@@ -1530,7 +1541,7 @@ class _RidgeGCV(LinearModel):
                 cv_values_shape = n_samples, len(self.alphas)
             else:
                 cv_values_shape = n_samples, n_y, len(self.alphas)
-            self.cv_values_ = cv_values.reshape(cv_values_shape)
+            self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
 
