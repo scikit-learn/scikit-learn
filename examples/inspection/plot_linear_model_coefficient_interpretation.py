@@ -33,6 +33,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import RidgeCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import RepeatedKFold
 
 #############################################################################
 # Determinants of Wages from the 1985 Current Population Survey
@@ -188,4 +190,39 @@ plt.axvline(x=0, color='.5');
 # link between "AGE" and "WAGE" given all other features.
 # Therefore, one should also interpret that for a given experience (and all other
 # features constant as well ...), a younger person would have an higher wage.
+#
+# Checking the coefficient stability
+# ..................................
+#
+# The stability of the coefficients is a guarantee of the robustness of the
+# model. We can check the coefficient stability through cross-validation.
+
+cv_model = cross_validate(
+    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True, n_jobs=-1
+)
+coefs = pd.DataFrame(
+    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
+     X_train_preprocessed.std()
+     for est in cv_model['estimator']],
+    columns=feature_names
+)
+plt.figure(figsize=(9, 7))
+sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.boxenplot(data=coefs, orient='h', color='C0')
+plt.axvline(x=0, color='.5')
+plt.title('Stability of coefficients');
+
+###############################################################################
+# The "AGE" and "EXPERIENCE" coefficients are highly instable which might be
+# due to the collinearity between the 2 features.
+
+age = survey.data['AGE'].values
+experience = survey.data['EXPERIENCE'].values
+sns.regplot(age,experience,scatter_kws={"color": "black", "alpha": 0.2, "s": 30},
+    line_kws={"color": "red"})
+
+##############################################################################
+# We can remove one of the 2 features and check what is the impact on the
+# features stability.
 
