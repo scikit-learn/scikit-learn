@@ -496,10 +496,16 @@ Changelog
   requires less memory.
   :pr:`14108`, :pr:`14170`, :pr:`14296` by :user:`Alex Henrie <alexhenrie>`.
 
-- |Efficiency| :class:`linear_model.RidgeCV` now does not allocate a
+- |Efficiency| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now does not allocate a
   potentially large array to store dual coefficients for all hyperparameters
   during its `fit`, nor an array to store all LOO predictions unless
   `store_cv_values` is `True`.
+  :pr:`15183` by :user:`Jérôme Dockès <jeromedockes>`.
+
+- |Fix| :class:`linear_model.RidgeCV` returns predictions in the original space
+  when `scoring is not None`. In addition, the reported mean squared errors are
+  normalized by the sample weights for consistency.
   :pr:`15183` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| In :class:`linear_model.RidgeCV`, the predicitons reported by
@@ -807,7 +813,7 @@ Changelog
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
 - |FIX| The liblinear solver now supports ``sample_weight``.
-  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
+n  :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 
 :mod:`sklearn.tree`

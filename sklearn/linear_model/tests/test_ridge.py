@@ -572,12 +572,17 @@ def test_ridge_gcv_stored_predictions(fit_intercept):
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_ridge_gcv_equivalence_prediction_metric(fit_intercept):
+@pytest.mark.parametrize("with_sample_weight", [False, True])
+def test_ridge_gcv_equivalence_prediction_metric(fit_intercept,
+                                                 with_sample_weight):
     # Check the consistency between the cv_values_ obtained with and without
     # a score. The default score being the mean squared error, we can compute
     # the error from the prediction with `scoring='neg_mean_squared_error`
     # the score reported when `scoring=None`
     X, y = make_regression(n_samples=6, n_features=2, random_state=42)
+    sample_weight = np.arange(1, len(y) + 1) if with_sample_weight else None
+    from sklearn.utils.validation import _check_sample_weight
+    sample_weight = _check_sample_weight(sample_weight, X)
     ridge_cv_no_score = RidgeCV(
         fit_intercept=fit_intercept, scoring=None, store_cv_values=True,
         alphas=[1.]
@@ -587,13 +592,13 @@ def test_ridge_gcv_equivalence_prediction_metric(fit_intercept):
         store_cv_values=True, alphas=[1.]
     )
 
-    ridge_cv_no_score.fit(X, y)
-    ridge_cv_score.fit(X, y)
+    ridge_cv_no_score.fit(X, y, sample_weight=sample_weight)
+    ridge_cv_score.fit(X, y, sample_weight=sample_weight)
 
-    assert (
-        ridge_cv_no_score.cv_values_.mean() == pytest.approx(
-            mean_squared_error(y, ridge_cv_score.cv_values_.ravel()))
-    )
+    # compute the mean squared error and apply the sample weight
+    mse = ((y - ridge_cv_score.cv_values_.ravel()) ** 2) * sample_weight
+    mse = mse.sum() / len(mse)
+    assert ridge_cv_no_score.cv_values_.mean() == pytest.approx(mse)
 
 
 def test_ridge_gcv_cv_values_not_stored():
@@ -606,21 +611,24 @@ def test_ridge_gcv_cv_values_not_stored():
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_ridge_gcv_decision_function_scoring(fit_intercept):
+@pytest.mark.parametrize("with_sample_weight", [False, True])
+def test_ridge_gcv_decision_function_scoring(fit_intercept,
+                                             with_sample_weight):
     # check that the passing a scorer computing the mean squared error is
     # equivalent to `scoring=None`
 
     def scorer(estimator, X, Y):
-        pred = estimator.decision_function(X)
-        return - np.mean((Y - pred)**2)
+        predict = estimator.decision_function(X)
+        return - np.mean((Y - predict) ** 2)
 
     X, y = make_regression(n_samples=10, n_features=2, random_state=0)
+    sample_weight = np.arange(1, len(y) + 1) if with_sample_weight else None
     ridge_1 = _RidgeGCV(
         fit_intercept=fit_intercept, scoring=None, store_cv_values=True,
-        alphas=[1.0]).fit(X, y)
+        alphas=[1.0]).fit(X, y, sample_weight=sample_weight)
     ridge_2 = _RidgeGCV(
         fit_intercept=fit_intercept, scoring=scorer, store_cv_values=True,
-        alphas=[1.0]).fit(X, y)
+        alphas=[1.0]).fit(X, y, sample_weight=sample_weight)
     assert ridge_1.best_score_ == pytest.approx(ridge_2.best_score_)
 
 
