@@ -102,7 +102,7 @@ Making a release
    packages and upload them to PyPI by running the following commands in the
    scikit-learn source folder (checked out at the release tag)::
 
-       $ rm -r dist
+       $ rm -r dist # only if there's anything other than the sdist tar.gz there
        $ pip install -U wheelhouse_uploader twine
        $ python setup.py fetch_artifacts
 
