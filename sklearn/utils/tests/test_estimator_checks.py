@@ -9,11 +9,11 @@ from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils.testing import (assert_raises_regex,
+from sklearn.utils._testing import (assert_raises_regex,
                                    ignore_warnings,
                                    assert_warns, assert_raises,
                                    SkipTest)
-from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
@@ -23,6 +23,7 @@ from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.fixes import _parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -305,6 +306,17 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+def test_not_an_array_array_function():
+    np_version = _parse_version(np.__version__)
+    if np_version < (1, 17):
+        raise SkipTest("array_function protocol not supported in numpy <1.17")
+    not_array = _NotAnArray(np.ones(10))
+    msg = "Don't want to call array_function sum!"
+    assert_raises_regex(TypeError, msg, np.sum, not_array)
+    # always returns True
+    assert np.may_share_memory(not_array, None)
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -451,7 +463,7 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)
@@ -461,7 +473,7 @@ def test_check_estimator_clones():
             check_estimator(est)
         assert old_hash == joblib.hash(est)
 
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
             _set_checking_parameters(est)

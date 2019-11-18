@@ -2,8 +2,8 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris

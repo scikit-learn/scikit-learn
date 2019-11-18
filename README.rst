@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |PythonVersion|_ |PyPi|_ |DOI|_
 
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
@@ -14,8 +14,8 @@
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
 
-.. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
-.. _Python35: https://badge.fury.io/py/scikit-learn
+.. |PythonVersion| image:: https://img.shields.io/pypi/pyversions/scikit-learn.svg
+.. _PythonVersion: https://img.shields.io/pypi/pyversions/scikit-learn.svg
 
 .. |PyPi| image:: https://badge.fury.io/py/scikit-learn.svg
 .. _PyPi: https://badge.fury.io/py/scikit-learn
@@ -31,7 +31,7 @@ SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+the `About us <http://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
 It is currently maintained by a team of volunteers.
@@ -138,7 +138,7 @@ Project History
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the  `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+the `About us <http://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
 The project is currently maintained by a team of volunteers.

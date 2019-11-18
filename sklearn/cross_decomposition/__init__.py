@@ -1,2 +1,4 @@
-from .pls_ import *  # noqa
-from .cca_ import *  # noqa
+from ._pls import PLSCanonical, PLSRegression, PLSSVD
+from ._cca import CCA
+
+__all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD', 'CCA']

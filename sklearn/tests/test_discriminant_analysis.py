@@ -7,15 +7,15 @@ from scipy import linalg
 from sklearn.base import BaseEstimator
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
+from sklearn.utils._testing import (assert_array_equal, assert_no_warnings,
                                    assert_warns_message)
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
