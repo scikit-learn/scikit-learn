@@ -66,6 +66,11 @@ might be found.
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
 
+How should I save, export or deploy estimators for production?
+--------------------------------------------------------------
+
+See :ref:`model_persistence`.
+
 How can I create a bunch object?
 ------------------------------------------------
 
@@ -110,6 +115,15 @@ its usefulness via common use-cases/applications and corroborate performance
 improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
+
+Inclusion of a new algorithm speeding up an existing model is easier if:
+
+- it does not introduce new hyper-parameters (as it makes the library
+  more future-proof),
+- it is easy to document clearly when the contribution improves the speed
+  and when it does not, for instance "when n_features >>
+  n_samples",
+- benchmarks clearly show a speed up.
 
 Also note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
@@ -285,23 +299,20 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why does my job use more cores than specified with n_jobs under OSX or Linux?
------------------------------------------------------------------------------
+Why does my job use more cores than specified with n_jobs?
+----------------------------------------------------------
 
-This happens when vectorized numpy operations are handled by libraries such
-as MKL or OpenBLAS.
+This is because ``n_jobs`` only controls the number of jobs for
+routines that are parallelized with ``joblib``, but parallel code can come
+from other sources:
 
-While scikit-learn adheres to the limit set by ``n_jobs``,
-numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
-threads within each scikit-learn job (thread or process).
+- some routines may be parallelized with OpenMP (for code written in C or
+  Cython).
+- scikit-learn relies a lot on numpy, which in turn may rely on numerical
+  libraries like MKL, OpenBLAS or BLIS which can provide parallel
+  implementations.
 
-The number of threads used by the BLAS library can be set via an environment
-variable. For example, to set the maximum number of threads to some integer
-value ``N``, the following environment variables should be set:
-
-* For MKL: ``export MKL_NUM_THREADS=N``
-
-* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
 
 
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?

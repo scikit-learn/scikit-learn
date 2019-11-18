@@ -2,12 +2,63 @@
 
 .. currentmodule:: sklearn
 
-.. _changes_0_20_3:
+.. _changes_0_20_4:
+
+Version 0.20.4
+==============
+
+**July 30, 2019**
+
+This is a bug-fix release with some bug fixes applied to version 0.20.3.
+
+Changelog
+---------
+
+The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
+
+:mod:`sklearn.cluster`
+..............................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where KMeans++ initialisation
+  could rarely result in an IndexError. :issue:`11756` by `Joel Nothman`_.
+
+:mod:`sklearn.compose`
+.......................
+
+- |Fix| Fixed an issue in :class:`compose.ColumnTransformer` where using
+  DataFrames whose column order differs between :func:``fit`` and
+  :func:``transform`` could lead to silently passing incorrect columns to the
+  ``remainder`` transformer.
+  :pr:`14237` by `Andreas Schuderer <schuderer>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+  stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
+
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| Fixed a bug in :class:`neighbors.KernelDensity` which could not be
+  restored from a pickle if ``sample_weight`` had been used.
+  :issue:`13772` by :user:`Aditya Vyas <aditya1702>`.
+
+ .. _changes_0_20_3:
 
 Version 0.20.3
 ==============
 
-**??, 2019**
+**March 1, 2019**
 
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
@@ -22,6 +73,51 @@ Changelog
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
+  negative indexes in the columns list of the transformers.
+  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
+  the case `n_features=2` is handled correctly. :issue:`13276` by
+  :user:`Aurélien Bellet <bellet>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.datasets`
+............................
+
+- |Efficiency| :func:`sklearn.datasets.fetch_openml` now loads data by
+  streaming, avoiding high memory usage.  :issue:`13312` by `Joris Van den
+  Bossche`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+  would result in the sparse feature matrix having conflicting `indptr` and
+  `indices` precisions under very large vocabularies. :issue:`11295` by
+  :user:`Gabriel Vacaliuc <gvacaliuc>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| add support for non-numeric data in
+  :class:`sklearn.impute.MissingIndicator` which was not supported while
+  :class:`sklearn.impute.SimpleImputer` was supporting this for some
+  imputation strategies.
+  :issue:`13046` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -32,10 +128,43 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
+  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
+
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
   deprecation of ``categorical_features`` was handled incorrectly in
   combination with ``handle_unknown='ignore'``.
   :issue:`12881` by `Joris Van den Bossche`_.
+
+- |Fix| Bins whose width are too small (i.e., <= 1e-8) are removed
+  with a warning in :class:`preprocessing.KBinsDiscretizer`.
+  :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |FIX| Fixed a bug in :class:`svm.SVC`, :class:`svm.NuSVC`, :class:`svm.SVR`,
+  :class:`svm.NuSVR` and :class:`svm.OneClassSVM` where the ``scale`` option
+  of parameter ``gamma`` is erroneously defined as
+  ``1 / (n_features * X.std())``. It's now defined as
+  ``1 / (n_features * X.var())``.
+  :issue:`13221` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+Adrin Jalali, Agamemnon Krasoulis, Albert Thomas, Andreas Mueller, Aurélien
+Bellet, bertrandhaut, Bharat Raghunathan, Dowon, Emmanuel Arias, Fibinse
+Xavier, Finn O'Shea, Gabriel Vacaliuc, Gael Varoquaux, Guillaume Lemaitre,
+Hanmin Qin, joaak, Joel Nothman, Joris Van den Bossche, Jérémie Méhault, kms15,
+Kossori Aruku, Lakshya KD, maikia, Manuel López-Ibáñez, Marco Gorelli,
+MarcoGorelli, mferrari3, Mickaël Schoentgen, Nicolas Hug, pavlos kallis, Pierre
+Glaser, pierretallotte, Prabakaran Kumaresshan, Reshama Shaikh, Rohit Kapoor,
+Roman Yurchak, SandroCasagrande, Tashay Green, Thomas Fan, Vishaal Kapoor,
+Zhuyi Xue, Zijie (ZJ) Poh
 
 .. _changes_0_20_2:
 
@@ -96,12 +225,12 @@ Code and Documentation Contributors
 
 With thanks to:
 
+
 adanhawth, Adrin Jalali, Albert Thomas, Andreas Mueller, Dan Stine, Feda Curic,
 Hanmin Qin, Jan S, jeremiedbb, Joel Nothman, Joris Van den Bossche,
 josephsalmon, Katrin Leinweber, Loic Esteve, Muhammad Hassaan Rafique, Nicolas
 Hug, Olivier Grisel, Paul Paczuski, Reshama Shaikh, Sam Waterbury, Shivam
 Kotwalia, Thomas Fan
-
 
 .. _changes_0_20_1:
 

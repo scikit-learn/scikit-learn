@@ -8,13 +8,12 @@ from math import log
 import numpy as np
 from scipy.linalg import pinvh
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import check_random_state
-from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
+from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
 from sklearn.utils.extmath import fast_logdet
@@ -125,6 +124,19 @@ def test_toy_bayesian_ridge_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
+def test_bayesian_initial_params():
+    # Test BayesianRidge with initial values (alpha_init, lambda_init)
+    X = np.vander(np.linspace(0, 4, 5), 4)
+    y = np.array([0., 1., 0., -1., 0.])    # y = (x^3 - 6x^2 + 8x) / 3
+
+    # In this case, starting from the default initial values will increase
+    # the bias of the fitted curve. So, lambda_init should be small.
+    reg = BayesianRidge(alpha_init=1., lambda_init=1e-3)
+    # Check the R2 score nearly equals to one.
+    r2 = reg.fit(X, y).score(X, y)
+    assert_almost_equal(r2, 1.)
+
+
 def test_prediction_bayesian_ridge_ard_with_constant_input():
     # Test BayesianRidge and ARDRegression predictions for edge case of
     # constant target vectors
@@ -171,7 +183,7 @@ def test_update_of_sigma_in_ard():
     clf.fit(X, y)
     # With the inputs above, ARDRegression prunes one of the two coefficients
     # in the first iteration. Hence, the expected shape of `sigma_` is (1, 1).
-    assert_equal(clf.sigma_.shape, (1, 1))
+    assert clf.sigma_.shape == (1, 1)
     # Ensure that no error is thrown at prediction stage
     clf.predict(X, return_std=True)
 
@@ -186,6 +198,24 @@ def test_toy_ard_object():
     # Check that the model could approximately learn the identity function
     test = [[1], [3], [4]]
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
+
+
+def test_ard_accuracy_on_easy_problem():
+    # Check that ARD converges with reasonable accuracy on an easy problem
+    # (Github issue #14055)
+    # This particular seed seems to converge poorly in the failure-case
+    # (scipy==1.3.0, sklearn==0.21.2)
+    seed = 45
+    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    y = X[:, 1]
+
+    regressor = ARDRegression()
+    regressor.fit(X, y)
+
+    abs_coef_error = np.abs(1 - regressor.coef_[1])
+    # Expect an accuracy of better than 1E-4 in most cases -
+    # Failure-case produces 0.16!
+    assert abs_coef_error < 0.01
 
 
 def test_return_std():

@@ -1,327 +1,384 @@
 
 .. _advanced-installation:
 
-===================================
-Advanced installation instructions
-===================================
+==================================================
+Installing the development version of scikit-learn
+==================================================
 
-There are different ways to get scikit-learn installed:
+This section introduces how to install the **master branch** of scikit-learn.
+This can be done by either installing a nightly build or building from source.
 
-  * :ref:`Install an official release <install_official_release>`. This
-    is the best approach for most users. It will provide a stable version
-    and pre-build packages are available for most platforms.
+.. _install_nightly_builds:
 
-  * Install the version of scikit-learn provided by your
-    :ref:`operating system or Python distribution <install_by_distribution>`.
-    This is a quick option for those who have operating systems
-    that distribute scikit-learn. It might not provide the latest release
-    version.
+Installing nightly builds
+=========================
 
-  * :ref:`Building the package from source
-    <install_bleeding_edge>`. This is best for users who want the
-    latest-and-greatest features and aren't afraid of running
-    brand-new code. This document describes how to build from source.
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis.
 
-.. note::
+Installing a nightly build is the quickest way to:
 
-    If you wish to contribute to the project, you need to
-    :ref:`install the latest development version<install_bleeding_edge>`.
+- try a new feature that will be shipped in the next release (that is, a
+  feature from a pull-request that was recently merged to the master branch);
+
+- check whether a bug you encountered has been fixed since the last release.
+
+::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
 
 .. _install_bleeding_edge:
 
 Building from source
-=====================
+====================
 
-Scikit-learn requires:
+Building from source is required to work on a contribution (bug fix, new
+feature, code or documentation improvement).
 
-- Python (>= 3.5),
-- NumPy (>= 1.8.2),
-- SciPy (>= 0.13.3).
+.. _git_repo:
+
+#. Use `Git <https://git-scm.com/>`_ to check out the latest source from the
+   `scikit-learn repository <https://github.com/scikit-learn/scikit-learn>`_ on
+   Github.::
+
+        git clone git://github.com/scikit-learn/scikit-learn.git
+        cd scikit-learn
+
+   If you plan on submitting a pull-request, you should clone from your fork
+   instead.
+
+#. Install a compiler with OpenMP_ support for your platform. See intructions
+   for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
+   and :ref:`compiler_freebsd`.
+
+#. Optional (but recommended): create and activate a dedicated virtualenv_
+   or `conda environment`_.
+
+#. Install Cython_ and build the project with pip in :ref:`editable_mode`::
+
+        pip install cython
+        pip install --verbose --editable .
+
+#. Check that the installed scikit-learn has a version number ending with
+   `.dev0`::
+
+    python -c "import sklearn; sklearn.show_versions()"
+
+#. Please refer to the :ref:`developers_guide` and :ref:`pytest_tips` to run
+   the tests on the module of your choice.
 
 .. note::
 
-   For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
+    You will have to re-run the ``pip install --editable .`` command every time
+    the source code of a Cython file is updated (ending in `.pyx` or `.pxd`).
+
+Dependencies
+------------
+
+Runtime dependencies
+~~~~~~~~~~~~~~~~~~~~
+
+Scikit-learn requires the following dependencies both at build time and at
+runtime:
+
+- Python (>= 3.5),
+- NumPy (>= 1.11),
+- SciPy (>= 0.17),
+- Joblib (>= 0.11).
+
+Those dependencies are **automatically installed by pip** if they were missing
+when building scikit-learn from source.
+
+.. note::
+
+   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required. For PyPy, only installation instructions with pip apply.
 
+Build dependencies
+~~~~~~~~~~~~~~~~~~
 
-Building Scikit-learn also requires
+Building Scikit-learn also requires:
 
-- Cython >=0.23 
+..
+    # The following places need to be in sync with regard to Cython version:
+    # - .circleci config file
+    # - sklearn/_build_utils/__init__.py
+    # - advanced installation guide
 
-Running tests requires
+- Cython >= 0.28.5
+- A C/C++ compiler and a matching OpenMP_ runtime library. See the
+  :ref:`platform system specific instructions
+  <platform_specific_instructions>` for more details.
 
-.. |PytestMinVersion| replace:: 3.3.0
+.. note::
+
+   If OpenMP is not supported by the compiler, the build will be done with
+   OpenMP functionalities disabled. This is not recommended since it will force
+   some estimators to run in sequential mode instead of leveraging thread-based
+   parallelism. Setting the ``SKLEARN_FAIL_NO_OPENMP`` environment variable
+   (before cythonization) will force the build to fail if OpenMP is not
+   supported.
+
+Since version 0.21, scikit-learn automatically detects and use the linear
+algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
+or MKL.
+
+Test dependencies
+~~~~~~~~~~~~~~~~~
+
+Running tests requires:
+
+.. |PytestMinVersion| replace:: 4.6.2
 
 - pytest >=\ |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 
-.. _git_repo:
 
-Retrieving the latest code
---------------------------
-
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command::
-
-    git clone git://github.com/scikit-learn/scikit-learn.git
+Building a specific version from a tag
+--------------------------------------
 
 If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github.
 
-If you have all the build requirements installed (see below for details), you
-can build and install the package in the following way.
+.. _editable_mode:
 
-If you run the development version, it is cumbersome to reinstall the
-package each time you update the sources. Therefore it's recommended that you
-install in editable, which allows you to edit the code in-place. This
-builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
+Editable mode
+-------------
 
-    pip install --editable .
+If you run the development version, it is cumbersome to reinstall the package
+each time you update the sources. Therefore it is recommended that you install
+in with the ``pip install --editable .`` command, which allows you to edit the
+code in-place. This builds the extension in place and creates a link to the
+development directory (see `the pip docs
+<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
 
-.. note::
+This is fundamentally similar to using the command ``python setup.py develop``
+(see `the setuptool docs
+<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+It is however preferred to use pip.
 
-    This is fundamentally similar to using the command ``python setup.py develop``
-    (see `the setuptool docs <https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
-    It is however preferred to use pip.
+On Unix-like systems, you can equivalently type ``make in`` from the top-level
+folder. Have a look at the ``Makefile`` for additional utilities.
 
-.. note::
+.. _platform_specific_instructions:
 
-    If you decide to do an editable install you have to rerun::
+Platform-specific instructions
+==============================
 
-        pip install --editable .
+Here are instructions to install a working C/C++ compiler with OpenMP support
+to build scikit-learn Cython extensions for each supported platform.
 
-    every time the source code of a compiled extension is
-    changed (for instance when switching branches or pulling changes from upstream).
-
-On Unix-like systems, you can simply type ``make`` in the top-level folder to
-build in-place and launch all the tests. Have a look at the ``Makefile`` for
-additional utilities.
-
-Installing build dependencies
-=============================
-
-Linux
------
-
-Installing from source requires you to have installed the scikit-learn runtime
-dependencies, Python development headers and a working C/C++ compiler.
-Under Debian-based operating systems, which include Ubuntu::
-    
-    sudo apt-get install build-essential python3-dev python3-setuptools \
-                     python3-numpy python3-scipy \
-                     libatlas-dev libatlas3-base
-
-On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
-is used to provide the implementation of the BLAS and LAPACK linear algebra
-routines::
-
-    sudo update-alternatives --set libblas.so.3 \
-        /usr/lib/atlas-base/atlas/libblas.so.3
-    sudo update-alternatives --set liblapack.so.3 \
-        /usr/lib/atlas-base/atlas/liblapack.so.3
-
-.. note::
-
-    In order to build the documentation and run the example code contains in
-    this documentation you will need matplotlib::
-
-        sudo apt-get install python-matplotlib
-
-.. note::
-
-    The above installs the ATLAS implementation of BLAS
-    (the Basic Linear Algebra Subprograms library).
-    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
-    offer an alternative implementation called OpenBLAS.
-
-    Using OpenBLAS can give speedups in some scikit-learn modules,
-    but can freeze joblib/multiprocessing prior to OpenBLAS version 0.2.8-4,
-    so using it is not recommended unless you know what you're doing.
-
-    If you do want to use OpenBLAS, then replacing ATLAS only requires a couple
-    of commands. ATLAS has to be removed, otherwise NumPy may not work::
-
-        sudo apt-get remove libatlas3gf-base libatlas-dev
-        sudo apt-get install libopenblas-dev
-
-        sudo update-alternatives  --set libblas.so.3 \
-            /usr/lib/openblas-base/libopenblas.so.0
-        sudo update-alternatives --set liblapack.so.3 \
-            /usr/lib/lapack/liblapack.so.3
-
-On Red Hat and clones (e.g. CentOS), install the dependencies using::
-
-    sudo yum -y install gcc gcc-c++ numpy python-devel scipy
-
+.. _compiler_windows:
 
 Windows
 -------
 
-To build scikit-learn on Windows you need a working C/C++ compiler in
-addition to numpy, scipy and setuptools.
+First, install `Build Tools for Visual Studio 2019
+<https://visualstudio.microsoft.com/downloads/>`_.
 
-Picking the right compiler depends on the version of Python (2 or 3)
-and the architecture of the Python interpreter, 32-bit or 64-bit.
-You can check the Python version by running the following in ``cmd`` or
-``powershell`` console::
+.. warning::
 
-    python --version
+    You DO NOT need to install Visual Studio 2019. You only need the "Build
+    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
+    Studio 2019".
 
-and the architecture with::
+Secondly, find out if you are running 64-bit or 32-bit Python. The building
+command depends on the architecture of the Python interpreter. You can check
+the architecture by running the following in ``cmd`` or ``powershell``
+console::
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
-
-The above commands assume that you have the Python installation folder in your
-PATH environment variable.
-
-
-Python >= 3.5
--------------
-
-For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
-<https://visualstudio.microsoft.com/de/downloads/>`_.
 
 For 64-bit Python, configure the build environment with::
 
     SET DISTUTILS_USE_SDK=1
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
-
-And build scikit-learn from this environment::
-
-    python setup.py install
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
 
+Please be aware that the path above might be different from user to user. The
+aim is to point to the "vcvarsall.bat" file that will set the necessary
+environment variables in the current command prompt.
 
-32-bit Python (<= 3.4)
-----------------------
+Finally, build scikit-learn from this command prompt::
 
-For 32-bit Python versions up to 3.4 use Microsoft Visual C++ Express 2010.
+    pip install --verbose --editable .
 
-Once installed you should be able to build scikit-learn without any
-particular configuration by running the following command in the scikit-learn
-folder::
+.. _compiler_macos:
 
-   python setup.py install
+macOS
+-----
 
+The default C compiler on macOS, Apple clang (confusingly aliased as
+`/usr/bin/gcc`), does not directly support OpenMP. We present two alternatives
+to enable OpenMP support:
 
-64-bit Python (<= 3.4)
-----------------------
+- either install `conda-forge::compilers` with conda;
 
-For 64-bit Python versions up to 3.4, you either need the full Visual Studio or
-the free Windows SDKs that can be downloaded from the links below.
+- or install `libomp` with Homebrew to extend the default Apple clang compiler.
 
-The Windows SDKs include the MSVC compilers both for 32 and 64-bit
-architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
-as a new drive with a ``setup.exe`` installer in it.
+macOS compilers from conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- For Python  you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
-  Framework 4
-  <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
+If you use the conda package manager (version >= 4.7), you can install the
+``compilers`` meta-package from the conda-forge channel, which provides
+OpenMP-enabled C/C++ compilers based on the llvm toolchain.
 
-Both SDKs can be installed in parallel on the same host. To use the Windows
-SDKs, you need to setup the environment of a ``cmd`` console launched with the
-following flags ::
+First install the macOS command line tools::
 
-    cmd /E:ON /V:ON /K
+    xcode-select --install
 
-Then configure the build environment with::
+It is recommended to use a dedicated `conda environment`_ to build
+scikit-learn from source::
 
-    SET DISTUTILS_USE_SDK=1
-    SET MSSdk=1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Setup\WindowsSdkVer.exe" -q -version:v7.1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 /release
+    conda create -n sklearn-dev python numpy scipy cython joblib pytest \
+        conda-forge::compilers conda-forge::llvm-openmp
+    conda activate sklearn-dev
+    make clean
+    pip install --verbose --editable .
 
-Finally you can build scikit-learn in the same ``cmd`` console::
+.. note::
 
-    python setup.py install
+    If you get any conflicting dependency error message, try commenting out
+    any custom conda configuration in the ``$HOME/.condarc`` file. In
+    particular the ``channel_priority: strict`` directive is known to cause
+    problems for this setup.
 
-Replace ``/x64`` by ``/x86`` to build for 32-bit Python instead of 64-bit
-Python.
+You can check that the custom compilers are properly installed from conda
+forge using the following command::
 
+    conda list compilers llvm-openmp
 
-Building binary packages and installers
----------------------------------------
+The compilers meta-package will automatically set custom environment
+variables::
 
-The ``.whl`` package and ``.exe`` installers can be built with::
+    echo $CC
+    echo $CXX
+    echo $CFLAGS
+    echo $CXXFLAGS
+    echo $LDFLAGS
 
-    pip install wheel
-    python setup.py bdist_wheel bdist_wininst -b doc/logos/scikit-learn-logo.bmp
+They point to files and folders from your ``sklearn-dev`` conda environment
+(in particular in the bin/, include/ and lib/ subfolders). For instance
+``-L/path/to/conda/envs/sklearn-dev/lib`` should appear in ``LDFLAGS``.
 
-The resulting packages are generated in the ``dist/`` folder.
+In the log, you should see the compiled extension being built with the clang
+and clang++ compilers installed by conda with the ``-fopenmp`` command line
+flag.
 
+macOS compilers from Homebrew
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using an alternative compiler
------------------------------
+Another solution is to enable OpenMP support for the clang compiler shipped
+by default on macOS.
 
-It is possible to use `MinGW <http://www.mingw.org>`_ (a port of GCC to Windows
-OS) as an alternative to MSVC for 32-bit Python. Not that extensions built with
-mingw32 can be redistributed as reusable packages as they depend on GCC runtime
-libraries typically not installed on end-users environment.
+First install the macOS command line tools::
 
-To force the use of a particular compiler, pass the ``--compiler`` flag to the
-build step::
+    xcode-select --install
 
-    python setup.py build --compiler=my_compiler install
+Install the Homebrew_ package manager for macOS.
 
-where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+Install the LLVM OpenMP library::
 
+    brew install libomp
 
-.. _testing:
+Set the following environment variables::
 
-Testing
-=======
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/opt/libomp/lib -L/usr/local/opt/libomp/lib -lomp"
 
-Testing scikit-learn once installed
------------------------------------
+Finally, build scikit-learn in verbose mode (to check for the presence of the
+``-fopenmp`` flag in the compiler commands)::
 
-Testing requires having `pytest <https://docs.pytest.org>`_ >=\ |PytestMinVersion|\ .
-Some tests also require having `pandas <https://pandas.pydata.org/>` installed.
-After installation, the package can be tested by executing *from outside* the
-source directory::
+    make clean
+    pip install --verbose --editable .
 
-    $ pytest sklearn
+.. _compiler_linux:
 
-This should give you a lot of output (and some warnings) but
-eventually should finish with a message similar to::
+Linux
+-----
 
-    =========== 8304 passed, 26 skipped, 4659 warnings in 557.76 seconds ===========
+Linux compilers from the system
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Otherwise, please consider posting an issue into the `GitHub issue tracker
-<https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
-:ref:`mailing_lists` including the traceback of the individual failures
-and errors. Please include your operating system, your version of NumPy, SciPy
-and scikit-learn, and how you installed scikit-learn.
+Installing scikit-learn from source without using conda requires you to have
+installed the scikit-learn Python development headers and a working C/C++
+compiler with OpenMP support (typically the GCC toolchain).
 
+Install build dependencies for Debian-based operating systems, e.g.
+Ubuntu::
 
-Testing scikit-learn from within the source folder
---------------------------------------------------
+    sudo apt-get install build-essential python3-dev python3-pip
 
-Scikit-learn can also be tested without having the package
-installed. For this you must compile the sources inplace from the
-source directory::
+then proceed as usual::
 
-    python setup.py build_ext --inplace
+    pip3 install cython
+    pip3 install --verbose --editable .
 
-Test can now be run using pytest::
+Cython and the pre-compiled wheels for the runtime dependencies (numpy, scipy
+and joblib) should automatically be installed in
+``$HOME/.local/lib/pythonX.Y/site-packages``. Alternatively you can run the
+above commands from a virtualenv_ or a `conda environment`_ to get full
+isolation from the Python packages installed via the system packager. When
+using an isolated environment, ``pip3`` should be replaced by ``pip`` in the
+above commands.
 
-    pytest sklearn
+When precompiled wheels of the runtime dependencies are not avalaible for your
+architecture (e.g. ARM), you can install the system versions::
 
-This is automated by the commands::
+    sudo apt-get install cython3 python3-numpy python3-scipy
 
-    make in
+On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
-and::
+    sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
-    make test
+Linux compilers from conda-forge
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Alternatively, install a recent version of the GNU C Compiler toolchain (GCC)
+in the user folder using conda::
 
-You can also install a symlink named ``site-packages/scikit-learn.egg-link``
-to the development folder of scikit-learn with::
+    conda create -n sklearn-dev numpy scipy joblib cython conda-forge::compilers
+    conda activate sklearn-dev
+    pip install --verbose --editable .
 
-    pip install --editable .
+.. _compiler_freebsd:
+
+FreeBSD
+-------
+
+The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
+include OpenMP support. You need to install the `openmp` library from packages
+(or ports)::
+
+    sudo pkg install openmp
+
+This will install header files in ``/usr/local/include`` and libs in
+``/usr/local/lib``. Since these directories are not searched by default, you
+can set the environment variables to these locations::
+
+    export CFLAGS="$CFLAGS -I/usr/local/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+    export LDFLAGS="$LDFLAGS -Wl,-rpath,/usr/local/lib -L/usr/local/lib -lomp"
+
+Finally, build the package using the standard command::
+
+    pip install --verbose --editable .
+
+For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+the base system and these steps will not be necessary.
+
+.. _OpenMP: https://en.wikipedia.org/wiki/OpenMP
+.. _Cython: https://cython.org
+.. _Homebrew: https://brew.sh
+.. _virtualenv: https://docs.python.org/3/tutorial/venv.html
+.. _conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html

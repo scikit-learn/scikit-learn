@@ -1,9 +1,8 @@
 
-from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
-
+import pytest
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -12,18 +11,19 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.estimator_checks import _NotAnArray
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import _ovr_decision_function
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -31,22 +31,13 @@ from sklearn.svm import SVC
 from sklearn import datasets
 
 
-class NotAnArray(object):
-    """An object that is convertable to an array. This is useful to
-    simulate a Pandas timeseries."""
-
-    def __init__(self, data):
-        self.data = data
-
-    def __array__(self, dtype=None):
-        return self.data
-
-
 EXAMPLES = {
     'multilabel-indicator': [
         # valid when the data is formatted as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
+        [[0, 1], [1, 0]],
+        [[0, 1]],
         csr_matrix(np.array([[0, 1], [1, 0]])),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
@@ -56,9 +47,10 @@ EXAMPLES = {
         csr_matrix(np.array([[0, 0], [0, 0]])),
         csr_matrix(np.array([[0, 1]])),
         # Only valid when data is dense
+        [[-1, 1], [1, -1]],
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
-        NotAnArray(np.array([[-3, 3], [3, -3]])),
+        _NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -68,24 +60,26 @@ EXAMPLES = {
         np.array([1, 0, 2], dtype=np.float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
-        NotAnArray(np.array([1, 0, 2])),
+        _NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
-        np.array([u'a', u'b', u'c']),
-        np.array([u'a', u'b', u'c'], dtype=object),
+        np.array(['a', 'b', 'c']),
+        np.array(['a', 'b', 'c'], dtype=object),
         np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
+        [[1, 0, 2, 2], [1, 4, 2, 4]],
+        [['a', 'b'], ['c', 'd']],
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
+        np.array([['a', 'b'], ['c', 'd']]),
+        np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
-        NotAnArray(np.array([[1, 0, 2]])),
+        _NotAnArray(np.array([[1, 0, 2]])),
     ],
     'binary': [
         [0, 1],
@@ -99,14 +93,14 @@ EXAMPLES = {
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
-        NotAnArray(np.array([[0], [1]])),
+        _NotAnArray(np.array([[0], [1]])),
         [1, -1],
         [3, 5],
         ['a'],
         ['a', 'b'],
         ['abc', 'def'],
         np.array(['abc', 'def']),
-        [u'a', u'b'],
+        ['a', 'b'],
         np.array(['abc', 'def'], dtype=object),
     ],
     'continuous': [
@@ -153,7 +147,7 @@ MULTILABEL_SEQUENCES = [
     [[1], [2], [0, 1]],
     [(), (2), (0, 1)],
     np.array([[], [1, 2]], dtype='object'),
-    NotAnArray(np.array([[], [1, 2]], dtype='object'))
+    _NotAnArray(np.array([[], [1, 2]], dtype='object'))
 ]
 
 
@@ -279,9 +273,9 @@ def test_check_classification_targets():
 def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
-            assert_equal(type_of_target(example), group,
-                         msg=('type_of_target(%r) should be %r, got %r'
-                              % (example, group, type_of_target(example))))
+            assert type_of_target(example) == group, (
+                'type_of_target(%r) should be %r, got %r'
+                % (example, group, type_of_target(example)))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'
@@ -293,14 +287,14 @@ def test_type_of_target():
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
-    try:
-        from pandas import SparseSeries
-    except ImportError:
-        raise SkipTest("Pandas not found")
 
-    y = SparseSeries([1, 0, 0, 1, 0])
-    msg = "y cannot be class 'SparseSeries'."
-    assert_raises_regex(ValueError, msg, type_of_target, y)
+def test_type_of_target_pandas_sparse():
+    pd = pytest.importorskip("pandas")
+
+    y = pd.SparseArray([1, np.nan, np.nan, 1, np.nan])
+    msg = "y cannot be class 'SparseSeries' or 'SparseArray'"
+    with pytest.raises(ValueError, match=msg):
+        type_of_target(y)
 
 
 def test_class_distribution():
@@ -379,3 +373,46 @@ def test_safe_split_with_precomputed_kernel():
     K_test, y_test2 = _safe_split(clfp, K, y, test, train)
     assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
     assert_array_almost_equal(y_test, y_test2)
+
+
+def test_ovr_decision_function():
+    # test properties for ovr decision function
+
+    predictions = np.array([[0, 1, 1],
+                            [0, 1, 0],
+                            [0, 1, 1],
+                            [0, 1, 1]])
+
+    confidences = np.array([[-1e16, 0, -1e16],
+                            [1., 2., -3.],
+                            [-5., 2., 5.],
+                            [-0.5, 0.2, 0.5]])
+
+    n_classes = 3
+
+    dec_values = _ovr_decision_function(predictions, confidences, n_classes)
+
+    # check that the decision values are within 0.5 range of the votes
+    votes = np.array([[1, 0, 2],
+                      [1, 1, 1],
+                      [1, 0, 2],
+                      [1, 0, 2]])
+
+    assert_allclose(votes, dec_values, atol=0.5)
+
+    # check that the prediction are what we expect
+    # highest vote or highest confidence if there is a tie.
+    # for the second sample we have a tie (should be won by 1)
+    expected_prediction = np.array([2, 1, 2, 2])
+    assert_array_equal(np.argmax(dec_values, axis=1), expected_prediction)
+
+    # third and fourth sample have the same vote but third sample
+    # has higher confidence, this should reflect on the decision values
+    assert (dec_values[2, 2] > dec_values[3, 2])
+
+    # assert subset invariance.
+    dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
+                                             np.array([confidences[i]]),
+                                             n_classes)[0] for i in range(4)]
+
+    assert_allclose(dec_values, dec_values_one, atol=1e-6)

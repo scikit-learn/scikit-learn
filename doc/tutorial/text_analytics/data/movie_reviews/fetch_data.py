@@ -3,10 +3,7 @@
 import os
 import tarfile
 from contextlib import closing
-try:
-    from urllib import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 
 
 URL = ("http://www.cs.cornell.edu/people/pabo/"
