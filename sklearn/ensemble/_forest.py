@@ -1553,7 +1553,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
     random_state : int, RandomState instance or None, optional (default=None)
         Controls 3 sources of randomness:
-        
+
         - the bootstrapping of the samples used when building trees
           (if ``bootstrap=True``)
         - the sampling of the features to consider when looking for the best
