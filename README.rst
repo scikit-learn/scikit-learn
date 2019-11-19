@@ -125,14 +125,6 @@ for more information.
     Random number generation can be controlled during testing by setting
     the ``SKLEARN_SEED`` environment variable.
 
-Submitting a Pull Request
--------------------------
-
-Before opening a Pull Request, have a look at the
-full Contributing page to make sure your code complies
-with our guidelines: http://scikit-learn.org/stable/developers/index.html
-
-
 Project History
 ---------------
 
@@ -145,9 +137,15 @@ The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
 
-
 Help and Support
 ----------------
+
+Submitting a Pull Request
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before opening a Pull Request, have a look at the
+full Contributing page to make sure your code complies
+with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
 Documentation
 ~~~~~~~~~~~~~
