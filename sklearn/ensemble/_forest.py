@@ -97,13 +97,13 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return n_samples
 
     if isinstance(max_samples, numbers.Integral):
-        if not (1 <= max_samples <= n_samples):
+        if not 1 <= max_samples <= n_samples:
             msg = "`max_samples` must be in range 1 to {} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
+        if not 0 < max_samples < 1:
             msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
         return int(round(n_samples * max_samples))
@@ -355,7 +355,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                              'len(estimators_)=%d when warm_start==True'
                              % (self.n_estimators, len(self.estimators_)))
 
-        elif n_more_estimators == 0:
+        if n_more_estimators == 0:
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
         else:
@@ -400,7 +400,8 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         Calculate out of bag predictions and score."""
 
-    def _validate_y_class_weight(self, y):
+    @staticmethod
+    def _validate_y_class_weight(y):
         # Default implementation
         return y, None
 
@@ -614,19 +615,18 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
-        else:
-            n_samples = proba[0].shape[0]
-            # all dtypes should be the same, so just take the first
-            class_type = self.classes_[0].dtype
-            predictions = np.empty((n_samples, self.n_outputs_),
-                                   dtype=class_type)
+        n_samples = proba[0].shape[0]
+        # all dtypes should be the same, so just take the first
+        class_type = self.classes_[0].dtype
+        predictions = np.empty((n_samples, self.n_outputs_),
+                               dtype=class_type)
 
-            for k in range(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
-                                                                    axis=1),
-                                                          axis=0)
+        for k in range(self.n_outputs_):
+            predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
+                                                                axis=1),
+                                                      axis=0)
 
-            return predictions
+        return predictions
 
     def predict_proba(self, X):
         """
@@ -673,8 +673,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         if len(all_proba) == 1:
             return all_proba[0]
-        else:
-            return all_proba
+
+        return all_proba
 
     def predict_log_proba(self, X):
         """
@@ -703,11 +703,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         if self.n_outputs_ == 1:
             return np.log(proba)
 
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
+        for k in range(self.n_outputs_):
+            proba[k] = np.log(proba[k])
 
-            return proba
+        return proba
 
 
 class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
