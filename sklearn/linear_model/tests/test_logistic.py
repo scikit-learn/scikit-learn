@@ -31,7 +31,6 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
     logistic_regression_path,
