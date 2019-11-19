@@ -964,12 +964,6 @@ class RandomForestClassifier(ForestClassifier):
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
         (if ``max_features < n_features``).
-        Also note that the features are always randomly permuted at each split.
-        Therefore, the best found split may vary, even with the same training
-        data, ``max_features=n_features`` and ``bootstrap=False``, if the
-        improvement of the criterion is identical for several splits enumerated
-        during the search of the best split. To obtain a deterministic
-        behaviour during fitting, ``random_state`` has to be fixed.
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -1085,6 +1079,13 @@ class RandomForestClassifier(ForestClassifier):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data,
+    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+    of the criterion is identical for several splits enumerated during the
+    search of the best split. To obtain a deterministic behaviour during
+    fitting, ``random_state`` has to be fixed.
 
     References
     ----------
@@ -1280,13 +1281,6 @@ class RandomForestRegressor(ForestRegressor):
         when building trees (if ``bootstrap=True``) and the sampling of the
         features to consider when looking for the best split at each node
         (if ``max_features < n_features``).
-        Also note that the features are always randomly permuted at each split.
-        Therefore, the best found split may vary, even with the same training
-        data, ``max_features=n_features`` and ``bootstrap=False``, if the
-        improvement of the criterion is identical for several splits enumerated
-        during the search of the best split. To obtain a deterministic
-        behaviour during fitting, ``random_state`` has to be fixed.
-        See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
@@ -1363,6 +1357,13 @@ class RandomForestRegressor(ForestRegressor):
     unpruned trees which can potentially be very large on some data sets. To
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
+
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data,
+    ``max_features=n_features`` and ``bootstrap=False``, if the improvement
+    of the criterion is identical for several splits enumerated during the
+    search of the best split. To obtain a deterministic behaviour during
+    fitting, ``random_state`` has to be fixed.
 
     The default value ``max_features="auto"`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
