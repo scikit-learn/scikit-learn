@@ -38,7 +38,6 @@ It is currently maintained by a team of volunteers.
 
 Website: http://scikit-learn.org
 
-
 Installation
 ------------
 
