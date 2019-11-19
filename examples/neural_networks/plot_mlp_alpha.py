@@ -36,7 +36,8 @@ names = ['alpha ' + str(i) for i in alphas]
 
 classifiers = []
 for i in alphas:
-    classifiers.append(MLPClassifier(alpha=i, random_state=1))
+    classifiers.append(MLPClassifier(solver='lbfgs', alpha=i, random_state=1,
+                                     hidden_layer_sizes=[100, 100]))
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=0, n_clusters_per_class=1)

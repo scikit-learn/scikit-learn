@@ -19,7 +19,8 @@ from inspect import signature
 
 import numpy as np
 
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import indexable, check_random_state, _safe_indexing
+from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
@@ -42,15 +43,6 @@ __all__ = ['BaseCrossValidator',
            'PredefinedSplit',
            'train_test_split',
            'check_cv']
-
-
-NSPLIT_WARNING = (
-    "The default value of n_split will change from 3 to 5 "
-    "in version 0.22. Specify it explicitly to silence this warning.")
-
-CV_WARNING = (
-    "The default value of cv will change from 3 to 5 "
-    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -215,7 +207,7 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets. Must be strictly greater than the number of
+        Size of the test sets. Must be strictly less than the number of
         samples.
 
     Examples
@@ -295,6 +287,15 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
 
+        if not shuffle and random_state is not None:  # None is the default
+            # TODO 0.24: raise a ValueError instead of a warning
+            warnings.warn(
+                'Setting a random_state has no effect since shuffle is '
+                'False. This will raise an error in 0.24. You should leave '
+                'random_state to its default (None), or set shuffle=True.',
+                FutureWarning
+            )
+
         self.n_splits = n_splits
         self.shuffle = shuffle
         self.random_state = random_state
@@ -369,11 +370,11 @@ class KFold(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.20
-            ``n_splits`` default value will change from 3 to 5 in v0.22.
+        .. versionchanged:: 0.22
+            ``n_splits`` default value changed from 3 to 5.
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
@@ -382,7 +383,8 @@ class KFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -393,7 +395,7 @@ class KFold(_BaseKFold):
     >>> kf = KFold(n_splits=2)
     >>> kf.get_n_splits(X)
     2
-    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -424,11 +426,8 @@ class KFold(_BaseKFold):
     RepeatedKFold: Repeats K-Fold n times.
     """
 
-    def __init__(self, n_splits='warn', shuffle=False,
+    def __init__(self, n_splits=5, shuffle=False,
                  random_state=None):
-        if n_splits == 'warn':
-            warnings.warn(NSPLIT_WARNING, FutureWarning)
-            n_splits = 3
         super().__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
@@ -458,11 +457,11 @@ class GroupKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.20
-            ``n_splits`` default value will change from 3 to 5 in v0.22.
+        .. versionchanged:: 0.22
+            ``n_splits`` default value changed from 3 to 5.
 
     Examples
     --------
@@ -497,10 +496,7 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits='warn'):
-        if n_splits == 'warn':
-            warnings.warn(NSPLIT_WARNING, FutureWarning)
-            n_splits = 3
+    def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
 
     def _iter_test_indices(self, X, y, groups):
@@ -580,11 +576,11 @@ class StratifiedKFold(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of folds. Must be at least 2.
 
-        .. versionchanged:: 0.20
-            ``n_splits`` default value will change from 3 to 5 in v0.22.
+        .. versionchanged:: 0.22
+            ``n_splits`` default value changed from 3 to 5.
 
     shuffle : boolean, optional
         Whether to shuffle each class's samples before splitting into batches.
@@ -593,7 +589,8 @@ class StratifiedKFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -604,7 +601,7 @@ class StratifiedKFold(_BaseKFold):
     >>> skf = StratifiedKFold(n_splits=2)
     >>> skf.get_n_splits(X, y)
     2
-    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -615,18 +612,27 @@ class StratifiedKFold(_BaseKFold):
 
     Notes
     -----
-    Train and test sizes may be different in each fold, with a difference of at
-    most ``n_classes``.
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      classes, or as close as possible.
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from class k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
+    * Generate test sets where the smallest and largest differ by at most one
+      sample.
+
+    .. versionchanged:: 0.22
+        The previous implementation did not follow the last constraint.
 
     See also
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
 
-    def __init__(self, n_splits='warn', shuffle=False, random_state=None):
-        if n_splits == 'warn':
-            warnings.warn(NSPLIT_WARNING, FutureWarning)
-            n_splits = 3
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
@@ -640,9 +646,16 @@ class StratifiedKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
-        n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = np.bincount(y_inversed)
+
+        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
+        # y_inv encodes y according to lexicographic order. We invert y_idx to
+        # map the classes so that they are encoded by order of appearance:
+        # 0 represents the first label appearing in y, 1 the second, etc.
+        _, class_perm = np.unique(y_idx, return_inverse=True)
+        y_encoded = class_perm[y_inv]
+
+        n_classes = len(y_idx)
+        y_counts = np.bincount(y_encoded)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("n_splits=%d cannot be greater than the"
@@ -650,35 +663,29 @@ class StratifiedKFold(_BaseKFold):
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
-                           " members, which is too few. The minimum"
-                           " number of members in any class cannot"
-                           " be less than n_splits=%d."
-                           % (min_groups, self.n_splits)), Warning)
+                           " members, which is less than n_splits=%d."
+                           % (min_groups, self.n_splits)), UserWarning)
 
-        # pre-assign each sample to a test fold index using individual KFold
-        # splitting strategies for each class so as to respect the balance of
-        # classes
-        # NOTE: Passing the data corresponding to ith class say X[y==class_i]
-        # will break when the data is not 100% stratifiable for all classes.
-        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
-        per_cls_cvs = [
-            KFold(self.n_splits, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
-            for count in y_counts]
+        # Determine the optimal number of samples from each class in each fold,
+        # using round robin over the sorted y. (This can be done direct from
+        # counts, but that code is unreadable.)
+        y_order = np.sort(y_encoded)
+        allocation = np.asarray(
+            [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
+             for i in range(self.n_splits)])
 
-        test_folds = np.zeros(n_samples, dtype=np.int)
-        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
-            for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
-                # the test split can be too big because we used
-                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
-                # stratifiable for all the classes
-                # (we use a warning instead of raising an exception)
-                # If this is the case, let's trim it:
-                test_split = test_split[test_split < len(cls_test_folds)]
-                cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
-
+        # To maintain the data order dependencies as best as possible within
+        # the stratification constraint, we assign samples from each class in
+        # blocks (and then mess that up when shuffle=True).
+        test_folds = np.empty(len(y), dtype='i')
+        for k in range(n_classes):
+            # since the kth column of allocation stores the number of samples
+            # of class k in each test set, this generates blocks of fold
+            # indices corresponding to the allocation for class k.
+            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, k])
+            if self.shuffle:
+                rng.shuffle(folds_for_class)
+            test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
     def _iter_test_masks(self, X, y=None, groups=None):
@@ -743,11 +750,11 @@ class TimeSeriesSplit(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=3
+    n_splits : int, default=5
         Number of splits. Must be at least 2.
 
-        .. versionchanged:: 0.20
-            ``n_splits`` default value will change from 3 to 5 in v0.22.
+        .. versionchanged:: 0.22
+            ``n_splits`` default value changed from 3 to 5.
 
     max_train_size : int, optional
         Maximum size for a single training set.
@@ -758,8 +765,8 @@ class TimeSeriesSplit(_BaseKFold):
     >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
-    >>> tscv = TimeSeriesSplit(n_splits=5)
-    >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
+    >>> tscv = TimeSeriesSplit()
+    >>> print(tscv)
     TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -778,10 +785,7 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits='warn', max_train_size=None):
-        if n_splits == 'warn':
-            warnings.warn(NSPLIT_WARNING, FutureWarning)
-            n_splits = 3
+    def __init__(self, n_splits=5, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
@@ -852,7 +856,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> logo = LeaveOneGroupOut()
     >>> logo.get_n_splits(X, y, groups)
     2
-    >>> logo.get_n_splits(groups=groups) # 'groups' is always required
+    >>> logo.get_n_splits(groups=groups)  # 'groups' is always required
     2
     >>> print(logo)
     LeaveOneGroupOut()
@@ -1095,7 +1099,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         and shuffle.
     """
     def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
-        if not isinstance(n_repeats, (np.integer, numbers.Integral)):
+        if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
         if n_repeats <= 0:
@@ -1169,6 +1173,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
         cv = self.cv(random_state=rng, shuffle=True,
                      **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
+
+    def __repr__(self):
+        return _build_repr(self)
 
 
 class RepeatedKFold(_RepeatedSplits):
@@ -1399,7 +1406,6 @@ class ShuffleSplit(BaseShuffleSplit):
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...  # doctest: +ELLIPSIS
     TRAIN: [1 3 0 4] TEST: [5 2]
     TRAIN: [4 0 2 5] TEST: [1 3]
     TRAIN: [1 2 4 0] TEST: [3 5]
@@ -1409,7 +1415,6 @@ class ShuffleSplit(BaseShuffleSplit):
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...  # doctest: +ELLIPSIS
     TRAIN: [1 3 0] TEST: [5 2]
     TRAIN: [4 0 2] TEST: [1 3]
     TRAIN: [1 2 4] TEST: [3 5]
@@ -1470,10 +1475,13 @@ class GroupShuffleSplit(ShuffleSplit):
 
     test_size : float, int, None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        absolute number of test groups. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.2.
+        of groups to include in the test split (rounded up). If int,
+        represents the absolute number of test groups. If None, the value is
+        set to the complement of the train size. By default, the value is set
+        to 0.2.
+        The default will change in version 0.21. It will remain 0.2 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1487,6 +1495,22 @@ class GroupShuffleSplit(ShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupShuffleSplit
+    >>> X = np.ones(shape=(8, 2))
+    >>> y = np.ones(shape=(8, 1))
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 3, 3])
+    >>> print(groups.shape)
+    (8,)
+    >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
+    >>> gss.get_n_splits()
+    2
+    >>> for train_idx, test_idx in gss.split(X, y, groups):
+    ...    print("TRAIN:", train_idx, "TEST:", test_idx)
+    TRAIN: [2 3 4 5 6 7] TEST: [0 1]
+    TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
@@ -1545,75 +1569,6 @@ class GroupShuffleSplit(ShuffleSplit):
         return super().split(X, y, groups)
 
 
-def _approximate_mode(class_counts, n_draws, rng):
-    """Computes approximate mode of multivariate hypergeometric.
-
-    This is an approximation to the mode of the multivariate
-    hypergeometric given by class_counts and n_draws.
-    It shouldn't be off by more than one.
-
-    It is the mostly likely outcome of drawing n_draws many
-    samples from the population given by class_counts.
-
-    Parameters
-    ----------
-    class_counts : ndarray of int
-        Population per class.
-    n_draws : int
-        Number of draws (samples to draw) from the overall population.
-    rng : random state
-        Used to break ties.
-
-    Returns
-    -------
-    sampled_classes : ndarray of int
-        Number of samples drawn from each class.
-        np.sum(sampled_classes) == n_draws
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.model_selection._split import _approximate_mode
-    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
-    array([2, 1])
-    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
-    array([3, 1])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=0)
-    array([0, 1, 1, 0])
-    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
-    ...                   n_draws=2, rng=42)
-    array([1, 1, 0, 0])
-    """
-    rng = check_random_state(rng)
-    # this computes a bad approximation to the mode of the
-    # multivariate hypergeometric given by class_counts and n_draws
-    continuous = n_draws * class_counts / class_counts.sum()
-    # floored means we don't overshoot n_samples, but probably undershoot
-    floored = np.floor(continuous)
-    # we add samples according to how much "left over" probability
-    # they had, until we arrive at n_samples
-    need_to_add = int(n_draws - floored.sum())
-    if need_to_add > 0:
-        remainder = continuous - floored
-        values = np.sort(np.unique(remainder))[::-1]
-        # add according to remainder, but break ties
-        # randomly to avoid biases
-        for value in values:
-            inds, = np.where(remainder == value)
-            # if we need_to_add less than what's in inds
-            # we draw randomly from them.
-            # if we need to add more, we add them all and
-            # go to the next value
-            add_now = min(len(inds), need_to_add)
-            inds = rng.choice(inds, size=add_now, replace=False)
-            floored[inds] += 1
-            need_to_add -= add_now
-            if need_to_add == 0:
-                break
-    return floored.astype(np.int)
-
-
 class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross-validator
 
@@ -1662,7 +1617,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> sss = StratifiedShuffleSplit(n_splits=5, test_size=0.5, random_state=0)
     >>> sss.get_n_splits(X, y)
     5
-    >>> print(sss)       # doctest: +ELLIPSIS
+    >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -1758,7 +1713,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -1879,7 +1834,7 @@ class PredefinedSplit(BaseCrossValidator):
     >>> ps = PredefinedSplit(test_fold)
     >>> ps.get_n_splits()
     2
-    >>> print(ps)       # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
     >>> for train_index, test_index in ps.split():
     ...    print("TRAIN:", train_index, "TEST:", test_index)
@@ -2005,7 +1960,7 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv='warn', y=None, classifier=False):
+def check_cv(cv=5, y=None, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -2014,7 +1969,7 @@ def check_cv(cv='warn', y=None, classifier=False):
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 3-fold cross-validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -2026,8 +1981,8 @@ def check_cv(cv='warn', y=None, classifier=False):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        .. versionchanged:: 0.20
-            ``cv`` default value will change from 3-fold to 5-fold in v0.22.
+        .. versionchanged:: 0.22
+            ``cv`` default value changed from 3-fold to 5-fold.
 
     y : array-like, optional
         The target variable for supervised learning problems.
@@ -2042,10 +1997,7 @@ def check_cv(cv='warn', y=None, classifier=False):
         The return value is a cross-validator which generates the train/test
         splits via the ``split`` method.
     """
-    if cv is None or cv == 'warn':
-        warnings.warn(CV_WARNING, FutureWarning)
-        cv = 3
-
+    cv = 5 if cv is None else cv
     if isinstance(cv, numbers.Integral):
         if (classifier and (y is not None) and
                 (type_of_target(y) in ('binary', 'multiclass'))):
@@ -2188,8 +2140,13 @@ def train_test_split(*arrays, **options):
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    return list(chain.from_iterable((_safe_indexing(a, train),
+                                     _safe_indexing(a, test)) for a in arrays))
+
+
+# Tell nose that train_test_split is not a test.
+# (Needed for external libraries that may use nose.)
+train_test_split.__test__ = False
 
 
 def _build_repr(self):
@@ -2211,11 +2168,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", FutureWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+                if value is None and hasattr(self, 'cvargs'):
+                    value = self.cvargs.get(key, None)
+            if len(w) and w[0].category == FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:

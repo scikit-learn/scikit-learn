@@ -8,19 +8,18 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.linear_model.sag import get_auto_step_size
-from sklearn.linear_model.sag_fast import _multinomial_grad_loss_all_samples
+from sklearn.linear_model._sag import get_auto_step_size
+from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
-from sklearn.linear_model.base import make_dataset
-from sklearn.linear_model.logistic import _multinomial_loss_grad
+from sklearn.linear_model._base import make_dataset
+from sklearn.linear_model._logistic import _multinomial_loss_grad
 
 from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
@@ -316,8 +315,7 @@ def test_sag_pobj_matches_logistic_regression():
     clf2 = clone(clf1)
     clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
-                              random_state=10, multi_class='ovr',
-                              solver='lbfgs')
+                              random_state=10, multi_class='ovr')
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -472,8 +470,8 @@ def test_sag_regressor():
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.99)
-    assert_greater(score2, 0.99)
+    assert score1 > 0.99
+    assert score2 > 0.99
 
     # simple linear function with noise
     y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
@@ -486,8 +484,8 @@ def test_sag_regressor():
     score1 = clf1.score(X, y)
     score2 = clf2.score(X, y)
     score2 = clf2.score(X, y)
-    assert_greater(score1, 0.5)
-    assert_greater(score2, 0.5)
+    assert score1 > 0.5
+    assert score2 > 0.5
 
 
 @pytest.mark.filterwarnings('ignore:The max_iter was reached')
@@ -592,7 +590,6 @@ def test_sag_multiclass_computed_correctly():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_results():
     """tests if classifier results match target"""
     alpha = .1
@@ -730,7 +727,6 @@ def test_multiclass_classifier_class_weight():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_single_class():
     """tests if ValueError is thrown with only one class"""
     X = [[1, 2], [3, 4]]
@@ -743,7 +739,6 @@ def test_classifier_single_class():
                          X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_step_size_alpha_error():
     X = [[0, 0], [0, 0]]
     y = [1, -1]

@@ -15,7 +15,7 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 
 
 # Dictionaries of metrics
@@ -126,8 +126,7 @@ def test_normalized_output(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -150,11 +149,10 @@ def test_permute_labels(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
 )
 # For all clustering metrics Input parameters can be both
-# in the form of arrays lists, positive, negetive or string
+# in the form of arrays lists, positive, negative or string
 def test_format_invariance(metric_name):
     y_true = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 1, 2, 3, 4, 5, 6, 7]
@@ -163,7 +161,9 @@ def test_format_invariance(metric_name):
         y = np.array(y)
         yield y, 'array of ints'
         yield y.tolist(), 'list of ints'
-        yield [str(x) for x in y.tolist()], 'list of strs'
+        yield [str(x) + "-a" for x in y.tolist()], 'list of strs'
+        yield (np.array([str(x) + "-a" for x in y.tolist()], dtype=object),
+               'array of strs')
         yield y - 1, 'including negative ints'
         yield y + 1, 'strictly positive ints'
 
@@ -183,3 +183,29 @@ def test_format_invariance(metric_name):
         y_true_gen = generate_formats(y_true)
         for (y_true_fmt, fmt_name) in y_true_gen:
             assert score_1 == metric(X, y_true_fmt)
+
+
+@pytest.mark.parametrize("metric", SUPERVISED_METRICS.values())
+def test_single_sample(metric):
+    # only the supervised metrics support single sample
+    for i, j in [(0, 0), (0, 1), (1, 0), (1, 1)]:
+        metric([i], [j])
+
+
+@pytest.mark.parametrize(
+    "metric_name, metric_func",
+    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS).items()
+)
+def test_inf_nan_input(metric_name, metric_func):
+    if metric_name in SUPERVISED_METRICS:
+        invalids = [([0, 1], [np.inf, np.inf]),
+                    ([0, 1], [np.nan, np.nan]),
+                    ([0, 1], [np.nan, np.inf])]
+    else:
+        X = np.random.randint(10, size=(2, 10))
+        invalids = [(X, [np.inf, np.inf]),
+                    (X, [np.nan, np.nan]),
+                    (X, [np.nan, np.inf])]
+    with pytest.raises(ValueError, match='contains NaN, infinity'):
+        for args in invalids:
+            metric_func(*args)

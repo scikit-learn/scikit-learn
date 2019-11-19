@@ -5,15 +5,14 @@ import numpy as np
 from scipy import optimize, sparse
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import (
     HuberRegressor, LinearRegression, SGDRegressor, Ridge)
-from sklearn.linear_model.huber import _huber_loss_and_gradient
+from sklearn.linear_model._huber import _huber_loss_and_gradient
 
 
 def make_regression_with_outliers(n_samples=50, n_features=20):
@@ -33,9 +32,9 @@ def make_regression_with_outliers(n_samples=50, n_features=20):
 def test_huber_equals_lr_for_high_epsilon():
     # Test that Ridge matches LinearRegression for large epsilon
     X, y = make_regression_with_outliers()
-    lr = LinearRegression(fit_intercept=True)
+    lr = LinearRegression()
     lr.fit(X, y)
-    huber = HuberRegressor(fit_intercept=True, epsilon=1e3, alpha=0.0)
+    huber = HuberRegressor(epsilon=1e3, alpha=0.0)
     huber.fit(X, y)
     assert_almost_equal(huber.coef_, lr.coef_, 3)
     assert_almost_equal(huber.intercept_, lr.intercept_, 2)
@@ -75,7 +74,7 @@ def test_huber_sample_weights():
     # Test sample_weights implementation in HuberRegressor"""
 
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=True)
+    huber = HuberRegressor()
     huber.fit(X, y)
     huber_coef = huber.coef_
     huber_intercept = huber.intercept_
@@ -109,7 +108,7 @@ def test_huber_sample_weights():
 
     # Test sparse implementation with sample weights.
     X_csr = sparse.csr_matrix(X)
-    huber_sparse = HuberRegressor(fit_intercept=True)
+    huber_sparse = HuberRegressor()
     huber_sparse.fit(X_csr, y, sample_weight=sample_weight)
     assert_array_almost_equal(huber_sparse.coef_ / scale,
                               huber_coef / scale)
@@ -117,11 +116,11 @@ def test_huber_sample_weights():
 
 def test_huber_sparse():
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=True, alpha=0.1)
+    huber = HuberRegressor(alpha=0.1)
     huber.fit(X, y)
 
     X_csr = sparse.csr_matrix(X)
-    huber_sparse = HuberRegressor(fit_intercept=True, alpha=0.1)
+    huber_sparse = HuberRegressor(alpha=0.1)
     huber_sparse.fit(X_csr, y)
     assert_array_almost_equal(huber_sparse.coef_, huber.coef_)
     assert_array_equal(huber.outliers_, huber_sparse.outliers_)
@@ -171,8 +170,8 @@ def test_huber_and_sgd_same_results():
 def test_huber_warm_start():
     X, y = make_regression_with_outliers()
     huber_warm = HuberRegressor(
-        fit_intercept=True, alpha=1.0, max_iter=10000, warm_start=True,
-        tol=1e-1)
+        alpha=1.0, max_iter=10000, warm_start=True, tol=1e-1)
+
     huber_warm.fit(X, y)
     huber_warm_coef = huber_warm.coef_.copy()
     huber_warm.fit(X, y)
@@ -187,7 +186,7 @@ def test_huber_warm_start():
 def test_huber_better_r2_score():
     # Test that huber returns a better r2 score than non-outliers"""
     X, y = make_regression_with_outliers()
-    huber = HuberRegressor(fit_intercept=True, alpha=0.01, max_iter=100)
+    huber = HuberRegressor(alpha=0.01)
     huber.fit(X, y)
     linear_loss = np.dot(X, huber.coef_) + huber.intercept_ - y
     mask = np.abs(linear_loss) < huber.epsilon * huber.scale_
@@ -197,14 +196,14 @@ def test_huber_better_r2_score():
     # The Ridge regressor should be influenced by the outliers and hence
     # give a worse score on the non-outliers as compared to the huber
     # regressor.
-    ridge = Ridge(fit_intercept=True, alpha=0.01)
+    ridge = Ridge(alpha=0.01)
     ridge.fit(X, y)
     ridge_score = ridge.score(X[mask], y[mask])
     ridge_outlier_score = ridge.score(X[~mask], y[~mask])
-    assert_greater(huber_score, ridge_score)
+    assert huber_score > ridge_score
 
     # The huber model should also fit poorly on the outliers.
-    assert_greater(ridge_outlier_score, huber_outlier_score)
+    assert ridge_outlier_score > huber_outlier_score
 
 
 def test_huber_bool():

@@ -77,7 +77,7 @@ used:
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
     >>> distances, indices = nbrs.kneighbors(X)
-    >>> indices                                           # doctest: +ELLIPSIS
+    >>> indices
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -125,7 +125,7 @@ have the same interface; we'll show an example of using the KD Tree here:
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
-    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
+    >>> kdt.query(X, k=2, return_distance=False)
     array([[0, 1],
            [1, 0],
            [2, 1],
@@ -135,8 +135,8 @@ have the same interface; we'll show an example of using the KD Tree here:
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for nearest neighbors searches,
-including specification of query strategies, distance metrics, etc. For a list 
-of available metrics, see the documentation of the :class:`DistanceMetric` 
+including specification of query strategies, distance metrics, etc. For a list
+of available metrics, see the documentation of the :class:`DistanceMetric`
 class.
 
 .. _classification:
@@ -160,8 +160,8 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the most commonly used technique. The optimal choice of the value :math:`k` 
-is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+is the most commonly used technique. The optimal choice of the value :math:`k`
+is highly data-dependent: in general a larger :math:`k` suppresses the effects
 of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
@@ -320,7 +320,7 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but results in a data structure which can be very efficient on 
+KD tree, but results in a data structure which can be very efficient on
 highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
@@ -415,13 +415,11 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
-``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
-``'ball_tree'``. It selects ``'brute'`` if :math:`k < N/2` and the
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
-``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`.
+Currently, ``algorithm = 'auto'`` selects ``'brute'`` if :math:`k >= N/2`,
+the input data is sparse, or ``effective_metric_`` isn't in
+the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``.
+Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'``
+that has ``effective_metric_`` in its ``VALID_METRICS`` list.
 This choice is based on the assumption that the number of query points is at
 least the same order as the number of training points, and that ``leaf_size``
 is close to its default value of ``30``.
@@ -462,7 +460,7 @@ Nearest Centroid Classifier
 
 The :class:`NearestCentroid` classifier is a simple algorithm that represents
 each class by the centroid of its members. In effect, this makes it
-similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
+similar to the label updating phase of the :class:`sklearn.cluster.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
@@ -471,13 +469,13 @@ and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.Quadr
 for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
-    >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
+    >>> from sklearn.neighbors import NearestCentroid
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid(metric='euclidean', shrink_threshold=None)
+    NearestCentroid()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -511,6 +509,93 @@ the model from 0.81 to 0.82.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
+.. _neighbors_transformer:
+
+Nearest Neighbors Transformer
+=============================
+
+Many scikit-learn estimators rely on nearest neighbors: Several classifiers and
+regressors such as :class:`KNeighborsClassifier` and
+:class:`KNeighborsRegressor`, but also some clustering methods such as
+:class:`~sklearn.cluster.DBSCAN` and
+:class:`~sklearn.cluster.SpectralClustering`, and some manifold embeddings such
+as :class:`~sklearn.manifold.TSNE` and :class:`~sklearn.manifold.Isomap`.
+
+All these estimators can compute internally the nearest neighbors, but most of
+them also accept precomputed nearest neighbors :term:`sparse graph`,
+as given by :func:`~sklearn.neighbors.kneighbors_graph` and
+:func:`~sklearn.neighbors.radius_neighbors_graph`. With mode
+`mode='connectivity'`, these functions return a binary adjacency sparse graph
+as required, for instance, in :class:`~sklearn.cluster.SpectralClustering`.
+Whereas with `mode='distance'`, they return a distance sparse graph as required,
+for instance, in :class:`~sklearn.cluster.DBSCAN`. To include these functions in
+a scikit-learn pipeline, one can also use the corresponding classes
+:class:`KNeighborsTransformer` and :class:`RadiusNeighborsTransformer`.
+The benefits of this sparse graph API are multiple.
+
+First, the precomputed graph can be re-used multiple times, for instance while
+varying a parameter of the estimator. This can be done manually by the user, or
+using the caching properties of the scikit-learn pipeline:
+
+    >>> from sklearn.manifold import Isomap
+    >>> from sklearn.neighbors import KNeighborsTransformer
+    >>> from sklearn.pipeline import make_pipeline
+    >>> estimator = make_pipeline(
+    ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
+    ...     Isomap(neighbors_algorithm='precomputed'),
+    ...     memory='/path/to/cache')
+
+Second, precomputing the graph can give finer control on the nearest neighbors
+estimation, for instance enabling multiprocessing though the parameter
+`n_jobs`, which might not be available in all estimators.
+
+Finally, the precomputation can be performed by custom estimators to use
+different implementations, such as approximate nearest neighbors methods, or
+implementation with special data types. The precomputed neighbors
+:term:`sparse graph` needs to be formatted as in
+:func:`~sklearn.neighbors.radius_neighbors_graph` output:
+
+* a CSR matrix (although COO, CSC or LIL will be accepted).
+* only explicitly store nearest neighborhoods of each sample with respect to the
+  training data. This should include those at 0 distance from a query point,
+  including the matrix diagonal when computing the nearest neighborhoods
+  between the training data and itself.
+* each row's `data` should store the distance in increasing order (optional.
+  Unsorted data will be stable-sorted, adding a computational overhead).
+* all values in data should be non-negative.
+* there should be no duplicate `indices` in any row
+  (see https://github.com/scipy/scipy/issues/5807).
+* if the algorithm being passed the precomputed matrix uses k nearest neighbors
+  (as opposed to radius neighborhood), at least k neighbors must be stored in
+  each row (or k+1, as explained in the following note).
+
+.. note::
+  When a specific number of neighbors is queried (using
+  :class:`KNeighborsTransformer`), the definition of `n_neighbors` is ambiguous
+  since it can either include each training point as its own neighbor, or
+  exclude them. Neither choice is perfect, since including them leads to a
+  different number of non-self neighbors during training and testing, while
+  excluding them leads to a difference between `fit(X).transform(X)` and
+  `fit_transform(X)`, which is against scikit-learn API.
+  In :class:`KNeighborsTransformer` we use the definition which includes each
+  training point as its own neighbor in the count of `n_neighbors`. However,
+  for compatibility reasons with other estimators which use the other
+  definition, one extra neighbor will be computed when `mode == 'distance'`.
+  To maximise compatiblity with all estimators, a safe choice is to always
+  include one extra neighbor in a custom nearest neighbors estimator, since
+  unnecessary neighbors will be filtered by following estimators.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_neighbors_approximate_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`~sklearn.manifold.TSNE`. Also proposes two custom nearest neighbors
+    estimators based on external packages.
+
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_caching_nearest_neighbors.py`:
+    an example of pipelining :class:`KNeighborsTransformer` and
+    :class:`KNeighborsClassifier` to enable caching of the neighbors graph
+    during a hyper-parameter grid-search.
 
 .. _nca:
 
@@ -581,9 +666,9 @@ classes:
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
-    >>> nca_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> nca_pipe.fit(X_train, y_train)
     Pipeline(...)
-    >>> print(nca_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
+    >>> print(nca_pipe.score(X_test, y_test))
     0.96190476...
 
 .. |nca_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_classification_001.png
@@ -717,10 +802,10 @@ added space complexity in the operation.
 
 .. topic:: References:
 
-    .. [1] `"Neighbourhood Components Analysis". Advances in Neural Information"
+    .. [1] `"Neighbourhood Components Analysis"
       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-      J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
+      J. Goldberger, S. Roweis, G. Hinton, R. Salakhutdinov, Advances in
       Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    .. [2] `Wikipedia entry on Neighborhood Components Analysis
-      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+    `Wikipedia entry on Neighborhood Components Analysis
+    <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

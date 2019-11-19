@@ -5,19 +5,19 @@ Testing for mean shift clustering methods
 
 import numpy as np
 import warnings
+import pytest
 
 from scipy import sparse
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
 from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 
 n_clusters = 3
@@ -36,23 +36,35 @@ def test_estimate_bandwidth_1sample():
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
     bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
-    assert_array_almost_equal(bandwidth, 0., decimal=5)
+    assert bandwidth == pytest.approx(0., abs=1e-5)
 
 
-def test_mean_shift():
+@pytest.mark.parametrize("bandwidth, cluster_all, expected, "
+                         "first_cluster_label",
+                         [(1.2, True, 3, 0), (1.2, False, 4, -1)])
+def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
     # Test MeanShift algorithm
-    bandwidth = 1.2
-
-    ms = MeanShift(bandwidth=bandwidth)
+    ms = MeanShift(bandwidth=bandwidth, cluster_all=cluster_all)
     labels = ms.fit(X).labels_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
+    assert n_clusters_ == expected
+    assert labels_unique[0] == first_cluster_label
 
-    cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
-    labels_unique = np.unique(labels)
-    n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
+    cluster_centers, labels_mean_shift = mean_shift(X, cluster_all=cluster_all)
+    labels_mean_shift_unique = np.unique(labels_mean_shift)
+    n_clusters_mean_shift = len(labels_mean_shift_unique)
+    assert n_clusters_mean_shift == expected
+    assert labels_mean_shift_unique[0] == first_cluster_label
+
+
+def test_mean_shift_negative_bandwidth():
+    bandwidth = -1
+    ms = MeanShift(bandwidth=bandwidth)
+    msg = (r"bandwidth needs to be greater than zero or None,"
+           r" got -1\.000000")
+    with pytest.raises(ValueError, match=msg):
+        ms.fit(X)
 
 
 def test_estimate_bandwidth_with_sparse_matrix():
@@ -143,3 +155,16 @@ def test_bin_seeds():
                       cluster_std=0.1, random_state=0)
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
+
+
+@pytest.mark.parametrize('max_iter', [1, 100])
+def test_max_iter(max_iter):
+    clusters1, _ = mean_shift(X, max_iter=max_iter)
+    ms = MeanShift(max_iter=max_iter).fit(X)
+    clusters2 = ms.cluster_centers_
+
+    assert ms.n_iter_ <= ms.max_iter
+    assert len(clusters1) == len(clusters2)
+
+    for c1, c2 in zip(clusters1, clusters2):
+        assert np.allclose(c1, c2)

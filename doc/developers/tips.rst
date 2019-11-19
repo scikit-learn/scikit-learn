@@ -102,10 +102,10 @@ Other `pytest` options that may become useful include:
     statements
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
 
-Since our continuous integration tests will error if ``DeprecationWarning``
-or ``FutureWarning`` aren't properly caught, it is also recommended to run
-``pytest`` along with the ``-Werror::DeprecationWarning`` and
-``-Werror::FutureWarning`` flags.
+Since our continuous integration tests will error if
+``FutureWarning`` isn't properly caught,
+it is also recommended to run ``pytest`` along with the
+``-Werror::FutureWarning`` flag.
 
 .. _saved_replies:
 
@@ -219,7 +219,7 @@ PR-MRG: Patience
 PR-MRG: Add to what's new
     ::
 
-        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
 
 PR: Don't change unrelated
     ::

@@ -1,4 +1,8 @@
-"""Base classes for all estimators."""
+"""
+Base classes for all estimators.
+
+Used for VotingClassifier
+"""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -17,7 +21,8 @@ from .utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
-    'requires_positive_data': False,
+    'requires_positive_X': False,
+    'requires_positive_y': False,
     'X_types': ['2darray'],
     'poor_score': False,
     'no_validation': False,
@@ -26,7 +31,9 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
-    'multioutput_only': False}
+    'multioutput_only': False,
+    'binary_only': False,
+    'requires_fit': True}
 
 
 def clone(estimator, safe=True):
@@ -126,17 +133,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-def _update_if_consistent(dict1, dict2):
-    common_keys = set(dict1.keys()).intersection(dict2.keys())
-    for key in common_keys:
-        if dict1[key] != dict2[key]:
-            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
-                key, dict1[key], dict2[key]
-            ))
-    dict1.update(dict2)
-    return dict1
-
-
 class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
@@ -175,11 +171,12 @@ class BaseEstimator:
         return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
-        """Get parameters for this estimator.
+        """
+        Get parameters for this estimator.
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -190,7 +187,15 @@ class BaseEstimator:
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            try:
+                value = getattr(self, key)
+            except AttributeError:
+                warnings.warn('From version 0.24, get_params will raise an '
+                              'AttributeError if a parameter cannot be '
+                              'retrieved as an instance attribute. Previously '
+                              'it would return None.',
+                              FutureWarning)
+                value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -198,16 +203,23 @@ class BaseEstimator:
         return out
 
     def set_params(self, **params):
-        """Set the parameters of this estimator.
+        """
+        Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 
+        Parameters
+        ----------
+        **params : dict
+            Estimator parameters.
+
         Returns
         -------
-        self
+        self : object
+            Estimator instance.
         """
         if not params:
             # Simple optimization to gain speed (inspect is slow)
@@ -309,28 +321,29 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
+    def _more_tags(self):
+        return _DEFAULT_TAGS
+
     def _get_tags(self):
         collected_tags = {}
-        for base_class in inspect.getmro(self.__class__):
-            if (hasattr(base_class, '_more_tags')
-                    and base_class != self.__class__):
+        for base_class in reversed(inspect.getmro(self.__class__)):
+            if hasattr(base_class, '_more_tags'):
+                # need the if because mixins might not have _more_tags
+                # but might do redundant work in estimators
+                # (i.e. calling more tags on BaseEstimator multiple times)
                 more_tags = base_class._more_tags(self)
-                collected_tags = _update_if_consistent(collected_tags,
-                                                       more_tags)
-        if hasattr(self, '_more_tags'):
-            more_tags = self._more_tags()
-            collected_tags = _update_if_consistent(collected_tags, more_tags)
-        tags = _DEFAULT_TAGS.copy()
-        tags.update(collected_tags)
-        return tags
+                collected_tags.update(more_tags)
+        return collected_tags
 
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
+
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """
+        Return the mean accuracy on the given test data and labels.
 
         In multi-label classification, this is the subset accuracy
         which is a harsh metric since you require for each sample that
@@ -338,20 +351,19 @@ class ClassifierMixin:
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
         -------
         score : float
             Mean accuracy of self.predict(X) wrt. y.
-
         """
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
@@ -362,7 +374,7 @@ class RegressorMixin:
     _estimator_type = "regressor"
 
     def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
+        """Return the coefficient of determination R^2 of the prediction.
 
         The coefficient R^2 is defined as (1 - u/v), where u is the residual
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
@@ -374,16 +386,17 @@ class RegressorMixin:
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples. For some estimators this may be a
-            precomputed kernel matrix instead, shape = (n_samples,
-            n_samples_fitted], where n_samples_fitted is the number of
+            precomputed kernel matrix or a list of generic objects instead,
+            shape = (n_samples, n_samples_fitted),
+            where n_samples_fitted is the number of
             samples used in the fitting for the estimator.
 
-        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True values for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -395,16 +408,17 @@ class RegressorMixin:
         -----
         The R2 score used when calling ``score`` on a regressor will use
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
-        with `metrics.r2_score`. This will influence the ``score`` method of
-        all the multioutput regressors (except for
-        `multioutput.MultiOutputRegressor`). To specify the default value
-        manually and avoid the warning, please either call `metrics.r2_score`
-        directly or make a custom scorer with `metrics.make_scorer` (the
-        built-in scorer ``'r2'`` uses ``multioutput='uniform_average'``).
+        with :func:`~sklearn.metrics.r2_score`. This will influence the
+        ``score`` method of all the multioutput regressors (except for
+        :class:`~sklearn.multioutput.MultiOutputRegressor`). To specify the
+        default value manually and avoid the warning, please either call
+        :func:`~sklearn.metrics.r2_score` directly or make a custom scorer with
+        :func:`~sklearn.metrics.make_scorer` (the built-in scorer ``'r2'`` uses
+        ``multioutput='uniform_average'``).
         """
 
         from .metrics import r2_score
-        from .metrics.regression import _check_reg_targets
+        from .metrics._regression import _check_reg_targets
         y_pred = self.predict(X)
         # XXX: Remove the check in 0.23
         y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
@@ -427,7 +441,8 @@ class ClusterMixin:
     _estimator_type = "clusterer"
 
     def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
+        """
+        Perform clustering on X and returns cluster labels.
 
         Parameters
         ----------
@@ -435,12 +450,12 @@ class ClusterMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         labels : ndarray, shape (n_samples,)
-            cluster labels
+            Cluster labels.
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -498,7 +513,7 @@ class BiclusterMixin:
         return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
-        """Returns the submatrix corresponding to bicluster `i`.
+        """Return the submatrix corresponding to bicluster `i`.
 
         Parameters
         ----------
@@ -527,7 +542,8 @@ class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it.
+        """
+        Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
@@ -540,11 +556,13 @@ class TransformerMixin:
         y : numpy array of shape [n_samples]
             Target values.
 
+        **fit_params : dict
+            Additional fit parameters.
+
         Returns
         -------
         X_new : numpy array of shape [n_samples, n_features_new]
             Transformed array.
-
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
@@ -561,11 +579,11 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Returns the score of the model on the data X
+        """Return the score of the model on the data X
 
         Parameters
         ----------
-        X : array-like, shape = (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
@@ -579,7 +597,7 @@ class OutlierMixin:
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs fit on X and returns labels for X.
+        """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -589,7 +607,7 @@ class OutlierMixin:
             Input data.
 
         y : Ignored
-            not used, present for API consistency by convention.
+            Not used, present for API consistency by convention.
 
         Returns
         -------
@@ -605,13 +623,13 @@ class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn."""
 
 
-class MultiOutputMixin(object):
+class MultiOutputMixin:
     """Mixin to mark estimators that support multioutput."""
     def _more_tags(self):
         return {'multioutput': True}
 
 
-class _UnstableArchMixin(object):
+class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
         return {'non_deterministic': (
@@ -619,7 +637,7 @@ class _UnstableArchMixin(object):
 
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier.
+    """Return True if the given estimator is (probably) a classifier.
 
     Parameters
     ----------
@@ -635,7 +653,7 @@ def is_classifier(estimator):
 
 
 def is_regressor(estimator):
-    """Returns True if the given estimator is (probably) a regressor.
+    """Return True if the given estimator is (probably) a regressor.
 
     Parameters
     ----------
@@ -651,7 +669,7 @@ def is_regressor(estimator):
 
 
 def is_outlier_detector(estimator):
-    """Returns True if the given estimator is (probably) an outlier detector.
+    """Return True if the given estimator is (probably) an outlier detector.
 
     Parameters
     ----------

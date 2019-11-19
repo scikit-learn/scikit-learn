@@ -101,7 +101,7 @@ dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_cl
 
   In [2]: from sklearn.datasets import load_digits
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
 Before starting the profiling session and engaging in tentative
 optimization iterations, it is important to measure the total execution
@@ -200,9 +200,10 @@ Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition import NMF
+    ... : from sklearn.decomposition._nmf import _nls_subproblem
 
-  In [3]: X = load_digits().data
+  In [3]: X, _ = load_digits(return_X_y=True)
 
   In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
@@ -331,16 +332,16 @@ memory alignment, direct blas calls...
 Using OpenMP
 ------------
 
-Since scikit-learn can be built without OpenMP support, it's necessary to
+Since scikit-learn can be built without OpenMP, it's necessary to
 protect each direct call to OpenMP. This can be done using the following
 syntax::
 
   # importing OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       cimport openmp
 
   # calling OpenMP
-  IF SKLEARN_OPENMP_SUPPORTED:
+  IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
       max_threads = openmp.omp_get_max_threads()
   ELSE:
       max_threads = 1
@@ -360,26 +361,16 @@ directly as Cython extension), the default Python profiler is useless:
 we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
-Using yep and google-perftools
---------------------------------
+Using yep and gperftools
+------------------------
 
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
 - http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
-.. note::
-
-  google-perftools provides a nice 'line by line' report mode that
-  can be triggered with the ``--lines`` option. However this
-  does not seem to work correctly at the time of writing. This
-  issue can be tracked on the `project issue tracker
-  <https://github.com/gperftools/gperftools>`_.
-
-
-
 Using gprof
--------------
+-----------
 
 In order to profile compiled Python extensions one could use ``gprof``
 after having recompiled the project with ``gcc -pg`` and using the
@@ -390,21 +381,30 @@ with ``-pg`` which is rather complicated to get working.
 Fortunately there exist two alternative profilers that don't require you to
 recompile everything.
 
-
 Using valgrind / callgrind / kcachegrind
 ----------------------------------------
 
-TODO
+kcachegrind
+~~~~~~~~~~~
 
+``yep`` can be used to create a profiling report.
+``kcachegrind`` provides a graphical environment to visualize this report::
+
+  # Run yep to profile some python script
+  python -m yep -c my_file.py
+
+  # open my_file.py.callgrin with kcachegrind
+  kcachegrind my_file.py.prof
+
+.. note::
+
+   ``yep`` can be executed with the argument ``--lines`` or ``-l`` to compile
+   a profiling report 'line by line'.
 
 Multi-core parallelism using ``joblib.Parallel``
 ================================================
 
-TODO: give a simple teaser example here.
-
-Checkout the official joblib documentation:
-
-- https://joblib.readthedocs.io
+See `joblib documentation <https://joblib.readthedocs.io>`_
 
 
 .. _warm-restarts:

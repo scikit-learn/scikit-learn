@@ -2,9 +2,9 @@
 
 .. _model_evaluation:
 
-========================================================
-Model evaluation: quantifying the quality of predictions
-========================================================
+===========================================================
+Metrics and scoring: quantifying the quality of predictions
+===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
@@ -61,7 +61,7 @@ Scoring                           Function                                      
 'accuracy'                        :func:`metrics.accuracy_score`
 'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
-'brier_score_loss'                :func:`metrics.brier_score_loss`
+'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -72,6 +72,10 @@ Scoring                           Function                                      
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
 'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
@@ -88,9 +92,12 @@ Scoring                           Function                                      
 'max_error'                       :func:`metrics.max_error`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
 'r2'                              :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
 ==============================    =============================================     ==================================
 
 
@@ -98,11 +105,9 @@ Usage examples:
 
     >>> from sklearn import svm, datasets
     >>> from sklearn.model_selection import cross_val_score
-    >>> iris = datasets.load_iris()
-    >>> X, y = iris.data, iris.target
-    >>> clf = svm.SVC(gamma='scale', random_state=0)
-    >>> cross_val_score(clf, X, y, scoring='recall_macro',
-    ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> X, y = datasets.load_iris(return_X_y=True)
+    >>> clf = svm.SVC(random_state=0)
+    >>> cross_val_score(clf, X, y, cv=5, scoring='recall_macro')
     array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
@@ -191,9 +196,9 @@ Here is an example of building custom scorers, and of using the
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
     >>> clf = clf.fit(X, y)
-    >>> my_custom_loss_func(clf.predict(X), y) # doctest: +ELLIPSIS
+    >>> my_custom_loss_func(clf.predict(X), y)
     0.69...
-    >>> score(clf, X, y) # doctest: +ELLIPSIS
+    >>> score(clf, X, y)
     -0.69...
 
 
@@ -218,13 +223,13 @@ the following two rules:
 
 .. note:: **Using custom scorers in functions where n_jobs > 1**
 
-    While defining the custom scoring function alongside the calling function 
-    should work out of the box with the default joblib backend (loky), 
+    While defining the custom scoring function alongside the calling function
+    should work out of the box with the default joblib backend (loky),
     importing it from another module will be a more robust approach and work
-    independently of the joblib backend. 
+    independently of the joblib backend.
 
-    For example, to use, ``n_jobs`` greater than 1 in the example below, 
-    ``custom_scoring_function`` function is saved in a user-created module 
+    For example, to use ``n_jobs`` greater than 1 in the example below,
+    ``custom_scoring_function`` function is saved in a user-created module
     (``custom_scorer_module.py``) and imported::
 
         >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
@@ -273,13 +278,12 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y,
-    ...                             scoring=scoring, cv=5)
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
-    >>> print(cv_results['test_tp'])  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
     >>> # Getting the test set false negative scores
-    >>> print(cv_results['test_fn'])  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(cv_results['test_fn'])
     [0 1 2 3 2]
 
 .. _classification_metrics:
@@ -303,7 +307,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -311,10 +314,12 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    cohen_kappa_score
    confusion_matrix
    hinge_loss
    matthews_corrcoef
+   roc_auc_score
 
 
 Some also work in the multilabel case:
@@ -333,6 +338,7 @@ Some also work in the multilabel case:
    precision_recall_fscore_support
    precision_score
    recall_score
+   roc_auc_score
    zero_one_loss
 
 And some work with binary and multilabel (but not multiclass) problems:
@@ -341,7 +347,6 @@ And some work with binary and multilabel (but not multiclass) problems:
    :template: function.rst
 
    average_precision_score
-   roc_auc_score
 
 
 In the following sub-sections, we will describe each of those functions,
@@ -568,13 +573,26 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
 
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
@@ -739,8 +757,14 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary classification and multilabel indicator format. The
+:func:`plot_precision_recall_curve` function plots the precision recall as
+follows.
 
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
+        :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
+        :scale: 75
+        :align: center
 
 .. topic:: Examples:
 
@@ -816,15 +840,15 @@ Here are some small examples in binary classification::
   1.0
   >>> metrics.recall_score(y_true, y_pred)
   0.5
-  >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred)
   0.66...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)
   0.83...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=1)
   0.66...
-  >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, beta=2)
   0.55...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
   (array([0.66..., 1.        ]), array([1. , 0.5]), array([0.71..., 0.83...]), array([2, 2]))
 
 
@@ -834,13 +858,13 @@ Here are some small examples in binary classification::
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
-  >>> precision  # doctest: +ELLIPSIS
+  >>> precision
   array([0.66..., 0.5       , 1.        , 1.        ])
   >>> recall
   array([1. , 0.5, 0.5, 0. ])
   >>> threshold
   array([0.35, 0.4 , 0.8 ])
-  >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+  >>> average_precision_score(y_true, y_scores)
   0.83...
 
 
@@ -896,17 +920,15 @@ Then the metrics are defined as:
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='macro')
   0.22...
   >>> metrics.recall_score(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')
   0.26...
-  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
   0.23...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
-  ... # doctest: +ELLIPSIS
   (array([0.66..., 0.        , 0.        ]), array([1., 0., 0.]), array([0.71..., 0.        , 0.        ]), array([2, 2, 2]...))
 
 For multiclass classification with a "negative class", it is possible to exclude some labels:
@@ -918,7 +940,6 @@ For multiclass classification with a "negative class", it is possible to exclude
 Similarly, labels not present in the data sample may be accounted for in macro-averaging.
 
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
-  ... # doctest: +ELLIPSIS
   0.166...
 
 .. _jaccard_similarity_score:
@@ -951,14 +972,14 @@ In the binary case: ::
   ...                    [1, 1, 0]])
   >>> y_pred = np.array([[1, 1, 1],
   ...                    [1, 0, 0]])
-  >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true[0], y_pred[0])
   0.6666...
 
 In the multilabel case with binary label indicators: ::
 
-  >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true, y_pred, average='samples')
   0.5833...
-  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  >>> jaccard_score(y_true, y_pred, average='macro')
   0.6666...
   >>> jaccard_score(y_true, y_pred, average=None)
   array([0.5, 0.5, 1. ])
@@ -969,7 +990,6 @@ multilabel problem: ::
   >>> y_pred = [0, 2, 1, 2]
   >>> y_true = [0, 1, 2, 2]
   >>> jaccard_score(y_true, y_pred, average=None)
-  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([1. , 0. , 0.33...])
   >>> jaccard_score(y_true, y_pred, average='macro')
   0.44...
@@ -1017,15 +1037,12 @@ with a svm classifier in a binary class problem::
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
-  >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-       verbose=0)
+  >>> est.fit(X, y)
+  LinearSVC(random_state=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-  >>> pred_decision  # doctest: +ELLIPSIS
+  >>> pred_decision
   array([-2.18...,  2.36...,  0.09...])
-  >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+  >>> hinge_loss([-1, 1, 1], pred_decision)
   0.3...
 
 Here is an example demonstrating the use of the :func:`hinge_loss` function
@@ -1035,14 +1052,11 @@ with a svm classifier in a multiclass problem::
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
-  >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-       intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-       multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-       verbose=0)
+  >>> est.fit(X, Y)
+  LinearSVC()
   >>> pred_decision = est.decision_function([[-1], [2], [3]])
   >>> y_true = [0, 2, 3]
-  >>> hinge_loss(y_true, pred_decision, labels)  #doctest: +ELLIPSIS
+  >>> hinge_loss(y_true, pred_decision, labels)
   0.56...
 
 .. _log_loss:
@@ -1092,7 +1106,7 @@ method.
     >>> from sklearn.metrics import log_loss
     >>> y_true = [0, 0, 1, 1]
     >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
-    >>> log_loss(y_true, y_pred)    # doctest: +ELLIPSIS
+    >>> log_loss(y_true, y_pred)
     0.1738...
 
 The first ``[.9, .1]`` in ``y_pred`` denotes 90% probability that the first
@@ -1157,7 +1171,7 @@ function:
     >>> from sklearn.metrics import matthews_corrcoef
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
-    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
 
 .. _multilabel_confusion_matrix:
@@ -1325,9 +1339,52 @@ In multi-label classification, the :func:`roc_auc_score` function is
 extended by averaging over the labels as :ref:`above <average>`.
 
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label. The
-:func:`roc_auc_score` function can also be used in multi-class classification,
-if the predicted outputs have been binarized.
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function can also be used in multi-class
+classification. Two averaging strategies are currently supported: the
+one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
+the one-vs-rest algorithm computes the average of the ROC AUC scores for each
+class against all other classes. In both cases, the predicted labels are
+provided in an array with values from 0 to ``n_classes``, and the scores
+correspond to the probability estimates that a sample belongs to a particular
+class. The OvO and OvR algorithms supports weighting uniformly
+(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+
+**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
+combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
+uniformly:
+
+.. math::
+
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
+   \text{AUC}(k | j))
+
+where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
+AUC with class :math:`j` as the positive class and class :math:`k` as the
+negative class. In general,
+:math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
+case. This algorithm is used by setting the keyword argument ``multiclass``
+to ``'ovo'`` and ``average`` to ``'macro'``.
+
+The [HT2001]_ multiclass AUC metric can be extended to be weighted by the
+prevalence:
+
+.. math::
+
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
+   \text{AUC}(j | k) + \text{AUC}(k | j))
+
+where :math:`c` is the number of classes. This algorithm is used by setting
+the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
+as described in [FC2009]_.
+
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
+The algorithm is functionally the same as the multilabel case. To enable this
+algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
+OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
@@ -1352,6 +1409,28 @@ to the given limit.
   * See :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
     for an example of using ROC to
     model species distribution.
+
+.. topic:: References:
+
+    .. [HT2001] Hand, D.J. and Till, R.J., (2001). `A simple generalisation
+       of the area under the ROC curve for multiple class classification problems.
+       <http://link.springer.com/article/10.1023/A:1010920819831>`_
+       Machine learning, 45(2), pp.171-186.
+
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+       `An Experimental Comparison of Performance Measures for Classification.
+       <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+       Pattern Recognition Letters. 30. 27-38.
+
+    .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
+       <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+       Pattern Recognition Letters, 27(8), pp. 861-874.
+
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
+       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       In Data Mining, 2001.
+       Proceedings IEEE International Conference, pp. 131-138.
+
 
 .. _zero_one_loss:
 
@@ -1559,7 +1638,7 @@ Here is a small example of usage of this function::
     >>> from sklearn.metrics import label_ranking_average_precision_score
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
-    >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
+    >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
 
 .. _label_ranking_loss:
@@ -1594,7 +1673,7 @@ Here is a small example of usage of this function::
     >>> from sklearn.metrics import label_ranking_loss
     >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
-    >>> label_ranking_loss(y_true, y_score) # doctest: +ELLIPSIS
+    >>> label_ranking_loss(y_true, y_score)
     0.75...
     >>> # With the following prediction, we have perfect and minimal loss
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
@@ -1606,6 +1685,67 @@ Here is a small example of usage of this function::
 
   * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
     Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
+
+.. _ndcg:
+
+Normalized Discounted Cumulative Gain
+-------------------------------------
+
+Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
+(NDCG) are ranking metrics; they compare a predicted order to ground-truth
+scores, such as the relevance of answers to a query.
+
+from the Wikipedia page for Discounted Cumulative Gain:
+
+"Discounted cumulative gain (DCG) is a measure of ranking quality. In
+information retrieval, it is often used to measure effectiveness of web search
+engine algorithms or related applications. Using a graded relevance scale of
+documents in a search-engine result set, DCG measures the usefulness, or gain,
+of a document based on its position in the result list. The gain is accumulated
+from the top of the result list to the bottom, with the gain of each result
+discounted at lower ranks"
+
+DCG orders the true targets (e.g. relevance of query answers) in the predicted
+order, then multiplies them by a logarithmic decay and sums the result. The sum
+can be truncated after the first :math:`K` results, in which case we call it
+DCG@K.
+NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
+that it is always between 0 and 1. Usually, NDCG is preferred to DCG.
+
+Compared with the ranking loss, NDCG can take into account relevance scores,
+rather than a ground-truth ranking. So if the ground-truth consists only of an
+ordering, the ranking loss should be preferred; if the ground-truth consists of
+actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
+relevant), NDCG can be used.
+
+For one sample, given the vector of continuous ground-truth values for each
+target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
+the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+DCG score is
+
+.. math::
+   \sum_{r=1}^{\min(K, M)}\frac{y_{f(r)}}{\log(1 + r)}
+
+and the NDCG score is the DCG score divided by the DCG score obtained for
+:math:`y`.
+
+.. topic:: References:
+
+  * Wikipedia entry for Discounted Cumulative Gain:
+    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+
+  * Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+  * Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+  * McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
 
 .. _regression_metrics:
 
@@ -1666,15 +1806,13 @@ function::
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred)
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='raw_values')
-    ... # doctest: +ELLIPSIS
     array([0.967..., 1.        ])
     >>> explained_variance_score(y_true, y_pred, multioutput=[0.3, 0.7])
-    ... # doctest: +ELLIPSIS
     0.990...
 
 .. _max_error:
@@ -1741,7 +1879,6 @@ Here is a small example of usage of the :func:`mean_absolute_error` function::
   >>> mean_absolute_error(y_true, y_pred, multioutput='raw_values')
   array([0.5, 1. ])
   >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
-  ... # doctest: +ELLIPSIS
   0.85...
 
 .. _mean_squared_error:
@@ -1772,7 +1909,7 @@ function::
   0.375
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-  >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_true, y_pred)
   0.7083...
 
 .. topic:: Examples:
@@ -1811,11 +1948,11 @@ function::
   >>> from sklearn.metrics import mean_squared_log_error
   >>> y_true = [3, 5, 2.5, 7]
   >>> y_pred = [2.5, 5, 4, 8]
-  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_log_error(y_true, y_pred)
   0.039...
   >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
-  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> mean_squared_log_error(y_true, y_pred)
   0.044...
 
 .. _median_absolute_error:
@@ -1851,46 +1988,52 @@ function::
 R² score, the coefficient of determination
 -------------------------------------------
 
-The :func:`r2_score` function computes R², the `coefficient of
-determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
-It provides a measure of how well future samples are likely to
-be predicted by the model. Best possible score is 1.0 and it can be negative
+The :func:`r2_score` function computes the `coefficient of
+determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
+usually denoted as R².
+
+It represents the proportion of variance (of y) that has been explained by the
+independent variables in the model. It provides an indication of goodness of
+fit and therefore a measure of how well unseen samples are likely to be
+predicted by the model, through the proportion of explained variance.
+
+As such variance is dataset dependent, R² may not be meaningfully comparable
+across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected value of y, disregarding the input features, would get a
-R^2 score of 0.0.
+R² score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
-and :math:`y_i` is the corresponding true value, then the score R² estimated
-over :math:`n_{\text{samples}}` is defined as
+and :math:`y_i` is the corresponding true value for total :math:`n` samples,
+the estimated R² is defined as:
 
 .. math::
 
-  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}} - 1} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_\text{samples} - 1} (y_i - \bar{y})^2}
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
 
-where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
+where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
+
+Note that :func:`r2_score` calculates unadjusted R² without correcting for
+bias in sample variance of y.
 
 Here is a small example of usage of the :func:`r2_score` function::
 
   >>> from sklearn.metrics import r2_score
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred)
   0.948...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='variance_weighted')
-  ... # doctest: +ELLIPSIS
   0.938...
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred, multioutput='uniform_average')
-  ... # doctest: +ELLIPSIS
   0.936...
   >>> r2_score(y_true, y_pred, multioutput='raw_values')
-  ... # doctest: +ELLIPSIS
   array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
-  ... # doctest: +ELLIPSIS
   0.925...
 
 
@@ -1899,6 +2042,78 @@ Here is a small example of usage of the :func:`r2_score` function::
   * See :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
+
+
+.. _mean_tweedie_deviance:
+
+Mean Poisson, Gamma, and Tweedie deviances
+------------------------------------------
+The :func:`mean_tweedie_deviance` function computes the `mean Tweedie
+deviance error
+<https://en.wikipedia.org/wiki/Tweedie_distribution#The_Tweedie_deviance>`_
+with a ``power`` parameter (:math:`p`). This is a metric that elicits
+predicted expectation values of regression targets.
+
+Following special cases exist,
+
+- when ``power=0`` it is equivalent to :func:`mean_squared_error`.
+- when ``power=1`` it is equivalent to :func:`mean_poisson_deviance`.
+- when ``power=2`` it is equivalent to :func:`mean_gamma_deviance`.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean Tweedie
+deviance error (D) for power :math:`p`, estimated over :math:`n_{\text{samples}}`
+is defined as
+
+.. math::
+
+  \text{D}(y, \hat{y}) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples} - 1}
+  \begin{cases}
+  (y_i-\hat{y}_i)^2, & \text{for }p=0\text{ (Normal)}\\
+  2(y_i \log(y/\hat{y}_i) + \hat{y}_i - y_i),  & \text{for}p=1\text{ (Poisson)}\\
+  2(\log(\hat{y}_i/y_i) + y_i/\hat{y}_i - 1),  & \text{for}p=2\text{ (Gamma)}\\
+  2\left(\frac{\max(y_i,0)^{2-p}}{(1-p)(2-p)}-
+  \frac{y\,\hat{y}^{1-p}_i}{1-p}+\frac{\hat{y}^{2-p}_i}{2-p}\right),
+  & \text{otherwise}
+  \end{cases}
+
+Tweedie deviance is a homogeneous function of degree ``2-power``.
+Thus, Gamma distribution with ``power=2`` means that simultaneously scaling
+``y_true`` and ``y_pred`` has no effect on the deviance. For Poisson
+distribution ``power=1`` the deviance scales linearly, and for Normal
+distribution (``power=0``), quadratically.  In general, the higher
+``power`` the less weight is given to extreme deviations between true
+and predicted targets.
+
+For instance, let's compare the two predictions 1.0 and 100 that are both
+50% of their corresponding true value.
+
+The mean squared error (``power=0``) is very sensitive to the
+prediction difference of the second point,::
+
+    >>> from sklearn.metrics import mean_tweedie_deviance
+    >>> mean_tweedie_deviance([1.0], [1.5], power=0)
+    0.25
+    >>> mean_tweedie_deviance([100.], [150.], power=0)
+    2500.0
+
+If we increase ``power`` to 1,::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], power=1)
+    0.18...
+    >>> mean_tweedie_deviance([100.], [150.], power=1)
+    18.9...
+
+the difference in errors decreases. Finally, by setting, ``power=2``::
+
+    >>> mean_tweedie_deviance([1.0], [1.5], power=2)
+    0.14...
+    >>> mean_tweedie_deviance([100.], [150.], power=2)
+    0.14...
+
+we would get identical errors. The deviance when ``power=2`` is thus only
+sensitive to relative errors.
 
 .. _clustering_metrics:
 
@@ -1943,8 +2158,7 @@ dataset::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> y[y != 1] = -1
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -1953,19 +2167,19 @@ Next, let's compare the accuracy of ``SVC`` and ``most_frequent``::
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
   >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
+  >>> clf.score(X_test, y_test)
   0.63...
   >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
   >>> clf.fit(X_train, y_train)
-  DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
-  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  DummyClassifier(random_state=0, strategy='most_frequent')
+  >>> clf.score(X_test, y_test)
   0.57...
 
 We see that ``SVC`` doesn't do much better than a dummy classifier. Now, let's
 change the kernel::
 
-  >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
-  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)
   0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
