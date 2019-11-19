@@ -249,36 +249,27 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             eigen_solver = self.eigen_solver
 
         if eigen_solver == 'dense':
+            # Note: eigvals specifies the indices of smallest/largest to return
             self.lambdas_, self.alphas_ = linalg.eigh(
                 K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1))
         elif eigen_solver == 'arpack':
             random_state = check_random_state(self.random_state)
             # initialize with [-1,1] as in ARPACK
             v0 = random_state.uniform(-1, 1, K.shape[0])
+            # todo consistency: pca uses `svds`+flip, this uses `eigsh`. why?
             self.lambdas_, self.alphas_ = eigsh(K, n_components,
                                                 which="LA",
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
                                                 v0=v0)
         elif eigen_solver == 'randomized':
-            random_state = check_random_state(self.random_state)
-
             # Note: sign flipping is done inside
             U, S, V = randomized_svd(K, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
-                                     random_state=random_state)
-
-            # eigenvectors
-            self.alphas_ = U[:, :n_components]
-
-            # eigenvalues
-            self.lambdas_ = S[:n_components]
-            # Make sure that there are no wrong signs (svd does not guarantee
-            #  that sign of u and v is the same)
-            VU = np.dot(V[:n_components, :], U[:, :n_components])
-            signs = np.sign(np.diag(VU))
-            self.lambdas_ = self.lambdas_ * signs
+                                     random_state=self.random_state)
+            self.alphas_ = U[:, :n_components]  # eigenvectors
+            self.lambdas_ = S[:n_components]    # eigenvalues
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
