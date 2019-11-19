@@ -10,7 +10,15 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
+from sklearn.utils._testing import _convert_container
+
 from sklearn.inspection import plot_partial_dependence
+
+
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
 
 
 @pytest.fixture(scope="module")
@@ -86,12 +94,15 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
 
 
 @pytest.mark.parametrize(
-    "input_type, use_feature_names",
-    [('dataframe', False), ('dataframe', True),
-     ('list', True), ('array', True)]
+    "input_type, feature_names_type",
+    [('dataframe', None),
+     ('dataframe', 'list'), ('list', 'list'), ('array', 'list'),
+     ('dataframe', 'array'), ('list', 'array'), ('array', 'array'),
+     ('dataframe', 'series'), ('list', 'series'), ('array', 'series'),
+     ('dataframe', 'index'), ('list', 'index'), ('array', 'index')]
 )
 def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
-                                              input_type, use_feature_names):
+                                              input_type, feature_names_type):
     if input_type == 'dataframe':
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(boston.data, columns=boston.feature_names)
@@ -99,7 +110,12 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
         X = boston.data.tolist()
     else:
         X = boston.data
-    feature_names = boston.feature_names if use_feature_names else None
+
+    if feature_names_type is None:
+        feature_names = None
+    else:
+        feature_names = _convert_container(boston.feature_names,
+                                           feature_names_type)
 
     grid_resolution = 25
     # check with str features and array feature names and single column
