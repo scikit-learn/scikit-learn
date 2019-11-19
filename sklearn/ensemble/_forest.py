@@ -1862,6 +1862,7 @@ class ExtraTreesRegressor(ForestRegressor):
 
     random_state : int, RandomState instance or None, optional (default=None)
         Controls 3 sources of randomness:
+
         - the bootstrapping of the samples used when building trees
           (if ``bootstrap=True``)
         - the sampling of the features to consider when looking for the best
@@ -2094,10 +2095,14 @@ class RandomTreesEmbedding(BaseForest):
         <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Controls 3 sources of randomness:
+
+        - the bootstrapping of the samples used when building trees
+          (if ``bootstrap=True``)
+        - the sampling of the features to consider when looking for the best
+          split at each node (if ``max_features < n_features``)
+        - the draw of the splits for each of the `max_features`
+        See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
