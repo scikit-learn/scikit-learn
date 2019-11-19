@@ -54,6 +54,7 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 
 # 2- Design experiment / Init plots
 # ---------------------------------
+plt.ion()
 grid_size = 5
 n_components_range = [np.floor(np.exp((x / grid_size) * np.log(n_samples)))
                       for x in range(1, grid_size + 1)]
@@ -71,43 +72,47 @@ plt.scatter(X[blues, 0], X[blues, 1], c="blue",
             s=20, edgecolor='k')
 plt.xlabel("$x_1$")
 plt.ylabel("$x_2$")
-
+plt.draw()
+plt.pause(1e-3)  # needed to refresh the display
 
 # 2- Run experiments
 # -----------------------
 for i, n_compo in enumerate(n_components_range):
     n_compo = int(n_compo)
     print("Fitting kPCA for n_components=%i" % n_compo)
+    start_time = datetime.now()
 
-    try:
-        start_time = datetime.now()
-        kpca = KernelPCA(n_components=n_compo, kernel="rbf",
-                         fit_inverse_transform=True, gamma=10)
-        X_kpca = kpca.fit_transform(X)
-        X_back = kpca.inverse_transform(X_kpca)
-        elapsed = (datetime.now() - start_time).total_seconds()
+    # fit and transform
+    kpca = KernelPCA(n_components=n_compo, kernel="rbf",
+                     fit_inverse_transform=True, gamma=10)
+    X_kpca = kpca.fit_transform(X)
+    X_back = kpca.inverse_transform(X_kpca)
+    elapsed = (datetime.now() - start_time).total_seconds()
 
-        # original space after inverse transform
-        plt.subplot(2, nb_cols, i + 2, aspect='equal')
-        plt.scatter(X_back[reds, 0], X_back[reds, 1], c="red",
-                    s=20, edgecolor='k')
-        plt.scatter(X_back[blues, 0], X_back[blues, 1], c="blue",
-                    s=20, edgecolor='k')
-        plt.title("kPCA approx (n=%i)(%.2fs)" % (n_compo, elapsed))
-        plt.xlabel("$x_1$")
-        plt.ylabel("$x_2$")
+    # original space after inverse transform
+    plt.subplot(2, nb_cols, i + 2, aspect='equal')
+    plt.scatter(X_back[reds, 0], X_back[reds, 1], c="red",
+                s=20, edgecolor='k')
+    plt.scatter(X_back[blues, 0], X_back[blues, 1], c="blue",
+                s=20, edgecolor='k')
+    plt.title("kPCA approx (n=%i)(%.2fs)" % (n_compo, elapsed))
+    plt.xlabel("$x_1$")
+    plt.ylabel("$x_2$")
+    plt.draw()
+    plt.pause(1e-3)  # needed to refresh the display
 
-        # plot the first two principal components
-        plt.subplot(2, nb_cols, i + 2 + nb_cols, aspect='equal')
-        plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
-                    s=20, edgecolor='k')
-        plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
-                    s=20, edgecolor='k')
-        plt.title("First 2PC (n=%i)" % n_compo)
-        plt.xlabel(r"1st PC in space induced by $\phi$")
-        plt.ylabel("2nd component")
-    except Exception as e:
-        print(e)
+    # plot the first two principal components
+    plt.subplot(2, nb_cols, i + 2 + nb_cols, aspect='equal')
+    plt.scatter(X_kpca[reds, 0], X_kpca[reds, 1], c="red",
+                s=20, edgecolor='k')
+    plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
+                s=20, edgecolor='k')
+    plt.title("First 2PC (n=%i)" % n_compo)
+    plt.xlabel(r"1st PC in space induced by $\phi$")
+    plt.ylabel("2nd component")
+    plt.draw()
+    plt.pause(1e-3)  # needed to refresh the display
 
+plt.ioff()
 plt.subplots_adjust(0.02, 0.10, 0.98, 0.94, 0.04, 0.35)
 plt.show()
