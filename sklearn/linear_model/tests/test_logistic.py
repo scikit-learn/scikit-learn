@@ -31,7 +31,6 @@ from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
     logistic_regression_path,
@@ -391,12 +390,19 @@ def test_logistic_regression_path_convergence_fail():
     y = [1] * 100 + [-1] * 100
     Cs = [1e3]
 
-    msg = (r"lbfgs failed to converge.+Increase the number of iterations or "
-           r"scale the data")
-
-    with pytest.warns(ConvergenceWarning, match=msg):
+    # Check that the convergence message points to both a model agnostic
+    # advice (scaling the data) and to the logistic regression specific
+    # documentation that includes hints on the solver configuration.
+    with pytest.warns(ConvergenceWarning) as record:
         _logistic_regression_path(
             X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+
+    assert len(record) == 1
+    warn_msg = record[0].message.args[0]
+    assert "lbfgs failed to converge" in warn_msg
+    assert "Increase the number of iterations" in warn_msg
+    assert "scale the data" in warn_msg
+    assert "linear_model.html#logistic-regression" in warn_msg
 
 
 def test_liblinear_dual_random_state():
