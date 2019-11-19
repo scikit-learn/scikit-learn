@@ -40,6 +40,16 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     ite = 1
     X_pinv = Y_pinv = None
     eps = np.finfo(X.dtype).eps
+
+    if mode == "B":
+        # use condition from scipy <=1.2 in pinv2
+        X_t = X.dtype.char.lower()
+        Y_t = Y.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+
+        cond_X = factor[X_t] * eps
+        cond_Y = factor[Y_t] * eps
+
     # Inner loop of the Wold algo.
     while True:
         # 1.1 Update u: the X weights
@@ -47,7 +57,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
             if X_pinv is None:
                 # We use slower pinv2 (same as np.linalg.pinv) for stability
                 # reasons
-                X_pinv = pinv2(X, check_finite=False)
+                X_pinv = pinv2(X, check_finite=False, cond=cond_X)
             x_weights = np.dot(X_pinv, y_score)
         else:  # mode A
             # Mode A regress each X column on y_score
@@ -64,7 +74,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
         # 2.1 Update y_weights
         if mode == "B":
             if Y_pinv is None:
-                Y_pinv = pinv2(Y, check_finite=False)  # compute once pinv(Y)
+                # compute once pinv(Y)
+                Y_pinv = pinv2(Y, check_finite=False, cond=cond_Y)
             y_weights = np.dot(Y_pinv, x_score)
         else:
             # Mode A regress each Y column on x_score
