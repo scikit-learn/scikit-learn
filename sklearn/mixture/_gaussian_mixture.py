@@ -813,6 +813,10 @@ class ConditionalGaussianMixture():
         self.gmm = gmm
         self.i_cond = i_cond
 
+        # Dimensions of problem
+        Da = np.sum(~i_cond)
+        Db = np.sum(i_cond)
+
         # Initialise lists where we store partitioned vectors and matrices
         # for each mixture component
         self.mu_aa_list = []
@@ -828,14 +832,39 @@ class ConditionalGaussianMixture():
             # Split mean into individual components
             mu_aa, mu_bb = gmm.means_[c][~i_cond], gmm.means_[c][i_cond]
 
-            # Split covariance matrix into individual components
-            (Sigma_aa,
-             Sigma_ab,
-             Sigma_ba,
-             Sigma_bb) = (gmm.covariances_[c][~i_cond, ~i_cond],
-                          gmm.covariances_[c][~i_cond, i_cond],
-                          gmm.covariances_[c][i_cond, ~i_cond],
-                          gmm.covariances_[c][i_cond, i_cond])
+            # Split covariance matrix into individual components ('full'
+            # covariance matrix)
+            if gmm.covariance_type == 'full':
+                Sigma_aa = gmm.covariances_[c][~i_cond, ~i_cond]
+                Sigma_ab = gmm.covariances_[c][~i_cond, i_cond]
+                Sigma_ba = gmm.covariances_[c][i_cond, ~i_cond]
+                Sigma_bb = gmm.covariances_[c][i_cond, i_cond]
+
+            # Split covariance matrix into individual components ('diag'
+            # covariance matrix). For now we just store copies of the
+            # partitioned matrices - this could be sped up later if it
+            # causes problems.
+            if gmm.covariance_type == 'tied':
+                Sigma_aa = gmm.covariances_[~i_cond, ~i_cond]
+                Sigma_ab = gmm.covariances_[~i_cond, i_cond]
+                Sigma_ba = gmm.covariances_[i_cond, ~i_cond]
+                Sigma_bb = gmm.covariances_[i_cond, i_cond]
+
+            # Split covariance matrix into individual components ('diag'
+            # covariance matrix)
+            if gmm.covariance_type == 'diag':
+                Sigma_aa = np.diag(gmm.covariances_[c][~i_cond])
+                Sigma_ab = np.zeros([Da, Db])
+                Sigma_ba = np.zeros([Db, Da])
+                Sigma_bb = np.diag(gmm.covariances_[c][i_cond])
+
+            # Split covariance matrix into individual components ('spherical'
+            # covariance matrix)
+            if gmm.covariance_type == 'spherical':
+                Sigma_aa = np.diag(np.repeat(gmm.covariances_[c], Da))
+                Sigma_ab = np.zeros([Da, Db])
+                Sigma_ba = np.zeros([Db, Da])
+                Sigma_bb = np.diag(np.repeat(gmm.covariances_[c], Db))
 
             self.mu_aa_list.append(mu_aa)
             self.mu_bb_list.append(mu_bb)
