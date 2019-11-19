@@ -2098,13 +2098,8 @@ class RandomTreesEmbedding(BaseForest):
         <n_jobs>` for more details.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Controls 3 sources of randomness:
-
-        - the bootstrapping of the samples used when building trees
-          (if ``bootstrap=True``)
-        - the sampling of the features to consider when looking for a
-          split at each node (if ``max_features < n_features``)
-        - the draw of the splits for each of the `max_features`
+        Controls the generation of the random `y` used to fit the trees
+        and the draw of the splits for each feature at the trees' nodes.
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
