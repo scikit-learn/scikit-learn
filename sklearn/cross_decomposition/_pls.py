@@ -42,7 +42,8 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
     eps = np.finfo(X.dtype).eps
 
     if mode == "B":
-        # use condition from scipy <=1.2 in pinv2
+        # use condition from scipy < 1.3 in pinv2 which was changed in
+        # https://github.com/scipy/scipy/pull/10067
         X_t = X.dtype.char.lower()
         Y_t = Y.dtype.char.lower()
         factor = {'f': 1E3, 'd': 1E6}
