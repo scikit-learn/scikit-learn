@@ -86,7 +86,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         randomized :
             run randomized SVD by the method of Halko et al.
 
-        .. versionchanged:: 0.21
+        .. versionchanged:: 0.22
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -100,7 +100,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
