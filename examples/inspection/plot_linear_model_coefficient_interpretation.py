@@ -8,7 +8,7 @@ a linear combination of the features (see the :ref:`linear_model` User guide
 section for a description of a set of linear model methods available in
 scikit-learn).
 It is important to emphasize that linear models compute conditional links.
-The interpretation of the coefficient gives the relationship between the
+The interpretation of the coefficients gives the relationship between the
 feature and the target given that other features remain constant.
 
 This example will show some hints in interpreting coefficient in linear models, 
@@ -23,6 +23,10 @@ import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+
+from matplotlib.axes._axes import _log as matplotlib_axes_logger
+matplotlib_axes_logger.setLevel('ERROR')
 
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
@@ -111,9 +115,11 @@ model.fit(X_train, y_train);
 
 def mae_scorer(model, X_train, X_test, y_train, y_test):
     y_pred = model.predict(X_train)
-    string_score = f'MAE on training set: {median_absolute_error(y_train, y_pred):.2f} $/hour'
+    string_score = f'MAE on training set: \
+                    {median_absolute_error(y_train, y_pred):.2f} $/hour'
     y_pred = model.predict(X_test)
-    string_score += f'\nMAE on testing set: {median_absolute_error(y_test, y_pred):.2f} $/hour'
+    string_score += f'\nMAE on testing set: \
+                    {median_absolute_error(y_test, y_pred):.2f} $/hour'
     return string_score
 
 fig, ax = plt.subplots(figsize=(6, 6))
@@ -219,10 +225,29 @@ plt.title('Stability of coefficients');
 
 age = survey.data['AGE'].values
 experience = survey.data['EXPERIENCE'].values
-sns.regplot(age,experience,scatter_kws={"color": "black", "alpha": 0.2, "s": 30},
-    line_kws={"color": "red"})
+sns.regplot(age,experience,scatter_kws={"color": "black", "alpha": 0.2, "s": 30}
+            , line_kws={"color": "red"})
 
 ##############################################################################
 # We can remove one of the 2 features and check what is the impact on the
 # features stability.
+
+column_to_drop = ['AGE']
+
+cv_model = cross_validate(
+    model, X.drop(columns=column_to_drop), y,
+    cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True, n_jobs=-1
+)
+coefs = pd.DataFrame(
+    [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
+     X_train_preprocessed.drop(columns=column_to_drop).std()
+     for est in cv_model['estimator']],
+    columns=feature_names[:-1]
+)
+plt.figure(figsize=(9, 7))
+sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.boxenplot(data=coefs, orient='h', color='C0')
+plt.axvline(x=0, color='.5')
+plt.title('Stability of coefficients');
 
