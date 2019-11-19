@@ -14,7 +14,7 @@ from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
 from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.mixture import GaussianMixture
+from sklearn.mixture import GaussianMixture, ConditionalGaussianMixture
 from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_full,
     _estimate_gaussian_covariances_tied,
@@ -32,7 +32,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
-
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 
@@ -651,6 +650,54 @@ def test_gaussian_mixture_fit():
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
+
+
+def test_conditional_gaussian_mixture_fit():
+    """ Here we test the fit of our conditional Gaussian mixture model.
+    Note that we have to compare against the a Monte Carlo estimate of
+    the conditional distribution, so we have to use a lot of samples
+    to run this test.
+
+    """
+    for covar_type in COVARIANCE_TYPE:
+        rng = np.random.RandomState(0)
+        rand_data = RandomData(rng, n_samples=500000)
+        n_features = rand_data.n_features
+        n_components = rand_data.n_components
+
+        X = rand_data.X[covar_type]
+
+        g = GaussianMixture(n_components=n_components, n_init=20,
+                        reg_covar=0, random_state=rng,
+                        covariance_type=covar_type)
+        g.fit(X)
+
+        x2 = 27   # Conditional value of x2
+
+        # Histogram approximation of conditional distribution
+        indices = np.where((X[:, 1] > x2 - 0.1) &
+                           (X[:, 1] < x2 + 0.1))
+
+        counts, bins = np.histogram(X[indices, 0].T, bins=50, density=True)
+        bin_centers = np.zeros(50)
+        for i in range(50):
+            bin_centers[i] = bins[i] + (bins[i + 1] - bins[i]) / 2
+
+        # Create GMM_Conditional object
+        i_cond = np.array([False, True])
+        cond_g = ConditionalGaussianMixture(g, i_cond)
+
+        # Evaluate conditional distribution over a range of x1 values
+        x1_range = bin_centers
+        cond_predicted = np.zeros(len(bin_centers))
+        for i in range(len(bin_centers)):
+            cond_predicted[i] = cond_g.pdf_xa_cond_xb(x1_range[i], x2)
+
+        # Test model prediction vs. Monte Carlo approximation, for each point
+        # where the conditional distribution is evaluated
+        error = np.abs(cond_predicted - counts)
+        for i in range(len(bin_centers)):
+            assert_allclose(cond_predicted[i], counts[i], rtol=0.1, atol=1e-2)
 
 
 def test_gaussian_mixture_fit_best_params():

@@ -8,6 +8,8 @@ import numpy as np
 
 from scipy import linalg
 
+from scipy.stats import multivariate_normal as Normal_PDF
+
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
@@ -750,3 +752,260 @@ class GaussianMixture(BaseMixture):
             The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()
+
+
+class ConditionalGaussianMixture():
+
+    # Author: Peter L Green <p.l.green@liverpool.ac.uk>
+
+    """  Conditional Gaussian Mixture.
+
+    This class is used to define the conditional distributions of a
+    Gaussian mixture model that has already been trained on some data.
+    Writing the Gaussian mixture model as p(xa, xb), the code will
+    evaluate p(xa | xb).
+
+    Read more in (still to be added)
+
+    Parameters
+    ----------
+    gmm : an instance of a (trained) Gaussian mixture model.
+
+    i_cond : a numpy array of True or False values. If the ith value of
+        i_cond is True then xi will be considered as fixed equal to
+        some conditional value. If the jth value of i_cond is False then
+        xj will be considered as a random variable.
+
+    Attributes
+    ----------
+    mu_aa_list : means of marginal distributions, p(xa), for each Gaussian
+    in the mixture.
+
+    mu_bb_list : means of marginal distributions, p(xb), for each Gaussian
+    in the mixture.
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
+        (xa, xa), for each Gaussian in the mixture.
+
+    Sigma_ab_list : partitioned covariance matrices, with respect to
+        (xa, xb), for each Gaussian in the mixture.
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
+        (xb, xa), for each Gaussian in the mixture.
+
+    Sigma_aa_list : partitioned covariance matrices, with respect to
+        (xb, xb), for each Gaussian in the mixture.
+
+    p_aa : marginal probability distributions, for xa, for each Gaussian in
+        the mixture.
+
+    p_bb : marginal probability distributions, for xb, for each Gaussian in
+        the mixture.
+
+    """
+
+    def __init__(self, gmm, i_cond):
+
+        # This can only be applied after the GMM has been trained
+        check_is_fitted(gmm)
+
+        # Assign to self
+        self.gmm = gmm
+        self.i_cond = i_cond
+
+        # Dimensions of problem
+        Da = np.sum(~i_cond)
+        Db = np.sum(i_cond)
+
+        # Initialise lists where we store partitioned vectors and matrices
+        # for each mixture component
+        self.mu_aa_list = []
+        self.mu_bb_list = []
+        self.Sigma_aa_list = []
+        self.Sigma_ab_list = []
+        self.Sigma_ba_list = []
+        self.Sigma_bb_list = []
+
+        # Isolate components of Gaussian Mixture model
+        for c in range(gmm.n_components):
+
+            # Split mean into individual components
+            mu_aa, mu_bb = gmm.means_[c][~i_cond], gmm.means_[c][i_cond]
+
+            # Split covariance matrix into individual components ('full'
+            # covariance matrix)
+            if gmm.covariance_type == 'full':
+                Sigma_aa = gmm.covariances_[c][~i_cond, ~i_cond]
+                Sigma_ab = gmm.covariances_[c][~i_cond, i_cond]
+                Sigma_ba = gmm.covariances_[c][i_cond, ~i_cond]
+                Sigma_bb = gmm.covariances_[c][i_cond, i_cond]
+
+            # Split covariance matrix into individual components ('diag'
+            # covariance matrix). For now we just store copies of the
+            # partitioned matrices - this could be sped up later if it
+            # causes problems.
+            if gmm.covariance_type == 'tied':
+                Sigma_aa = gmm.covariances_[~i_cond, ~i_cond]
+                Sigma_ab = gmm.covariances_[~i_cond, i_cond]
+                Sigma_ba = gmm.covariances_[i_cond, ~i_cond]
+                Sigma_bb = gmm.covariances_[i_cond, i_cond]
+
+            # Split covariance matrix into individual components ('diag'
+            # covariance matrix)
+            if gmm.covariance_type == 'diag':
+                Sigma_aa = np.diag(gmm.covariances_[c][~i_cond])
+                Sigma_ab = np.zeros([Da, Db])
+                Sigma_ba = np.zeros([Db, Da])
+                Sigma_bb = np.diag(gmm.covariances_[c][i_cond])
+
+            # Split covariance matrix into individual components ('spherical'
+            # covariance matrix)
+            if gmm.covariance_type == 'spherical':
+                Sigma_aa = np.diag(np.repeat(gmm.covariances_[c], Da))
+                Sigma_ab = np.zeros([Da, Db])
+                Sigma_ba = np.zeros([Db, Da])
+                Sigma_bb = np.diag(np.repeat(gmm.covariances_[c], Db))
+
+            self.mu_aa_list.append(mu_aa)
+            self.mu_bb_list.append(mu_bb)
+            self.Sigma_aa_list.append(Sigma_aa)
+            self.Sigma_ab_list.append(Sigma_ab)
+            self.Sigma_ba_list.append(Sigma_ba)
+            self.Sigma_bb_list.append(Sigma_bb)
+
+        # Create lists of marginal probability distributions
+        self.p_aa = []
+        self.p_bb = []
+        for c in range(gmm.n_components):
+            self.p_aa.append(Normal_PDF(mean=self.mu_aa_list[c],
+                                        cov=self.Sigma_aa_list[c]))
+            self.p_bb.append(Normal_PDF(mean=self.mu_bb_list[c],
+                                        cov=self.Sigma_bb_list[c]))
+
+    def mu_a_b(self, xb, mu_aa, Sigma_ab, Sigma_bb, mu_bb):
+        """ Expression for the mean of each Gaussian that makes up p(xa | xb)
+
+        Parameters
+        ----------
+        xb : array of conditional values
+
+        mu_aa : mean of marginal distribution, p(xa)
+
+        Sigma_ab : partitioned covariance matrix with respect to (xa, xb)
+
+        Sigma_bb : partitioned covariance matrix with respect to (xb, xb)
+
+        mu_bb : mean of marginal distribution, p(xb)
+
+        Returns
+        -------
+        mu : array
+            mean of the distribution p(xa | xb)
+
+        """
+
+        mu = mu_aa + Sigma_ab @ np.linalg.inv(Sigma_bb) @ (xb - mu_bb)
+
+        return mu
+
+    def Sigma_a_b(self, xb, Sigma_aa, Sigma_ab, Sigma_ba, Sigma_bb):
+        """ Expression for the covariance matrix of each Gaussian
+            that makes up p(xa | xb)
+
+        Parameters
+        ----------
+        xb : array of conditional values
+
+        Sigma_aa : partitioned covariance matrix with respect to (xa, xa)
+
+        Sigma_ab : partitioned covariance matrix with respect to (xa, xb)
+
+        Sigma_ba : partitioned covariance matrix with respect to (xb, xa)
+
+        Sigma_bb : partitioned covariance matrix with respect to (xb, xb)
+
+        Returns
+        -------
+        Sigma : array
+            covariance matrix of the distribution p(xa | xb)
+        """
+
+        Sigma = Sigma_aa - Sigma_ab @ np.linalg.inv(Sigma_bb) @ Sigma_ba
+
+        return Sigma
+
+    def w_a_b(self, xb):
+        """ Computes mixture weights of p(xa | xb), conditional on xb.
+
+        Parameters
+        ----------
+        xb : array of conditional values
+
+        Returns
+        -------
+            new_weights : list
+                list contains weights of Gaussians that make up p(xa | xb)
+
+        """
+
+        # Array of components that will make up the denominator of our
+        # conditional weights expression.
+        den_components = np.zeros(self.gmm.n_components)
+        for c in range(self.gmm.n_components):
+            den_components[c] = self.p_bb[c].pdf(xb) * self.gmm.weights_[c]
+
+        # Find denominator
+        den = np.sum(den_components)
+
+        # Initialise list of new, conditional weights
+        new_weights = []
+
+        # Find new weights
+        for c in range(self.gmm.n_components):
+            new_weights.append(den_components[c] / den)
+
+        return new_weights
+
+    def pdf_xa_cond_xb(self, xa, xb):
+        """ Compute the probability density of xa, given xb.
+
+        Parameters
+        ----------
+        xa : point where p(xa | xb) is to be evaluated
+
+        xb : conditional values for p(xa | xb)
+
+        Returns
+        -------
+        pdf : float
+            the value of p(xa | xb)
+
+        """
+
+        # Find Gaussian components of p(xa | xb)
+        p_a_b = []
+        for c in range(self.gmm.n_components):
+
+            mu = self.mu_a_b(xb,
+                             self.mu_aa_list[c],
+                             self.Sigma_ab_list[c],
+                             self.Sigma_bb_list[c],
+                             self.mu_bb_list[c])
+
+            Sigma = self.Sigma_a_b(xb,
+                                   self.Sigma_aa_list[c],
+                                   self.Sigma_ab_list[c],
+                                   self.Sigma_ba_list[c],
+                                   self.Sigma_bb_list[c])
+
+            p_a_b.append(Normal_PDF(mean=mu, cov=Sigma))
+
+        # Find weights of p(xa | xb)
+        weights_a_b = self.w_a_b(xb)
+
+        # Calculate pdf, p(xa | xb)
+        pdf = np.zeros(1)
+        for c in range(self.gmm.n_components):
+            pdf += weights_a_b[c] * p_a_b[c].pdf(xa)
+
+        return pdf
