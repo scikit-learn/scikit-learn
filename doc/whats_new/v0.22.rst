@@ -237,6 +237,16 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  drastically accelerates computation when the number of samples gets much
+  larger than the desired number of components.
+  For example with 10000 samples, a fairly accurate kPCA model using 100
+  principal components can be trained more than 10 times faster with
+  `eigen_solver='randomized'` than with the default `eigen_solver='full'`
+  solver.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`
+
 - |Enhancement| :func:`decomposition.dict_learning()` and
   :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
   pass it to :meth:`decomposition.sparse_encode`.

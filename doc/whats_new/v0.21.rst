@@ -335,24 +335,6 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.decomposition`
 ............................
 
-- |Enhancement| added a new approximate solver (randomized SVD, available with
-  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
-  drastically accelerates computation when the number of samples gets much
-  larger than the desired number of components.
-  For example with 10000 samples, a fairly accurate kPCA model using 100
-  principal components can be trained more than 10 times faster with
-  `eigen_solver='randomized'` than with the default `eigen_solver='full'`
-  solver.
-  :issue:`12068` by :user:`Sylvain Marié <smarie>`
-
-- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
-  eigenvalues found by the solver for numerical or conditioning issues, relying
-  on new common util :func:`utils.validation.check_psd_eigenvalues`. This
-  ensures consistency of results across solvers (different choices for
-  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
-  ``'lobpcg'`` (see :issue:`12068`).
-  :issue:`12145` by :user:`Sylvain Marié <smarie>`
-
 - |Enhancement| :class:`decomposition.KernelPCA` now has deterministic output
   (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
   :pr:`13241` by :user:`Aurélien Bellet <bellet>`.
