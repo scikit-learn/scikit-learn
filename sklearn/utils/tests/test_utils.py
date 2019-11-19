@@ -9,10 +9,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils._testing import (assert_raises,
-                                   assert_array_equal,
-                                   assert_allclose_dense_sparse,
-                                   assert_raises_regex,
-                                   assert_warns_message, assert_no_warnings)
+                                    assert_array_equal,
+                                    assert_allclose_dense_sparse,
+                                    assert_raises_regex,
+                                    assert_warns_message,
+                                    assert_no_warnings,
+                                    _convert_container)
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
 from sklearn.utils import deprecated
@@ -234,25 +236,6 @@ def test_determine_key_type_error():
 def test_determine_key_type_slice_error():
     with pytest.raises(TypeError, match="Only array-like or scalar are"):
         _determine_key_type(slice(0, 2, 1), accept_slice=False)
-
-
-def _convert_container(container, constructor_name, columns_name=None):
-    if constructor_name == 'list':
-        return list(container)
-    elif constructor_name == 'tuple':
-        return tuple(container)
-    elif constructor_name == 'array':
-        return np.asarray(container)
-    elif constructor_name == 'sparse':
-        return sp.csr_matrix(container)
-    elif constructor_name == 'dataframe':
-        pd = pytest.importorskip('pandas')
-        return pd.DataFrame(container, columns=columns_name)
-    elif constructor_name == 'series':
-        pd = pytest.importorskip('pandas')
-        return pd.Series(container)
-    elif constructor_name == 'slice':
-        return slice(container[0], container[1])
 
 
 @pytest.mark.parametrize(
