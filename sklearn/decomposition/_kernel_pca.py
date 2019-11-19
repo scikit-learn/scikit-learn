@@ -9,7 +9,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.extmath import svd_flip
+from ..utils.extmath import svd_flip, randomized_svd
 from ..utils.validation import (check_is_fitted, check_array,
                                 _check_psd_eigenvalues)
 from ..exceptions import NotFittedError
