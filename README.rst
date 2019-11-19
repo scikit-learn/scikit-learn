@@ -47,10 +47,10 @@ Dependencies
 
 scikit-learn requires:
 
-- Python  (>= 3.5)
-- NumPy   (>= 1.11.0)
-- SciPy   (>= 0.17.0)
-- joblib  (>= 0.11)
+- Python  *(>= 3.5)*
+- NumPy   *(>= 1.11.0)*
+- SciPy   *(>= 0.17.0)*
+- joblib  *(>= 0.11)*
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.21 and later require Python 3.5 or newer.
