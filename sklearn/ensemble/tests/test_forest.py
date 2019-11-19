@@ -1337,6 +1337,8 @@ def test_class_weight_balanced_bootstrap():
     forest.fit(X, y)
     # Test fail on multi-output
     assert_raises(ValueError, forest.fit, X, X.astype(int))
+
+
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize(
     'max_samples, exc_type, exc_msg',
