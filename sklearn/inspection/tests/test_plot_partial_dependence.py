@@ -15,6 +15,12 @@ from sklearn.utils._testing import _convert_container
 from sklearn.inspection import plot_partial_dependence
 
 
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
+
+
 @pytest.fixture(scope="module")
 def boston():
     return load_boston()
