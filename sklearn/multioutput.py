@@ -23,10 +23,10 @@ from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
-from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
+from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -60,8 +60,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
-                           metaclass=ABCMeta):
+class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+                            metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
@@ -193,7 +193,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         X = check_array(X, accept_sparse=True)
 
         y = Parallel(n_jobs=self.n_jobs)(
-            delayed(parallel_helper)(e, 'predict', X)
+            delayed(e.predict)(X)
             for e in self.estimators_)
 
         return np.asarray(y).T
@@ -202,7 +202,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return {'multioutput_only': True}
 
 
-class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
+class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     """Multi target regression
 
     This strategy consists of fitting one regressor per target. This is a
@@ -297,7 +297,7 @@ class MultiOutputRegressor(RegressorMixin, MultiOutputEstimator):
                         multioutput='uniform_average')
 
 
-class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
+class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     """Multi target classification
 
     This strategy consists of fitting one classifier per target. This is a
@@ -321,6 +321,18 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+
+    >>> X, y = make_multilabel_classification(n_classes=3, random_state=0)
+    >>> clf = MultiOutputClassifier(KNeighborsClassifier()).fit(X, y)
+    >>> clf.predict(X[-2:])
+    array([[1, 1, 0], [1, 1, 1]])
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -348,7 +360,8 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
         self.classes_ = [estimator.classes_ for estimator in self.estimators_]
         return self
 
-    def predict_proba(self, X):
+    @property
+    def predict_proba(self):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
@@ -370,9 +383,11 @@ class MultiOutputClassifier(ClassifierMixin, MultiOutputEstimator):
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
                     for estimator in self.estimators_]):
-            raise ValueError("The base estimator should implement "
-                             "predict_proba method")
+            raise AttributeError("The base estimator should "
+                                 "implement predict_proba method")
+        return self._predict_proba
 
+    def _predict_proba(self, X):
         results = [estimator.predict_proba(X) for estimator in
                    self.estimators_]
         return results
@@ -524,6 +539,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <classifierchain>`.
+
+    .. versionadded:: 0.19
 
     Parameters
     ----------
@@ -760,3 +777,10 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
+
+
+# TODO: remove in 0.24
+@deprecated("MultiOutputEstimator is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class MultiOutputEstimator(_MultiOutputEstimator):
+    pass
