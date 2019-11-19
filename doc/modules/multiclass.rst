@@ -34,8 +34,8 @@ regression is also supported.
       example of a vector ``y`` for 3 samples:
 
         >>> import numpy as np
-        >>> y = np.array(['apple', 'pear', 'apple'])                               
-        >>> print(y)                                                                         
+        >>> y = np.array(['apple', 'pear', 'apple'])
+        >>> print(y)
         ['apple' 'pear' 'apple']
 
     - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
@@ -44,10 +44,10 @@ regression is also supported.
       the columns, in order, are orange, apple and pear:
 
         >>> from scipy import sparse
-        >>> row_ind = np.array([0,1,2])                                                      
-        >>> col_ind = np.array([1,2,1])  
-        >>> y_sparse = sparse.csr_matrix((np.ones(3), (row_ind, col_ind)))                   
-        >>> print(y_sparse)                                                                  
+        >>> row_ind = np.array([0, 1, 2])
+        >>> col_ind = np.array([1, 2, 1])
+        >>> y_sparse = sparse.csr_matrix((np.ones(3), (row_ind, col_ind)))
+        >>> print(y_sparse)
           (0, 1)	1.0
           (1, 2)	1.0
           (2, 1)	1.0
@@ -75,16 +75,16 @@ regression is also supported.
   sample has been labelled with. An example of a dense matrix ``y`` for 3
   samples:
 
-    >>> y = np.array([[1,0,0,1], [0,0,1,1], [0,0,0,0]])                                  
-    >>> print(y)                                                                         
+    >>> y = np.array([[1, 0, 0, 1], [0, 0, 1, 1], [0, 0, 0, 0]])
+    >>> print(y)
     [[1 0 0 1]
-    [0 0 1 1]
-    [0 0 0 0]]
+     [0 0 1 1]
+     [0 0 0 0]]
 
   An example of the same ``y`` in sparse matrix form:
- 
-    >>> y_sparse = sparse.csr_matrix(y)                                                  
-    >>> print(y_sparse)                                                                  
+
+    >>> y_sparse = sparse.csr_matrix(y)
+    >>> print(y_sparse)
       (0, 0)	1
       (0, 3)	1
       (1, 2)	1
@@ -106,11 +106,11 @@ regression is also supported.
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of
   :term:`continuous` variables. An example of ``y`` for 3 samples:
 
-    >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])                              
-    >>> print(y)                                                                         
+    >>> y = np.array([[31.4, 94], [40.5, 109], [25.0, 30]])
+    >>> print(y)
     [[ 31.4  94. ]
-    [ 40.5 109. ]
-    [ 25.   30. ]]
+     [ 40.5 109. ]
+     [ 25.   30. ]]
 
 
 - **Multioutput-multiclass classification**
@@ -134,11 +134,11 @@ regression is also supported.
   ``(n_samples, n_classes)`` of floats. A column wise concatenation of 1d
   :term:`multiclass` variables. An example of ``y`` for 3 samples:
 
-    >>> y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])      
-    >>> print(y)                                                                         
+    >>> y = np.array([['apple', 'green'], ['orange', 'orange'], ['pear', 'green']])
+    >>> print(y)
     [['apple' 'green']
-    ['orange' 'orange']
-    ['pear' 'green']]
+     ['orange' 'orange']
+     ['pear' 'green']]
 
   Note that any classifiers handling multioutput-multiclass (also known as
   multitask classification) tasks, support the multilabel classification task
