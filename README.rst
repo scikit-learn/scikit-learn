@@ -24,13 +24,13 @@
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. image:: doc/logos/scikit-learn-logo.png
-	:align: center
+	:align: right
 
 ============
 scikit-learn
 ============
 
-scikit-learn is a Python module for machine learning built on top of
+*scikit-learn* is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
