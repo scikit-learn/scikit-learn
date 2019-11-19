@@ -14,6 +14,8 @@ IF "%PYTHON_ARCH%"=="64" (
     conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION%
 
     call activate %VIRTUALENV%
+
+    pip install pytest-xdist
 )
 
 IF "%PYTEST_VERSION%"=="*" (
@@ -22,7 +24,7 @@ IF "%PYTEST_VERSION%"=="*" (
     pip install pytest==%PYTEST_VERSION%
 )
 
-pip install numpy scipy cython pytest wheel pillow joblib pytest-xdist matplotlib wheel
+pip install numpy scipy cython wheel pillow joblib matplotlib wheel
 
 if "%COVERAGE%" == "true" (
     pip install coverage codecov pytest-cov

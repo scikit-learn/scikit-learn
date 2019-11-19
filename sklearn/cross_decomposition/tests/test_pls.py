@@ -400,9 +400,7 @@ def test_scale_and_stability():
         X_s = (X - X.mean(axis=0)) / X_std
         Y_s = (Y - Y.mean(axis=0)) / Y_std
 
-        for clf in [CCA(),
-                    pls_.PLSCanonical(),
-                    pls_.PLSRegression(),
+        for clf in [CCA(), pls_.PLSCanonical(), pls_.PLSRegression(),
                     pls_.PLSSVD()]:
             clf.set_params(scale=True)
             X_score, Y_score = clf.fit_transform(X, Y)
