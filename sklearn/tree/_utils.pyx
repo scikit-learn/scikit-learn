@@ -20,6 +20,8 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from ..utils._random cimport our_rand_r
+
 # =============================================================================
 # Helper functions
 # =============================================================================
@@ -50,16 +52,6 @@ def _realloc_test():
     if p != NULL:
         free(p)
         assert False
-
-
-# rand_r replacement using a 32bit XorShift generator
-# See https://www.jstatsoft.org/v08/i14/paper for details
-cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
-    seed[0] ^= <UINT32_t>(seed[0] << 13)
-    seed[0] ^= <UINT32_t>(seed[0] >> 17)
-    seed[0] ^= <UINT32_t>(seed[0] << 5)
-
-    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
 
 cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
@@ -519,7 +511,7 @@ cdef class WeightedMedianCalculator:
         or 0 otherwise.
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -576,7 +568,7 @@ cdef class WeightedMedianCalculator:
         from consideration in the median calculation
         """
         cdef int return_value
-        cdef DOUBLE_t original_median
+        cdef DOUBLE_t original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()
@@ -591,7 +583,7 @@ cdef class WeightedMedianCalculator:
         left and moving to the right.
         """
         cdef int return_value
-        cdef double original_median
+        cdef double original_median = 0.0
 
         if self.size() != 0:
             original_median = self.get_median()

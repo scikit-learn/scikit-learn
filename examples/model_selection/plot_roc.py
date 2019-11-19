@@ -15,24 +15,21 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-Multiclass settings
--------------------
-
 ROC curves are typically used in binary classification to study the output of
-a classifier. In order to extend ROC curve and ROC area to multi-class
-or multi-label classification, it is necessary to binarize the output. One ROC
+a classifier. In order to extend ROC curve and ROC area to multi-label
+classification, it is necessary to binarize the output. One ROC
 curve can be drawn per label, but one can also draw a ROC curve by considering
 each element of the label indicator matrix as a binary prediction
 (micro-averaging).
 
-Another evaluation measure for multi-class classification is
+Another evaluation measure for multi-label classification is
 macro-averaging, which gives equal weight to the classification of each
 label.
 
 .. note::
 
     See also :func:`sklearn.metrics.roc_auc_score`,
-             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`.
+             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`
 
 """
 print(__doc__)
@@ -47,6 +44,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
 from scipy import interp
+from sklearn.metrics import roc_auc_score
 
 # Import some data to play with
 iris = datasets.load_iris()
@@ -101,8 +99,8 @@ plt.show()
 
 
 ##############################################################################
-# Plot ROC curves for the multiclass problem
-
+# Plot ROC curves for the multilabel problem
+# ..........................................
 # Compute macro-average ROC curve and ROC area
 
 # First aggregate all false positive rates
@@ -146,3 +144,29 @@ plt.ylabel('True Positive Rate')
 plt.title('Some extension of Receiver operating characteristic to multi-class')
 plt.legend(loc="lower right")
 plt.show()
+
+
+##############################################################################
+# Area under ROC for the multiclass problem
+# .........................................
+# The :func:`sklearn.metrics.roc_auc_score` function can be used for
+# multi-class classification. The multi-class One-vs-One scheme compares every
+# unique pairwise combination of classes. In this section, we calcuate the AUC
+# using the OvR and OvO schemes. We report a macro average, and a
+# prevalence-weighted average.
+y_prob = classifier.predict_proba(X_test)
+
+macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multi_class="ovo",
+                                  average="macro")
+weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multi_class="ovo",
+                                     average="weighted")
+macro_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr",
+                                  average="macro")
+weighted_roc_auc_ovr = roc_auc_score(y_test, y_prob, multi_class="ovr",
+                                     average="weighted")
+print("One-vs-One ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
+      "(weighted by prevalence)"
+      .format(macro_roc_auc_ovo, weighted_roc_auc_ovo))
+print("One-vs-Rest ROC AUC scores:\n{:.6f} (macro),\n{:.6f} "
+      "(weighted by prevalence)"
+      .format(macro_roc_auc_ovr, weighted_roc_auc_ovr))

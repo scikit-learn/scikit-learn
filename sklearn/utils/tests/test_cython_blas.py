@@ -1,10 +1,8 @@
 import pytest
-import cython
 
 import numpy as np
 
-from sklearn.utils.testing import assert_allclose
-
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._cython_blas import _dot_memview
 from sklearn.utils._cython_blas import _asum_memview
 from sklearn.utils._cython_blas import _axpy_memview
@@ -18,6 +16,8 @@ from sklearn.utils._cython_blas import _ger_memview
 from sklearn.utils._cython_blas import _gemm_memview
 from sklearn.utils._cython_blas import RowMajor, ColMajor
 from sklearn.utils._cython_blas import Trans, NoTrans
+
+cython = pytest.importorskip("cython")
 
 
 NUMPY_TO_CYTHON = {np.float32: cython.float, np.float64: cython.double}

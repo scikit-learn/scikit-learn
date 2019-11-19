@@ -8,7 +8,7 @@ from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
 
-from ..utils import safe_indexing
+from ..utils import _safe_indexing
 from ..base import BaseEstimator
 
 __all__ = ['if_delegate_has_method']
@@ -198,10 +198,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         else:
             X_subset = X[np.ix_(indices, train_indices)]
     else:
-        X_subset = safe_indexing(X, indices)
+        X_subset = _safe_indexing(X, indices)
 
     if y is not None:
-        y_subset = safe_indexing(y, indices)
+        y_subset = _safe_indexing(y, indices)
     else:
         y_subset = None
 

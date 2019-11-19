@@ -18,8 +18,9 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
 
-class KBinsDiscretizer(BaseEstimator, TransformerMixin):
-    """Bin continuous data into intervals.
+class KBinsDiscretizer(TransformerMixin, BaseEstimator):
+    """
+    Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
 
@@ -63,6 +64,27 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
         Ignored features will have empty arrays.
 
+    See Also
+    --------
+     sklearn.preprocessing.Binarizer : Class used to bin values as ``0`` or
+        ``1`` based on a parameter ``threshold``.
+
+    Notes
+    -----
+    In bin edges for feature ``i``, the first and last values are used only for
+    ``inverse_transform``. During transform, bin edges are extended to::
+
+      np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
+
+    You can combine ``KBinsDiscretizer`` with
+    :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
+    part of the features.
+
+    ``KBinsDiscretizer`` might produce constant features (e.g., when
+    ``encode = 'onehot'`` and certain bins do not contain any data).
+    These features can be removed with feature selection algorithms
+    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
+
     Examples
     --------
     >>> X = [[-2, 1, -4,   -1],
@@ -70,7 +92,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
     >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='uniform')
-    >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> est.fit(X)
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
     >>> Xt  # doctest: +SKIP
@@ -91,27 +113,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
            [-0.5,  2.5, -2.5, -0.5],
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
-
-    Notes
-    -----
-    In bin edges for feature ``i``, the first and last values are used only for
-    ``inverse_transform``. During transform, bin edges are extended to::
-
-      np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
-
-    You can combine ``KBinsDiscretizer`` with
-    :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
-    part of the features.
-
-    ``KBinsDiscretizer`` might produce constant features (e.g., when
-    ``encode = 'onehot'`` and certain bins do not contain any data).
-    These features can be removed with feature selection algorithms
-    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
-
-    See also
-    --------
-     sklearn.preprocessing.Binarizer : class used to bin values as ``0`` or
-        ``1`` based on a parameter ``threshold``.
     """
 
     def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
@@ -120,14 +121,17 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.strategy = strategy
 
     def fit(self, X, y=None):
-        """Fits the estimator.
+        """
+        Fit the estimator.
 
         Parameters
         ----------
         X : numeric array-like, shape (n_samples, n_features)
             Data to be discretized.
 
-        y : ignored
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -211,7 +215,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, (numbers.Integral, np.integer)):
+            if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
                                  "Received {}, expected int."
                                  .format(KBinsDiscretizer.__name__,
@@ -241,7 +245,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         return n_bins
 
     def transform(self, X):
-        """Discretizes the data.
+        """
+        Discretize the data.
 
         Parameters
         ----------
@@ -253,7 +258,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
         n_features = self.n_bins_.shape[0]
@@ -279,7 +284,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
-        """Transforms discretized data back to original feature space.
+        """
+        Transform discretized data back to original feature space.
 
         Note that this function does not regenerate the original data
         due to discretization rounding.
@@ -294,7 +300,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        check_is_fitted(self, ["bin_edges_"])
+        check_is_fitted(self)
 
         if 'onehot' in self.encode:
             Xt = self._encoder.inverse_transform(Xt)

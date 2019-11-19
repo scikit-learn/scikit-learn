@@ -1,6 +1,6 @@
 import numpy as np
 
-from sklearn.utils.extmath import stable_cumsum
+from .extmath import stable_cumsum
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
