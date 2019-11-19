@@ -1308,10 +1308,6 @@ def test_forest_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
 
-    # Try to fit and predict.
-    clf.fit(X, y)
-    clf.predict(X)
-
 
 def test_get_class_distribution():
     y = np.array([0, 1, 0, 1, 1, 2])
