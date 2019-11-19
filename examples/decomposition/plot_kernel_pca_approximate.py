@@ -76,6 +76,7 @@ plt.ylabel("$x_2$")
 # 2- Run experiments
 # -----------------------
 for i, n_compo in enumerate(n_components_range):
+    n_compo = int(n_compo)
     print("Fitting kPCA for n_components=%i" % n_compo)
 
     try:
