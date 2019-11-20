@@ -465,7 +465,8 @@ class PCA(_BasePCA):
             # variance percentage is superior to the desired threshold
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
             n_components_index = np.searchsorted(ratio_cumsum, n_components)
-            n_components = n_components_index + 2 if n_components == ratio_cumsum[n_components_index] \
+            n_components = n_components_index + 2 \
+                if n_components == ratio_cumsum[n_components_index] \
                 else n_components_index + 1
 
         # Compute noise covariance using Probabilistic PCA model
