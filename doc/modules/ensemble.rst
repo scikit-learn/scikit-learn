@@ -255,6 +255,12 @@ random-forest.
 alternative balancing strategies which are not as efficient in case of large
 difference between the class frequencies.
 
+.. note::
+  Be aware that `sample_weight` will be taken into account when setting
+  `class_weight="balanced_bootstrap"`. Thus, it is recommended to not manually
+  balanced the dataset using `sample_weight` and use
+  `class_weight="balanced_bootstrap"` at the same time.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_plot_learn_from_imbalanced_dataset.py`
