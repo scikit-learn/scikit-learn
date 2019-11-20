@@ -93,6 +93,7 @@ random sampling procedures.
 - :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`decomposition.SparsePCA` where `normalize_components` has no effect
   due to deprecation.
+- :class:`decomposition.KernelPCA` |Feature|, |Enhancement|
 - :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` |Fix|, |Feature|,
   |Enhancement|.
