@@ -109,10 +109,10 @@ set of classifiers is created by introducing randomness in the classifier
 construction.  The prediction of the ensemble is given as the averaged
 prediction of the individual classifiers.
 
-As other classifiers, forest classifiers have to be fitted with two
-arrays: a sparse or dense array X of size ``[n_samples, n_features]`` holding the
-training samples, and an array Y of size ``[n_samples]`` holding the
-target values (class labels) for the training samples::
+As other classifiers, forest classifiers have to be fitted with two arrays: a
+sparse or dense array X of size ``[n_samples, n_features]`` holding the
+training samples, and an array Y of size ``[n_samples]`` holding the target
+values (class labels) for the training samples::
 
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> X = [[0, 0], [1, 1]]
@@ -200,6 +200,9 @@ in bias::
 Parameters
 ----------
 
+Impactful parameters
+....................
+
 The main parameters to adjust when using these methods is ``n_estimators`` and
 ``max_features``. The former is the number of trees in the forest. The larger
 the better, but also the longer it will take to compute. In addition, note that
@@ -223,10 +226,40 @@ or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
-    The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
-    where :math:`M` is the number of trees and :math:`N` is the number of samples.
-    In order to reduce the size of the model, you can change these parameters:
-    ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and ``min_samples_leaf``.
+    The size of the model with the default parameters is :math:`O( M * N * log
+    (N) )`, where :math:`M` is the number of trees and :math:`N` is the number
+    of samples. In order to reduce the size of the model, you can change these
+    parameters: ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and
+    ``min_samples_leaf``.
+
+Learning from imbalanced classes dataset
+........................................
+
+In some datasets, the number of samples per classes might vary tremendously
+(e.g 100 samples for a "majority" class for a single sample in a "minority"
+class). Learning from these imbalanced dataset is challenging. The tree
+criteria (i.e. gini or entropy) are sensitive to class imbalanced and will
+naturally favor the classes with the most samples given during ``fit``.
+
+The :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` provides
+a parameter `class_weight` with the option `"balanced_bootstrap"` to alleviate
+the bias induce by the class imbalanced. This strategy will provide a balanced
+bootstrap sample (i.e. equal number of samples from each class) to each tree
+of the ensemble during the ``fit`` process as proposed in [CLB2004]_.
+
+`class_weight="balanced"` and `class_weight="balanced_subsample"`) provide
+alternative balancing strategies which are not as efficient in case of large
+difference between the class frequencies.
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_plot_learn_from_imbalanced_dataset.py`
+
+.. topic:: References
+
+  .. [CLB2004] C. Chen, A. Liaw, and L. Breiman, "Using random forest to learn
+         imbalanced data." University of California, Berkeley
+         110.1-12, 24, 2004.
 
 Parallelization
 ---------------
