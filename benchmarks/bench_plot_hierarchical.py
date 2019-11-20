@@ -6,6 +6,7 @@ from numpy import random as nr
 
 from sklearn.cluster import AgglomerativeClustering
 
+
 def compute_bench(samples_range, features_range):
 
     it = 0
@@ -24,7 +25,7 @@ def compute_bench(samples_range, features_range):
             for linkage in ("single", "average", "complete", "ward"):
                 print(linkage.capitalize())
                 tstart = time()
-                agglom = AgglomerativeClustering(
+                AgglomerativeClustering(
                     linkage=linkage,
                     n_clusters=10
                 ).fit(data)
@@ -36,6 +37,7 @@ def compute_bench(samples_range, features_range):
                 results[linkage].append(delta)
 
     return results
+
 
 if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
