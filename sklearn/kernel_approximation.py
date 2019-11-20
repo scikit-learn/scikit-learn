@@ -55,9 +55,9 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> ps = PolynomialSampler(degree=3, random_state=1)
     >>> X_features = ps.fit_transform(X)
-    >>> clf = LinearSVC(C=1.0, class_weight=None, dual=True,
-        fit_intercept=True, intercept_scaling=1, loss='squared_hinge',
-        max_iter=1000, multi_class='ovr', penalty='l2', random_state=None,
+    >>> clf = LinearSVC(C=1.0, class_weight=None, dual=True, \
+        fit_intercept=True, intercept_scaling=1, loss='squared_hinge', \
+        max_iter=1000, multi_class='ovr', penalty='l2', random_state=None, \
         tol=0.0001, verbose=0)
     >>> clf.fit(X_features, y)
     ... # doctest: +NORMALIZE_WHITESPACE
