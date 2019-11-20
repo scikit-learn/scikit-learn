@@ -163,12 +163,13 @@ cat_pipe = make_pipeline(
 # columns to the categorical pipeline and the numerical columns to the
 # numerical pipeline
 
+from pandas.api.types import CategoricalDtype
 from sklearn.compose import ColumnTransformer
 from sklearn.compose import make_column_selector as selector
 
 preprocessor_linear = ColumnTransformer(
     [("num-pipe", num_pipe, selector(dtype_include=np.number)),
-     ("cat-pipe", cat_pipe, selector(dtype_include=pd.CategoricalDtype))],
+     ("cat-pipe", cat_pipe, selector(dtype_include=CategoricalDtype))],
     n_jobs=2
 )
 
@@ -203,7 +204,7 @@ cat_pipe = make_pipeline(
 
 preprocessor_tree = ColumnTransformer(
     [("num-pipe", num_pipe, selector(dtype_include=np.number)),
-     ("cat-pipe", cat_pipe, selector(dtype_include=pd.CategoricalDtype))],
+     ("cat-pipe", cat_pipe, selector(dtype_include=CategoricalDtype))],
     n_jobs=2
 )
 
