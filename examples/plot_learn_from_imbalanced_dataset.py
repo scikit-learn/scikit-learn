@@ -79,7 +79,7 @@ from sklearn.dummy import DummyClassifier
 
 dummy_clf = DummyClassifier(strategy="most_frequent")
 score = dummy_clf.fit(X_train, y_train).score(X_test, y_test)
-print(f"Accuracy score of a dummy classifier: {score:.3f}")
+print("Accuracy score of a dummy classifier: {:.3f}".format(score))
 
 ##############################################################################
 # Instead of using the accuracy, we can use the balanced accuracy which will
@@ -89,7 +89,7 @@ from sklearn.metrics import balanced_accuracy_score
 
 y_pred = dummy_clf.predict(X_test)
 score = balanced_accuracy_score(y_test, y_pred)
-print(f"Balanced accuracy score of a dummy classifier: {score:.3f}")
+print("Balanced accuracy score of a dummy classifier: {:.3f}".format(score))
 
 ###############################################################################
 # Strategies to learn from an imbalanced dataset
@@ -282,7 +282,7 @@ y_pred = one_class_svm.predict(X_test)
 y_test_converted = ((2 * (y_test ==
                           y_test.value_counts().idxmin()).astype(int)) - 1)
 score = balanced_accuracy_score(y_test_converted, y_pred)
-print(f"Balanced accuracy {score:.2f}")
+print("Balanced accuracy {:.3f}".format(score))
 
 ###############################################################################
 # This method is not performing as good as the approaches presented earlier,
