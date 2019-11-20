@@ -226,7 +226,7 @@ Changelog
   `weights` parameter, i.e. list or numpy.array, instead of list only.
   :pr:`14764` by :user:`Cat Chenal <CatChenal>`.
 
- - |Enhancement| The parameter `normalize` was added to
+- |Enhancement| The parameter `normalize` was added to
    :func:`datasets.fetch_20newsgroups_vectorized`.
    :pr:`14740` by :user:`Stéphan Tulkens <stephantul>`
 
