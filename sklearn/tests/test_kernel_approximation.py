@@ -36,10 +36,10 @@ def test_polynomial_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
     # compute exact kernel for degree=3, coef0=4
     kernel = (np.dot(X, Y.T)+4)**3
@@ -52,10 +52,10 @@ def test_polynomial_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
     # Should also work with sparse input data
     X_trans = ps_transform.fit_transform(csr_matrix(X))
@@ -63,10 +63,10 @@ def test_polynomial_sampler():
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
-    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    assert np.abs(np.mean(error)) <= 0.01  # close to unbiased
     np.abs(error, out=error)
-    assert_less_equal(np.max(error), 0.1)  # nothing too far off
-    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+    assert np.max(error) <= 0.1  # nothing too far off
+    assert np.mean(error) <= 0.05  # mean is fairly close
 
 
 def test_additive_chi2_sampler():
