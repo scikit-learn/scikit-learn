@@ -1184,8 +1184,7 @@ def all_estimators(include_meta_estimators=None,
                       DeprecationWarning)
 
     all_classes = []
-    # get parent folder
-    modules_to_ignore = {"tests", "externals", "setup"}
+    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
     root = str(Path(__file__).parent.parent)  # sklearn package
     # Ignore deprecation warnings triggered at import time and from walking
     # packages
