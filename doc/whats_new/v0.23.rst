@@ -49,3 +49,16 @@ Changelog
 
 - |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
   :user:`name <user id>`
+
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Efficiency| add the option `class_weight="balanced_bootstrap"` in
+  :class:`ensemble.RandomForestClassifier` and
+  :class:`ensemble.ExtraTreesClassifier`. This option will ensure that the
+  number of samples in each bootstrap sample given to each tree of the ensemble
+  will be identical. This algorithm is also known as balanced random-forest
+  when applied to random-forest.
+  :pr:`13227` by :user:`Eric Potash <potash>`, :user:`Christos Aridas <chkoar>`
+  and :user:`Guillaume Lemaitre <glemaitre>`.
