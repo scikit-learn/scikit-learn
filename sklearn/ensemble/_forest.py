@@ -1091,6 +1091,9 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+        .. versionadded:: 0.23
+           The option `"balanced_bootstrap` was added in 0.23
+
     ccp_alpha : non-negative float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
