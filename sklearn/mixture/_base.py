@@ -15,7 +15,7 @@ from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.fixes import logsumexp
 
 
@@ -60,6 +60,21 @@ def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
                          "but got %d features"
                          % (n_features, X.shape[1]))
     return X
+
+
+def _check_normalize_sample_weight(sample_weight, X):
+    """Set sample_weight if None, and check for correct dtype"""
+
+    sample_weight_was_none = sample_weight is None
+
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    if not sample_weight_was_none:
+        # normalize the weights to sum up to n_samples
+        # an array of 1 (i.e. samples_weight is None) is already normalized
+        n_samples = len(sample_weight)
+        scale = n_samples / sample_weight.sum()
+        sample_weight *= scale
+    return sample_weight
 
 
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
@@ -129,7 +144,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def _initialize_parameters(self, X, random_state):
+    def _initialize_parameters(self, X, sample_weight, random_state):
         """Initialize the model parameters.
 
         Parameters
@@ -138,13 +153,18 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         random_state : RandomState
             A random number generator instance.
+
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
         """
         n_samples, _ = X.shape
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
-            label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
-                                   random_state=random_state).fit(X).labels_
+            init_kmeans = cluster.KMeans(n_clusters=self.n_components,
+                                         n_init=1, random_state=random_state)
+            label = init_kmeans.fit(X, sample_weight=sample_weight).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
@@ -153,10 +173,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("Unimplemented initialization method '%s'"
                              % self.init_params)
 
-        self._initialize(X, resp)
+        self._initialize(X, sample_weight, resp)
 
     @abstractmethod
-    def _initialize(self, X, resp):
+    def _initialize(self, X, sample_weight, resp):
         """Initialize the model parameters of the derived class.
 
         Parameters
@@ -167,7 +187,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Estimate model parameters with the EM algorithm.
 
         The method fits the model ``n_init`` times and sets the parameters with
@@ -185,14 +205,18 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
+
         Returns
         -------
         self
         """
-        self.fit_predict(X, y)
+        self.fit_predict(X, y, sample_weight)
         return self
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, sample_weight=None):
         """Estimate model parameters using X and predict the labels for X.
 
         The method fits the model n_init times and sets the parameters with
@@ -211,6 +235,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
+
         Returns
         -------
         labels : array, shape (n_samples,)
@@ -219,8 +250,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X = _check_X(X, self.n_components, ensure_min_samples=2)
         self._check_initial_parameters(X)
 
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+
         # if we enable warm_start, we will have a unique initialisation
-        do_init = not(self.warm_start and hasattr(self, 'converged_'))
+        do_init = not (self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
 
         max_lower_bound = -np.infty
@@ -233,7 +266,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             self._print_verbose_msg_init_beg(init)
 
             if do_init:
-                self._initialize_parameters(X, random_state)
+                self._initialize_parameters(X, sample_weight, random_state)
 
             lower_bound = (-np.infty if do_init else self.lower_bound_)
 
@@ -241,7 +274,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 prev_lower_bound = lower_bound
 
                 log_prob_norm, log_resp = self._e_step(X)
-                self._m_step(X, log_resp)
+                self._m_step(X, sample_weight, log_resp)
                 lower_bound = self._compute_lower_bound(
                     log_resp, log_prob_norm)
 
@@ -284,6 +317,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like, shape (n_samples, n_features)
 
+        sample_weight : array-like, shape (n_samples,)
+            The weights for each observation in X.
+
         Returns
         -------
         log_prob_norm : float
@@ -297,7 +333,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         return np.mean(log_prob_norm), log_resp
 
     @abstractmethod
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, sample_weight, log_resp):
         """M step.
 
         Parameters
@@ -307,6 +343,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
+
+        sample_weight : array-like, shape (n_samples,)
+            The weights for each observation in X.
         """
         pass
 
@@ -318,7 +357,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     def _set_parameters(self, params):
         pass
 
-    def score_samples(self, X):
+    def score_samples(self, X, sample_weight=None):
         """Compute the weighted log probabilities for each sample.
 
         Parameters
@@ -326,6 +365,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
+
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
 
         Returns
         -------
@@ -335,9 +378,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
 
-        return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
-    def score(self, X, y=None):
+        return sample_weight \
+               * logsumexp(self._estimate_weighted_log_prob(X), axis=1)
+
+    def score(self, X, y=None, sample_weight=None):
         """Compute the per-sample average log-likelihood of the given data X.
 
         Parameters
@@ -346,14 +392,18 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
+
         Returns
         -------
         log_likelihood : float
             Log likelihood of the Gaussian mixture given X.
         """
-        return self.score_samples(X).mean()
+        return self.score_samples(X, sample_weight).mean()
 
-    def predict(self, X):
+    def predict(self, X, sample_weight=None):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
@@ -362,6 +412,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
+
         Returns
         -------
         labels : array, shape (n_samples,)
@@ -369,6 +423,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
+
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
@@ -380,6 +437,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
+        sample_weight : array-like, shape (n_samples,), optional
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight (default: None).
+
         Returns
         -------
         resp : array, shape (n_samples, n_components)
@@ -388,6 +449,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
+
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
 
@@ -436,7 +498,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     self.means_, self.covariances_, n_samples_comp)])
 
         y = np.concatenate([np.full(sample, j, dtype=int)
-                           for j, sample in enumerate(n_samples_comp)])
+                            for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)
 
@@ -446,6 +508,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+
+        sample_weight : array-like, shape (n_samples,)
 
         Returns
         -------
@@ -473,6 +537,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
         X : array-like, shape (n_samples, n_features)
 
+        sample_weight : array-like, shape (n_samples,)
+
         Returns
         -------
         log_prob : array, shape (n_samples, n_component)
@@ -489,6 +555,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+
+        sample_weight : array-like, shape (n_samples,)
 
         Returns
         -------
