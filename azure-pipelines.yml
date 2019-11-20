@@ -48,7 +48,6 @@ jobs:
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.5'
         JOBLIB_VERSION: '0.11'
-        SKLEARN_NO_OPENMP: 'True'
       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
       py35_conda_openblas:
         DISTRIB: 'conda'
@@ -58,7 +57,8 @@ jobs:
         SCIPY_VERSION: '0.17.0'
         PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
-        PYTEST_VERSION: '*'
+        # temporary pin pytest due to unknown failure with pytest 5.3
+        PYTEST_VERSION: '5.2'
         PILLOW_VERSION: '4.0.0'
         MATPLOTLIB_VERSION: '1.5.1'
         # later version of joblib are not packaged in conda for Python 3.5
@@ -69,7 +69,7 @@ jobs:
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         # FIXME: pinned until SciPy wheels are available for Pyhon 3.8
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
@@ -86,7 +86,6 @@ jobs:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.5'
         JOBLIB_VERSION: '0.11'
-        SKLEARN_NO_OPENMP: 'True'
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -105,6 +104,19 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
+      pylatest_conda_mkl_no_openmp:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
+        SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
 
 - template: build_tools/azure/windows.yml
   parameters:
