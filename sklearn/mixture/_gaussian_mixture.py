@@ -209,7 +209,7 @@ def _estimate_gaussian_covariances_diag(resp, X, sample_weight, nk, means,
 
     Parameters
     ----------
-    responsibilities : array-like, shape (n_samples, n_components)
+    resp : array-like, shape (n_samples, n_components)
 
     X : array-like, shape (n_samples, n_features)
 
@@ -239,7 +239,7 @@ def _estimate_gaussian_covariances_spherical(resp, X, sample_weight, nk, means,
 
     Parameters
     ----------
-    responsibilities : array-like, shape (n_samples, n_components)
+    resp : array-like, shape (n_samples, n_components)
 
     X : array-like, shape (n_samples, n_features)
 
@@ -398,12 +398,15 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     return log_det_chol
 
 
-def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
+def _estimate_log_gaussian_prob(X, sample_weight, means, precisions_chol,
+                                covariance_type):
     """Estimate the log Gaussian probability.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_features)
+
+    sample_weight : array-like, shape (n_samples,), optional
 
     means : array-like, shape (n_components, n_features)
 
@@ -425,6 +428,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     # det(precision_chol) is half of det(precision)
     log_det = _compute_log_det_cholesky(
         precisions_chol, covariance_type, n_features)
+
+    log_det_weighted = - 2 * np.log(sample_weight)
 
     if covariance_type == 'full':
         log_prob = np.empty((n_samples, n_components))
@@ -449,7 +454,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
         log_prob = (np.sum(means ** 2, 1) * precisions -
                     2 * np.dot(X, means.T * precisions) +
                     np.outer(row_norms(X, squared=True), precisions))
-    return -.5 * (n_features * np.log(2 * np.pi) + log_prob) + log_det
+    return (-.5 * (n_features * np.log(2 * np.pi) + log_prob)
+            + log_det + log_det_weighted[:, np.newaxis])
 
 
 class GaussianMixture(BaseMixture):
@@ -652,9 +658,9 @@ class GaussianMixture(BaseMixture):
         ----------
         X : array-like, shape (n_samples, n_features)
 
-        resp : array-like, shape (n_samples, n_components)
-
         sample_weight : array-like, shape (n_samples,)
+
+        resp : array-like, shape (n_samples, n_components)
         """
         sum_weight = np.sum(sample_weight)
 
@@ -687,6 +693,8 @@ class GaussianMixture(BaseMixture):
         ----------
         X : array-like, shape (n_samples, n_features)
 
+        sample_weight : array-like, shape (n_samples,)
+
         log_resp : array-like, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
@@ -700,8 +708,8 @@ class GaussianMixture(BaseMixture):
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
 
-    def _estimate_log_prob(self, X):
-        return _estimate_log_gaussian_prob(X, self.means_,
+    def _estimate_log_prob(self, X, sample_weight):
+        return _estimate_log_gaussian_prob(X, sample_weight, self.means_,
                                            self.precisions_cholesky_,
                                            self.covariance_type)
 
@@ -747,25 +755,24 @@ class GaussianMixture(BaseMixture):
         mean_params = n_features * self.n_components
         return int(cov_params + mean_params + self.n_components - 1)
 
-    def bic(self, X, sample_weight):
+    def bic(self, X, sample_weight=None):
         """Bayesian information criterion for the current model on the input X.
 
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
 
+        sample_weight : array-like, shape (n_samples,)
+
         Returns
         -------
         bic : float
             The lower the better.
         """
-        print('full score', -2 * self.score(X, sample_weight) * X.shape[0])
-        print('pena', + self._n_parameters() * np.log(X.shape[0]))
-        print('bic', -2 * self.score(X, sample_weight) * X.shape[0] + self._n_parameters() * np.log(X.shape[0]))
+        return (-2 * self.score(X, sample_weight=sample_weight) * X.shape[0]
+                + self._n_parameters() * np.log(X.shape[0]))
 
-        return -2 * self.score(X, sample_weight=sample_weight) * X.shape[0] + self._n_parameters() * np.log(X.shape[0])
-
-    def aic(self, X, sample_weight):
+    def aic(self, X, sample_weight=None):
         """Akaike information criterion for the current model on the input X.
 
         Parameters

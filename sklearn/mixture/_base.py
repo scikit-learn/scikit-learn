@@ -184,6 +184,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         X : array-like, shape  (n_samples, n_features)
 
         resp : array-like, shape (n_samples, n_components)
+
+        sample_weight : array-like, shape (n_samples,), optional.
         """
         pass
 
@@ -273,7 +275,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             for n_iter in range(1, self.max_iter + 1):
                 prev_lower_bound = lower_bound
 
-                log_prob_norm, log_resp = self._e_step(X)
+                log_prob_norm, log_resp = self._e_step(X, sample_weight)
                 self._m_step(X, sample_weight, log_resp)
                 lower_bound = self._compute_lower_bound(
                     log_resp, log_prob_norm)
@@ -306,11 +308,11 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         # Always do a final e-step to guarantee that the labels returned by
         # fit_predict(X) are always consistent with fit(X).predict(X)
         # for any value of max_iter and tol (and any random_state).
-        _, log_resp = self._e_step(X)
+        _, log_resp = self._e_step(X, sample_weight)
 
         return log_resp.argmax(axis=1)
 
-    def _e_step(self, X):
+    def _e_step(self, X, sample_weight):
         """E step.
 
         Parameters
@@ -329,7 +331,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X, sample_weight)
         return np.mean(log_prob_norm), log_resp
 
     @abstractmethod
@@ -380,8 +382,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
-        return sample_weight \
-               * logsumexp(self._estimate_weighted_log_prob(X), axis=1)
+        return sample_weight * logsumexp(
+            self._estimate_weighted_log_prob(X, sample_weight), axis=1)
 
     def score(self, X, y=None, sample_weight=None):
         """Compute the per-sample average log-likelihood of the given data X.
@@ -426,9 +428,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         sample_weight = _check_normalize_sample_weight(sample_weight, X)
 
-        return self._estimate_weighted_log_prob(X).argmax(axis=1)
+        return self._estimate_weighted_log_prob(X,
+                                                sample_weight).argmax(axis=1)
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, sample_weight=None):
         """Predict posterior probability of each component given the data.
 
         Parameters
@@ -450,7 +453,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         X = _check_X(X, None, self.means_.shape[1])
 
-        _, log_resp = self._estimate_log_prob_resp(X)
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+
+        _, log_resp = self._estimate_log_prob_resp(X, sample_weight)
         return np.exp(log_resp)
 
     def sample(self, n_samples=1):
@@ -502,7 +507,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         return (X, y)
 
-    def _estimate_weighted_log_prob(self, X):
+    def _estimate_weighted_log_prob(self, X, sample_weight):
         """Estimate the weighted log-probabilities, log P(X | Z) + log weights.
 
         Parameters
@@ -515,7 +520,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         weighted_log_prob : array, shape (n_samples, n_component)
         """
-        return self._estimate_log_prob(X) + self._estimate_log_weights()
+        return (self._estimate_log_prob(X, sample_weight)
+                + self._estimate_log_weights())
 
     @abstractmethod
     def _estimate_log_weights(self):
@@ -528,7 +534,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, sample_weight):
         """Estimate the log-probabilities log P(X | Z).
 
         Compute the log-probabilities per each component for each sample.
@@ -545,7 +551,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         pass
 
-    def _estimate_log_prob_resp(self, X):
+    def _estimate_log_prob_resp(self, X, sample_weight):
         """Estimate log probabilities and responsibilities for each sample.
 
         Compute the log probabilities, weighted log probabilities per
@@ -566,7 +572,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_responsibilities : array, shape (n_samples, n_components)
             logarithm of the responsibilities
         """
-        weighted_log_prob = self._estimate_weighted_log_prob(X)
+        weighted_log_prob = self._estimate_weighted_log_prob(X, sample_weight)
         log_prob_norm = logsumexp(weighted_log_prob, axis=1)
         with np.errstate(under='ignore'):
             # ignore underflow
