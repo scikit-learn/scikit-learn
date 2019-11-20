@@ -701,7 +701,6 @@ def test_binary_clf_curve_implicit_pos_label(curve_func):
     with pytest.raises(ValueError, match=msg):
         roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
 
-
     # Check that it is possible to use floating point class labels
     # that are interpreted similarly to integer class labels:
     y_pred = [0., 1., 0.2, 0.42]
