@@ -30,7 +30,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     Read more in the :ref:`User Guide <regression>`.
 	
-	.. versionadded:: 0.9
+    .. versionadded:: 0.9
 
     Parameters
     ----------
@@ -205,7 +205,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     Read more in the :ref:`User Guide <regression>`.
 	
-	.. versionadded:: 0.9
+    .. versionadded:: 0.9
 
     Parameters
     ----------

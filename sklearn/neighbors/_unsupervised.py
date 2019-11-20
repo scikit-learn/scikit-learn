@@ -11,7 +11,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 	
-	.. versionadded:: 0.9
+    .. versionadded:: 0.9
 
     Parameters
     ----------
