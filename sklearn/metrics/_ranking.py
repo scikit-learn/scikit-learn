@@ -31,7 +31,6 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils import _determine_key_type
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..preprocessing._label import _encode
