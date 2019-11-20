@@ -1060,8 +1060,8 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" \
-        "balanced_bootstrap" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample", \
+            "balanced_bootstrap" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1083,7 +1083,8 @@ class RandomForestClassifier(ForestClassifier):
 
         The "balanced_bootstrap" triggers the Balanced Random Forest [2]_.
         Instead of down-weighting majority class(es) it undersamples them.
-        In this case multi-output is not supported.
+        In this case multi-output is not supported. You can find more
+        information in the :ref:`User Guide <balanced_bootstrap>`.
 
         For multi-output, the weights of each column of y will be multiplied.
 

@@ -232,6 +232,8 @@ or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
     parameters: ``min_samples_split``, ``max_leaf_nodes``, ``max_depth`` and
     ``min_samples_leaf``.
 
+  .. _balanced_bootstrap:
+
 Learning from imbalanced classes dataset
 ........................................
 
@@ -241,13 +243,15 @@ class). Learning from these imbalanced dataset is challenging. The tree
 criteria (i.e. gini or entropy) are sensitive to class imbalanced and will
 naturally favor the classes with the most samples given during ``fit``.
 
-The :class:`RandomForestClassifier` and :class:`ExtraTreesClassifier` provides
-a parameter `class_weight` with the option `"balanced_bootstrap"` to alleviate
-the bias induce by the class imbalanced. This strategy will provide a balanced
-bootstrap sample (i.e. equal number of samples from each class) to each tree
-of the ensemble during the ``fit`` process as proposed in [CLB2004]_.
+The :class:`RandomForestClassifier` provides a parameter `class_weight` with
+the option `"balanced_bootstrap"` to alleviate the bias induces by the class
+imbalance. This strategy will create a bootstrap subsample for the "minority"
+class and draw with replacement the same amount of training instances from the
+other classes. Each balanced subsample is given to each tree of the ensemble to
+be fitted as proposed in [CLB2004]_. This algorithm is also called balanced
+random-forest.
 
-`class_weight="balanced"` and `class_weight="balanced_subsample"`) provide
+`class_weight="balanced"` and `class_weight="balanced_subsample"` provide
 alternative balancing strategies which are not as efficient in case of large
 difference between the class frequencies.
 
