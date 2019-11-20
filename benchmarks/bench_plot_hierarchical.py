@@ -40,7 +40,7 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
+    from mpl_toolkits.mplot3d import axes3d  # noqa: F401
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(100, 10000, 5).astype(np.int)
