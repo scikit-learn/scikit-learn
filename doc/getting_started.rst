@@ -31,7 +31,6 @@ Here is a simple example where we fit a
   RandomForestClassifier(random_state=0)
 
 The :term:`fit` method generally accepts 2 inputs:
-
 - The samples matrix (or design matrix) :term:`X`. The size of ``X``
   is typically ``(n_samples, n_features)``, which means that samples are
   represented as rows and features are represented as columns.
