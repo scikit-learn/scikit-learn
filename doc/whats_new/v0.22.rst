@@ -545,6 +545,10 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
+- |Feature| :class:`manifold.Isomap` can now use the new
+  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
+  get faster results.
+
 - |Feature| :class:`manifold.Isomap`, :class:`manifold.TSNE`, and
   :class:`manifold.SpectralEmbedding` now accept precomputed sparse
   neighbors graph as input. :issue:`10482` by `Tom Dupre la Tour`_ and
