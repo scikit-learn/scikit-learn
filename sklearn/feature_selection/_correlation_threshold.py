@@ -49,6 +49,11 @@ class CorrelationThreshold(BaseEstimator, SelectorMixin):
            [ 2. , 10.1],
            [ 3. ,  1.1]])
 
+    See Also
+    --------
+    :class:`sklearn.cluster.FeatureAgglomeration` : Agglomerate features by
+        recursively merges features
+
     References
     ----------
     Max Kuhn and Kjell Johnson, "Applied Predictive Modeling", Springer, 2013
