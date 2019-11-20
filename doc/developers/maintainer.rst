@@ -81,6 +81,13 @@ Making a release
 
        $ python setup.py bdist_wheel
 
+   - You can test if PyPi is going to accept the package using::
+
+       $ python setup.py -r -s
+       $ twine check dist/*
+
+   You can run ``twine check`` after step 5 (fetching artifacts) as well.
+
    The result should be in the `dist/` folder. We will upload it later
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
@@ -111,6 +118,10 @@ Making a release
 
    Make sure that you do not have developer versions or older versions of
    the scikit-learn package in that folder.
+
+   Before uploading to pypi, you can test upload to test.pypi.org::
+
+       $ twine upload --verbose --repository-url https://test.pypi.org/legacy/ dist/*
 
    Upload everything at once to https://pypi.org::
 
