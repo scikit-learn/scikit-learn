@@ -467,7 +467,7 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components, 
+            n_components = np.searchsorted(ratio_cumsum, n_components,
                                            side='right') + 1
             
 
