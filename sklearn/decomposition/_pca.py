@@ -463,11 +463,13 @@ class PCA(_BasePCA):
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
+            # side='right' ensures that number of features selected
+            # their variance is always greater than n_components float
+            # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components_index = np.searchsorted(ratio_cumsum, n_components)
-            n_components = n_components_index + 2 \
-                if n_components == ratio_cumsum[n_components_index] \
-                else n_components_index + 1
+            n_components = np.searchsorted(ratio_cumsum, n_components, 
+                                           side='right') + 1
+            
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
