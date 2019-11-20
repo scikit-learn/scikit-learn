@@ -538,10 +538,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
                  np.array_equal(classes, [-1]) or
                  np.array_equal(classes, [1])))):
         classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError("y_true takes value in {{{classes_repr}}} and pos_label is "
-                         "not specified: either make y_true take integer "
-                         "value in {{0, 1}} or {{-1, 1}} or pass pos_label "
-                         "explicitly.".format(classes_repr=classes_repr))
+        raise ValueError("y_true takes value in {{{classes_repr}}} and "
+                         "pos_label is not specified: either make y_true "
+                         "take integer value in {{0, 1}} or {{-1, 1}} or "
+                         "pass pos_label explicitly.".format(
+                             classes_repr=classes_repr))
     elif pos_label is None:
         pos_label = 1.
 
