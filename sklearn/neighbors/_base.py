@@ -262,7 +262,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     """
     assert graph.format == 'csr'
 
-    no_filter_needed = graph.data.max() <= radius
+    no_filter_needed = bool(graph.data.max() <= radius)
 
     if no_filter_needed:
         data, indices, indptr = graph.data, graph.indices, graph.indptr
