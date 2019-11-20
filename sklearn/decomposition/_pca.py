@@ -464,7 +464,9 @@ class PCA(_BasePCA):
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.argmax(ratio_cumsum > n_components)
+            n_components_index = np.searchsorted(ratio_cumsum, n_components)
+            n_components = n_components_index + 2 if n_components == ratio_cumsum[n_components_index] \
+                else n_components_index + 1
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
