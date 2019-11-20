@@ -97,13 +97,13 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return n_samples
 
     if isinstance(max_samples, numbers.Integral):
-        if not 1 <= max_samples <= n_samples:
+        if not (1 <= max_samples <= n_samples):
             msg = "`max_samples` must be in range 1 to {} but got value {}"
             raise ValueError(msg.format(n_samples, max_samples))
         return max_samples
 
     if isinstance(max_samples, numbers.Real):
-        if not 0 < max_samples < 1:
+        if not (0 < max_samples < 1):
             msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
         return int(round(n_samples * max_samples))
@@ -355,7 +355,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                              'len(estimators_)=%d when warm_start==True'
                              % (self.n_estimators, len(self.estimators_)))
 
-        if n_more_estimators == 0:
+        elif n_more_estimators == 0:
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
         else:
@@ -622,9 +622,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                                dtype=class_type)
 
         for k in range(self.n_outputs_):
-            predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
-                                                                axis=1),
-                                                      axis=0)
+            predictions[:, k] = self.classes_[k].take(
+                np.argmax(proba[k], axis=1), axis=0
+            )
 
         return predictions
 
