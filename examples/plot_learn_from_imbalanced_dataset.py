@@ -273,13 +273,14 @@ df_scores
 
 from sklearn.svm import OneClassSVM
 
-mask_minority_class = y_train == y_train.value_counts.idxmin()
+mask_minority_class = y_train == y_train.value_counts().idxmin()
 
 one_class_svm = make_pipeline(preprocessor_linear, OneClassSVM())
 one_class_svm.fit(X_train[mask_minority_class], y_train[mask_minority_class])
 y_pred = one_class_svm.predict(X_test)
 
-y_test_converted = (2 * (mask_minority_class).astype(int)) - 1
+y_test_converted = ((2 * (y_test ==
+                          y_test.value_counts().idxmin()).astype(int)) - 1)
 score = balanced_accuracy_score(y_test_converted, y_pred)
 print(f"Balanced accuracy {score:.2f}")
 
