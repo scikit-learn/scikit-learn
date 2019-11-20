@@ -6,9 +6,9 @@
 
 import itertools
 import numbers
-import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+import numpy as np
 
 from joblib import Parallel, delayed
 
@@ -242,7 +242,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         return self._fit(X, y, self.max_samples, sample_weight=sample_weight)
 
-    def _parallel_args(self):
+    @staticmethod
+    def _parallel_args():
         return {}
 
     def _fit(self, X, y, max_samples=None, max_depth=None, sample_weight=None):
@@ -348,7 +349,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                              'len(estimators_)=%d when warm_start==True'
                              % (self.n_estimators, len(self.estimators_)))
 
-        elif n_more_estimators == 0:
+        if n_more_estimators == 0:
             warn("Warm-start fitting without increasing n_estimators does not "
                  "fit new trees.")
             return self
@@ -394,11 +395,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
-    def _validate_y(self, y):
+    @staticmethod
+    def _validate_y(y):
         if len(y.shape) == 1 or y.shape[1] == 1:
             return column_or_1d(y, warn=True)
-        else:
-            return y
+        return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -707,8 +708,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, _, starts = _partition_estimators(self.n_estimators,
+                                                  self.n_jobs)
 
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
                              **self._parallel_args())(
@@ -758,7 +759,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                                  "".format(self.n_features_, X.shape[1]))
 
             # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(
+            n_jobs, _, starts = _partition_estimators(
                 self.n_estimators, self.n_jobs)
 
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -779,8 +780,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
             return log_proba
 
-        else:
-            return np.log(self.predict_proba(X))
+        return np.log(self.predict_proba(X))
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
@@ -816,8 +816,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, _, starts = _partition_estimators(self.n_estimators,
+                                                  self.n_jobs)
 
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_decision_function)(
@@ -1017,8 +1017,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         )
 
         # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,
-                                                             self.n_jobs)
+        n_jobs, _, starts = _partition_estimators(self.n_estimators,
+                                                  self.n_jobs)
 
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
