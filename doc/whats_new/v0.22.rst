@@ -7,7 +7,7 @@
 Version 0.22.0
 ==============
 
-**In Development**
+**November 29 2019**
 
 For a short description of the main highlights of the release, please
 refer to
@@ -191,6 +191,13 @@ Changelog
 
 :mod:`sklearn.cross_decomposition`
 ..................................
+
+- |Enhancement| :class:`decomposition.KernelPCA` now properly checks the
+  eigenvalues found by the solver for numerical or conditioning issues. This
+  ensures consistency of results across solvers (different choices for
+  ``eigen_solver``), including approximate solvers such as ``'randomized'`` and
+  ``'lobpcg'`` (see :issue:`12068`).
+  :pr:`12145` by :user:`Sylvain Marié <smarie>`
 
 - |Fix| Fixed a bug where :class:`cross_decomposition.PLSCanonical` and
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
@@ -419,6 +426,15 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
+- |Feature| Gaussian process models on structured data: :class:`gaussian_process.GaussianProcessRegressor`
+  and :class:`gaussian_process.GaussianProcessClassifier` can now accept a list
+  of generic objects (e.g. strings, trees, graphs, etc.) as the ``X`` argument
+  to their training/prediction methods.
+  A user-defined kernel should be provided for computing the kernel matrix among
+  the generic objects, and should inherit from :class:`gaussian_process.kernels.GenericKernelMixin`
+  to notify the GPR/GPC model that it handles non-vectorial samples.
+  :pr:`15557` by :user:`Yu-Hang Tang <yhtang>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -500,20 +516,20 @@ Changelog
 - |Fix| :class:`linear_model.LassoCV` no longer forces ``precompute=False``
   when fitting the final model. :pr:`14591` by `Andreas Müller`_.
 
-- |FIX| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
+- |Fix| :class:`linear_model.RidgeCV` and :class:`linear_model.RidgeClassifierCV`
   now correctly scores when `cv=None`.
   :pr:`14864` by :user:`Venkatachalam N <venkyyuvy>`.
 
-- |FIX| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
+- |Fix| Fixed a bug in :class:`linear_model.LogisticRegressionCV` where the
   ``scores_``, ``n_iter_`` and ``coefs_paths_`` attribute would have a wrong
   ordering with ``penalty='elastic-net'``. :pr:`15044` by `Nicolas Hug`_
 
-- |FIX| :class:`linear_model.MultiTaskLassoCV` and
+- |Fix| :class:`linear_model.MultiTaskLassoCV` and
   :class:`linear_model.MultiTaskElasticNetCV` with X of dtype int
   and `fit_intercept=True`.
   :pr:`15086` by :user:`Alex Gramfort <agramfort>`.
 
-- |FIX| The liblinear solver now supports ``sample_weight``.
+- |Fix| The liblinear solver now supports ``sample_weight``.
   :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.manifold`
@@ -573,6 +589,9 @@ Changelog
 - |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
   precision recall curves. :pr:`14936` by `Thomas Fan`_.
 
+- |Feature| :func:`metrics.plot_confusion_matrix` has been added to plot
+  confusion matrices. :pr:`15083` by `Thomas Fan`_.
+
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with
   corresponding scorers `'roc_auc_ovr'`, `'roc_auc_ovo'`,
   `'roc_auc_ovr_weighted'`, and `'roc_auc_ovo_weighted'`.
@@ -623,6 +642,11 @@ Changelog
 - |Enhancement| 'roc_auc_ovr_weighted' and 'roc_auc_ovo_weighted' can now be
   used as the :term:`scoring` parameter of model-selection tools.
   :pr:`14417` by `Thomas Fan`_.
+
+- |Enhancement| :func:`metrics.confusion_matrix` accepts a parameters
+  `normalize` allowing to normalize the confusion matrix by column, rows, or
+  overall.
+  :pr:`15625` by `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -783,7 +807,7 @@ Changelog
 - |Fix| fixed a bug in :class:`BaseLibSVM._sparse_fit` where n_SV=0 raised a
   ZeroDivisionError. :pr:`14894` by :user:`Danna Naser <danna-naser>`.
 
-- |FIX| The liblinear solver now supports ``sample_weight``.
+- |Fix| The liblinear solver now supports ``sample_weight``.
   :pr:`15038` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 
