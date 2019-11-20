@@ -39,14 +39,15 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble.forest import _get_class_distribution
-from sklearn.ensemble.forest import _generate_balanced_sample_indices
+from sklearn.model_selection import train_test_split
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
@@ -1309,34 +1310,68 @@ def test_forest_degenerate_feature_importances():
                        np.zeros(10, dtype=np.float64))
 
 
-def test_get_class_distribution():
-    y = np.array([0, 1, 0, 1, 1, 2])
-    classes, class_counts, class_indices = _get_class_distribution(y)
-    assert_array_equal(classes, [0, 1, 2])
-    assert_array_equal(class_counts, [2, 3, 1])
-    assert_array_equal(class_indices[0], [0, 2])
-    assert_array_equal(class_indices[1], [1, 3, 4])
-    assert_array_equal(class_indices[2], [5])
+def test_forest_balanced_bootstrap_not_implemented():
+    # check that an error is raised for unknown target
+    X, y = make_multilabel_classification(random_state=0)
+    with pytest.raises(NotImplementedError, match="Balanced random-forest"):
+        RandomForestClassifier(class_weight="balanced_bootstrap").fit(X, y)
 
 
-def test_generate_balanced_sample_indices():
-    y = np.array([0, 1, 0, 1, 1, 2])
-    random_state = 0
-    balance_data = _get_class_distribution(y)
-    sample_indices = _generate_balanced_sample_indices(random_state,
-                                                       balance_data)
-    assert_array_equal(sample_indices, [0, 3, 5])
+def test_forest_class_weight_balanced_bootstrap():
+    # check the implementation of balanced random forest
+    X, y = datasets.make_classification(
+        n_samples=1000, weights=[0.95, 0.05], random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, stratify=y, random_state=0
+    )
+
+    rf = RandomForestClassifier(n_estimators=10, random_state=0)
+    brf = RandomForestClassifier(
+        n_estimators=10, random_state=0, class_weight="balanced_bootstrap"
+    )
+
+    rf.fit(X_train, y_train)
+    brf.fit(X_train, y_train)
+
+    # The random-forest will be affected by the imbalanced classes while the
+    # balanced random-forest will be able to fit a proper model
+    balanced_acc_rf = balanced_accuracy_score(y_test, rf.predict(X_test))
+    balanced_acc_brf = balanced_accuracy_score(y_test, brf.predict(X_test))
+    assert balanced_acc_brf > balanced_acc_rf
+
+    # the balanced random-forest will be trained with much less samples than
+    # the random-forest. Thus, the number of nodes will be much less.
+    for brf_est, rf_est in zip(brf.estimators_, rf.estimators_):
+        assert brf_est.tree_.node_count < rf_est.tree_.node_count
 
 
-def test_class_weight_balanced_bootstrap():
-    # Test class_weight works for multi-output"""
-    forest = RandomForestClassifier(n_estimators=10,
-                                    class_weight='balanced_bootstrap',
-                                    random_state=0)
-    X, y = datasets.make_classification(n_samples=100, weights=[0.8, 0.2])
-    forest.fit(X, y)
-    # Test fail on multi-output
-    assert_raises(ValueError, forest.fit, X, X.astype(int))
+def test_forest_balanced_bootstrap_max_samples():
+    # check that we take the minimum between max_samples and the minimum
+    # class_counts
+    X, y = datasets.make_classification(
+        n_samples=1000, weights=[0.8, 0.2], random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, stratify=y, random_state=0
+    )
+
+    brf = RandomForestClassifier(
+        n_estimators=10, random_state=0, class_weight="balanced_bootstrap"
+    )
+    brf_max_samples = RandomForestClassifier(
+        n_estimators=10, random_state=0, class_weight="balanced_bootstrap",
+        max_samples=60
+    )
+
+    brf.fit(X_train, y_train)
+    brf_max_samples.fit(X_train, y_train)
+
+    # the random forest with max_samples will have less training samples and
+    # therefore less number of nodes
+    for brf_est_max_samples, brf_est in zip(brf_max_samples.estimators_,
+                                            brf.estimators_):
+        assert brf_est_max_samples.tree_.node_count < brf_est.tree_.node_count
 
 
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)

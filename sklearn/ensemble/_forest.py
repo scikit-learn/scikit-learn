@@ -62,6 +62,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import column_or_1d
 
 
 __all__ = ["RandomForestClassifier",
@@ -112,71 +113,85 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
     raise TypeError(msg.format(type(max_samples)))
 
 
-def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
-    """
-    Private function used to _parallel_build_trees function."""
-
-    random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
-
-    return sample_indices
-
-
 def _get_class_distribution(y):
-    """Private function used to fit function.
-    Args: outcome array y
-    Returns: tuple of
-        - classes: list of classes
-        - class_counts: list of count of each class
-        - class_indices: list of indices of each class
+    """Compute the class distributions and associated statistics.
+
+    Parameters
+    ----------
+    y : ndarray of shape (n_samples,)
+        Targets.
+
+    Returns
+    -------
+    class_indices : dict
+        Dictionary where the key is the class name and the value is an array
+        of the class indices.
+    class_counts : dict
+        Dictionary where the key is the class name and the value is the counts.
     """
-    if len(y.shape) > 1:
-        if y.shape[1] == 1:
-            y = y.flatten()
-        else:
-            raise ValueError("Balanced random forest not implemented "
-                             "for multi-output")
+    try:
+        y = column_or_1d(y)
+    except ValueError:
+        raise NotImplementedError(
+            "Balanced random-forest not implemented for multi-output"
+        )
 
     classes = np.unique(y)
-    class_indices = [np.nonzero(y == cls)[0] for cls in classes]
-    class_counts = [len(i) for i in class_indices]
+    class_indices = {klass: np.flatnonzero(y == klass) for klass in classes}
+    class_counts = {klass: len(indices)
+                    for klass, indices in class_indices.items()}
 
-    return classes, class_counts, class_indices
+    return class_indices, class_counts
 
 
-def _generate_balanced_sample_indices(random_state, balance_data):
-    """
-    Private function used to _parallel_build_trees function.
-    Generates samples according to the balanced random forest method [1],
-    adapted for multi-class, i.e. a bootstrap sample from the minority
-    class and a random sample with replacement of the same size from all
-    other classes.
-    References
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap,
+                             balanced_bootstrap, y):
+    """Generate bootstrap samples.
+
+    Parameters
     ----------
-    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
-           Learn Imbalanced Data", Tech. Rep. 666, 2004
+    random_state : int, RandomState
+        Random state used in the different random draw.
+    n_samples : int
+        The number of samples in the dataset.
+    n_samples_bootstrap : int
+        The maximum number of samples required in the bootstrap sample.
+    balanced_bootstrap : bool
+        Whether or not the class counts should be balanced in the bootstrap
+    y : ndarray of shape (n_samples,) or (n_samples, 1)
+        The array of targets used when a balanced bootstrap is requested.
+
+    Returns
+    -------
+    samples_indices : ndarray of shape (n_bootstrap_sample,)
+        The indices of the bootstrap sample.
     """
-    classes, class_counts, class_indices = balance_data
-    min_count = np.min(class_counts)
-    n_class = len(classes)
-
-    random_instance = check_random_state(random_state)
-    sample_indices = np.empty(n_class*min_count, dtype=int)
-
-    for i, cls, count, indices in zip(range(n_class), classes, class_counts,
-                                      class_indices):
-        random_instances = random_instance.randint(0, count, min_count)
-        random_indices = indices[random_instances]
-        sample_indices[i*min_count:(i+1)*min_count] = random_indices
-
+    rng = check_random_state(random_state)
+    if balanced_bootstrap:
+        class_indices, class_counts = _get_class_distribution(y)
+        n_classes = len(class_counts)
+        n_samples_per_class = min(min(class_counts.values()),
+                                  n_samples_bootstrap // n_classes)
+        sample_indices = np.empty(
+            n_classes * n_samples_per_class, dtype=class_indices[0].dtype
+        )
+        for i, indices in enumerate(class_indices.values()):
+            sample_indices[i * n_samples_per_class:
+                           (i + 1) * n_samples_per_class] = rng.choice(
+                               indices, size=n_samples_per_class, replace=True
+                           )
+    else:
+        sample_indices = rng.randint(0, n_samples, n_samples_bootstrap)
     return sample_indices
 
 
-def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap,
+                                balanced_bootstrap, y):
     """
     Private function used to forest._set_oob_score function."""
-    sample_indices = _generate_sample_indices(random_state, n_samples,
-                                              n_samples_bootstrap)
+    sample_indices = _generate_sample_indices(
+        random_state, n_samples, n_samples_bootstrap, balanced_bootstrap, y
+    )
     sample_counts = np.bincount(sample_indices, minlength=n_samples)
     unsampled_mask = sample_counts == 0
     indices_range = np.arange(n_samples)
@@ -187,7 +202,7 @@ def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None,
-                          n_samples_bootstrap=None, balance_data=None):
+                          n_samples_bootstrap=None, balanced_bootstrap=False):
     """
     Private function used to fit a single tree in parallel."""
     if verbose > 1:
@@ -200,16 +215,10 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        if class_weight == 'balanced_bootstrap':
-            if balance_data is None:
-                raise ValueError("_parallel_build_trees called with "
-                                 "class_weight 'balanced_bootstrap' "
-                                 "but no balance_data")
-            indices = _generate_balanced_sample_indices(tree.random_state,
-                                                        balance_data)
-        else:
-            indices = _generate_sample_indices(tree.random_state, n_samples,
-                                               n_samples_bootstrap)
+        indices = _generate_sample_indices(
+            tree.random_state, n_samples, n_samples_bootstrap,
+            balanced_bootstrap, y
+        )
 
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -428,9 +437,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                      for i in range(n_more_estimators)]
 
             if self.class_weight == 'balanced_bootstrap':
-                balance_data = _get_class_distribution(y)
+                self._balanced_bootstrap = True
             else:
-                balance_data = None
+                self._balanced_bootstrap = False
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -444,7 +453,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight,
                     n_samples_bootstrap=n_samples_bootstrap,
-                    balance_data=balance_data)
+                    balanced_bootstrap=self._balanced_bootstrap)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -573,7 +582,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
+                estimator.random_state, n_samples, n_samples_bootstrap,
+                self._balanced_bootstrap, y)
             p_estimator = estimator.predict_proba(X[unsampled_indices, :],
                                                   check_input=False)
 
@@ -605,8 +615,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
 
-        # use this local class_weight to easily handle
-        # class_weight="balanced_bootstrap" identically to class_weight=None
         class_weight = self.class_weight
         if self.class_weight == 'balanced_bootstrap':
             class_weight = None
@@ -876,7 +884,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples, n_samples_bootstrap)
+                estimator.random_state, n_samples, n_samples_bootstrap,
+                self._balanced_bootstrap, y)
             p_estimator = estimator.predict(
                 X[unsampled_indices, :], check_input=False)
 
@@ -1072,7 +1081,7 @@ class RandomForestClassifier(ForestClassifier):
         weights are computed based on the bootstrap sample for every tree
         grown.
 
-        The "balanced_sbootstrap" triggers the Balanaced Random Forest.
+        The "balanced_bootstrap" triggers the Balanced Random Forest [2]_.
         Instead of down-weighting majority class(es) it undersamples them.
         In this case multi-output is not supported.
 
@@ -1172,6 +1181,9 @@ class RandomForestClassifier(ForestClassifier):
     ----------
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+
+    .. [2] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
+           Learn Imbalanced Data", Tech. Rep. 666, 2004
 
     See Also
     --------
