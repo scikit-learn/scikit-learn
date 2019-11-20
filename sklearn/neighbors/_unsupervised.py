@@ -103,8 +103,6 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
-	
-	
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
