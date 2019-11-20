@@ -998,7 +998,6 @@ def _detect_categorical_features(X, categorical_features=None):
     # Automatic detection of categorical features
     if categorical_features is None:
         categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
-
         def detect_cat(x):
             if not np.isnan(x):
                 if np.issubdtype(type(x), np.number):
@@ -1009,19 +1008,27 @@ def _detect_categorical_features(X, categorical_features=None):
         f_test = np.frompyfunc(detect_cat, 1, 1)
         for col in range(np.shape(X)[1]):
             try:
-                f_test(X[:, col])
+                # This identifies categorical and numerical columns,
+                # including boolean as numerical.
+                # A TypeError means it is a categorical column,
+                # for nansum ==0 it means the entire column is NaN,
+                # then we consider it numerical.
+                if np.nansum(X[:, col]) > 0:
+                    # In case nansum > 0 there are values in the column,
+                    # then we need to identify between boolean and
+                    # numerical values, because boolean values are
+                    # calculated as categorical.
+                    f_test(X[:, col])
             except ValueError as e:
                 categorical_features[col] = e.args[0]
             except TypeError:
                 categorical_features[col] = True
-
     else:
         categorical_features = np.asarray(categorical_features)
         if np.issubdtype(categorical_features.dtype, np.integer):
             new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
-
     return categorical_features
 
 
