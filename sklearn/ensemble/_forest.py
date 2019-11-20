@@ -1654,6 +1654,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -1665,7 +1666,7 @@ class ExtraTreesClassifier(ForestClassifier):
         new forest. See :term:`the Glossary <warm_start>`.
 
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
-    None, optional (default=None)
+            None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1962,6 +1963,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
