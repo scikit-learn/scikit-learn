@@ -10,6 +10,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+	
+	.. versionadded:: 0.9
 
     Parameters
     ----------
@@ -101,6 +103,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+	
+	
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,

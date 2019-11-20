@@ -29,6 +29,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     associated of the nearest neighbors in the training set.
 
     Read more in the :ref:`User Guide <regression>`.
+	
+	.. versionadded:: 0.9
 
     Parameters
     ----------
@@ -202,6 +204,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     associated of the nearest neighbors in the training set.
 
     Read more in the :ref:`User Guide <regression>`.
+	
+	.. versionadded:: 0.9
 
     Parameters
     ----------
