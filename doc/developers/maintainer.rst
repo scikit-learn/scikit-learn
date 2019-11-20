@@ -92,9 +92,12 @@ Making a release
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
 
-4. Create the tag and push it (if it's an RC, it can be 0.xxrc1). Note that
-   you want to tag when you're sure it's working. Therefore tagging after the
-   CI in scikit-learn-wheels passes is not a bad idea::
+4. Proceed with caution. Ideally, tags should be created when you're almost
+   certain that the release is ready. You can test upload the sdist to
+   test.pypi.org, and follow step 5 and have ``BUILD_COMMIT`` set to the
+   branch name (``0.22.X`` for instance), and test the wheel builds on a PR on
+   that repo. Once all works, you can proceed with tagging.
+   Create the tag and push it (if it's an RC, it can be 0.xxrc1 for instance)::
 
     $ git tag -a 0.999
 
