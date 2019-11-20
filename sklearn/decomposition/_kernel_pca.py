@@ -263,13 +263,20 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 maxiter=self.max_iter,
                                                 v0=v0)
         elif eigen_solver == 'randomized':
-            # Note: sign flipping is done inside
+            # not using flip_sign=True for deterministic output, we do it later
             U, S, V = randomized_svd(K, n_components=n_components,
                                      n_iter=self.iterated_power,
-                                     flip_sign=True,
+                                     flip_sign=False,
                                      random_state=self.random_state)
             self.alphas_ = U[:, :n_components]  # eigenvectors
             self.lambdas_ = S[:n_components]    # eigenvalues
+
+            # SVD does not guarantee that sign of u and v is the same. If they
+            # are different that means that the corresponding eigenvalue has
+            # the wrong sign, we have to fix it.
+            VU = np.dot(V[:n_components, :], U[:, :n_components])
+            signs = np.sign(np.diag(VU))
+            self.lambdas_ = self.lambdas_ * signs
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
