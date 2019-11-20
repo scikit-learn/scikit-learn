@@ -195,13 +195,22 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 Similarly to :ref:`PCA`, the optional parameter ``eigen_solver='randomized'``
 can be used to drastically improve the computation time when the desired
 number of components ``n_components`` is much smaller than the number of
-training samples. See :ref:`RandomizedPCA` above.
+training samples. See :ref:`RandomizedPCA` above. You can see the performance
+impact of the solver selection in two benchmarks:
+
+* `benchmark 1 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison1.py>`_
+compares the :class:`KernelPCA` execution times for various values of
+``eigen_solver``, when the number of components is fixed and the number of
+samples increases.
+
+* `benchmark 2 <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_comparison2.py>`_
+compares the :class:`KernelPCA` execution times for various values of
+``eigen_solver``, when the number of samples is fixed and the number of
+components increases.
 
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_approximate.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_solvers_comparison.py`
-    * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_solvers_comparison2.py`
 
 .. _SparsePCA:
 
