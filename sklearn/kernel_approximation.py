@@ -50,21 +50,14 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialSampler
-    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
     >>> y = [0, 0, 1, 1]
     >>> ps = PolynomialSampler(degree=3, random_state=1)
     >>> X_features = ps.fit_transform(X)
-    >>> clf = LinearSVC(C=1.0, class_weight=None, dual=True, \
-        fit_intercept=True, intercept_scaling=1, loss='squared_hinge', \
-        max_iter=1000, multi_class='ovr', penalty='l2', random_state=None, \
-        tol=0.0001, verbose=0)
+    >>> clf = clf = SGDClassifier(max_iter=10, tol=1e-3)
     >>> clf.fit(X_features, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-        multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-        verbose=0)
+    SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
 
