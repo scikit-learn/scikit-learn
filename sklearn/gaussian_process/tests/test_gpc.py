@@ -11,12 +11,15 @@ import pytest
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 
-from sklearn.utils.testing import assert_almost_equal, assert_array_equal
+from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 
 def f(x):
     return np.sin(x)
+
+
 X = np.atleast_2d(np.linspace(0, 10, 30)).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = np.array(f(X).ravel() > 0, dtype=int)
@@ -44,12 +47,22 @@ def test_predict_consistent(kernel):
                        gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
+def test_predict_consistent_structured():
+    # Check binary predict decision has also predicted probability above 0.5.
+    X = ['A', 'AB', 'B']
+    y = np.array([True, False, True])
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
+    gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
+    assert_array_equal(gpc.predict(X),
+                       gpc.predict_proba(X)[:, 1] >= 0.5)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
     assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
-                   gpc.log_marginal_likelihood(kernel.theta))
+            gpc.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -139,7 +152,7 @@ def test_custom_optimizer(kernel):
     gpc.fit(X, y_mc)
     # Checks that optimizer improved marginal likelihood
     assert (gpc.log_marginal_likelihood(gpc.kernel_.theta) >
-                   gpc.log_marginal_likelihood(kernel.theta))
+            gpc.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)

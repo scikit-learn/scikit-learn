@@ -8,16 +8,17 @@ import pytest
 import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster.spectral import discretize
+from sklearn.cluster._spectral import discretize
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.neighbors import NearestNeighbors
+from sklearn.datasets import make_blobs
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -100,6 +101,25 @@ def test_spectral_clustering_sparse():
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
     assert adjusted_rand_score(y, labels) == 1
+
+
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    X, y = make_blobs(n_samples=200, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors).fit(X)
+        graph = nn.kneighbors_graph(X, mode='connectivity')
+        labels = SpectralClustering(random_state=0, n_clusters=2,
+                                    affinity='precomputed_nearest_neighbors',
+                                    n_neighbors=n_neighbors).fit(graph).labels_
+        results.append(labels)
+
+    assert_array_equal(results[0], results[1])
 
 
 def test_affinities():

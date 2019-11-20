@@ -299,23 +299,20 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 .. _faq_mkl_threading:
 
-Why does my job use more cores than specified with n_jobs under OSX or Linux?
------------------------------------------------------------------------------
+Why does my job use more cores than specified with n_jobs?
+----------------------------------------------------------
 
-This happens when vectorized numpy operations are handled by libraries such
-as MKL or OpenBLAS.
+This is because ``n_jobs`` only controls the number of jobs for
+routines that are parallelized with ``joblib``, but parallel code can come
+from other sources:
 
-While scikit-learn adheres to the limit set by ``n_jobs``,
-numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
-threads within each scikit-learn job (thread or process).
+- some routines may be parallelized with OpenMP (for code written in C or
+  Cython).
+- scikit-learn relies a lot on numpy, which in turn may rely on numerical
+  libraries like MKL, OpenBLAS or BLIS which can provide parallel
+  implementations.
 
-The number of threads used by the BLAS library can be set via an environment
-variable. For example, to set the maximum number of threads to some integer
-value ``N``, the following environment variables should be set:
-
-* For MKL: ``export MKL_NUM_THREADS=N``
-
-* For OpenBLAS: ``export OPENBLAS_NUM_THREADS=N``
+For more details, please refer to our :ref:`Parallelism notes <parallelism>`.
 
 
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
@@ -388,3 +385,23 @@ efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
+
+Do you plan to implement transform for target y in a pipeline?
+----------------------------------------------------------------------------
+Currently transform only works for features X in a pipeline. 
+There's a long-standing discussion about 
+not being able to transform y in a pipeline.
+Follow on github issue
+`#4143<https://github.com/scikit-learn/scikit-learn/issues/4143>`_.
+Meanwhile check out
+:class:`sklearn.compose.TransformedTargetRegressor`,
+`pipegraph<https://github.com/mcasl/PipeGraph>`_,
+`imbalanced-learn<https://github.com/scikit-learn-contrib/imbalanced-learn>`_.
+Note that Scikit-learn solved for the case where y 
+has an invertible transformation applied before training 
+and inverted after prediction. Scikit-learn intends to solve for
+use cases where y should be transformed at training time 
+and not at test time, for resampling and similar uses, 
+like at imbalanced learn. 
+In general, these use cases can be solved 
+with a custom meta estimator rather than a Pipeline
