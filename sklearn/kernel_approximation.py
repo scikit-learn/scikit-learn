@@ -142,7 +142,7 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
 
-        check_is_fitted(self, 'indexHash_')
+        check_is_fitted(self)
         X = check_array(X, accept_sparse="csc")
 
         if sp.issparse(X) and self.coef0 != 0:
