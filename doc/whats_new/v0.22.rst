@@ -297,13 +297,13 @@ Changelog
     and `Olivier Grisel`_.
   - |Feature| Estimators now have an additional `warm_start` parameter that
     enables warm starting. :pr:`14012` by :user:`Johann Faouzi <johannfaouzi>`.
+  - |Feature| :func:`inspection.partial_dependence` and
+    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+    method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| for :class:`ensemble.HistGradientBoostingClassifier` the
     training loss or score is now monitored on a class-wise stratified
     subsample to preserve the class balance of the original training set.
     :pr:`14194` by :user:`Johann Faouzi <johannfaouzi>`.
-  - |Feature| :func:`inspection.partial_dependence` and
-    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
-    method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now supports
     the 'least_absolute_deviation' loss. :pr:`13896` by `Nicolas Hug`_.
   - |Fix| Estimators now bin the training and validation data separately to
