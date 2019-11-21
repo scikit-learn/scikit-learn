@@ -1,4 +1,3 @@
-
 def _check_axes_has_been_used(ax):
     """Return true if the axes has been used"""
     used_attrs = ['lines', 'patches', 'texts', 'tables', 'artists',
