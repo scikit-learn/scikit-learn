@@ -38,6 +38,12 @@ from ..model_selection import check_cv
 from ..metrics import get_scorer
 
 
+_LOGISTIC_SOLVER_CONVERGENCE_MSG = (
+    "Please also refer to the documentation for alternative solver options:\n"
+    "    https://scikit-learn.org/stable/modules/linear_model.html"
+    "#logistic-regression")
+
+
 # .. some helper functions for logistic_regression_path ..
 def _intercept_dot(w, X, y):
     """Computes y * np.dot(X, w).
@@ -928,7 +934,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 args=(X, target, 1. / C, sample_weight),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
-            n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
+            n_iter_i = _check_optimize_result(
+                solver, opt_res, max_iter,
+                extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG)
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
