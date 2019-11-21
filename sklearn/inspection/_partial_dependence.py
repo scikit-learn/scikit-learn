@@ -25,6 +25,7 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
+from ..utils._plot import _check_axes_has_been_used
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
@@ -424,22 +425,6 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
-
-    .. note::
-
-        :func:`plot_partial_dependence` does not support using the same axes
-        with multiple calls. To plot the the partial dependence for multiple
-        estimators, please pass the axes created by the first call to the
-        second call::
-
-          >>> from sklearn.inspection import plot_partial_dependence
-          >>> from sklearn.datasets import make_friedman1
-          >>> from sklearn.linear_model import LinearRegression
-          >>> X, y = make_friedman1()
-          >>> est = LinearRegression().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(est, X,
-          ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
     Read more in the :ref:`User Guide <partial_dependence>`.
 
@@ -860,19 +845,24 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            # If ax was set off, it has most likely been set to off
-            # by a previous call to plot.
-            if not ax.axison:
-                raise ValueError("The ax was already used in another plot "
-                                 "function, please set ax=display.axes_ "
-                                 "instead")
+            if hasattr(ax, "_sklearn_display_object"):
+                if not isinstance(ax._sklearn_display_object, self.__class__):
+                    raise ValueError("The ax was already used by another "
+                                     "display object")
+                # ax._sklearn_display_object is an instance of self.__class__
+                ax = ax._sklearn_display_object.axes_
+            else:
+                ax._sklearn_display_object = self
+                ax.set_axis_off()
 
-            ax.set_axis_off()
-            self.bounding_ax_ = ax
-            self.figure_ = ax.figure
+        if isinstance(ax, plt.Axes):
+            _check_axes_has_been_used(ax)
 
             n_cols = min(n_cols, n_features)
             n_rows = int(np.ceil(n_features / float(n_cols)))
+
+            self.bounding_ax_ = ax
+            self.figure_ = ax.figure
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
             self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)

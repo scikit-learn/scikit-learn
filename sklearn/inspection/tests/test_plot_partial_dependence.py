@@ -244,32 +244,54 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
         disp.plot(ax=[ax1, ax2, ax3])
 
 
+def test_plot_partial_dependence_with_used_axes(pyplot, clf_boston, boston):
+    # When the axes was drawn on plot_partial_dependence should fail
+    grid_resolution = 5
+    fig, ax = pyplot.subplots()
+    ax.plot([0, 1, 2], [1, 2, 3])
+
+    msg = "The ax was already used in another plot function"
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+                                grid_resolution=grid_resolution,
+                                feature_names=boston.feature_names, ax=ax)
+
+
+def test_plot_partial_dependence_used_by_another_display_obj(
+        pyplot, clf_boston, boston):
+    fig, ax = pyplot.subplots()
+    ax._sklearn_display_object = "Not a partial dependence object"
+
+    msg = "The ax was already used by another display object"
+    with pytest.raises(ValueError, match=msg):
+        plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+                                grid_resolution=5,
+                                feature_names=boston.feature_names, ax=ax)
+
+
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
-    # Currently the API does not allow for the second call to
-    # plot_partial_dependence to use the same axes again, because it will
-    # create two new axes in the space resulting in five axes. To get the
-    # expected behavior one needs to pass the generated axes into the second
-    # call:
-    # disp1 = plot_partial_dependence(...)
-    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
+    # The second call will plot on the axes created by the first call to
+    # plot_partial_dependence
 
-    grid_resolution = 25
+    grid_resolution = 5
     fig, ax = pyplot.subplots()
     plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
                             grid_resolution=grid_resolution,
                             feature_names=boston.feature_names, ax=ax)
 
-    msg = ("The ax was already used in another plot function, please set "
-           "ax=display.axes_ instead")
+    axs = fig.get_axes()
+    assert len(axs) == 3
 
-    with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_boston, boston.data,
-                                ['CRIM', 'ZN'],
-                                grid_resolution=grid_resolution,
-                                feature_names=boston.feature_names, ax=ax)
+    plot_partial_dependence(clf_boston, boston.data,
+                            ['CRIM', 'ZN'],
+                            grid_resolution=grid_resolution,
+                            feature_names=boston.feature_names, ax=ax)
+
+    axs = fig.get_axes()
+    assert len(axs) == 3
 
 
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
