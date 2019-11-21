@@ -157,11 +157,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    parallel_params :  keyworded, variable-length argument list
+        Optional list of keyworded parameters to be passed to
+        :class:`joblib.Parallel`. For instance, ``n_jobs`` (the number of jobs
+        to use for the computation, see :term:`Glossary <n_jobs>`),
+        ``max_nbytes``, ``backend``, etc. (see also :class:`joblib.Parallel`
+        reference documentation
+        (https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html).
 
     Attributes
     ----------
@@ -200,9 +202,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     array([2, 0, 1])
 
     """
-    def __init__(self, estimator, n_jobs=None):
+    def __init__(self, estimator, **parallel_params):
         self.estimator = estimator
-        self.n_jobs = n_jobs
+        self.parallel_params = parallel_params
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -232,10 +234,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
-            self.estimator, X, column, classes=[
-                "not %s" % self.label_binarizer_.classes_[i],
-                self.label_binarizer_.classes_[i]])
+        self.estimators_ = Parallel(**self.parallel_params)(
+            delayed(_fit_binary)(
+                self.estimator, X, column, classes=[
+                    "not %s" % self.label_binarizer_.classes_[i],
+                    self.label_binarizer_.classes_[i]])
             for i, column in enumerate(columns))
 
         return self
@@ -290,7 +293,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(**self.parallel_params)(
             delayed(_partial_fit_binary)(estimator, X, column)
             for estimator, column in zip(self.estimators_, columns))
 
@@ -480,11 +483,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         An estimator object implementing :term:`fit` and one of
         :term:`decision_function` or :term:`predict_proba`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    parallel_params :  keyworded, variable-length argument list
+        Optional list of keyworded parameters to be passed to
+        :class:`joblib.Parallel`. For instance, ``n_jobs`` (the number of jobs
+        to use for the computation, see :term:`Glossary <n_jobs>`),
+        ``max_nbytes``, ``backend``, etc. (see also :class:`joblib.Parallel`
+        reference documentation
+        (https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html).
 
     Attributes
     ----------
@@ -502,9 +507,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
 
-    def __init__(self, estimator, n_jobs=None):
+    def __init__(self, estimator, **parallel_params):
         self.estimator = estimator
-        self.n_jobs = n_jobs
+        self.parallel_params = parallel_params
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -529,7 +534,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError("OneVsOneClassifier can not be fit when only one"
                              " class is present.")
         n_classes = self.classes_.shape[0]
-        estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
+        estimators_indices = list(zip(*(Parallel(**self.parallel_params)(
             delayed(_fit_ovo_binary)
             (self.estimator, X, y, self.classes_[i], self.classes_[j])
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
@@ -582,7 +587,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
         self.estimators_ = Parallel(
-            n_jobs=self.n_jobs)(
+            **self.parallel_params)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
                 for estimator, (i, j) in zip(self.estimators_,
@@ -690,11 +695,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         random_state is the random number generator; If None, the random number
         generator is the RandomState instance used by `np.random`.
 
-    n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    parallel_params :  keyworded, variable-length argument list
+        Optional list of keyworded parameters to be passed to
+        :class:`joblib.Parallel`. For instance, ``n_jobs`` (the number of jobs
+        to use for the computation, see :term:`Glossary <n_jobs>`),
+        ``max_nbytes``, ``backend``, etc. (see also :class:`joblib.Parallel`
+        reference documentation
+        (https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html).
 
     Attributes
     ----------
@@ -741,11 +748,11 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """
 
     def __init__(self, estimator, code_size=1.5, random_state=None,
-                 n_jobs=None):
+                 **parallel_params):
         self.estimator = estimator
         self.code_size = code_size
         self.random_state = random_state
-        self.n_jobs = n_jobs
+        self.parallel_params = parallel_params
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -790,7 +797,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Y = np.array([self.code_book_[classes_index[y[i]]]
                       for i in range(X.shape[0])], dtype=np.int)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(**self.parallel_params)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])
             for i in range(Y.shape[1]))
 
