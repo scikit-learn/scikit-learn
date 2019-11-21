@@ -858,11 +858,11 @@ class PartialDependenceDisplay:
         if isinstance(ax, plt.Axes):
             _check_axes_has_been_used(ax)
 
-            n_cols = min(n_cols, n_features)
-            n_rows = int(np.ceil(n_features / float(n_cols)))
-
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
+
+            n_cols = min(n_cols, n_features)
+            n_rows = int(np.ceil(n_features / float(n_cols)))
 
             self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
             self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
