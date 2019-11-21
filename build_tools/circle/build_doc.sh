@@ -58,6 +58,44 @@ get_build_type() {
         return
     fi
     changed_examples=$(echo "$filenames" | grep -E "^examples/(.*/)*plot_")
+
+    # The following is used to extract the list of filenames of example python
+    # files that sphinx-gallery needs to run to generate png files used as
+    # figures or images in the .rst files  from the documentation.
+    # If the contributor changes a .rst file in a PR we need to run all
+    # the examples mentioned in that file to get sphinx build the
+    # documentation without generating spurious warnings related to missing
+    # png files.
+
+    if [[ -n "$filenames" ]]
+    then
+        # get rst files
+        rst_files="$(echo "$filenames" | grep -E "rst$")"
+
+        # get lines with figure or images
+        img_fig_lines="$(echo "$rst_files" | xargs grep -shE "(figure|image)::")"
+
+        # get only auto_examples
+        auto_example_files="$(echo "$img_fig_lines" | grep auto_examples | awk -F "/" '{print $NF}')"
+
+        # remove "sphx_glr_" from path and accept replace _(\d\d\d|thumb).png with .py
+        scripts_names="$(echo "$auto_example_files" | sed 's/sphx_glr_//' | sed -E 's/_([[:digit:]][[:digit:]][[:digit:]]|thumb).png/.py/')"
+
+        # get unique values
+        examples_in_rst="$(echo "$scripts_names" | uniq )"
+    fi
+
+    # executed only if there are examples in the modified rst files
+    if [[ -n "$examples_in_rst" ]]
+    then
+        if [[ -n "$changed_examples" ]]
+        then
+            changed_examples="$changed_examples|$examples_in_rst"
+        else
+            changed_examples="$examples_in_rst"
+        fi
+    fi
+
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
@@ -134,8 +172,8 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib memory_profiler packaging
 
 source activate testenv
-pip install sphinx-gallery==0.3.1
-pip install numpydoc==0.9
+pip install sphinx-gallery
+pip install numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py build_ext --inplace -j 3
@@ -204,5 +242,12 @@ then
     echo "$warnings" | sed 's/\/home\/circleci\/project\//<li>/g'
     echo '</ul></body></html>'
     ) > 'doc/_build/html/stable/_changed.html'
+
+    if [ "$warnings" != "/home/circleci/project/ no warnings" ]
+    then
+        echo "Sphinx generated warnings when building the documentation related to files modified in this PR."
+        echo "Please check doc/_build/html/stable/_changed.html"
+        exit 1
+    fi
 fi
 
