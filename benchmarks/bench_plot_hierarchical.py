@@ -51,18 +51,27 @@ if __name__ == '__main__':
     max_time = max([max(i) for i in [t for (label, t) in results.items()]])
 
     colors = plt.get_cmap('tab10')(np.linspace(0, 1, 10))[:4]
-    lines = {linkage:None for linkage in results.keys()}
+    lines = {linkage: None for linkage in results.keys()}
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
-    fig.suptitle('Scikit-learn agglomerative clustering benchmark results', fontsize=16)
+    fig.suptitle(
+        'Scikit-learn agglomerative clustering benchmark results',
+        fontsize=16
+    )
     for c, (label, timings) in zip(colors,
                                    sorted(results.items())):
-        timing_by_samples = np.asarray(timings).reshape(samples_range.shape[0],
-                                        features_range.shape[0])
+        timing_by_samples = np.asarray(timings).reshape(
+            samples_range.shape[0],
+            features_range.shape[0]
+        )
 
         for n in range(timing_by_samples.shape[1]):
             ax = axs.flatten()[n]
-            lines[label], = ax.plot(samples_range, timing_by_samples[:, n], color=c,
-                            label=label)
+            lines[label], = ax.plot(
+                samples_range,
+                timing_by_samples[:, n],
+                color=c,
+                label=label
+            )
             ax.set_title('n_features = %d' % features_range[n])
             if n >= 2:
                 ax.set_xlabel('n_samples')
