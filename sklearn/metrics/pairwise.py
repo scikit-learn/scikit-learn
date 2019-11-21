@@ -1018,10 +1018,10 @@ def _detect_categorical_features(X, categorical_features=None):
                 # for nansum ==0 it means the entire column is NaN,
                 # then we consider it numerical.
                 if np.nansum(X[:, col]) > 0:
-                    # In case nansum > 0 there are values in the column,
-                    # then we need to identify between boolean and
+                    # In case nansum > 0 there are numerical values in the
+                    # column, then we need to identify between boolean and
                     # numerical values, because boolean values are
-                    # calculated as categorical.
+                    # calculated as categorical in gower distances.
                     f_test(X[:, col])
             except ValueError as e:
                 categorical_features[col] = e.args[0]
@@ -1033,6 +1033,7 @@ def _detect_categorical_features(X, categorical_features=None):
             new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
+    print("X:", X, "X.shape:", X.shape, "categorical_features:", categorical_features)
     return categorical_features
 
 
