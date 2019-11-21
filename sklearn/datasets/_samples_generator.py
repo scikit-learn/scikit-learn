@@ -840,8 +840,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         generator.shuffle(indices)
         X = X[indices]
         y = y[indices]
+
     if return_centers:
         return X, y, centers
+
     return X, y
 
 
