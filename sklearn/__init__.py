@@ -90,6 +90,9 @@ else:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
 
+    # Allow distributors to run custom init code
+    from . import _distributor_init  # noqa: F401
+
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
