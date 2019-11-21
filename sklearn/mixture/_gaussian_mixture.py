@@ -760,12 +760,10 @@ class ConditionalGaussianMixture():
 
     """  Conditional Gaussian Mixture.
 
-    This class is used to define the conditional distributions of a
+    This class is used to find the conditional distributions of a
     Gaussian mixture model that has already been trained on some data.
-    Writing the Gaussian mixture model as p(xa, xb), the code will
-    evaluate p(xa | xb).
-
-    Read more in (still to be added)
+    Essentially, writing the Gaussian mixture model as p(xa, xb), the
+    code can be used to evaluate p(xa | xb).
 
     Parameters
     ----------
@@ -774,15 +772,15 @@ class ConditionalGaussianMixture():
     i_cond : a numpy array of True or False values. If the ith value of
         i_cond is True then xi will be considered as fixed equal to
         some conditional value. If the jth value of i_cond is False then
-        xj will be considered as a random variable.
+        xj will be considered variable.
 
     Attributes
     ----------
     mu_aa_list : means of marginal distributions, p(xa), for each Gaussian
-    in the mixture.
+        in the mixture.
 
     mu_bb_list : means of marginal distributions, p(xb), for each Gaussian
-    in the mixture.
+        in the mixture.
 
     Sigma_aa_list : partitioned covariance matrices, with respect to
         (xa, xa), for each Gaussian in the mixture.
@@ -790,10 +788,10 @@ class ConditionalGaussianMixture():
     Sigma_ab_list : partitioned covariance matrices, with respect to
         (xa, xb), for each Gaussian in the mixture.
 
-    Sigma_aa_list : partitioned covariance matrices, with respect to
+    Sigma_ba_list : partitioned covariance matrices, with respect to
         (xb, xa), for each Gaussian in the mixture.
 
-    Sigma_aa_list : partitioned covariance matrices, with respect to
+    Sigma_bb_list : partitioned covariance matrices, with respect to
         (xb, xb), for each Gaussian in the mixture.
 
     p_aa : marginal probability distributions, for xa, for each Gaussian in
@@ -826,7 +824,7 @@ class ConditionalGaussianMixture():
         self.Sigma_ba_list = []
         self.Sigma_bb_list = []
 
-        # Isolate components of Gaussian Mixture model
+        # Loop over components of the Gaussian mixture model
         for c in range(gmm.n_components):
 
             # Split mean into individual components
@@ -842,8 +840,7 @@ class ConditionalGaussianMixture():
 
             # Split covariance matrix into individual components ('diag'
             # covariance matrix). For now we just store copies of the
-            # partitioned matrices - this could be sped up later if it
-            # causes problems.
+            # partitioned matrices - this could be sped up later if needed.
             if gmm.covariance_type == 'tied':
                 Sigma_aa = gmm.covariances_[~i_cond, ~i_cond]
                 Sigma_ab = gmm.covariances_[~i_cond, i_cond]
@@ -866,6 +863,7 @@ class ConditionalGaussianMixture():
                 Sigma_ba = np.zeros([Db, Da])
                 Sigma_bb = np.diag(np.repeat(gmm.covariances_[c], Db))
 
+            # Assign partitioned means and covariance matrices to list
             self.mu_aa_list.append(mu_aa)
             self.mu_bb_list.append(mu_bb)
             self.Sigma_aa_list.append(Sigma_aa)
@@ -899,8 +897,7 @@ class ConditionalGaussianMixture():
 
         Returns
         -------
-        mu : array
-            mean of the distribution p(xa | xb)
+        mu : mean of the distribution p(xa | xb), evaluated at the point xb
 
         """
 
@@ -926,8 +923,9 @@ class ConditionalGaussianMixture():
 
         Returns
         -------
-        Sigma : array
-            covariance matrix of the distribution p(xa | xb)
+        Sigma : covariance matrix of the distribution p(xa | xb), evaluated
+            at the point xb
+
         """
 
         Sigma = Sigma_aa - Sigma_ab @ np.linalg.inv(Sigma_bb) @ Sigma_ba
@@ -939,12 +937,12 @@ class ConditionalGaussianMixture():
 
         Parameters
         ----------
-        xb : array of conditional values
+        xb : conditional value of xb
 
         Returns
         -------
-            new_weights : list
-                list contains weights of Gaussians that make up p(xa | xb)
+            new_weights : list contains weights of Gaussians that make
+                up p(xa | xb)
 
         """
 
@@ -973,7 +971,7 @@ class ConditionalGaussianMixture():
         ----------
         xa : point where p(xa | xb) is to be evaluated
 
-        xb : conditional values for p(xa | xb)
+        xb : conditional value of xb
 
         Returns
         -------
