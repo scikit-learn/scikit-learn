@@ -18,6 +18,7 @@ def compute_bench(samples_range, features_range):
             it += 1
             print('==============================')
             print('Iteration %03d of %03d' % (it, max_it))
+            print('n_samples %05d; n_features %02d' % (n_samples, n_features))
             print('==============================')
             print()
             data = nr.randint(-50, 51, (n_samples, n_features))
@@ -43,8 +44,8 @@ if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # noqa: F401
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(100, 10000, 5).astype(np.int)
-    features_range = np.linspace(2, 100, 5).astype(np.int)
+    samples_range = np.linspace(1000, 15000, 5).astype(np.int)
+    features_range = np.linspace(2, 50, 5).astype(np.int)
 
     results = compute_bench(samples_range, features_range)
 
