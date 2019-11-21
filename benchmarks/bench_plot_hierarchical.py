@@ -50,7 +50,7 @@ if __name__ == '__main__':
 
     max_time = max([max(i) for i in [t for (label, t) in results.items()]])
 
-    colors = plt.get_cmap('Vega10')(np.linspace(0, 1, 10))[:4]
+    colors = plt.get_cmap('tab10')(np.linspace(0, 1, 10))[:4]
     lines = {linkage:None for linkage in results.keys()}
     fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
     fig.suptitle('Scikit-learn agglomerative clustering benchmark results', fontsize=16)
