@@ -101,6 +101,7 @@ random sampling procedures.
 - :class:`linear_model.Ridge` when `X` is sparse. |Fix|
 - :class:`model_selection.StratifiedKFold` and any use of `cv=int` with a
   classifier. |Fix|
+- :class:`cross_decomposition.CCA` when using scipy >= 1.3 |Fix|
 
 Details are listed in the changelog below.
 
@@ -208,6 +209,9 @@ Changelog
   :class:`cross_decomposition.PLSRegression` were raising an error when fitted
   with a target matrix `Y` in which the first column was constant.
   :issue:`13609` by :user:`Camila Williamson <camilaagw>`.
+
+- |Fix| :class:`cross_decomposition.CCA` now produces the same results with
+  scipy 1.3 and previous scipy versions. :pr:`15661` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
