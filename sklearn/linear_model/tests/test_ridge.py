@@ -36,7 +36,7 @@ from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -493,7 +493,6 @@ def test_ridge_loo_cv_asym_scoring():
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
-"""
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('n_features', [8, 20])
@@ -552,85 +551,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
     assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
-"""
-
-
-@pytest.mark.parametrize("fit_intercept", [True, False])
-def test_ridge_gcv_stored_predictions(fit_intercept):
-    # check the predictions stored in `cv_values_` are equivalent to the
-    # prediction computed with a LOO with a Ridge at a specific alpha when the
-    # `scoring` is not `None`. We check as well that the predictions are
-    # rescaled if fitted with an intercept.
-    # Partly a regression test for #13998
-    X, y = make_regression(n_samples=6, n_features=2, random_state=42)
-    ridge_cv = RidgeCV(
-        fit_intercept=fit_intercept, scoring='neg_mean_squared_error',
-        store_cv_values=True, alphas=[1.]
-    )
-    ridge_cv.fit(X, y)
-    ridge = Ridge(fit_intercept=fit_intercept)
-    loo_pred = cross_val_predict(ridge, X, y, cv=len(X))
-    assert_allclose(loo_pred.ravel(), ridge_cv.cv_values_.ravel())
-
-
-@pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize("use_sample_weight", [True, False])
-def test_ridge_gcv_equivalence_prediction_metric(fit_intercept,
-                                                 use_sample_weight):
-    # Check the consistency between the cv_values_ obtained with and without
-    # a score. The default score being the mean squared error, we can compute
-    # the error from the prediction with `scoring='neg_mean_squared_error`
-    # the score reported when `scoring=None`
-    X, y = make_regression(n_samples=6, n_features=2, random_state=42)
-    ridge_cv_no_score = RidgeCV(
-        fit_intercept=fit_intercept, scoring=None, store_cv_values=True,
-        alphas=[1.]
-    )
-    ridge_cv_score = RidgeCV(
-        fit_intercept=fit_intercept, scoring='neg_mean_squared_error',
-        store_cv_values=True, alphas=[1.]
-    )
-
-    if use_sample_weight:
-        rng = np.random.RandomState(0)
-        sample_weight = rng.rand(X.shape[0])
-    else:
-        sample_weight = None
-    ridge_cv_no_score.fit(X, y, sample_weight=sample_weight)
-    ridge_cv_score.fit(X, y, sample_weight)
-
-    assert (
-        ridge_cv_no_score.cv_values_.mean() == pytest.approx(
-            mean_squared_error(y, ridge_cv_score.cv_values_.ravel()))
-    )
-
-
-def test_ridge_gcv_cv_values_not_stored():
-    # Check that `cv_values_` is not stored when store_cv_values is False
-    X, y = make_regression(n_samples=6, n_features=2, random_state=42)
-    ridge_cv = RidgeCV(store_cv_values=False, alphas=[1.])
-    ridge_cv.fit(X, y)
-
-    assert not hasattr(ridge_cv, "cv_values_")
-
-
-@pytest.mark.parametrize("fit_intercept", [True, False])
-def test_ridge_gcv_decision_function_scoring(fit_intercept):
-    # check that the passing a scorer computing the mean squared error is
-    # equivalent to `scoring=None`
-
-    def scorer(estimator, X, Y):
-        pred = estimator.decision_function(X)
-        return - np.mean((Y - pred)**2)
-
-    X, y = make_regression(n_samples=10, n_features=2, random_state=0)
-    ridge_1 = _RidgeGCV(
-        fit_intercept=fit_intercept, scoring=None, store_cv_values=True,
-        alphas=[1.0]).fit(X, y)
-    ridge_2 = _RidgeGCV(
-        fit_intercept=fit_intercept, scoring=scorer, store_cv_values=True,
-        alphas=[1.0]).fit(X, y)
-    assert ridge_1.best_score_ == pytest.approx(ridge_2.best_score_)
 
 
 @pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv'])
