@@ -14,7 +14,6 @@ def test_axes_has_been_used(pyplot):
         _check_axes_has_been_used(ax)
 
     ax.clear()
-
     _check_axes_has_been_used(ax)  # no error
 
     ax.imshow([[0, 1, 2]])
