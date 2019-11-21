@@ -356,9 +356,8 @@ Changelog
   :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`,
-  :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`. :pr:`14682` by
-  :user:`Matt Hancock <notmatthancock>` and
+  :class:`ensemble.ExtraTreesRegressor`
+  :pr:`14682` by :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
 - |Fix| Stacking and Voting estimators now ensure that their underlying
