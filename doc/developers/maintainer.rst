@@ -130,6 +130,8 @@ Making a release
 
        $ twine upload dist/*
 
+   Note that you will need to get permissions on pypi and test.pypi separately.
+
 7. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io::
