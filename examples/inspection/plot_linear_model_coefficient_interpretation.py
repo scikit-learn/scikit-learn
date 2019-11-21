@@ -54,14 +54,8 @@ survey = fetch_openml(data_id=534, as_frame=True)
 
 X = survey.data[survey.feature_names]
 y = survey.target.values.ravel()
-ax = sns.kdeplot(y, shade=True, color="r")
-plt.xlabel(survey.target_names)
-plt.show()
 
 ##############################################################################
-# Note that the "WAGE" distribution has a long tail and we could take its log
-# to simplify our problem getting closer to a normal distribution.
-#
 # The dataset is composed by columns with different data types and we need to
 # apply a specific preprocessing for each data types.
 # Our pre-processor will
@@ -85,8 +79,7 @@ preprocessor = make_column_transformer(
 # Modeling the data
 # .................
 #
-# We will fit a ridge regressor and transform the target before the fit using
-# a log transform.
+# We will fit a ridge regressor.
 # But before computing the model we split the sample in a train and a test
 # dataset.
 
@@ -105,6 +98,13 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 model.fit(X_train, y_train);
 
+##############################################################################
+# Note that the "WAGE" distribution has a long tail and we could take its log
+# to simplify our problem getting closer to a normal distribution.
+# That's why a log transform has been applied to the target before the fit.
+
+ax = sns.kdeplot(y, shade=True, color="r")
+plt.xlabel(survey.target_names)
 
 ##############################################################################
 # Scoring the model
@@ -157,6 +157,8 @@ coefs = pd.DataFrame(
 )
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.axvline(x=0, color='.5');
+plt.subplots_adjust(left=.3)
+plt.show()
 
 ###############################################################################
 # Soon we realize that we cannot compare different coefficients since we did
@@ -171,6 +173,7 @@ X_train_preprocessed = pd.DataFrame(
 )
 X_train_preprocessed.std().plot(kind='barh', figsize=(9, 7))
 plt.title('Features std. dev.');
+plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # We can then normalize the coefficients by the standard deviation and we will
@@ -183,6 +186,7 @@ coefs = pd.DataFrame(
 )
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.axvline(x=0, color='.5');
+plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The plot above tells us that an increase of the "AGE" will induce a decrease
@@ -218,6 +222,7 @@ sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxenplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients');
+plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The "AGE" and "EXPERIENCE" coefficients are highly instable which might be
@@ -227,6 +232,8 @@ age = survey.data['AGE'].values
 experience = survey.data['EXPERIENCE'].values
 sns.regplot(age,experience,scatter_kws={"color": "black", "alpha": 0.2, "s": 30}
             , line_kws={"color": "red"})
+plt.ylabel('EXPERIENCE')
+plt.xlabel('AGE')
 
 ##############################################################################
 # We can remove one of the 2 features and check what is the impact on the
@@ -250,4 +257,5 @@ sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxenplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients');
+plt.subplots_adjust(left=.3)
 
