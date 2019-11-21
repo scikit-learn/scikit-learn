@@ -21,6 +21,7 @@ from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
+from sklearn.metrics import r2_score
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import ridge_regression
@@ -37,6 +38,7 @@ from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
+from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -1187,3 +1189,80 @@ def test_ridge_sag_with_X_fortran():
     X = X[::2, :]
     y = y[::2]
     Ridge(solver='sag').fit(X, y)
+
+
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("use_sample_weight", [True, False])
+@pytest.mark.parametrize("multioutput", [True, False])
+def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight, multioutput):
+    if multioutput:
+        X, y = make_regression(n_samples=10, n_features=5,
+                               n_targets=3, random_state=0)
+    else:
+        X, y = make_regression(n_samples=10, n_features=5, random_state=0)
+    if use_sample_weight:
+        rng = np.random.RandomState(0)
+        sample_weight = rng.rand(X.shape[0])
+    else:
+        sample_weight = None
+    alphas = [0.1, 1, 10]
+
+    clf1 = RidgeCV(
+        fit_intercept=fit_intercept, scoring=None,
+        store_cv_values=True, alphas=alphas
+    )
+    clf1.fit(X, y, sample_weight=sample_weight)
+
+    clf2 = RidgeCV(
+        fit_intercept=fit_intercept, scoring="neg_mean_squared_error",
+        store_cv_values=True, alphas=alphas
+    )
+    clf2.fit(X, y, sample_weight=sample_weight)
+    assert clf1.alpha_ == pytest.approx(clf2.alpha_)
+    assert clf1.best_score_ == pytest.approx(clf2.best_score_)
+    assert_array_almost_equal(clf1.coef_, clf2.coef_)
+    assert_array_almost_equal(clf1.intercept_, clf2.intercept_)
+    if multioutput:
+        cv_results_1 = clf1.cv_values_[:, :, alphas.index(clf1.alpha_)]
+        cv_results_2 = clf2.cv_values_[:, :, alphas.index(clf2.alpha_)]
+    else:
+        cv_results_1 = clf1.cv_values_[:, alphas.index(clf1.alpha_)]
+        cv_results_2 = clf2.cv_values_[:, alphas.index(clf2.alpha_)]
+    assert_array_almost_equal(cv_results_1, (y - cv_results_2) ** 2)
+    assert clf1.best_score_ == pytest.approx(-mean_squared_error(y, cv_results_2))
+
+    clf2 = GridSearchCV(Ridge(fit_intercept=fit_intercept), {"alpha": alphas},
+                        scoring="neg_mean_squared_error", cv=LeaveOneOut())
+    clf2.fit(X, y, sample_weight=sample_weight)
+    assert clf1.alpha_ == pytest.approx(clf2.best_params_["alpha"])
+    assert clf1.best_score_ == pytest.approx(clf2.best_score_)
+    assert_array_almost_equal(clf1.coef_, clf2.best_estimator_.coef_)
+    assert_array_almost_equal(clf1.intercept_, clf2.best_estimator_.intercept_)
+    
+
+@pytest.mark.parametrize("fit_intercept", [True, False])
+@pytest.mark.parametrize("use_sample_weight", [True, False])
+@pytest.mark.parametrize("multioutput", [True, False])
+def test_ridgecv_custom_scorer_consistency(fit_intercept, use_sample_weight, multioutput):
+    if multioutput:
+        X, y = make_regression(n_samples=10, n_features=5,
+                               n_targets=3, random_state=0)
+    else:
+        X, y = make_regression(n_samples=10, n_features=5, random_state=0)
+    if use_sample_weight:
+        rng = np.random.RandomState(0)
+        sample_weight = rng.rand(X.shape[0])
+    else:
+        sample_weight = None
+
+    alphas = [0.1, 1, 10]
+    clf = RidgeCV(
+        fit_intercept=fit_intercept, scoring="r2",
+        store_cv_values=True, alphas=alphas
+    )
+    clf.fit(X, y, sample_weight=sample_weight)
+    if multioutput:
+        cv_results = clf.cv_values_[:, :, alphas.index(clf.alpha_)]
+    else:
+        cv_results = clf.cv_values_[:, alphas.index(clf.alpha_)]
+    assert clf.best_score_ == pytest.approx(r2_score(y, cv_results))

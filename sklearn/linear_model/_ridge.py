@@ -1518,7 +1518,7 @@ class _RidgeGCV(LinearModel):
                     y_pred = predictions / sqrt_sw + y_offset
                 # let the underlying scorer to handle multioutput
                 alpha_score = scorer(
-                    _IdentityEstimator(), y_true, y_pred)
+                    _IdentityEstimator(), y_pred, y_true)
                 if self.store_cv_values:
                     self.cv_values_[:, i] = y_pred.ravel()
             if (best_score is None) or (alpha_score > best_score):
