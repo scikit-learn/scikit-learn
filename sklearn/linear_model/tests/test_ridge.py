@@ -36,7 +36,7 @@ from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
+from sklearn.model_selection import KFold
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification

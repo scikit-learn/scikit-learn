@@ -1494,21 +1494,29 @@ class _RidgeGCV(LinearModel):
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
                 squared_errors = (c / G_inverse_diag) ** 2
+                # convert errors back to the original space
+                # return converted errors
+                # calculate scores based on converted errors
                 if y.ndim == 2:
                     squared_errors /= sample_weight[:, np.newaxis]
                 else:
                     squared_errors /= sample_weight
+                # consistent with default multioutput of mean_squared_error
                 alpha_score = -squared_errors.mean()
                 if self.store_cv_values:
                     self.cv_values_[:, i] = squared_errors.ravel()
             else:
                 predictions = y - (c / G_inverse_diag)
+                # convert predictions back to the original space
+                # return converted predictions
+                # calculate scores based on converted predictions
                 if y.ndim == 2:
                     y_true = y / sqrt_sw[:, np.newaxis] + y_offset
                     y_pred = predictions / sqrt_sw[:, np.newaxis] + y_offset
                 else:
                     y_true = y / sqrt_sw + y_offset
                     y_pred = predictions / sqrt_sw + y_offset
+                # let the underlying scorer to handle multioutput
                 alpha_score = scorer(
                     _IdentityEstimator(), y_true, y_pred)
                 if self.store_cv_values:
