@@ -283,6 +283,16 @@ def test_make_blobs_n_samples_list():
         "Incorrect number of samples per blob"
 
 
+def test_make_blobs_n_samples_with_centers_list():
+    n_samples = [50, 30, 20]
+    X, y, centers = make_blobs(n_samples=n_samples, n_features=2,
+                               random_state=0, return_centers=True)
+
+    assert len(n_samples) == len(centers), "Mismatch in length of " \
+                                           "n_sanmpes and number " \
+                                           "of centers"
+
+
 def test_make_blobs_n_samples_list_with_centers():
     n_samples = [20, 20, 20]
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
