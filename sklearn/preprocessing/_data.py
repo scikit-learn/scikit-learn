@@ -365,8 +365,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
                              " than maximum. Got %s." % str(feature_range))
 
         if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does no support sparse input. "
-                            "You may consider to use MaxAbsScaler instead.")
+            raise TypeError("MinMaxScaler does not support sparse input. "
+                            "Consider using MaxAbsScaler instead.")
 
         X = check_array(X,
                         estimator=self, dtype=FLOAT_DTYPES,
