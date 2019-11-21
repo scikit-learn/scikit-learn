@@ -702,7 +702,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
 
 def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=None, return_centers=False):
+               center_box=(-10.0, 10.0), shuffle=True, random_state=None,
+               return_centers=False):
     """Generate isotropic Gaussian blobs for clustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
