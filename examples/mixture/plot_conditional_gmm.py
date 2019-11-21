@@ -3,17 +3,17 @@
 Conditional Gaussian Mixture Model
 =================================
 
-The ConditionalGaussianMixture class takes an (already trained) Gaussian 
+The ConditionalGaussianMixture class takes an (already trained) Gaussian
 mixture model as an input, and can then be used to evaluate conditional
 distributions of the mixture. In the following we generate data from a
-2D Gaussian mixture before using the samples to try and estimate the 
-resulting 1D conditional distribution. We then fit our conditional 
-Gaussian mixture and show that it matches closely with the approximate 
-solution. 
+2D Gaussian mixture, p(x1,x2), before using the samples to try and estimate
+the 1D conditional distribution, p(x1|x2). We then fit our conditional
+Gaussian mixture and show that it matches closely with the approximate
+solution.
 """
 print(__doc__)
 
-# Author: P L Green <p.l.green@liverpool.ac.uk> 
+# Author: P L Green <p.l.green@liverpool.ac.uk>
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -31,14 +31,14 @@ gmm = mixture.GaussianMixture(n_components=n_components)
 gmm.fit(X)
 
 # We are going to hold x2 equal to 1 and evaluate p(x1|x2) for different
-# values of x1. 
+# values of x1.
 x2 = 1.0
 
 # Here we use the existing samples to generate a histogram of the conditional
 # distribution p(x1|x2)
 indices = np.where((X[:, 1] > x2 - 0.1) &
                    (X[:, 1] < x2 + 0.1))
-                   
+
 fig, ax = plt.subplots(nrows=2, ncols=1)
 ax[0].plot(X[:, 0], X[:, 1], 'k x')
 ax[0].plot(X[indices, 0], X[indices, 1], 'r o')
@@ -49,9 +49,9 @@ ax[0].set_title('Gaussian mixture')
 ax[1].hist(X[indices, 0].T, density=True, bins=50)
 ax[1].set_xlim([-8, 8])
 
-# Create our GMM_Conditional object. Note that the indices where
-# i_cond is True represent the indices of x that will be held at a 
-# conditional value. 
+# Create an instance of a conditional GMM object. Note that the indices where
+# i_cond is True represent the indices of x that will be held at a
+# conditional value.
 gmm_cond = mixture.ConditionalGaussianMixture(gmm=gmm,
                                               i_cond=np.array([False, True]))
 
@@ -66,6 +66,6 @@ ax[1].set_title('Conditional of Gaussian mixture')
 ax[1].set_xlabel('x1')
 ax[1].set_ylabel('p(x1 | x2)')
 
-# Tidy-up and display plots
+# Display plots
 plt.tight_layout()
 plt.show()
