@@ -1194,7 +1194,8 @@ def test_ridge_sag_with_X_fortran():
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("use_sample_weight", [True, False])
 @pytest.mark.parametrize("multioutput", [True, False])
-def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight, multioutput):
+def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight,
+                                            multioutput):
     if multioutput:
         X, y = make_regression(n_samples=10, n_features=5,
                                n_targets=3, random_state=0)
@@ -1229,7 +1230,8 @@ def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight, mu
         cv_results_1 = clf1.cv_values_[:, alphas.index(clf1.alpha_)]
         cv_results_2 = clf2.cv_values_[:, alphas.index(clf2.alpha_)]
     assert_array_almost_equal(cv_results_1, (y - cv_results_2) ** 2)
-    assert clf1.best_score_ == pytest.approx(-mean_squared_error(y, cv_results_2))
+    assert (clf1.best_score_ ==
+            pytest.approx(-mean_squared_error(y, cv_results_2)))
 
     clf2 = GridSearchCV(Ridge(fit_intercept=fit_intercept), {"alpha": alphas},
                         scoring="neg_mean_squared_error", cv=LeaveOneOut())
@@ -1238,12 +1240,13 @@ def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight, mu
     assert clf1.best_score_ == pytest.approx(clf2.best_score_)
     assert_array_almost_equal(clf1.coef_, clf2.best_estimator_.coef_)
     assert_array_almost_equal(clf1.intercept_, clf2.best_estimator_.intercept_)
-    
+
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("use_sample_weight", [True, False])
 @pytest.mark.parametrize("multioutput", [True, False])
-def test_ridgecv_custom_scorer_consistency(fit_intercept, use_sample_weight, multioutput):
+def test_ridgecv_custom_scorer_consistency(fit_intercept, use_sample_weight,
+                                           multioutput):
     if multioutput:
         X, y = make_regression(n_samples=10, n_features=5,
                                n_targets=3, random_state=0)
