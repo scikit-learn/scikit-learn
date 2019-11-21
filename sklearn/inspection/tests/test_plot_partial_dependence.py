@@ -3,6 +3,7 @@ from scipy.stats.mstats import mquantiles
 
 import pytest
 from numpy.testing import assert_allclose
+from numpy.testing import assert_array_equal
 
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
@@ -278,20 +279,24 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
 
     grid_resolution = 5
     fig, ax = pyplot.subplots()
-    plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
-                            grid_resolution=grid_resolution,
-                            feature_names=boston.feature_names, ax=ax)
+    disp1 = plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=boston.feature_names, ax=ax)
 
     axs = fig.get_axes()
     assert len(axs) == 3
 
-    plot_partial_dependence(clf_boston, boston.data,
-                            ['CRIM', 'ZN'],
-                            grid_resolution=grid_resolution,
-                            feature_names=boston.feature_names, ax=ax)
+    disp2 = plot_partial_dependence(clf_boston, boston.data,
+                                    ['CRIM', 'ZN'],
+                                    grid_resolution=grid_resolution,
+                                    feature_names=boston.feature_names, ax=ax)
 
     axs = fig.get_axes()
     assert len(axs) == 3
+
+    assert_array_equal(disp1.axes_, disp2.axes_)
+    assert disp1.figure_ == disp2.figure_
+    assert disp1.bounding_ax_ == disp2.bounding_ax_
 
 
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,

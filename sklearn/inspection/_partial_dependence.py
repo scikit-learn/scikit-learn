@@ -850,7 +850,9 @@ class PartialDependenceDisplay:
                     raise ValueError("The ax was already used by another "
                                      "display object")
                 # ax._sklearn_display_object is an instance of self.__class__
-                ax = ax._sklearn_display_object.axes_
+                disp_obj = ax._sklearn_display_object
+                ax = disp_obj.axes_
+                self.bounding_ax_ = disp_obj.bounding_ax_
             else:
                 ax._sklearn_display_object = self
                 ax.set_axis_off()
@@ -886,7 +888,7 @@ class PartialDependenceDisplay:
             if ax.ndim == 1 and ax.shape[0] != n_features:
                 raise ValueError("Expected len(ax) == len(features), "
                                  "got len(ax) = {}".format(len(ax)))
-            self.bounding_ax_ = None
+            self.bounding_ax_ = getattr(self, "bounding_ax_", None)
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
             self.lines_ = np.empty_like(ax, dtype=np.object)
