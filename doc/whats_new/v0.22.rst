@@ -167,6 +167,10 @@ Changelog
   `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
   :user:`mthorrell`.
 
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
 :mod:`sklearn.compose`
 ......................
 
