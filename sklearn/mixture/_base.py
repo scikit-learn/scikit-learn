@@ -331,7 +331,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        log_prob_norm, log_resp = self._estimate_log_prob_resp(X, sample_weight)
+        log_prob_norm, log_resp = self._estimate_log_prob_resp(X,
+                                                               sample_weight)
         return np.mean(log_prob_norm), log_resp
 
     @abstractmethod

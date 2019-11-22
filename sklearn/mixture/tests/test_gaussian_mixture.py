@@ -203,9 +203,8 @@ def test_sample_weight_length():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
 
-    n_samples, n_components, n_feature = (rand_data.n_samples,
-                                          rand_data.n_components,
-                                          rand_data.n_features)
+    n_samples, n_components = (rand_data.n_samples,
+                               rand_data.n_components)
     X = rand_data.X['full']
 
     g = GaussianMixture(n_components=n_components)
@@ -229,11 +228,11 @@ def test_unit_weights_vs_no_weights():
     rand_data = RandomData(rng)
 
     n_samples, n_components, n_features = (rand_data.n_samples,
-                                          rand_data.n_components,
-                                          rand_data.n_features)
+                                           rand_data.n_components,
+                                           rand_data.n_features)
     sample_weight = np.ones(n_samples)
 
-    for covar_type in ['full']:#COVARIANCE_TYPE:
+    for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
 
         g = GaussianMixture(n_components=n_components, n_init=20,
@@ -260,18 +259,19 @@ def test_unit_weights_vs_no_weights():
             prec_unit_weight = g_unit_weight.precisions_
             prec_no_weight = g_no_weight.precisions_
         elif covar_type == 'tied':
-            prec_unit_weight = np.array([g_unit_weight.precisions_] * n_components)
+            prec_unit_weight = np.array([g_unit_weight.precisions_]
+                                        * n_components)
             prec_no_weight = np.array([g_no_weight.precisions_] * n_components)
         elif covar_type == 'spherical':
             prec_unit_weight = np.array([np.eye(n_features) * c
-                                 for c in g_unit_weight.precisions_])
+                                         for c in g_unit_weight.precisions_])
             prec_no_weight = np.array([np.eye(n_features) * c
-                                 for c in g_no_weight.precisions_])
+                                       for c in g_no_weight.precisions_])
         elif covar_type == 'diag':
             prec_unit_weight = np.array([np.diag(d)
-                                      for d in g_unit_weight.precisions_])
+                                         for d in g_unit_weight.precisions_])
             prec_no_weight = np.array([np.diag(d)
-                                      for d in g_no_weight.precisions_])
+                                       for d in g_no_weight.precisions_])
 
         arg_idx1 = np.trace(prec_unit_weight, axis1=1, axis2=2).argsort()
         arg_idx2 = np.trace(prec_no_weight, axis1=1, axis2=2).argsort()
@@ -793,8 +793,8 @@ def test_weighted_vs_repeated():
                             covariance_type=covar_type)
 
         g1 = GaussianMixture(n_components=n_components, n_init=20,
-                            reg_covar=0, random_state=rng,
-                            covariance_type=covar_type)
+                             reg_covar=0, random_state=rng,
+                             covariance_type=covar_type)
 
         g_weighted = g.fit(X, sample_weight=sample_weight)
         g_repeated = g1.fit(X_repeat)
@@ -815,9 +815,9 @@ def test_weighted_vs_repeated():
             prec_repeated = np.array([g_repeated.precisions_] * n_components)
         elif covar_type == 'spherical':
             prec_weighted = np.array([np.eye(n_features) * c
-                                 for c in g_weighted.precisions_])
+                                      for c in g_weighted.precisions_])
             prec_repeated = np.array([np.eye(n_features) * c
-                                 for c in g_repeated.precisions_])
+                                      for c in g_repeated.precisions_])
         elif covar_type == 'diag':
             prec_weighted = np.array([np.diag(d)
                                       for d in g_weighted.precisions_])
@@ -1098,8 +1098,7 @@ def test_monotonic_likelihood():
                     current_log_likelihood = gmm.fit(X).score(X)
                 except ConvergenceWarning:
                     pass
-                assert (current_log_likelihood >=
-                                     prev_log_likelihood)
+                assert (current_log_likelihood >= prev_log_likelihood)
 
                 if gmm.converged_:
                     break
