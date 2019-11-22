@@ -1,4 +1,5 @@
 import numpy as np
+import weakref
 from scipy.stats.mstats import mquantiles
 
 import pytest
@@ -12,6 +13,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
+from sklearn.utils._plot import _SKLEARN_AX_DISP_OBJ_REF_KEY
 
 from sklearn.inspection import plot_partial_dependence
 
@@ -251,7 +253,7 @@ def test_plot_partial_dependence_with_used_axes(pyplot, clf_boston, boston):
     fig, ax = pyplot.subplots()
     ax.plot([0, 1, 2], [1, 2, 3])
 
-    msg = "The ax was already used in another plot function"
+    msg = "The ax was already used in a matplotlib plot function"
     with pytest.raises(ValueError, match=msg):
         plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
                                 grid_resolution=grid_resolution,
@@ -261,9 +263,15 @@ def test_plot_partial_dependence_with_used_axes(pyplot, clf_boston, boston):
 def test_plot_partial_dependence_used_by_another_display_obj(
         pyplot, clf_boston, boston):
     fig, ax = pyplot.subplots()
-    ax._sklearn_display_object = "Not a partial dependence object"
 
-    msg = "The ax was already used by another display object"
+    class DisplayMock:
+        pass
+
+    obj = DisplayMock()
+    setattr(ax, _SKLEARN_AX_DISP_OBJ_REF_KEY, weakref.ref(obj))
+
+    msg = ("The ax was already used by another display object which is not "
+           "an instance of PartialDependenceDisplay")
     with pytest.raises(ValueError, match=msg):
         plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
                                 grid_resolution=5,
@@ -297,6 +305,21 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
     assert_array_equal(disp1.axes_, disp2.axes_)
     assert disp1.figure_ == disp2.figure_
     assert disp1.bounding_ax_ == disp2.bounding_ax_
+
+
+def test_plot_partial_dependence_with_weak_ref(pyplot, clf_boston, boston):
+    # When original display object is deleted, the weakref from the axes
+    # is set to None
+    grid_resolution = 5
+    fig, ax = pyplot.subplots()
+    disp = plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+                                   grid_resolution=grid_resolution,
+                                   feature_names=boston.feature_names, ax=ax)
+
+    display_ref = getattr(ax, _SKLEARN_AX_DISP_OBJ_REF_KEY)
+    assert isinstance(display_ref(), disp.__class__)
+    del disp
+    assert display_ref() is None
 
 
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,

@@ -26,6 +26,7 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..utils._plot import _check_axes_has_been_used
+from ..utils._plot import _check_axes_has_display_object
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
@@ -845,17 +846,11 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            if hasattr(ax, "_sklearn_display_object"):
-                if not isinstance(ax._sklearn_display_object, self.__class__):
-                    raise ValueError("The ax was already used by another "
-                                     "display object")
-                # ax._sklearn_display_object is an instance of self.__class__
-                disp_obj = ax._sklearn_display_object
-                ax = disp_obj.axes_
+            disp_obj = _check_axes_has_display_object(self, ax)
+            if disp_obj != self:
                 self.bounding_ax_ = disp_obj.bounding_ax_
-            else:
-                ax._sklearn_display_object = self
-                ax.set_axis_off()
+                # ax is set to be an array-like
+                ax = disp_obj.axes_
 
         if isinstance(ax, plt.Axes):
             _check_axes_has_been_used(ax)
