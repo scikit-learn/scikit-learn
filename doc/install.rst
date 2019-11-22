@@ -230,6 +230,25 @@ library for Windows, Mac OSX and Linux.
 Anaconda offers scikit-learn as part of its free distribution.
 
 
+Intel conda channel
+-------------------
+
+Intel maintains a dedicated conda channel that ships scikit-learn::
+
+    $ conda install -c scikit-learn
+
+This version of scikit-learn comes with alternative solvers for some common
+estimators. Those solvers come from the DAAL C++ library and are optimized for
+multi-core CPUs.
+
+Note that those solvers are not enabled by default, please refer to the
+[daal4py](https://intelpython.github.io/daal4py/sklearn.html) documentation for
+more details.
+
+Compatibility with the standard scikit-learn solvers is checked via automated
+continuous integration as reported on https://github.com/IntelPython/daal4py.
+
+
 WinPython for Windows
 -----------------------
 
