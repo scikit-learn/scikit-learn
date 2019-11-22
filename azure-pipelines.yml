@@ -59,7 +59,7 @@ jobs:
         CYTHON_VERSION: '*'
         # temporary pin pytest due to unknown failure with pytest 5.3
         PYTEST_VERSION: '5.2'
-        PILLOW_VERSION: '4.0.0'
+        PILLOW_VERSION: '4.2.1'
         MATPLOTLIB_VERSION: '2.1.1'
         # latest version of joblib available in conda for Python 3.6
         JOBLIB_VERSION: '0.13.2'
