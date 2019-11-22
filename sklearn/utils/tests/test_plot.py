@@ -1,4 +1,6 @@
 import weakref
+import gc
+
 import pytest
 
 from sklearn.utils._plot import _check_axes_has_been_used
@@ -53,6 +55,7 @@ def test_check_axes_has_display_object(pyplot):
 
     # deleting the display_1 object
     del display_1
+    gc.collect()  # python 3.5 needs to gc before the weak reference is removed
     assert display_1_ref() is None
 
     # With the display_1 deleted, a new display object can be added to ax
