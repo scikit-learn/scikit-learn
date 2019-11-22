@@ -3,7 +3,7 @@ jobs:
 - job: linting
   displayName: Linting
   pool:
-    vmImage: ubuntu-16.04
+    vmImage: ubuntu-18.04
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
@@ -21,7 +21,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
-    vmImage: ubuntu-16.04
+    vmImage: ubuntu-18.04
     matrix:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
@@ -79,23 +79,13 @@ jobs:
 - template: build_tools/azure/posix-32.yml
   parameters:
     name: Linux32
-<<<<<<< HEAD
     vmImage: ubuntu-18.04
-=======
-    vmImage: ubuntu-16.04
     dependsOn: [linting]
->>>>>>> upstream/master
     matrix:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
-<<<<<<< HEAD
         PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: '0.13'
-        SKLEARN_NO_OPENMP: 'True'
-=======
-        PYTHON_VERSION: '3.5'
-        JOBLIB_VERSION: '0.11'
->>>>>>> upstream/master
 
 - template: build_tools/azure/posix.yml
   parameters:
