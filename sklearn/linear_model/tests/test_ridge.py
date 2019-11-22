@@ -39,6 +39,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import cross_val_predict
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -1214,6 +1215,8 @@ def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight,
     )
     clf1.fit(X, y, sample_weight=sample_weight)
 
+    # check consistency between RidgeCV(scoring=None) and
+    # RidgeCV(scoring="neg_mean_squared_error")
     clf2 = RidgeCV(
         fit_intercept=fit_intercept, scoring="neg_mean_squared_error",
         store_cv_values=True, alphas=alphas
@@ -1233,6 +1236,8 @@ def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight,
     assert (clf1.best_score_ ==
             pytest.approx(-mean_squared_error(y, cv_results_2)))
 
+    # check consistency between RidgeCV and GridSearCV
+    # this is true for specific scorer
     clf2 = GridSearchCV(Ridge(fit_intercept=fit_intercept), {"alpha": alphas},
                         scoring="neg_mean_squared_error", cv=LeaveOneOut())
     clf2.fit(X, y, sample_weight=sample_weight)
@@ -1240,6 +1245,13 @@ def test_ridgecv_default_scorer_consistency(fit_intercept, use_sample_weight,
     assert clf1.best_score_ == pytest.approx(clf2.best_score_)
     assert_array_almost_equal(clf1.coef_, clf2.best_estimator_.coef_)
     assert_array_almost_equal(clf1.intercept_, clf2.best_estimator_.intercept_)
+
+    # check consistency between RidgeCV and cross_val_predict
+    # this is true for arbitrary scorer
+    ridge = Ridge(alpha=clf1.alpha_, fit_intercept=fit_intercept)
+    loo_pred = cross_val_predict(ridge, X, y, cv=LeaveOneOut(),
+                                 fit_params={"sample_weight": sample_weight})
+    assert_array_almost_equal(loo_pred, cv_results_2)
 
 
 @pytest.mark.parametrize("fit_intercept", [True, False])
@@ -1269,3 +1281,10 @@ def test_ridgecv_custom_scorer_consistency(fit_intercept, use_sample_weight,
     else:
         cv_results = clf.cv_values_[:, alphas.index(clf.alpha_)]
     assert clf.best_score_ == pytest.approx(r2_score(y, cv_results))
+
+    # check consistency between RidgeCV and cross_val_predict
+    # this is true for arbitrary scorer
+    ridge = Ridge(alpha=clf.alpha_, fit_intercept=fit_intercept)
+    loo_pred = cross_val_predict(ridge, X, y, cv=LeaveOneOut(),
+                                 fit_params={"sample_weight": sample_weight})
+    assert_array_almost_equal(loo_pred, cv_results)
