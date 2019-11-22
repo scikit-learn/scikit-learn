@@ -32,6 +32,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.validation import _num_samples
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -196,6 +197,106 @@ def test_check_X():
     assert_array_equal(X, _check_X(X, n_components, n_features))
 
 
+def test_sample_weight_length():
+    # check that an error is raised when passing sample weights
+    # with an incompatible shape
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+
+    n_samples, n_components, n_feature = (rand_data.n_samples,
+                                          rand_data.n_components,
+                                          rand_data.n_features)
+    X = rand_data.X['full']
+
+    g = GaussianMixture(n_components=n_components)
+
+    sample_weight_small = np.ones(2)
+    msg = r'sample_weight.shape == \(2,\), expected \(200,\)'
+    with pytest.raises(ValueError, match=msg):
+        g.fit(X, sample_weight=sample_weight_small)
+
+    sample_weight_two_dim = np.repeat(np.ones(n_samples)[np.newaxis, :],
+                                      2, axis=0)
+    msg_2 = r'Sample weights must be 1D array or scalar'
+    with pytest.raises(ValueError, match=msg_2):
+        g.fit(X, sample_weight=sample_weight_two_dim)
+
+
+def test_unit_weights_vs_no_weights():
+    # not passing any sample weights should be equivalent
+    # to all weights equal to one
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+
+    n_samples, n_components, n_features = (rand_data.n_samples,
+                                          rand_data.n_components,
+                                          rand_data.n_features)
+    sample_weight = np.ones(n_samples)
+
+    for covar_type in ['full']:#COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+
+        g = GaussianMixture(n_components=n_components, n_init=20,
+                            reg_covar=0, random_state=rng,
+                            covariance_type=covar_type)
+
+        g1 = GaussianMixture(n_components=n_components, n_init=20,
+                             reg_covar=0, random_state=rng,
+                             covariance_type=covar_type)
+
+        g_unit_weight = g.fit(X, sample_weight=sample_weight)
+        g_no_weight = g1.fit(X)
+
+        # test all parameters of the gmm
+        assert_allclose(np.sort(g_unit_weight.weights_),
+                        np.sort(g_no_weight.weights_))
+
+        arg_idx1 = g_unit_weight.means_[:, 0].argsort()
+        arg_idx2 = g_no_weight.means_[:, 0].argsort()
+        assert_allclose(g_unit_weight.means_[arg_idx1],
+                        g_no_weight.means_[arg_idx2])
+
+        if covar_type == 'full':
+            prec_unit_weight = g_unit_weight.precisions_
+            prec_no_weight = g_no_weight.precisions_
+        elif covar_type == 'tied':
+            prec_unit_weight = np.array([g_unit_weight.precisions_] * n_components)
+            prec_no_weight = np.array([g_no_weight.precisions_] * n_components)
+        elif covar_type == 'spherical':
+            prec_unit_weight = np.array([np.eye(n_features) * c
+                                 for c in g_unit_weight.precisions_])
+            prec_no_weight = np.array([np.eye(n_features) * c
+                                 for c in g_no_weight.precisions_])
+        elif covar_type == 'diag':
+            prec_unit_weight = np.array([np.diag(d)
+                                      for d in g_unit_weight.precisions_])
+            prec_no_weight = np.array([np.diag(d)
+                                      for d in g_no_weight.precisions_])
+
+        arg_idx1 = np.trace(prec_unit_weight, axis1=1, axis2=2).argsort()
+        arg_idx2 = np.trace(prec_no_weight, axis1=1, axis2=2).argsort()
+        for k, h in zip(arg_idx1, arg_idx2):
+            ecov = EmpiricalCovariance()
+            ecov.covariance_ = prec_unit_weight[h]
+            # the accuracy depends on the number of data and randomness, rng
+            assert_allclose(ecov.error_norm(prec_no_weight[k]), 0)
+
+
+def test_check_normalize_sample_weight():
+    from sklearn.mixture._base import _check_normalize_sample_weight
+
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng)
+
+    X = rand_data.X['full']
+
+    sample_weight = None
+    checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
+    assert _num_samples(X) == _num_samples(checked_sample_weight)
+    assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
+    assert X.dtype == checked_sample_weight.dtype
+
+
 def test_check_weights():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
@@ -333,7 +434,9 @@ def test_suffstat_sk_full():
     X_resp = np.sqrt(resp) * X
     nk = np.array([n_samples])
     xk = np.zeros((1, n_features))
-    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
+    sample_weight = np.ones(n_samples)
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, sample_weight,
+                                                      nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=True)
     ecov.fit(X_resp)
     assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
@@ -349,7 +452,8 @@ def test_suffstat_sk_full():
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean(axis=0).reshape((1, -1))
-    covars_pred = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
+    covars_pred = _estimate_gaussian_covariances_full(resp, X, sample_weight,
+                                                      nk, xk, 0)
     ecov = EmpiricalCovariance(assume_centered=False)
     ecov.fit(X)
     assert_almost_equal(ecov.error_norm(covars_pred[0], norm='frobenius'), 0)
@@ -372,12 +476,15 @@ def test_suffstat_sk_tied():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
+    sample_weight = np.ones(n_samples)
 
-    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
+    covars_pred_full = _estimate_gaussian_covariances_full(
+        resp, X, sample_weight, nk, xk, 0)
     covars_pred_full = np.sum(nk[:, np.newaxis, np.newaxis] * covars_pred_full,
                               0) / n_samples
 
-    covars_pred_tied = _estimate_gaussian_covariances_tied(resp, X, nk, xk, 0)
+    covars_pred_tied = _estimate_gaussian_covariances_tied(
+        resp, X, sample_weight, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     ecov.covariance_ = covars_pred_full
@@ -401,8 +508,11 @@ def test_suffstat_sk_diag():
     X = rng.rand(n_samples, n_features)
     nk = resp.sum(axis=0)
     xk = np.dot(resp.T, X) / nk[:, np.newaxis]
-    covars_pred_full = _estimate_gaussian_covariances_full(resp, X, nk, xk, 0)
-    covars_pred_diag = _estimate_gaussian_covariances_diag(resp, X, nk, xk, 0)
+    sample_weight = np.ones(n_samples)
+    covars_pred_full = _estimate_gaussian_covariances_full(
+        resp, X, sample_weight, nk, xk, 0)
+    covars_pred_diag = _estimate_gaussian_covariances_diag(
+        resp, X, sample_weight, nk, xk, 0)
 
     ecov = EmpiricalCovariance()
     for (cov_full, cov_diag) in zip(covars_pred_full, covars_pred_diag):
@@ -427,8 +537,9 @@ def test_gaussian_suffstat_sk_spherical():
     resp = np.ones((n_samples, 1))
     nk = np.array([n_samples])
     xk = X.mean()
-    covars_pred_spherical = _estimate_gaussian_covariances_spherical(resp, X,
-                                                                     nk, xk, 0)
+    sample_weight = np.ones(n_samples)
+    covars_pred_spherical = _estimate_gaussian_covariances_spherical(
+        resp, X, sample_weight, nk, xk, 0)
     covars_pred_spherical2 = (np.dot(X.flatten().T, X.flatten()) /
                               (n_features * n_samples))
     assert_almost_equal(covars_pred_spherical, covars_pred_spherical2)
@@ -482,17 +593,20 @@ def test_gaussian_mixture_log_probabilities():
     means = rand_data.means
     covars_diag = rng.rand(n_components, n_features)
     X = rng.rand(n_samples, n_features)
+    sample_weight = np.ones(n_samples)
     log_prob_naive = _naive_lmvnpdf_diag(X, means, covars_diag)
 
     # full covariances
     precs_full = np.array([np.diag(1. / np.sqrt(x)) for x in covars_diag])
 
-    log_prob = _estimate_log_gaussian_prob(X, means, precs_full, 'full')
+    log_prob = _estimate_log_gaussian_prob(X, sample_weight, means,
+                                           precs_full, 'full')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # diag covariances
     precs_chol_diag = 1. / np.sqrt(covars_diag)
-    log_prob = _estimate_log_gaussian_prob(X, means, precs_chol_diag, 'diag')
+    log_prob = _estimate_log_gaussian_prob(X, sample_weight, means,
+                                           precs_chol_diag, 'diag')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
     # tied
@@ -501,7 +615,8 @@ def test_gaussian_mixture_log_probabilities():
 
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [covars_tied] * n_components)
-    log_prob = _estimate_log_gaussian_prob(X, means, precs_tied, 'tied')
+    log_prob = _estimate_log_gaussian_prob(X, sample_weight, means,
+                                           precs_tied, 'tied')
 
     assert_array_almost_equal(log_prob, log_prob_naive)
 
@@ -511,7 +626,7 @@ def test_gaussian_mixture_log_probabilities():
     log_prob_naive = _naive_lmvnpdf_diag(X, means,
                                          [[k] * n_features for k in
                                           covars_spherical])
-    log_prob = _estimate_log_gaussian_prob(X, means,
+    log_prob = _estimate_log_gaussian_prob(X, sample_weight, means,
                                            precs_spherical, 'spherical')
     assert_array_almost_equal(log_prob, log_prob_naive)
 
@@ -651,6 +766,71 @@ def test_gaussian_mixture_fit():
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
+
+
+def test_weighted_vs_repeated():
+    # a sample weight of N should yield the same result as an N-fold
+    # repetition of the sample
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    rand_data = RandomData(rng, n_samples=n_samples)
+
+    n_features = rand_data.n_features
+    n_components = rand_data.n_components
+
+    for covar_type in COVARIANCE_TYPE:
+        X = rand_data.X[covar_type]
+
+        separation_index = int(np.round(rand_data.weights[0] * n_samples))
+        sample_weight = np.ones(n_samples)
+        sample_weight[separation_index:] += 2
+
+        X_second_component = X[separation_index:]
+        X_repeat = np.vstack((X, X_second_component, X_second_component))
+
+        g = GaussianMixture(n_components=n_components, n_init=20,
+                            reg_covar=0, random_state=rng,
+                            covariance_type=covar_type)
+
+        g1 = GaussianMixture(n_components=n_components, n_init=20,
+                            reg_covar=0, random_state=rng,
+                            covariance_type=covar_type)
+
+        g_weighted = g.fit(X, sample_weight=sample_weight)
+        g_repeated = g1.fit(X_repeat)
+
+        assert_allclose(np.sort(g_weighted.weights_),
+                        np.sort(g_repeated.weights_))
+
+        arg_idx1 = g_weighted.means_[:, 0].argsort()
+        arg_idx2 = g_repeated.means_[:, 0].argsort()
+        assert_allclose(g_weighted.means_[arg_idx1],
+                        g_repeated.means_[arg_idx2])
+
+        if covar_type == 'full':
+            prec_weighted = g_weighted.precisions_
+            prec_repeated = g_repeated.precisions_
+        elif covar_type == 'tied':
+            prec_weighted = np.array([g_weighted.precisions_] * n_components)
+            prec_repeated = np.array([g_repeated.precisions_] * n_components)
+        elif covar_type == 'spherical':
+            prec_weighted = np.array([np.eye(n_features) * c
+                                 for c in g_weighted.precisions_])
+            prec_repeated = np.array([np.eye(n_features) * c
+                                 for c in g_repeated.precisions_])
+        elif covar_type == 'diag':
+            prec_weighted = np.array([np.diag(d)
+                                      for d in g_weighted.precisions_])
+            prec_repeated = np.array([np.diag(d)
+                                      for d in g_repeated.precisions_])
+
+        arg_idx1 = np.trace(prec_weighted, axis1=1, axis2=2).argsort()
+        arg_idx2 = np.trace(prec_repeated, axis1=1, axis2=2).argsort()
+        for k, h in zip(arg_idx1, arg_idx2):
+            ecov = EmpiricalCovariance()
+            ecov.covariance_ = prec_weighted[h]
+            # the accuracy depends on the number of data and randomness, rng
+            assert_allclose(ecov.error_norm(prec_repeated[k]), 0, atol=0.001)
 
 
 def test_gaussian_mixture_fit_best_params():

@@ -452,7 +452,7 @@ class BayesianGaussianMixture(BaseMixture):
                              "should be greater than 0., but got %.3f."
                              % self.covariance_prior)
 
-    def _initialize(self, X, resp):
+    def _initialize(self, X, sample_weight, resp):
         """Initialization of the mixture parameters.
 
         Parameters
@@ -461,7 +461,8 @@ class BayesianGaussianMixture(BaseMixture):
 
         resp : array-like, shape (n_samples, n_components)
         """
-        nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
+        nk, xk, sk = _estimate_gaussian_parameters(X, sample_weight, resp,
+                                                   self.reg_covar,
                                                    self.covariance_type)
 
         self._estimate_weights(nk)
@@ -647,7 +648,7 @@ class BayesianGaussianMixture(BaseMixture):
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
 
-    def _m_step(self, X, log_resp):
+    def _m_step(self, X, sample_weight, log_resp):
         """M step.
 
         Parameters
@@ -661,7 +662,8 @@ class BayesianGaussianMixture(BaseMixture):
         n_samples, _ = X.shape
 
         nk, xk, sk = _estimate_gaussian_parameters(
-            X, np.exp(log_resp), self.reg_covar, self.covariance_type)
+            X, sample_weight, np.exp(log_resp), self.reg_covar,
+            self.covariance_type)
         self._estimate_weights(nk)
         self._estimate_means(nk, xk)
         self._estimate_precisions(nk, xk, sk)
@@ -679,12 +681,13 @@ class BayesianGaussianMixture(BaseMixture):
             return (digamma(self.weight_concentration_) -
                     digamma(np.sum(self.weight_concentration_)))
 
-    def _estimate_log_prob(self, X):
+    def _estimate_log_prob(self, X, sample_weight):
         _, n_features = X.shape
         # We remove `n_features * np.log(self.degrees_of_freedom_)` because
         # the precision matrix is normalized
         log_gauss = (_estimate_log_gaussian_prob(
-            X, self.means_, self.precisions_cholesky_, self.covariance_type) -
+            X, sample_weight, self.means_, self.precisions_cholesky_,
+            self.covariance_type) -
             .5 * n_features * np.log(self.degrees_of_freedom_))
 
         log_lambda = n_features * np.log(2.) + np.sum(digamma(
