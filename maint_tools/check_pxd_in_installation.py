@@ -14,7 +14,6 @@ import subprocess
 
 
 sklearn_dir = pathlib.Path(sys.argv[1]).absolute()
-print(sklearn_dir)
 
 # find all .pxd files
 pxd_files = list(sklearn_dir.glob("**/*.pxd"))
