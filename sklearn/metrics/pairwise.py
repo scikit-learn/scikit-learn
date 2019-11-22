@@ -1033,7 +1033,8 @@ def _detect_categorical_features(X, categorical_features=None):
             new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
-    print("X:", X, "X.shape:", X.shape, "categorical_features:", categorical_features)
+    print("X:", X, "X.shape:", X.shape, "categorical_features:",
+          categorical_features)
     return categorical_features
 
 
