@@ -167,8 +167,8 @@ plt.ylim([0, 27])
 feature_names = (model.named_steps['columntransformer']
                       .named_transformers_['onehotencoder']
                       .get_feature_names(input_features=categorical_columns))
-feature_names = np.concatenate([feature_names, binary_columns,
-                      numerical_columns])
+feature_names = np.concatenate(
+    [feature_names, binary_columns, numerical_columns])
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
