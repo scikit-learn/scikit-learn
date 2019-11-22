@@ -235,7 +235,7 @@ Intel conda channel
 
 Intel maintains a dedicated conda channel that ships scikit-learn::
 
-    $ conda install -c scikit-learn
+    $ conda install -c intel scikit-learn
 
 This version of scikit-learn comes with alternative solvers for some common
 estimators. Those solvers come from the DAAL C++ library and are optimized for
