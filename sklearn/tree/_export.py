@@ -540,7 +540,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
 
-        self.arrow_args = dict(arrowstyle="<-")
+        self.arrow_args = dict(arrowstyle="<-",color="C0")
 
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
