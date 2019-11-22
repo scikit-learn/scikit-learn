@@ -13,9 +13,7 @@ import textwrap
 import subprocess
 
 
-sklearn_dir = pathlib.Path(sys.argv[1]).absolute()
-
-# find all .pxd files
+sklearn_dir = pathlib.Path(sys.argv[1])
 pxd_files = list(sklearn_dir.glob("**/*.pxd"))
 
 print("> Found pxd files:")
@@ -24,8 +22,6 @@ for pxd_file in pxd_files:
 
 print("\n> Trying to compile a cython extension cimporting all corresponding "
       "modules\n")
-start_dir = os.path.abspath('.')
-
 with tempfile.TemporaryDirectory() as tmpdir:
     tmpdir = pathlib.Path(tmpdir)
     # A cython test file which cimports all modules corresponding to found
