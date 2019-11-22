@@ -593,8 +593,10 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     ----------
     n_samples : int or two-element tuple, optional (default=100)
         If int, it is the total number of points generated.
-        (For odd numbers, the inner circle will have one point more than the outer circle.)
-        If two-element tuple, number of points in outer circle and inner circle.
+        For odd numbers, the inner circle will have one point more than the
+        outer circle.
+        If two-element tuple, number of points in outer circle and inner
+        circle.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -629,8 +631,9 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         try:
             n_samples_out, n_samples_in = n_samples
         except ValueError:
-            raise ValueError('`n_samples` can be either an int or a two-element tuple. '
-                             'You passed ' + str(n_samples) + ' instead.')
+            raise ValueError('`n_samples` can be either an int or '
+                             'a two-element tuple. You passed ' +
+                             str(n_samples) + ' instead.')
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -693,8 +696,9 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
         try:
             n_samples_out, n_samples_in = n_samples
         except ValueError:
-            raise ValueError('`n_samples` can be either an int or a two-element tuple. '
-                             'You passed ' + str(n_samples) + ' instead.')
+            raise ValueError('`n_samples` can be either an int or '
+                             'a two-element tuple. You passed ' +
+                             str(n_samples) + ' instead.')
 
     generator = check_random_state(random_state)
 

@@ -478,7 +478,8 @@ def test_make_moons():
 
 def test_make_moons_unbalanced():
     X, y = make_moons(n_samples=(7, 5))
-    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, 'Number of samples in a moon is wrong'
+    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, \
+        'Number of samples in a moon is wrong'
     assert X.shape == (12, 2), "X shape mismatch"
     assert y.shape == (12,), "y shape mismatch"
 
