@@ -24,8 +24,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # this import hids some warnings in axis plotting
-from matplotlib.axes._axes import _log as matplotlib_axes_logger
-matplotlib_axes_logger.setLevel('ERROR')
 
 #############################################################################
 # Determinants of Wages from the 1985 Current Population Survey
