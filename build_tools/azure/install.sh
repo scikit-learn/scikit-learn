@@ -22,13 +22,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
+                blas[build=$BLAS]"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
