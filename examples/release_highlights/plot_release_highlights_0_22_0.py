@@ -246,10 +246,10 @@ def test_sklearn_compatible_estimator(estimator, check):
 # classification. Two averaging strategies are currently supported: the
 # one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 # the one-vs-rest algorithm computes the average of the ROC AUC scores for each
-# class against all other classes. In both cases, the scores correspond to the
-# probability estimates that a sample belongs to a particular
-# class. The OvO and OvR algorithms supports weighting uniformly
-# (``average='macro'``) and weighting by the prevalence
+# class against all other classes. In both cases, the multiclass ROC AUC scores
+# are computed from the probability estimates that a sample belongs to a
+# particular class according to the model. The OvO and OvR algorithms supports
+# weighting uniformly (``average='macro'``) and weighting by the prevalence
 # (``average='weighted'``).
 #
 # Read more in the :ref:`User Guide <roc_metrics>`.
