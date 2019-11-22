@@ -10,7 +10,15 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
+from sklearn.utils._testing import _convert_container
+
 from sklearn.inspection import plot_partial_dependence
+
+
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
 
 
 @pytest.fixture(scope="module")
@@ -57,11 +65,12 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
                                    prob=np.arange(0.1, 1.0, 0.1)))
 
     single_feature_positions = [(0, 0), (0, 1)]
+    expected_ylabels = ["Partial dependence", ""]
 
     for i, pos in enumerate(single_feature_positions):
         ax = disp.axes_[pos]
+        assert ax.get_ylabel() == expected_ylabels[i]
         assert ax.get_xlabel() == boston.feature_names[i]
-        assert ax.get_ylabel() == "Partial dependence"
         assert_allclose(ax.get_ylim(), disp.pdp_lim[1])
 
         line = disp.lines_[pos]
@@ -84,13 +93,36 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston):
+@pytest.mark.parametrize(
+    "input_type, feature_names_type",
+    [('dataframe', None),
+     ('dataframe', 'list'), ('list', 'list'), ('array', 'list'),
+     ('dataframe', 'array'), ('list', 'array'), ('array', 'array'),
+     ('dataframe', 'series'), ('list', 'series'), ('array', 'series'),
+     ('dataframe', 'index'), ('list', 'index'), ('array', 'index')]
+)
+def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
+                                              input_type, feature_names_type):
+    if input_type == 'dataframe':
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(boston.data, columns=boston.feature_names)
+    elif input_type == 'list':
+        X = boston.data.tolist()
+    else:
+        X = boston.data
+
+    if feature_names_type is None:
+        feature_names = None
+    else:
+        feature_names = _convert_container(boston.feature_names,
+                                           feature_names_type)
+
     grid_resolution = 25
     # check with str features and array feature names and single column
-    disp = plot_partial_dependence(clf_boston, boston.data,
+    disp = plot_partial_dependence(clf_boston, X,
                                    [('CRIM', 'ZN'), 'ZN'],
                                    grid_resolution=grid_resolution,
-                                   feature_names=boston.feature_names,
+                                   feature_names=feature_names,
                                    n_cols=1, line_kw={"alpha": 0.8})
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -171,6 +203,8 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
+    assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
+    assert disp1.axes_[0, 1].get_ylabel() == ""
     assert len(disp1.axes_[0, 0].get_lines()) == 1
     assert len(disp1.axes_[0, 1].get_lines()) == 1
 
@@ -211,7 +245,16 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
 
 
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
-    # The first call to `plot_*` will plot the axes
+    # The first call to plot_partial_dependence will create two new axes to
+    # place in the space of the passed in axes, which results in a total of
+    # three axes in the figure.
+    # Currently the API does not allow for the second call to
+    # plot_partial_dependence to use the same axes again, because it will
+    # create two new axes in the space resulting in five axes. To get the
+    # expected behavior one needs to pass the generated axes into the second
+    # call:
+    # disp1 = plot_partial_dependence(...)
+    # disp2 = plot_partial_dependence(..., ax=disp1.axes_)
 
     grid_resolution = 25
     fig, ax = pyplot.subplots()
@@ -227,6 +270,24 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
                                 ['CRIM', 'ZN'],
                                 grid_resolution=grid_resolution,
                                 feature_names=boston.feature_names, ax=ax)
+
+
+def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
+                                                    boston):
+    # second call to plot does not change the feature names from the first
+    # call
+
+    feature_names = boston.feature_names
+    disp = plot_partial_dependence(clf_boston, boston.data,
+                                   [0, 1],
+                                   grid_resolution=10,
+                                   feature_names=feature_names)
+
+    plot_partial_dependence(clf_boston, boston.data, [0, 1],
+                            grid_resolution=10, ax=disp.axes_)
+
+    for i, ax in enumerate(disp.axes_.ravel()):
+        assert ax.get_xlabel() == feature_names[i]
 
 
 def test_plot_partial_dependence_multiclass(pyplot):
@@ -296,11 +357,24 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     assert disp.bounding_ax_ is not None
 
     positions = [(0, 0), (0, 1)]
+    expected_label = ["Partial dependence", ""]
 
     for i, pos in enumerate(positions):
         ax = disp.axes_[pos]
-        assert ax.get_ylabel() == "Partial dependence"
+        assert ax.get_ylabel() == expected_label[i]
         assert ax.get_xlabel() == "{}".format(i)
+
+
+def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame(boston.data, columns=boston.feature_names)
+
+    grid_resolution = 25
+
+    plot_partial_dependence(
+        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
+        feature_names=df.columns.tolist()
+    )
 
 
 dummy_classification_data = make_classification(random_state=0)
@@ -369,7 +443,7 @@ def test_plot_partial_dependence_fig_deprecated(pyplot):
 
     msg = ("The fig parameter is deprecated in version 0.22 and will be "
            "removed in version 0.24")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         plot_partial_dependence(
             clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 

@@ -13,6 +13,11 @@ jobs:
       - NUMPY_VERSION: 1.13.1
       - SCIPY_VERSION: 0.19.1
       - MATPLOTLIB_VERSION: 2.1.1
+      # on conda, this is the latest for python 3.5
+      # The following places need to be in sync with regard to Cython version:
+      # - .circleci config file
+      # - sklearn/_build_utils/__init__.py
+      # - advanced installation guide
       - CYTHON_VERSION: 0.28.5
       - SCIKIT_IMAGE_VERSION: 0.12.3
     steps:
@@ -91,11 +96,8 @@ jobs:
           name: dependencies
           command: sudo pip install flake8
       - run:
-          name: flake8
-          command: ./build_tools/circle/flake8_diff.sh
-      - run:
-          name: deprecated_properties_checks
-          command: ./build_tools/circle/check_deprecated_properties.sh
+          name: linting
+          command: ./build_tools/circle/linting.sh
 
   pypy3:
     docker:
