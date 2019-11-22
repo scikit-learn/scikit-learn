@@ -11,20 +11,19 @@ It is important to emphasize that linear models compute conditional links.
 The interpretation of the coefficients gives the relationship between the
 feature and the target given that other features remain constant.
 
-This example will show some hints in interpreting coefficient in linear models, 
+This example will show some hints in interpreting coefficient in linear models,
 using data from the "Current Population Survey" from 1985.
 """
 
 print(__doc__)
 
-from time import time
 import numpy as np
 import scipy as sp
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# this import hids some warnings in axis plotting 
+# this import hids some warnings in axis plotting
 from matplotlib.axes._axes import _log as matplotlib_axes_logger
 matplotlib_axes_logger.setLevel('ERROR')
 
@@ -38,7 +37,7 @@ matplotlib_axes_logger.setLevel('ERROR')
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to `True` will retrieve the data
 # as a pandas dataframe.
- 
+
 from sklearn.datasets import fetch_openml
 
 survey = fetch_openml(data_id=534, as_frame=True)
@@ -55,7 +54,7 @@ print(survey.target.head())
 
 ##############################################################################
 # First, let's get some insights by looking at the marginal links between the
-# different variables. Only numerical variables will be used. 
+# different variables. Only numerical variables will be used.
 
 sns.pairplot(survey.frame, diag_kind='kde')
 
@@ -75,7 +74,7 @@ survey.data.info()
 # The dataset is composed by columns with different data types and we need to
 # apply a specific preprocessing for each data types.
 # Our pre-processor will
-# 
+#
 # - one-hot encode (i.e., generate a column by category) the categorical
 #   columns;
 # - replace by 0 and 1 the categories of binary columns;
@@ -127,11 +126,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 ##############################################################################
 # Then we fit the model
 
-model.fit(X_train, y_train);
+model.fit(X_train, y_train)
 
 ##############################################################################
 # We can check the performance of the computed model using, for example, the
-# median absolute error of the model.  
+# median absolute error of the model.
 
 from sklearn.metrics import median_absolute_error
 
@@ -156,8 +155,8 @@ plt.ylim([0, 27])
 ##############################################################################
 # The model learnt is far to be a good model making accurate prediction.
 # As interpretation tools characterize model rather than the generative process
-# of the data itself, it needs to be emphasized that interpretations are correct
-# if the model is correct as well.
+# of the data itself, it needs to be emphasized that interpretations are
+# correct if the model is correct as well.
 #
 # Interpreting coefficients
 # .........................
@@ -168,14 +167,15 @@ plt.ylim([0, 27])
 feature_names = (model.named_steps['columntransformer']
                       .named_transformers_['onehotencoder']
                       .get_feature_names(input_features=categorical_columns))
-feature_names = np.concatenate([feature_names, binary_columns, numerical_columns])
+feature_names = np.concatenate([feature_names, binary_columns,
+                                             numerical_columns])
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
     columns=['Coefficients'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
-plt.axvline(x=0, color='.5');
+plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -190,7 +190,7 @@ X_train_preprocessed = pd.DataFrame(
     columns=feature_names
 )
 X_train_preprocessed.std().plot(kind='barh', figsize=(9, 7))
-plt.title('Features std. dev.');
+plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -203,7 +203,7 @@ coefs = pd.DataFrame(
     columns=['Coefficients'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
-plt.axvline(x=0, color='.5');
+plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -212,8 +212,8 @@ plt.subplots_adjust(left=.3)
 # the "EXPERIENCE" will induce an increase of the "WAGE" when all other
 # features remain constant.
 #
-# The first interpretation might look counter-intuitive at first, if one relates
-# the relationship between "AGE" and "WAGE" as a marginal link.
+# The first interpretation might look counter-intuitive at first, if one
+# relates the relationship between "AGE" and "WAGE" as a marginal link.
 # However, as previously mentioned, a linear model computes a conditional
 # link between "AGE" and "WAGE" given all other features.
 # Therefore, one should also interpret that for a given experience and all
@@ -243,7 +243,7 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxenplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
-plt.title('Stability of coefficients');
+plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
@@ -270,7 +270,7 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxenplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
-plt.title('Stability of coefficients');
+plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
