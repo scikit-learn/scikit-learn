@@ -245,8 +245,9 @@ Note that those solvers are not enabled by default, please refer to the
 [daal4py](https://intelpython.github.io/daal4py/sklearn.html) documentation for
 more details.
 
-Compatibility with the standard scikit-learn solvers is checked via automated
-continuous integration as reported on https://github.com/IntelPython/daal4py.
+Compatibility with the standard scikit-learn solvers is checked by running the
+full scikit-learn test suite via automated continuous integration as reported
+on https://github.com/IntelPython/daal4py.
 
 
 WinPython for Windows
