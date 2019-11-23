@@ -10,7 +10,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
-
+	
     .. versionadded:: 0.9
 
     Parameters
