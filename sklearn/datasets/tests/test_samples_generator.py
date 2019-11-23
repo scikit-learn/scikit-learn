@@ -312,6 +312,15 @@ def test_make_blobs_n_samples_centers_none(n_samples):
         "Incorrect number of samples per blob"
 
 
+def test_make_blobs_return_centers():
+    n_samples = [10, 20]
+    n_features = 3
+    X, y, centers = make_blobs(n_samples=n_samples, n_features=n_features,
+                               return_centers=True, random_state=0)
+
+    assert_array_equal(centers.shape, [len(n_samples), n_features])
+
+
 def test_make_blobs_error():
     n_samples = [20, 20, 20]
     centers = np.array([[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]])
