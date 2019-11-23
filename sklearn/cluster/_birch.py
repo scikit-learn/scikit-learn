@@ -330,6 +330,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <birch>`.
 
+    .. versionadded:: 0.16
+
     Parameters
     ----------
     threshold : float, default 0.5
@@ -386,25 +388,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.cluster import Birch
-    >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
-    >>> brc = Birch(n_clusters=None)
-    >>> brc.fit(X)
-    Birch(n_clusters=None)
-    >>> brc.predict(X)
-    array([0, 0, 0, 1, 1, 1])
 
-    References
-    ----------
-    * Tian Zhang, Raghu Ramakrishnan, Maron Livny
-      BIRCH: An efficient data clustering method for large databases.
-      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
-
-    * Roberto Perdisci
-      JBirch - Java implementation of BIRCH clustering algorithm
-      https://code.google.com/archive/p/jbirch
+    MiniBatchKMeans
+        Alternative  implementation that does incremental updates
+        of the centers' positions using mini-batches.
 
     Notes
     -----
@@ -419,6 +408,26 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     to it and the linear sum, squared sum and the number of samples of that
     subcluster are updated. This is done recursively till the properties of
     the leaf node are updated.
+
+    References
+    ----------
+    * Tian Zhang, Raghu Ramakrishnan, Maron Livny
+      BIRCH: An efficient data clustering method for large databases.
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+
+    * Roberto Perdisci
+      JBirch - Java implementation of BIRCH clustering algorithm
+      https://code.google.com/archive/p/jbirch
+
+    Examples
+    --------
+    >>> from sklearn.cluster import Birch
+    >>> X = [[0, 1], [0.3, 1], [-0.3, 1], [0, -1], [0.3, -1], [-0.3, -1]]
+    >>> brc = Birch(n_clusters=None)
+    >>> brc.fit(X)
+    Birch(n_clusters=None)
+    >>> brc.predict(X)
+    array([0, 0, 0, 1, 1, 1])
     """
 
     def __init__(self, threshold=0.5, branching_factor=50, n_clusters=3,
@@ -439,7 +448,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             Input data.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+            Fitted estimator.
         """
         self.fit_, self.partial_fit_ = True, False
         return self._fit(X)
@@ -522,7 +536,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             step is done.
 
         y : Ignored
+            Not used, present here for API consistency by convention.
 
+        Returns
+        -------
+        self
+            Fitted estimator.
         """
         self.partial_fit_, self.fit_ = True, False
         if X is None:
