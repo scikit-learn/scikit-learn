@@ -330,7 +330,7 @@ Changelog
   estimator's constructor but not stored as attributes on the instance.
   :pr:`14464` by `Joel Nothman`_.
 
-- |Fix| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
+- |Enhancement| :func:`gaussian_process.kernels.Matern` returns the RBF kernel when ``nu=np.inf``.
   :pr: `15503` by :user:`Sam Dixon` <sam-dixon>.
 
 :mod:`sklearn.impute`
