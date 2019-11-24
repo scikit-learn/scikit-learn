@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
+#          Charles Moyes <me@charlesmoyes.com>
 # License: BSD 3 clause
 
 from collections import defaultdict
@@ -30,6 +31,7 @@ __all__ = [
     'LabelBinarizer',
     'LabelEncoder',
     'MultiLabelBinarizer',
+    'MultiLabelHistogram',
 ]
 
 
@@ -1023,6 +1025,232 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                                  'Also got {0}'.format(unexpected))
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
+
+    def _more_tags(self):
+        return {'X_types': ['2dlabels']}
+
+
+class MultiLabelHistogram(TransformerMixin, BaseEstimator):
+    """Transform between iterable of dicts and a multilabel format
+
+    This transformer converts between a class mapping with numerical values
+    (such as a histogram) to the multilabel format: a (samples x classes)
+    histogram matrix indicating the presence of a class label with an
+    associated value.
+
+    Parameters
+    ----------
+    classes : array-like of shape [n_classes] (optional)
+        Indicates an ordering for the class labels.
+        All entries should be unique (cannot contain duplicate classes).
+
+    sparse_output : boolean (default: False),
+        Set to true if output binary array is desired in CSR sparse format
+
+    Attributes
+    ----------
+    classes_ : array of labels
+        A copy of the `classes` parameter where provided,
+        or otherwise, the sorted set of classes found when fitting.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import MultiLabelHistogram
+    >>> mlh = MultiLabelHistogram()
+    >>> mlh.fit_transform([{1: 5.5, 2: -3.0}, {3: 999}])
+    array([[  5.5  -3.    0. ],
+           [  0.    0.  999. ]])
+    >>> mlh.classes_
+    array([1, 2, 3])
+
+    >>> mlh.fit_transform([{'sci-fi': -2.0, 'thriller': 5.0}, {'comedy': 0.1}])
+    array([[ 0.  -2.   5. ],
+           [ 0.1  0.   0. ]])
+    >>> list(mlh.classes_)
+    ['comedy', 'sci-fi', 'thriller']
+
+    See also
+    --------
+    MultiLabelBinarizer : Transform between iterable
+        of iterables and a multilabel format
+    """
+
+    def __init__(self, classes=None, sparse_output=False):
+        self.classes = classes
+        self.sparse_output = sparse_output
+
+    def fit(self, y):
+        """Fit the label sets binarizer, storing :term:`classes_`
+
+        Parameters
+        ----------
+        y : iterable of iterables
+            A set of labels (any orderable and hashable object) for each
+            sample. If the `classes` parameter is set, `y` will not be
+            iterated.
+
+        Returns
+        -------
+        self : returns this MultiLabelHistogram instance
+        """
+        self._cached_dict = None
+        if self.classes is None:
+            classes = sorted(set(itertools.chain.from_iterable(y)))
+        elif len(set(self.classes)) < len(self.classes):
+            raise ValueError("The classes argument contains duplicate "
+                             "classes. Remove these duplicates before passing "
+                             "them to MultiLabelHistogram.")
+        else:
+            classes = self.classes
+        dtype = np.int if all(isinstance(c, int) for c in classes) else object
+        self.classes_ = np.empty(len(classes), dtype=dtype)
+        self.classes_[:] = classes
+        return self
+
+    def fit_transform(self, y):
+        """Fit the label sets binarizer and transform the given label sets
+
+        Parameters
+        ----------
+        y : iterable of iterables
+            A set of labels (any orderable and hashable object) for each
+            sample. If the `classes` parameter is set, `y` will not be
+            iterated.
+
+        Returns
+        -------
+        y_indicator : array or CSR matrix, shape (n_samples, n_classes)
+            A matrix such that `y_indicator[i, j] = (C != 0)` iff
+            `classes_[j]` is in `y[i]` with associated value C, and 0
+            otherwise.
+        """
+        self._cached_dict = None
+
+        if self.classes is not None:
+            return self.fit(y).transform(y)
+
+        # Automatically increment on new class
+        class_mapping = defaultdict(int)
+        class_mapping.default_factory = class_mapping.__len__
+        yt = self._transform(y, class_mapping)
+
+        # sort classes and reorder columns
+        tmp = sorted(class_mapping, key=class_mapping.get)
+
+        # (make safe for tuples)
+        dtype = np.int if all(isinstance(c, int) for c in tmp) else object
+        class_mapping = np.empty(len(tmp), dtype=dtype)
+        class_mapping[:] = tmp
+        self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
+        # ensure yt.indices keeps its current dtype
+        yt.indices = np.array(inverse[yt.indices], dtype=yt.indices.dtype,
+                              copy=False)
+
+        if not self.sparse_output:
+            yt = yt.toarray()
+
+        return yt
+
+    def transform(self, y):
+        """Transform the given label sets
+
+        Parameters
+        ----------
+        y : iterable of dicts
+            A dict of labels for each sample, containing associated
+            values for each class. If the `classes` parameter is set,
+            `y` will not be iterated.
+
+        Returns
+        -------
+        y_indicator : array or CSR matrix, shape (n_samples, n_classes)
+            A matrix such that `y_indicator[i, j] = (C ! = 0)` iff
+            `classes_[j]` is in `y[i]` with associated value C, and 0
+            otherwise.
+        """
+        check_is_fitted(self)
+
+        class_to_index = self._build_cache()
+        yt = self._transform(y, class_to_index)
+
+        if not self.sparse_output:
+            yt = yt.toarray()
+
+        return yt
+
+    def _build_cache(self):
+        if self._cached_dict is None:
+            self._cached_dict = dict(zip(self.classes_,
+                                         range(len(self.classes_))))
+
+        return self._cached_dict
+
+    def _transform(self, y, class_mapping):
+        """Transforms the label sets with a given mapping
+
+        Parameters
+        ----------
+        y : iterable of iterables
+        class_mapping : Mapping
+            Maps from label to column index in label value matrix
+
+        Returns
+        -------
+        y_indicator : sparse CSR matrix, shape (n_samples, n_classes)
+            Label indicator matrix
+        """
+        data = array.array('f')
+        indices = array.array('i')
+        indptr = array.array('i', [0])
+        unknown = set()
+        for labels in y:
+            index = set()
+            for label, value in labels.items():
+                try:
+                    index.add(class_mapping[label])
+                except KeyError:
+                    unknown.add(label)
+
+                data.append(value)
+
+            indices.extend(index)
+            indptr.append(len(indices))
+        if unknown:
+            warnings.warn('unknown class(es) {0} will be ignored'
+                          .format(sorted(unknown, key=str)))
+
+        return sp.csr_matrix((data, indices, indptr),
+                             shape=(len(indptr) - 1, len(class_mapping)))
+
+    def inverse_transform(self, yt):
+        """Transform the given indicator matrix into label sets
+
+        Parameters
+        ----------
+        yt : array or sparse matrix of shape (n_samples, n_classes)
+            A matrix containing associated values for each class in each
+            sample.
+
+        Returns
+        -------
+        y : list of tuples
+            The set of labels for each sample such that `y[i]` consists of
+            `classes_[j]` for each `yt[i, j] == (C != 0)`.
+        """
+        check_is_fitted(self)
+
+        if yt.shape[1] != len(self.classes_):
+            raise ValueError('Expected indicator for {0} classes, but got {1}'
+                             .format(len(self.classes_), yt.shape[1]))
+
+        if sp.issparse(yt):
+            yt = yt.tocsr()
+            return [dict(zip(self.classes_.take(yt.indices[start:end]), yt.data[start:end]))
+                    for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
+        else:
+            print([ind for ind in yt])
+            return [dict(zip(self.classes_.compress(indicators), filter(None, indicators)))
+                    for indicators in yt]
 
     def _more_tags(self):
         return {'X_types': ['2dlabels']}

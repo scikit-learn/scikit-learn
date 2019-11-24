@@ -11,12 +11,14 @@ from scipy.sparse import lil_matrix
 
 from sklearn.utils.multiclass import type_of_target
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.preprocessing._label import LabelBinarizer
 from sklearn.preprocessing._label import MultiLabelBinarizer
+from sklearn.preprocessing._label import MultiLabelHistogram
 from sklearn.preprocessing._label import LabelEncoder
 from sklearn.preprocessing._label import label_binarize
 
@@ -654,3 +656,17 @@ def test_encode_check_unknown():
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
         _encode(values, uniques, encode=True, check_unknown=False)
+
+
+def test_multilabel_histogram():
+    mlh = MultiLabelHistogram()
+    y = [{1: 5.5, 2: -3.0}, {3: 999}]
+    Y = np.array([[  5.5,  -3.,    0. ],
+                  [  0.,    0.,  999. ]])
+    assert_allclose(mlh.fit_transform(y), Y)
+
+    mlh = MultiLabelHistogram()
+    y = [{'sci-fi': -2.0, 'thriller': 5.0}, {'comedy': 0.1}]
+    Y = np.array([[ 0.,  -2.,   5. ],
+                  [ 0.1,  0.,   0. ]])
+    assert_allclose(mlh.fit_transform(y), Y)
