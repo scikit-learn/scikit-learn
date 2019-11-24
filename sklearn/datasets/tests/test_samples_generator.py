@@ -483,9 +483,14 @@ def test_make_moons_unbalanced():
     assert X.shape == (12, 2), "X shape mismatch"
     assert y.shape == (12,), "y shape mismatch"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='`n_samples` can be either an int or '
+                                         'a two-element tuple. You passed '
+                                         '\[1, 2, 3\] instead.'):
         make_moons(n_samples=[1, 2, 3])
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError, match='`n_samples` can be either an int or '
+                                         'a two-element tuple. You passed '
+                                         '\(10,\) instead.'):
         make_moons(n_samples=(10,))
 
 
@@ -525,7 +530,12 @@ def test_make_circles_unbalanced():
     assert X.shape == (10, 2), "X shape mismatch"
     assert y.shape == (10,), "y shape mismatch"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='`n_samples` can be either an int or '
+                                         'a two-element tuple. You passed '
+                                         '\[1, 2, 3\] instead.'):
         make_circles(n_samples=[1, 2, 3])
-    with pytest.raises(ValueError):
+
+    with pytest.raises(ValueError, match='`n_samples` can be either an int or '
+                                         'a two-element tuple. You passed '
+                                         '\(10,\) instead.'):
         make_circles(n_samples=(10,))
