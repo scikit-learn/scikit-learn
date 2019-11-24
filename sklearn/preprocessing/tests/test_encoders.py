@@ -9,6 +9,7 @@ import pytest
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import _convert_container
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
@@ -639,30 +640,25 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('as_data_frame', ['True', 'False'])
-def test_ordinal_encoder_deprecated_categories_auto_with_string_labels(
-        as_data_frame):
-    x = [['Male', 1], ['Female', 3], ['Female', 2]]
-
-    if as_data_frame:
-        pd = pytest.importorskip('pandas')
-        X_possibilities = [pd.DataFrame(x)]
-    else:
-        X_possibilities = [x, tuple(x), np.array(x), np.array(x, np.object)]
-
-    enc = OrdinalEncoder()
-    for X in X_possibilities:
-        with pytest.warns(FutureWarning, match="From version 0.24"):
-            Xt = enc.fit_transform(X)
-
-        # checking the output is correct when `categories==sort`
-        assert_array_equal(Xt, OrdinalEncoder(categories='sort')
-                           .fit_transform(X))
-
-
 def test_ohe_not_accept_sort_ordering():
     X = [['Male', 1], ['Female', 3], ['Female', 2]]
 
     enc = OneHotEncoder(categories='sort')
     with pytest.raises(ValueError, match="The valid values"):
         enc.fit_transform(X)
+
+
+@pytest.mark.parametrize(
+    "array_type", ["list", "tuple", "array", "dataframe"]
+)
+def test_ordinal_encoder_deprecated_categories_auto_with_string_labels(
+        array_type):
+    X = _convert_container([['Male', 1], ['Female', 3], ['Female', 2]],
+                           array_type)
+    enc = OrdinalEncoder()
+
+    with pytest.warns(FutureWarning, match="From version 0.24"):
+        Xt = enc.fit_transform(X)
+
+    assert_array_equal(Xt, OrdinalEncoder(categories='sort')
+                       .fit_transform(X))
