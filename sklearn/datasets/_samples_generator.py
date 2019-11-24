@@ -624,7 +624,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    if isinstance(n_samples, int):
+    if isinstance(n_samples, (int, np.integer)):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
     else:
@@ -689,7 +689,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    if isinstance(n_samples, int):
+    if isinstance(n_samples, (int, np.integer)):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
     else:
