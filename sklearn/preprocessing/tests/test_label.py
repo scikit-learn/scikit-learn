@@ -661,12 +661,12 @@ def test_encode_check_unknown():
 def test_multilabel_histogram():
     mlh = MultiLabelHistogram()
     y = [{1: 5.5, 2: -3.0}, {3: 999}]
-    Y = np.array([[  5.5,  -3.,    0. ],
-                  [  0.,    0.,  999. ]])
+    Y = np.array([[  5.5,  -3. ,   0. ],
+                  [  0. ,   0. , 999. ]], dtype=np.float32)
     assert_allclose(mlh.fit_transform(y), Y)
 
     mlh = MultiLabelHistogram()
     y = [{'sci-fi': -2.0, 'thriller': 5.0}, {'comedy': 0.1}]
-    Y = np.array([[ 0.,  -2.,   5. ],
-                  [ 0.1,  0.,   0. ]])
+    Y = np.array([[ 0. , -2. ,  5. ],
+                  [ 0.1,  0. ,  0. ]], dtype=np.float32)
     assert_allclose(mlh.fit_transform(y), Y)

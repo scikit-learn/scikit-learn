@@ -1058,14 +1058,14 @@ class MultiLabelHistogram(TransformerMixin, BaseEstimator):
     >>> from sklearn.preprocessing import MultiLabelHistogram
     >>> mlh = MultiLabelHistogram()
     >>> mlh.fit_transform([{1: 5.5, 2: -3.0}, {3: 999}])
-    array([[  5.5  -3.    0. ],
-           [  0.    0.  999. ]])
+    array([[  5.5,  -3. ,   0. ],
+           [  0. ,   0. , 999. ]], dtype=float32)
     >>> mlh.classes_
     array([1, 2, 3])
 
     >>> mlh.fit_transform([{'sci-fi': -2.0, 'thriller': 5.0}, {'comedy': 0.1}])
-    array([[ 0.  -2.   5. ],
-           [ 0.1  0.   0. ]])
+    array([[ 0. , -2. ,  5. ],
+           [ 0.1,  0. ,  0. ]], dtype=float32)
     >>> list(mlh.classes_)
     ['comedy', 'sci-fi', 'thriller']
 
