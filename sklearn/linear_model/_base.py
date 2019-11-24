@@ -215,11 +215,13 @@ def _rescale_data(X, y, sample_weight, order=None):
     if order is not None:
         sparse_format = "csc" if order == "F" else "csr"
         if sparse_X:
-            X = X.asformat(sparse_format, copy=False)
+            # As of scipy 1.1.0, new argument copy=False by default.
+            # This is what we want.
+            X = X.asformat(sparse_format)
         else:
             X = np.asarray(X, order=order)
         if sparse_y:
-            y = y.asformat(sparse_format, copy=False)
+            y = y.asformat(sparse_format)
         else:
             y = np.asarray(y, order=order)
 
