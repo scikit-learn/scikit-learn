@@ -1245,11 +1245,15 @@ class MultiLabelHistogram(TransformerMixin, BaseEstimator):
 
         if sp.issparse(yt):
             yt = yt.tocsr()
-            return [dict(zip(self.classes_.take(yt.indices[start:end]), yt.data[start:end]))
+            return [dict(zip(
+                      self.classes_.take(yt.indices[start:end]),
+                      yt.data[start:end]))
                     for start, end in zip(yt.indptr[:-1], yt.indptr[1:])]
         else:
             print([ind for ind in yt])
-            return [dict(zip(self.classes_.compress(indicators), filter(None, indicators)))
+            return [dict(zip(
+                      self.classes_.compress(indicators),
+                      filter(None, indicators)))
                     for indicators in yt]
 
     def _more_tags(self):
