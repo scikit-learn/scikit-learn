@@ -31,7 +31,7 @@ SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+the `About us <http://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
 It is currently maintained by a team of volunteers.
@@ -55,7 +55,7 @@ scikit-learn requires:
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.21 and later require Python 3.5 or newer.
 
-Scikit-learn plotting capabilities (i.e., functions start with "plot_"
+Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
 and classes end with "Display") require Matplotlib (>= 1.5.1). For running the
 examples Matplotlib >= 1.5.1 is required. A few examples require
 scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0.
@@ -138,7 +138,7 @@ Project History
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
-the  `About us <http://scikit-learn.org/dev/about.html#authors>`_ page
+the `About us <http://scikit-learn.org/dev/about.html#authors>`__ page
 for a list of core contributors.
 
 The project is currently maintained by a team of volunteers.

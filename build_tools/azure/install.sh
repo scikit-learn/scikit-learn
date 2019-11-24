@@ -22,13 +22,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
+                blas[build=$BLAS]"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
@@ -47,8 +42,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
 
     if [[ "$UNAMESTR" == "Darwin" ]]; then
-        # on macOS, install an OpenMP-enabled clang/llvm from conda-forge
-        TO_INSTALL="$TO_INSTALL conda-forge::compilers conda-forge::llvm-openmp"
+        if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
+            # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+                        conda-forge::llvm-openmp"
+        fi
     fi
 
     # Old packages coming from the 'free' conda channel have been removed but
@@ -74,6 +72,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
+    sudo apt-get update
     sudo apt-get install python3-scipy python3-matplotlib libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
@@ -89,7 +88,8 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # we use pypi to test against the latest releases of the dependencies.
     # conda is still used as a convenient way to install Python and pip.
     make_conda "python=$PYTHON_VERSION"
-    python -m pip install numpy scipy joblib cython
+    python -m pip install -U pip
+    python -m pip install numpy scipy cython joblib
     python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
     python -m pip install pandas matplotlib pyamg
 fi
@@ -117,5 +117,8 @@ except ImportError:
     print('pandas not installed')
 "
 python -m pip list
+
+# Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+# to speed-up the building multicore CI machines.
 python setup.py build_ext --inplace -j 3
 python setup.py develop
