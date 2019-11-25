@@ -23,8 +23,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# this import hids some warnings in axis plotting
-
 #############################################################################
 # Determinants of Wages from the 1985 Current Population Survey
 # -------------------------------------------------------------
@@ -239,7 +237,7 @@ coefs = pd.DataFrame(
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxenplot(data=coefs, orient='h', color='C0')
+sns.boxplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
@@ -266,11 +264,12 @@ coefs = pd.DataFrame(
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxenplot(data=coefs, orient='h', color='C0')
+sns.boxplot(data=coefs, orient='h', color='C0')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
+plt.show()
 ###############################################################################
 # The estimation of the "EXPERIENCE" coefficient is now more stable with
 # respect to cross_validation.
