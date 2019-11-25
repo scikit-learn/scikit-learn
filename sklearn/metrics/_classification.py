@@ -506,6 +506,66 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+def most_confused_classes(y_true, y_pred):
+    """Most confused classes.
+
+    In multilabel classification, this function computes the classes
+    which have been confused the most often by the classifier.
+
+    Parameters
+    ----------
+
+    y_true: array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
+
+    Returns
+    -------
+    most_confused : ndarray of shape (n_pairs, 3)
+        The most confused classes list, with each row containing:
+        [class_1, class_2, count]
+        where count denotes the number of times class_1 was misclassified as class_2
+        and n_pairs is the number of pairs of classes confused by the classifier.
+
+    See also
+    --------
+    confusion_matrix
+
+    Examples
+    --------
+    >>> from sklearn.metrics import most_confused_classes
+    >>> y_true = [2, 0, 1, 2, 1, 2]
+    >>> y_pred = [0, 0, 2, 0, 1, 1]
+    >>> most_confused_classes(y_true, y_pred)
+    array([[2, 0, 2],
+           [2, 1, 1],
+           [1, 2, 1]])
+    """
+    C = confusion_matrix(y_true, y_pred)
+
+    # Initialize the most_confused array
+    most_confused_dict = {}
+
+    # Browse the confusion matrix to count the class confusions
+    for i in range(C.shape[0]):
+        for j in range(C.shape[1]):
+            if i != j and C[i, j] > 0:
+                most_confused_dict[(i, j)] = C[i, j]
+
+    # Transform the dict into a np.ndarray
+    most_confused = np.append(np.array(list(most_confused_dict.keys())),
+                              np.array(list(most_confused_dict.values())).reshape(-1, 1),
+                              axis=1)
+    # Sort the array by the third column containing the counts
+    most_confused.view('i8,i8,i8').sort(order=['f2'], axis=0)
+    # Reverse the sort order
+    most_confused = most_confused[::-1, :]
+
+    return most_confused
+
+
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 

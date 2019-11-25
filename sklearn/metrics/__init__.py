@@ -34,6 +34,7 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
+from ._classification import most_confused_classes
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -126,6 +127,7 @@ __all__ = [
     'mean_gamma_deviance',
     'mean_tweedie_deviance',
     'median_absolute_error',
+    'most_confused_classes',
     'multilabel_confusion_matrix',
     'mutual_info_score',
     'ndcg_score',
