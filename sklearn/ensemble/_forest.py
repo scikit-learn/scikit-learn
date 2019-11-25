@@ -1563,6 +1563,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -1871,6 +1872,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
