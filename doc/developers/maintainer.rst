@@ -36,7 +36,7 @@ happen in master to avoid asynchrony. To select commits from master for use in
 the bug fix (version 0.999.3), you can use::
 
     $ git checkout -b release-0.999.3 master
-    $ git rebase -i 0.999.X
+    $ git rebase -i upstream/0.999.X
 
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
