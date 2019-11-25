@@ -38,6 +38,9 @@ the bug fix (version 0.999.3), you can use::
     $ git checkout -b release-0.999.3 master
     $ git rebase -i 0.999.X
 
+It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
+understand what's included.
+
 Then pick the commits for release and resolve any issues, and create a pull
 request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
 Additional commits can be cherry-picked into the ``release-0.999.3`` branch
