@@ -269,7 +269,6 @@ plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
-plt.show()
 ###############################################################################
 # The estimation of the "EXPERIENCE" coefficient is now more stable with
 # respect to cross_validation.
