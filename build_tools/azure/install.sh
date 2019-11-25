@@ -44,8 +44,11 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            # FIXME: temporary pin version of compilers, see
-            # https://github.com/conda-forge/compilers-feedstock/issues/18
+            # FIXME: temporary pin version of ld64 from compilers meta-package,
+            # see https://github.com/conda-forge/compilers-feedstock/issues/18
+            # When restoring, the command should be
+            # TO_INSTALL="$TO_INSTALL conda-forge::compilers \
+            #    conda-forge::llvm-openmp"
             TO_INSTALL="$TO_INSTALL conda-forge::compilers=1.0.4 \
                 conda-forge::llvm-openmp conda-forge::ld64=409.12"
         fi
