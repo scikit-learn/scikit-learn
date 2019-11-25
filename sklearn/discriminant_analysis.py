@@ -86,7 +86,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
         else:
             raise TypeError('shrinkage must be a float or a string')
     else:
-        if shrinkage is not None:
+        if shrinkage is not None and shrinkage != 0:
             raise ValueError("covariance_estimator and shrinkage parameters "
                              "are not None. Only one of the two can be set.")
         if standardize:
