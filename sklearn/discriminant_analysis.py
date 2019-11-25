@@ -783,8 +783,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
           - 'svd': Singular value decomposition (default).
             Does not compute the covariance matrix, therefore this solver is
             recommended for data with a large number of features.
-          - 'lsqr': Least squares solution, can be combined with
-          custom covariance estimator.
+          - 'lsqr': Least squares solution, can be combined with \
+    custom covariance estimator.
 
         .. versionadded:: 0.22
 
