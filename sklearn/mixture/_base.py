@@ -64,16 +64,18 @@ def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
 
 def _check_normalize_sample_weight(sample_weight, X):
     """Set sample_weight if None, and check for correct dtype"""
+    if sample_weight is None:
+        sample_weight = np.ones(X.shape[0])
 
-    sample_weight_was_none = sample_weight is None
-
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    if not sample_weight_was_none:
-        # normalize the weights to sum up to n_samples
-        # an array of 1 (i.e. samples_weight is None) is already normalized
-        n_samples = len(sample_weight)
-        scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
+    # sample_weight_was_none = sample_weight is None
+    #
+    # sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    # if not sample_weight_was_none:
+    #     # normalize the weights to sum up to n_samples
+    #     # an array of 1 (i.e. samples_weight is None) is already normalized
+    #     n_samples = len(sample_weight)
+    #     scale = n_samples / sample_weight.sum()
+    #     sample_weight *= scale
     return sample_weight
 
 

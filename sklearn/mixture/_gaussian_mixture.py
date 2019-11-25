@@ -8,7 +8,7 @@ import numpy as np
 
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
+from ._base import BaseMixture, _check_shape, _check_normalize_sample_weight
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import row_norms
@@ -429,7 +429,7 @@ def _estimate_log_gaussian_prob(X, sample_weight, means, precisions_chol,
     log_det = _compute_log_det_cholesky(
         precisions_chol, covariance_type, n_features)
 
-    log_det_weighted = - 2 * np.log(sample_weight)
+    log_det_weighted = - 0.0 * np.log(sample_weight)
 
     if covariance_type == 'full':
         log_prob = np.empty((n_samples, n_components))
@@ -769,8 +769,9 @@ class GaussianMixture(BaseMixture):
         bic : float
             The lower the better.
         """
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
         return (-2 * self.score(X, sample_weight=sample_weight) * X.shape[0]
-                + self._n_parameters() * np.log(X.shape[0]))
+                + self._n_parameters() * np.log(np.sum(sample_weight)))
 
     def aic(self, X, sample_weight=None):
         """Akaike information criterion for the current model on the input X.
@@ -779,10 +780,13 @@ class GaussianMixture(BaseMixture):
         ----------
         X : array of shape (n_samples, n_dimensions)
 
+        sample_weight : array-like, shape (n_samples,)
+
         Returns
         -------
         aic : float
             The lower the better.
         """
+        sample_weight = _check_normalize_sample_weight(sample_weight, X)
         return (-2 * self.score(X, sample_weight=sample_weight) * X.shape[0]
                 + 2 * self._n_parameters())
