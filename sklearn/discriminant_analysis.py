@@ -39,7 +39,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
     covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
         method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`
+        `sklearn.covariance`. It is used to estimate the covariance matrix.
 
         if None the shrinkage parameter drives the estimate.
 
@@ -57,6 +57,9 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
           - None or 'empirical': no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
+        Shrinkage parameter is ignored if  `covariance_estimator`\
+    is not None.
 
     Returns
     -------
@@ -83,6 +86,9 @@ def _cov(X, shrinkage=None, covariance_estimator=None, standardize=False):
         else:
             raise TypeError('shrinkage must be a float or a string')
     else:
+        if shrinkage is not None:
+            raise ValueError("covariance_estimator and shrinkage parameters "
+                             "are not None. Only one of the two can be set.")
         if standardize:
             sc = StandardScaler()
             X = sc.fit_transform(X)
@@ -145,7 +151,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None,
     covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
         method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`
+        `sklearn.covariance`. It is used to estimate the covariance matrix.
 
         if None the shrinkage parameter drives the estimate.
 
@@ -163,6 +169,8 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None,
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
+        Shrinkage parameter is ignored if `covariance_estimator` is not None.
 
     Returns
     -------
@@ -192,7 +200,7 @@ def _classes_cov(X, y, shrinkage=None, covariance_estimator=None,
     covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
         method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`
+        `sklearn.covariance`. It is used to estimate the covariance matrix.
 
         if None the shrinkage parameter drives the estimate.
 
@@ -210,6 +218,9 @@ def _classes_cov(X, y, shrinkage=None, covariance_estimator=None,
           - None: no shrinkage (default).
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
+
+        Shrinkage parameter is ignored if  `covariance_estimator`\
+    is not None.
 
     Returns
     -------
@@ -264,6 +275,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
           - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
           - float between 0 and 1: fixed shrinkage parameter.
 
+        Shrinkage parameter is ignored if  `covariance_estimator`\
+    is not None.
+
         Note that shrinkage works only with 'lsqr' and 'eigen' solvers.
 
     priors : array, optional, shape (n_classes,)
@@ -288,7 +302,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
         method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`
+        `sklearn.covariance`. It is used to estimate the covariance matrix.
 
         if None the shrinkage parameter drives the estimate.
 
@@ -402,10 +416,13 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage parameter.
 
+            Shrinkage parameter is ignored if  `covariance_estimator` is \
+        not None
+
         covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
             method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`
+            `sklearn.covariance`. It is used to estimate the covariance matrix.
 
             if None the shrinkage parameter drives the estimate.
 
@@ -458,10 +475,13 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
               - 'auto': automatic shrinkage using the Ledoit-Wolf lemma.
               - float between 0 and 1: fixed shrinkage constant.
 
+            Shrinkage parameter is ignored if  `covariance_estimator` is\
+        not None
+
         covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
             method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`
+            `sklearn.covariance`. It is used to estimate the covariance matrix.
 
             if None the shrinkage parameter drives the estimate.
 
@@ -771,7 +791,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     covariance_estimator : estimator, default=None
         The covariance estimator is a BaseEstimator with a fit
         method and a ``covariance_`` attribute like the estimators in
-        `sklearn.covariance`
+        `sklearn.covariance`. It is used to estimate the covariance matrix.
 
         if None the shrinkage parameter drives the estimate.
 
@@ -916,7 +936,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         covariance_estimator : estimator, default=None
             The covariance estimator is a BaseEstimator with a fit
             method and a ``covariance_`` attribute like the estimators in
-            `sklearn.covariance`
+            `sklearn.covariance`. It is used to estimate the covariance matrix.
 
             if None the shrinkage parameter drives the estimate.
 

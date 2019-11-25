@@ -104,9 +104,16 @@ def test_lda_predict():
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     assert_raises(NotImplementedError, clf.fit, X, y)
     clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-
     with pytest.raises(TypeError,
                        match="shrinkage must be a float or a string"):
+        clf.fit(X, y)
+    clf = LinearDiscriminantAnalysis(solver="lsqr",
+                                     shrinkage=0.1,
+                                     covariance_estimator=ShrunkCovariance())
+    with pytest.raises(ValueError,
+                       match=("covariance_estimator and shrinkage "
+                              "parameters are not None. "
+                              "Only one of the two can be set.")):
         clf.fit(X, y)
     # Test unknown solver
     clf = LinearDiscriminantAnalysis(solver="dummy")

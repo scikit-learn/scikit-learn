@@ -161,6 +161,27 @@ matrix.
 
 .. centered:: |shrinkage|
 
+Covariance Estimator
+=====================
+
+LDA and QDA uses by default an empirical estimate of covariance.
+It some situations (typically when the number of training samples
+is small compared to the number of features) other estimators might be
+more appropriate.
+
+For example if the data are Gaussian distributed the
+Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
+yields a smaller Mean Squared Error than the one given by Ledoit and Wolf's formula.
+
+A covariance estimator should have a :term:`fit` method and
+a ``covariance_`` attribute like all covariance estimators in the
+:mod:`sklearn.covariance` package.
+
+.. |ldaoas| image:: ../auto_examples/classification/images/sphx_glr_plot_lda_oas_001.png
+        :target: ../auto_examples/classification/plot_lda_oas.html
+        :scale: 75
+
+.. centered:: |ldaoas|
 
 Estimation algorithms
 =====================
