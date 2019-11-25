@@ -829,7 +829,6 @@ Changelog
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`,
   :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
