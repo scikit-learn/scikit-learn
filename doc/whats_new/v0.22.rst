@@ -168,6 +168,10 @@ Changelog
   `affinity='cosine'` and `X` has samples that are all-zeros. :pr:`7943` by
   :user:`mthorrell`.
 
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
 :mod:`sklearn.compose`
 ......................
 
@@ -822,7 +826,6 @@ Changelog
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`,
   :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`,
   :class:`ensemble.GradientBoostingClassifier`,
   and :class:`ensemble.GradientBoostingRegressor`.
   :pr:`12887` by `Thomas Fan`_.
