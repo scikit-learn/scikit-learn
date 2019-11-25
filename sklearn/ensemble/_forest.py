@@ -2112,14 +2112,6 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    ccp_alpha : non-negative float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning. The
-        subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
-
-        .. versionadded:: 0.22
-
     max_samples : int or float, default=None
         If bootstrap is True, the number of samples to draw from X
         to train each base estimator.
@@ -2163,7 +2155,6 @@ class RandomTreesEmbedding(BaseForest):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 ccp_alpha=0.0,
                  max_samples=None):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
@@ -2172,7 +2163,7 @@ class RandomTreesEmbedding(BaseForest):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -2189,7 +2180,6 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
-        self.ccp_alpha = ccp_alpha
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
