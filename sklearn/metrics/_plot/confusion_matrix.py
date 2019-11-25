@@ -117,9 +117,9 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
-                          labels=None, display_labels=None,
-                          include_values=True, normalize=None,
+def plot_confusion_matrix(estimator, X, y_true, labels=None,
+                          sample_weight=None, normalize=None,
+                          display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None):
@@ -138,13 +138,18 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
     y : array-like of shape (n_samples,)
         Target values.
 
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder or
         select a subset of labels. If `None` is given, those that appear at
         least once in `y_true` or `y_pred` are used in sorted order.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes confusion matrix over the true (rows), predicted (columns)
+        conditions or all the population. If None, confusion matrix will not be
+        normalized.
 
     display_labels : array-like of shape (n_classes,), default=None
         Target names used for plotting. By default, `labels` will be used if
@@ -153,11 +158,6 @@ def plot_confusion_matrix(estimator, X, y_true, sample_weight=None,
 
     include_values : bool, default=True
         Includes values in confusion matrix.
-
-    normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes confusion matrix over the true (rows), predicted (columns)
-        conditions or all the population. If None, confusion matrix will not be
-        normalized.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
                         default='vertical'
