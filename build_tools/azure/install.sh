@@ -46,8 +46,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
             # FIXME: temporary pin version of compilers, see
             # https://github.com/conda-forge/compilers-feedstock/issues/18
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers=1.0.3 \
-                        conda-forge::llvm-openmp=8"
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers=1.0.3"
         fi
     fi
 
