@@ -104,6 +104,7 @@ jobs:
         PYTEST_VERSION: '*'
         JOBLIB_VERSION: '*'
         COVERAGE: 'true'
+        SKLEARN_FAIL_NO_OPENMP: 'true'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'

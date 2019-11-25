@@ -47,7 +47,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             # FIXME: temporary pin version of compilers, see
             # https://github.com/conda-forge/compilers-feedstock/issues/18
             TO_INSTALL="$TO_INSTALL conda-forge::compilers=1.0.3 \
-                        conda-forge::llvm-openmp"
+                        conda-forge::llvm-openmp=8"
         fi
     fi
 
