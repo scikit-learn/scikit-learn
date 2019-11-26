@@ -13,7 +13,6 @@ ctypedef np.int8_t INT8
 
 np.import_array()
 
-from ..neighbors._dist_metrics cimport DistanceMetric
 from ..utils._fast_dict cimport IntFloatDict
 
 # C++
@@ -26,8 +25,6 @@ ctypedef np.float64_t DTYPE_t
 
 ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
-
-from numpy.math cimport INFINITY
 
 ###############################################################################
 # Utilities for computing the ward momentum
@@ -449,89 +446,3 @@ def single_linkage_label(L):
         raise ValueError("Input MST array must be sorted by weight")
 
     return _single_linkage_label(L)
-
-
-# Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
-@cython.boundscheck(False)
-@cython.nonecheck(False)
-def mst_linkage_core(
-        DTYPE_t [:, ::1] raw_data,
-        DistanceMetric dist_metric):
-    """
-    Compute the necessary elements of a minimum spanning
-    tree for computation of single linkage clustering. This
-    represents the MST-LINKAGE-CORE algorithm (Figure 6) from
-    *Modern hierarchical, agglomerative clustering algorithms*
-    by Daniel Mullner (https://arxiv.org/abs/1109.2378).
-
-    In contrast to the scipy implementation is never computes
-    a full distance matrix, generating distances only as they
-    are needed and releasing them when no longer needed.
-
-    Parameters
-    ----------
-    raw_data: array of shape (n_samples, n_features)
-        The array of feature data to be clustered. Must be C-aligned
-
-    dist_metric: DistanceMetric
-        A DistanceMetric object conforming to the API from
-        ``sklearn.neighbors._dist_metrics.pxd`` that will be
-        used to compute distances.
-
-    Returns
-    -------
-    mst_core_data: array of shape (n_samples, 3)
-        An array providing information from which one
-        can either compute an MST, or the linkage hierarchy
-        very efficiently. See https://arxiv.org/abs/1109.2378
-        algorithm MST-LINKAGE-CORE for more details.
-    """
-    cdef:
-        ITYPE_t n_samples = raw_data.shape[0]
-        np.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
-        DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
-
-        np.ndarray label_filter
-
-        ITYPE_t current_node = 0
-        ITYPE_t new_node
-        ITYPE_t i
-        ITYPE_t j
-        ITYPE_t num_features = raw_data.shape[1]
-
-        DTYPE_t right_value
-        DTYPE_t left_value
-        DTYPE_t new_distance
-
-        DTYPE_t[:] current_distances = np.full(n_samples, INFINITY)
-
-    for i in range(n_samples - 1):
-
-        in_tree[current_node] = 1
-
-        new_distance = INFINITY
-        new_node = 0
-
-        for j in range(n_samples):
-            if in_tree[j]:
-                continue
-
-            right_value = current_distances[j]
-            left_value = dist_metric.dist(&raw_data[current_node, 0],
-                                          &raw_data[j, 0],
-                                          num_features)
-
-            if left_value < right_value:
-                current_distances[j] = left_value
-
-            if current_distances[j] < new_distance:
-                new_distance = current_distances[j]
-                new_node = j
-
-        result[i, 0] = current_node
-        result[i, 1] = new_node
-        result[i, 2] = new_distance
-        current_node = new_node
-
-    return np.array(result)
-
