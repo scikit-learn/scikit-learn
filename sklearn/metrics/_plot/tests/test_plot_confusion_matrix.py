@@ -21,6 +21,7 @@ pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
 
+
 @pytest.fixture(scope="module")
 def n_classes():
     return 5
