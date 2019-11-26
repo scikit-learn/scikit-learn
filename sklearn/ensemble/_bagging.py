@@ -778,9 +778,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
             log_proba -= np.log(self.n_estimators)
 
-            return log_proba
+        else:
+            log_proba = np.log(self.predict_proba(X))
 
-        return np.log(self.predict_proba(X))
+        return log_proba
 
     @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
