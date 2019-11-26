@@ -62,7 +62,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Estimator must support :term:`fit` and :term:`transform`.
             Special-cased strings 'drop' and 'passthrough' are accepted as
             well, to indicate to drop the columns or to pass them through
-            untransformed, respectively.
+            untransformed, respectively
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
