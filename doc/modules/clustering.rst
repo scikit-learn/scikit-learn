@@ -1687,7 +1687,6 @@ Drawbacks
 Calinski-Harabasz Index
 -----------------------
 
-
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
