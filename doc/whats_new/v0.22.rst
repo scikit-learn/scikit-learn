@@ -326,13 +326,10 @@ Changelog
 
 - |Enhancement| Addition of ``max_samples`` argument allows limiting
   size of bootstrap samples to be less than size of dataset. Added to
-  :class:`ensemble.ForestClassifier`,
-  :class:`ensemble.ForestRegressor`,
   :class:`ensemble.RandomForestClassifier`,
   :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier`,
-  :class:`ensemble.ExtraTreesRegressor`,
-  :class:`ensemble.RandomTreesEmbedding`. :pr:`14682` by
+  :class:`ensemble.ExtraTreesRegressor`. :pr:`14682` by
   :user:`Matt Hancock <notmatthancock>` and
   :pr:`5963` by :user:`Pablo Duboue <DrDub>`.
 
