@@ -1027,7 +1027,7 @@ def _detect_categorical_features(X, categorical_features=None):
                     # calculated as categorical in gower distances.
                     f_test(X[:, col])
             except ValueError as e:
-                print("ValueError:" , col)
+                print("ValueError:", col)
                 categorical_features[col] = e.args[0]
             except TypeError:
                 print("TypeError:", col)
