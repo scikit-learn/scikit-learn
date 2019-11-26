@@ -777,17 +777,15 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2] TEST: [3]
     TRAIN: [0 1 2 3] TEST: [4]
     TRAIN: [0 1 2 3 4] TEST: [5]    
-    >>> for train_index, test_index in tscv.split(X, initial_window=3, 
-                                          horizon=2,
-                                          fixed_window=True):
+    >>> for train_index, test_index in tscv.split(X, initial_window=3,\
+        horizon=2, fixed_window=True):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [0 1 2] TEST: [3 4]
     TRAIN: [1 2 3] TEST: [4 5]    
-    >>> for train_index, test_index in tscv.split(X, initial_window=2, 
-                                          horizon=3,
-                                          fixed_window=False):
+    >>> for train_index, test_index in tscv.split(X, initial_window=2,\
+        horizon=3, fixed_window=False):
     print("TRAIN:", train_index, "TEST:", test_index)
     X_train, X_test = X[train_index], X[test_index]
     y_train, y_test = y[train_index], y[test_index]
@@ -802,12 +800,20 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
+
     def __init__(self, n_splits=5, max_train_size=None):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
-    def split(self, X, y=None, groups=None, 
-              initial_window=None, horizon=None, fixed_window=False):
+    def split(
+        self,
+        X,
+        y=None,
+        groups=None,
+        initial_window=None,
+        horizon=None,
+        fixed_window=False,
+    ):
         """Generate indices to split data into training and test set.
 
         Parameters
@@ -840,93 +846,97 @@ class TimeSeriesSplit(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
         """
-        
+
         if initial_window is None:
-        
+
             X, y, groups = indexable(X, y, groups)
             n_samples = _num_samples(X)
             n_splits = self.n_splits
             n_folds = n_splits + 1
             if n_folds > n_samples:
                 raise ValueError(
-                    ("Cannot have number of folds ={0} greater"
-                     " than the number of samples: {1}.").format(n_folds,
-                                                                 n_samples))
+                    (
+                        "Cannot have number of folds ={0} greater"
+                        " than the number of samples: {1}."
+                    ).format(n_folds, n_samples)
+                )
             indices = np.arange(n_samples)
-            test_size = (n_samples // n_folds)
-            test_starts = range(test_size + n_samples % n_folds,
-                                n_samples, test_size)
+            test_size = n_samples // n_folds
+            test_starts = range(
+                test_size + n_samples % n_folds, n_samples, test_size
+            )
             for test_start in test_starts:
                 if self.max_train_size and self.max_train_size < test_start:
-                    yield (indices[test_start - self.max_train_size:test_start],
-                           indices[test_start:test_start + test_size])
+                    yield (
+                        indices[test_start - self.max_train_size : test_start],
+                        indices[test_start : test_start + test_size],
+                    )
                 else:
-                    yield (indices[:test_start],
-                           indices[test_start:test_start + test_size])
-        
-        else: # rolling window
-            
-            assert isinstance(initial_window, int),\
-            "'initial_window' must be an integer"
-            
-            assert (horizon is not None),\
-            "'horizon' must be provided"
-            
-            assert ((isinstance(horizon, int)) & (isinstance(fixed_window, bool))),\
-            "'horizon' must be an integer, and 'fixed_window' must be a boolean"
-            
+                    yield (
+                        indices[:test_start],
+                        indices[test_start : test_start + test_size],
+                    )
+
+        else:  # rolling window
+
+            assert isinstance(
+                initial_window, int
+            ), "'initial_window' must be an integer"
+
+            assert horizon is not None, "'horizon' must be provided"
+
+            assert (isinstance(horizon, int)) & (
+                isinstance(fixed_window, bool)
+            ), "'horizon' must be an integer, and 'fixed_window' must be a boolean"
+
             n = X.shape[0]
-    
+
             # Initialization of indices -----
-    
+
             indices = np.arange(n)
             n_splits = 0
-    
+
             # train index
             min_index_train = 0
             max_index_train = initial_window
-    
+
             # test index
             min_index_test = max_index_train
             max_index_test = initial_window + horizon
-    
+
             # Main loop -----
-    
+
             if fixed_window == True:
-    
+
                 while max_index_test <= n:
-    
+
                     yield (
-                        indices[
-                            min_index_train:max_index_train
-                        ],
+                        indices[min_index_train:max_index_train],
                         indices[min_index_test:max_index_test],
                     )
-    
+
                     min_index_train += 1
                     min_index_test += 1
                     max_index_train += 1
                     max_index_test += 1
-    
+
                     n_splits += 1
-    
+
             else:
-    
+
                 while max_index_test <= n:
-    
+
                     yield (
-                        indices[
-                            min_index_train:max_index_train
-                        ],
+                        indices[min_index_train:max_index_train],
                         indices[min_index_test:max_index_test],
                     )
-    
+
                     max_index_train += 1
                     min_index_test += 1
                     max_index_test += 1
-    
+
                     n_splits += 1
-    
+
             self.n_splits = n_splits
             self.max_train_size = max_index_train + 1
 
