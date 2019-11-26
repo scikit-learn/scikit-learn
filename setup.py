@@ -259,6 +259,7 @@ def setup_package():
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
                         'joblib>={}'.format(JOBLIB_MIN_VERSION)
                     ],
+                    package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
     if len(sys.argv) == 1 or (
