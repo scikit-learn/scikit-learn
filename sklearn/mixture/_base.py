@@ -67,15 +67,15 @@ def _check_normalize_sample_weight(sample_weight, X):
     if sample_weight is None:
         sample_weight = np.ones(X.shape[0])
 
-    # sample_weight_was_none = sample_weight is None
-    #
-    # sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    # if not sample_weight_was_none:
-    #     # normalize the weights to sum up to n_samples
-    #     # an array of 1 (i.e. samples_weight is None) is already normalized
-    #     n_samples = len(sample_weight)
-    #     scale = n_samples / sample_weight.sum()
-    #     sample_weight *= scale
+    sample_weight_was_none = sample_weight is None
+
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+    if not sample_weight_was_none:
+        # normalize the weights to sum up to n_samples
+        # an array of 1 (i.e. samples_weight is None) is already normalized
+        n_samples = len(sample_weight)
+        scale = n_samples / sample_weight.sum()
+        sample_weight *= scale
     return sample_weight
 
 
@@ -161,12 +161,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             are assigned equal weight (default: None).
         """
         n_samples, _ = X.shape
+        sample_weight_copy = sample_weight.copy()
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
             init_kmeans = cluster.KMeans(n_clusters=self.n_components,
                                          n_init=1, random_state=random_state)
-            label = init_kmeans.fit(X, sample_weight=sample_weight).labels_
+            label = init_kmeans.fit(X, sample_weight=sample_weight_copy).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)

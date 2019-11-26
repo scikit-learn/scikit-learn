@@ -700,11 +700,12 @@ class GaussianMixture(BaseMixture):
             the point of each sample in X.
         """
         n_samples, _ = X.shape
+        sum_weight = np.sum(sample_weight)
         self.weights_, self.means_, self.covariances_ = (
             _estimate_gaussian_parameters(X, sample_weight, np.exp(log_resp),
                                           self.reg_covar,
                                           self.covariance_type))
-        self.weights_ /= n_samples
+        self.weights_ /= sum_weight
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type)
 
