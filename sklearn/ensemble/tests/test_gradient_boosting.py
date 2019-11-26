@@ -1311,7 +1311,7 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
-    # inital estimator does not support sample weight
+    # initial estimator does not support sample weight
 
     X, y = dataset_maker()
     sample_weight = np.random.RandomState(42).rand(100)
