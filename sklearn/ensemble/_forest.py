@@ -672,9 +672,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             proba /= len(self.estimators_)
 
         if len(all_proba) == 1:
-            return all_proba[0]
-
-        return all_proba
+            p = all_proba[0]
+        else:
+            p = all_proba
+        return p
 
     def predict_log_proba(self, X):
         """
