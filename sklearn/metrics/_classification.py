@@ -528,6 +528,7 @@ def most_confused_classes(y_true, y_pred):
         [class_1, class_2, count]
         where count denotes the number of times class_1 was misclassified as class_2
         and n_pairs is the number of pairs of classes confused by the classifier.
+        Or, if there is no misclassification, returns an empty ndarray.
 
     See also
     --------
@@ -548,6 +549,10 @@ def most_confused_classes(y_true, y_pred):
     array([[0, 1, 4],
            [1, 0, 2]])
     """
+    # If there is no mistake, we return an empty array
+    if np.array_equal(y_true, y_pred):
+        return np.empty(0)
+
     C = confusion_matrix(y_true, y_pred)
 
     # Initialize the most_confused_dict dictionary
