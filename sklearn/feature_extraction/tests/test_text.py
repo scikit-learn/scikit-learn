@@ -364,15 +364,13 @@ def test_countvectorizer_custom_token_pattern():
     vectorizer.fit_transform(corpus)
     expected = ['document', 'one', 'sample']
     assert vectorizer.get_feature_names() == expected
+    
     # With 2 capturing groups, capturing the ordinal and the word after it
     token_pattern = r"([0-9]{1,3}(?:st|nd|rd|th))\s\b(\w{2,})\b"
     message = "more than 1 capturing group in token pattern"
+    vectorizer = CountVectorizer(token_pattern=token_pattern)
 
-    def func(token_pattern):
-        vectorizer = CountVectorizer(token_pattern=token_pattern)
-        vectorizer.fit(corpus)
-
-    assert_raise_message(ValueError, message, func, token_pattern)
+    assert_raise_message(ValueError, message, vectorizer.fit, corpus)
 
 
 def test_tf_idf_smoothing():
