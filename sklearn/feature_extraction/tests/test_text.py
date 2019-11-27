@@ -370,7 +370,7 @@ def test_countvectorizer_custom_token_pattern():
 
     def func(token_pattern):
         vectorizer = CountVectorizer(token_pattern=token_pattern)
-        vectorizer.fit_transform(corpus)
+        vectorizer.fit(corpus)
 
     assert_raise_message(ValueError, message, func, token_pattern)
 
