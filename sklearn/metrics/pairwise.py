@@ -1015,22 +1015,16 @@ def _detect_categorical_features(X, categorical_features=None):
         for col in range(np.shape(X)[1]):
             try:
                 # This identifies categorical and numerical columns,
-                # including boolean as numerical.
-                # A TypeError means it is a categorical column,
-                # for nansum ==0 it means the entire column is NaN,
-                # then we consider it numerical.
-                print("nan_sum:", col, np.nansum(X[:, col]))
-                if np.nansum(X[:, col]) > 0:
-                    # In case nansum > 0 there are numerical values in the
-                    # column, then we need to identify between boolean and
-                    # numerical values, because boolean values are
-                    # calculated as categorical in gower distances.
-                    f_test(X[:, col])
+                # A TypeError or ValueError(True) means it is a categorical
+                # column.
+
+                # This test was disabled because some deployments are returning
+                # nan instead of 0 in columns with nan values:
+                # if np.nansum(X[:, col]) > 0:
+                f_test(X[:, col])
             except ValueError as e:
-                print("ValueError:", col)
                 categorical_features[col] = e.args[0]
             except TypeError:
-                print("TypeError:", col)
                 categorical_features[col] = True
     else:
         categorical_features = np.asarray(categorical_features)
@@ -1038,8 +1032,6 @@ def _detect_categorical_features(X, categorical_features=None):
             new_categorical_features = np.zeros(np.shape(X)[1], dtype=bool)
             new_categorical_features[categorical_features] = True
             categorical_features = new_categorical_features
-    print("X:", X, "X.shape:", X.shape, "categorical_features:",
-          categorical_features)
     return categorical_features
 
 
