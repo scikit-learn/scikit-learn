@@ -889,7 +889,10 @@ class TimeSeriesSplit(_BaseKFold):
                 isinstance(fixed_window, bool)
             ), "'horizon' must be an integer, and 'fixed_window' must be a boolean"
 
-            n = X.shape[0]
+            try:
+                n = X.shape[0]
+            except:
+                n = len(X)
 
             # Initialization of indices -----
 
