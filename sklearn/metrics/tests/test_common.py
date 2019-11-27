@@ -115,7 +115,7 @@ CLASSIFICATION_METRICS = {
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is neccessary for this module to
+    # . Naming it with an unnormalized_ prefix is necessary for this module to
     # skip sample_weight scaling checks which will fail for unnormalized
     # metrics.
     "unnormalized_confusion_matrix": confusion_matrix,

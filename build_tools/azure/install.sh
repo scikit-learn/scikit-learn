@@ -11,7 +11,7 @@ make_conda() {
 }
 
 version_ge() {
-    # The two version numbers are seperated with a new line is piped to sort
+    # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
     # decending order. If the first argument is the top element of the sort, it
     # is greater than or equal to the second argument.

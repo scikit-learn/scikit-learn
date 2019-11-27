@@ -14,7 +14,7 @@ This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
-The plots show four 1-way and two 1-way partial dependence plots (ommitted for
+The plots show four 1-way and two 1-way partial dependence plots (omitted for
 :class:`~sklearn.neural_network.MLPRegressor` due to computation time). The
 target variables for the one-way PDP are: median income (`MedInc`), average
 occupants per household (`AvgOccup`), median house age (`HouseAge`), and
