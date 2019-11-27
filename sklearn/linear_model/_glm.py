@@ -1862,8 +1862,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             elif (P2.ndim == 2 and P2.shape[0] == P2.shape[1] and
                     P2.shape[0] == X.shape[1]):
                 if sparse.issparse(X):
-                    P2 = (sparse.dia_matrix((P2, 0),
-                          shape=(n_features, n_features))).tocsc()
+                    P2 = sparse.csc_matrix(P2)
             else:
                 raise ValueError("P2 must be either None or an array of shape "
                                  "(n_features, n_features) with "
@@ -1939,7 +1938,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     # efficiently, use only half of n_features
                     # k = how many eigenvals to compute
                     k = np.min([10, n_features // 10 + 1])
-                    sigma = 0  # start searching near this value
+                    sigma = -1000 * epsneg  # start searching near this value
                     which = 'SA'  # find smallest algebraic eigenvalues first
                     eigenvalues = splinalg.eigsh(P2, k=k, sigma=sigma,
                                                  which=which,
