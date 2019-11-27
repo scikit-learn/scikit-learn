@@ -542,10 +542,15 @@ def most_confused_classes(y_true, y_pred):
     array([[2, 0, 2],
            [2, 1, 1],
            [1, 2, 1]])
+    >>> y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
+    >>> y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
+    >>> most_confused_classes(y_true, y_pred)
+    array([[0, 1, 4],
+           [1, 0, 2]])
     """
     C = confusion_matrix(y_true, y_pred)
 
-    # Initialize the most_confused array
+    # Initialize the most_confused_dict dictionary
     most_confused_dict = {}
 
     # Browse the confusion matrix to count the class confusions

@@ -44,6 +44,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import most_confused_classes
 
 from sklearn.metrics._classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
@@ -507,6 +508,16 @@ def test_multilabel_confusion_matrix_errors():
     with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
                                     [[1, 2, 0], [1, 0, 2]])
+
+
+def test_most_confused_classes():
+    # Test docstring examples
+    y_true = [2, 0, 1, 2, 1, 2]
+    y_pred = [0, 0, 2, 0, 1, 1]
+    assert_array_equal(most_confused_classes(y_true, y_pred), [[2, 0, 2], [2, 1, 1], [1, 2, 1]])
+    y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
+    y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
+    assert_array_equal(most_confused_classes(y_true, y_pred), [[0, 1, 4], [1, 0, 2]])
 
 
 def test_cohen_kappa():
