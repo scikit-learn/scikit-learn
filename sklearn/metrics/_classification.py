@@ -506,10 +506,10 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def most_confused_classes(y_true, y_pred):
+def most_confused_classes(y_true, y_pred, labels=None):
     """Most confused classes.
 
-    In multilabel classification, this function computes the classes
+    In multiclass and binary classification, this function computes the classes
     which have been confused the most often by the classifier.
 
     Parameters
@@ -520,6 +520,12 @@ def most_confused_classes(y_true, y_pred):
 
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
+
+    labels : array, shape = [n_classes], optional
+        List of labels to index the confusion matrix. This may be used to reorder
+        or select a subset of labels.
+        If none is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used in sorted order.
 
     Returns
     -------
@@ -543,26 +549,28 @@ def most_confused_classes(y_true, y_pred):
     array([[2, 0, 2],
            [2, 1, 1],
            [1, 2, 1]])
-    >>> y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
-    >>> y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
-    >>> most_confused_classes(y_true, y_pred)
-    array([[0, 1, 4],
-           [1, 0, 2]])
+
+    With labels:
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"])
+    array([[2, 1, 1],
+           [0, 2, 1]])
     """
     # If there is no mistake, we return an empty array
     if np.array_equal(y_true, y_pred):
         return np.empty(0)
 
-    C = confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred, labels=labels)
 
     # Initialize the most_confused_dict dictionary
     most_confused_dict = {}
 
     # Browse the confusion matrix to count the class confusions
-    for i in range(C.shape[0]):
-        for j in range(C.shape[1]):
-            if i != j and C[i, j] > 0:
-                most_confused_dict[(i, j)] = C[i, j]
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            if i != j and cm[i, j] > 0:
+                most_confused_dict[(i, j)] = cm[i, j]
 
     # Transform the dict into a np.ndarray
     most_confused = np.append(np.array(list(most_confused_dict.keys())),
