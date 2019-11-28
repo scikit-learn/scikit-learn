@@ -139,13 +139,17 @@ def test_precision_recall_curve_string_labels():
     # regression test #15738
     cancer = load_breast_cancer()
     X = cancer.data
-    y = np.array(
-        [cancer.target_names[i] for i in cancer.target],
-        dtype=object
-    )
+    y = cancer.target_names[cancer.target]
+
     lr = make_pipeline(StandardScaler(), LogisticRegression())
     lr.fit(X, y)
     for klass in cancer.target_names:
         assert klass in lr.classes_
     disp = plot_precision_recall_curve(lr, X, y)
+
+    y_pred = lr.predict_proba(X)[:, 1]
+    avg_prec = average_precision_score(y, y_pred,
+                                       pos_label=lr.classes_[1])
+
+    assert disp.average_precision == pytest.approx(avg_prec)
     assert disp.estimator_name == lr.__class__.__name__
