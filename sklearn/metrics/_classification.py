@@ -587,7 +587,7 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
     most_confused = np.append(
         coords,
         # Values corresponding to the columns
-        np.apply_along_axis(lambda row: cm[row[0], row[1]], axis=1, arr=coords).reshape(-1, 1),
+        cm[coords[:, 0], coords[:, 1]].reshape(-1, 1),
         axis=1
     )
 
