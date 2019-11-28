@@ -7,6 +7,7 @@ from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
@@ -132,3 +133,19 @@ def test_precision_recall_curve_pipeline(pyplot, clf):
     clf.fit(X, y)
     disp = plot_precision_recall_curve(clf, X, y)
     assert disp.estimator_name == clf.__class__.__name__
+
+
+def test_precision_recall_curve_string_labels():
+    # regression test #15738
+    cancer = load_breast_cancer()
+    X = cancer.data
+    y = np.array(
+        [cancer.target_names[i] for i in cancer.target],
+        dtype=object
+    )
+    lr = make_pipeline(StandardScaler(), LogisticRegression())
+    lr.fit(X, y)
+    for klass in cancer.target_names:
+        assert klass in lr.classes_
+    disp = plot_precision_recall_curve(lr, X, y)
+    assert disp.estimator_name == lr.__class__.__name__
