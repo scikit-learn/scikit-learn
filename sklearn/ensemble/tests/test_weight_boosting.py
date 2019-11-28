@@ -97,7 +97,9 @@ def test_classification_toy(algorithm):
     clf.fit(X, y_class)
     assert_array_equal(clf.predict(T), y_t_class)
     assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
-    assert clf.predict_proba(T).shape == (len(T), 2)
+    # Use len(y_class) to include all classes from train samples
+    # len(y_t_class) may not contain all unique classes
+    assert clf.predict_proba(T).shape == (len(T), len(np.unique(y_class)))
     assert clf.decision_function(T).shape == (len(T),)
 
 
