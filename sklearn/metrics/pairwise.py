@@ -1429,9 +1429,9 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
-            V = np.var(X, axis=0, ddof=1)
+            V = np.var(X, axis=0, ddof=1, dtype=np.double)
         else:
-            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=np.double)
         return {'V': V}
     if metric == "mahalanobis" and 'VI' not in kwds:
         if X is Y:
