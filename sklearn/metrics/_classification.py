@@ -535,8 +535,8 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
     Returns
     -------
     most_confused : ndarray of shape (n_pairs, 3)
-        The most confused classes list, with each row containing:
-        [class_1, class_2, count]
+        The most confused classes list, from the most confused to the less confused,
+        with each row containing: [class_1, class_2, count]
         where count denotes the number of times class_1 was misclassified as class_2
         and n_pairs is the number of pairs of classes confused by the classifier.
         Or, if there is no misclassification, returns an empty ndarray.
@@ -580,21 +580,20 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
     # confusion_matrix checks for input errors
     cm = confusion_matrix(y_true, y_pred, labels=labels)
 
-    # Initialize the most_confused_dict dictionary
-    most_confused_dict = {}
+    # Clean the diagonal
+    cm = cm - np.diag(np.diag(cm))
+    # Get the coordinates of sorted values of cm
+    coords = np.array(np.unravel_index(np.argsort(cm, axis=None), shape=cm.shape)).T
+    most_confused = np.append(
+        coords,
+        # Values corresponding to the columns
+        np.apply_along_axis(lambda row: cm[row[0], row[1]], axis=1, arr=coords).reshape(-1, 1),
+        axis=1
+    )
 
-    # Browse the confusion matrix to count the class confusions
-    for i in range(cm.shape[0]):
-        for j in range(cm.shape[1]):
-            if i != j and cm[i, j] > 0:
-                most_confused_dict[(i, j)] = cm[i, j]
+    # Keep only rows with count > 0
+    most_confused = most_confused[np.where(most_confused[:, -1] > 0)]
 
-    # Transform the dict into a np.ndarray
-    most_confused = np.append(np.array(list(most_confused_dict.keys())),
-                              np.array(list(most_confused_dict.values())).reshape(-1, 1),
-                              axis=1)
-    # Sort the array by the third column containing the counts
-    most_confused.view('i8,i8,i8').sort(order=['f2'], axis=0)
     # Reverse the sort order
     most_confused = most_confused[::-1, :]
     # Keep only max_rows rows
