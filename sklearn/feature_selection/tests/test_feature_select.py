@@ -11,6 +11,7 @@ import pytest
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns_message
@@ -125,6 +126,24 @@ def test_f_regression_center():
     F2, _ = f_regression(X, Y, center=False)
     assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
     assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
+
+
+def test_f_regression_gets_raised():
+    # Test whether f_regression gets raised when the standard deviation
+    # of the random variables (regressors and targets) is zero
+    X = np.array([[2, 2], [0, 1]])
+    y = np.array([0, 1])
+    assert_raises(ValueError, f_regression, X, y)
+
+    X = np.array([[0, 1], [0, 1]])
+    y = np.array([1, 1])
+    assert_raises(ValueError, f_regression, X, y)
+
+    # Test whether f_regression gets raised when the degrees
+    # of freedom employed for the F-test is less than one
+    X = np.array([[1, 0], [0, 1]])
+    y = np.array([1, 0])
+    assert_raises(ValueError, f_regression, X, y)
 
 
 def test_f_classif_multi_class():
