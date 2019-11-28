@@ -755,13 +755,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
 
-    random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
-        'liblinear'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -1091,13 +1087,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         across the entire probability distribution, *even when the data is
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
-    random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' and
-        'liblinear'.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
     max_squared_sum : float, default None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -1268,12 +1260,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *class_weight='balanced'*
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
-        'liblinear'.
+        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
+        See :term:`Glossary <random_state>` for details.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
              optional (default='lbfgs')
@@ -1826,12 +1814,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when `solver='sag'` or `solver='liblinear'`.
+        Used when `solver='sag'` or `solver='liblinear'` to shuffle the data.
         Note that this only applies to the solver and not the cross-validation
-        generator.
+        generator. See :term:`Glossary <random_state>` for details.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
