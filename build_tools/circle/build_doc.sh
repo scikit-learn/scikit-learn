@@ -172,8 +172,8 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib memory_profiler packaging seaborn
 
 source activate testenv
-pip install sphinx-gallery==0.3.1
-pip install numpydoc==0.9
+pip install sphinx-gallery
+pip install numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py build_ext --inplace -j 3
