@@ -1513,7 +1513,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                          accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
         self.classes_ = np.unique(y)
-        n_samples, n_features = X.shape
 
         multi_class = _check_multi_class(self.multi_class, solver,
                                          len(self.classes_))
@@ -1589,6 +1588,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
+        n_features = X.shape[1]
         if multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
         else:
