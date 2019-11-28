@@ -1,5 +1,13 @@
-Maintainer / core-developer information
+jMaintainer / core-developer information
 ========================================
+
+A release is either a major release, or a minor bug fix release. Our convention
+is that we release one or more release candidates (0.XXrcN) before releasing
+the final binaries. Creating the first RC involves creating the release branch
+(0.99.X for instance) directly on the main repo. The rest of the changes should
+be done as a PR to the master branch, if it's possible, or done through a PR
+to the release branch, for the other maintainers to review before the release.
+This is further explained under *Preparing a release PR*.
 
 Before a release
 ----------------
@@ -9,7 +17,8 @@ Before a release
     $ cd build_tools; make authors; cd ..
 
    and commit. This is only needed if the authors have changed since the last
-   release. This step is sometimes done independent of the release.
+   release. This step is sometimes done independent of the release. This
+   updates the maintainer list and is not the contributor list for the release.
 
 2. Confirm any blockers tagged for the milestone are resolved, and that other
    issues tagged for the milestone can be postponed.
@@ -19,21 +28,22 @@ Before a release
 
    - ``maint_tools/sort_whats_new.py`` can put what's new entries into
      sections. It's not perfect, and requires manual checking of the changes.
+     If the whats new list if well curated, it may not be necessary.
 
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
 
-Preparing a bug-fix-release
-...........................
+Preparing a release PR
+......................
 
-Since any commits to a released branch (e.g. 0.999.X) will automatically update
-the web site documentation, it is best to develop a bug-fix release with a pull
+Since any commits to an existing branch (e.g. 0.999.X) will automatically
+update the web site documentation, it is best to develop a release with a pull
 request in which 0.999.X is the base. It also allows you to keep track of any
 tasks towards release with a TO DO list.
 
-Most development of the bug fix release, and its documentation, should
-happen in master to avoid asynchrony. To select commits from master for use in
-the bug fix (version 0.999.3), you can use::
+Most development of the release, and its documentation, should happen in master
+to avoid asynchrony. To select commits from master for use in the bug fix
+(version 0.999.3), you can use::
 
     $ git checkout -b release-0.999.3 master
     $ git rebase -i upstream/0.999.X
@@ -59,16 +69,17 @@ Making a release
 
    - Update the release date in whats_new.rst
 
-   - Edit the doc/index.rst to change the 'News' entry of the front page.
+   - Edit the doc/templates//index.html to change the 'News' entry of the front page.
 
    - Note that these changes should be made in master and cherry-picked into
-     the release branch.
+     the release branch, only before the final release.
 
 2. On the branch for releasing, update the version number in
    sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
-   when ready to release.
-   On master, increment the version in the same place (when branching for
-   release).
+   when ready to release. On master, increment the version in the same place
+   (when branching for release). This means while we're in the release
+   candidate period, the latest stable is two versions behind the master
+   branch, and one one.
 
 3. Create the source tarball:
 
@@ -86,7 +97,6 @@ Making a release
 
    - You can test if PyPi is going to accept the package using::
 
-       $ python setup.py -r -s
        $ twine check dist/*
 
    You can run ``twine check`` after step 5 (fetching artifacts) as well.
