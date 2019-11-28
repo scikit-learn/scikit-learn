@@ -506,7 +506,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def most_confused_classes(y_true, y_pred, labels=None):
+def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
     """Most confused classes.
 
     In multiclass and binary classification, this function computes the classes
@@ -526,6 +526,11 @@ def most_confused_classes(y_true, y_pred, labels=None):
         or select a subset of labels.
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
+
+    max_rows : int, optional
+        Maximum number of pairs of classes to return. Corresponds to the
+        number of rows in most_confused.
+        If none is given, all rows are returned.
 
     Returns
     -------
@@ -548,19 +553,31 @@ def most_confused_classes(y_true, y_pred, labels=None):
     >>> most_confused_classes(y_true, y_pred)
     array([[2, 0, 2],
            [2, 1, 1],
-           [1, 2, 1]])
+           [1, 2, 1]], dtype=int64)
 
     With labels:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"])
     array([[2, 1, 1],
-           [0, 2, 1]])
+           [0, 2, 1]], dtype=int64)
+
+    Keep only two rows:
+    >>> from sklearn.metrics import most_confused_classes
+    >>> y_true = [2, 0, 1, 2, 1, 2]
+    >>> y_pred = [0, 0, 2, 0, 1, 1]
+    >>> most_confused_classes(y_true, y_pred, max_rows=2)
+    array([[2, 0, 2],
+           [2, 1, 1]], dtype=int64)
     """
     # If there is no mistake, we return an empty array
     if np.array_equal(y_true, y_pred):
         return np.empty(0)
 
+    if max_rows is not None and max_rows < 1:
+        raise ValueError('max_rows must be an int >= 1')
+
+    # confusion_matrix checks for input errors
     cm = confusion_matrix(y_true, y_pred, labels=labels)
 
     # Initialize the most_confused_dict dictionary
@@ -580,6 +597,9 @@ def most_confused_classes(y_true, y_pred, labels=None):
     most_confused.view('i8,i8,i8').sort(order=['f2'], axis=0)
     # Reverse the sort order
     most_confused = most_confused[::-1, :]
+    # Keep only max_rows rows
+    if max_rows is not None:
+        most_confused = most_confused[:max_rows, :]
 
     return most_confused
 
