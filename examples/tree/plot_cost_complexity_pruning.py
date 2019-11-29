@@ -14,7 +14,7 @@ increase the number of nodes pruned. Here we only show the effect of
 ``ccp_alpha`` on regularizing the trees and how to choose a ``ccp_alpha``
 based on validation scores.
 
-See also `ref`:_minimal_cost_complexity_pruning` for details on pruning.
+See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 """
 
 print(__doc__)
