@@ -9,6 +9,8 @@ import warnings
 
 import numpy as np
 
+from scipy.linalg import qr, svd
+
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
