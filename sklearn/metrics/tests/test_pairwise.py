@@ -1275,7 +1275,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
         assert_allclose(dist, expected_dist_default_params)
 
 
-@pytest.mark.parametrize("metric", ["seuclidean", "mahalanobis"])
+@pytest.mark.parametrize("metric", ["seuclidean"])
 @pytest.mark.parametrize(
         "dtype",
         [np.half, np.float, np.double, np.longdouble])
