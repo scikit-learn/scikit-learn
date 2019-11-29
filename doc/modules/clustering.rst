@@ -509,12 +509,6 @@ Alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape. 
 The recently added option ``clusterQR`` is 100% also reproducible. 
 
-===========================  =============================== ==============================
- ``assign_labels="kmeans"``  |``assign_labels="discretize"`` |``assign_labels="clusterQR"``
-===========================  =============================== ==============================
-|coin_kmeans|                |coin_discretize|               |coin_clusterQR|
-===========================  =============================== ==============================
-
 Spectral Clustering Graphs
 --------------------------
 
