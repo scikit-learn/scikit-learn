@@ -69,7 +69,7 @@ Making a release
 
    - Update the release date in whats_new.rst
 
-   - Edit the doc/templates//index.html to change the 'News' entry of the front page.
+   - Edit the doc/templates/index.html to change the 'News' entry of the front page.
 
    - Note that these changes should be made in master and cherry-picked into
      the release branch, only before the final release.
