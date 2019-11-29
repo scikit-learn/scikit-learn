@@ -135,7 +135,7 @@ def test_precision_recall_curve_pipeline(pyplot, clf):
     assert disp.estimator_name == clf.__class__.__name__
 
 
-def test_precision_recall_curve_string_labels():
+def test_precision_recall_curve_string_labels(pyplot):
     # regression test #15738
     cancer = load_breast_cancer()
     X = cancer.data
