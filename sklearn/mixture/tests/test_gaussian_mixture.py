@@ -653,6 +653,45 @@ def test_gaussian_mixture_fit():
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
 
+def test_non_scaled_gaussian_mixture_fit():
+    """
+        This is used to test that a GMM, initiated with k-means, is able
+        to produce a fit to data where each feature is of very different
+        scale. Key to this is that, when the GMM is initialised, it
+        is done so by applying k-means to a scaled version of the data.
+
+        Note that we are comparing the GMM estimates of the means
+        with the corresponding sample estimates of means, rather than the
+        'ground truth'.
+
+        Pete Green <p.l.green@liverpool.ac.uk>
+
+    """
+
+    # Define moments of true Gaussian Mixture model
+    mu1 = np.array([0, 0])
+    mu2 = np.array([20, 0])
+    cov1 = np.array([[1, 0], [0, 1000]])
+    cov2 = np.array([[1, 0], [0, 1000]])
+
+    # Generate data
+    X1 = np.random.multivariate_normal(mu1, cov1, 200)
+    X2 = np.random.multivariate_normal(mu2, cov2, 200)
+    X = np.concatenate((X1, X2), axis=0)
+
+    # Find sample means and covariance matrices
+    means = np.array([np.mean(X1, 0), np.mean(X2, 0)])
+
+    # Fit GMM
+    g = GaussianMixture(n_components=2, n_init=20, init_params='kmeans')
+    g.fit(X)
+
+    # Compare GMM means with sample means
+    arg_idx1 = g.means_[:, 0].argsort()
+    arg_idx2 = means[:, 0].argsort()
+    assert_allclose(g.means_[arg_idx1], means[arg_idx2], rtol=0.1, atol=0.1)
+
+
 def test_gaussian_mixture_fit_best_params():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)

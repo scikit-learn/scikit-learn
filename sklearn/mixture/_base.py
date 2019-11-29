@@ -7,6 +7,7 @@
 import warnings
 from abc import ABCMeta, abstractmethod
 from time import time
+from sklearn import preprocessing
 
 import numpy as np
 
@@ -143,8 +144,13 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
+
+            # Note that we scale the data here, as k-means doesn't work well
+            # on data where difference features are on very different scales.
+            Xs = preprocessing.scale(X)
+
             label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
-                                   random_state=random_state).fit(X).labels_
+                                   random_state=random_state).fit(Xs).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
