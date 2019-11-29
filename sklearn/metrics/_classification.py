@@ -521,7 +521,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
+def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=None):
     """Most confused classes.
 
     In multiclass and binary classification, this function computes the classes
@@ -546,6 +546,12 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
         Maximum number of pairs of classes to return. Corresponds to the
         number of rows in most_confused.
         If none is given, all rows are returned.
+
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes most confused classes over the true, predicted conditions
+        or all the population. If None, most confused classes will not be normalized.
+        For normalize='all', the sum of the counts of the most_confused matrix
+        is equal to 1 - accuracy_score.
 
     Returns
     -------
@@ -593,7 +599,7 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None):
         raise ValueError('max_rows must be an int >= 1')
 
     # confusion_matrix checks for input errors
-    cm = confusion_matrix(y_true, y_pred, labels=labels)
+    cm = confusion_matrix(y_true, y_pred, labels=labels, normalize=normalize)
 
     # Clean the diagonal
     cm = cm - np.diag(np.diag(cm))

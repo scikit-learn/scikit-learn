@@ -566,6 +566,26 @@ def test_most_confused_classes():
     # Test with data without misclassification
     assert_array_equal(most_confused_classes([1, 0], [1, 0]), np.empty(0))
 
+def test_most_confused_classes_normalize():
+    y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
+    y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
+    assert_array_equal(
+        most_confused_classes(y_true, y_pred, normalize='true'),
+        [[1, 0, .5], [0, 1, .5]]
+    )
+    assert_array_almost_equal(
+        most_confused_classes(y_true, y_pred, normalize='pred'),
+        [[0, 1, 2/3], [1, 0, 1/3]]
+    )
+    assert_array_almost_equal(
+        most_confused_classes(y_true, y_pred, normalize='all'),
+        [[0, 1, 1/3], [1, 0, 1/6]]
+    )
+    assert_almost_equal(
+        most_confused_classes(y_true, y_pred, normalize='all')[:, -1].sum(),
+        1-accuracy_score(y_true, y_pred)
+    )
+
 
 def test_cohen_kappa():
     # These label vectors reproduce the contingency matrix from Artstein and
