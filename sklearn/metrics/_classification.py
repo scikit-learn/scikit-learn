@@ -521,7 +521,8 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=None):
+def most_confused_classes(y_true, y_pred, labels=None,
+                          max_rows=None, normalize=None):
     """Most confused classes.
 
     In multiclass and binary classification, this function computes the classes
@@ -537,10 +538,10 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_classes], optional
-        List of labels to index the confusion matrix. This may be used to reorder
-        or select a subset of labels.
-        If none is given, those that appear at least once
-        in ``y_true`` or ``y_pred`` are used in sorted order.
+        List of labels to index the confusion matrix. This may be used to
+        reorder or select a subset of labels.
+        If none is given, those that appear at least once in ``y_true`` or
+        ``y_pred`` are used in sorted order.
 
     max_rows : int, optional
         Maximum number of pairs of classes to return. Corresponds to the
@@ -549,17 +550,19 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=
 
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes most confused classes over the true, predicted conditions
-        or all the population. If None, most confused classes will not be normalized.
+        or all the population. If None, most confused classes will not be
+        normalized.
         For normalize='all', the sum of the counts of the most_confused matrix
         is equal to 1 - accuracy_score.
 
     Returns
     -------
     most_confused : ndarray of shape (n_pairs, 3)
-        The most confused classes list, from the most confused to the less confused,
-        with each row containing: [class_1, class_2, count]
-        where count denotes the number of times class_1 was misclassified as class_2
-        and n_pairs is the number of pairs of classes confused by the classifier.
+        The most confused classes list, from the most confused to the less
+        confused, with each row containing: [class_1, class_2, count]
+        where count denotes the number of times class_1 was misclassified as
+        class_2 and n_pairs is the number of pairs of classes confused by the
+        classifier.
         Or, if there is no misclassification, returns an empty ndarray.
 
     See also
@@ -574,14 +577,14 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=
     >>> most_confused_classes(y_true, y_pred)
     array([[2, 0, 2],
            [2, 1, 1],
-           [1, 2, 1]], dtype=int64)
+           [1, 2, 1]])
 
     With labels:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"])
     array([[2, 1, 1],
-           [0, 2, 1]], dtype=int64)
+           [0, 2, 1]])
 
     Keep only two rows:
     >>> from sklearn.metrics import most_confused_classes
@@ -589,7 +592,7 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=
     >>> y_pred = [0, 0, 2, 0, 1, 1]
     >>> most_confused_classes(y_true, y_pred, max_rows=2)
     array([[2, 0, 2],
-           [2, 1, 1]], dtype=int64)
+           [2, 1, 1]])
     """
     # If there is no mistake, we return an empty array
     if np.array_equal(y_true, y_pred):
@@ -604,7 +607,8 @@ def most_confused_classes(y_true, y_pred, labels=None, max_rows=None, normalize=
     # Clean the diagonal
     cm = cm - np.diag(np.diag(cm))
     # Get the coordinates of sorted values of cm
-    coords = np.array(np.unravel_index(np.argsort(cm, axis=None), shape=cm.shape)).T
+    coords = np.array(np.unravel_index(np.argsort(cm, axis=None),
+                                       shape=cm.shape)).T
     most_confused = np.append(
         coords,
         # Values corresponding to the columns

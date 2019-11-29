@@ -550,21 +550,30 @@ def test_most_confused_classes():
     # Test docstring examples
     y_true = [2, 0, 1, 2, 1, 2]
     y_pred = [0, 0, 2, 0, 1, 1]
-    assert_array_equal(most_confused_classes(y_true, y_pred), [[2, 0, 2], [2, 1, 1], [1, 2, 1]])
+    assert_array_equal(most_confused_classes(y_true, y_pred),
+                       [[2, 0, 2], [2, 1, 1], [1, 2, 1]])
     y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
     y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
-    assert_array_equal(most_confused_classes(y_true, y_pred), [[0, 1, 4], [1, 0, 2]])
+    assert_array_equal(most_confused_classes(y_true, y_pred),
+                       [[0, 1, 4], [1, 0, 2]])
     # With labels
     y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
-    assert_array_equal(most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"]), [[2, 1, 1], [0, 2, 1]])
+    assert_array_equal(
+        most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"]),
+        [[2, 1, 1], [0, 2, 1]]
+    )
     # With max rows argument
     y_true = [2, 0, 1, 2, 1, 2]
     y_pred = [0, 0, 2, 0, 1, 1]
-    assert_array_equal(most_confused_classes(y_true, y_pred, max_rows=2), [[2, 0, 2], [2, 1, 1]])
+    assert_array_equal(
+        most_confused_classes(y_true, y_pred, max_rows=2),
+        [[2, 0, 2], [2, 1, 1]]
+    )
 
     # Test with data without misclassification
     assert_array_equal(most_confused_classes([1, 0], [1, 0]), np.empty(0))
+
 
 def test_most_confused_classes_normalize():
     y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
