@@ -3,7 +3,7 @@
 Faces dataset decompositions
 ============================
 
-This example applies to :ref:`olivetti_faces` different unsupervised
+This example applies to :ref:`olivetti_faces_dataset` different unsupervised
 matrix decomposition (dimension reduction) methods from the module
 :py:mod:`sklearn.decomposition` (see the documentation chapter
 :ref:`decompositions`) .

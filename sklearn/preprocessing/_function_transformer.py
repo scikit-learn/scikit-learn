@@ -11,7 +11,7 @@ def _identity(X):
     return X
 
 
-class FunctionTransformer(BaseEstimator, TransformerMixin):
+class FunctionTransformer(TransformerMixin, BaseEstimator):
     """Constructs a transformer from an arbitrary callable.
 
     A FunctionTransformer forwards its X (and optionally y) arguments to a
@@ -48,7 +48,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
           sparse matrix. If the conversion is not possible an exception is
           raised.
 
-        .. deprecated:: 0.22
+        .. versionchanged:: 0.22
            The default of ``validate`` changed from True to False.
 
     accept_sparse : boolean, optional
@@ -69,6 +69,15 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     inv_kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to inverse_func.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
+    >>> transformer.transform(X)
+    array([[0.       , 0.6931...],
+           [1.0986..., 1.3862...]])
     """
     def __init__(self, func=None, inverse_func=None, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
@@ -156,5 +165,5 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         return func(X, **(kw_args if kw_args else {}))
 
     def _more_tags(self):
-        return {'no_validation': True,
+        return {'no_validation': not self.validate,
                 'stateless': True}

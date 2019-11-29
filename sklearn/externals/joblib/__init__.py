@@ -12,4 +12,4 @@ msg = ("sklearn.externals.joblib is deprecated in 0.21 and will be removed "
        "those models with scikit-learn 0.21+.")
 
 if not hasattr(sys, "_is_pytest_session"):
-    warnings.warn(msg, category=DeprecationWarning)
+    warnings.warn(msg, category=FutureWarning)

@@ -21,7 +21,7 @@ from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class RBFSampler(BaseEstimator, TransformerMixin):
+class RBFSampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
 
@@ -125,7 +125,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
+class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximates feature map of the "skewed chi-squared" kernel by Monte
     Carlo approximation of its Fourier transform.
 
@@ -239,7 +239,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         return projection
 
 
-class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
+class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
@@ -345,7 +345,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
 
         Returns
         -------
@@ -429,13 +429,15 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         return {'stateless': True}
 
 
-class Nystroem(BaseEstimator, TransformerMixin):
+class Nystroem(TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
     using a subset of the data as basis.
 
     Read more in the :ref:`User Guide <nystroem_kernel_approx>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -537,7 +539,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_feature)
+        X : array-like of shape (n_samples, n_features)
             Training data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -579,7 +581,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data to transform.
 
         Returns

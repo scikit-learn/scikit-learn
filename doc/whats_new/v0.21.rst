@@ -7,6 +7,8 @@
 Version 0.21.3
 ==============
 
+.. include:: changelog_legend.inc
+
 **July 30, 2019**
 
 Changed models
@@ -228,7 +230,7 @@ random sampling procedures.
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
 - :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
-- Any model using the :func:`linear_model.sag.sag_solver` function with a `0`
+- Any model using the :func:`linear_model._sag.sag_solver` function with a `0`
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
@@ -293,7 +295,7 @@ Support for Python 3.4 and below has been officially dropped.
 ......................
 
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
-  algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
+  algorithm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   `Adrin Jalali`_, :user:`Erich Schubert <kno10>`, `Hanmin Qin`_, and
   :user:`Assia Benbihi <assiaben>`.

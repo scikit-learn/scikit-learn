@@ -155,6 +155,15 @@ def test_should_stop(scores, n_iter_no_change, tol, stopping):
     assert gbdt._should_stop(scores) == stopping
 
 
+def test_least_absolute_deviation():
+    # For coverage only.
+    X, y = make_regression(n_samples=500, random_state=0)
+    gbdt = HistGradientBoostingRegressor(loss='least_absolute_deviation',
+                                         random_state=0)
+    gbdt.fit(X, y)
+    assert gbdt.score(X, y) > .9
+
+
 def test_binning_train_validation_are_separated():
     # Make sure training and validation data are binned separately.
     # See issue 13926
@@ -404,7 +413,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())
@@ -415,6 +424,17 @@ def test_infinite_values_missing_values():
 
     assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
+
+
+def test_crossentropy_binary_problem():
+    # categorical_crossentropy should only be used if there are more than two
+    # classes present. PR #14869
+    X = [[1], [0]]
+    y = [0, 1]
+    gbrt = HistGradientBoostingClassifier(loss='categorical_crossentropy')
+    with pytest.raises(ValueError,
+                       match="'categorical_crossentropy' is not suitable for"):
+        gbrt.fit(X, y)
 
 
 @pytest.mark.parametrize("scoring", [None, 'loss'])
