@@ -31,6 +31,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     its neighbors, one can identify samples that have a substantially lower
     density than their neighbors. These are considered outliers.
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     n_neighbors : int, optional (default=20)
@@ -143,6 +145,17 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         contamination parameter different than "auto" is provided. In that
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.neighbors import LocalOutlierFactor
+    >>> X = [[-1.1], [0.2], [101.1], [0.3]]
+    >>> clf = LocalOutlierFactor(n_neighbors=2)
+    >>> clf.fit_predict(X)
+    array([ 1,  1, -1,  1])
+    >>> clf.negative_outlier_factor_
+    array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
 
     References
     ----------

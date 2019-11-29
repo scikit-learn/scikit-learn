@@ -38,6 +38,12 @@ from ..model_selection import check_cv
 from ..metrics import get_scorer
 
 
+_LOGISTIC_SOLVER_CONVERGENCE_MSG = (
+    "Please also refer to the documentation for alternative solver options:\n"
+    "    https://scikit-learn.org/stable/modules/linear_model.html"
+    "#logistic-regression")
+
+
 # .. some helper functions for logistic_regression_path ..
 def _intercept_dot(w, X, y):
     """Computes y * np.dot(X, w).
@@ -928,7 +934,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                 args=(X, target, 1. / C, sample_weight),
                 options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
             )
-            n_iter_i = _check_optimize_result(solver, opt_res, max_iter)
+            n_iter_i = _check_optimize_result(
+                solver, opt_res, max_iter,
+                extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG)
             w0, loss = opt_res.x, opt_res.fun
         elif solver == 'newton-cg':
             args = (X, target, 1. / C, sample_weight)
@@ -1180,7 +1188,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                          SparseCoefMixin):
-    """Logistic Regression (aka logit, MaxEnt) classifier.
+    """
+    Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
     scheme if the 'multi_class' option is set to 'ovr', and uses the
@@ -1267,7 +1276,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             optional (default='lbfgs').
+             optional (default='lbfgs')
 
         Algorithm to use in the optimization problem.
 
@@ -1367,25 +1376,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             In SciPy <= 1.0.0 the number of lbfgs iterations may exceed
             ``max_iter``. ``n_iter_`` will now report at most ``max_iter``.
 
-    Examples
+    See Also
     --------
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.linear_model import LogisticRegression
-    >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0).fit(X, y)
-    >>> clf.predict(X[:2, :])
-    array([0, 0])
-    >>> clf.predict_proba(X[:2, :])
-    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
-           [9.7...e-01, 2.8...e-02, ...e-08]])
-    >>> clf.score(X, y)
-    0.97...
-
-    See also
-    --------
-    SGDClassifier : incrementally trained logistic regression (when given
+    SGDClassifier : Incrementally trained logistic regression (when given
         the parameter ``loss="log"``).
-    LogisticRegressionCV : Logistic regression with built-in cross validation
+    LogisticRegressionCV : Logistic regression with built-in cross validation.
 
     Notes
     -----
@@ -1421,6 +1416,20 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = LogisticRegression(random_state=0).fit(X, y)
+    >>> clf.predict(X[:2, :])
+    array([0, 0])
+    >>> clf.predict_proba(X[:2, :])
+    array([[9.8...e-01, 1.8...e-02, 1.4...e-08],
+           [9.7...e-01, 2.8...e-02, ...e-08]])
+    >>> clf.score(X, y)
+    0.97...
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -1446,7 +1455,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.l1_ratio = l1_ratio
 
     def fit(self, X, y, sample_weight=None):
-        """Fit the model according to the given training data.
+        """
+        Fit the model according to the given training data.
 
         Parameters
         ----------
@@ -1466,7 +1476,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Returns
         -------
-        self : object
+        self
+            Fitted estimator.
 
         Notes
         -----
@@ -1604,7 +1615,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return self
 
     def predict_proba(self, X):
-        """Probability estimates.
+        """
+        Probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -1619,6 +1631,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -1644,7 +1658,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             return softmax(decision_2d, copy=False)
 
     def predict_log_proba(self, X):
-        """Log of probability estimates.
+        """
+        Predict logarithm of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -1652,6 +1667,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Vector to be scored, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------

@@ -12,7 +12,8 @@ __all__ = ['NotFittedError',
            'FitFailedWarning',
            'NonBLASDotWarning',
            'SkipTestWarning',
-           'UndefinedMetricWarning']
+           'UndefinedMetricWarning',
+           'PositiveSpectrumWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -30,7 +31,7 @@ class NotFittedError(ValueError, AttributeError):
     ... except NotFittedError as e:
     ...     print(repr(e))
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
-    appropriate arguments before using this method."...)
+    appropriate arguments before using this estimator."...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
@@ -170,4 +171,16 @@ class UndefinedMetricWarning(UserWarning):
 
     .. versionchanged:: 0.18
        Moved from sklearn.base.
+    """
+
+
+class PositiveSpectrumWarning(UserWarning):
+    """Warning raised when the eigenvalues of a PSD matrix have issues
+
+    This warning is typically raised by ``_check_psd_eigenvalues`` when the
+    eigenvalues of a positive semidefinite (PSD) matrix such as a gram matrix
+    (kernel) present significant negative eigenvalues, or bad conditioning i.e.
+    very small non-zero eigenvalues compared to the largest eigenvalue.
+
+    .. versionadded:: 0.22
     """

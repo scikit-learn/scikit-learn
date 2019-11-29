@@ -1,6 +1,8 @@
 
 from functools import partial
 from itertools import product
+from itertools import chain
+from itertools import permutations
 import warnings
 import re
 
@@ -14,14 +16,15 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_div0
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_div0
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._mocking import MockDataFrame
 
 from sklearn.metrics import accuracy_score
@@ -507,6 +510,39 @@ def test_multilabel_confusion_matrix_errors():
     with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
                                     [[1, 2, 0], [1, 0, 2]])
+
+
+@pytest.mark.parametrize(
+    "normalize, cm_dtype, expected_results",
+    [('true', 'f', 0.333333333),
+     ('pred', 'f', 0.333333333),
+     ('all', 'f', 0.1111111111),
+     (None, 'i', 2)]
+)
+def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
+    y_test = [0, 1, 2] * 6
+    y_pred = list(chain(*permutations([0, 1, 2])))
+    cm = confusion_matrix(y_test, y_pred, normalize=normalize)
+    assert_allclose(cm, expected_results)
+    assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_single_class():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+
+    cm_true = confusion_matrix(y_test, y_pred, normalize='true')
+    assert cm_true.sum() == pytest.approx(2.0)
+
+    # additionally check that no warnings are raised due to a division by zero
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
+    assert not rec
+    assert cm_pred.sum() == pytest.approx(1.0)
+
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
+    assert not rec
 
 
 def test_cohen_kappa():
@@ -1141,7 +1177,7 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
-    assert_warns_message(DeprecationWarning,
+    assert_warns_message(FutureWarning,
                          "The labels parameter is unused. It was"
                          " deprecated in version 0.21 and"
                          " will be removed in version 0.23",
@@ -2212,7 +2248,8 @@ def test_multilabel_jaccard_similarity_score_deprecation():
     # size(y1 \inter y2) = [1, 2]
     # size(y1 \union y2) = [2, 2]
 
-    jss = partial(assert_warns, DeprecationWarning, jaccard_similarity_score)
+    jss = partial(assert_warns, FutureWarning,
+                  jaccard_similarity_score)
     assert jss(y1, y2) == 0.75
     assert jss(y1, y1) == 1
     assert jss(y2, y2) == 1
