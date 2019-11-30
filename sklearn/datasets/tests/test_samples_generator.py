@@ -318,7 +318,7 @@ def test_make_blobs_return_centers():
     X, y, centers = make_blobs(n_samples=n_samples, n_features=n_features,
                                return_centers=True, random_state=0)
 
-    assert_array_equal(centers.shape, [len(n_samples), n_features])
+    assert centers.shape == (len(n_samples), n_features)
 
 
 def test_make_blobs_error():
