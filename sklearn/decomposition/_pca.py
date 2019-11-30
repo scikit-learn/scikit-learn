@@ -276,7 +276,7 @@ class PCA(_BasePCA):
     TruncatedSVD : Dimensionality reduction using truncated SVD.
     IncrementalPCA : Incremental Principal Component Analysis.
 
-    References
+    Notes
     ----------
     For n_components == 'mle', this class uses the method of *Minka, T. P.
     "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
