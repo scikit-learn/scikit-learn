@@ -1563,6 +1563,7 @@ class ExtraTreesClassifier(ForestClassifier):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -1871,6 +1872,7 @@ class ExtraTreesRegressor(ForestRegressor):
         - the sampling of the features to consider when looking for the best
           split at each node (if ``max_features < n_features``)
         - the draw of the splits for each of the `max_features`
+
         See :term:`Glossary <random_state>` for details.
 
     verbose : int, optional (default=0)
@@ -2110,25 +2112,6 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    ccp_alpha : non-negative float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning. The
-        subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
-        :ref:`minimal_cost_complexity_pruning` for details.
-
-        .. versionadded:: 0.22
-
-    max_samples : int or float, default=None
-        If bootstrap is True, the number of samples to draw from X
-        to train each base estimator.
-
-        - If None (default), then draw `X.shape[0]` samples.
-        - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
-
-        .. versionadded:: 0.22
-
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -2160,9 +2143,7 @@ class RandomTreesEmbedding(BaseForest):
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False,
-                 ccp_alpha=0.0,
-                 max_samples=None):
+                 warm_start=False):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -2170,14 +2151,14 @@ class RandomTreesEmbedding(BaseForest):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            max_samples=max_samples)
+            max_samples=None)
 
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -2187,7 +2168,6 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
-        self.ccp_alpha = ccp_alpha
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
