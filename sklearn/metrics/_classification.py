@@ -604,7 +604,7 @@ def most_confused_classes(y_true, y_pred, labels=None,
     cm = cm - np.diag(np.diag(cm))
     # Get the coordinates of sorted values of cm
     coords = np.array(
-        np.unravel_index(np.argsort(cm, axis=None), shape=cm.shape)
+        np.unravel_index(np.argsort(cm, axis=None), cm.shape)
     ).T
     most_confused = np.append(
         coords,
