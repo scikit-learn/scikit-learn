@@ -557,13 +557,13 @@ def most_confused_classes(y_true, y_pred, labels=None,
 
     Returns
     -------
-    most_confused : ndarray of shape (n_pairs, 3)
-        The most confused classes list, from the most confused to the less
-        confused, with each row containing: [class_1, class_2, count]
+    most_confused : list (of length n_pairs) of tuples (of length 3)
+        The most confused classes list, from the most confused to the least
+        confused, with each row containing: (class_1, class_2, count)
         where count denotes the number of times class_1 was misclassified as
         class_2 and n_pairs is the number of pairs of classes confused by the
         classifier.
-        Or, if there is no misclassification, returns an empty ndarray.
+        Or, if there is no misclassification, returns an empty list.
 
     See also
     --------
@@ -575,28 +575,24 @@ def most_confused_classes(y_true, y_pred, labels=None,
     >>> y_true = [2, 0, 1, 2, 1, 2]
     >>> y_pred = [0, 0, 2, 0, 1, 1]
     >>> most_confused_classes(y_true, y_pred)
-    array([[2, 0, 2],
-           [2, 1, 1],
-           [1, 2, 1]])
+    [(2, 0, 2), (2, 1, 1), (1, 2, 1)]
 
     With labels:
     >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     >>> most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"])
-    array([[2, 1, 1],
-           [0, 2, 1]])
+    [('cat', 'ant', 1), ('bird', 'cat', 1)]
 
     Keep only two rows:
     >>> from sklearn.metrics import most_confused_classes
     >>> y_true = [2, 0, 1, 2, 1, 2]
     >>> y_pred = [0, 0, 2, 0, 1, 1]
     >>> most_confused_classes(y_true, y_pred, max_rows=2)
-    array([[2, 0, 2],
-           [2, 1, 1]])
+    [(2, 0, 2), (2, 1, 1)]
     """
     # If there is no mistake, we return an empty array
     if np.array_equal(y_true, y_pred):
-        return np.empty(0)
+        return []
 
     if max_rows is not None and max_rows < 1:
         raise ValueError('max_rows must be an int >= 1')
@@ -607,8 +603,9 @@ def most_confused_classes(y_true, y_pred, labels=None,
     # Clean the diagonal
     cm = cm - np.diag(np.diag(cm))
     # Get the coordinates of sorted values of cm
-    coords = np.array(np.unravel_index(np.argsort(cm, axis=None),
-                                       shape=cm.shape)).T
+    coords = np.array(
+        np.unravel_index(np.argsort(cm, axis=None), shape=cm.shape)
+    ).T
     most_confused = np.append(
         coords,
         # Values corresponding to the columns
@@ -624,6 +621,15 @@ def most_confused_classes(y_true, y_pred, labels=None,
     # Keep only max_rows rows
     if max_rows is not None:
         most_confused = most_confused[:max_rows, :]
+
+    # Return the result as a list of tuples
+    # with the class names as strings (if provided)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
+    most_confused = [tuple([labels[int(row[0])], labels[int(row[1])], row[2]])
+                     for row in most_confused]
 
     return most_confused
 

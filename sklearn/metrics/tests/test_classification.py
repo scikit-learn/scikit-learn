@@ -551,28 +551,28 @@ def test_most_confused_classes():
     y_true = [2, 0, 1, 2, 1, 2]
     y_pred = [0, 0, 2, 0, 1, 1]
     assert_array_equal(most_confused_classes(y_true, y_pred),
-                       [[2, 0, 2], [2, 1, 1], [1, 2, 1]])
+                       [(2, 0, 2), (2, 1, 1), (1, 2, 1)])
     y_true = [0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0]
     y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
     assert_array_equal(most_confused_classes(y_true, y_pred),
-                       [[0, 1, 4], [1, 0, 2]])
+                       [(0, 1, 4), (1, 0, 2)])
     # With labels
     y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
     y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
     assert_array_equal(
         most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"]),
-        [[2, 1, 1], [0, 2, 1]]
+        [("cat", "ant", 1), ("bird", "cat", 1)]
     )
     # With max rows argument
     y_true = [2, 0, 1, 2, 1, 2]
     y_pred = [0, 0, 2, 0, 1, 1]
     assert_array_equal(
         most_confused_classes(y_true, y_pred, max_rows=2),
-        [[2, 0, 2], [2, 1, 1]]
+        [(2, 0, 2), (2, 1, 1)]
     )
 
     # Test with data without misclassification
-    assert_array_equal(most_confused_classes([1, 0], [1, 0]), np.empty(0))
+    assert_array_equal(most_confused_classes([1, 0], [1, 0]), [])
 
 
 def test_most_confused_classes_normalize():
@@ -580,19 +580,23 @@ def test_most_confused_classes_normalize():
     y_pred = [1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0]
     assert_array_equal(
         most_confused_classes(y_true, y_pred, normalize='true'),
-        [[1, 0, .5], [0, 1, .5]]
+        [(1, 0, .5), (0, 1, .5)]
     )
     assert_array_almost_equal(
         most_confused_classes(y_true, y_pred, normalize='pred'),
-        [[0, 1, 2/3], [1, 0, 1/3]]
+        [(0, 1, 2/3), (1, 0, 1/3)]
     )
     assert_array_almost_equal(
         most_confused_classes(y_true, y_pred, normalize='all'),
-        [[0, 1, 1/3], [1, 0, 1/6]]
+        [(0, 1, 1/3), (1, 0, 1/6)]
     )
-    assert_almost_equal(
-        most_confused_classes(y_true, y_pred, normalize='all')[:, -1].sum(),
-        1-accuracy_score(y_true, y_pred)
+    # With labels
+    y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    assert_array_equal(
+        most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"],
+                              normalize='all'),
+        [("cat", "ant", 1/6), ("bird", "cat", 1/6)]
     )
 
 
