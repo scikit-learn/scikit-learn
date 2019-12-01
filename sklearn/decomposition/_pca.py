@@ -267,7 +267,8 @@ class PCA(_BasePCA):
     Notes
     -----
     For n_components == 'mle', this class uses the method of implemented
-    in [1].
+    in [1].     `score` and `score_samples` implement the probabilistic
+    PCA model from [2].
 
     See Also
     --------
@@ -276,26 +277,11 @@ class PCA(_BasePCA):
     TruncatedSVD : Dimensionality reduction using truncated SVD.
     IncrementalPCA : Incremental Principal Component Analysis.
 
-    Notes
-    ----------
-    For n_components == 'mle', this class uses the method of *Minka, T. P.
-    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
-
-    Implements the probabilistic PCA model from:
-    Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
-    component analysis". Journal of the Royal Statistical Society:
-    Series B (Statistical Methodology), 61(3), 611-622.
-    via the score and score_samples methods.
-    See http://www.miketipping.com/papers/met-mppca.pdf
-
-    `score` and `score_samples` implements the probabilistic PCA model from
-    [2].
-
-    For the different solvers:
-        * svd_solver == 'arpack', refer to :func:`scipy.sparse.linalg.svds`.
-        * svd_solver == 'randomized', refer to the implementation in
+    For other solvers:
+        * svd_solver == 'arpack', refers to :func:`scipy.sparse.linalg.svds`.
+        * svd_solver == 'randomized', refers to the implementation in
           [3] and [4].
-        * svd_solver == 'lobpcg', refer to the implementation in [5].
+        * svd_solver == 'lobpcg', refers to the implementation in [5].
 
     References
     ----------
