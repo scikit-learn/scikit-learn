@@ -847,6 +847,8 @@ class PartialDependenceDisplay:
 
         if isinstance(ax, plt.Axes):
             disp_obj = _check_axes_has_display_object(self, ax)
+
+            # axes was used by another PartialDependenceDisplay for plotting
             if disp_obj != self:
                 self.bounding_ax_ = disp_obj.bounding_ax_
                 # ax is set to be an array-like
