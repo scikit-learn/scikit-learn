@@ -2262,6 +2262,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 col = col.take(subsample_idx, mode='clip')
             self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+        self.quantiles_ = np.minimum.accumulate(
+                                    self.quantiles_[::-1])[::-1]
 
     def _sparse_fit(self, X, random_state):
         """Compute percentiles for sparse matrices.
@@ -2305,6 +2307,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 self.quantiles_.append(
                         np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+        self.quantiles_ = np.minimum.accumulate(
+                                        self.quantiles_[::-1])[::-1]
 
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
