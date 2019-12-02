@@ -704,7 +704,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     inner_stats : tuple of (A, B) ndarrays
         Inner sufficient statistics that are kept by the algorithm.
         Passing them at initialization is useful in online settings, to
-        avoid loosing the history of the evolution.
+        avoid losing the history of the evolution.
         A (n_components, n_components) is the dictionary covariance matrix.
         B (n_features, n_components) is the data approximation matrix
 
@@ -1351,7 +1351,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     inner_stats_ : tuple of (A, B) ndarrays
         Internal sufficient statistics that are kept by the algorithm.
-        Keeping them is useful in online settings, to avoid loosing the
+        Keeping them is useful in online settings, to avoid losing the
         history of the evolution, but they shouldn't have any use for the
         end user.
         A (n_components, n_components) is the dictionary covariance matrix.

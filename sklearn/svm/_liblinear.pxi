@@ -1,6 +1,3 @@
-cimport numpy as np
-
-
 cdef extern from "_cython_blas_helpers.h":
     ctypedef double (*dot_func)(int, double*, int, double*, int)
     ctypedef void (*axpy_func)(int, double, double*, int, double*, int)
@@ -11,6 +8,7 @@ cdef extern from "_cython_blas_helpers.h":
         axpy_func axpy
         scal_func scal
         nrm2_func nrm2
+
 
 cdef extern from "linear.h":
     cdef struct feature_node
@@ -27,6 +25,7 @@ cdef extern from "linear.h":
     void get_n_iter (model *model, int *n_iter)
     void free_and_destroy_model (model **)
     void destroy_param (parameter *)
+
 
 cdef extern from "liblinear_helper.c":
     void copy_w(void *, model *, int)
