@@ -656,7 +656,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     features = tmp_features
 
     # Early exit if the axes does not have the correct number of axes
-    if ax is not None:
+    if ax is not None and not isinstance(ax, plt.Axes):
         axes = check_array(ax, dtype=object, ensure_2d=False)
         if axes.size != len(features):
             raise ValueError("Expected ax to have {} axes, got {}".format(
