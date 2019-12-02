@@ -590,14 +590,6 @@ def test_most_confused_classes_normalize():
         most_confused_classes(y_true, y_pred, normalize='all'),
         [(0, 1, 1/3), (1, 0, 1/6)]
     )
-    # With labels
-    y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
-    y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
-    assert_array_equal(
-        most_confused_classes(y_true, y_pred, labels=["bird", "ant", "cat"],
-                              normalize='all'),
-        [("cat", "ant", 1/6), ("bird", "cat", 1/6)]
-    )
 
 
 def test_cohen_kappa():
