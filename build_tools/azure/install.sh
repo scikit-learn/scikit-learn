@@ -11,7 +11,7 @@ make_conda() {
 }
 
 version_ge() {
-    # The two version numbers are seperated with a new line is piped to sort
+    # The two version numbers are separated with a new line is piped to sort
     # -rV. The -V activates for version number sorting and -r sorts in
     # decending order. If the first argument is the top element of the sort, it
     # is greater than or equal to the second argument.
@@ -22,13 +22,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
-
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        TO_INSTALL="$TO_INSTALL mkl"
-    else
-        TO_INSTALL="$TO_INSTALL nomkl"
-    fi
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION\
+                blas[build=$BLAS]"
 
     if [[ -n "$PANDAS_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
