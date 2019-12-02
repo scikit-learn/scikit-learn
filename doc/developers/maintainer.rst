@@ -45,6 +45,7 @@ Most development of the release, and its documentation, should happen in master
 to avoid asynchrony. To select commits from master for use in the bug fix
 (version 0.999.3), you can use::
 
+    $ # # assuming master and upstream/master are the same
     $ git checkout -b release-0.999.3 master
     $ git rebase -i upstream/0.999.X
 
