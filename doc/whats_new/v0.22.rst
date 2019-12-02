@@ -7,7 +7,7 @@
 Version 0.22.0
 ==============
 
-**November 29 2019**
+**December 3 2019**
 
 For a short description of the main highlights of the release, please
 refer to
@@ -951,3 +951,65 @@ These changes mostly affect library developers.
 
 - |Fix| The estimators tags resolution now follows the regular MRO. They used
   to be overridable only once. :pr:`14884` by `Andreas Müller`_.
+
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.20, including:
+
+Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav Sagar,
+Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin Jalali,
+Agamemnon Krasoulis, Alec Peters, Alessandro Surace, Alexandre de Siqueira,
+Alexandre Gramfort, alexgoryainov, Alex Henrie, Alex Itkes, alexshacked, Allen
+Akinkunle, Anaël Beaugnon, Anders Kaseorg, Andrea Maldonado, Andrea Navarrete,
+Andreas Mueller, Andreas Schuderer, Andrew Nystrom, Angela Ambroz, Anisha
+Keshavan, Ankit Jha, Antonio Gutierrez, Anuja Kelkar, Archana Alva,
+arnaudstiegler, arpanchowdhry, ashimb9, Ayomide Bamidele, Baran Buluttekin,
+barrycg, Bharat Raghunathan, Bill Mill, Biswadip Mandal, blackd0t, Brian G.
+Barkley, Brian Wignall, Bryan Yang, c56pony, camilaagw, cartman_nabana,
+catajara, Cat Chenal, Cathy, cgsavard, Charles Vesteghem, Chiara Marmo, Chris
+Gregory, Christian Lorentzen, Christos Aridas, Dakota Grusak, Daniel Grady,
+Daniel Perry, Danna Naser, DatenBergwerk, David Dormagen, deeplook, Dillon
+Niederhut, Dong-hee Na, Dougal J. Sutherland, DrGFreeman, Dylan Cashman,
+edvardlindelof, Eric Larson, Eric Ndirangu, Eunseop Jeong, Fanny,
+federicopisanu, Felix Divo, flaviomorelli, FranciDona, Franco M. Luque, Frank
+Hoang, Frederic Haase, g0g0gadget, Gabriel Altay, Gabriel do Vale Rios, Gael
+Varoquaux, ganevgv, gdex1, getgaurav2, Gideon Sonoiya, Gordon Chen, gpapadok,
+Greg Mogavero, Grzegorz Szpak, Guillaume Lemaitre, Guillem García Subies,
+H4dr1en, hadshirt, Hailey Nguyen, Hanmin Qin, Hannah Bruce Macdonald, Harsh
+Mahajan, Harsh Soni, Honglu Zhang, Hossein Pourbozorg, Ian Sanders, Ingrid
+Spielman, J-A16, jaehong park, Jaime Ferrando Huertas, James Hill, James Myatt,
+Jay, jeremiedbb, Jérémie du Boisberranger, jeromedockes, Jesper Dramsch, Joan
+Massich, Joanna Zhang, Joel Nothman, Johann Faouzi, Jonathan Rahn, Jon Cusick,
+Jose Ortiz, Kanika Sabharwal, Katarina Slama, kellycarmody, Kennedy Kang'ethe,
+Kensuke Arai, Kesshi Jordan, Kevad, Kevin Loftis, Kevin Winata, Kevin Yu-Sheng
+Li, Kirill Dolmatov, Kirthi Shankar Sivamani, krishna katyal, Lakshmi Krishnan,
+Lakshya KD, LalliAcqua, lbfin, Leland McInnes, Léonard Binet, Loic Esteve,
+loopyme, lostcoaster, Louis Huynh, lrjball, Luca Ionescu, Lutz Roeder,
+MaggieChege, Maithreyi Venkatesh, Maltimore, Maocx, Marc Torrellas, Marie
+Douriez, Markus, Markus Frey, Martina G. Vilas, Martin Oywa, Martin Thoma,
+Masashi SHIBATA, Maxwell Aladago, mbillingr, m-clare, Meghann Agarwal, m.fab,
+Micah Smith, miguelbarao, Miguel Cabrera, Mina Naghshhnejad, Ming Li, motmoti,
+mschaffenroth, mthorrell, Natasha Borders, nezar-a, Nicolas Hug, Nidhin
+Pattaniyil, Nikita Titov, Nishan Singh Mann, Nitya Mandyam, norvan,
+notmatthancock, novaya, nxorable, Oleg Stikhin, Oleksandr Pavlyk, Olivier
+Grisel, Omar Saleem, Owen Flanagan, panpiort8, Paolo, Paolo Toccaceli, Paresh
+Mathur, Paula, Peng Yu, Peter Marko, pierretallotte, poorna-kumar, pspachtholz,
+qdeffense, Rajat Garg, Raphaël Bournhonesque, Ray, Ray Bell, Rebekah Kim, Reza
+Gharibi, Richard Payne, Richard W, rlms, Robert Juergens, Rok Mihevc, Roman
+Feldbauer, Roman Yurchak, R Sanjabi, RuchitaGarde, Ruth Waithera, Sackey, Sam
+Dixon, Samesh Lakhotia, Samuel Taylor, Sarra Habchi, Scott Gigante, Scott
+Sievert, Scott White, Sebastian Pölsterl, Sergey Feldman, SeWook Oh, she-dares,
+Shreya V, Shubham Mehta, Shuzhe Xiao, SimonCW, smarie, smujjiga, Sönke
+Behrends, Soumirai, Sourav Singh, stefan-matcovici, steinfurt, Stéphane
+Couvreur, Stephan Tulkens, Stephen Cowley, Stephen Tierney, SylvainLan,
+th0rwas, theoptips, theotheo, Thierno Ibrahima DIOP, Thomas Edwards, Thomas J
+Fan, Thomas Moreau, Thomas Schmitt, Tilen Kusterle, Tim Bicker, Timsaur, Tim
+Staley, Tirth Patel, Tola A, Tom Augspurger, Tom Dupré la Tour, topisan, Trevor
+Stephens, ttang131, Urvang Patel, Vathsala Achar, veerlosar, Venkatachalam N,
+Victor Luzgin, Vincent Jeanselme, Vincent Lostanlen, Vladimir Korolev,
+vnherdeiro, Wenbo Zhao, Wendy Hu, willdarnell, William de Vazelhes,
+wolframalpha, xavier dupré, xcjason, x-martian, xsat, xun-tang, Yinglr,
+yokasre, Yu-Hang "Maxin" Tang, Yulia Zamriy, Zhao Feng
