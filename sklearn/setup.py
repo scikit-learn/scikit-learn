@@ -39,6 +39,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('impute/tests')
     config.add_subpackage('inspection')
     config.add_subpackage('inspection/tests')
+    config.add_subpackage('inspection/_plot')
+    config.add_subpackage('inspection/_plot/tests')
     config.add_subpackage('mixture')
     config.add_subpackage('mixture/tests')
     config.add_subpackage('model_selection')
