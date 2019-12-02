@@ -70,9 +70,16 @@
           </div>
         </li>
       </ul>
-      <div class="sk-search-form">
-          <div class="gcse-search" id="cse" data-linktarget="_parent"></div>
+      {%- if pagename != "search"%}
+      <div id="searchbox" role="search">
+          <div class="searchformwrapper">
+          <form class="search" action="{{ pathto('search') }}" method="get">
+            <input class="sk-search-text-input" type="text" name="q" aria-labelledby="searchlabel" />
+            <input class="sk-search-text-btn" type="submit" value="{{ _('Go') }}" />
+          </form>
+          </div>
       </div>
+      {%- endif %}
     </div>
   </div>
 </nav>
