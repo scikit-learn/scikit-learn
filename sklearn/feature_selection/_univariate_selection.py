@@ -294,15 +294,34 @@ def f_regression(X, y, center=True):
     else:
         X_norms = row_norms(X.T)
 
+    # the Pearson correlation coefficient is undefined
+    # for random variables (regressors and target) with
+    # a standard deviation of zero
+    if np.any(X_norms == 0) or np.std(y) == 0:
+        raise ValueError("The correlation is undefined for "
+                         "regressors and target with "
+                         "identically constant values. "
+                         "Remove them before calling this method.")
+
     # compute the correlation
     corr = safe_sparse_dot(y, X)
     corr /= X_norms
     corr /= np.linalg.norm(y)
 
-    # convert to p-value
+    # compute degrees of freedom
     degrees_of_freedom = y.size - (2 if center else 1)
-    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
-    pv = stats.f.sf(F, 1, degrees_of_freedom)
+
+    # the degrees of freedom must be at least one for the F-test
+    if degrees_of_freedom < 1:
+        raise ValueError("The sample size must be greater than "
+                         "two if 'center=True'. Got n_samples={}."
+                         .format(n_samples))
+
+    # convert to F-score and then to p-value
+    with np.errstate(divide="ignore"):
+        F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+        pv = stats.f.sf(F, 1, degrees_of_freedom)
+
     return F, pv
 
 
