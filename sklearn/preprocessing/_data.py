@@ -2307,8 +2307,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 self.quantiles_.append(
                         np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
-        self.quantiles_ = np.maximum.accumulate(
-                                        self.quantiles_)
+        # make sure the quantiles are monotonically increasing
+        self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
     def fit(self, X, y=None):
         """Compute the quantiles used for transforming.
