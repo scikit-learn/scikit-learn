@@ -1,7 +1,7 @@
 """
-===============================================================
-Learn from imbalanced datasets and correct bias during learning
-===============================================================
+==============================
+Learn from imbalanced datasets
+==============================
 
 This example illustrates the problem induced by learning on datasets having
 imbalanced classes. Subsequently, we compare different approaches alleviating
@@ -112,12 +112,12 @@ def evaluate_classifier(clf, clf_name=None):
     y_pred = clf.predict(X_test)
     bal_acc = balanced_accuracy_score(y_test, y_pred)
     clf_score = pd.DataFrame(
-        {clf_name: [acc, bal_acc]},
-        index=['Accuracy', 'Balanced accuracy']
+        {"Accuracy" : acc, "Balanced accuracy": bal_acc},
+        index=[clf_name]
     )
     # to avoid passing df_scores and returning it, we make it a global variable
     global df_scores
-    df_scores = pd.concat([df_scores, clf_score], axis=1).round(decimals=3)
+    df_scores = pd.concat([df_scores, clf_score], axis=0).round(decimals=3)
 
 
 # Let's define an empty dataframe to store the results
@@ -130,7 +130,7 @@ df_scores = pd.DataFrame()
 # Before to train a real machine learning model, we can store the results
 # obtained with our :class:`sklearn.dummy.DummyClassifier`.
 
-evaluate_classifier(dummy_clf, "Dummy")
+evaluate_classifier(dummy_clf)
 df_scores
 
 ###############################################################################
@@ -182,7 +182,7 @@ from sklearn.linear_model import LogisticRegression
 lr_clf = make_pipeline(
     preprocessor_linear, LogisticRegression(max_iter=1000)
 )
-evaluate_classifier(lr_clf, "LR")
+evaluate_classifier(lr_clf)
 df_scores
 
 ###############################################################################
@@ -212,7 +212,7 @@ rf_clf = make_pipeline(
     preprocessor_tree, RandomForestClassifier(random_state=42, n_jobs=2)
 )
 
-evaluate_classifier(rf_clf, "RF")
+evaluate_classifier(rf_clf)
 df_scores
 
 ###############################################################################
@@ -232,15 +232,25 @@ df_scores
 # linear model and tree-based model.
 
 lr_clf.set_params(logisticregression__class_weight="balanced")
-evaluate_classifier(lr_clf, "LR with class weight")
+evaluate_classifier(
+    lr_clf, "LogisticRegression with class weight='balanced'"
+)
 df_scores
 
 ###############################################################################
-#
+# This weighting strategy is particularly efficient for the logistic
+# regression. The balanced accuracy increased significantly.
 
 rf_clf.set_params(randomforestclassifier__class_weight="balanced")
-evaluate_classifier(rf_clf, "RF with class weight")
+evaluate_classifier(
+    rf_clf, "RandomForestClassifier with class weight='balanced'"
+)
 df_scores
+
+###############################################################################
+# However, the same weighting strategy is not efficient with random forest.
+# Indeed, the chosen criteria (e.g. entropy) is known to be sensitive to class
+# imbalanced.
 
 ###############################################################################
 # From a random-forest toward a balanced random-forest
@@ -256,35 +266,11 @@ df_scores
 # algorithm is also known as a balanced random-forest.
 
 rf_clf.set_params(randomforestclassifier__class_weight="balanced_bootstrap")
-evaluate_classifier(rf_clf, "Balanced RF")
+evaluate_classifier(
+    rf_clf, "RandomForestClassifier with class_weight='balanced_bootstrap'"
+)
 df_scores
 
 ###############################################################################
 # We can observe by taking a balanced bootstrap for each tree alleviate the
 # overfitting in the random-forest.
-
-###############################################################################
-# Use a novelty detection algorithm
-# .................................
-#
-# One might think of the problem of balancing as finding anomaly. Therefore,
-# one strategy is to learn from a single class and predict if a new sample
-# would belong to this class or not. We show an example using
-# :class:`sklearn.svm.OneClassSVM`.
-
-from sklearn.svm import OneClassSVM
-
-mask_minority_class = y_train == y_train.value_counts().idxmin()
-
-one_class_svm = make_pipeline(preprocessor_linear, OneClassSVM())
-one_class_svm.fit(X_train[mask_minority_class], y_train[mask_minority_class])
-y_pred = one_class_svm.predict(X_test)
-
-y_test_converted = ((2 * (y_test ==
-                          y_test.value_counts().idxmin()).astype(int)) - 1)
-score = balanced_accuracy_score(y_test_converted, y_pred)
-print("Balanced accuracy {:.3f}".format(score))
-
-###############################################################################
-# This method is not performing as good as the approaches presented earlier,
-# however it remains an alternative which can work in some of the cases.
