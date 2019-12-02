@@ -1,4 +1,4 @@
-jMaintainer / core-developer information
+Maintainer / core-developer information
 ========================================
 
 A release is either a major release, or a minor bug fix release. Our convention
