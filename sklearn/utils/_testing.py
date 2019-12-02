@@ -188,7 +188,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         # Checks the message of all warnings belong to warning_class
         for index in [i for i, x in enumerate(found) if x]:
             # substring will match, the entire message with typo won't
-            msg, mtb = w[index].message, ''  # For Python 3 compatibility
+            msg = w[index].message  # For Python 3 compatibility
             msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
             # if msg.find('Traceback (most recent call last):\n') > -1:
             if msg.count('\n') > 1:  # has stacktrace in middle of string
@@ -199,7 +199,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             else:
                 check_in_message = lambda msg: message in msg
 
-            if check_in_message(msg) or check_in_message(mtb):
+            if check_in_message(msg):
                 message_found = True
                 break
 
