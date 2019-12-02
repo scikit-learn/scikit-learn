@@ -1637,17 +1637,21 @@ def test_fit_and_score_failing():
                        "partition for these parameters will be set to %f. "
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
                                           error_message))
+    def test_warn_no_trace(msg):
+        split = msg.splitlines()  # note: handles more than '\n'
+        mtb = split[0] + '\n' + split[-1]
+        return warning_message in mtb        
     # check if the same warning is triggered
-    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+    assert_warns_message(FitFailedWarning, test_warn_no_trace, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     # check traceback is included
-    def testwarntrace(msg):
+    def test_warn_trace(msg):
         assert(msg.find('Traceback (most recent call last):\n') > -1)
         split = msg.splitlines()  # note: handles more than '\n'
         mtb = split[0] + '\n' + split[-1]
         return warning_message in mtb
-    assert_warns_message(FitFailedWarning, testwarntrace, _fit_and_score,
+    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
