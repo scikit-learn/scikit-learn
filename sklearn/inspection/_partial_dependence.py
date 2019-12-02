@@ -655,10 +655,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     features = tmp_features
 
-    if isinstance(ax, list):
-        if len(ax) != len(features):
-            raise ValueError("Expected len(ax) == len(features), "
-                             "got len(ax) = {}".format(len(ax)))
+    if isinstance(ax, list) and len(ax) != len(features):
+        raise ValueError("Expected len(ax) == len(features), "
+                         "got len(ax) = {}".format(len(ax)))
 
     for i in chain.from_iterable(features):
         if i >= len(feature_names):
@@ -886,6 +885,10 @@ class PartialDependenceDisplay:
                 axes_ravel[i] = self.figure_.add_subplot(spec)
 
         else:  # array-like
+            if isinstance(ax, list) and len(ax) != n_features:
+                raise ValueError("Expected len(ax) == len(features), "
+                                 "got len(ax) = {}".format(len(ax)))
+
             ax = check_array(ax, dtype=object, ensure_2d=False)
 
             if ax.ndim == 2:
@@ -893,9 +896,9 @@ class PartialDependenceDisplay:
             else:
                 n_cols = None
 
-            if ax.ndim == 1 and ax.shape[0] != n_features:
-                raise ValueError("Expected len(ax) == len(features), "
-                                 "got len(ax) = {}".format(len(ax)))
+            if ax.size != n_features:
+                raise ValueError("Expected ax.size == len(features), "
+                                 "got ax.size = {}".format(ax.size))
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
