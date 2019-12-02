@@ -242,8 +242,8 @@ estimators. Those solvers come from the DAAL C++ library and are optimized for
 multi-core CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
-[daal4py](https://intelpython.github.io/daal4py/sklearn.html) documentation for
-more details.
+`daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
+for more details.
 
 Compatibility with the standard scikit-learn solvers is checked by running the
 full scikit-learn test suite via automated continuous integration as reported
