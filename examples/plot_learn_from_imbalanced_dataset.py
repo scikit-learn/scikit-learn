@@ -112,7 +112,7 @@ def evaluate_classifier(clf, clf_name=None):
     y_pred = clf.predict(X_test)
     bal_acc = balanced_accuracy_score(y_test, y_pred)
     clf_score = pd.DataFrame(
-        {"Accuracy" : acc, "Balanced accuracy": bal_acc},
+        {"Accuracy": acc, "Balanced accuracy": bal_acc},
         index=[clf_name]
     )
     # to avoid passing df_scores and returning it, we make it a global variable
