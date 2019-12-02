@@ -654,11 +654,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}
+    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
         Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -671,19 +671,19 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    n_init : int, default: 10
+    n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    max_iter : int, default: 300
+    max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Relative tolerance with regards to inertia to declare convergence.
 
-    precompute_distances : {'auto', True, False}
+    precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 12
@@ -694,15 +694,15 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         False : never precompute distances.
 
-    verbose : int, default 0
+    verbose : int, default=0
         Verbosity mode.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : bool, optional
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -711,7 +711,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
