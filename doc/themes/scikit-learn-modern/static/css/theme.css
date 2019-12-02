@@ -952,6 +952,31 @@ div.sphx-glr-thumbcontainer {
   }
 }
 
+.dataframe {
+  border: none;
+}
+
+.dataframe thead {
+  border-bottom: 2px solid black;
+}
+
+.dataframe tbody tr:nth-child(even) {
+  background-color: #F0F0F0;
+}
+
+.dataframe thead th {
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  border: none;
+}
+
+.dataframe tbody tr td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  border: none;
+}
+
 /* rellinks */
 
 .sk-btn-rellink {
