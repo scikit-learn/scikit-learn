@@ -239,7 +239,7 @@ Intel maintains a dedicated conda channel that ships scikit-learn::
 
 This version of scikit-learn comes with alternative solvers for some common
 estimators. Those solvers come from the DAAL C++ library and are optimized for
-multi-core CPUs.
+multi-core Intel CPUs.
 
 Note that those solvers are not enabled by default, please refer to the
 `daal4py <https://intelpython.github.io/daal4py/sklearn.html>`_ documentation
