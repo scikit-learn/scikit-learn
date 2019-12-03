@@ -39,7 +39,7 @@ from sklearn.datasets import fetch_openml
 survey = fetch_openml(data_id=534, as_frame=True)
 
 ##############################################################################
-# Then, we identify features (`X`) and targets (`y`): the column 'WAGE' is our
+# Then, we identify features `X` and targets `y`: the column WAGE is our
 # target variable (i.e., the variable which we want to predict).
 
 X = survey.data[survey.feature_names]
