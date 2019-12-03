@@ -649,7 +649,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
 
 def test_multimetric_scorer_sanity_check():
-    # scoring dictionary returned is the same as calling each scorer seperately
+    # scoring dictionary returned is the same as calling each scorer separately
     scorers = {'a1': 'accuracy', 'a2': 'accuracy',
                'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
                'ra1': 'roc_auc', 'ra2': 'roc_auc'}
@@ -664,13 +664,13 @@ def test_multimetric_scorer_sanity_check():
 
     result = multi_scorer(clf, X, y)
 
-    seperate_scores = {
+    separate_scores = {
         name: get_scorer(name)(clf, X, y)
         for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
 
     for key, value in result.items():
         score_name = scorers[key]
-        assert_allclose(value, seperate_scores[score_name])
+        assert_allclose(value, separate_scores[score_name])
 
 
 @pytest.mark.parametrize('scorer_name, metric', [

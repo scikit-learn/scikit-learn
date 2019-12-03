@@ -425,6 +425,22 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
 
+    .. note::
+
+        :func:`plot_partial_dependence` does not support using the same axes
+        with multiple calls. To plot the the partial dependence for multiple
+        estimators, please pass the axes created by the first call to the
+        second call::
+
+          >>> from sklearn.inspection import plot_partial_dependence
+          >>> from sklearn.datasets import make_friedman1
+          >>> from sklearn.linear_model import LinearRegression
+          >>> X, y = make_friedman1()
+          >>> est = LinearRegression().fit(X, y)
+          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est, X,
+          ...                                 ax=disp1.axes_)  # doctest: +SKIP
+
     Read more in the :ref:`User Guide <partial_dependence>`.
 
     Parameters
@@ -607,7 +623,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         else:
             # define a list of numbered indices for a numpy array
             feature_names = [str(i) for i in range(n_features)]
-    elif isinstance(feature_names, np.ndarray):
+    elif hasattr(feature_names, "tolist"):
+        # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
@@ -843,15 +860,14 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
 
         if isinstance(ax, plt.Axes):
-            # If ax has visible==False, it has most likely been set to False
+            # If ax was set off, it has most likely been set to off
             # by a previous call to plot.
-            if not ax.get_visible():
+            if not ax.axison:
                 raise ValueError("The ax was already used in another plot "
                                  "function, please set ax=display.axes_ "
                                  "instead")
 
             ax.set_axis_off()
-            ax.set_visible(False)
             self.bounding_ax_ = ax
             self.figure_ = ax.figure
 
@@ -918,8 +934,11 @@ class PartialDependenceDisplay:
             ylim = axi.get_ylim()
             axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
                        color='k')
-            axi.set_xlabel(self.feature_names[fx[0]])
             axi.set_ylim(ylim)
+
+            # Set xlabel if it is not already set
+            if not axi.get_xlabel():
+                axi.set_xlabel(self.feature_names[fx[0]])
 
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:

@@ -56,7 +56,7 @@ from ..utils import check_consistent_length
 from ..utils import deprecated
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
@@ -1442,13 +1442,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
-        if sample_weight_is_none:
-            sample_weight = np.ones(n_samples, dtype=np.float32)
-        else:
-            sample_weight = column_or_1d(sample_weight, warn=True)
-            sample_weight_is_none = False
 
-        check_consistent_length(X, y, sample_weight)
+        sample_weight = _check_sample_weight(sample_weight, X)
 
         y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
         y = column_or_1d(y, warn=True)
