@@ -103,7 +103,8 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
 
 
 ###############################################################################
-# Let's see how it looks for the `KFold` cross-validation object:
+# Let's see how it looks for the :class:`~sklearn.model_selection.KFold`
+# cross-validation object:
 
 fig, ax = plt.subplots()
 cv = KFold(n_splits)

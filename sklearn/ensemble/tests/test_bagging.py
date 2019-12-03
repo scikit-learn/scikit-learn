@@ -10,12 +10,13 @@ import joblib
 
 from sklearn.base import BaseEstimator
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -51,6 +52,8 @@ boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 def test_classification():
     # Check classification for various parameter settings.
     rng = check_random_state(0)
@@ -64,7 +67,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(tol=1e-3),
+                           Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -543,7 +546,7 @@ def test_base_estimator():
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
-    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
+    ensemble = BaggingClassifier(Perceptron(),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 

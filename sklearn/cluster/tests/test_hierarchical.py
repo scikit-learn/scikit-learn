@@ -14,26 +14,25 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.metrics.cluster.supervised import adjusted_rand_score
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
-from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                          linkage_tree, _fix_connectivity)
+from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
+                                           linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
-from sklearn.neighbors.graph import kneighbors_graph
-from sklearn.cluster._hierarchical import average_merge, max_merge
-from sklearn.utils.fast_dict import IntFloatDict
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.neighbors import kneighbors_graph
+from sklearn.cluster._hierarchical_fast import average_merge, max_merge
+from sklearn.utils._fast_dict import IntFloatDict
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.datasets import make_moons, make_circles
 
 
@@ -41,9 +40,14 @@ def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
     X = rng.normal(size=(5, 5))
-    assert_raises(ValueError, AgglomerativeClustering(linkage='foo').fit, X)
-    assert_raises(ValueError, linkage_tree, X, linkage='foo')
-    assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
+    with pytest.raises(ValueError):
+        AgglomerativeClustering(linkage='foo').fit(X)
+
+    with pytest.raises(ValueError):
+        linkage_tree(X, linkage='foo')
+
+    with pytest.raises(ValueError):
+        linkage_tree(X, connectivity=np.ones((4, 4)))
 
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
@@ -74,11 +78,11 @@ def test_structured_linkage_tree():
         assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
-        assert_raises(ValueError,
-                      tree_builder, X.T, np.ones((4, 4)))
+        with pytest.raises(ValueError):
+            tree_builder(X.T, np.ones((4, 4)))
         # Check that fitting with no samples raises an error
-        assert_raises(ValueError,
-                      tree_builder, X.T[:0], connectivity)
+        with pytest.raises(ValueError):
+            tree_builder(X.T[:0], connectivity)
 
 
 def test_unstructured_linkage_tree():
@@ -124,7 +128,8 @@ def test_agglomerative_clustering_wrong_arg_memory():
     X = rng.randn(n_samples, 50)
     memory = 5
     clustering = AgglomerativeClustering(memory=memory)
-    assert_raises(ValueError, clustering.fit, X)
+    with pytest.raises(ValueError):
+        clustering.fit(X)
 
 
 def test_zero_cosine_linkage_tree():
@@ -179,7 +184,8 @@ def test_agglomerative_clustering():
             connectivity=sparse.lil_matrix(
                 connectivity.toarray()[:10, :10]),
             linkage=linkage)
-        assert_raises(ValueError, clustering.fit, X)
+        with pytest.raises(ValueError):
+            clustering.fit(X)
 
     # Test that using ward with another metric than euclidean raises an
     # exception
@@ -188,7 +194,8 @@ def test_agglomerative_clustering():
         connectivity=connectivity.toarray(),
         affinity="manhattan",
         linkage="ward")
-    assert_raises(ValueError, clustering.fit, X)
+    with pytest.raises(ValueError):
+        clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
     for affinity in PAIRED_DISTANCES.keys():
@@ -241,7 +248,8 @@ def test_ward_agglomeration():
     assert_array_almost_equal(agglo.transform(X_full), X_red)
 
     # Check that fitting with no samples raises a ValueError
-    assert_raises(ValueError, agglo.fit, X[:0])
+    with pytest.raises(ValueError):
+        agglo.fit(X[:0])
 
 
 def test_single_linkage_clustering():
@@ -272,7 +280,7 @@ def assess_same_labelling(cut1, cut2):
     assert (co_clust[0] == co_clust[1]).all()
 
 
-def test_scikit_vs_scipy():
+def test_sparse_scikit_vs_scipy():
     # Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     n, p, k = 10, 5, 3
     rng = np.random.RandomState(0)
@@ -302,7 +310,35 @@ def test_scikit_vs_scipy():
             assess_same_labelling(cut, cut_)
 
     # Test error management in _hc_cut
-    assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
+    with pytest.raises(ValueError):
+        _hc_cut(n_leaves + 1, children, n_leaves)
+
+
+# Make sure our custom mst_linkage_core gives
+# the same results as scipy's builtin
+@pytest.mark.parametrize('seed', range(5))
+def test_vector_scikit_single_vs_scipy_single(seed):
+    n_samples, n_features, n_clusters = 10, 5, 3
+    rng = np.random.RandomState(seed)
+    X = .1 * rng.normal(size=(n_samples, n_features))
+    X -= 4. * np.arange(n_samples)[:, np.newaxis]
+    X -= X.mean(axis=1)[:, np.newaxis]
+
+    out = hierarchy.linkage(X, method='single')
+    children_scipy = out[:, :2].astype(np.int)
+
+    children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
+
+    # Sort the order of child nodes per row for consistency
+    children.sort(axis=1)
+    assert_array_equal(children, children_scipy,
+                       'linkage tree differs'
+                       ' from scipy impl for'
+                       ' single linkage.')
+
+    cut = _hc_cut(n_clusters, children, n_leaves)
+    cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
+    assess_same_labelling(cut, cut_scipy)
 
 
 def test_identical_points():
@@ -725,6 +761,6 @@ def test_n_components_deprecation():
 
     match = ("``n_components_`` attribute was deprecated "
              "in favor of ``n_connected_components_``")
-    with pytest.warns(DeprecationWarning, match=match):
+    with pytest.warns(FutureWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_

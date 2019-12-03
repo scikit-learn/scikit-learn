@@ -2,6 +2,7 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
+from functools import partial
 
 import numpy as np
 from timeit import default_timer as time
@@ -14,7 +15,7 @@ from ...metrics import check_scoring
 from ...model_selection import train_test_split
 from ...preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import _BinMapper
 from .grower import TreeGrower
@@ -75,15 +76,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError('tol={} '
                              'must not be smaller than 0.'.format(self.tol))
 
+        if not (2 <= self.max_bins <= 255):
+            raise ValueError('max_bins={} should be no smaller than 2 '
+                             'and no larger than 255.'.format(self.max_bins))
+
     def fit(self, X, y):
         """Fit the gradient boosting model.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
-        y : array-like, shape=(n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
@@ -96,15 +101,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        X, y = check_X_y(X, y, dtype=[X_DTYPE])
+        X, y = check_X_y(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
 
-        # The rng state must be preserved if warm_start is True
-        if (self.warm_start and hasattr(self, '_rng')):
-            rng = self._rng
-        else:
-            rng = check_random_state(self.random_state)
-            self._rng = rng
+        rng = check_random_state(self.random_state)
+
+        # When warm starting, we want to re-use the same seed that was used
+        # the first time fit was called (e.g. for subsampling or for the
+        # train/val split).
+        if not (self.warm_start and self._is_fitted()):
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max,
+                                            dtype='u8')
 
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
@@ -133,21 +140,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
             # warm starting.
-            if not (self._is_fitted() and self.warm_start):
-                self._train_val_split_seed = rng.randint(1024)
 
             X_train, X_val, y_train, y_val = train_test_split(
                 X, y, test_size=self.validation_fraction, stratify=stratify,
-                random_state=self._train_val_split_seed)
+                random_state=self._random_seed)
         else:
             X_train, y_train = X, y
             X_val, y_val = None, None
 
+        has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
+
         # Bin the data
-        self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
-        X_binned_train = self._bin_data(X_train, rng, is_training_data=True)
+        # For ease of use of the API, the user-facing GBDT classes accept the
+        # parameter max_bins, which doesn't take into account the bin for
+        # missing values (which is always allocated). However, since max_bins
+        # isn't the true maximal number of bins, all other private classes
+        # (binmapper, histbuilder...) accept n_bins instead, which is the
+        # actual total number of bins. Everywhere in the code, the
+        # convention is that n_bins == max_bins + 1
+        n_bins = self.max_bins + 1  # + 1 for missing values
+        self.bin_mapper_ = _BinMapper(n_bins=n_bins,
+                                      random_state=self._random_seed)
+        X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
-            X_binned_val = self._bin_data(X_val, rng, is_training_data=False)
+            X_binned_val = self._bin_data(X_val, is_training_data=False)
         else:
             X_binned_val = None
 
@@ -174,13 +190,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 dtype=self._baseline_prediction.dtype
             )
             raw_predictions += self._baseline_prediction
-
-            # initialize gradients and hessians (empty arrays).
-            # shape = (n_trees_per_iteration, n_samples).
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_
-            )
 
             # predictors is a matrix (list of lists) of TreePredictor objects
             # with shape (n_iter_, n_trees_per_iteration)
@@ -226,13 +235,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
 
-                    # Save the seed for the small trainset generator
-                    self._small_trainset_seed = rng.randint(1024)
-
                     # Compute the subsample set
                     (X_binned_small_train,
                      y_small_train) = self._get_small_trainset(
-                        X_binned_train, y_train, self._small_trainset_seed)
+                        X_binned_train, y_train, self._random_seed)
 
                     self._check_early_stopping_scorer(
                         X_binned_small_train, y_small_train,
@@ -257,22 +263,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Compute raw predictions
             raw_predictions = self._raw_predict(X_binned_train)
+            if self.do_early_stopping_ and self._use_validation_data:
+                raw_predictions_val = self._raw_predict(X_binned_val)
 
             if self.do_early_stopping_ and self.scoring != 'loss':
                 # Compute the subsample set
                 X_binned_small_train, y_small_train = self._get_small_trainset(
-                    X_binned_train, y_train, self._small_trainset_seed)
-
-            # Initialize the gradients and hessians
-            gradients, hessians = self.loss_.init_gradients_and_hessians(
-                n_samples=n_samples,
-                prediction_dim=self.n_trees_per_iteration_
-            )
+                    X_binned_train, y_train, self._random_seed)
 
             # Get the predictors from the previous fit
             predictors = self._predictors
 
             begin_at_stage = self.n_iter_
+
+        # initialize gradients and hessians (empty arrays).
+        # shape = (n_trees_per_iteration, n_samples).
+        gradients, hessians = self.loss_.init_gradients_and_hessians(
+            n_samples=n_samples,
+            prediction_dim=self.n_trees_per_iteration_
+        )
 
         for iteration in range(begin_at_stage, self.max_iter):
 
@@ -293,8 +302,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
-                    max_bins=self.max_bins,
-                    actual_n_bins=self.bin_mapper_.actual_n_bins_,
+                    n_bins=n_bins,
+                    n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
+                    has_missing_values=has_missing_values,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
@@ -305,6 +315,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
+
+                if self.loss_.need_update_leaves_values:
+                    self.loss_.update_leaves_values(grower, y_train,
+                                                    raw_predictions[k, :])
 
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_
@@ -325,7 +339,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if self._use_validation_data:
                         for k, pred in enumerate(self._predictors[-1]):
                             raw_predictions_val[k, :] += (
-                                pred.predict_binned(X_binned_val))
+                                pred.predict_binned(
+                                    X_binned_val,
+                                    self.bin_mapper_.missing_values_bin_idx_
+                                )
+                            )
 
                     should_early_stop = self._check_early_stopping_loss(
                         raw_predictions, y_train,
@@ -376,7 +394,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
-        for var in ('train_score_', 'validation_score_', '_rng'):
+        for var in ('train_score_', 'validation_score_'):
             if hasattr(self, var):
                 delattr(self, var)
 
@@ -406,11 +424,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Scores are computed on validation data or on training data.
         """
+        if is_classifier(self):
+            y_small_train = self.classes_[y_small_train.astype(int)]
         self.train_score_.append(
             self.scorer_(self, X_binned_small_train, y_small_train)
         )
 
         if self._use_validation_data:
+            if is_classifier(self):
+                y_val = self.classes_[y_val.astype(int)]
             self.validation_score_.append(
                 self.scorer_(self, X_binned_val, y_val)
             )
@@ -460,7 +482,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _bin_data(self, X, rng, is_training_data):
+    def _bin_data(self, X, is_training_data):
         """Bin data X.
 
         If is_training_data, then set the bin_mapper_ attribute.
@@ -531,7 +553,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input samples.
 
         Returns
@@ -539,8 +561,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
-        check_is_fitted(self, '_predictors')
+        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
+                        force_all_finite=False)
+        check_is_fitted(self)
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
@@ -555,8 +578,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions += self._baseline_prediction
         for predictors_of_ith_iteration in self._predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                predict = (predictor.predict_binned if is_binned
-                           else predictor.predict)
+                if is_binned:
+                    predict = partial(
+                        predictor.predict_binned,
+                        missing_values_bin_idx=self.bin_mapper_.missing_values_bin_idx_  # noqa
+                    )
+                else:
+                    predict = predictor.predict
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions
@@ -592,6 +620,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return averaged_predictions
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
     @abstractmethod
     def _get_loss(self):
         pass
@@ -602,22 +633,24 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @property
     def n_iter_(self):
-        check_is_fitted(self, '_predictors')
+        check_is_fitted(self)
         return len(self._predictors)
 
 
-class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
+class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Regression Tree.
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    for big datasets (n_samples >= 10 000).
+
+    This estimator has native support for missing values (NaNs). During
+    training, the tree grower learns at each split point whether samples
+    with missing values should go to the left or right child, based on the
+    potential gain. When predicting, samples with missing values are
+    assigned to the left or right child consequently. If no missing values
+    were encountered for a given feature during training, then samples with
+    missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -633,10 +666,14 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
-    loss : {'least_squares'}, optional (default='least_squares')
+    loss : {'least_squares', 'least_absolute_deviation'}, \
+            optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
         "least squares" loss actually implements an "half least squares loss"
         to simplify the computation of the gradient.
@@ -661,12 +698,13 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array `X` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is always reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -709,13 +747,13 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -733,11 +771,11 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     0.98...
     """
 
-    _VALID_LOSSES = ('least_squares',)
+    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  max_iter=100, max_leaf_nodes=31, max_depth=None,
-                 min_samples_leaf=20, l2_regularization=0., max_bins=256,
+                 min_samples_leaf=20, l2_regularization=0., max_bins=255,
                  warm_start=False, scoring=None, validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-7, verbose=0,
                  random_state=None):
@@ -784,13 +822,15 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
-    into integer-valued bins, which considerably reduces the number of
-    splitting points to consider, and allows the algorithm to leverage
-    integer-based data structures. For small sample sizes,
-    :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    might be preferred since binning may lead to split points that are too
-    approximate in this setting.
+    for big datasets (n_samples >= 10 000).
+
+    This estimator has native support for missing values (NaNs). During
+    training, the tree grower learns at each split point whether samples
+    with missing values should go to the left or right child, based on the
+    potential gain. When predicting, samples with missing values are
+    assigned to the left or right child consequently. If no missing values
+    were encountered for a given feature during training, then samples with
+    missing values are mapped to whichever child has the most samples.
 
     This implementation is inspired by
     `LightGBM <https://github.com/Microsoft/LightGBM>`_.
@@ -805,6 +845,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
         >>> # now you can import normally from ensemble
         >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+    Read more in the :ref:`User Guide <histogram_based_gradient_boosting>`.
+
+    .. versionadded:: 0.21
 
     Parameters
     ----------
@@ -836,12 +880,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional (default=256)
-        The maximum number of bins to use. Before training, each feature of
-        the input array ``X`` is binned into at most ``max_bins`` bins, which
-        allows for a much faster training stage. Features with a small
-        number of unique values may use less than ``max_bins`` bins. Must be no
-        larger than 256.
+    max_bins : int, optional (default=255)
+        The maximum number of bins to use for non-missing values. Before
+        training, each feature of the input array `X` is binned into
+        integer-valued bins, which allows for a much faster training stage.
+        Features with a small number of unique values may use less than
+        ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
+        is always reserved for missing values. Must be no larger than 255.
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -885,13 +930,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
         classification.
-    train_score_ : ndarray, shape (n_iter_ + 1,)
+    train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : ndarray, shape (n_iter_ + 1,)
+    validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -914,7 +959,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
-                 l2_regularization=0., max_bins=256, warm_start=False,
+                 l2_regularization=0., max_bins=255, warm_start=False,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
         super(HistGradientBoostingClassifier, self).__init__(
@@ -997,6 +1042,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         return encoded_y
 
     def _get_loss(self):
+        if (self.loss == 'categorical_crossentropy' and
+                self.n_trees_per_iteration_ == 1):
+            raise ValueError("'categorical_crossentropy' is not suitable for "
+                             "a binary classification problem. Please use "
+                             "'auto' or 'binary_crossentropy' instead.")
+
         if self.loss == 'auto':
             if self.n_trees_per_iteration_ == 1:
                 return _LOSSES['binary_crossentropy']()
