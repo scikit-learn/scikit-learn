@@ -3,7 +3,7 @@ from scipy.sparse import issparse
 from scipy.stats import spearmanr
 
 from ..base import BaseEstimator
-from .base import SelectorMixin
+from ._base import SelectorMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.extmath import safe_sparse_dot
