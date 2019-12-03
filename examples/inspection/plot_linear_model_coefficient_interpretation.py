@@ -149,7 +149,7 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# The model learnt is far to be a good model making accurate prediction.
+# The model learnt is far from being a good model making accurate predictions.
 # As interpretation tools characterize model rather than the generative process
 # of the data itself, it needs to be emphasized that interpretations are
 # correct if the model is correct as well.
