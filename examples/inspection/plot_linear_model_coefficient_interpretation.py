@@ -11,7 +11,7 @@ It is important to emphasize that linear models compute conditional links.
 The interpretation of the coefficients gives the relationship between the
 feature and the target given that other features remain constant.
 
-This example will show some hints in interpreting coefficient in linear models,
+This example will provide some hints in interpreting coefficient in linear models,
 using data from the "Current Population Survey" from 1985.
 """
 
