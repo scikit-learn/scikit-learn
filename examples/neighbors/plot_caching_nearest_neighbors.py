@@ -19,6 +19,7 @@ larger, or when the grid of parameter to search is large.
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
+from tempfile import TemporaryDirectory
 import matplotlib.pyplot as plt
 
 from sklearn.neighbors import KNeighborsTransformer, KNeighborsClassifier
@@ -38,14 +39,17 @@ graph_model = KNeighborsTransformer(n_neighbors=max(n_neighbors_list),
                                     mode='distance')
 classifier_model = KNeighborsClassifier(metric='precomputed')
 
-# Note that we give `memory` a directory to cache the graph computation.
-full_model = Pipeline(
-    steps=[('graph', graph_model), ('classifier', classifier_model)],
-    memory='./cache')
+# Note that we give `memory` a directory to cache the graph computation
+# that will be used several times when tuning the hyperparameters of the
+# classifier.
+with TemporaryDirectory(prefix="sklearn_graph_cache_") as tmpdir:
+    full_model = Pipeline(
+        steps=[('graph', graph_model), ('classifier', classifier_model)],
+        memory=tmpdir)
 
-param_grid = {'classifier__n_neighbors': n_neighbors_list}
-grid_model = GridSearchCV(full_model, param_grid)
-grid_model.fit(X, y)
+    param_grid = {'classifier__n_neighbors': n_neighbors_list}
+    grid_model = GridSearchCV(full_model, param_grid)
+    grid_model.fit(X, y)
 
 # Plot the results of the grid search.
 fig, axes = plt.subplots(1, 2, figsize=(8, 4))

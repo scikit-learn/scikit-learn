@@ -14,7 +14,7 @@ This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor` trained on the
 California housing dataset. The example is taken from [1]_.
 
-The plots show four 1-way and two 1-way partial dependence plots (ommitted for
+The plots show four 1-way and two 1-way partial dependence plots (omitted for
 :class:`~sklearn.neural_network.MLPRegressor` due to computation time). The
 target variables for the one-way PDP are: median income (`MedInc`), average
 occupants per household (`AvgOccup`), median house age (`HouseAge`), and
@@ -30,6 +30,7 @@ print(__doc__)
 
 from time import time
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -42,7 +43,7 @@ from sklearn.inspection import plot_partial_dependence
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.datasets.california_housing import fetch_california_housing
+from sklearn.datasets import fetch_california_housing
 
 
 ##############################################################################
@@ -54,8 +55,8 @@ from sklearn.datasets.california_housing import fetch_california_housing
 # (here the average target, by default)
 
 cal_housing = fetch_california_housing()
-names = cal_housing.feature_names
-X, y = cal_housing.data, cal_housing.target
+X = pd.DataFrame(cal_housing.data, columns=cal_housing.feature_names)
+y = cal_housing.target
 
 y -= y.mean()
 
@@ -104,14 +105,14 @@ print('Computing partial dependence plots...')
 tic = time()
 # We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
 # with the brute method.
-features = [0, 5, 1, 2]
-plot_partial_dependence(est, X_train, features, feature_names=names,
+features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms']
+plot_partial_dependence(est, X_train, features,
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with MLPRegressor')
-fig.subplots_adjust(wspace=0.8, hspace=0.3)
+fig.subplots_adjust(hspace=0.3)
 
 ##############################################################################
 # Partial Dependence computation for Gradient Boosting
@@ -143,14 +144,15 @@ print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
 print('Computing partial dependence plots...')
 tic = time()
-features = [0, 5, 1, 2, (5, 1)]
-plot_partial_dependence(est, X_train, features, feature_names=names,
+features = ['MedInc', 'AveOccup', 'HouseAge', 'AveRooms',
+            ('AveOccup', 'HouseAge')]
+plot_partial_dependence(est, X_train, features,
                         n_jobs=3, grid_resolution=20)
 print("done in {:.3f}s".format(time() - tic))
 fig = plt.gcf()
 fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with Gradient Boosting')
-fig.subplots_adjust(wspace=0.8, hspace=0.3)
+fig.subplots_adjust(wspace=0.4, hspace=0.3)
 
 
 ##############################################################################
@@ -192,16 +194,16 @@ fig.subplots_adjust(wspace=0.8, hspace=0.3)
 
 fig = plt.figure()
 
-target_feature = (1, 5)
-pdp, axes = partial_dependence(est, X_train, target_feature,
+features = ('AveOccup', 'HouseAge')
+pdp, axes = partial_dependence(est, X_train, features=features,
                                grid_resolution=20)
 XX, YY = np.meshgrid(axes[0], axes[1])
 Z = pdp[0].T
 ax = Axes3D(fig)
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1,
                        cmap=plt.cm.BuPu, edgecolor='k')
-ax.set_xlabel(names[target_feature[0]])
-ax.set_ylabel(names[target_feature[1]])
+ax.set_xlabel(features[0])
+ax.set_ylabel(features[1])
 ax.set_zlabel('Partial dependence')
 #  pretty init view
 ax.view_init(elev=22, azim=122)

@@ -1,0 +1,21 @@
+# Simple first task to activate GitHub actions.
+# This won't run until is merged, but future actions will
+# run on PRs, so we can see we don't break things in more
+# complex actions added later, like real builds.
+#
+# TODO: Remove this once another action exists
+name: Activate
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+jobs:
+  activate:
+    name: Activate actions
+    runs-on: ubuntu-latest
+    steps:
+    - name: Activate
+      run: echo "GitHub actions ok"

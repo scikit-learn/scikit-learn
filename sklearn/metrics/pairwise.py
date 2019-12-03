@@ -29,7 +29,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 
-from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
 
@@ -228,7 +228,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
+    X_norm_squared : array-like of shape (n_samples,), optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
@@ -406,20 +406,25 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     distances -= np.dot(XX, missing_Y.T)
     distances -= np.dot(missing_X, YY.T)
 
-    present_coords_cnt = np.dot(1 - missing_X, 1 - missing_Y.T)
-    present_mask = (present_coords_cnt != 0)
-    distances[present_mask] *= (X.shape[1] / present_coords_cnt[present_mask])
+    np.clip(distances, 0, None, out=distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
 
+    present_X = 1 - missing_X
+    present_Y = present_X if Y is X else ~missing_Y
+    present_count = np.dot(present_X, present_Y.T)
+    distances[present_count == 0] = np.nan
+    # avoid divide by zero
+    np.maximum(1, present_count, out=present_count)
+    distances /= present_count
+    distances *= X.shape[1]
+
     if not squared:
         np.sqrt(distances, out=distances)
 
-    # coordinates with no common coordinates have a nan distance
-    distances[~present_mask] = np.nan
     return distances
 
 
@@ -736,6 +741,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         else shape is (n_samples_X, n_samples_Y) and D contains
         the pairwise L1 distances.
 
+    Notes
+    --------
+    When X and/or Y are CSR sparse matrices and they are not already
+    in canonical format, this function modifies them in-place to
+    make them canonical.
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import manhattan_distances
@@ -765,10 +776,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
 
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
+        X.sum_duplicates()   # this also sorts indices in-place
+        Y.sum_duplicates()
         D = np.zeros((X.shape[0], Y.shape[0]))
         _sparse_manhattan(X.data, X.indices, X.indptr,
                           Y.data, Y.indices, Y.indptr,
-                          X.shape[1], D)
+                          D)
         return D
 
     if sum_over_features:
