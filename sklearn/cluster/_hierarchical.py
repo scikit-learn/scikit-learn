@@ -683,23 +683,23 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_clusters : int or None, optional (default=2)
+    n_clusters : int or None, default=2
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : string or callable, default: "euclidean"
+    affinity : string or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : None, str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, optional
+    connectivity : array-like or callable, default=None
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -707,7 +707,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : bool or 'auto' (optional)
+    compute_full_tree : bool or 'auto', default='auto'
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. This option is
@@ -716,8 +716,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         be advantageous to compute the full tree. It must be ``True`` if
         ``distance_threshold`` is not ``None``.
 
-    linkage : {"ward", "complete", "average", "single"}, optional \
-            (default="ward")
+    linkage : {"ward", "complete", "average", "single"}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -730,7 +729,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    distance_threshold : float, optional (default=None)
+    distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
