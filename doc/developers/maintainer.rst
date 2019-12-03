@@ -3,11 +3,11 @@ Maintainer / core-developer information
 
 A release is either a major release, or a minor bug fix release. Our convention
 is that we release one or more release candidates (0.XXrcN) before releasing
-the final binaries. Creating the first RC involves creating the release branch
-(0.99.X for instance) directly on the main repo. The rest of the changes should
-be done as a PR to the master branch, if it's possible, or done through a PR
-to the release branch, for the other maintainers to review before the release.
-This is further explained under *Preparing a release PR*.
+the final distributions. Creating the first RC involves creating the release
+branch (0.99.X for instance) directly on the main repo. The rest of the changes
+should be done as a PR to the master branch, if it's possible, or done through
+a PR to the release branch, for the other maintainers to review before the
+release. This is further explained under *Preparing a release PR*.
 
 Before a release
 ----------------
@@ -33,13 +33,28 @@ Before a release
    - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
      requests that were merged but likely missing from What's New.
 
+Permissions
+...........
+
+The release manager requires a set of permissions on top of the usual
+permissions given to maintainers, which includes:
+
+- *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
+  ``test.pypi.org``, separately.
+- become a member of the *scikit-learn* team on conda-forge.
+- *maintainer* on ``https://github.com/MacPython/scikit-learn-wheels``
+
 Preparing a release PR
 ......................
 
 Since any commits to an existing branch (e.g. 0.999.X) will automatically
 update the web site documentation, it is best to develop a release with a pull
 request in which 0.999.X is the base. It also allows you to keep track of any
-tasks towards release with a TO DO list.
+tasks towards release with a TO DO list. Since the documentation for the branch
+is live as a stable release, it should ideally match the distributions
+available to users. Having all the changes for a release in one PR minimizes
+the gap between the time when the website points to a release, and the release
+being available to users.
 
 Most development of the release, and its documentation, should happen in master
 to avoid asynchrony. To select commits from master for use in the bug fix
@@ -51,6 +66,15 @@ to avoid asynchrony. To select commits from master for use in the bug fix
 
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
+
+In terms of including changes, the first RC is a pure copy of the ``master``,
+and ideally counts as a *feature freeze*. Each coming release candidate and the
+final release afterwards will include minor documentation changes and bug
+fixes. Any major enhancement or feature should be excluded.
+
+The minor releases should included bug fixes and some relevant documentation
+changes only. Any PR resulting in a behavior change which is not a bug fix
+should be excluded.
 
 Then pick the commits for release and resolve any issues, and create a pull
 request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
@@ -144,8 +168,6 @@ Making a release
 
        $ twine upload dist/*
 
-   Note that you will need to get permissions on pypi and test.pypi separately.
-
 7. For major/minor (not bug-fix release), update the symlink for ``stable``
    and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io::
@@ -157,8 +179,8 @@ Making a release
        $ git checkout master
        $ rm stable
        $ ln -s 0.999 stable
-       $ sed -i "s/latestStable = '.*/latestStable = '0.999';" versionwarning.js
-       $ git commit -m "Update stable to point to 0.999" stable
+       $ sed -i "s/latestStable = '.*/latestStable = '0.999';/g" versionwarning.js
+       $ git commit -am "Update stable to point to 0.999"
        $ git push origin master
 
 The following GitHub checklist might be helpful in a release PR::
@@ -170,7 +192,7 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
     * [ ] confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
-    * [ ] announce on mailing list
+    * [ ] announce on mailing list and on twitter
     * [ ] (regenerate Dash docs: https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/Scikit)
 
 The scikit-learn.org web site
