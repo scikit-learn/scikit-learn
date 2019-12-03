@@ -7,7 +7,10 @@ the final distributions. Creating the first RC involves creating the release
 branch (0.99.X for instance) directly on the main repo. The rest of the changes
 should be done as a PR to the master branch, if it's possible, or done through
 a PR to the release branch, for the other maintainers to review before the
-release. This is further explained under *Preparing a release PR*.
+release. This is further explained under
+:ref:`Preparing a release PR<Preparing a release PR>`. We follow the
+`PEP101 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate release
+candidates, post, and minor releases.
 
 Before a release
 ----------------
