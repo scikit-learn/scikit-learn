@@ -44,8 +44,9 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.module`
-.....................
+:mod:`sklearn.cluster`
+......................
 
-- |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
-  :user:`name <user id>`
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.

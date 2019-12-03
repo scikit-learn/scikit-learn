@@ -161,6 +161,7 @@ def plot_precision_recall_curve(estimator, X, y,
                                                   pos_label=pos_label,
                                                   sample_weight=sample_weight)
     average_precision = average_precision_score(y, y_pred,
+                                                pos_label=pos_label,
                                                 sample_weight=sample_weight)
     viz = PrecisionRecallDisplay(precision, recall, average_precision,
                                  estimator.__class__.__name__)
