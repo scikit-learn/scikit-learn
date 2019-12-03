@@ -12,6 +12,7 @@ from sklearn.utils._testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.utils._testing import _convert_container
 
 
 def toarray(a):
@@ -637,3 +638,24 @@ def test_categories(density, drop):
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
 def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
+
+
+@pytest.mark.parametrize('input_dtype', ['O', 'U'])
+@pytest.mark.parametrize('array_type', ['list', 'array', 'dataframe'])
+def test_encoders_unicode_categories(input_dtype, array_type):
+    # encoders are correct for both string and object dtypes
+
+    X = np.array([['b'], ['a']], dtype=input_dtype)
+    ohe = OneHotEncoder(categories=[['b', 'a']], sparse=False).fit(X)
+
+    X_test = _convert_container([['a'], ['a'], ['b'], ['a']], array_type)
+    X_trans = ohe.transform(X_test)
+
+    expected = np.array([[0, 1], [0, 1], [1, 0], [0, 1]])
+    assert_allclose(X_trans, expected)
+
+    oe = OrdinalEncoder(categories=[['b', 'a']]).fit(X)
+    X_trans = oe.transform(X_test)
+
+    expected = np.array([[1], [1], [0], [1]])
+    assert_array_equal(X_trans, expected)

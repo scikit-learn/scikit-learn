@@ -107,7 +107,7 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         If ``encode=True``.
 
     """
-    if values.dtype == object:
+    if values.dtype.kind in {'O', 'U'}:
         try:
             res = _encode_python(values, uniques, encode)
         except TypeError:

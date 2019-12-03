@@ -86,7 +86,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 cats = _encode(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
-                if Xi.dtype != object:
+                if Xi.dtype.kind not in {'O', 'U'}:
                     if not np.all(np.sort(cats) == cats):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
