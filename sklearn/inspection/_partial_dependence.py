@@ -623,7 +623,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         else:
             # define a list of numbered indices for a numpy array
             feature_names = [str(i) for i in range(n_features)]
-    elif isinstance(feature_names, np.ndarray):
+    elif hasattr(feature_names, "tolist"):
+        # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
     if len(set(feature_names)) != len(feature_names):
         raise ValueError('feature_names should not contain duplicates.')
@@ -933,8 +934,11 @@ class PartialDependenceDisplay:
             ylim = axi.get_ylim()
             axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
                        color='k')
-            axi.set_xlabel(self.feature_names[fx[0]])
             axi.set_ylim(ylim)
+
+            # Set xlabel if it is not already set
+            if not axi.get_xlabel():
+                axi.set_xlabel(self.feature_names[fx[0]])
 
             if len(values) == 1:
                 if n_cols is None or i % n_cols == 0:

@@ -26,7 +26,7 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
-        INSTALL_MKL: 'true'
+        BLAS: 'mkl'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
@@ -52,12 +52,13 @@ jobs:
       py35_conda_openblas:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.5'
-        INSTALL_MKL: 'false'
+        BLAS: 'openblas'
         NUMPY_VERSION: '1.11.0'
         SCIPY_VERSION: '0.17.0'
         PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
-        PYTEST_VERSION: '*'
+        # temporary pin pytest due to unknown failure with pytest 5.3
+        PYTEST_VERSION: '5.2'
         PILLOW_VERSION: '4.0.0'
         MATPLOTLIB_VERSION: '1.5.1'
         # later version of joblib are not packaged in conda for Python 3.5
@@ -68,7 +69,7 @@ jobs:
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         # FIXME: pinned until SciPy wheels are available for Pyhon 3.8
-        PYTHON_VERSION: '3.7'
+        PYTHON_VERSION: '3.8'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
@@ -95,7 +96,7 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
-        INSTALL_MKL: 'true'
+        BLAS: 'mkl'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
@@ -106,7 +107,7 @@ jobs:
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
-        INSTALL_MKL: 'true'
+        BLAS: 'mkl'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
         CYTHON_VERSION: '*'
