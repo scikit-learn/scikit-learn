@@ -50,3 +50,10 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |API| :class:`svm.SVR` and :class:`svm.OneClassSVM` attributes, `probA_` and
+  `probB_`, are now deprecated as they were not useful. :pr:`15558` by
+  `Thomas Fan`_.

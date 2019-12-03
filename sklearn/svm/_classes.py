@@ -993,15 +993,15 @@ class SVR(RegressorMixin, BaseLibSVM):
             class_weight=None, max_iter=max_iter, random_state=None)
 
     @deprecated(
-        "The probA_ attribute is deprecated in version 0.22 and will be "
-        "removed in version 0.24.")
+        "The probA_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
     @deprecated(
-        "The probB_ attribute is deprecated in version 0.22 and will be "
-        "removed in version 0.24.")
+        "The probB_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
     @property
     def probB_(self):
         return self._probB
@@ -1326,15 +1326,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         return np.asarray(y, dtype=np.intp)
 
     @deprecated(
-        "The probA_ attribute is deprecated in version 0.22 and will be "
-        "removed in version 0.24.")
+        "The probA_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
     @property
     def probA_(self):
         return self._probA
 
     @deprecated(
-        "The probB_ attribute is deprecated in version 0.22 and will be "
-        "removed in version 0.24.")
+        "The probB_ attribute is deprecated in version 0.23 and will be "
+        "removed in version 0.25.")
     @property
     def probB_(self):
         return self._probB
