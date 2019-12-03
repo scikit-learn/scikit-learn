@@ -114,17 +114,19 @@ def _open_openml_url(openml_path, data_home, expected_md5_checksum=None):
         ValueError :
             if expected_md5 does not match actual md5-checksum of stream
         """
+        if expected_md5 is None:
+            return fsrc.read()
+
         fsrc_bytes = bytearray()
-        file_md5 = hashlib.md5() if expected_md5_checksum else None
+        file_md5 = hashlib.md5()
         while True:
             data = fsrc.read(chunk_size)
             if not data:
                 break
-            if expected_md5:
-                file_md5.update(data)
+            file_md5.update(data)
             fsrc_bytes.extend(data)
 
-        if expected_md5 and file_md5.hexdigest() != expected_md5:
+        if file_md5.hexdigest() != expected_md5:
             raise ValueError("md5checksum: {} does not match expected: "
                              "{}".format(file_md5.hexdigest(),
                                          expected_md5))
