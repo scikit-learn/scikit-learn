@@ -716,6 +716,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         be advantageous to compute the full tree. It must be ``True`` if
         ``distance_threshold`` is not ``None``.
 
+        - auto by default tales True if distance_threshold is not None,
+          otherwise it's value is based on the expression:
+          n_clusters < max(100, 0.02 * n_samples)
+
     linkage : {"ward", "complete", "average", "single"}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
@@ -958,10 +962,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree. It must be ``True`` if
         ``distance_threshold`` is not ``None``.
-
-        - auto by default tales True if distance_threshold is not None,
-          otherwise it's value is based on the expression:
-          n_clusters < max(100, 0.02 * n_samples)
 
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
