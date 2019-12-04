@@ -91,7 +91,6 @@ __all__ = [
     'auc',
     'average_precision_score',
     'balanced_accuracy_score',
-    'calinski_harabaz_score',
     'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
