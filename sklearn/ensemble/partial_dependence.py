@@ -51,7 +51,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     -------
     grid : ndarray
         All data points on the grid; ``grid.shape[1] == X.shape[1]``
-        and ``grid.shape[0] == grid_resolution * X.shape[1]``.
+        and ``grid.shape[0] == grid_resolution ** X.shape[1]``.
     axes : seq of ndarray
         The axes with which the grid has been created.
     """
@@ -63,9 +63,14 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     axes = []
     emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
     for col in range(X.shape[1]):
-        uniques = np.unique(X[:, col])
+        X_interior = X[(X[:, col] >= emp_percentiles[0, col]) &
+                       (X[:, col] <= emp_percentiles[1, col]),
+                       col]
+        uniques = np.unique(X_interior)
+
         if uniques.shape[0] < grid_resolution:
-            # feature has low resolution use unique vals
+            # feature has low resolution inside the extremal vals,
+            # use unique vals
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution

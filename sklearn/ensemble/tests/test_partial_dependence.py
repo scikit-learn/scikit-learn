@@ -39,15 +39,17 @@ def test_partial_dependence_classifier():
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
-    pdp, axes = partial_dependence(clf, [0], X=X, grid_resolution=5)
+    pdp, axes = partial_dependence(clf, [0], X=X, grid_resolution=5,
+                                   percentiles=(0.2, 0.8))
 
-    # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
-    assert pdp.shape == (1, 4)
-    assert axes[0].shape[0] == 4
+    # only 2 grid points instead of 5 because only 2 unique X[:,0] vals
+    # inside the percentile range
+    assert pdp.shape == (1, 2)
+    assert axes[0].shape[0] == 2
 
     # now with our own grid
     X_ = np.asarray(X)
-    grid = np.unique(X_[:, 0])
+    grid = np.unique(X_[(X_[:, 0] >= -1) & (X_[:, 0] <= 1), 0])
     pdp_2, axes = partial_dependence(clf, [0], grid=grid)
 
     assert axes is None
