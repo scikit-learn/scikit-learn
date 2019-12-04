@@ -191,10 +191,10 @@ class SpectralCoclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer, optional, default: 3
+    n_clusters : integer, default=3
         The number of biclusters to find.
 
-    svd_method : string, optional, default: 'randomized'
+    svd_method : string, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -202,20 +202,20 @@ class SpectralCoclustering(BaseSpectral):
         :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    n_svd_vecs : int, optional, default: None
+    n_svd_vecs : int, default=None
         Number of vectors to use in calculating the SVD. Corresponds
         to `ncv` when `svd_method=arpack` and `n_oversamples` when
         `svd_method` is 'randomized`.
 
-    mini_batch : bool, optional, default: False
+    mini_batch : bool, default=False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}
+    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
          Method for initialization of k-means algorithm; defaults to
          'k-means++'.
 
-    n_init : int, optional, default: 10
+    n_init : int, default=10
         Number of random initializations that are tried with the
         k-means algorithm.
 
@@ -223,7 +223,7 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -232,7 +232,7 @@ class SpectralCoclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -319,11 +319,11 @@ class SpectralBiclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer or tuple (n_row_clusters, n_column_clusters)
+    n_clusters : integer or tuple (n_row_clusters, n_column_clusters), default=3
         The number of row and column clusters in the checkerboard
         structure.
 
-    method : string, optional, default: 'bistochastic'
+    method : string, default='bistochastic'
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
         The authors recommend using 'log'. If the data is sparse,
@@ -331,14 +331,14 @@ class SpectralBiclustering(BaseSpectral):
         default is 'bistochastic'. CAUTION: if `method='log'`, the
         data must not be sparse.
 
-    n_components : integer, optional, default: 6
+    n_components : integer, default=6
         Number of singular vectors to check.
 
-    n_best : integer, optional, default: 3
+    n_best : integer, default=3
         Number of best singular vectors to which to project the data
         for clustering.
 
-    svd_method : string, optional, default: 'randomized'
+    svd_method : string, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
         :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -346,20 +346,20 @@ class SpectralBiclustering(BaseSpectral):
         `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    n_svd_vecs : int, optional, default: None
+    n_svd_vecs : int, default=None
         Number of vectors to use in calculating the SVD. Corresponds
         to `ncv` when `svd_method=arpack` and `n_oversamples` when
         `svd_method` is 'randomized`.
 
-    mini_batch : bool, optional, default: False
+    mini_batch : bool, default=False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}
+    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
          Method for initialization of k-means algorithm; defaults to
          'k-means++'.
 
-    n_init : int, optional, default: 10
+    n_init : int, default=10
         Number of random initializations that are tried with the
         k-means algorithm.
 
@@ -367,7 +367,7 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -376,7 +376,7 @@ class SpectralBiclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
