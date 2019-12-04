@@ -256,7 +256,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         Make a copy of input data.
 
     preference : array-like, shape (n_samples,) or float, default=None
@@ -266,12 +266,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, default=``euclidean``
-        Which affinity to use. At the moment ``precomputed`` and
-        ``euclidean`` are supported. ``euclidean`` uses the
+    affinity : {'euclidean', 'precomputed'}, default='euclidean'
+        Which affinity to use. At the moment 'precomputed' and
+        ``euclidean`` are supported. 'euclidean' uses the
         negative squared euclidean distance between points.
 
-    verbose : boolean, default=False
+    verbose : bool, default=False
         Whether to be verbose.
 
 
