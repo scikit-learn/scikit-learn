@@ -494,3 +494,17 @@ def test_ransac_fit_sample_weight():
     base_estimator = Lasso()
     ransac_estimator = RANSACRegressor(base_estimator)
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
+
+
+def test_ransac_base_estimator_fit_sample_weight():
+    class DummyLinearRegression(LinearRegression):
+        def fit(self, X, y, sample_weight):
+            super().fit(X, y, sample_weight)
+
+    base_estimator = DummyLinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, random_state=0)
+    n_samples = y.shape[0]
+    weights = np.ones(n_samples)
+    ransac_estimator.fit(X, y, weights)
+    # sanity check
+    assert ransac_estimator.inlier_mask_.shape[0] == n_samples
