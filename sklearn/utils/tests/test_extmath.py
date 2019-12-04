@@ -491,6 +491,41 @@ def test_incremental_weighted_mean_and_variance():
         assert_almost_equal(last_var, var_exp)
 
 
+def test_incremental_weighted_mean_and_variance_ignore_nan():
+    old_means = np.array([535., 535., 535., 535.])
+    old_variances = np.array([4225., 4225., 4225., 4225.])
+    old_weight_sum = np.array([2, 2, 2, 2], dtype=np.int32)
+
+    sample_weights_X = np.ones(3)
+    sample_weights_X_nan = np.ones(4)
+
+    X = np.array([[170, 170, 170, 170],
+                  [430, 430, 430, 430],
+                  [300, 300, 300, 300]])
+
+    X_nan = np.array([[170, np.nan, 170, 170],
+                      [np.nan, 170, 430, 430],
+                      [430, 430, np.nan, 300],
+                      [300, 300, 300, np.nan]])
+
+    X_means, X_variances, X_count = \
+        _incremental_weighted_mean_and_var(X,
+                                           sample_weights_X,
+                                           old_means,
+                                           old_variances,
+                                           old_weight_sum)
+    X_nan_means, X_nan_variances, X_nan_count = \
+        _incremental_weighted_mean_and_var(X_nan,
+                                           sample_weights_X_nan,
+                                           old_means,
+                                           old_variances,
+                                           old_weight_sum)
+
+    assert_allclose(X_nan_means, X_means)
+    assert_allclose(X_nan_variances, X_variances)
+    assert_allclose(X_nan_count, X_count)
+
+
 def test_incremental_variance_update_formulas():
     # Test Youngs and Cramer incremental variance formulas.
     # Doggie data from https://www.mathsisfun.com/data/standard-deviation.html

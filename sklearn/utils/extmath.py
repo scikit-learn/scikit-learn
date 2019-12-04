@@ -748,7 +748,7 @@ def _incremental_weighted_mean_and_var(X, sample_weight, last_weighted_mean,
 
         Notes
         -----
-        NaNs are forbidden.
+        NaNs in X are ignored.
 
         References
         ----------
@@ -761,8 +761,13 @@ def _incremental_weighted_mean_and_var(X, sample_weight, last_weighted_mean,
     # new = the current increment
     # updated = the aggregated stats
 
-    new_weight_sum = np.sum(sample_weight, axis=0)
+    M = np.isnan(X)
+    X = np.where(np.isnan(X), 0, X)
+    new_weight_sum = np.dot(np.transpose(np.reshape(sample_weight, (-1, 1))), ~M).ravel()
+    total_weight_sum = np.sum(sample_weight, axis=0)
+
     new_weighted_mean = np.average(X, weights=sample_weight, axis=0)
+    new_weighted_mean = (new_weighted_mean * total_weight_sum) / new_weight_sum
     updated_weight_sum = last_weight_sum + new_weight_sum
     updated_weighted_mean = (last_weight_sum * last_weighted_mean
                              + new_weight_sum * new_weighted_mean) / updated_weight_sum
@@ -770,8 +775,8 @@ def _incremental_weighted_mean_and_var(X, sample_weight, last_weighted_mean,
     if last_weighted_variance is None:
         updated_weighted_variance = None
     else:
-        new_weighted_variance = np.average(
-            X ** 2, weights=sample_weight, axis=0) - new_weighted_mean ** 2
+        new_weighted_variance = (np.average(
+            X ** 2, weights=sample_weight, axis=0) * total_weight_sum / new_weight_sum) - new_weighted_mean ** 2
         new_element = new_weight_sum * \
             (new_weighted_variance + (new_weighted_mean - updated_weighted_mean) ** 2)
         last_element = last_weight_sum * \
