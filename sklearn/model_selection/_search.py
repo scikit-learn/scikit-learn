@@ -610,6 +610,23 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
+    def _check_multimetric_scores_refit(self, scores_dict):
+        """Check score contains the string in refit"""
+        multimetric_refit_msg = ("For multi-metric scoring, the parameter "
+                                 "refit must be set to a scorer key or a "
+                                 "callable to refit an estimator with the "
+                                 "best parameter setting on the whole "
+                                 "data and make the best_* attributes "
+                                 "available for that metric. If this is "
+                                 "not needed, refit should be set to "
+                                 "False explicitly. %r was passed."
+                                 % self.refit)
+        if self.refit is not False and (
+                not isinstance(self.refit, str) or
+                # This will work for both dict / list (tuple)
+                self.refit not in scores_dict) and not callable(self.refit):
+            raise ValueError(multimetric_refit_msg)
+
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -635,31 +652,15 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        multimetric_refit_msg = ("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key or a "
-                                 "callable to refit an estimator with the "
-                                 "best parameter setting on the whole "
-                                 "data and make the best_* attributes "
-                                 "available for that metric. If this is "
-                                 "not needed, refit should be set to "
-                                 "False explicitly. %r was passed."
-                                 % self.refit)
-
         refit_metric = "score"
-        scoring_callable = callable(self.scoring)
-        if scoring_callable:
+        if callable(self.scoring):
             scorers = self.scoring
-        elif (self.scoring is None or isinstance(self.scoring, str)):
+        elif self.scoring is None or isinstance(self.scoring, str):
             scorers = check_scoring(self.estimator, self.scoring)
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
+            self._check_multimetric_scores_refit(scorers)
             refit_metric = self.refit
-
-            if self.refit is not False and (
-                    not isinstance(self.refit, str) or
-                    # This will work for both dict / list (tuple)
-                    self.refit not in scorers) and not callable(self.refit):
-                raise ValueError(multimetric_refit_msg)
 
         X, y, groups = indexable(X, y, groups)
         # make sure fit_params are sliceable
@@ -679,7 +680,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                     return_n_test_samples=True,
                                     return_times=True,
                                     return_parameters=False,
-                                    return_fit_failed=True,
                                     error_score=self.error_score,
                                     verbose=self.verbose)
         results = {}
@@ -734,11 +734,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.multimetric_ = isinstance(successful_score, dict)
 
             # scorer is callable, check refit_metric now
-            if scoring_callable and self.multimetric_:
-                if (self.refit is not False and not callable(self.refit)
-                        and (not isinstance(self.refit, str)
-                             or self.refit not in successful_score)):
-                    raise ValueError(multimetric_refit_msg)
+            if callable(self.scoring) and self.multimetric_:
+                self._check_multimetric_scores_refit(successful_score)
                 refit_metric = self.refit
 
         # For multi-metric evaluation, store the best_index_, best_params_ and

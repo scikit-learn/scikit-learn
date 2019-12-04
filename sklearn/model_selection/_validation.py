@@ -237,7 +237,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            error_score=error_score, return_fit_failed=True)
+            error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
     results = _aggregate_list_of_dicts(results, constructor=list)
@@ -267,9 +267,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _check_fit_and_score_results(results, error_score):
-    """Checks _fit_and_score results. Handles scoring as a callable and
-    normalizes scores into a list of dictionaries.
-    """
     fit_failed = results["fit_failed"]
     test_score_dicts = results["test_scores"]
 
@@ -438,7 +435,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan, return_fit_failed=False):
+                   error_score=np.nan):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -498,10 +495,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
-
-    return_fit_failed : bool, default=False
-        Whether to return if estimatored failed to fit, when error_score is
-        numeric.
 
     Returns
     -------
@@ -590,11 +583,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
-        if return_fit_failed:
-            result["fit_failed"] = True
+        result["fit_failed"] = True
     else:
-        if return_fit_failed:
-            result["fit_failed"] = False
+        result["fit_failed"] = False
 
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer)
