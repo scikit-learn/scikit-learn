@@ -447,7 +447,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
             base_estimator.fit(X_inlier_best, y_inlier_best)
         else:
             base_estimator.fit(X_inlier_best, y_inlier_best,
-                                   sample_weight=sample_weight[inlier_best_idxs_subset])
+                         sample_weight=sample_weight[inlier_best_idxs_subset])
 
         self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best
