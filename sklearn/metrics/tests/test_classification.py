@@ -38,7 +38,6 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -2238,22 +2237,3 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
-
-
-def test_multilabel_jaccard_similarity_score_deprecation():
-    # Dense label indicator matrix format
-    y1 = np.array([[0, 1, 1], [1, 0, 1]])
-    y2 = np.array([[0, 0, 1], [1, 0, 1]])
-
-    # size(y1 \inter y2) = [1, 2]
-    # size(y1 \union y2) = [2, 2]
-
-    jss = partial(assert_warns, FutureWarning,
-                  jaccard_similarity_score)
-    assert jss(y1, y2) == 0.75
-    assert jss(y1, y1) == 1
-    assert jss(y2, y2) == 1
-    assert jss(y2, np.logical_not(y2)) == 0
-    assert jss(y1, np.logical_not(y1)) == 0
-    assert jss(y1, np.zeros(y1.shape)) == 0
-    assert jss(y2, np.zeros(y1.shape)) == 0
