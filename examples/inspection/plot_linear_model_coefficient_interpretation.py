@@ -8,11 +8,11 @@ a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
 scikit-learn).
 It is important to emphasize that linear models compute conditional links.
-The interpretation of the coefficients gives the relationship between the
-feature and the target given that other features remain constant.
+The interpretation of a coefficient gives the relationship between the given
+feature and the target assuming that other features remain constant.
 
-This example will provide some hints in interpreting coefficient in linear models,
-using data from the "Current Population Survey" from 1985.
+This example will provide some hints in interpreting coefficient in linear
+models, using data from the "Current Population Survey" from 1985.
 """
 
 print(__doc__)
@@ -31,7 +31,7 @@ import seaborn as sns
 # ...........
 #
 # We fetch the data from `OpenML <http://openml.org/>`_.
-# Note that setting the parameter `as_frame` to `True` will retrieve the data
+# Note that setting the parameter `as_frame` to True will retrieve the data
 # as a pandas dataframe.
 
 from sklearn.datasets import fetch_openml
@@ -43,10 +43,10 @@ survey = fetch_openml(data_id=534, as_frame=True)
 # target variable (i.e., the variable which we want to predict).
 
 X = survey.data[survey.feature_names]
-print(X.head())
+X.head()
 ##############################################################################
 y = survey.target.values.ravel()
-print(survey.target.head())
+survey.target.head()
 
 ##############################################################################
 # First, let's get some insights by looking at the marginal links between the
@@ -55,11 +55,11 @@ print(survey.target.head())
 sns.pairplot(survey.frame, diag_kind='kde')
 
 ##############################################################################
-# Note that the "WAGE" distribution has a long tail and we could take its log
+# Note that the WAGE distribution has a long tail and we could take its log
 # to simplify our problem getting closer to a normal distribution.
-# For all 3 variables, "EDUCATION", "EXPERIENCE", and "AGE", the "WAGE" is
-# increasing when these variables are increasing. Also, the "EXPERIENCE" and
-# "AGE" are correlated.
+# For all 3 variables, EDUCATION, EXPERIENCE, and AGE, the WAGE is
+# increasing when these variables are increasing. Also, the EXPERIENCE and
+# AGE are correlated.
 #
 # The pipeline
 # ............
@@ -92,7 +92,7 @@ preprocessor = make_column_transformer(
 
 ##############################################################################
 # To describe the dataset as a linear model we choose to use a ridge regressor
-# and to model le log of the "WAGE".
+# and to model le log of the WAGE.
 
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import RidgeCV
@@ -177,8 +177,8 @@ plt.subplots_adjust(left=.3)
 ###############################################################################
 # Soon we realize that we cannot compare different coefficients since we did
 # not scale the data before the fit, features having different value ranges.
-# For instance, the "AGE" coefficient is expressed in $/hours/leaving years
-# while the "EDUCATION" is expressed in $/hours/years of education.
+# For instance, the AGE coefficient is expressed in $/hours/leaving years
+# while the EDUCATION is expressed in $/hours/years of education.
 # This is evident if we compare feature standard deviations.
 
 X_train_preprocessed = pd.DataFrame(
@@ -203,17 +203,17 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The plot above tells us that an increase of the "AGE" will induce a decrease
-# of the "WAGE" when all other features remain constant. Also an increase of
-# the "EXPERIENCE" will induce an increase of the "WAGE" when all other
+# The plot above tells us that an increase of the AGE will induce a decrease
+# of the WAGE when all other features remain constant. Also an increase of
+# the EXPERIENCE will induce an increase of the WAGE when all other
 # features remain constant.
 #
 # The first interpretation might look counter-intuitive at first, if one
-# relates the relationship between "AGE" and "WAGE" as a marginal link.
+# relates the relationship between AGE and WAGE as a marginal link.
 # However, as previously mentioned, a linear model computes a conditional
-# link between "AGE" and "WAGE" given all other features.
+# link between AGE and WAGE given all other features.
 # Therefore, one should also interpret that for a given experience and all
-# other features constant as well, a younger person would have an higher
+# other features constant as well, a younger person would have a higher
 # wage.
 #
 # Checking the coefficient stability
@@ -243,10 +243,10 @@ plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The "AGE" and "EXPERIENCE" coefficients are highly instable which might be
+# The AGE and EXPERIENCE coefficients are highly unstable which might be
 # due to the collinearity between the 2 features.
 #
-# In order to verify our interpretation we can remove one of the 2 features and
+# In order to verify our interpretation we remove one of the 2 features and
 # check what is the impact on the features stability.
 
 column_to_drop = ['AGE']
@@ -270,5 +270,5 @@ plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The estimation of the "EXPERIENCE" coefficient is now more stable with
-# respect to cross_validation.
+# The estimation of the EXPERIENCE coefficient is now more stable and
+# remain important for all predictors trained during cross-validation.
