@@ -959,6 +959,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         be advantageous to compute the full tree. It must be ``True`` if
         ``distance_threshold`` is not ``None``.
 
+        - auto by default tales True if distance_threshold is not None,
+          otherwise it's value is based on the expression:
+          n_clusters < max(100, 0.02 * n_samples)
+
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
         Which linkage criterion to use. The linkage criterion determines which
