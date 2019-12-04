@@ -501,7 +501,10 @@ def test_ransac_final_model_fit_sample_weight():
     rng = check_random_state(42)
     sample_weight = rng.randint(1, 4, size=y.shape[0])
     sample_weight = sample_weight / sample_weight.sum()
-    ransac = RANSACRegressor(base_estimator=LinearRegression(), random_state=0)
+    ransac = RANSACRegressor(
+        base_estimator=LinearRegression(), 
+        random_state=0
+        )
     ransac.fit(X, y, sample_weight=sample_weight)
 
     final_model = LinearRegression()
