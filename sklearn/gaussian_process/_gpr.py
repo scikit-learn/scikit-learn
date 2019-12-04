@@ -196,10 +196,14 @@ class GaussianProcessRegressor(MultiOutputMixin,
         # Normalize target value
         if self.normalize_y:
             self._y_train_mean = np.mean(y, axis=0)
-            # demean y
-            y = y - self._y_train_mean
+            self._y_train_std = np.std(y, axis=0)
+
+            # demean y and make unit variance
+            y = (y - self._y_train_mean) / self._y_train_std
+
         else:
             self._y_train_mean = np.zeros(1)
+            self._y_train_std = 1
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -336,10 +340,19 @@ class GaussianProcessRegressor(MultiOutputMixin,
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self._y_train_mean + y_mean  # undo normal.
+
+            # undo normalisation
+            y_mean = self._y_train_std * y_mean + self._y_train_mean
+
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
+
+                ##########################################
+                ## Check to see if normalisation will   ##
+                ## need to be addressed here as well    ##
+                ##########################################
+
                 return y_mean, y_cov
             elif return_std:
                 # cache result of K_inv computation
@@ -362,6 +375,10 @@ class GaussianProcessRegressor(MultiOutputMixin,
                     warnings.warn("Predicted variances smaller than 0. "
                                   "Setting those variances to 0.")
                     y_var[y_var_negative] = 0.0
+
+                # undo normalisation
+                y_var = y_var * self._y_train_std**2
+
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
