@@ -57,3 +57,9 @@ Changelog
 - |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
   deciles lines as attributes so they can be hidden or customized. :pr:`15785`
   by :user:`Nicolas Hug`_
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
+  transforming. :pr:`15762` by `Thomas Fan`_.
