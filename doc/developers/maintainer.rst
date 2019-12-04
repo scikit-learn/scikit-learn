@@ -1,19 +1,20 @@
 Maintainer / core-developer information
 ========================================
 
-A release is either a major release, or a minor bug fix release. Our convention
-is that we release one or more release candidates (0.XXrcN) before releasing
-the final distributions. Creating the first RC involves creating the release
-branch (0.99.X for instance) directly on the main repo. The rest of the changes
-should be done as a PR to the master branch, if it's possible, or done through
-a PR to the release branch, for the other maintainers to review before the
-release. Note that all development for the minor releases and the major release
-of for instance 0.99, happens under the branch called ``0.99.X``, where ``X``
-is a literal, and independent of minor bug fix releases. Each release
-candidate, major, or minor release is a tag under the same branch. This is
-further explained under :ref:`Preparing a release PR<Preparing a release PR>`.
-We follow the `PEP101 <https://www.python.org/dev/peps/pep-0101/>`_ to indicate
-release candidates, post, and minor releases.
+A major release, incrementing the minor version, or a big fix release
+incrementing the patch version. Our convention is that we release one or more
+release candidates (0.XXrcN) before releasing the final distributions. Creating
+the first RC involves creating the release branch (0.99.X for instance)
+directly on the main repo. The rest of the changes should be done as a PR to
+the master branch, if it's possible, or done through a PR to the release
+branch, for the other maintainers to review before the release. Note that all
+development for the minor releases and the major release of for instance 0.99,
+happens under the branch called ``0.99.X``, where ``X`` is a literal, and
+independent of minor bug fix releases. Each release candidate, major, or minor
+release is a tag under the same branch. This is further explained under
+`Preparing a release PR<#Preparing-a-release-PR>`_. We follow the `PEP101
+<https://www.python.org/dev/peps/pep-0101/>`_ to indicate release candidates,
+post, and minor releases.
 
 Before a release
 ----------------
@@ -57,10 +58,9 @@ Since any commits to an existing branch (e.g. 0.999.X) will automatically
 update the web site documentation, it is best to develop a release with a pull
 request in which 0.999.X is the base. It also allows you to keep track of any
 tasks towards release with a TO DO list. Since the documentation for the branch
-is live as a stable release, it should ideally match the distributions
-available to users. Having all the changes for a release in one PR minimizes
-the gap between the time when the website points to a release, and the release
-being available to users.
+is updated live, it should ideally match the version available to users. Having
+all the changes for a release in one PR minimizes the gap between the time when
+the website points to a release, and the release being available to users.
 
 Most development of the release, and its documentation, should happen in master
 to avoid asynchrony. To select commits from master for use in the bug fix
@@ -73,12 +73,13 @@ to avoid asynchrony. To select commits from master for use in the bug fix
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
 
-In terms of including changes, the first RC is a pure copy of the ``master``,
-and ideally counts as a *feature freeze*. Each coming release candidate and the
-final release afterwards will include minor documentation changes and bug
-fixes. Any major enhancement or feature should be excluded.
+In terms of including changes, the first RC is a pure copy of the ``master``
+with a release version number, and ideally counts as a *feature freeze*. Each
+coming release candidate and the final release afterwards will include minor
+documentation changes and bug fixes. Any major enhancement or feature should be
+excluded.
 
-The minor releases should included bug fixes and some relevant documentation
+The minor releases should include bug fixes and some relevant documentation
 changes only. Any PR resulting in a behavior change which is not a bug fix
 should be excluded.
 
@@ -110,7 +111,7 @@ Making a release
    when ready to release. On master, increment the version in the same place
    (when branching for release). This means while we're in the release
    candidate period, the latest stable is two versions behind the master
-   branch, and one one.
+   branch, instead of one.
 
 3. Create the source tarball:
 
@@ -137,11 +138,11 @@ Making a release
    that the tests pass.
 
 4. Proceed with caution. Ideally, tags should be created when you're almost
-   certain that the release is ready. You can test upload the sdist to
-   test.pypi.org, and follow step 5 and have ``BUILD_COMMIT`` set to the
-   branch name (``0.22.X`` for instance), and test the wheel builds on a PR on
-   that repo. Once all works, you can proceed with tagging.
-   Create the tag and push it (if it's an RC, it can be 0.xxrc1 for instance)::
+   certain that the release is ready to avoid premature tagging. You can test
+   upload the sdist to test.pypi.org, and test the next step by setting
+   ``BUILD_COMMIT`` to the branch name (``0.22.X`` for instance) in a PR to the
+   wheel building repo. Once all works, you can proceed with tagging. Create
+   the tag and push it (if it's an RC, it can be 0.xxrc1 for instance)::
 
     $ git tag -a 0.999
 
