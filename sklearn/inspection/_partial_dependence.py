@@ -794,12 +794,16 @@ class PartialDependenceDisplay:
         `ax`. Elements that are None corresponds to a nonexisting axes or an
         axes that does not include a PDP plot.
 
+        .. versionadded:: 0.23
+
     deciles_hlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
         `ax`. Elements that are None corresponds to a nonexisting axes or an
         axes that does not include a 2-way plot.
+
+        .. versionadded:: 0.23
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
