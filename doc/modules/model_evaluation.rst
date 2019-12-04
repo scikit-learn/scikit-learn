@@ -260,8 +260,8 @@ parameter:
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
       ...            'prec': 'precision'}
 
-Note that the dict values can either be scorer functions or one of the
-predefined metric strings.
+  Note that the dict values can either be scorer functions or one of the
+  predefined metric strings.
 
 - As a callable that returns a dictionary of scores::
 
