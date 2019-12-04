@@ -448,3 +448,14 @@ def test_plot_partial_dependence_fig_deprecated(pyplot):
             clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert pyplot.gcf() is fig
+
+
+def test_plot_partial_dependence_does_not_override_ylabel(pyplot, clf_boston,
+                                                          boston):
+    _, axes = pyplot.subplots(1, 2)
+    axes[0].set_ylabel("Hello world")
+    plot_partial_dependence(clf_boston, boston.data,
+                            [0, 1], ax=axes)
+
+    assert axes[0].get_ylabel() == "Hello world"
+    assert axes[1].get_ylabel() == "Partial dependence"
