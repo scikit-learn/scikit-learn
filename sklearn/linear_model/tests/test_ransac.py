@@ -496,15 +496,19 @@ def test_ransac_fit_sample_weight():
     assert_raises(ValueError, ransac_estimator.fit, X, y, weights)
 
 
-def test_ransac_base_estimator_fit_sample_weight():
-    class DummyLinearRegression(LinearRegression):
-        def fit(self, X, y, sample_weight):
-            super().fit(X, y, sample_weight)
+def test_ransac_final_model_fit_sample_weight():
+    X, y = make_regression(n_samples=1000, random_state=10)
+    rng = check_random_state(42)
+    sample_weight = rng.randint(1, 4, size=y.shape[0])
+    sample_weight = sample_weight / sample_weight.sum()
+    ransac = RANSACRegressor(base_estimator=LinearRegression(), random_state=0)
+    ransac.fit(X, y, sample_weight=sample_weight)
 
-    base_estimator = DummyLinearRegression()
-    ransac_estimator = RANSACRegressor(base_estimator, random_state=0)
-    n_samples = y.shape[0]
-    weights = np.ones(n_samples)
-    ransac_estimator.fit(X, y, weights)
-    # sanity check
-    assert ransac_estimator.inlier_mask_.shape[0] == n_samples
+    final_model = LinearRegression()
+    mask_samples = ransac.inlier_mask_
+    final_model.fit(
+        X[mask_samples], y[mask_samples],
+        sample_weight=sample_weight[mask_samples]
+    )
+
+    assert_allclose(ransac.estimator_.coef_, final_model.coef_)
