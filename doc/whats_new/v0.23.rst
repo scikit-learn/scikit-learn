@@ -52,7 +52,7 @@ Changelog
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
 :mod:`sklearn.linear_model`
-..........................
+...........................
 
 - |Fix| Fixed a bug that made :class:`linear_model.RANSACRegressor` fail when
   its fit method was given a `sample_weight` parameter (in the case where
