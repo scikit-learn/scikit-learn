@@ -242,36 +242,36 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    damping : float, optional, default: 0.5
+    damping : float, default=0.5
         Damping factor (between 0.5 and 1) is the extent to
         which the current value is maintained relative to
         incoming values (weighted 1 - damping). This in order
         to avoid numerical oscillations when updating these
         values (messages).
 
-    max_iter : int, optional, default: 200
+    max_iter : int, default=200
         Maximum number of iterations.
 
-    convergence_iter : int, optional, default: 15
+    convergence_iter : int, default=15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    copy : boolean, optional, default: True
+    copy : boolean, default=True
         Make a copy of input data.
 
-    preference : array-like, shape (n_samples,) or float, optional
+    preference : array-like, shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity : string, optional, default=``euclidean``
+    affinity : string, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
-    verbose : boolean, optional, default: False
+    verbose : boolean, default=False
         Whether to be verbose.
 
 
