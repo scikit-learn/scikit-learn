@@ -145,11 +145,11 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
     assert disp.deciles_hlines_.shape == (2, 1)
 
     assert disp.lines_[0, 0] is None
-    assert disp.contours_[1, 0] is None
     assert disp.deciles_vlines_[0, 0] is not None
-    assert disp.deciles_vlines_[1, 0] is not None
-    assert disp.deciles_hlines_[1, 0] is None
     assert disp.deciles_hlines_[0, 0] is not None
+    assert disp.contours_[1, 0] is None
+    assert disp.deciles_hlines_[1, 0] is None
+    assert disp.deciles_vlines_[1, 0] is not None
 
     # line
     ax = disp.axes_[1, 0]
