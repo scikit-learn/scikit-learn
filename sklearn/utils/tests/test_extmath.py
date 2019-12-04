@@ -11,6 +11,7 @@ from scipy import stats
 from scipy.special import expit
 
 import pytest
+from sklearn.utils import gen_batches
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -29,6 +30,7 @@ from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
+from sklearn.utils.extmath import _incremental_weighted_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
@@ -451,6 +453,42 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+
+
+def test_incremental_weighted_mean_and_variance_simple():
+    rng = np.random.RandomState(42)
+    mult = 10
+    X = rng.rand(1000, 20)*mult
+    sample_weight = rng.rand(X.shape[0]) * mult
+    mean, var, _ = _incremental_weighted_mean_and_var(X, sample_weight,
+                                                      0, 0, 0)
+
+    mean_exp = np.average(X, weights=sample_weight, axis=0)
+    var_exp = np.average(X**2, weights=sample_weight, axis=0) - mean_exp**2
+    assert_almost_equal(mean, mean_exp)
+    assert_almost_equal(var, var_exp)
+
+
+def test_incremental_weighted_mean_and_variance():
+    rng = np.random.RandomState(42)
+    mult = 10
+    X = rng.rand(1000, 20)*mult
+    sample_weight = rng.rand(X.shape[0]) * mult
+
+    n = X.shape[0]
+    last_mean, last_weight_sum, last_var = 0, 0, 0
+    mean_exp = np.average(X, weights=sample_weight, axis=0)
+    var_exp = np.average(X ** 2, weights=sample_weight, axis=0) - mean_exp ** 2
+    for chunk_size in [1, 2, 50, n, n + 42]:
+        for batch in gen_batches(n, chunk_size):
+            last_mean, last_var, last_weight_sum = \
+                _incremental_weighted_mean_and_var(X[batch],
+                                                   sample_weight[batch],
+                                                   last_mean,
+                                                   last_var,
+                                                   last_weight_sum)
+        assert_almost_equal(last_mean, mean_exp)
+        assert_almost_equal(last_var, var_exp)
 
 
 def test_incremental_variance_update_formulas():
