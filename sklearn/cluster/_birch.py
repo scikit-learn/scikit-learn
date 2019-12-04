@@ -334,20 +334,20 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    threshold : float, default 0.5
+    threshold : float, default=0.5
         The radius of the subcluster obtained by merging a new sample and the
         closest subcluster should be lesser than the threshold. Otherwise a new
         subcluster is started. Setting this value to be very low promotes
         splitting and vice-versa.
 
-    branching_factor : int, default 50
+    branching_factor : int, default=50
         Maximum number of CF subclusters in each node. If a new samples enters
         such that the number of subclusters exceed the branching_factor then
         that node is split into two nodes with the subclusters redistributed
         in each. The parent subcluster of that node is removed and two new
         subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default 3
+    n_clusters : int, instance of sklearn.cluster model, default=3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
@@ -361,10 +361,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         - `int` : the model fit is :class:`AgglomerativeClustering` with
           `n_clusters` set to be equal to the int.
 
-    compute_labels : bool, default True
+    compute_labels : bool, default=True
         Whether or not to compute labels for each fit.
 
-    copy : bool, default True
+    copy : bool, default=True
         Whether or not to make a copy of the given data. If set to False,
         the initial data will be overwritten.
 
