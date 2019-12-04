@@ -51,10 +51,19 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert disp.axes_.shape == (1, 3)
     assert disp.lines_.shape == (1, 3)
     assert disp.contours_.shape == (1, 3)
+    assert disp.deciles_vlines_.shape == (1, 3)
+    assert disp.deciles_hlines_.shape == (1, 3)
 
     assert disp.lines_[0, 2] is None
     assert disp.contours_[0, 0] is None
     assert disp.contours_[0, 1] is None
+
+    # deciles lines: always show on xaxis, only show on yaxis if 2-way PDP
+    for i in range(3):
+        assert disp.deciles_vlines_[0, i] is not None
+    assert disp.deciles_hlines_[0, 0] is None
+    assert disp.deciles_hlines_[0, 1] is None
+    assert disp.deciles_hlines_[0, 2] is not None
 
     assert disp.features == [(0, ), (1, ), (0, 1)]
     assert np.all(disp.feature_names == feature_names)
@@ -132,9 +141,15 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
     assert disp.axes_.shape == (2, 1)
     assert disp.lines_.shape == (2, 1)
     assert disp.contours_.shape == (2, 1)
+    assert disp.deciles_vlines_.shape == (2, 1)
+    assert disp.deciles_hlines_.shape == (2, 1)
 
     assert disp.lines_[0, 0] is None
     assert disp.contours_[1, 0] is None
+    assert disp.deciles_vlines_[0, 0] is not None
+    assert disp.deciles_vlines_[1, 0] is not None
+    assert disp.deciles_hlines_[1, 0] is None
+    assert disp.deciles_hlines_[0, 0] is not None
 
     # line
     ax = disp.axes_[1, 0]
@@ -304,6 +319,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert disp_target_0.axes_.shape == (1, 2)
     assert disp_target_0.lines_.shape == (1, 2)
     assert disp_target_0.contours_.shape == (1, 2)
+    assert disp_target_0.deciles_vlines_.shape == (1, 2)
+    assert disp_target_0.deciles_hlines_.shape == (1, 2)
     assert all(c is None for c in disp_target_0.contours_.flat)
     assert disp_target_0.target_idx == 0
 
@@ -318,6 +335,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert disp_symbol.axes_.shape == (1, 2)
     assert disp_symbol.lines_.shape == (1, 2)
     assert disp_symbol.contours_.shape == (1, 2)
+    assert disp_symbol.deciles_vlines_.shape == (1, 2)
+    assert disp_symbol.deciles_hlines_.shape == (1, 2)
     assert all(c is None for c in disp_symbol.contours_.flat)
     assert disp_symbol.target_idx == 0
 
