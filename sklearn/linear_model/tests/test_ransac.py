@@ -99,6 +99,7 @@ def test_ransac_max_trials():
         ransac_estimator.fit(X, y)
         assert ransac_estimator.n_trials_ < max_trials + 1
 
+
 def test_ransac_stop_n_inliers():
     base_estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
@@ -355,10 +356,12 @@ def test_ransac_multi_dimensional_targets():
 
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_residual_loss():
-    loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
-    loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
+    def loss_multi1(y_true, y_pred): return np.sum(
+        np.abs(y_true - y_pred), axis=1)
+    def loss_multi2(y_true, y_pred): return np.sum(
+        (y_true - y_pred) ** 2, axis=1)
 
-    loss_mono = lambda y_true, y_pred : np.abs(y_true - y_pred)
+    def loss_mono(y_true, y_pred): return np.abs(y_true - y_pred)
     yyy = np.column_stack([y, y, y])
 
     base_estimator = LinearRegression()
@@ -477,7 +480,8 @@ def test_ransac_fit_sample_weight():
     X_flat = np.append(np.repeat(X_, sample_weight, axis=0),
                        np.repeat(outlier_X, outlier_weight, axis=0), axis=0)
     y_flat = np.ndarray.flatten(np.append(np.repeat(y_, sample_weight, axis=0),
-                                np.repeat(outlier_y, outlier_weight, axis=0),
+                                          np.repeat(
+                                              outlier_y, outlier_weight, axis=0),
                                           axis=0))
     ransac_estimator.fit(X_flat, y_flat)
     ref_coef_ = ransac_estimator.estimator_.coef_
