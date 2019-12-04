@@ -781,11 +781,18 @@ class PartialDependenceDisplay:
         that position.
 
     lines_ : ndarray of matplotlib Artists
-        If `ax` is an axes or None, `line_[i, j]` is the partial dependence
+        If `ax` is an axes or None, `lines_[i, j]` is the partial dependence
         curve on the i-th row and j-th column. If `ax` is a list of axes,
         `lines_[i]` is the partial dependence curve corresponding to the i-th
         item in `ax`. Elements that are None corresponds to a nonexisting axes
         or an axes that does not include a line plot.
+
+    vlines_ : ndarray of matplotlib LineCollection
+        If `ax` is an axes or None, `vlines_[i, j]` is the line collection
+        representing the deciles of the i-th row and j-th column. If `ax` is
+        a list of axes, `vlines_[i]` corresponds to the i-th item in `ax`.
+        Elements that are None corresponds to a nonexisting axes or an axes
+        that does not include a line plot.
 
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
@@ -908,6 +915,7 @@ class PartialDependenceDisplay:
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
 
+        vlines = np.empty_like(self.axes_).ravel()
         for i, axi, fx, (avg_preds, values) in zip(count(),
                                                    self.axes_.ravel(),
                                                    self.features,
@@ -932,8 +940,8 @@ class PartialDependenceDisplay:
             trans = transforms.blended_transform_factory(axi.transData,
                                                          axi.transAxes)
             ylim = axi.get_ylim()
-            axi.vlines(self.deciles[fx[0]], 0, 0.05, transform=trans,
-                       color='k')
+            vlines[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
+                                   transform=trans, color='k')
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set
@@ -956,4 +964,6 @@ class PartialDependenceDisplay:
                 # hline erases xlim
                 axi.set_ylabel(self.feature_names[fx[1]])
                 axi.set_xlim(xlim)
+
+        self.vlines_ = vlines.reshape(self.axes_.shape)
         return self
