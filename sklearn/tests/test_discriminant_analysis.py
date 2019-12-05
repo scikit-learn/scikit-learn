@@ -352,8 +352,7 @@ def test_lda_dimension_warning(n_classes, n_features):
         # larger than both n_features and n_classes - 1 to ensure the test
         # works for any value of n_component
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        msg = ("n_components cannot be larger than min\(n_features, "
-               "n_classes - 1\).")
+        msg = "n_components cannot be larger than "
         with pytest.raises(ValueError, match=msg):
             lda.fit(X, y)
 
