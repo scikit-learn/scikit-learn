@@ -7,12 +7,19 @@ from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import make_column_transformer
+
+
+# TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
+    "matplotlib.*")
 
 
 def test_errors(pyplot):
@@ -126,3 +133,23 @@ def test_precision_recall_curve_pipeline(pyplot, clf):
     clf.fit(X, y)
     disp = plot_precision_recall_curve(clf, X, y)
     assert disp.estimator_name == clf.__class__.__name__
+
+
+def test_precision_recall_curve_string_labels(pyplot):
+    # regression test #15738
+    cancer = load_breast_cancer()
+    X = cancer.data
+    y = cancer.target_names[cancer.target]
+
+    lr = make_pipeline(StandardScaler(), LogisticRegression())
+    lr.fit(X, y)
+    for klass in cancer.target_names:
+        assert klass in lr.classes_
+    disp = plot_precision_recall_curve(lr, X, y)
+
+    y_pred = lr.predict_proba(X)[:, 1]
+    avg_prec = average_precision_score(y, y_pred,
+                                       pos_label=lr.classes_[1])
+
+    assert disp.average_precision == pytest.approx(avg_prec)
+    assert disp.estimator_name == lr.__class__.__name__

@@ -1720,7 +1720,7 @@ relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
 DCG score is
 
 .. math::

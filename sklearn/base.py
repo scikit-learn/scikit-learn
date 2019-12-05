@@ -1,4 +1,8 @@
-"""Base classes for all estimators."""
+"""
+Base classes for all estimators.
+
+Used for VotingClassifier
+"""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -334,6 +338,7 @@ class BaseEstimator:
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
+
     _estimator_type = "classifier"
 
     def score(self, X, y, sample_weight=None):
