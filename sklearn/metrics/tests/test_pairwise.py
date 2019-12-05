@@ -1280,8 +1280,12 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
         [np.half, np.float, np.double, np.longdouble])
 @pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
 def test_pairwise_distances_input_datatypes(dtype, y_is_x):
-    # check that pairwise distances gives the same result as pdist and cdist
-    # regardless of input datatype when using metric='seuclidean'
+    # Check that pairwise distances gives the same result as pdist and cdist
+    # regardless of input datatype when using metric='seuclidean'.
+    # 
+    # This test is necessary because pairwise_distances used to throw an
+    # error when using metric='seuclidean' and the input data was not 
+    # of type np.double
     rng = np.random.RandomState(0)
 
     X = rng.random_sample((5, 4)).astype(dtype)
