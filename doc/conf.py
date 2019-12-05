@@ -244,6 +244,7 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
+    'seaborn': ('https://seaborn.pydata.org/', None),
 }
 
 v = parse(release)

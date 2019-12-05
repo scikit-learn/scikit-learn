@@ -7,9 +7,9 @@ Linear models describe situations in which the target value is expected to be
 a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
 scikit-learn).
-It is important to emphasize that linear models compute conditional links.
-The interpretation of a coefficient gives the relationship between the given
-feature and the target assuming that other features remain constant.
+It is important to emphasize that coefficients in multiple linear models
+represent the relationship between the given feature and the target
+assuming that other features remain constant.
 
 This example will provide some hints in interpreting coefficient in linear
 models, using data from the "Current Population Survey" from 1985.
@@ -41,9 +41,19 @@ survey = fetch_openml(data_id=534, as_frame=True)
 ##############################################################################
 # Then, we identify features `X` and targets `y`: the column WAGE is our
 # target variable (i.e., the variable which we want to predict).
-
+#
 X = survey.data[survey.feature_names]
+X.describe(include="all")
+
+##############################################################################
+# Notice that the dataset contains categorical and numerical variables.
+# Some of the categorical variables are binary variables.
+# About the numerical ones we can observe that AGE and EXPERIENCE have similar
+# distributions while the EDUCATION distribution is narrower.
+# This will give us directions on how to preprocess the data thereafter.
+
 X.head()
+
 ##############################################################################
 y = survey.target.values.ravel()
 survey.target.head()
@@ -67,14 +77,14 @@ sns.pairplot(survey.frame, diag_kind='kde')
 survey.data.info()
 
 #############################################################################
-# The dataset is composed by columns with different data types and we need to
-# apply a specific preprocessing for each data types.
+# As seen previously, the dataset contains columns with different data types
+# and we need to apply a specific preprocessing for each data types.
 # Our pre-processor will
 #
 # - one-hot encode (i.e., generate a column by category) the categorical
 #   columns;
 # - replace by 0 and 1 the categories of binary columns;
-# - keep numerical values as they are.
+# - as a first approach, keep numerical values as they are.
 
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
