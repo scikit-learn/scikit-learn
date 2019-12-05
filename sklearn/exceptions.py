@@ -135,17 +135,10 @@ class FitFailedWarning(RuntimeWarning):
     ...         gs.fit(X, y)  # This will raise a ValueError since C is < 0
     ...     except ValueError:
     ...         pass
-    ...     msg = repr(w[-1].message)
-    ...     # if msg.find(r'Traceback (most recent call last):\\n') > -1:
-    ...     ct = msg.count('\\n')
-    ...     if ct > 1 or msg.count(r'\\n') > 1:  # has stacktrace
-    ...         split = msg.splitlines() if ct > 1 else msg.split(r'\\n')
-    ...         msg = split[0] + ('\\n' + split[-1] + '\\n' if ct > 1 else
-    ...                           r'\\n' + split[-2] + r'\\n' + split[-1])
-    ...     print(msg)
+    ...     print(repr(w[-1].message))
     FitFailedWarning('Estimator fit failed. The score on this train-test
-    partition for these parameters will be set to 0.000000.
-    Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
+    partition for these parameters will be set to 0.000000.'...
+    'Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
