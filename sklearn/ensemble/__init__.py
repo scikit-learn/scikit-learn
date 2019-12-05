@@ -21,7 +21,6 @@ from ._voting import VotingRegressor
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
 
-from . import partial_dependence
 
 __all__ = ["BaseEnsemble",
            "RandomForestClassifier", "RandomForestRegressor",
@@ -31,4 +30,4 @@ __all__ = ["BaseEnsemble",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
            "StackingClassifier", "StackingRegressor",
-           "partial_dependence"]
+           ]
