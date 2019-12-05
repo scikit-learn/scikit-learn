@@ -49,3 +49,11 @@ Changelog
 
 - |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
   :user:`name <user id>`
+
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an error if
+  ``metric='seuclidean'`` and ``X`` is not type ``np.double``. 
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
