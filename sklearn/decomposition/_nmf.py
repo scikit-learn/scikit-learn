@@ -842,7 +842,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
 
 
 def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init='warn', update_H=True, solver='cd',
+                               init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
@@ -891,10 +891,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
     init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'random'.
-
-        The default value will change from 'random' to None in version 0.23
-        to make it consistent with decomposition.NMF.
+        Default: None.
 
         Valid options:
 
@@ -1027,13 +1024,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
-
-    if init == "warn":
-        if n_components < n_features:
-            warnings.warn("The default value of init will change from "
-                          "random to None in 0.23 to make it consistent "
-                          "with decomposition.NMF.", FutureWarning)
-        init = "random"
 
     # check W and H, or initialize them
     if init == 'custom' and update_H:
