@@ -293,19 +293,17 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
 
-        if self.min_impurity_split is not None:
+        min_impurity_split = self.min_impurity_split
+        if min_impurity_split != 0:
             warnings.warn("The min_impurity_split parameter is deprecated. "
-                          "Its default value will change from 1e-7 to 0 in "
+                          "Its default value has changed from 1e-7 to 0 in "
                           "version 0.23, and it will be removed in 0.25. "
                           "Use the min_impurity_decrease parameter instead.",
                           FutureWarning)
-            min_impurity_split = self.min_impurity_split
-        else:
-            min_impurity_split = 1e-7
 
-        if min_impurity_split < 0.:
-            raise ValueError("min_impurity_split must be greater than "
-                             "or equal to 0")
+            if min_impurity_split < 0.:
+                raise ValueError("min_impurity_split must be greater than "
+                                 "or equal to 0")
 
         if self.min_impurity_decrease < 0.:
             raise ValueError("min_impurity_decrease must be greater than "
@@ -679,14 +677,14 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, default=1e-7
+    min_impurity_split : float, default=0
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
@@ -812,7 +810,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
+                 min_impurity_split=0,
                  class_weight=None,
                  presort='deprecated',
                  ccp_alpha=0.0):
@@ -1061,14 +1059,14 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float, (default=0)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     presort : deprecated, default='deprecated'
@@ -1165,7 +1163,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
+                 min_impurity_split=0,
                  presort='deprecated',
                  ccp_alpha=0.0):
         super().__init__(
@@ -1349,14 +1347,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float, (default=0)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     class_weight : dict, list of dicts, "balanced" or None, default=None
@@ -1448,7 +1446,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
+                 min_impurity_split=0,
                  class_weight=None,
                  ccp_alpha=0.0):
         super().__init__(
@@ -1573,14 +1571,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float, (default=0)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     max_leaf_nodes : int or None, optional (default=None)
@@ -1657,7 +1655,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_features="auto",
                  random_state=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=None,
+                 min_impurity_split=0,
                  max_leaf_nodes=None,
                  ccp_alpha=0.0):
         super().__init__(
