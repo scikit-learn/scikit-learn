@@ -829,8 +829,8 @@ def test_check_dataframe_warns_on_dtype():
 def test_check_dataframe_mixed_float_dtypes():
     # pandas dataframe will coerce a boolean into a object, this is a mismatch
     # with np.result_type which will return a float
-    # check_array needs explicity check for bool dtype in a dataframe for this
-    # situation
+    # check_array needs to explicitly check for bool dtype in a dataframe for
+    # this situation
     # https://github.com/scikit-learn/scikit-learn/issues/15787
 
     pd = importorskip("pandas")

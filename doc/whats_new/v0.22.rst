@@ -2,6 +2,25 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_22_1:
+
+Version 0.22.1
+==============
+
+**In Development**
+
+This is a bug-fix release to primarily resolve some packaging issues in version
+0.21.0. It also includes minor documentation improvements and some bug fixes.
+
+Changelog
+---------
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
+  boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
 .. _changes_0_22:
 
 Version 0.22.0
