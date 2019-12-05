@@ -1621,6 +1621,4 @@ To be removed in 0.23
 
    utils.cpu_count
    utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
    utils.safe_indexing
