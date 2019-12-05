@@ -1623,12 +1623,4 @@ To be removed in 0.23
    utils.delayed
    metrics.calinski_harabaz_score
    metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
    utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
