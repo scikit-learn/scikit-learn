@@ -840,12 +840,10 @@ def test_check_dataframe_mixed_float_dtypes():
         'bool': [True, False, True]})
 
     array = check_array(df, dtype=(np.float64, np.float32, np.float16))
-
     expected_array = np.array(
         [[1.0, 0.0, 1.0],
          [2.0, 0.1, 0.0],
          [3.0, 2.1, 1.0]], dtype=np.float)
-
     assert_allclose_dense_sparse(array, expected_array)
 
 
