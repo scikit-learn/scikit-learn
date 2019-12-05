@@ -707,7 +707,8 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_weighted_mean_and_var(X, sample_weight, last_weighted_mean,
+def _incremental_weighted_mean_and_var(X, sample_weight,
+                                       last_weighted_mean,
                                        last_weighted_variance,
                                        last_weight_sum):
     """Calculate weighted mean and variance batch update
@@ -762,30 +763,39 @@ def _incremental_weighted_mean_and_var(X, sample_weight, last_weighted_mean,
     # updated = the aggregated stats
 
     M = np.isnan(X)
-    X = np.where(np.isnan(X), 0, X)
-    new_weight_sum = np.dot(np.transpose(np.reshape(sample_weight, (-1, 1))), ~M).ravel()
-    total_weight_sum = np.sum(sample_weight, axis=0)
+    sample_weight_T = np.transpose(np.reshape(sample_weight, (-1, 1)))
+    new_weight_sum = _safe_accumulator_op(np.dot, sample_weight_T, ~M).ravel()
+    total_weight_sum = _safe_accumulator_op(np.sum, sample_weight, axis=0)
 
-    new_weighted_mean = np.average(X, weights=sample_weight, axis=0)
-    new_weighted_mean = (new_weighted_mean * total_weight_sum) / new_weight_sum
+    X_0 = np.where(np.isnan(X), 0, X)
+    new_weighted_mean = \
+        _safe_accumulator_op(np.average, X_0, weights=sample_weight, axis=0)
+    new_weighted_mean *= total_weight_sum / new_weight_sum
     updated_weight_sum = last_weight_sum + new_weight_sum
-    updated_weighted_mean = (last_weight_sum * last_weighted_mean
-                             + new_weight_sum * new_weighted_mean) / updated_weight_sum
+    updated_weighted_mean = (
+            (last_weight_sum * last_weighted_mean +
+             new_weight_sum * new_weighted_mean) / updated_weight_sum)
 
     if last_weighted_variance is None:
         updated_weighted_variance = None
     else:
-        new_weighted_variance = (np.average(
-            X ** 2, weights=sample_weight, axis=0) * total_weight_sum / new_weight_sum) - new_weighted_mean ** 2
-        new_element = new_weight_sum * \
-            (new_weighted_variance + (new_weighted_mean - updated_weighted_mean) ** 2)
-        last_element = last_weight_sum * \
-            (last_weighted_variance + (last_weighted_mean - updated_weighted_mean) ** 2)
+        X_0 = np.where(np.isnan(X), 0, (X-new_weighted_mean)**2)
+        new_weighted_variance = \
+            _safe_accumulator_op(
+                np.average, X_0, weights=sample_weight, axis=0)
+        new_weighted_variance *= total_weight_sum / new_weight_sum
+        new_element = (
+                new_weight_sum *
+                (new_weighted_variance +
+                 (new_weighted_mean - updated_weighted_mean) ** 2))
+        last_element = (
+                last_weight_sum *
+                (last_weighted_variance +
+                 (last_weighted_mean - updated_weighted_mean) ** 2))
         updated_weighted_variance = (
             new_element + last_element) / updated_weight_sum
 
     return updated_weighted_mean, updated_weighted_variance, updated_weight_sum
-
 
 
 def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):

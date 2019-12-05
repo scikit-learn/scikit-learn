@@ -22,7 +22,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
 
-from sklearn.utils.extmath import density
+from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
@@ -470,32 +470,71 @@ def test_incremental_weighted_mean_and_variance_simple():
 
 
 def test_incremental_weighted_mean_and_variance():
-    rng = np.random.RandomState(42)
-    mult = 10
-    X = rng.rand(1000, 20)*mult
-    sample_weight = rng.rand(X.shape[0]) * mult
 
-    n = X.shape[0]
-    last_mean, last_weight_sum, last_var = 0, 0, 0
-    mean_exp = np.average(X, weights=sample_weight, axis=0)
-    var_exp = np.average(X ** 2, weights=sample_weight, axis=0) - mean_exp ** 2
-    for chunk_size in [1, 2, 50, n, n + 42]:
-        for batch in gen_batches(n, chunk_size):
-            last_mean, last_var, last_weight_sum = \
-                _incremental_weighted_mean_and_var(X[batch],
-                                                   sample_weight[batch],
-                                                   last_mean,
-                                                   last_var,
-                                                   last_weight_sum)
-        assert_almost_equal(last_mean, mean_exp)
-        assert_almost_equal(last_var, var_exp)
+    # Testing of correctness and numerical stability
+    def test(X, sample_weight, mean_exp=None, var_exp=None):
+        n = X.shape[0]
+        if mean_exp is None:
+            mean_exp = \
+                _safe_accumulator_op(
+                    np.average, X, weights=sample_weight, axis=0)
+        if var_exp is None:
+            var_exp = \
+                _safe_accumulator_op(
+                    np.average, (X-mean_exp)**2, weights=sample_weight, axis=0)
+        for chunk_size in [1, n//10 + 1, n//4 + 1, n//2 + 1, n]:
+            last_mean, last_weight_sum, last_var = 0, 0, 0
+            for batch in gen_batches(n, chunk_size):
+                last_mean, last_var, last_weight_sum = \
+                    _incremental_weighted_mean_and_var(X[batch],
+                                                       sample_weight[batch],
+                                                       last_mean,
+                                                       last_var,
+                                                       last_weight_sum)
+            assert_allclose(last_mean, mean_exp)
+            assert_allclose(last_var, var_exp, atol=1e-6)
+
+    HIGH_MEAN = 1e7
+    LOW_VAR = 1e-8
+    HIGH_VAR = 1e5
+    NORMAL_MEAN = 0.0
+    NORMAL_VAR = 1.0
+    SIZE = (100, 20)
+
+    rng = np.random.RandomState(42)
+    NORMAL_WEIGHT = \
+        rng.normal(loc=NORMAL_MEAN, scale=NORMAL_VAR, size=(SIZE[0],))
+    ALMOST_ZERO_WEIGHT = \
+        rng.normal(loc=NORMAL_MEAN, scale=LOW_VAR, size=(SIZE[0],))
+    ALMOST_ONES_WEIGHT = rng.normal(loc=1.0, scale=LOW_VAR, size=(SIZE[0],))
+    JUST_WEIGHT = rng.normal(loc=10.0, scale=NORMAL_VAR, size=(SIZE[0],))
+    HIGH_WEIGHT = rng.normal(loc=HIGH_MEAN, scale=NORMAL_VAR, size=(SIZE[0],))
+    ONES_WEIGHT = np.ones(SIZE[0])
+
+    means = [NORMAL_MEAN, HIGH_MEAN, -HIGH_MEAN]
+    vars = [NORMAL_VAR, LOW_VAR, HIGH_VAR]
+    weights = [NORMAL_WEIGHT, ALMOST_ONES_WEIGHT,
+               JUST_WEIGHT, ALMOST_ZERO_WEIGHT, HIGH_WEIGHT]
+    means_vars = [(m, v) for m in means for v in vars]
+
+    # Comparing with weighted np.average
+    for mean, var in means_vars:
+        X = rng.normal(loc=mean, scale=var, size=SIZE)
+        for i, weight in enumerate(weights):
+            test(X, weight)
+
+    # Comparing with unweighted np.average
+    for mean, var in means_vars:
+        X = rng.normal(loc=mean, scale=var, size=SIZE)
+        mean_exp = _safe_accumulator_op(np.mean, X, axis=0)
+        var_exp = _safe_accumulator_op(np.var, X, axis=0)
+        test(X, ONES_WEIGHT, mean_exp, var_exp)
 
 
 def test_incremental_weighted_mean_and_variance_ignore_nan():
     old_means = np.array([535., 535., 535., 535.])
     old_variances = np.array([4225., 4225., 4225., 4225.])
     old_weight_sum = np.array([2, 2, 2, 2], dtype=np.int32)
-
     sample_weights_X = np.ones(3)
     sample_weights_X_nan = np.ones(4)
 
