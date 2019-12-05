@@ -1294,6 +1294,6 @@ def test_pairwise_distances_input_datatypes(metric, dtype, y_is_x):
         Y = rng.random_sample((5, 4)).astype(dtype)
         expected_dist = cdist(X, Y, metric=metric)
 
-    dist = np.vstack(tuple(pairwise_distances(X, Y, metric=metric)))
+    dist = pairwise_distances(X, Y, metric=metric)
 
     assert_allclose(dist, expected_dist)
