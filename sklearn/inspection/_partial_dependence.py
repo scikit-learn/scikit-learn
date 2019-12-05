@@ -777,21 +777,21 @@ class PartialDependenceDisplay:
     axes_ : ndarray of matplotlib Axes
         If `ax` is an axes or None, `axes_[i, j]` is the axes on the i-th row
         and j-th column. If `ax` is a list of axes, `axes_[i]` is the i-th item
-        in `ax`. Elements that are None corresponds to a nonexisting axes in
+        in `ax`. Elements that are None correspond to a nonexisting axes in
         that position.
 
     lines_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `lines_[i, j]` is the partial dependence
         curve on the i-th row and j-th column. If `ax` is a list of axes,
         `lines_[i]` is the partial dependence curve corresponding to the i-th
-        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a line plot.
 
     deciles_vlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the x axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
-        `ax`. Elements that are None corresponds to a nonexisting axes or an
+        `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a PDP plot.
 
         .. versionadded:: 0.23
@@ -800,7 +800,7 @@ class PartialDependenceDisplay:
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the y axis deciles of the i-th row and j-th column. If
         `ax` is a list of axes, `vlines_[i]` corresponds to the i-th item in
-        `ax`. Elements that are None corresponds to a nonexisting axes or an
+        `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
 
         .. versionadded:: 0.23
@@ -809,7 +809,7 @@ class PartialDependenceDisplay:
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
         plot on the i-th row and j-th column. If `ax` is a list of axes,
         `contours_[i]` is the partial dependence plot corresponding to the i-th
-        item in `ax`. Elements that are None corresponds to a nonexisting axes
+        item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a contour plot.
 
     figure_ : matplotlib Figure
