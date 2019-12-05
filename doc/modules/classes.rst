@@ -1621,5 +1621,4 @@ To be removed in 0.23
 
    utils.cpu_count
    utils.delayed
-   metrics.jaccard_similarity_score
    utils.safe_indexing
