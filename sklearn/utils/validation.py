@@ -456,9 +456,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = list(array.dtypes)
         # pandas boolean dtype __array__ interface coerces bools to objects
-        if any(dtype.kind == 'b' for dtype in dtypes_orig):
-            dtypes_orig.append(np.object)
-        elif all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
+        for i, dtype_iter in enumerate(dtypes_orig):
+            if dtype_iter.kind == 'b':
+                dtypes_orig[i] = np.object
+
+        if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
