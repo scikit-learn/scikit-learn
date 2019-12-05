@@ -679,16 +679,6 @@ def test_check_is_fitted():
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
 
-    # to be removed in 0.23
-    assert_warns_message(
-        FutureWarning,
-        "Passing attributes to check_is_fitted is deprecated",
-        check_is_fitted, ard, ['coef_'])
-    assert_warns_message(
-        FutureWarning,
-        "Passing all_or_any to check_is_fitted is deprecated",
-        check_is_fitted, ard, all_or_any=any)
-
 
 def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])

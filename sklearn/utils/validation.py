@@ -845,8 +845,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes='deprecated', msg=None,
-                    all_or_any='deprecated'):
+def check_is_fitted(estimator, msg=None):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -858,11 +857,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : deprecated, ignored
-        .. deprecated:: 0.22
-           `attributes` is deprecated, is currently ignored and will be removed
-           in 0.23.
-
     msg : string
         The default error message is, "This %(name)s instance is not fitted
         yet. Call 'fit' with appropriate arguments before using this
@@ -873,11 +867,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
 
         Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
 
-    all_or_any : deprecated, ignored
-        .. deprecated:: 0.21
-           `all_or_any` is deprecated, is currently ignored and will be removed
-           in 0.23.
-
     Returns
     -------
     None
@@ -887,14 +876,6 @@ def check_is_fitted(estimator, attributes='deprecated', msg=None,
     NotFittedError
         If the attributes are not found.
     """
-    if attributes != 'deprecated':
-        warnings.warn("Passing attributes to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The attributes "
-                      "argument is ignored.", FutureWarning)
-    if all_or_any != 'deprecated':
-        warnings.warn("Passing all_or_any to check_is_fitted is deprecated"
-                      " and will be removed in 0.23. The any_or_all "
-                      "argument is ignored.", FutureWarning)
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
     if msg is None:
