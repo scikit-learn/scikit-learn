@@ -837,7 +837,7 @@ def test_check_dataframe_mixed_float_dtypes():
     df = pd.DataFrame({
         'int': [1, 2, 3],
         'float': [0, 0.1, 2.1],
-        'bool': [True, False, True]})
+        'bool': [True, False, True]}, columns=['int', 'float', 'bool'])
 
     array = check_array(df, dtype=(np.float64, np.float32, np.float16))
     expected_array = np.array(
