@@ -26,6 +26,7 @@ from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
+from ..tree import DecisionTreeRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
@@ -105,7 +106,14 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
 
 def _partial_dependence_recursion(est, grid, features):
-    return est._compute_partial_dependence_recursion(grid, features)
+    averaged_predictions = est._compute_partial_dependence_recursion(grid,
+                                                                     features)
+    if averaged_predictions.ndim == 1:
+        # reshape to (1, n_points) for consistency with
+        # _partial_dependence_brute
+        averaged_predictions = averaged_predictions.reshape(1, -1)
+
+    return averaged_predictions
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
@@ -351,19 +359,23 @@ def partial_dependence(estimator, X, features, response_method='auto',
         if (isinstance(estimator, BaseGradientBoosting) and
                 estimator.init is None):
             method = 'recursion'
-        elif isinstance(estimator, BaseHistGradientBoosting):
+        elif isinstance(estimator, (BaseHistGradientBoosting,
+                                    DecisionTreeRegressor)):
             method = 'recursion'
         else:
             method = 'brute'
 
     if method == 'recursion':
         if not isinstance(estimator,
-                          (BaseGradientBoosting, BaseHistGradientBoosting)):
+                          (BaseGradientBoosting, BaseHistGradientBoosting,
+                          DecisionTreeRegressor)):
             supported_classes_recursion = (
                 'GradientBoostingClassifier',
                 'GradientBoostingRegressor',
                 'HistGradientBoostingClassifier',
                 'HistGradientBoostingRegressor',
+                'HistGradientBoostingRegressor',
+                'DecisionTreeRegressor',
             )
             raise ValueError(
                 "Only the following estimators support the 'recursion' "

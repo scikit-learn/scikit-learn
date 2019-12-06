@@ -206,6 +206,36 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
+@pytest.mark.parametrize('target_feature', range(1))
+def test_decision_tree_vs_gradient_boosting(target_feature):
+
+    X, y = make_regression(random_state=0, n_features=5, n_informative=5)
+    # The 'init' estimator for GBDT (here the average prediction) isn't taken
+    # into account with the recursion method, for technical reasons. We set
+    # the mean to 0 to that this 'bug' doesn't have any effect.
+    y = y - y.mean()
+
+    # gbdt = HistGradientBoostingRegressor(max_iter=1, learning_rate=1, random_state=0)
+    gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1, random_state=0, min_samples_leaf=1, max_leaf_nodes=None)
+    gbdt.fit(X, y)
+
+    tree = DecisionTreeRegressor(random_state=0, min_samples_leaf=1)
+    tree.fit(X, y)
+
+    # target feature will be set to .5 and then to 123
+    features = np.array([target_feature], dtype=np.int32)
+    grid = np.array([[.5],
+                     [123]])
+
+    pdp_gbdt = _partial_dependence_brute(gbdt, grid, features, X,
+                                         response_method='auto')
+    pdp_tree = _partial_dependence_brute(tree, grid, features, X,
+                                         response_method='auto')
+    assert np.allclose(pdp_gbdt, pdp_tree)
+    print(gbdt.predict(X))
+    print(tree.predict(X))
+
+
 @pytest.mark.parametrize('est', (
     GradientBoostingClassifier(random_state=0),
     HistGradientBoostingClassifier(random_state=0),
@@ -236,8 +266,9 @@ def test_recursion_decision_function(est, target_feature):
     LinearRegression(),
     GradientBoostingRegressor(random_state=0),
     HistGradientBoostingRegressor(random_state=0, min_samples_leaf=1,
-                                  max_leaf_nodes=None, max_iter=1))
-)
+                                  max_leaf_nodes=None, max_iter=1),
+    DecisionTreeRegressor(random_state=0),
+))
 @pytest.mark.parametrize('power', (1, 2))
 def test_partial_dependence_easy_target(est, power):
     # If the target y only depends on one feature in an obvious way (linear or
