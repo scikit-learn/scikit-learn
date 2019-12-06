@@ -1916,10 +1916,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
