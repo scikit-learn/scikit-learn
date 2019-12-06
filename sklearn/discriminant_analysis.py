@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .linear_model.base import LinearClassifierMixin
+from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
@@ -186,7 +186,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     coef_ : array, shape (n_features,) or (n_classes, n_features)
         Weight vector(s).
 
-    intercept_ : array, shape (n_features,)
+    intercept_ : array, shape (n_classes,)
         Intercept term.
 
     covariance_ : array-like, shape (n_features, n_features)
@@ -241,9 +241,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
-                  solver='svd', store_covariance=False, tol=0.0001)
+    >>> clf.fit(X, y)
+    LinearDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
@@ -384,8 +383,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         U, S, V = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
-        if rank < n_features:
-            warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
         scalings = (V[:rank] / std).T / S[:rank]
 
@@ -508,7 +505,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
+        check_is_fitted(self)
 
         X = check_array(X)
         if self.solver == 'svd':
@@ -531,7 +528,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         decision = self.decision_function(X)
         if self.classes_.size == 2:
@@ -556,7 +553,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
+class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
 
     A classifier with a quadratic decision boundary, generated
@@ -592,13 +589,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    covariance_ : list of array-like, shape = [n_features, n_features]
+    covariance_ : list of array-like of shape (n_features, n_features)
         Covariance matrices of each class.
 
-    means_ : array-like, shape = [n_classes, n_features]
+    means_ : array-like of shape (n_classes, n_features)
         Class means.
 
-    priors_ : array-like, shape = [n_classes]
+    priors_ : array-like of shape (n_classes)
         Class priors (sum to 1).
 
     rotations_ : list of arrays
@@ -612,6 +609,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
 
+    classes_ : array-like, shape (n_classes,)
+        Unique class labels.
+
     Examples
     --------
     >>> from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
@@ -620,9 +620,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QuadraticDiscriminantAnalysis()
     >>> clf.fit(X, y)
-    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False, tol=0.0001)
+    QuadraticDiscriminantAnalysis()
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -651,7 +649,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -706,7 +704,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         return self
 
     def _decision_function(self, X):
-        check_is_fitted(self, 'classes_')
+        check_is_fitted(self)
 
         X = check_array(X)
         norm2 = []
@@ -716,7 +714,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
-        norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
+        norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return (-0.5 * (norm2 + u) + np.log(self.priors_))
 
@@ -725,12 +723,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples (test vectors).
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes] or [n_samples,]
+        C : ndarray of shape (n_samples,) or (n_samples, n_classes)
             Decision function values related to each class, per sample.
             In the two-class case, the shape is [n_samples,], giving the
             log likelihood ratio of the positive class.
@@ -748,11 +746,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : ndarray of shape (n_samples,)
         """
         d = self._decision_function(X)
         y_pred = self.classes_.take(d.argmax(1))
@@ -763,12 +761,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples/test vectors.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior probabilities of classification per class.
         """
         values = self._decision_function(X)
@@ -783,12 +781,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Array of samples/test vectors.
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes]
+        C : ndarray of shape (n_samples, n_classes)
             Posterior log-probabilities of classification per class.
         """
         # XXX : can do better to avoid precision overflows

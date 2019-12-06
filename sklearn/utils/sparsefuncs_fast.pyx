@@ -7,7 +7,7 @@
 # License: BSD 3 clause
 
 #!python
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs, sqrt, pow
 cimport numpy as np
@@ -171,7 +171,6 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
         np.npy_intp i, j
         unsigned long long counts
         unsigned long long startptr
-        unsigned long long endptr
         floating diff
         # means[j] contains the mean of feature j
         np.ndarray[floating, ndim=1] means

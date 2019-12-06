@@ -1,22 +1,36 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import (RandomForestClassifier,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class NaNTagRandomForest(RandomForestClassifier):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
@@ -31,10 +45,10 @@ def test_invalid_input():
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        with pytest.raises(ValueError):
+            model.transform(data)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_input_estimator_unchanged():
     # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
@@ -170,15 +184,13 @@ def test_feature_importances():
         assert hasattr(transformer.estimator_, 'feature_importances_')
 
         X_new = transformer.transform(X)
-        assert_less(X_new.shape[1], X.shape[1])
+        assert X_new.shape[1] < X.shape[1]
         importances = transformer.estimator_.feature_importances_
 
         feature_mask = np.abs(importances) > func(importances)
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
     X, y = datasets.make_classification(
@@ -215,8 +227,6 @@ def test_coef_default_threshold():
     assert_array_almost_equal(X_new, X[:, mask])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
     X, y = datasets.make_classification(
@@ -233,7 +243,7 @@ def test_2d_coef():
             transformer.fit(X, y)
             assert hasattr(transformer.estimator_, 'coef_')
             X_new = transformer.transform(X)
-            assert_less(X_new.shape[1], X.shape[1])
+            assert X_new.shape[1] < X.shape[1]
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
@@ -242,7 +252,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 # 0.23. warning about tol not having its correct default value.
 @pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
@@ -272,7 +281,7 @@ def test_calling_fit_reinitializes():
     transformer.fit(data, y)
     transformer.set_params(estimator__C=100)
     transformer.fit(data, y)
-    assert_equal(transformer.estimator_.C, 100)
+    assert transformer.estimator_.C == 100
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -299,7 +308,8 @@ def test_prefit():
 
     # Check that prefit=True and calling fit raises a ValueError
     model = SelectFromModel(clf, prefit=True)
-    assert_raises(ValueError, model.fit, data, y)
+    with pytest.raises(ValueError):
+        model.fit(data, y)
 
 
 def test_threshold_string():
@@ -327,4 +337,41 @@ def test_threshold_without_refitting():
 
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
-    assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+    assert X_transform.shape[1] > model.transform(data).shape[1]
+
+
+def test_fit_accepts_nan_inf():
+    # Test that fit doesn't check for np.inf and np.nan values.
+    clf = HistGradientBoostingClassifier(random_state=0)
+
+    model = SelectFromModel(estimator=clf)
+
+    nan_data = data.copy()
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.fit(data, y)
+
+
+def test_transform_accepts_nan_inf():
+    # Test that transform doesn't check for np.inf and np.nan values.
+    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    nan_data = data.copy()
+
+    model = SelectFromModel(estimator=clf)
+    model.fit(nan_data, y)
+
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.transform(nan_data)
+
+
+def test_allow_nan_tag_comes_from_estimator():
+    allow_nan_est = NaNTag()
+    model = SelectFromModel(estimator=allow_nan_est)
+    assert model._get_tags()['allow_nan'] is True
+
+    no_nan_est = NoNaNTag()
+    model = SelectFromModel(estimator=no_nan_est)
+    assert model._get_tags()['allow_nan'] is False

@@ -2,7 +2,7 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 #
-# cython: language_level=3, boundscheck=False, wraparound=False
+# cython: boundscheck=False, wraparound=False
 
 cimport cython
 from libcpp.vector cimport vector

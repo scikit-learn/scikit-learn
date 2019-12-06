@@ -15,6 +15,7 @@ build feature vectors from text documents.
 import array
 from collections import defaultdict
 from collections.abc import Mapping
+from functools import partial
 import numbers
 from operator import itemgetter
 import re
@@ -26,11 +27,12 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
-from .hashing import FeatureHasher
-from .stop_words import ENGLISH_STOP_WORDS
+from ._hashing import FeatureHasher
+from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils import _IS_32BIT
+from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
+from ..exceptions import ChangedBehaviorWarning, NotFittedError
 
 
 __all__ = ['HashingVectorizer',
@@ -41,6 +43,72 @@ __all__ = ['HashingVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
            'strip_tags']
+
+
+def _preprocess(doc, accent_function=None, lower=False):
+    """Chain together an optional series of text preprocessing steps to
+    apply to a document.
+
+    Parameters
+    ----------
+    doc: str
+        The string to preprocess
+    accent_function: callable
+        Function for handling accented characters. Common strategies include
+        normalizing and removing.
+    lower: bool
+        Whether to use str.lower to lowercase all fo the text
+
+    Returns
+    -------
+    doc: str
+        preprocessed string
+    """
+    if lower:
+        doc = doc.lower()
+    if accent_function is not None:
+        doc = accent_function(doc)
+    return doc
+
+
+def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
+             preprocessor=None, decoder=None, stop_words=None):
+    """Chain together an optional series of text processing steps to go from
+    a single document to ngrams, with or without tokenizing or preprocessing.
+
+    If analyzer is used, only the decoder argument is used, as the analyzer is
+    intended to replace the preprocessor, tokenizer, and ngrams steps.
+
+    Parameters
+    ----------
+    analyzer: callable
+    tokenizer: callable
+    ngrams: callable
+    preprocessor: callable
+    decoder: callable
+    stop_words: list
+
+    Returns
+    -------
+    ngrams: list
+        A sequence of tokens, possibly with pairs, triples, etc.
+    """
+
+    if decoder is not None:
+        doc = decoder(doc)
+    if analyzer is not None:
+        doc = analyzer(doc)
+    else:
+        if preprocessor is not None:
+            doc = preprocessor(doc)
+        if tokenizer is not None:
+            doc = tokenizer(doc)
+        if ngrams is not None:
+            if stop_words is not None:
+                doc = ngrams(doc, stop_words)
+            else:
+                doc = ngrams(doc)
+    return doc
 
 
 def strip_accents_unicode(s):
@@ -55,16 +123,19 @@ def strip_accents_unicode(s):
     s : string
         The string to strip
 
-    See also
+    See Also
     --------
     strip_accents_ascii
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    normalized = unicodedata.normalize('NFKD', s)
-    if normalized == s:
+    try:
+        # If `s` is ASCII-compatible, then it does not contain any accented
+        # characters and we can avoid an expensive list comprehension
+        s.encode("ASCII", errors="strict")
         return s
-    else:
+    except UnicodeEncodeError:
+        normalized = unicodedata.normalize('NFKD', s)
         return ''.join([c for c in normalized if not unicodedata.combining(c)])
 
 
@@ -79,7 +150,7 @@ def strip_accents_ascii(s):
     s : string
         The string to strip
 
-    See also
+    See Also
     --------
     strip_accents_unicode
         Remove accentuated char for any unicode symbol.
@@ -109,24 +180,29 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     elif stop is None:
         return None
-    else:               # assume it's a collection
+    else:  # assume it's a collection
         return frozenset(stop)
 
 
-class VectorizerMixin:
+class _VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
 
     def decode(self, doc):
-        """Decode the input into a string of unicode symbols
+        """Decode the input into a string of unicode symbols.
 
         The decoding strategy depends on the vectorizer parameters.
 
         Parameters
         ----------
-        doc : string
-            The string to decode
+        doc : str
+            The string to decode.
+
+        Returns
+        -------
+        doc: str
+            A string of unicode symbols.
         """
         if self.input == 'filename':
             with open(doc, 'rb') as fh:
@@ -227,20 +303,19 @@ class VectorizerMixin:
         return ngrams
 
     def build_preprocessor(self):
-        """Return a function to preprocess the text before tokenization"""
+        """Return a function to preprocess the text before tokenization.
+
+        Returns
+        -------
+        preprocessor: callable
+              A function to preprocess the text before tokenization.
+        """
         if self.preprocessor is not None:
             return self.preprocessor
 
-        # unfortunately python functools package does not have an efficient
-        # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the cost of a lambda call is a few
-        # hundreds of nanoseconds which is negligible when compared to the
-        # cost of tokenizing a string of 1000 chars for instance.
-        noop = lambda x: x
-
         # accent stripping
         if not self.strip_accents:
-            strip_accents = noop
+            strip_accents = None
         elif callable(self.strip_accents):
             strip_accents = self.strip_accents
         elif self.strip_accents == 'ascii':
@@ -251,20 +326,31 @@ class VectorizerMixin:
             raise ValueError('Invalid value for "strip_accents": %s' %
                              self.strip_accents)
 
-        if self.lowercase:
-            return lambda x: strip_accents(x.lower())
-        else:
-            return strip_accents
+        return partial(
+            _preprocess, accent_function=strip_accents, lower=self.lowercase
+        )
 
     def build_tokenizer(self):
-        """Return a function that splits a string into a sequence of tokens"""
+        """Return a function that splits a string into a sequence of tokens.
+
+        Returns
+        -------
+        tokenizer: callable
+              A function to split a string into a sequence of tokens.
+        """
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
-        return lambda doc: token_pattern.findall(doc)
+        return token_pattern.findall
 
     def get_stop_words(self):
-        """Build or fetch the effective stop words list"""
+        """Build or fetch the effective stop words list.
+
+        Returns
+        -------
+        stop_words: list or None
+                A list of stop words.
+        """
         return _check_stop_list(self.stop_words)
 
     def _check_stop_words_consistency(self, stop_words, preprocess, tokenize):
@@ -304,27 +390,65 @@ class VectorizerMixin:
             self._stop_words_id = id(self.stop_words)
             return 'error'
 
+    def _validate_custom_analyzer(self):
+        # This is to check if the given custom analyzer expects file or a
+        # filename instead of data.
+        # Behavior changed in v0.21, function could be removed in v0.23
+        import tempfile
+        with tempfile.NamedTemporaryFile() as f:
+            fname = f.name
+        # now we're sure fname doesn't exist
+
+        msg = ("Since v0.21, vectorizers pass the data to the custom analyzer "
+               "and not the file names or the file objects. This warning "
+               "will be removed in v0.23.")
+        try:
+            self.analyzer(fname)
+        except FileNotFoundError:
+            warnings.warn(msg, ChangedBehaviorWarning)
+        except AttributeError as e:
+            if str(e) == "'str' object has no attribute 'read'":
+                warnings.warn(msg, ChangedBehaviorWarning)
+        except Exception:
+            pass
+
     def build_analyzer(self):
-        """Return a callable that handles preprocessing and tokenization"""
+        """Return a callable that handles preprocessing, tokenization
+        and n-grams generation.
+
+        Returns
+        -------
+        analyzer: callable
+            A function to handle preprocessing, tokenization
+            and n-grams generation.
+        """
+
         if callable(self.analyzer):
-            return self.analyzer
+            if self.input in ['file', 'filename']:
+                self._validate_custom_analyzer()
+            return partial(
+                _analyze, analyzer=self.analyzer, decoder=self.decode
+            )
 
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
-            return lambda doc: self._char_ngrams(preprocess(self.decode(doc)))
+            return partial(_analyze, ngrams=self._char_ngrams,
+                           preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
-            return lambda doc: self._char_wb_ngrams(
-                preprocess(self.decode(doc)))
+
+            return partial(_analyze, ngrams=self._char_wb_ngrams,
+                           preprocessor=preprocess, decoder=self.decode)
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
             self._check_stop_words_consistency(stop_words, preprocess,
                                                tokenize)
-            return lambda doc: self._word_ngrams(
-                tokenize(preprocess(self.decode(doc))), stop_words)
+            return partial(_analyze, ngrams=self._word_ngrams,
+                           tokenizer=tokenize, preprocessor=preprocess,
+                           decoder=self.decode, stop_words=stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
@@ -359,9 +483,11 @@ class VectorizerMixin:
             self.fixed_vocabulary_ = False
 
     def _check_vocabulary(self):
-        """Check if vocabulary is empty or missing (not fit-ed)"""
-        msg = "%(name)s - Vocabulary wasn't fitted."
-        check_is_fitted(self, 'vocabulary_', msg=msg),
+        """Check if vocabulary is empty or missing (not fitted)"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+            if not self.fixed_vocabulary_:
+                raise NotFittedError("Vocabulary not fitted or provided")
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -375,8 +501,40 @@ class VectorizerMixin:
                 "lower boundary larger than the upper boundary."
                 % str(self.ngram_range))
 
+    def _warn_for_unused_params(self):
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
+        if self.tokenizer is not None and self.token_pattern is not None:
+            warnings.warn("The parameter 'token_pattern' will not be used"
+                          " since 'tokenizer' is not None'")
+
+        if self.preprocessor is not None and callable(self.analyzer):
+            warnings.warn("The parameter 'preprocessor' will not be used"
+                          " since 'analyzer' is callable'")
+
+        if (self.ngram_range != (1, 1) and self.ngram_range is not None
+                and callable(self.analyzer)):
+            warnings.warn("The parameter 'ngram_range' will not be used"
+                          " since 'analyzer' is callable'")
+        if self.analyzer != 'word' or callable(self.analyzer):
+            if self.stop_words is not None:
+                warnings.warn("The parameter 'stop_words' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.token_pattern is not None and \
+               self.token_pattern != r"(?u)\b\w\w+\b":
+                warnings.warn("The parameter 'token_pattern' will not be used"
+                              " since 'analyzer' != 'word'")
+            if self.tokenizer is not None:
+                warnings.warn("The parameter 'tokenizer' will not be used"
+                              " since 'analyzer' != 'word'")
+
+
+@deprecated("VectorizerMixin is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class VectorizerMixin(_VectorizerMixin):
+    pass
+
+
+class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -426,8 +584,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
@@ -456,6 +614,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -480,7 +639,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
@@ -489,6 +651,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
+
+        .. versionchanged:: 0.21
+
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
 
     n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -527,11 +695,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     >>> print(X.shape)
     (4, 16)
 
-    See also
+    See Also
     --------
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -583,6 +752,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                 "Iterable over raw text documents expected, "
                 "string object received.")
 
+        self._warn_for_unused_params()
         self._validate_params()
 
         self._get_hasher().fit(X, y=y)
@@ -600,7 +770,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         if isinstance(X, str):
@@ -633,7 +803,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
         Returns
         -------
-        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+        X : sparse matrix of shape (n_samples, n_features)
             Document-term matrix.
         """
         return self.fit(X, y).transform(X)
@@ -655,7 +825,7 @@ def _document_frequency(X):
         return np.diff(X.indptr)
 
 
-class CountVectorizer(BaseEstimator, VectorizerMixin):
+class CountVectorizer(_VectorizerMixin, BaseEstimator):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -677,8 +847,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
     encoding : string, 'utf-8' by default.
         If bytes or files are given to analyze, this encoding is used to
@@ -707,6 +877,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     preprocessor : callable or None (default)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default)
         Override the string tokenization step while preserving the
@@ -732,18 +903,28 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n)
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
-        n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        word n-grams or char n-grams to be extracted. All values of n such
+        such that min_n <= n <= max_n will be used. For example an
+        ``ngram_range`` of ``(1, 1)`` means only unigrams, ``(1, 2)`` means
+        unigrams and bigrams, and ``(2, 2)`` means only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     analyzer : string, {'word', 'char', 'char_wb'} or callable
-        Whether the feature should be made of word or character n-grams.
+        Whether the feature should be made of word n-gram or character
+        n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
+
+        .. versionchanged:: 0.21
+
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
@@ -787,6 +968,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: boolean
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     stop_words_ : set
         Terms that were ignored because they either:
 
@@ -809,13 +994,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     >>> X = vectorizer.fit_transform(corpus)
     >>> print(vectorizer.get_feature_names())
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
-    >>> print(X.toarray())  # doctest: +NORMALIZE_WHITESPACE
+    >>> print(X.toarray())
     [[0 1 1 1 0 0 1 0 1]
      [0 2 0 1 0 1 1 0 1]
      [1 0 0 1 1 0 1 1 1]
      [0 1 1 1 0 0 1 0 1]]
+    >>> vectorizer2 = CountVectorizer(analyzer='word', ngram_range=(2, 2))
+    >>> X2 = vectorizer2.fit_transform(corpus)
+    >>> print(vectorizer2.get_feature_names())
+    ['and this', 'document is', 'first document', 'is the', 'is this',
+    'second document', 'the first', 'the second', 'the third', 'third one',
+     'this document', 'this is', 'this the']
+     >>> print(X2.toarray())
+     [[0 0 1 1 0 0 1 0 0 0 0 1 0]
+     [0 1 0 1 0 1 0 1 0 0 1 0 0]
+     [1 0 0 1 0 0 0 0 1 1 0 1 0]
+     [0 0 1 0 1 0 1 0 0 0 0 0 1]]
 
-    See also
+    See Also
     --------
     HashingVectorizer, TfidfVectorizer
 
@@ -888,13 +1084,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(X)
-        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
+            tfs = np.asarray(X.sum(axis=0)).ravel()
             mask_inds = (-tfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
@@ -986,6 +1182,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         self
         """
+        self._warn_for_unused_params()
         self.fit_transform(raw_documents)
         return self
 
@@ -1067,10 +1264,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
-
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
-
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1084,7 +1277,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Parameters
         ----------
-        X : {array, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Document-term matrix.
 
         Returns
         -------
@@ -1110,9 +1304,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 for i in range(n_samples)]
 
     def get_feature_names(self):
-        """Array mapping from feature integer indices to feature name"""
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
+        """Array mapping from feature integer indices to feature name.
+
+        Returns
+        -------
+        feature_names : list
+            A list of feature names.
+        """
 
         self._check_vocabulary()
 
@@ -1128,7 +1326,7 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(BaseEstimator, TransformerMixin):
+class TfidfTransformer(TransformerMixin, BaseEstimator):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1197,6 +1395,31 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.feature_extraction.text import TfidfTransformer
+    >>> from sklearn.feature_extraction.text import CountVectorizer
+    >>> from sklearn.pipeline import Pipeline
+    >>> import numpy as np
+    >>> corpus = ['this is the first document',
+    ...           'this document is the second document',
+    ...           'and this is the third one',
+    ...           'is this the first document']
+    >>> vocabulary = ['this', 'document', 'first', 'is', 'second', 'the',
+    ...               'and', 'one']
+    >>> pipe = Pipeline([('count', CountVectorizer(vocabulary=vocabulary)),
+    ...                  ('tfid', TfidfTransformer())]).fit(corpus)
+    >>> pipe['count'].transform(corpus).toarray()
+    array([[1, 1, 1, 1, 0, 1, 0, 0],
+           [1, 2, 0, 1, 1, 1, 0, 0],
+           [1, 0, 0, 1, 0, 1, 1, 1],
+           [1, 1, 1, 1, 0, 1, 0, 0]])
+    >>> pipe['tfid'].idf_
+    array([1.        , 1.22314355, 1.51082562, 1.        , 1.91629073,
+           1.        , 1.91629073, 1.91629073])
+    >>> pipe.transform(corpus).shape
+    (4, 8)
 
     References
     ----------
@@ -1275,7 +1498,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
+            check_is_fitted(self, msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1317,7 +1540,7 @@ class TfidfVectorizer(CountVectorizer):
 
     Parameters
     ----------
-    input : string {'filename', 'file', 'content'}
+    input : str {'filename', 'file', 'content'}
         If 'filename', the sequence passed as an argument to fit is
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
@@ -1325,10 +1548,10 @@ class TfidfVectorizer(CountVectorizer):
         If 'file', the sequence items must have a 'read' method (file-like
         object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of items that
+        can be of type string or byte.
 
-    encoding : string, 'utf-8' by default.
+    encoding : str, default='utf-8'
         If bytes or files are given to analyze, this encoding is used to
         decode.
 
@@ -1349,19 +1572,20 @@ class TfidfVectorizer(CountVectorizer):
         Both 'ascii' and 'unicode' use NFKD normalization from
         :func:`unicodedata.normalize`.
 
-    lowercase : boolean (default=True)
+    lowercase : bool (default=True)
         Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable or None (default=None)
         Override the preprocessing (string transformation) stage while
         preserving the tokenizing and n-grams generation steps.
+        Only applies if ``analyzer is not callable``.
 
     tokenizer : callable or None (default=None)
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
         Only applies if ``analyzer == 'word'``.
 
-    analyzer : string, {'word', 'char', 'char_wb'} or callable
+    analyzer : str, {'word', 'char', 'char_wb'} or callable
         Whether the feature should be made of word or character n-grams.
         Option 'char_wb' creates character n-grams only from text inside
         word boundaries; n-grams at the edges of words are padded with space.
@@ -1369,7 +1593,13 @@ class TfidfVectorizer(CountVectorizer):
         If a callable is passed it is used to extract the sequence of features
         out of the raw, unprocessed input.
 
-    stop_words : string {'english'}, list, or None (default=None)
+        .. versionchanged:: 0.21
+
+        Since v0.21, if ``input`` is ``filename`` or ``file``, the data is
+        first read from the file and then passed to the given callable
+        analyzer.
+
+    stop_words : str {'english'}, list, or None (default=None)
         If a string, it is passed to _check_stop_list and the appropriate stop
         list is returned. 'english' is currently the only supported string
         value.
@@ -1384,16 +1614,19 @@ class TfidfVectorizer(CountVectorizer):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string
+    token_pattern : str
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    ngram_range : tuple (min_n, max_n) (default=(1, 1))
+    ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
-        will be used.
+        will be used. For example an ``ngram_range`` of ``(1, 1)`` means only
+        unigrams, ``(1, 2)`` means unigrams and bigrams, and ``(2, 2)`` means
+        only bigrams.
+        Only applies if ``analyzer is not callable``.
 
     max_df : float in range [0.0, 1.0] or int (default=1.0)
         When building the vocabulary ignore terms that have a document
@@ -1422,10 +1655,10 @@ class TfidfVectorizer(CountVectorizer):
         indices in the feature matrix, or an iterable over terms. If not
         given, a vocabulary is determined from the input documents.
 
-    binary : boolean (default=False)
+    binary : bool (default=False)
         If True, all non-zero term counts are set to 1. This does not mean
         outputs will have only 0/1 values, only that the tf term in tf-idf
-        is binary. (Set idf and normalization to False to get 0/1 outputs.)
+        is binary. (Set idf and normalization to False to get 0/1 outputs).
 
     dtype : type, optional (default=float64)
         Type of the matrix returned by fit_transform() or transform().
@@ -1436,17 +1669,17 @@ class TfidfVectorizer(CountVectorizer):
         similarity between two vectors is their dot product when l2 norm has
         been applied.
         * 'l1': Sum of absolute values of vector elements is 1.
-        See :func:`preprocessing.normalize`
+        See :func:`preprocessing.normalize`.
 
-    use_idf : boolean (default=True)
+    use_idf : bool (default=True)
         Enable inverse-document-frequency reweighting.
 
-    smooth_idf : boolean (default=True)
+    smooth_idf : bool (default=True)
         Smooth idf weights by adding one to document frequencies, as if an
         extra document was seen containing every term in the collection
         exactly once. Prevents zero divisions.
 
-    sublinear_tf : boolean (default=False)
+    sublinear_tf : bool (default=False)
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
     Attributes
@@ -1454,9 +1687,13 @@ class TfidfVectorizer(CountVectorizer):
     vocabulary_ : dict
         A mapping of terms to feature indices.
 
+    fixed_vocabulary_: bool
+        True if a fixed vocabulary of term to indices mapping
+        is provided by the user
+
     idf_ : array, shape (n_features)
         The inverse document frequency (IDF) vector; only defined
-        if  ``use_idf`` is True.
+        if ``use_idf`` is True.
 
     stop_words_ : set
         Terms that were ignored because they either:
@@ -1466,6 +1703,19 @@ class TfidfVectorizer(CountVectorizer):
           - were cut off by feature selection (`max_features`).
 
         This is only available if no vocabulary was given.
+
+    See Also
+    --------
+    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
+
+    TfidfTransformer : Performs the TF-IDF transformation from a provided
+        matrix of counts.
+
+    Notes
+    -----
+    The ``stop_words_`` attribute can get large and increase the model size
+    when pickling. This attribute is provided only for introspection and can
+    be safely removed using delattr or set to None before pickling.
 
     Examples
     --------
@@ -1482,19 +1732,6 @@ class TfidfVectorizer(CountVectorizer):
     ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
     >>> print(X.shape)
     (4, 9)
-
-    See also
-    --------
-    CountVectorizer : Transforms text into a sparse matrix of n-gram counts.
-
-    TfidfTransformer : Performs the TF-IDF transformation from a provided
-        matrix of counts.
-
-    Notes
-    -----
-    The ``stop_words_`` attribute can get large and increase the model size
-    when pickling. This attribute is provided only for introspection and can
-    be safely removed using delattr or set to None before pickling.
     """
 
     def __init__(self, input='content', encoding='utf-8',
@@ -1581,13 +1818,17 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            an iterable which yields either str, unicode or file objects
+            An iterable which yields either str, unicode or file objects.
+        y : None
+            This parameter is not needed to compute tfidf.
 
         Returns
         -------
-        self : TfidfVectorizer
+        self : object
+            Fitted vectorizer.
         """
         self._check_params()
+        self._warn_for_unused_params()
         X = super().fit_transform(raw_documents)
         self._tfidf.fit(X)
         return self
@@ -1601,7 +1842,9 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            an iterable which yields either str, unicode or file objects
+            An iterable which yields either str, unicode or file objects.
+        y : None
+            This parameter is ignored.
 
         Returns
         -------
@@ -1615,7 +1858,7 @@ class TfidfVectorizer(CountVectorizer):
         # we set copy to False
         return self._tfidf.transform(X, copy=False)
 
-    def transform(self, raw_documents, copy=True):
+    def transform(self, raw_documents, copy="deprecated"):
         """Transform documents to document-term matrix.
 
         Uses the vocabulary and document frequencies (df) learned by fit (or
@@ -1624,19 +1867,30 @@ class TfidfVectorizer(CountVectorizer):
         Parameters
         ----------
         raw_documents : iterable
-            an iterable which yields either str, unicode or file objects
+            An iterable which yields either str, unicode or file objects.
 
-        copy : boolean, default True
+        copy : bool, default True
             Whether to copy X and operate on the copy or perform in-place
             operations.
+
+            .. deprecated:: 0.22
+               The `copy` parameter is unused and was deprecated in version
+               0.22 and will be removed in 0.24. This parameter will be
+               ignored.
 
         Returns
         -------
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
+        check_is_fitted(self, msg='The tfidf vector is not fitted')
 
+        # FIXME Remove copy parameter support in 0.24
+        if copy != "deprecated":
+            msg = ("'copy' param is unused and has been deprecated since "
+                   "version 0.22. Backward compatibility for 'copy' will "
+                   "be removed in 0.24.")
+            warnings.warn(msg, FutureWarning)
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
 

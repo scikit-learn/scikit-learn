@@ -46,8 +46,7 @@ n_neighbors = 3
 random_state = 0
 
 # Load Digits dataset
-digits = datasets.load_digits()
-X, y = digits.data, digits.target
+X, y = datasets.load_digits(return_X_y=True)
 
 # Split into train/test
 X_train, X_test, y_train, y_test = \

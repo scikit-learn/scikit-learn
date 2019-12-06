@@ -11,29 +11,27 @@ import numpy as np
 from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
-from sklearn.datasets.samples_generator import make_spd_matrix
+from sklearn.datasets import make_spd_matrix
 from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.mixture.gaussian_mixture import GaussianMixture
-from sklearn.mixture.gaussian_mixture import (
+from sklearn.mixture import GaussianMixture
+from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_full,
     _estimate_gaussian_covariances_tied,
     _estimate_gaussian_covariances_diag,
-    _estimate_gaussian_covariances_spherical)
-from sklearn.mixture.gaussian_mixture import _compute_precision_cholesky
-from sklearn.mixture.gaussian_mixture import _compute_log_det_cholesky
+    _estimate_gaussian_covariances_spherical,
+    _compute_precision_cholesky,
+    _compute_log_det_cholesky,
+    )
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
@@ -69,7 +67,7 @@ def generate_data(n_samples, n_features, weights, means, precisions,
 
 
 class RandomData:
-    def __init__(self, rng, n_samples=500, n_components=2, n_features=2,
+    def __init__(self, rng, n_samples=200, n_components=2, n_features=2,
                  scale=50):
         self.n_samples = n_samples
         self.n_components = n_components
@@ -165,17 +163,17 @@ def test_gaussian_mixture_attributes():
                           covariance_type=covariance_type,
                           init_params=init_params).fit(X)
 
-    assert_equal(gmm.n_components, n_components)
-    assert_equal(gmm.covariance_type, covariance_type)
-    assert_equal(gmm.tol, tol)
-    assert_equal(gmm.reg_covar, reg_covar)
-    assert_equal(gmm.max_iter, max_iter)
-    assert_equal(gmm.n_init, n_init)
-    assert_equal(gmm.init_params, init_params)
+    assert gmm.n_components == n_components
+    assert gmm.covariance_type == covariance_type
+    assert gmm.tol == tol
+    assert gmm.reg_covar == reg_covar
+    assert gmm.max_iter == max_iter
+    assert gmm.n_init == n_init
+    assert gmm.init_params == init_params
 
 
 def test_check_X():
-    from sklearn.mixture.base import _check_X
+    from sklearn.mixture._base import _check_X
     rng = np.random.RandomState(0)
 
     n_samples, n_components, n_features = 10, 2, 2
@@ -472,7 +470,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 
 
 def test_gaussian_mixture_log_probabilities():
-    from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
+    from sklearn.mixture._gaussian_mixture import _estimate_log_gaussian_prob
 
     # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
@@ -561,13 +559,13 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_raise_message(NotFittedError,
                              "This GaussianMixture instance is not fitted "
                              "yet. Call 'fit' with appropriate arguments "
-                             "before using this method.", g.predict, X)
+                             "before using this estimator.", g.predict, X)
 
         g.fit(X)
         Y_pred = g.predict(X)
         Y_pred_proba = g.predict_proba(X).argmax(axis=1)
         assert_array_equal(Y_pred, Y_pred_proba)
-        assert_greater(adjusted_rand_score(Y, Y_pred), .95)
+        assert adjusted_rand_score(Y, Y_pred) > .95
 
 
 @pytest.mark.filterwarnings("ignore:.*did not converge.*")
@@ -595,7 +593,7 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         Y_pred1 = f.fit(X).predict(X)
         Y_pred2 = g.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
-        assert_greater(adjusted_rand_score(Y, Y_pred2), .95)
+        assert adjusted_rand_score(Y, Y_pred2) > .95
 
 
 def test_gaussian_mixture_fit_predict_n_init():
@@ -652,7 +650,7 @@ def test_gaussian_mixture_fit():
             ecov = EmpiricalCovariance()
             ecov.covariance_ = prec_test[h]
             # the accuracy depends on the number of data and randomness, rng
-            assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.1)
+            assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
 
 def test_gaussian_mixture_fit_best_params():
@@ -706,7 +704,7 @@ def test_multiple_init():
         train2 = GaussianMixture(n_components=n_components,
                                  covariance_type=cv_type,
                                  random_state=0, n_init=5).fit(X).score(X)
-        assert_greater_equal(train2, train1)
+        assert train2 >= train1
 
 
 def test_gaussian_mixture_n_parameters():
@@ -719,7 +717,7 @@ def test_gaussian_mixture_n_parameters():
         g = GaussianMixture(
             n_components=n_components, covariance_type=cv_type,
             random_state=rng).fit(X)
-        assert_equal(g._n_parameters(), n_params[cv_type])
+        assert g._n_parameters() == n_params[cv_type]
 
 
 def test_bic_1d_1component():
@@ -860,7 +858,7 @@ def test_score():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm1.score, X)
+                         "before using this estimator.", gmm1.score, X)
 
     # Check score value
     with warnings.catch_warnings():
@@ -874,7 +872,7 @@ def test_score():
     gmm2 = GaussianMixture(n_components=n_components, n_init=1, reg_covar=0,
                            random_state=rng,
                            covariance_type=covar_type).fit(X)
-    assert_greater(gmm2.score(X), gmm1.score(X))
+    assert gmm2.score(X) > gmm1.score(X)
 
 
 def test_score_samples():
@@ -890,10 +888,10 @@ def test_score_samples():
     assert_raise_message(NotFittedError,
                          "This GaussianMixture instance is not fitted "
                          "yet. Call 'fit' with appropriate arguments "
-                         "before using this method.", gmm.score_samples, X)
+                         "before using this estimator.", gmm.score_samples, X)
 
     gmm_score_samples = gmm.fit(X).score_samples(X)
-    assert_equal(gmm_score_samples.shape[0], rand_data.n_samples)
+    assert gmm_score_samples.shape[0] == rand_data.n_samples
 
 
 def test_monotonic_likelihood():
@@ -920,7 +918,7 @@ def test_monotonic_likelihood():
                     current_log_likelihood = gmm.fit(X).score(X)
                 except ConvergenceWarning:
                     pass
-                assert_greater_equal(current_log_likelihood,
+                assert (current_log_likelihood >=
                                      prev_log_likelihood)
 
                 if gmm.converged_:
@@ -1021,18 +1019,19 @@ def test_sample():
 
         # Check shapes of sampled data, see
         # https://github.com/scikit-learn/scikit-learn/issues/7701
-        assert_equal(X_s.shape, (n_samples, n_features))
+        assert X_s.shape == (n_samples, n_features)
 
         for sample_size in range(1, 100):
             X_s, _ = gmm.sample(sample_size)
-            assert_equal(X_s.shape, (sample_size, n_features))
+            assert X_s.shape == (sample_size, n_features)
 
 
 @ignore_warnings(category=ConvergenceWarning)
 def test_init():
     # We check that by increasing the n_init number we have a better solution
-    for random_state in range(25):
-        rand_data = RandomData(np.random.RandomState(random_state), scale=1)
+    for random_state in range(15):
+        rand_data = RandomData(np.random.RandomState(random_state),
+                               n_samples=50, scale=1)
         n_components = rand_data.n_components
         X = rand_data.X['full']
 

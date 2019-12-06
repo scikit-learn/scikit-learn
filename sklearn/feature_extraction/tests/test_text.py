@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -29,12 +30,11 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import (assert_equal, assert_not_equal,
-                                   assert_almost_equal, assert_in,
-                                   assert_less, assert_greater,
+from sklearn.exceptions import ChangedBehaviorWarning
+from sklearn.utils._testing import (assert_almost_equal,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, ignore_warnings,
-                                   SkipTest, assert_raises, assert_no_warnings,
+                                   clean_warning_registry,
+                                   SkipTest, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
 from collections import defaultdict
@@ -82,42 +82,57 @@ def test_strip_accents():
     # check some classical latin accentuated symbols
     a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
-    assert_equal(strip_accents_unicode(a), expected)
+    assert strip_accents_unicode(a) == expected
 
     a = 'ìíîïñòóôõöùúûüý'
     expected = 'iiiinooooouuuuy'
-    assert_equal(strip_accents_unicode(a), expected)
+    assert strip_accents_unicode(a) == expected
 
     # check some arabic
     a = '\u0625'  # alef with a hamza below: إ
     expected = '\u0627'  # simple alef: ا
-    assert_equal(strip_accents_unicode(a), expected)
+    assert strip_accents_unicode(a) == expected
 
     # mix letters accentuated and not
     a = "this is à test"
     expected = 'this is a test'
-    assert_equal(strip_accents_unicode(a), expected)
+    assert strip_accents_unicode(a) == expected
+
+    # strings that are already decomposed
+    a = "o\u0308"  # o with diaresis
+    expected = "o"
+    assert strip_accents_unicode(a) == expected
+
+    # combining marks by themselves
+    a = "\u0300\u0301\u0302\u0303"
+    expected = ""
+    assert strip_accents_unicode(a) == expected
+
+    # Multiple combining marks on one character
+    a = "o\u0308\u0304"
+    expected = "o"
+    assert strip_accents_unicode(a) == expected
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
     a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
-    assert_equal(strip_accents_ascii(a), expected)
+    assert strip_accents_ascii(a) == expected
 
     a = "ìíîïñòóôõöùúûüý"
     expected = 'iiiinooooouuuuy'
-    assert_equal(strip_accents_ascii(a), expected)
+    assert strip_accents_ascii(a) == expected
 
     # check some arabic
     a = '\u0625'  # halef with a hamza below
     expected = ''  # halef has no direct ascii match
-    assert_equal(strip_accents_ascii(a), expected)
+    assert strip_accents_ascii(a) == expected
 
     # mix letters accentuated and not
     a = "this is à test"
     expected = 'this is a test'
-    assert_equal(strip_accents_ascii(a), expected)
+    assert strip_accents_ascii(a) == expected
 
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
@@ -127,18 +142,18 @@ def test_word_analyzer_unigrams(Vectorizer):
             "c'était pas très bon.")
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
     text = "This is a test, really.\n\n I met Harry yesterday."
     expected = ['this', 'is', 'test', 'really', 'met', 'harry',
                 'yesterday']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
     wa = Vectorizer(input='file').build_analyzer()
     text = StringIO("This is a test with a file-like object!")
     expected = ['this', 'is', 'test', 'with', 'file', 'like',
                 'object']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
@@ -146,7 +161,7 @@ def test_word_analyzer_unigrams(Vectorizer):
             " c'était pas très bon.")
     expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
                 'ETAIT', 'PAS', 'TRES', 'BON']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize,
@@ -155,7 +170,7 @@ def test_word_analyzer_unigrams(Vectorizer):
             "c'était pas très bon.")
     expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
                 "c'etait", 'pas', 'tres', 'bon.']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
 
 def test_word_analyzer_unigrams_and_bigrams():
@@ -167,7 +182,7 @@ def test_word_analyzer_unigrams_and_bigrams():
                 'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
                 'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
                 'etait pas', 'pas tres', 'tres bon']
-    assert_equal(wa(text), expected)
+    assert wa(text) == expected
 
 
 def test_unicode_decode_error():
@@ -179,11 +194,13 @@ def test_unicode_decode_error():
     # Then let the Analyzer try to decode it as ascii. It should fail,
     # because we have given it an incorrect encoding.
     wa = CountVectorizer(ngram_range=(1, 2), encoding='ascii').build_analyzer()
-    assert_raises(UnicodeDecodeError, wa, text_bytes)
+    with pytest.raises(UnicodeDecodeError):
+        wa(text_bytes)
 
     ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
                          encoding='ascii').build_analyzer()
-    assert_raises(UnicodeDecodeError, ca, text_bytes)
+    with pytest.raises(UnicodeDecodeError):
+        ca(text_bytes)
 
 
 def test_char_ngram_analyzer():
@@ -192,22 +209,22 @@ def test_char_ngram_analyzer():
 
     text = "J'ai mangé du kangourou  ce midi, c'était pas très bon"
     expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
-    assert_equal(cnga(text)[:5], expected)
+    assert cnga(text)[:5] == expected
     expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
-    assert_equal(cnga(text)[-5:], expected)
+    assert cnga(text)[-5:] == expected
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = ['thi', 'his', 'is ', 's i', ' is']
-    assert_equal(cnga(text)[:5], expected)
+    assert cnga(text)[:5] == expected
 
     expected = [' yeste', 'yester', 'esterd', 'sterda', 'terday']
-    assert_equal(cnga(text)[-5:], expected)
+    assert cnga(text)[-5:] == expected
 
     cnga = CountVectorizer(input='file', analyzer='char',
                            ngram_range=(3, 6)).build_analyzer()
     text = StringIO("This is a test with a file-like object!")
     expected = ['thi', 'his', 'is ', 's i', ' is']
-    assert_equal(cnga(text)[:5], expected)
+    assert cnga(text)[:5] == expected
 
 
 def test_char_wb_ngram_analyzer():
@@ -216,16 +233,16 @@ def test_char_wb_ngram_analyzer():
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = [' th', 'thi', 'his', 'is ', ' thi']
-    assert_equal(cnga(text)[:5], expected)
+    assert cnga(text)[:5] == expected
 
     expected = ['yester', 'esterd', 'sterda', 'terday', 'erday ']
-    assert_equal(cnga(text)[-5:], expected)
+    assert cnga(text)[-5:] == expected
 
     cnga = CountVectorizer(input='file', analyzer='char_wb',
                            ngram_range=(3, 6)).build_analyzer()
     text = StringIO("A test with a file-like object!")
     expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
-    assert_equal(cnga(text)[:6], expected)
+    assert cnga(text)[:6] == expected
 
 
 def test_word_ngram_analyzer():
@@ -234,17 +251,17 @@ def test_word_ngram_analyzer():
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = ['this is test', 'is test really', 'test really met']
-    assert_equal(cnga(text)[:3], expected)
+    assert cnga(text)[:3] == expected
 
     expected = ['test really met harry yesterday',
                 'this is test really met harry',
                 'is test really met harry yesterday']
-    assert_equal(cnga(text)[-3:], expected)
+    assert cnga(text)[-3:] == expected
 
     cnga_file = CountVectorizer(input='file', analyzer='word',
                                 ngram_range=(3, 6)).build_analyzer()
     file = StringIO(text)
-    assert_equal(cnga_file(file), cnga(text))
+    assert cnga_file(file) == cnga(text)
 
 
 def test_countvectorizer_custom_vocabulary():
@@ -257,11 +274,15 @@ def test_countvectorizer_custom_vocabulary():
         vect = CountVectorizer(vocabulary=v)
         vect.fit(JUNK_FOOD_DOCS)
         if isinstance(v, Mapping):
-            assert_equal(vect.vocabulary_, vocab)
+            assert vect.vocabulary_ == vocab
         else:
-            assert_equal(set(vect.vocabulary_), terms)
+            assert set(vect.vocabulary_) == terms
         X = vect.transform(JUNK_FOOD_DOCS)
-        assert_equal(X.shape[1], len(terms))
+        assert X.shape[1] == len(terms)
+        v = typ(vocab)
+        vect = CountVectorizer(vocabulary=v)
+        inv = vect.inverse_transform(X)
+        assert len(inv) == X.shape[0]
 
 
 def test_countvectorizer_custom_vocabulary_pipeline():
@@ -270,9 +291,9 @@ def test_countvectorizer_custom_vocabulary_pipeline():
         ('count', CountVectorizer(vocabulary=what_we_like)),
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
-    assert_equal(set(pipe.named_steps['count'].vocabulary_),
-                 set(what_we_like))
-    assert_equal(X.shape[1], len(what_we_like))
+    assert (set(pipe.named_steps['count'].vocabulary_) ==
+            set(what_we_like))
+    assert X.shape[1] == len(what_we_like)
 
 
 def test_countvectorizer_custom_vocabulary_repeated_indices():
@@ -280,7 +301,7 @@ def test_countvectorizer_custom_vocabulary_repeated_indices():
     try:
         CountVectorizer(vocabulary=vocab)
     except ValueError as e:
-        assert_in("vocabulary contains repeated indices", str(e).lower())
+        assert "vocabulary contains repeated indices" in str(e).lower()
 
 
 def test_countvectorizer_custom_vocabulary_gap_index():
@@ -288,20 +309,22 @@ def test_countvectorizer_custom_vocabulary_gap_index():
     try:
         CountVectorizer(vocabulary=vocab)
     except ValueError as e:
-        assert_in("doesn't contain index", str(e).lower())
+        assert "doesn't contain index" in str(e).lower()
 
 
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')
-    assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    assert cv.get_stop_words() == ENGLISH_STOP_WORDS
     cv.set_params(stop_words='_bad_str_stop_')
-    assert_raises(ValueError, cv.get_stop_words)
+    with pytest.raises(ValueError):
+        cv.get_stop_words()
     cv.set_params(stop_words='_bad_unicode_stop_')
-    assert_raises(ValueError, cv.get_stop_words)
+    with pytest.raises(ValueError):
+        cv.get_stop_words()
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
-    assert_equal(cv.get_stop_words(), set(stoplist))
+    assert cv.get_stop_words() == set(stoplist)
 
 
 def test_countvectorizer_empty_vocabulary():
@@ -310,7 +333,7 @@ def test_countvectorizer_empty_vocabulary():
         vect.fit(["foo"])
         assert False, "we shouldn't get here"
     except ValueError as e:
-        assert_in("empty vocabulary", str(e).lower())
+        assert "empty vocabulary" in str(e).lower()
 
     try:
         v = CountVectorizer(max_df=1.0, stop_words="english")
@@ -318,14 +341,14 @@ def test_countvectorizer_empty_vocabulary():
         v.fit(["to be or not to be", "and me too", "and so do you"])
         assert False, "we shouldn't get here"
     except ValueError as e:
-        assert_in("empty vocabulary", str(e).lower())
+        assert "empty vocabulary" in str(e).lower()
 
 
 def test_fit_countvectorizer_twice():
     cv = CountVectorizer()
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
     X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
-    assert_not_equal(X1.shape[1], X2.shape[1])
+    assert X1.shape[1] != X2.shape[1]
 
 
 def test_tf_idf_smoothing():
@@ -382,11 +405,11 @@ def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
     tfidf = tr.fit_transform(X).toarray()
-    assert_equal(tfidf[0], 1)
-    assert_greater(tfidf[1], tfidf[0])
-    assert_greater(tfidf[2], tfidf[1])
-    assert_less(tfidf[1], 2)
-    assert_less(tfidf[2], 3)
+    assert tfidf[0] == 1
+    assert tfidf[1] > tfidf[0]
+    assert tfidf[2] > tfidf[1]
+    assert tfidf[1] < 2
+    assert tfidf[2] < 3
 
 
 def test_vectorizer():
@@ -400,7 +423,7 @@ def test_vectorizer():
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
-    assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
+    assert counts_train[0, v1.vocabulary_["pizza"]] == 2
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
     v2 = CountVectorizer(vocabulary=v1.vocabulary_)
@@ -412,9 +435,9 @@ def test_vectorizer():
             counts_test = counts_test.tocsr()
 
         vocabulary = v.vocabulary_
-        assert_equal(counts_test[0, vocabulary["salad"]], 1)
-        assert_equal(counts_test[0, vocabulary["tomato"]], 1)
-        assert_equal(counts_test[0, vocabulary["water"]], 1)
+        assert counts_test[0, vocabulary["salad"]] == 1
+        assert counts_test[0, vocabulary["tomato"]] == 1
+        assert counts_test[0, vocabulary["water"]] == 1
 
         # stop word from the fixed list
         assert "the" not in vocabulary
@@ -426,20 +449,20 @@ def test_vectorizer():
         assert "copyright" not in vocabulary
 
         # not present in the sample
-        assert_equal(counts_test[0, vocabulary["coke"]], 0)
-        assert_equal(counts_test[0, vocabulary["burger"]], 0)
-        assert_equal(counts_test[0, vocabulary["beer"]], 0)
-        assert_equal(counts_test[0, vocabulary["pizza"]], 0)
+        assert counts_test[0, vocabulary["coke"]] == 0
+        assert counts_test[0, vocabulary["burger"]] == 0
+        assert counts_test[0, vocabulary["beer"]] == 0
+        assert counts_test[0, vocabulary["pizza"]] == 0
 
     # test tf-idf
     t1 = TfidfTransformer(norm='l1')
     tfidf = t1.fit(counts_train).transform(counts_train).toarray()
-    assert_equal(len(t1.idf_), len(v1.vocabulary_))
-    assert_equal(tfidf.shape, (n_train, len(v1.vocabulary_)))
+    assert len(t1.idf_) == len(v1.vocabulary_)
+    assert tfidf.shape == (n_train, len(v1.vocabulary_))
 
     # test tf-idf with new data
     tfidf_test = t1.transform(counts_test).toarray()
-    assert_equal(tfidf_test.shape, (len(test_data), len(v1.vocabulary_)))
+    assert tfidf_test.shape == (len(test_data), len(v1.vocabulary_))
 
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
@@ -448,7 +471,8 @@ def test_vectorizer():
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
-    assert_raises(ValueError, t3.transform, counts_train)
+    with pytest.raises(ValueError):
+        t3.transform(counts_train)
 
     # test idf transform with incompatible n_features
     X = [[1, 1, 5],
@@ -456,7 +480,8 @@ def test_vectorizer():
     t3.fit(X)
     X_incompt = [[1, 3],
                  [1, 3]]
-    assert_raises(ValueError, t3.transform, X_incompt)
+    with pytest.raises(ValueError):
+        t3.transform(X_incompt)
 
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
@@ -477,26 +502,34 @@ def test_vectorizer():
 
     # test transform on unfitted vectorizer with empty vocabulary
     v3 = CountVectorizer(vocabulary=None)
-    assert_raises(ValueError, v3.transform, train_data)
+    with pytest.raises(ValueError):
+        v3.transform(train_data)
 
     # ascii preprocessor?
     v3.set_params(strip_accents='ascii', lowercase=False)
-    assert_equal(v3.build_preprocessor(), strip_accents_ascii)
+    processor = v3.build_preprocessor()
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    expected = strip_accents_ascii(text)
+    result = processor(text)
+    assert expected == result
 
     # error on bad strip_accents param
     v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
-    assert_raises(ValueError, v3.build_preprocessor)
+    with pytest.raises(ValueError):
+        v3.build_preprocessor()
 
     # error with bad analyzer type
     v3.set_params = '_invalid_analyzer_type_'
-    assert_raises(ValueError, v3.build_analyzer)
+    with pytest.raises(ValueError):
+        v3.build_analyzer()
 
 
 def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
                          sublinear_tf=False)
     tv.norm = 'l1'
-    assert_equal(tv._tfidf.norm, 'l1')
+    assert tv._tfidf.norm == 'l1'
     tv.use_idf = True
     assert tv._tfidf.use_idf
     tv.smooth_idf = True
@@ -505,13 +538,25 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.sublinear_tf
 
 
+# FIXME Remove copy parameter support in 0.24
+def test_tfidf_vectorizer_deprecationwarning():
+    msg = ("'copy' param is unused and has been deprecated since "
+           "version 0.22. Backward compatibility for 'copy' will "
+           "be removed in 0.24.")
+    with pytest.warns(FutureWarning, match=msg):
+        tv = TfidfVectorizer()
+        train_data = JUNK_FOOD_DOCS
+        tv.fit(train_data)
+        tv.transform(train_data, copy=True)
+
+
 @fails_if_pypy
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
     token_nnz = X.nnz
-    assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
-    assert_equal(X.dtype, v.dtype)
+    assert X.shape == (len(ALL_FOOD_DOCS), v.n_features)
+    assert X.dtype == v.dtype
 
     # By default the hashed values receive a random sign and l2 normalization
     # makes the feature values bounded
@@ -527,8 +572,8 @@ def test_hashing_vectorizer():
     # Check vectorization with some non-default parameters
     v = HashingVectorizer(ngram_range=(1, 2), norm='l1')
     X = v.transform(ALL_FOOD_DOCS)
-    assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
-    assert_equal(X.dtype, v.dtype)
+    assert X.shape == (len(ALL_FOOD_DOCS), v.n_features)
+    assert X.dtype == v.dtype
 
     # ngrams generate more non zeros
     ngrams_nnz = X.nnz
@@ -548,22 +593,23 @@ def test_feature_names():
     cv = CountVectorizer(max_df=0.5)
 
     # test for Value error on unfitted/empty vocabulary
-    assert_raises(ValueError, cv.get_feature_names)
+    with pytest.raises(ValueError):
+        cv.get_feature_names()
     assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
     X = cv.fit_transform(ALL_FOOD_DOCS)
     n_samples, n_features = X.shape
-    assert_equal(len(cv.vocabulary_), n_features)
+    assert len(cv.vocabulary_) == n_features
 
     feature_names = cv.get_feature_names()
-    assert_equal(len(feature_names), n_features)
+    assert len(feature_names) == n_features
     assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
                         'salad', 'sparkling', 'tomato', 'water'],
                        feature_names)
 
     for idx, name in enumerate(feature_names):
-        assert_equal(idx, cv.vocabulary_.get(name))
+        assert idx == cv.vocabulary_.get(name)
 
     # test for custom vocabulary
     vocab = ['beer', 'burger', 'celeri', 'coke', 'pizza',
@@ -576,7 +622,7 @@ def test_feature_names():
     assert cv.fixed_vocabulary_
 
     for idx, name in enumerate(feature_names):
-        assert_equal(idx, cv.vocabulary_.get(name))
+        assert idx == cv.vocabulary_.get(name)
 
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
@@ -588,8 +634,8 @@ def test_vectorizer_max_features(Vectorizer):
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
     vectorizer.fit(ALL_FOOD_DOCS)
-    assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
-    assert_equal(vectorizer.stop_words_, expected_stop_words)
+    assert set(vectorizer.vocabulary_) == expected_vocabulary
+    assert vectorizer.stop_words_ == expected_stop_words
 
 
 def test_count_vectorizer_max_features():
@@ -608,14 +654,14 @@ def test_count_vectorizer_max_features():
     features_None = cv_None.get_feature_names()
 
     # The most common feature is "the", with frequency 7.
-    assert_equal(7, counts_1.max())
-    assert_equal(7, counts_3.max())
-    assert_equal(7, counts_None.max())
+    assert 7 == counts_1.max()
+    assert 7 == counts_3.max()
+    assert 7 == counts_None.max()
 
     # The most common feature should be the same
-    assert_equal("the", features_1[np.argmax(counts_1)])
-    assert_equal("the", features_3[np.argmax(counts_3)])
-    assert_equal("the", features_None[np.argmax(counts_None)])
+    assert "the" == features_1[np.argmax(counts_1)]
+    assert "the" == features_3[np.argmax(counts_3)]
+    assert "the" == features_None[np.argmax(counts_None)]
 
 
 def test_vectorizer_max_df():
@@ -623,22 +669,22 @@ def test_vectorizer_max_df():
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
     assert 'a' in vect.vocabulary_.keys()
-    assert_equal(len(vect.vocabulary_.keys()), 6)
-    assert_equal(len(vect.stop_words_), 0)
+    assert len(vect.vocabulary_.keys()) == 6
+    assert len(vect.stop_words_) == 0
 
     vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
     assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
+    assert len(vect.vocabulary_.keys()) == 4    # {bcdt} remain
     assert 'a' in vect.stop_words_
-    assert_equal(len(vect.stop_words_), 2)
+    assert len(vect.stop_words_) == 2
 
     vect.max_df = 1
     vect.fit(test_data)
     assert 'a' not in vect.vocabulary_.keys()  # {ae} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
+    assert len(vect.vocabulary_.keys()) == 4    # {bcdt} remain
     assert 'a' in vect.stop_words_
-    assert_equal(len(vect.stop_words_), 2)
+    assert len(vect.stop_words_) == 2
 
 
 def test_vectorizer_min_df():
@@ -646,22 +692,22 @@ def test_vectorizer_min_df():
     vect = CountVectorizer(analyzer='char', min_df=1)
     vect.fit(test_data)
     assert 'a' in vect.vocabulary_.keys()
-    assert_equal(len(vect.vocabulary_.keys()), 6)
-    assert_equal(len(vect.stop_words_), 0)
+    assert len(vect.vocabulary_.keys()) == 6
+    assert len(vect.stop_words_) == 0
 
     vect.min_df = 2
     vect.fit(test_data)
     assert 'c' not in vect.vocabulary_.keys()  # {bcdt} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
+    assert len(vect.vocabulary_.keys()) == 2    # {ae} remain
     assert 'c' in vect.stop_words_
-    assert_equal(len(vect.stop_words_), 4)
+    assert len(vect.stop_words_) == 4
 
     vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
     assert 'c' not in vect.vocabulary_.keys()  # {bcdet} ignored
-    assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
+    assert len(vect.vocabulary_.keys()) == 1    # {a} remains
     assert 'c' in vect.stop_words_
-    assert_equal(len(vect.stop_words_), 5)
+    assert len(vect.stop_words_) == 5
 
 
 def test_count_binary_occurrences():
@@ -684,7 +730,7 @@ def test_count_binary_occurrences():
     vect = CountVectorizer(analyzer='char', max_df=1.0,
                            binary=True, dtype=np.float32)
     X_sparse = vect.fit_transform(test_data)
-    assert_equal(X_sparse.dtype, np.float32)
+    assert X_sparse.dtype == np.float32
 
 
 @fails_if_pypy
@@ -693,23 +739,23 @@ def test_hashed_binary_occurrences():
     test_data = ['aaabc', 'abbde']
     vect = HashingVectorizer(alternate_sign=False, analyzer='char', norm=None)
     X = vect.transform(test_data)
-    assert_equal(np.max(X[0:1].data), 3)
-    assert_equal(np.max(X[1:2].data), 2)
-    assert_equal(X.dtype, np.float64)
+    assert np.max(X[0:1].data) == 3
+    assert np.max(X[1:2].data) == 2
+    assert X.dtype == np.float64
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
     vect = HashingVectorizer(analyzer='char', alternate_sign=False,
                              binary=True, norm=None)
     X = vect.transform(test_data)
-    assert_equal(np.max(X.data), 1)
-    assert_equal(X.dtype, np.float64)
+    assert np.max(X.data) == 1
+    assert X.dtype == np.float64
 
     # check the ability to change the dtype
     vect = HashingVectorizer(analyzer='char', alternate_sign=False,
                              binary=True, norm=None, dtype=np.float64)
     X = vect.transform(test_data)
-    assert_equal(X.dtype, np.float64)
+    assert X.dtype == np.float64
 
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
@@ -732,8 +778,6 @@ def test_vectorizer_inverse_transform(Vectorizer):
         assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -755,7 +799,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=1, cv=3)
 
     # Check that the best model found by grid search is 100% correct on the
     # held out evaluation set.
@@ -765,13 +809,11 @@ def test_count_vectorizer_pipeline_grid_selection():
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
-    assert_equal(grid_search.best_score_, 1.0)
+    assert grid_search.best_score_ == 1.0
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
-    assert_equal(best_vectorizer.ngram_range, (1, 1))
+    assert best_vectorizer.ngram_range == (1, 1)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -804,10 +846,10 @@ def test_vectorizer_pipeline_grid_selection():
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
     # to 100% accuracy models
-    assert_equal(grid_search.best_score_, 1.0)
+    assert grid_search.best_score_ == 1.0
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
-    assert_equal(best_vectorizer.ngram_range, (1, 1))
-    assert_equal(best_vectorizer.norm, 'l2')
+    assert best_vectorizer.ngram_range == (1, 1)
+    assert best_vectorizer.norm == 'l2'
     assert not best_vectorizer.fixed_vocabulary_
 
 
@@ -836,14 +878,14 @@ def test_vectorizer_unicode():
 
     vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
-    assert_equal(X_counted.shape, (1, 12))
+    assert X_counted.shape == (1, 12)
 
     vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
-    assert_equal(X_hashed.shape, (1, 2 ** 20))
+    assert X_hashed.shape == (1, 2 ** 20)
 
     # No collisions on such a small dataset
-    assert_equal(X_counted.nnz, X_hashed.nnz)
+    assert X_counted.nnz == X_hashed.nnz
 
     # When norm is None and not alternate_sign, the tokens are counted up to
     # collisions
@@ -879,14 +921,33 @@ def test_pickling_vectorizer():
     for orig in instances:
         s = pickle.dumps(orig)
         copy = pickle.loads(s)
-        assert_equal(type(copy), orig.__class__)
-        assert_equal(copy.get_params(), orig.get_params())
+        assert type(copy) == orig.__class__
+        assert copy.get_params() == orig.get_params()
         if IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
             assert_array_equal(
                 copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
                 orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+
+
+@pytest.mark.parametrize('factory', [
+    CountVectorizer.build_analyzer,
+    CountVectorizer.build_preprocessor,
+    CountVectorizer.build_tokenizer,
+])
+def test_pickling_built_processors(factory):
+    """Tokenizers cannot be pickled
+    https://github.com/scikit-learn/scikit-learn/issues/12833
+    """
+    vec = CountVectorizer()
+    function = factory(vec)
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
+    roundtripped_function = pickle.loads(pickle.dumps(function))
+    expected = function(text)
+    result = roundtripped_function(text)
+    assert result == expected
 
 
 def test_countvectorizer_vocab_sets_when_pickling():
@@ -901,7 +962,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
 
 
 def test_countvectorizer_vocab_dicts_when_pickling():
@@ -917,7 +978,7 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
 
 
 def test_stop_words_removal():
@@ -947,7 +1008,7 @@ def test_pickling_transformer():
     orig = TfidfTransformer().fit(X)
     s = pickle.dumps(orig)
     copy = pickle.loads(s)
-    assert_equal(type(copy), orig.__class__)
+    assert type(copy) == orig.__class__
     assert_array_equal(
         copy.fit_transform(X).toarray(),
         orig.fit_transform(X).toarray())
@@ -979,13 +1040,15 @@ def test_tfidfvectorizer_invalid_idf_attr():
     copy = TfidfVectorizer(vocabulary=vect.vocabulary_, use_idf=True)
     expected_idf_len = len(vect.idf_)
     invalid_idf = [1.0] * (expected_idf_len + 1)
-    assert_raises(ValueError, setattr, copy, 'idf_', invalid_idf)
+    with pytest.raises(ValueError):
+        setattr(copy, 'idf_', invalid_idf)
 
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     vect = CountVectorizer(vocabulary=vocab)
-    assert_raises(ValueError, vect.fit, [])
+    with pytest.raises(ValueError):
+        vect.fit([])
 
 
 @fails_if_pypy
@@ -1024,7 +1087,7 @@ def test_vectorizer_vocab_clone():
     vect_vocab_clone = clone(vect_vocab)
     vect_vocab.fit(ALL_FOOD_DOCS)
     vect_vocab_clone.fit(ALL_FOOD_DOCS)
-    assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
+    assert vect_vocab_clone.vocabulary_ == vect_vocab.vocabulary_
 
 
 @pytest.mark.parametrize('Vectorizer',
@@ -1074,7 +1137,7 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype,
     expected_warning_cls = warning_cls if warning_expected else None
     with pytest.warns(expected_warning_cls,
                       match=warning_msg_match) as record:
-            X_idf = vectorizer.fit_transform(X)
+        X_idf = vectorizer.fit_transform(X)
     if expected_warning_cls is None:
         relevant_warnings = [w for w in record
                              if isinstance(w, warning_cls)]
@@ -1095,7 +1158,7 @@ def test_vectorizers_invalid_ngram_range(vec):
                "lower boundary larger than the upper boundary."
                % str(invalid_range))
     if isinstance(vec, HashingVectorizer):
-        pytest.xfail(reason='HashingVectorizer not supported on PyPy')
+        pytest.xfail(reason='HashingVectorizer is not supported on PyPy')
 
     assert_raise_message(
         ValueError, message, vec.fit, ["good news everyone"])
@@ -1196,3 +1259,114 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
                                             .findall(doc),
                     stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     HashingVectorizer]
+)
+@pytest.mark.parametrize(
+    'input_type, err_type, err_msg',
+    [('filename', FileNotFoundError, ''),
+     ('file', AttributeError, "'str' object has no attribute 'read'")]
+)
+def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    if issubclass(Estimator, HashingVectorizer):
+        pytest.xfail('HashingVectorizer is not supported on PyPy')
+    data = ['this is text, not file or filename']
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(analyzer=lambda x: x.split(),
+                  input=input_type).fit_transform(data)
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
+@pytest.mark.parametrize(
+    'analyzer', [lambda doc: open(doc, 'r'), lambda doc: doc.read()]
+)
+@pytest.mark.parametrize('input_type', ['file', 'filename'])
+def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
+    data = ['this is text, not file or filename']
+    warn_msg = 'Since v0.21, vectorizer'
+    with pytest.raises((FileNotFoundError, AttributeError)):
+        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
+            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+    assert len(records) == 1
+    assert warn_msg in str(records[0])
+
+
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     HashingVectorizer]
+)
+def test_callable_analyzer_reraise_error(tmpdir, Estimator):
+    # check if a custom exception from the analyzer is shown to the user
+    def analyzer(doc):
+        raise Exception("testing")
+
+    if issubclass(Estimator, HashingVectorizer):
+        pytest.xfail('HashingVectorizer is not supported on PyPy')
+
+    f = tmpdir.join("file.txt")
+    f.write("sample content\n")
+
+    with pytest.raises(Exception, match="testing"):
+        Estimator(analyzer=analyzer, input='file').fit_transform([f])
+
+
+@pytest.mark.parametrize(
+    'Vectorizer',
+    [CountVectorizer, HashingVectorizer, TfidfVectorizer]
+)
+@pytest.mark.parametrize(
+    'stop_words, tokenizer, preprocessor, ngram_range, token_pattern,'
+    'analyzer, unused_name, ovrd_name, ovrd_msg',
+    [(["you've", "you'll"], None, None, (1, 1), None, 'char',
+     "'stop_words'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), None, 'char',
+     "'tokenizer'", "'analyzer'", "!= 'word'"),
+     (None, lambda s: s.split(), None, (1, 1), r'\w+', 'word',
+      "'token_pattern'", "'tokenizer'", "is not None"),
+     (None, None, lambda s:s.upper(), (1, 1), r'\w+', lambda s:s.upper(),
+      "'preprocessor'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 2), None, lambda s:s.upper(),
+      "'ngram_range'", "'analyzer'", "is callable"),
+     (None, None, None, (1, 1), r'\w+', 'char',
+      "'token_pattern'", "'analyzer'", "!= 'word'")]
+)
+def test_unused_parameters_warn(Vectorizer, stop_words,
+                                tokenizer, preprocessor,
+                                ngram_range, token_pattern,
+                                analyzer, unused_name, ovrd_name,
+                                ovrd_msg):
+
+    train_data = JUNK_FOOD_DOCS
+    # setting parameter and checking for corresponding warning messages
+    vect = Vectorizer()
+    vect.set_params(stop_words=stop_words, tokenizer=tokenizer,
+                    preprocessor=preprocessor, ngram_range=ngram_range,
+                    token_pattern=token_pattern, analyzer=analyzer)
+    msg = ("The parameter %s will not be used"
+           " since %s %s" % (unused_name, ovrd_name, ovrd_msg)
+           )
+    with pytest.warns(UserWarning, match=msg):
+        vect.fit(train_data)
+
+
+# TODO: Remove in 0.24
+def test_vectorizermixin_is_deprecated():
+    class MyVectorizer(VectorizerMixin):
+        pass
+
+    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
+           "in version 0.24.")
+    with pytest.warns(FutureWarning, match=msg):
+        MyVectorizer()
