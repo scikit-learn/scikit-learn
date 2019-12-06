@@ -24,7 +24,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]

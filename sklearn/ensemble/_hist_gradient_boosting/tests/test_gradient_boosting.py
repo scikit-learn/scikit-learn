@@ -413,7 +413,7 @@ def test_infinite_values_missing_values():
     # High level test making sure that inf and nan values are properly handled
     # when both are present. This is similar to
     # test_split_on_nan_with_infinite_values() in test_grower.py, though we
-    # cannot check the predicitons for binned values here.
+    # cannot check the predictions for binned values here.
 
     X = np.asarray([-np.inf, 0, 1, np.inf, np.nan]).reshape(-1, 1)
     y_isnan = np.isnan(X.ravel())
@@ -424,6 +424,17 @@ def test_infinite_values_missing_values():
 
     assert stump_clf.fit(X, y_isinf).score(X, y_isinf) == 1
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
+
+
+def test_crossentropy_binary_problem():
+    # categorical_crossentropy should only be used if there are more than two
+    # classes present. PR #14869
+    X = [[1], [0]]
+    y = [0, 1]
+    gbrt = HistGradientBoostingClassifier(loss='categorical_crossentropy')
+    with pytest.raises(ValueError,
+                       match="'categorical_crossentropy' is not suitable for"):
+        gbrt.fit(X, y)
 
 
 @pytest.mark.parametrize("scoring", [None, 'loss'])
