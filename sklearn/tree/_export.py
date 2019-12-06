@@ -175,8 +175,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     """
 
     if rotate != 'deprecated':
-        warnings.warn("'rotate' has no effect and is deprecated in 0.23. \
-                       it will be removed in 0.25.",
+        warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
+                       "It will be removed in 0.25."),
                       FutureWarning)
 
     exporter = _MPLTreeExporter(
