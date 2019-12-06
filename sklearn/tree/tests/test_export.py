@@ -451,7 +451,7 @@ def test_plot_tree_gini(pyplot):
 
 
 # FIXME: to be removed in 0.25
-def test_plot_tree_rotate_deprecation():
+def test_plot_tree_rotate_deprecation(pyplot):
     tree = DecisionTreeClassifier()
     tree.fit(X, y)
     # test that a warning is raised when rotate is used.
