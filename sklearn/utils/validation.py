@@ -438,9 +438,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
-        dtypes_orig = np.array(array.dtypes)
+        dtypes_orig = list(array.dtypes)
+        # pandas boolean dtype __array__ interface coerces bools to objects
+        for i, dtype_iter in enumerate(dtypes_orig):
+            if dtype_iter.kind == 'b':
+                dtypes_orig[i] = np.object
+
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
-            dtype_orig = np.result_type(*array.dtypes)
+            dtype_orig = np.result_type(*dtypes_orig)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":

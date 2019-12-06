@@ -732,6 +732,27 @@ def test_check_array_series():
     assert_array_equal(res, np.array(['a', 'b', 'c'], dtype=object))
 
 
+def test_check_dataframe_mixed_float_dtypes():
+    # pandas dataframe will coerce a boolean into a object, this is a mismatch
+    # with np.result_type which will return a float
+    # check_array needs to explicitly check for bool dtype in a dataframe for
+    # this situation
+    # https://github.com/scikit-learn/scikit-learn/issues/15787
+
+    pd = importorskip("pandas")
+    df = pd.DataFrame({
+        'int': [1, 2, 3],
+        'float': [0, 0.1, 2.1],
+        'bool': [True, False, True]}, columns=['int', 'float', 'bool'])
+
+    array = check_array(df, dtype=(np.float64, np.float32, np.float16))
+    expected_array = np.array(
+        [[1.0, 0.0, 1.0],
+         [2.0, 0.1, 0.0],
+         [3.0, 2.1, 1.0]], dtype=np.float)
+    assert_allclose_dense_sparse(array, expected_array)
+
+
 class DummyMemory:
     def cache(self, func):
         return func
