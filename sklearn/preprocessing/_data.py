@@ -2308,6 +2308,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                 self.quantiles_.append(
                         np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
+        # due to floating-point precision error in `np.nanpercentile`,
         # make sure the quantiles are monotonically increasing
         self.quantiles_ = np.maximum.accumulate(self.quantiles_)
 
