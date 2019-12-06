@@ -225,7 +225,12 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     labels = le.fit_transform(labels)
     n_samples = len(labels)
     label_freqs = np.bincount(labels)
-    check_number_of_labels(len(le.classes_), n_samples)
+
+    # don't raise an error when le.classes_ =1 or cle.classes_ = n_samples
+    # instead return the worst score = -1
+    # check_number_of_labels(len(le.classes_), n_samples)
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return -1.0
 
     kwds['metric'] = metric
     reduce_func = functools.partial(_silhouette_reduce,
@@ -284,7 +289,11 @@ def calinski_harabasz_score(X, labels):
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
 
-    check_number_of_labels(n_labels, n_samples)
+    # don't raise an error when le.classes_ = 1 or cle.classes_ = n_samples
+    # instead return the worst score = 0
+    # check_number_of_labels(n_labels, n_samples)
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return 0.0
 
     extra_disp, intra_disp = 0., 0.
     mean = np.mean(X, axis=0)
@@ -338,7 +347,16 @@ def davies_bouldin_score(X, labels):
     labels = le.fit_transform(labels)
     n_samples, _ = X.shape
     n_labels = len(le.classes_)
-    check_number_of_labels(n_labels, n_samples)
+
+    # don't raise an error when le.classes_ = 1 or cle.classes_ = n_samples
+    # instead return the worst score = np.inf
+    # this scorer does not follow the convention that higher return values
+    # are better than lower return values used along scikit-learn.
+    # It follow the opposite principle (lower return values are better than
+    # higher return values.
+    # check_number_of_labels(n_labels, n_samples)
+    if len(le.classes_) == 1 or len(le.classes_) == n_samples:
+        return np.inf
 
     intra_dists = np.zeros(n_labels)
     centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
