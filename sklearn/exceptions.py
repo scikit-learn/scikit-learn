@@ -140,7 +140,7 @@ class FitFailedWarning(RuntimeWarning):
     partition for these parameters will be set to 0.000000.
     Details: \\n
     Traceback (most recent call last):\\n
-    ...
+    ...\\n
     ValueError: Penalty term must be positive; got (C=-2)\\n'...)
 
     .. versionchanged:: 0.18
