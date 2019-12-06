@@ -449,6 +449,7 @@ def test_plot_tree_gini(pyplot):
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
 
+
 # FIXME: to be removed in 0.25
 def test_plot_tree_rotate_deprecation():
     tree = DecisionTreeClassifier()
