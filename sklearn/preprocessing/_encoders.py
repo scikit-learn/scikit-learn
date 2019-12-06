@@ -79,7 +79,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
-        if encoding=='ordinal':
+        if encoding == 'ordinal':
             contain_str = any([isinstance(Xi[0], str)
                               for Xi in X_list])
 
@@ -91,7 +91,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     "category order will be required.",
                     FutureWarning, stacklevel=1)
 
-        elif encoding=='one_hot':
+        elif encoding == 'one_hot':
             if type(self.categories) == str and self.categories != 'auto':
                 raise ValueError("The valid values for `categories` for "
                                  "OneHotEncoder are "
