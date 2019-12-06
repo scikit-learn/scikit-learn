@@ -588,8 +588,12 @@ class OrdinalEncoder(_BaseEncoder):
           values, and should be sorted in case of numeric values.
 
         For string values, categories has to be either 'sort' or
-        a list. The used categories can be found in the
+        a list. The used categories can be retrieved using
         ``categories_`` attribute.
+
+        .. deprecated:: 0.23
+           ``categories='auto'`` is deprecated for training data with string
+           values in 0.22 and will not be possible in 0.24.
 
     dtype : number type, default np.float64
         Desired dtype of output.
