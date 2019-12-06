@@ -49,3 +49,12 @@ Changelog
 
 - |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
   :user:`name <user id>`
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Added ``return_center`` parameter  in  
+  :func:`datasets.make_classification`, which can be used to return
+  centers for each cluster.
+  :pr:`15709` by :user:`<shivamgargsya>` and
+  :user:`Venkatachalam N <venkyyuvy>`.

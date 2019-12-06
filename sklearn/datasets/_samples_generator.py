@@ -741,8 +741,9 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    return_centers: bool, optional (default=False)
+    return_centers : bool, optional (default=False)
         If True, then return the centers of each cluster
+        .. versionadded:: 0.23
 
     Returns
     -------
