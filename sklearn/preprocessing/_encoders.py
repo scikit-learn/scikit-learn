@@ -71,7 +71,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error', ordinal=False):
+    def _fit(self, X, handle_unknown='error', encoding='one_hot'):
         X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories not in ['auto', 'sort']:
@@ -79,7 +79,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
-        if ordinal:
+        if encoding=='ordinal':
             contain_str = any([isinstance(Xi[0], str)
                               for Xi in X_list])
 
@@ -91,10 +91,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     "category order will be required.",
                     FutureWarning, stacklevel=1)
 
-        elif type(self.categories) == str and self.categories != 'auto':
-            raise ValueError("The valid values for `categories` for "
-                             "OneHotEncoder are "
-                             "'auto' or a list of lists/arrays of values.")
+        elif encoding=='one_hot':
+            if type(self.categories) == str and self.categories != 'auto':
+                raise ValueError("The valid values for `categories` for "
+                                 "OneHotEncoder are "
+                                 "'auto' or a list of lists/arrays of values.")
 
         self.categories_ = []
 
@@ -650,7 +651,7 @@ class OrdinalEncoder(_BaseEncoder):
         self
         """
 
-        self._fit(X, ordinal=True)
+        self._fit(X, encoding='ordinal')
 
         return self
 
