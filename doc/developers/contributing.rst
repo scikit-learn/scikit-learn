@@ -251,7 +251,7 @@ modifying code and submitting a PR:
    to record your changes in Git, then push the changes to your GitHub
    account with::
 
-       $ git push -u origin my-feature
+       $ git push -u origin my_feature
 
 10. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_

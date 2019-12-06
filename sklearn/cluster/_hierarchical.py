@@ -18,6 +18,8 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
+from ..neighbors import DistanceMetric
+from ..neighbors._dist_metrics import METRIC_MAPPING
 
 from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -107,7 +109,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     mst_array = np.vstack([mst.row, mst.col, mst.data]).T
 
     # Sort edges of the min_spanning_tree by weight
-    mst_array = mst_array[np.argsort(mst_array.T[2]), :]
+    mst_array = mst_array[np.argsort(mst_array.T[2], kind='mergesort'), :]
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = _hierarchical._single_linkage_label(mst_array)
@@ -464,7 +466,25 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             X = affinity(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        out = hierarchy.linkage(X, method=linkage, metric=affinity)
+        if (linkage == 'single'
+                and affinity != 'precomputed'
+                and not callable(affinity)
+                and affinity in METRIC_MAPPING):
+
+            # We need the fast cythonized metric from neighbors
+            dist_metric = DistanceMetric.get_metric(affinity)
+
+            # The Cython routines used require contiguous arrays
+            X = np.ascontiguousarray(X, dtype=np.double)
+
+            mst = _hierarchical.mst_linkage_core(X, dist_metric)
+            # Sort edges of the min_spanning_tree by weight
+            mst = mst[np.argsort(mst.T[2], kind='mergesort'), :]
+
+            # Convert edge list into standard hierarchical clustering format
+            out = _hierarchical.single_linkage_label(mst)
+        else:
+            out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int, copy=False)
 
         if return_distance:

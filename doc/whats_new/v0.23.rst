@@ -44,8 +44,8 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.module`
-.....................
+:mod:`sklearn.cluster`
+......................
 
 - |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
   :user:`name <user id>`
@@ -53,9 +53,19 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
   potentially large array to store dual coefficients for all hyperparameters
   during its `fit`, nor an array to store all LOO predictions unless
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
+  transforming. :pr:`15762` by `Thomas Fan`_.
