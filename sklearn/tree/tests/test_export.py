@@ -448,3 +448,12 @@ def test_plot_tree_gini(pyplot):
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "gini = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "gini = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+# FIXME: to be removed in 0.25
+def test_plot_tree_rotate_deprecation():
+    tree = DecisionTreeClassifier()
+    tree.fit(X, y)
+    # test that a warning is raised when rotate is used.
+    match = "'rotate' is deprecated in 0.23 and will be removed in 0.25."
+    with pytest.warns(FutureWarning, match=match):
+        plot_tree(tree, rotate=True)

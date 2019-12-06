@@ -132,10 +132,11 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         to be proportions and percentages respectively.
 
     rotate : bool, optional (default=False)
-        When set to ``True``, orient tree left to right rather than top-down.
+        This parameter has no effect on the matplotlib tree visualisation and
+        it is kept here for backward compatibility.
 
         .. deprecated:: 0.23
-           ``rotate`` will be removed in 0.25.
+           ``rotate`` is deprecated in 0.23 and will be removed in 0.25.
 
 
     rounded : bool, optional (default=False)
@@ -174,7 +175,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     """
 
     if rotate != 'deprecated':
-        warnings.warn("'rotate' will be removed in 0.25.",
+        warnings.warn("'rotate' is deprecated in 0.23 and will be removed in 0.25.",
                       FutureWarning)
 
     exporter = _MPLTreeExporter(
