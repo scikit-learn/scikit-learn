@@ -654,12 +654,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}
-        Method for initialization, defaults to 'k-means++':
+    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
+        Method for initialization
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -671,19 +671,19 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    n_init : int, default: 10
+    n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    max_iter : int, default: 300
+    max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    tol : float, default: 1e-4
+    tol : float, default=1e-4
         Relative tolerance with regards to inertia to declare convergence.
 
-    precompute_distances : {'auto', True, False}
+    precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 12
@@ -694,15 +694,15 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         False : never precompute distances.
 
-    verbose : int, default 0
+    verbose : int, default=0
         Verbosity mode.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : bool, optional
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -711,7 +711,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -719,11 +719,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient by using the triangle
-        inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "full" for sparse data.
+    algorithm : 'auto', 'full' or 'elkan', default='auto'
+        K-means algorithm to use. The classical EM-style algorithm is 'full'.
+        The 'elkan' variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. 'auto' chooses
+        'elkan' for dense data and 'full' for sparse data.
 
     Attributes
     ----------
@@ -1335,12 +1335,12 @@ class MiniBatchKMeans(KMeans):
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, optional, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
-        Method for initialization, defaults to 'k-means++':
+    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
+        Method for initialization
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -1352,26 +1352,26 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    max_iter : int, optional
+    max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
-    batch_size : int, optional, default: 100
+    batch_size : int, default=100
         Size of the mini batches.
 
-    verbose : bool, optional
+    verbose : int, default=0
         Verbosity mode.
 
     compute_labels : bool, default=True
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for centroid initialization and
         random reassignment. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    tol : float, default: 0.0
+    tol : float, default=0.0
         Control early stopping based on the relative center changes as
         measured by a smoothed, variance-normalized of the mean center
         squared position changes. This early stopping heuristics is
@@ -1382,25 +1382,27 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on normalized center
         change, set tol to 0.0 (default).
 
-    max_no_improvement : int, default: 10
+    max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini
         batches that does not yield an improvement on the smoothed inertia.
 
         To disable convergence detection based on inertia, set
         max_no_improvement to None.
 
-    init_size : int, optional, default: 3 * batch_size
+    init_size : int, default=None
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than n_clusters.
+
+        If None, init_size is 3 * batch_size
 
     n_init : int, default=3
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
 
-    reassignment_ratio : float, default: 0.01
+    reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the

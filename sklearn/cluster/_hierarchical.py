@@ -929,21 +929,21 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Parameters
     ----------
-    n_clusters : int or None, optional (default=2)
+    n_clusters : int or None, default=2
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : string or callable, default "euclidean"
+    affinity : string or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : None, str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, optional
+    connectivity : array-like or callable, default=None
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -951,7 +951,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : bool or 'auto', optional, default "auto"
+    compute_full_tree : bool or 'auto', optional, default='auto'
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of features. This option is
@@ -960,8 +960,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         be advantageous to compute the full tree. It must be ``True`` if
         ``distance_threshold`` is not ``None``.
 
-    linkage : {"ward", "complete", "average", "single"}, optional\
-            (default="ward")
+        - auto by default takes True if distance_threshold is not None,
+            otherwise it's value is based on the expression:
+            n_clusters < max(100, 0.02 * n_samples)
+
+    linkage : {'ward', 'complete', 'average', 'single'}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -974,12 +977,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    pooling_func : callable, default np.mean
+    pooling_func : callable, default=np.mean
         This combines the values of agglomerated features into a single
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
-    distance_threshold : float, optional (default=None)
+    distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
