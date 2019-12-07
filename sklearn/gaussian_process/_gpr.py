@@ -1,7 +1,7 @@
 """Gaussian processes regression. """
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#
+# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
 import warnings
@@ -93,12 +93,11 @@ class GaussianProcessRegressor(MultiOutputMixin,
         run is performed.
 
     normalize_y : boolean, optional (default: False)
-        Whether the target values y are normalized, i.e., the mean of the
-        observed target values become zero. This parameter should be set to
-        True if the target values' mean is expected to differ considerable from
-        zero. When enabled, the normalization effectively modifies the GP's
-        prior based on the data, which contradicts the likelihood principle;
-        normalization is thus disabled per default.
+        Whether the target values y are normalized, the mean and variance of
+        the target values are set equal to 0 and 1 respectively. This is
+        recommended for cases where zero-mean, unit-variance priors are used.
+        Note that, in the following, the normalisation is reversed before the
+        GP predictions are reported.
 
     copy_X_train : bool, optional (default: True)
         If True, a persistent copy of the training data is stored in the
@@ -198,7 +197,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
             self._y_train_mean = np.mean(y, axis=0)
             self._y_train_std = np.std(y, axis=0)
 
-            # demean y and make unit variance
+            # Remove mean and make unit variance
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
@@ -348,10 +347,8 @@ class GaussianProcessRegressor(MultiOutputMixin,
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
 
-                ##########################################
-                ## Check to see if normalisation will   ##
-                ## need to be addressed here as well    ##
-                ##########################################
+                # undo normalisation
+                y_cov = y_cov * self._y_train_std**2
 
                 return y_mean, y_cov
             elif return_std:
