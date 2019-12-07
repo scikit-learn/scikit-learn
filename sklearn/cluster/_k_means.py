@@ -43,14 +43,14 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Parameters
     ----------
-    X : array or sparse matrix, shape (n_samples, n_features)
+    X : array or sparse matrix of shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
     n_clusters : integer
         The number of seeds to choose
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : array-like of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
     random_state : int, RandomState instance
@@ -58,7 +58,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    n_local_trials : integer, optional
+    n_local_trials : int
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
@@ -185,7 +185,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     Parameters
     ----------
-    X : array-like or sparse matrix, shape (n_samples, n_features)
+    X : array-like or sparse matrix of shape (n_samples, n_features)
         The observations to cluster. It must be noted that the data
         will be converted to C ordering, which will cause a memory copy
         if the given data is not C-contiguous.
@@ -194,11 +194,11 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X. If None, all observations
         are assigned equal weight (default: None)
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'random', or ndarray, or a callable},
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -225,18 +225,18 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
         False : never precompute distances
 
-    n_init : int, optional, default: 10
+    n_init : int, default = 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default = 300
         Maximum number of iterations of the k-means algorithm to run.
 
-    verbose : boolean, optional
+    verbose : bool, default = None
         Verbosity mode.
 
-    tol : float, optional
+    tol : float, default = None
         The relative increment in the results before declaring convergence.
 
     random_state : int, RandomState instance or None (default)
@@ -244,7 +244,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : bool, optional
+    copy_x : bool, default = None
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -253,7 +253,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -267,7 +267,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         inequality, but currently doesn't support sparse data. "auto" chooses
         "elkan" for dense data and "full" for sparse data.
 
-    return_n_iter : bool, optional
+    return_n_iter : bool, default = None
         Whether or not to return the number of iterations.
 
     Returns
@@ -344,13 +344,13 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default = 300
         Maximum number of iterations of the k-means algorithm to run.
 
-    init : {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'random', or ndarray, or a callable},
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -366,16 +366,16 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    tol : float, optional
+    tol : float, default = None
         The relative increment in the results before declaring convergence.
 
-    verbose : boolean, optional
+    verbose : bool, default = None
         Verbosity mode
 
     x_squared_norms : array
         Precomputed x_squared_norms.
 
-    precompute_distances : boolean, default: True
+    precompute_distances : bool, default: True
         Precompute distances (faster but takes more memory).
 
     random_state : int, RandomState instance or None (default)
@@ -466,19 +466,19 @@ def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
 
     Parameters
     ----------
-    X : numpy array, shape (n_sample, n_features)
+    X : numpy array-like of shape (n_sample, n_features)
         Input data.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : numpy array, shape (n_samples,)
+    x_squared_norms : numpy array-like of shape (n_samples,)
         Precomputed squared norms of X.
 
-    centers : numpy array, shape (n_clusters, n_features)
+    centers : numpy array-like of shape (n_clusters, n_features)
         Cluster centers which data is assigned to.
 
-    distances : numpy array, shape (n_samples,)
+    distances : numpy array-like of shape (n_samples,)
         Pre-allocated array in which distances are stored.
 
     Returns
@@ -515,23 +515,23 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
 
     Parameters
     ----------
-    X : float64 array-like or CSR sparse matrix, shape (n_samples, n_features)
+    X : float64 array-like or CSR sparse matrix of shape (n_samples, n_features)
         The input samples to assign to the labels.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : array-like of shape (n_samples,)
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers : float array, shape (k, n_features)
+    centers : float array-like of shape (k, n_features)
         The cluster centers.
 
-    precompute_distances : boolean, default: True
+    precompute_distances : bool, default: True
         Precompute distances (faster but takes more memory).
 
-    distances : float array, shape (n_samples,)
+    distances : float array-like of shape (n_samples,)
         Pre-allocated array to be filled in with each sample's distance
         to the closest center.
 
@@ -573,24 +573,24 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
 
     k : int
         number of centroids
 
-    init : {'k-means++', 'random' or ndarray or callable} optional
+    init : {'k-means++', 'random' or ndarray or callable} ,default = None
         Method for initialization
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or default = None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    x_squared_norms : array, shape (n_samples,), optional
+    x_squared_norms : array-like of shape (n_samples,), default = None
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
-    init_size : int, optional
+    init_size : int, default = None
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
@@ -598,7 +598,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     Returns
     -------
-    centers : array, shape(k, n_features)
+    centers : array-like of shape(k, n_features)
     """
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
@@ -654,7 +654,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default = None
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -680,7 +680,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    tol : float, default: 1e-4
+    tol : float, default = 1e-4
         Relative tolerance with regards to inertia to declare convergence.
 
     precompute_distances : {'auto', True, False}
@@ -694,7 +694,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         False : never precompute distances.
 
-    verbose : int, default 0
+    verbose : int, default: 0
         Verbosity mode.
 
     random_state : int, RandomState instance or None (default)
@@ -702,7 +702,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : bool, optional
+    copy_x : bool, default = None
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -711,7 +711,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -732,7 +732,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
 
-    labels_ : array, shape (n_samples,)
+    labels_ : array-like of shape (n_samples,)
         Labels of each point
 
     inertia_ : float
@@ -830,7 +830,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -995,13 +995,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array-like of shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
@@ -1019,13 +1019,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        X_new : array, shape [n_samples, k]
+        X_new : array-like of shape [n_samples, k]
             X transformed in the new space.
         """
         # Currently, this just skips a copy of the data if it is not in
@@ -1048,7 +1048,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array, shape [n_samples, k]
+        X_new : array-like of shape [n_samples, k]
             X transformed in the new space.
         """
         check_is_fitted(self)
@@ -1072,13 +1072,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array of shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
@@ -1099,7 +1099,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1126,23 +1126,23 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The original data array.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : array-like of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array, shape (k, n_features)
+    centers : array-like of shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts : array, shape (k,)
+    counts : array-like of shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array, dtype float, shape (n_samples), optional
+    distances : array-like of dtype float of shape (n_samples), default = None
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1153,18 +1153,18 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    random_reassign : boolean, optional
+    random_reassign : bool, default = None
         If True, centers with very low counts are randomly reassigned
         to observations.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default = None
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose : bool, optional, default False
+    verbose : bool, default False
         Controls the verbosity.
 
     compute_squared_diff : bool
@@ -1178,7 +1178,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
 
-    squared_diff : numpy array, shape (n_clusters,)
+    squared_diff : numpy array-like of shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
 
     """
@@ -1335,7 +1335,7 @@ class MiniBatchKMeans(KMeans):
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default: 8
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -1352,14 +1352,14 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    max_iter : int, optional
+    max_iter : int, default = None
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
-    batch_size : int, optional, default: 100
+    batch_size : int, default: 100
         Size of the mini batches.
 
-    verbose : bool, optional
+    verbose : bool, default = None
         Verbosity mode.
 
     compute_labels : bool, default=True
@@ -1389,7 +1389,7 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on inertia, set
         max_no_improvement to None.
 
-    init_size : int, optional, default: 3 * batch_size
+    init_size : int, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
@@ -1484,7 +1484,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : array-like or sparse matrix of shape=(n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1492,7 +1492,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1641,15 +1641,15 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
 
         Returns
         -------
-        labels : array, shape (n_samples,)
+        labels : array-like 0f shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1677,7 +1677,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1747,13 +1747,13 @@ class MiniBatchKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default = None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array-like of shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)

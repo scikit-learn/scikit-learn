@@ -118,11 +118,11 @@ class _CFNode:
         next_leaf. Useful only if is_leaf is True.
         the final subclusters.
 
-    init_centroids_ : ndarray, shape (branching_factor + 1, n_features)
+    init_centroids_ : ndarray of shape (branching_factor + 1, n_features)
         manipulate ``init_centroids_`` throughout rather than centroids_ since
         the centroids are just a view of the ``init_centroids_`` .
 
-    init_sq_norm_ : ndarray, shape (branching_factor + 1,)
+    init_sq_norm_ : ndarray of shape (branching_factor + 1,)
         manipulate init_sq_norm_ throughout. similar to ``init_centroids_``.
 
     centroids_ : ndarray
@@ -245,7 +245,7 @@ class _CFSubcluster:
 
     Parameters
     ----------
-    linear_sum : ndarray, shape (n_features,), optional
+    linear_sum : ndarray of shape (n_features,), optional
         Sample. This is kept optional to allow initialization of empty
         subclusters.
 
@@ -383,7 +383,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         Labels assigned to the centroids of the subclusters after
         they are clustered globally.
 
-    labels_ : ndarray, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Array of labels assigned to the input data.
         if partial_fit is used instead of fit, they are assigned to the
         last batch of data.
@@ -444,7 +444,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         y : Ignored
@@ -531,7 +531,7 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features), None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), None
             Input data. If X is not provided, only the global clustering
             step is done.
 
@@ -569,12 +569,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        labels : ndarray, shape(n_samples)
+        labels : ndarray of shape(n_samples)
             Labelled data.
         """
         X = check_array(X, accept_sparse='csr')
@@ -593,12 +593,12 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        X_trans : {array-like, sparse matrix}, shape (n_samples, n_clusters)
+        X_trans : {array-like, sparse matrix} of shape (n_samples, n_clusters)
             Transformed data.
         """
         check_is_fitted(self)

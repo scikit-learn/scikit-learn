@@ -25,16 +25,16 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     Parameters
     ----------
-    vectors : array-like, shape: (n_samples, n_clusters)
+    vectors : array-of shape: (n_samples, n_clusters)
         The embedding space of the samples.
 
-    copy : boolean, optional, default: True
+    copy : bool, default: True
         Whether to copy vectors, or perform in-place normalization.
 
-    max_svd_restarts : int, optional, default: 30
+    max_svd_restarts : int, default: 30
         Maximum number of attempts to restart SVD if convergence fails
 
-    n_iter_max : int, optional, default: 30
+    n_iter_max : int, default: 30
         Maximum number of iterations to attempt in rotation and partition
         matrix search if machine precision convergence is not reached
 
@@ -174,7 +174,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     Parameters
     ----------
-    affinity : array-like or sparse matrix, shape: (n_samples, n_samples)
+    affinity : array-like or sparse matrix of shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
 
@@ -183,10 +183,10 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
           - heat kernel of the pairwise distance matrix of the samples,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
-    n_clusters : integer, optional
+    n_clusters : int, default = None
         Number of clusters to extract.
 
-    n_components : integer, optional, default is n_clusters
+    n_components : int, default is n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -201,12 +201,12 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         deterministic.
         See :term:`Glossary <random_state>`.
 
-    n_init : int, optional, default: 10
+    n_init : int, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    eigen_tol : float, optional, default: 0.0
+    eigen_tol : float, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
@@ -299,7 +299,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_clusters : integer, optional
+    n_clusters : int, default = None
         The dimension of the projection subspace.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -307,7 +307,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    n_components : integer, optional, default=n_clusters
+    n_components : int,  default=n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     random_state : int, RandomState instance or None (default)
@@ -317,7 +317,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         deterministic.
         See :term:`Glossary <random_state>`.
 
-    n_init : int, optional, default: 10
+    n_init : int, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -343,11 +343,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
 
-    n_neighbors : integer
+    n_neighbors : int
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float, optional, default: 0.0
+    eigen_tol : float, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when ``eigen_solver='arpack'``.
 
@@ -365,11 +365,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : dictionary of string to any, optional
+    kernel_params : dictionary of string to any, default = None
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default = None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -377,11 +377,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    affinity_matrix_ : array-like, shape (n_samples, n_samples)
+    affinity_matrix_ : array-like of shape (n_samples, n_samples)
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    labels_ : array, shape (n_samples,)
+    labels_ : array-like of shape (n_samples,)
         Labels of each point
 
     Examples
@@ -458,8 +458,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+            array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is
             provided in a format other than ``csr_matrix``, ``csc_matrix``,
@@ -526,8 +526,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+            array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is
             provided in a format other than ``csr_matrix``, ``csc_matrix``,
