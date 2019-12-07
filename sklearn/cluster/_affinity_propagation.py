@@ -400,7 +400,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrixof shape (n_samples, n_features)
+        X : array-like or sparse matrix of shape (n_samples, n_features)
             New data to predict. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
