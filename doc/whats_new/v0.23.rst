@@ -56,3 +56,11 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
+  deprecated.
+  :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
