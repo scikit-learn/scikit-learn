@@ -259,7 +259,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     copy : bool, default: True
         Make a copy of input data.
 
-    preference : array-like-like of shape (n_samples,) or float, default = None
+    preference : array-like of shape (n_samples,) or float, default = None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
