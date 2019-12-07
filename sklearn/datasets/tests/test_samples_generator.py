@@ -505,6 +505,7 @@ def test_make_circles():
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
+            dist_exp = 1.0 if label == 0 else factor**2
             dist_exp = 1.0 if label == 0 else factor ** 2
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
