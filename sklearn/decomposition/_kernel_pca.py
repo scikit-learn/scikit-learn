@@ -9,7 +9,8 @@ from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import (check_is_fitted, check_array,
+                                _check_psd_eigenvalues)
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -210,6 +211,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
                                                 v0=v0)
+
+        # make sure that the eigenvalues are ok and fix numerical issues
+        self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
+                                               enable_warnings=False)
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,
