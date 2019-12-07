@@ -632,8 +632,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
             n_samples_out, n_samples_in = n_samples
         except ValueError:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple. You passed ' +
-                             str(n_samples) + ' instead.')
+                             'a two-element tuple.')
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
