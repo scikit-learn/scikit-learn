@@ -756,8 +756,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
-        See :term:`Glossary <random_state>` for details.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     check_input : bool, default True
         If False, the input arrays X and y will not be checked.
@@ -1088,8 +1088,8 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         binary*. 'multinomial' is unavailable when solver='liblinear'.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
-        See :term:`Glossary <random_state>` for details.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     max_squared_sum : float, default None
         Maximum squared sum of X over samples. Used only in SAG solver.
@@ -1260,8 +1260,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            *class_weight='balanced'*
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Used when ``solver`` == 'sag' or 'liblinear' to shuffle the data.
-        See :term:`Glossary <random_state>` for details.
+        Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
+        data. See :term:`Glossary <random_state>` for details.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
              optional (default='lbfgs')
@@ -1814,7 +1814,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Used when `solver='sag'` or `solver='liblinear'` to shuffle the data.
+        Used when `solver='sag'`, 'saga' or 'liblinear' to shuffle the data.
         Note that this only applies to the solver and not the cross-validation
         generator. See :term:`Glossary <random_state>` for details.
 
