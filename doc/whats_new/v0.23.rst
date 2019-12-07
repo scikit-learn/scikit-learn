@@ -44,6 +44,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+
+:mod:`sklearn.cluster`
+......................
+
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -51,8 +60,9 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`
 
-:mod:`sklearn.module`
-.....................
 
-- |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
-  :user:`name <user id>`
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
+  transforming. :pr:`15762` by `Thomas Fan`_.
