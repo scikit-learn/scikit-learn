@@ -610,7 +610,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         See :term:`Glossary <random_state>`.
 
     factor : 0 < double < 1 (default=.8)
-        Scale factor between inner and outer circle.
+        Scale factor between radii of inner and outer circle.
 
     Returns
     -------
@@ -624,7 +624,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    if isinstance(n_samples, (int, np.integer)):
+    if isinstance(n_samples, numbers.Integral):
         n_samples_out = n_samples // 2
         n_samples_in = n_samples - n_samples_out
     else:
