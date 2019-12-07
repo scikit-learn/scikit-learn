@@ -54,9 +54,9 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| Fixed a bug that made :class:`linear_model.RANSACRegressor` fail when
-  its fit method was given a `sample_weight` parameter (in the case where
-  the `sample_weight` parameter was required by the wrapped `base_estimator`).
+- |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
+  method of :class:`linear_model.RANSACRegressor`, it would not be passed to
+  the wrapped `base_estimator` during the fitting of the final model.
   :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
 
 :mod:`sklearn.preprocessing`
