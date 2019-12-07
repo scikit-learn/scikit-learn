@@ -610,7 +610,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         See :term:`Glossary <random_state>`.
 
     factor : 0 < double < 1 (default=.8)
-        Scale factor between radii of inner and outer circle.
+        Scale factor between inner and outer circle.
 
     Returns
     -------
@@ -696,8 +696,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
             n_samples_out, n_samples_in = n_samples
         except ValueError:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple. You passed ' +
-                             str(n_samples) + ' instead.')
+                             'a two-element tuple.')
 
     generator = check_random_state(random_state)
 

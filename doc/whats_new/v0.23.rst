@@ -52,14 +52,12 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
-
 :mod:`sklearn.datasets`
 .......................
 
 - |Enhancement| Functions :func:`datasets.make_circles` and
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`
-
 
 :mod:`sklearn.preprocessing`
 ............................
