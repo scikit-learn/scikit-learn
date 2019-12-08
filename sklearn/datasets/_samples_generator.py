@@ -753,6 +753,10 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
     y : array of shape [n_samples]
         The integer labels for cluster membership of each sample.
 
+    centers : array, shape [n_centers, n_features]
+        The centers of each cluster. Only returned if
+        ``return_centers=True``.
+
     Examples
     --------
     >>> from sklearn.datasets import make_blobs

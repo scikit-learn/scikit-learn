@@ -54,7 +54,7 @@ Changelog
 :mod:`sklearn.datasets`
 .......................
 
-- |Enhancement| Added ``return_center`` parameter  in  
+- |Enhancement| Added ``return_centers`` parameter  in  
   :func:`datasets.make_blobs`, which can be used to return
   centers for each cluster.
   :pr:`15709` by :user:`<shivamgargsya>` and
