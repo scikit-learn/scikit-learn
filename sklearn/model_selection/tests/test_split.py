@@ -1344,16 +1344,6 @@ def test_cv_iterable_wrapper():
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
                             list(kf_randomized_iter_wrapped.split(X, y)))
 
-    try:
-        np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
-                                list(kf_randomized_iter_wrapped.split(X, y)))
-        splits_are_equal = True
-    except AssertionError:
-        splits_are_equal = False
-    assert not splits_are_equal, (
-        "If the splits are randomized, "
-        "successive calls to split should yield different results")
-
 
 def test_group_kfold():
     rng = np.random.RandomState(0)
