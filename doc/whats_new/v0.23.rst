@@ -47,15 +47,24 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| example fix in model XXX. :pr:`xxxx` or :issue:`xxxx` by
-  :user:`name <user id>`
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Functions :func:`datasets.make_circles` and
+  :func:`datasets.make_moons` now accept two-element tuple.
+  :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
-  more memory efficient implementation of single linkage clustering.
-  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+- |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
+  method of :class:`linear_model.RANSACRegressor`, it would not be passed to
+  the wrapped `base_estimator` during the fitting of the final model.
+  :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
@@ -69,3 +78,11 @@ Changelog
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
+  deprecated.
+  :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
+
