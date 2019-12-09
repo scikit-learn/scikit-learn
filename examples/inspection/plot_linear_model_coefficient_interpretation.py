@@ -77,7 +77,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # different variables. Only numerical variables will be used.
 
 train_dataset = X_train.copy()
-train_dataset.insert(0,"WAGE",y_train)
+train_dataset.insert(0, "WAGE", y_train)
 sns.pairplot(train_dataset, diag_kind='kde')
 plt.show()
 
