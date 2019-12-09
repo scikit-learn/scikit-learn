@@ -36,6 +36,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_32bit
 
 
 # toy sample
@@ -211,6 +212,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
+@skip_if_32bit
 def test_decision_tree_vs_gradient_boosting():
     # Make sure that the recursion method gives the same results on a
     # DecisionTreeRegressor and a GradientBoostingRegressor with 1 tree and
@@ -221,7 +223,7 @@ def test_decision_tree_vs_gradient_boosting():
     n_samples = 100
     n_features = 5
     X = np.random.RandomState(0).randn(n_samples, n_features)
-    y = np.random.RandomState(0).randn(n_samples).astype(np.float32)
+    y = np.random.RandomState(0).randn(n_samples)
 
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
     # into account with the recursion method, for technical reasons. We set
