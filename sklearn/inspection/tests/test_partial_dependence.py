@@ -174,6 +174,11 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # samples.
     # This also checks that the brute and recursion methods give the same
     # output.
+    # Note that even on the trainset, the brute and the recursion methods
+    # aren't always strictly equivalent (despite what we say in the docs), in
+    # particular when the slow method generates unrealistic samples that have
+    # low mass in the joint distribution of the input features, and when some
+    # of the features are dependent. Hence the high tolerance on the checks.
 
     X, y = make_regression(random_state=0, n_features=5, n_informative=5)
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
