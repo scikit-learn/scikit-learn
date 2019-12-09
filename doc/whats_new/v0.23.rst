@@ -69,7 +69,7 @@ Changelog
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
   potentially large array to store dual coefficients for all hyperparameters
-  during its `fit`, nor an array to store all LOO predictions unless
+  during its `fit`, nor an array to store all error or LOO predictions unless
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
 
@@ -85,4 +85,3 @@ Changelog
 - |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
   deprecated.
   :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
-
