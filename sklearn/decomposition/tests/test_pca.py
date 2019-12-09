@@ -532,7 +532,7 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
-    assert_allclose(pca_64.components_, pca_32.components_, rtol=1e-4)
+    assert_allclose(pca_64.components_, pca_32.components_, rtol=2e-4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):
