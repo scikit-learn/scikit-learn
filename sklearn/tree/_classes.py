@@ -294,7 +294,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                np.sum(sample_weight))
 
         min_impurity_split = self.min_impurity_split
-        if min_impurity_split != 0:
+        if min_impurity_split is not None:
             warnings.warn("The min_impurity_split parameter is deprecated. "
                           "Its default value has changed from 1e-7 to 0 in "
                           "version 0.23, and it will be removed in 0.25. "
@@ -304,6 +304,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if min_impurity_split < 0.:
                 raise ValueError("min_impurity_split must be greater than "
                                  "or equal to 0")
+        else:
+            min_impurity_split = 0
 
         if self.min_impurity_decrease < 0.:
             raise ValueError("min_impurity_decrease must be greater than "
@@ -810,7 +812,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=0,
+                 min_impurity_split=None,
                  class_weight=None,
                  presort='deprecated',
                  ccp_alpha=0.0):
@@ -1163,7 +1165,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=0,
+                 min_impurity_split=None,
                  presort='deprecated',
                  ccp_alpha=0.0):
         super().__init__(
@@ -1446,7 +1448,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  random_state=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=0,
+                 min_impurity_split=None,
                  class_weight=None,
                  ccp_alpha=0.0):
         super().__init__(
@@ -1655,7 +1657,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_features="auto",
                  random_state=None,
                  min_impurity_decrease=0.,
-                 min_impurity_split=0,
+                 min_impurity_split=None,
                  max_leaf_nodes=None,
                  ccp_alpha=0.0):
         super().__init__(
