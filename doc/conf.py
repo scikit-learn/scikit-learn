@@ -306,7 +306,7 @@ sphinx_gallery_conf = {
         'use_jupyter_lab': True
     },
     # avoid generating too many cross links
-    'inspect_global_variables'  : False,
+    'inspect_global_variables': False,
 }
 
 
