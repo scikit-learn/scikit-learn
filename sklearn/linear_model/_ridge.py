@@ -1078,7 +1078,9 @@ class _IdentityClassifier(LinearClassifierMixin):
 
 
 class _RidgeGCV(LinearModel):
-    """Ridge regression with built-in Generalized Cross-Validation
+    """Ridge regression with built-in Generalized Cross-Validation.
+
+    It allows efficient Leave-One-Out cross-validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 
