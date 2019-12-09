@@ -2606,6 +2606,9 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
 
+        ..versionchnanged:: 0.22
+            The default value of `copy` changed from False to True in 0.22.
+
     Returns
     -------
     Xt : ndarray or sparse matrix, shape (n_samples, n_features)
