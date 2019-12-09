@@ -127,8 +127,9 @@ def test_silhouette_paper_example():
                       abs=1e-2)
 
 
-def test_correct_labelsize():
-    # Assert 1 < n_labels < n_samples
+def test_worst_score_silhouette():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
     dataset = datasets.load_iris()
     X = dataset.data
 
@@ -138,6 +139,34 @@ def test_correct_labelsize():
     # n_labels = 1
     y = np.zeros(X.shape[0])
     assert -1.0 == silhouette_score(X, y)
+
+
+def test_worst_score_calinski_harabasz():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
+    dataset = datasets.load_iris()
+    X = dataset.data
+
+    # n_labels = n_samples
+    y = np.arange(X.shape[0])
+    assert 0.0 == calinski_harabasz_score(X, y)
+    # n_labels = 1
+    y = np.zeros(X.shape[0])
+    assert 0.0 == calinski_harabasz_score(X, y)
+
+
+def test_worst_score_davies_bouldin():
+    # Assert the worst score is returned
+    # when n_labels = 1 or n_labels = n_samples
+    dataset = datasets.load_iris()
+    X = dataset.data
+
+    # n_labels = n_samples
+    y = np.arange(X.shape[0])
+    assert np.inf == davies_bouldin_score(X, y)
+    # n_labels = 1
+    y = np.zeros(X.shape[0])
+    assert np.inf == davies_bouldin_score(X, y)
 
 
 def test_non_encoded_labels():
