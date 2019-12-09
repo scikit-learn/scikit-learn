@@ -423,8 +423,6 @@ def test_check_array_dtype_warning():
         X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
                                        accept_sparse=True)
         assert X_checked.dtype == np.float64
-        assert X_checked.dtype == np.float64
-        assert X_checked.dtype == np.float64
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
