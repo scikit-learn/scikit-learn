@@ -406,34 +406,17 @@ class RegressorMixin:
 
         Notes
         -----
-        The R2 score used when calling ``score`` on a regressor will use
+        The R2 score used when calling ``score`` on a regressor uses
         ``multioutput='uniform_average'`` from version 0.23 to keep consistent
-        with :func:`~sklearn.metrics.r2_score`. This will influence the
-        ``score`` method of all the multioutput regressors (except for
-        :class:`~sklearn.multioutput.MultiOutputRegressor`). To specify the
-        default value manually and avoid the warning, please either call
-        :func:`~sklearn.metrics.r2_score` directly or make a custom scorer with
-        :func:`~sklearn.metrics.make_scorer` (the built-in scorer ``'r2'`` uses
-        ``multioutput='uniform_average'``).
+        with default value of :func:`~sklearn.metrics.r2_score`.
+        This influences the ``score`` method of all the multioutput
+        regressors (except for
+        :class:`~sklearn.multioutput.MultiOutputRegressor`).
         """
 
         from .metrics import r2_score
-        from .metrics._regression import _check_reg_targets
         y_pred = self.predict(X)
-        # XXX: Remove the check in 0.23
-        y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
-        if y_type == 'continuous-multioutput':
-            warnings.warn("The default value of multioutput (not exposed in "
-                          "score method) will change from 'variance_weighted' "
-                          "to 'uniform_average' in 0.23 to keep consistent "
-                          "with 'metrics.r2_score'. To specify the default "
-                          "value manually and avoid the warning, please "
-                          "either call 'metrics.r2_score' directly or make a "
-                          "custom scorer with 'metrics.make_scorer' (the "
-                          "built-in scorer 'r2' uses "
-                          "multioutput='uniform_average').", FutureWarning)
-        return r2_score(y, y_pred, sample_weight=sample_weight,
-                        multioutput='variance_weighted')
+        return r2_score(y, y_pred, sample_weight=sample_weight)
 
 
 class ClusterMixin:

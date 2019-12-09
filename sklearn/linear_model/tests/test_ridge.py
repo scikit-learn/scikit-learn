@@ -720,7 +720,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
