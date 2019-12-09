@@ -483,6 +483,8 @@ class PatchExtractor(BaseEstimator):
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
 
+    .. versionadded:: 0.9
+    
     Parameters
     ----------
     patch_size : tuple of ints (patch_height, patch_width)
@@ -514,7 +516,6 @@ class PatchExtractor(BaseEstimator):
     >>> print('Patches shape: {}'.format(pe_trans.shape))
     Patches shape: (545706, 2, 2)
 
-    .. versionadded:: 0.9
     """
 
     def __init__(self, patch_size=None, max_patches=None, random_state=None):

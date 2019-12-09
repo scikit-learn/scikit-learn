@@ -1816,6 +1816,8 @@ class PredefinedSplit(BaseCrossValidator):
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
+    .. versionadded:: 0.16
+    
     Parameters
     ----------
     test_fold : array-like, shape (n_samples,)
@@ -1843,7 +1845,6 @@ class PredefinedSplit(BaseCrossValidator):
     TRAIN: [1 2 3] TEST: [0]
     TRAIN: [0 2] TEST: [1 3]
 
-    .. versionadded:: 0.16
     """
 
     def __init__(self, test_fold):

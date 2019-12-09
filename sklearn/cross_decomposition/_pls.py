@@ -517,6 +517,8 @@ class PLSRegression(_PLS):
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
+    .. versionadded:: 0.8
+
     Parameters
     ----------
     n_components : int, (default 2)
@@ -635,7 +637,6 @@ class PLSRegression(_PLS):
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
 
-    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True,

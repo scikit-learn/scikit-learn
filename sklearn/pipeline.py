@@ -47,6 +47,8 @@ class Pipeline(_BaseComposition):
 
     Read more in the :ref:`User Guide <pipeline>`.
 
+    .. versionadded:: 0.5
+    
     Parameters
     ----------
     steps : list
@@ -122,8 +124,6 @@ class Pipeline(_BaseComposition):
     (1, 10)
     >>> sub_pipeline.inverse_transform(coef).shape
     (1, 20)
-
-    .. versionadded:: 0.5
 
     """
 

@@ -2655,6 +2655,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     method : str, (default='yeo-johnson')
@@ -2716,7 +2718,6 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
 
-    .. versionadded:: 0.19.2
     """
     def __init__(self, method='yeo-johnson', standardize=True, copy=True):
         self.method = method
