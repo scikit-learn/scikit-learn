@@ -19,22 +19,6 @@ from ...preprocessing import LabelEncoder
 from ...utils import deprecated
 
 
-# def check_number_of_labels(n_labels, n_samples):
-#     """Check that number of labels are valid.
-#
-#     Parameters
-#     ----------
-#     n_labels : int
-#         Number of labels
-#
-#     n_samples : int
-#         Number of samples
-#     """
-#     if not 1 < n_labels < n_samples:
-#         raise ValueError("Number of labels is %d. Valid values are 2 "
-#                          "to n_samples - 1 (inclusive)" % n_labels)
-
-
 def silhouette_score(X, labels, metric='euclidean', sample_size=None,
                      random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
@@ -228,7 +212,6 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     # don't raise an error when le.classes_ =1 or cle.classes_ = n_samples
     # instead return the worst score = -1
-    # check_number_of_labels(len(le.classes_), n_samples)
     if len(le.classes_) == 1 or len(le.classes_) == n_samples:
         return -1.0
 
@@ -291,7 +274,6 @@ def calinski_harabasz_score(X, labels):
 
     # don't raise an error when le.classes_ = 1 or cle.classes_ = n_samples
     # instead return the worst score = 0
-    # check_number_of_labels(n_labels, n_samples)
     if len(le.classes_) == 1 or len(le.classes_) == n_samples:
         return 0.0
 
@@ -350,11 +332,6 @@ def davies_bouldin_score(X, labels):
 
     # don't raise an error when le.classes_ = 1 or cle.classes_ = n_samples
     # instead return the worst score = np.inf
-    # this scorer does not follow the convention that higher return values
-    # are better than lower return values used along scikit-learn.
-    # It follow the opposite principle (lower return values are better than
-    # higher return values.
-    # check_number_of_labels(n_labels, n_samples)
     if len(le.classes_) == 1 or len(le.classes_) == n_samples:
         return np.inf
 
