@@ -2,5 +2,5 @@ matplotlib
 scikit-image
 pandas
 sphinx-gallery
-scikit-learn==0.22
+scikit-learn==0.22.*
 
