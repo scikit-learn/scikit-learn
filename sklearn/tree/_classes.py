@@ -1645,7 +1645,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg = BaggingRegressor(extra_tree, random_state=0).fit(
     ...     X_train, y_train)
     >>> reg.score(X_test, y_test)
-    0.7823...
+    0.7788...
     """
     def __init__(self,
                  criterion="mse",
