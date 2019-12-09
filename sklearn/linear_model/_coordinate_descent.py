@@ -43,26 +43,26 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     y : ndarray, shape (n_samples,)
         Target values
 
-    Xy : array-like, optional
+    Xy : array-like, default=None
         Xy = np.dot(X.T, y) that can be precomputed.
 
-    l1_ratio : float
+    l1_ratio : float, default=1.0
         The elastic net mixing parameter, with ``0 < l1_ratio <= 1``.
         For ``l1_ratio = 0`` the penalty is an L2 penalty. (currently not
         supported) ``For l1_ratio = 1`` it is an L1 penalty. For
         ``0 < l1_ratio <1``, the penalty is a combination of L1 and L2.
 
-    eps : float, optional
+    eps : float, default=1e-3
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``
 
-    n_alphas : int, optional
+    n_alphas : int, default=100
         Number of alphas along the regularization path
 
-    fit_intercept : boolean, default True
+    fit_intercept : boolean, default=True
         Whether to fit an intercept or not
 
-    normalize : boolean, optional, default False
+    normalize : boolean, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -70,7 +70,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, optional, default=True
         If ``True``, X will be copied; else, it may be overwritten.
     """
     if l1_ratio == 0:
