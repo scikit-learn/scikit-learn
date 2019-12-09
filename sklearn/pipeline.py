@@ -48,7 +48,6 @@ class Pipeline(_BaseComposition):
     Read more in the :ref:`User Guide <pipeline>`.
 
     .. versionadded:: 0.5
-    
     Parameters
     ----------
     steps : list

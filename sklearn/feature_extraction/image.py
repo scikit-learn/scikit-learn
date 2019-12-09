@@ -484,7 +484,6 @@ class PatchExtractor(BaseEstimator):
     Read more in the :ref:`User Guide <image_feature_extraction>`.
 
     .. versionadded:: 0.9
-    
     Parameters
     ----------
     patch_size : tuple of ints (patch_height, patch_width)
