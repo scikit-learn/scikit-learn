@@ -1068,7 +1068,6 @@ class _IdentityClassifier(LinearClassifierMixin):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
-    predictions.
     """
     def __init__(self, classes):
         self.classes_ = classes
@@ -1079,8 +1078,6 @@ class _IdentityClassifier(LinearClassifierMixin):
 
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
-
-    It allows efficient Leave-One-Out cross-validation.
 
     This class is not intended to be used directly. Use RidgeCV instead.
 

@@ -365,8 +365,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
                              " than maximum. Got %s." % str(feature_range))
 
         if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does no support sparse input. "
-                            "You may consider to use MaxAbsScaler instead.")
+            raise TypeError("MinMaxScaler does not support sparse input. "
+                            "Consider using MaxAbsScaler instead.")
 
         X = check_array(X,
                         estimator=self, dtype=FLOAT_DTYPES,
@@ -2543,7 +2543,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy="warn"):
+                       copy=True):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2601,18 +2601,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default="warn")
+    copy : boolean, optional, (default=True)
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
 
-        .. deprecated:: 0.21
-            The default value of parameter `copy` will be changed from False
-            to True in 0.23. The current default of False is being changed to
-            make it more consistent with the default `copy` values of other
-            functions in :mod:`sklearn.preprocessing`. Furthermore, the
-            current default of False may have unexpected side effects by
-            modifying the value of `X` inplace
+        ..versionchnanged:: 0.22
+            The default value of `copy` changed from False to True in 0.22.
 
     Returns
     -------
@@ -2649,17 +2644,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    if copy == "warn":
-        warnings.warn("The default value of `copy` will change from False to "
-                      "True in 0.23 in order to make it more consistent with "
-                      "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing` and prevent "
-                      "unexpected side effects by modifying the value of `X` "
-                      "inplace. To avoid inplace modifications of `X`, it is "
-                      "recommended to explicitly set `copy=True`",
-                      FutureWarning)
-        copy = False
-
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
