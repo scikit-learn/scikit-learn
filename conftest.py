@@ -62,7 +62,7 @@ def pytest_collection_modifyitems(config, items):
                       '64 bits.')
             skip_doctests = True
     except ImportError:
-        pass
+        print("Import Error Raised.")
 
     if skip_doctests:
         skip_marker = pytest.mark.skip(reason=reason)
