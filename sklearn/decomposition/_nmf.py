@@ -912,6 +912,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
 
         - 'custom': use custom matrices W and H
 
+        .. versionchanged:: 0.23
+            The default value of `init` changed from 'random' to None in 0.23.
+
     update_H : boolean, default: True
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.

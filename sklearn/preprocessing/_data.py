@@ -2606,8 +2606,8 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
 
-        ..versionchnanged:: 0.22
-            The default value of `copy` changed from False to True in 0.22.
+        ..versionchnanged:: 0.23
+            The default value of `copy` changed from False to True in 0.23.
 
     Returns
     -------
@@ -3037,6 +3037,10 @@ def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
+
+        .. versionchanged:: 0.23
+            The default value of the `method` parameter changed from
+            'box-cox' to 'yeo-johnson' in 0.23.
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
