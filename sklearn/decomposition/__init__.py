@@ -4,7 +4,7 @@ algorithms, including among others PCA, NMF or ICA. Most of the algorithms of
 this module can be regarded as dimensionality reduction techniques.
 """
 
-# TODO: remove me in 0.24:
+# TODO: remove me in 0.24, as well as the #noqas:
 # pre-cache the import of the deprecated module to avoid showing
 # the partial_dependence function.
 # https://github.com/scikit-learn/scikit-learn/issues/15842
