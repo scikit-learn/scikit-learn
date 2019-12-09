@@ -108,7 +108,7 @@ def test_partial_dependence_no_shadowing():
         from sklearn.inspection.partial_dependence import partial_dependence as _  # noqa
 
         # Calling all_estimators() also triggers a recursive import of all
-        # submodules, including deprecated once.
+        # submodules, including deprecated ones.
         all_estimators()
 
     from sklearn.inspection import partial_dependence
@@ -124,7 +124,7 @@ def test_dict_learning_no_shadowing():
         from sklearn.decomposition.dict_learning import dict_learning as _  # noqa
 
         # Calling all_estimators() also triggers a recursive import of all
-        # submodules, including deprecated once.
+        # submodules, including deprecated ones.
         all_estimators()
 
     from sklearn.decomposition import dict_learning
