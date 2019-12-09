@@ -13,6 +13,8 @@ assuming that other features remain constant.
 
 This example will provide some hints in interpreting coefficient in linear
 models, using data from the "Current Population Survey" from 1985.
+We will be interested in the prediction of the wage as a function of various
+features such as experience, age, or education.
 
 A description of the dataset follows.
 """
@@ -85,14 +87,13 @@ plt.show()
 # Looking closely at the WAGE distribution it could be noticed that it has a
 # long tail and we could take its logarithm
 # to simplify our problem and approximate a normal distribution.
-# For all 3 variables, EDUCATION, EXPERIENCE, and AGE, the WAGE is
-# increasing when these variables are increasing. Also, the EXPERIENCE and
-# AGE are correlated.
+# The WAGE is increasing when EDUCATION is increasing.
+# Also, the EXPERIENCE and AGE are linearly correlated.
 #
 # The pipeline
 # ............
 #
-# To design our machine-learning pipeline, we will manually
+# To design our machine-learning pipeline, we manually
 # check the type of data that we are dealing with:
 
 survey.data.info()
@@ -101,7 +102,8 @@ survey.data.info()
 # As seen previously, the dataset contains columns with different data types
 # and we need to apply a specific preprocessing for each data types.
 # In particular categorical variables cannot be included in linear model if not
-# coded as integers first.
+# coded as integers first. In addition, to avoid categorical features to be
+# treated as ordered values, we need to one-hot-encode them.
 # Our pre-processor will
 #
 # - one-hot encode (i.e., generate a column by category) the categorical
