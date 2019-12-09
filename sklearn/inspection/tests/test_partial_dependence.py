@@ -246,9 +246,9 @@ def test_decision_tree_vs_gradient_boosting():
         features = np.array([f], dtype=np.int32)
 
         pdp_gbdt = _partial_dependence_brute(gbdt, grid, features, X,
-                                            response_method='auto')
+                                             response_method='auto')
         pdp_tree = _partial_dependence_brute(tree, grid, features, X,
-                                            response_method='auto')
+                                             response_method='auto')
         assert np.allclose(pdp_gbdt, pdp_tree)
 
 

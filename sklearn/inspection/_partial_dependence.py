@@ -369,7 +369,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if method == 'recursion':
         if not isinstance(estimator,
                           (BaseGradientBoosting, BaseHistGradientBoosting,
-                          DecisionTreeRegressor)):
+                           DecisionTreeRegressor)):
             supported_classes_recursion = (
                 'GradientBoostingClassifier',
                 'GradientBoostingRegressor',
