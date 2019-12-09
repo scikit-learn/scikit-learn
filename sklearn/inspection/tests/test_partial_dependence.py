@@ -221,7 +221,7 @@ def test_decision_tree_vs_gradient_boosting():
     n_samples = 100
     n_features = 5
     X = np.random.RandomState(0).randn(n_samples, n_features)
-    y = np.random.RandomState(0).randn(n_samples)
+    y = np.random.RandomState(0).randn(n_samples).astype(np.float32)
 
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
     # into account with the recursion method, for technical reasons. We set
