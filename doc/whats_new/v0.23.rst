@@ -58,6 +58,14 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
+  method of :class:`linear_model.RANSACRegressor`, it would not be passed to
+  the wrapped `base_estimator` during the fitting of the final model.
+  :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
