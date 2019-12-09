@@ -1068,6 +1068,7 @@ class _IdentityClassifier(LinearClassifierMixin):
     """Fake classifier which will directly output the prediction.
 
     We inherit from LinearClassifierMixin to get the proper shape for the
+    output `y`.
     """
     def __init__(self, classes):
         self.classes_ = classes
