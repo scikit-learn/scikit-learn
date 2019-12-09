@@ -548,13 +548,6 @@ Changelog
 - |Fix| The liblinear solver now supports ``sample_weight``.
   :pr:`15038` by `Guillaume Lemaitre`_.
 
-- |Efficiency| :class:`linear_model.RidgeCV` and
-  :class:`linear_model.RidgeClassifierCV` now does not allocate a
-  potentially large array to store dual coefficients for all hyperparameters
-  during its `fit`, nor an array to store all LOO predictions unless
-  `store_cv_values` is `True`.
-  :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
-
 :mod:`sklearn.manifold`
 .......................
 
