@@ -61,7 +61,7 @@ y = survey.target.values.ravel()
 survey.target.head()
 
 ###############################################################################
-# We split the sample in a train and a test dataset, 
+# We split the sample in a train and a test dataset,
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
 # an unknown target.
