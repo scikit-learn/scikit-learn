@@ -304,7 +304,9 @@ sphinx_gallery_conf = {
         'branch': binder_branch,
         'dependencies': './binder/requirements.txt',
         'use_jupyter_lab': True
-    }
+    },
+    # avoid generating too many cross links
+    'inspect_global_variables'  : False,
 }
 
 
