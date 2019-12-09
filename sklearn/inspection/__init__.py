@@ -1,8 +1,9 @@
 """The :mod:`sklearn.inspection` module includes tools for model inspection."""
 
-# TODO: remove me in 0.24:
-# pre-cache the import of the deprecated module to avoid showing
-# the partial_dependence function.
+# TODO: remove me in 0.24 (as well as the noqa markers)
+# pre-cache the import of the deprecated module so that import
+# sklearn.inspection.partial_dependence returns the function as in
+# 0.21, instead of the module
 # https://github.com/scikit-learn/scikit-learn/issues/15842
 import warnings
 with warnings.catch_warnings():
