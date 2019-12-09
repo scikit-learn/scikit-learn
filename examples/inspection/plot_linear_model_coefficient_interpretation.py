@@ -13,6 +13,8 @@ assuming that other features remain constant.
 
 This example will provide some hints in interpreting coefficient in linear
 models, using data from the "Current Population Survey" from 1985.
+
+A description of the dataset follows.
 """
 
 print(__doc__)
@@ -58,33 +60,55 @@ X.head()
 y = survey.target.values.ravel()
 survey.target.head()
 
+###############################################################################
+# We split the sample in a train and a test dataset, 
+# Only the train dataset will be used in the following exploratory analysis.
+# This is a way to emulate a real situation where predictions are performed on
+# an unknown target.
+
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, random_state=42
+)
+
 ##############################################################################
 # First, let's get some insights by looking at the marginal links between the
 # different variables. Only numerical variables will be used.
 
-sns.pairplot(survey.frame, diag_kind='kde')
+train_dataset = X_train.copy()
+train_dataset.insert(0,"WAGE",y_train)
+sns.pairplot(train_dataset, diag_kind='kde')
+plt.show()
 
 ##############################################################################
-# Note that the WAGE distribution has a long tail and we could take its log
-# to simplify our problem getting closer to a normal distribution.
+# Looking closely at the WAGE distribution it could be noticed that it has a
+# long tail and we could take its logarithm
+# to simplify our problem and approximate a normal distribution.
 # For all 3 variables, EDUCATION, EXPERIENCE, and AGE, the WAGE is
 # increasing when these variables are increasing. Also, the EXPERIENCE and
 # AGE are correlated.
 #
 # The pipeline
 # ............
+#
+# To design our machine-learning pipeline, we will manually
+# check the type of data that we are dealing with:
 
 survey.data.info()
 
 #############################################################################
 # As seen previously, the dataset contains columns with different data types
 # and we need to apply a specific preprocessing for each data types.
+# In particular categorical variables cannot be included in linear model if not
+# coded as integers first.
 # Our pre-processor will
 #
 # - one-hot encode (i.e., generate a column by category) the categorical
 #   columns;
 # - replace by 0 and 1 the categories of binary columns;
-# - as a first approach, keep numerical values as they are.
+# - as a first approach (we will see after how the normalisation of numerical
+#   values will affect our discussion), keep numerical values as they are.
 
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
@@ -121,16 +145,7 @@ model = make_pipeline(
 # Processing the dataset
 # ......................
 #
-# First of all we split the sample in a train and a test dataset.
-
-from sklearn.model_selection import train_test_split
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, random_state=42
-)
-
-##############################################################################
-# Then we fit the model
+# First we fit the model
 
 model.fit(X_train, y_train)
 
@@ -274,7 +289,7 @@ coefs = pd.DataFrame(
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='blue')
+sns.boxplot(data=coefs, orient='h', color='cyan')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
