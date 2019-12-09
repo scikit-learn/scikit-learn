@@ -206,34 +206,45 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
-@pytest.mark.parametrize('target_feature', range(1))
-def test_decision_tree_vs_gradient_boosting(target_feature):
+def test_decision_tree_vs_gradient_boosting():
+    # Make sure that the recursion method gives the same results on a
+    # DecisionTreeRegressor and a GradientBoostingRegressor with 1 tree and
+    # same parameters. The DecisionTreeRegressor doesn't pass the
+    # test_partial_dependence_helpers() test.
 
-    X, y = make_regression(random_state=0, n_features=5, n_informative=5)
+    # Purely random dataset to avoid correlated features
+    n_samples = 100
+    n_features = 5
+    X = np.random.RandomState(0).randn(n_samples, n_features)
+    y = np.random.RandomState(0).randn(n_samples)
+
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
     # into account with the recursion method, for technical reasons. We set
     # the mean to 0 to that this 'bug' doesn't have any effect.
     y = y - y.mean()
 
-    # gbdt = HistGradientBoostingRegressor(max_iter=1, learning_rate=1, random_state=0)
-    gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1, random_state=0, min_samples_leaf=1, max_leaf_nodes=None)
+    # set max_depth not too high to avoid splits with same gain but different
+    # features
+    max_depth = 5
+    gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
+                                     criterion='mse', max_depth=max_depth,
+                                     random_state=0)
     gbdt.fit(X, y)
 
-    tree = DecisionTreeRegressor(random_state=0, min_samples_leaf=1)
+    tree = DecisionTreeRegressor(random_state=0, max_depth=max_depth)
     tree.fit(X, y)
 
-    # target feature will be set to .5 and then to 123
-    features = np.array([target_feature], dtype=np.int32)
-    grid = np.array([[.5],
-                     [123]])
+    assert np.allclose(gbdt.predict(X), tree.predict(X))  # sanity check
 
-    pdp_gbdt = _partial_dependence_brute(gbdt, grid, features, X,
-                                         response_method='auto')
-    pdp_tree = _partial_dependence_brute(tree, grid, features, X,
-                                         response_method='auto')
-    assert np.allclose(pdp_gbdt, pdp_tree)
-    print(gbdt.predict(X))
-    print(tree.predict(X))
+    grid = np.random.RandomState(0).randn(50).reshape(-1, 1)
+    for f in range(n_features):
+        features = np.array([f], dtype=np.int32)
+
+        pdp_gbdt = _partial_dependence_brute(gbdt, grid, features, X,
+                                            response_method='auto')
+        pdp_tree = _partial_dependence_brute(tree, grid, features, X,
+                                            response_method='auto')
+        assert np.allclose(pdp_gbdt, pdp_tree)
 
 
 @pytest.mark.parametrize('est', (

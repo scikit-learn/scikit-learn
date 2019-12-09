@@ -233,11 +233,12 @@ def partial_dependence(estimator, X, features, response_method='auto',
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator (namely
-          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
-          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
-          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
-          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+        - 'recursion' is only supported for some tree-based estimators, (namely
+          :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+          :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+          :class:`~sklearn.tree.DecisionTreeRegressor`)
           but is more efficient in terms of speed.
           With this method, ``X`` is only used to build the
           grid and the partial dependences are computed using the training
@@ -513,11 +514,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     method : str, optional (default='auto')
         The method to use to calculate the partial dependence predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator (namely
-          :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
-          :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
-          :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
-          :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`)
+        - 'recursion' is only supported for some tree-based estimators, (namely
+          :class:`~sklearn.ensemble.GradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+          :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
+          :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
+          :class:`~sklearn.tree.DecisionTreeRegressor`)
           but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
           grid and the partial dependences are computed using the training
