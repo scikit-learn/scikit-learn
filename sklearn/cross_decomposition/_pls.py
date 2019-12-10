@@ -645,7 +645,6 @@ class PLSRegression(_PLS):
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
-
     In french but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
@@ -670,6 +669,8 @@ class PLSCanonical(_PLS):
     results up to numerical errors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -795,7 +796,6 @@ class PLSCanonical(_PLS):
     CCA
     PLSSVD
 
-    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
@@ -814,6 +814,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     There are no iterative deflation here.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
 
     Parameters
     ----------
@@ -864,7 +866,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
 
-    .. versionadded:: 0.8
     """
 
     def __init__(self, n_components=2, scale=True, copy=True):
