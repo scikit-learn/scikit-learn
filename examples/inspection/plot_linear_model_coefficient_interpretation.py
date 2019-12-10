@@ -128,7 +128,8 @@ preprocessor = make_column_transformer(
 
 ##############################################################################
 # To describe the dataset as a linear model we choose to use a ridge regressor
-# and to model le log of the WAGE.
+# and to model the logarithm of the WAGE.
+# We sample the complexity parameter space between 1.e-10 and 1.e10.
 
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import RidgeCV
@@ -137,7 +138,7 @@ from sklearn.compose import TransformedTargetRegressor
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(),
+        regressor=RidgeCV(alphas=np.logspace(-10,10,21)),
         func=np.log10,
         inverse_func=sp.special.exp10
     )
@@ -147,13 +148,17 @@ model = make_pipeline(
 # Processing the dataset
 # ......................
 #
-# First we fit the model
+# First, we fit the model and we verify which value for :math:`\alpha` has been
+# selected.
 
 model.fit(X_train, y_train)
+model[-1].regressor_.alpha_
 
 ##############################################################################
-# We can check the performance of the computed model using, for example, the
-# median absolute error of the model.
+# Once verified that the :math:`\alpha` parameter is not at the boundary of
+# the sampled parameter space, we can check the performance of the computed
+# model using, for example, the median absolute error of the model and the R
+# squared coefficient.
 
 from sklearn.metrics import median_absolute_error
 
@@ -162,9 +167,10 @@ mae = median_absolute_error(y_train, y_pred)
 string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
+r2score = model.score(X_test,y_test)
 
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
-
+string_score += '\nR2 score: {0:.4f}'.format(r2score)
 fig, ax = plt.subplots(figsize=(6, 6))
 sns.regplot(y_test, y_pred)
 
@@ -176,10 +182,14 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# The model learnt is far from being a good model making accurate predictions.
+# The model learnt is far from being a good model making accurate predictions:
+# the R squared score is very low.
 # As interpretation tools characterize model rather than the generative process
 # of the data itself, it needs to be emphasized that interpretations are
 # correct if the model is correct as well.
+# In this case, we are more interested in providing a methodology than in
+# having a good description of the data: a bad example illustrates the
+# importance of cross checking the results.
 #
 # Interpreting coefficients
 # .........................
@@ -264,7 +274,7 @@ coefs = pd.DataFrame(
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='blue')
+sns.boxplot(data=coefs, orient='h', color='cyan')
 plt.axvline(x=0, color='.5')
 plt.title('Stability of coefficients')
 plt.subplots_adjust(left=.3)
@@ -274,7 +284,7 @@ plt.subplots_adjust(left=.3)
 # due to the collinearity between the 2 features.
 #
 # In order to verify our interpretation we remove one of the 2 features and
-# check what is the impact on the features stability.
+# check what is the impact on the model stability.
 
 column_to_drop = ['AGE']
 
