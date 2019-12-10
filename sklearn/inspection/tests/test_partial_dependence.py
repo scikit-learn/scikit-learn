@@ -239,7 +239,8 @@ def test_decision_tree_vs_gradient_boosting():
     tree = DecisionTreeRegressor(random_state=0, max_depth=max_depth)
     tree.fit(X, y)
 
-    assert np.allclose(gbdt.predict(X), tree.predict(X))  # sanity check
+    # sanity check
+    np.testing.assert_allclose(gbdt.predict(X), tree.predict(X))
 
     grid = np.random.RandomState(0).randn(50).reshape(-1, 1)
     for f in range(n_features):
