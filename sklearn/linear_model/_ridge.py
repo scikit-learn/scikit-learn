@@ -1696,7 +1696,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Estimated regularization parameter.
 
     best_score_ : float
-        Score of base estimator with best alpha on the hold out data.
+        Mean cross-validated score of the estimator with the best alpha found.
 
     Examples
     --------
@@ -1803,7 +1803,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Estimated regularization parameter.
 
     best_score_ : float
-        Score of base estimator with best alpha on the hold out data.
+        Mean cross-validated score of the estimator with the best alpha found.
 
     classes_ : array of shape (n_classes,)
         The classes labels.
