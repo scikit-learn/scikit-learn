@@ -73,7 +73,7 @@ Changelog
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
 
-- |Fix| Fixed a bug in :class:`linear_model.RidgeRegressionCV` to pass a
+- |Fix| Fixed a bug in :class:`linear_model.RidgeClassifierCV` to pass a
   specific scoring strategy. Before the internal estimator outputs score
   instead of predictions.
   :pr:`14848` by :user:`Venkatachalam N <venkyyuvy>`.
