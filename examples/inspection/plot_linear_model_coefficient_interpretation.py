@@ -167,7 +167,7 @@ mae = median_absolute_error(y_train, y_pred)
 string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
 y_pred = model.predict(X_test)
 mae = median_absolute_error(y_test, y_pred)
-r2score = model.score(X_test,y_test)
+r2score = model.score(X_test, y_test)
 
 string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
 string_score += '\nR2 score: {0:.4f}'.format(r2score)
