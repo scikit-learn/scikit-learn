@@ -655,14 +655,14 @@ def test_gaussian_mixture_fit():
 
 def test_non_scaled_gaussian_mixture_fit():
     """
-        This is used to test that a GMM, initiated with k-means, is able
+        This is used to test that a GMM, initiated with kmeans-scaled, is able
         to produce a fit to data where each feature is of very different
-        scale. Key to this is that, when the GMM is initialised, it
-        is done so by applying k-means to a scaled version of the data.
+        scale. Key to this is that, when the GMM is initialised, it is done
+        so by applying k-means to a scaled version of the data.
 
-        Note that we are comparing the GMM estimates of the means
-        with the corresponding sample estimates of means, rather than the
-        'ground truth'.
+        Note that we are comparing the GMM estimates of the means with the
+        corresponding sample estimates of means, rather than the 'ground
+        truth'.
 
         Pete Green <p.l.green@liverpool.ac.uk>
 
@@ -683,7 +683,7 @@ def test_non_scaled_gaussian_mixture_fit():
     means = np.array([np.mean(X1, 0), np.mean(X2, 0)])
 
     # Fit GMM
-    g = GaussianMixture(n_components=2, n_init=20, init_params='kmeans')
+    g = GaussianMixture(n_components=2, n_init=20, init_params='kmeans-scaled')
     g.fit(X)
 
     # Compare GMM means with sample means
@@ -958,7 +958,7 @@ def test_monotonic_likelihood():
                 except ConvergenceWarning:
                     pass
                 assert (current_log_likelihood >=
-                                     prev_log_likelihood)
+                        prev_log_likelihood)
 
                 if gmm.converged_:
                     break
