@@ -244,7 +244,7 @@ def test_decision_tree_vs_gradient_boosting():
     # sanity check
     np.testing.assert_allclose(gbdt.predict(X), tree.predict(X))
 
-    grid = np.random.RandomState(0).randn(50).reshape(-1, 1)
+    grid = np.random.RandomState(0).randn(50).reshape(-1, 1).astype(np.float32)
     for f in range(n_features):
         features = np.array([f], dtype=np.int32)
 
