@@ -443,9 +443,9 @@ def test_stacking_with_sample_weight(stacker, X, y):
 @pytest.mark.parametrize(
     "stacker, X, y",
     [(StackingClassifier(
-        estimators=[('lr', LogisticRegression()),
+        estimators=[('lr', LogisticRegression(tol=1e-6)),
                     ('svm', LinearSVC(random_state=42))],
-        final_estimator=LogisticRegression()),
+        final_estimator=LogisticRegression(tol=1e-6)),
       *load_breast_cancer(return_X_y=True)),
      (StackingRegressor(
          estimators=[('lr', LinearRegression()),
