@@ -259,7 +259,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     copy : bool, default=True
         Make a copy of input data.
 
-    preference : array-like, shape (n_samples,) or float, default=None
+    preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
@@ -277,16 +277,16 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_indices_ : array, shape (n_clusters,)
+    cluster_centers_indices_ : ndarray of shape (n_clusters,)
         Indices of cluster centers
 
-    cluster_centers_ : array, shape (n_clusters, n_features)
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Cluster centers (if affinity != ``precomputed``).
 
-    labels_ : array, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
-    affinity_matrix_ : array, shape (n_samples, n_samples)
+    affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Stores the affinity matrix used in ``fit``.
 
     n_iter_ : int
