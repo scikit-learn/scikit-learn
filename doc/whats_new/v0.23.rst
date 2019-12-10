@@ -73,6 +73,11 @@ Changelog
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
 
+- |Fix| Fixed a bug in :class:`linear_model.RidgeCV` where the predictions
+  stored in `cv_values_` where in the normalized space instead of the original
+  space.
+  :pr:`15854` by :user:`Jérôme Dockès <jeromedockes>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
