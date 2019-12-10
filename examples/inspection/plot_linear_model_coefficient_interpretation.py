@@ -138,7 +138,7 @@ from sklearn.compose import TransformedTargetRegressor
 model = make_pipeline(
     preprocessor,
     TransformedTargetRegressor(
-        regressor=RidgeCV(alphas=np.logspace(-10,10,21)),
+        regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
         func=np.log10,
         inverse_func=sp.special.exp10
     )
