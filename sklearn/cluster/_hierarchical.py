@@ -687,14 +687,14 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : string or callable, default='euclidean'
+    affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
-    memory : None, str or object with the joblib.Memory interface, default=None
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -707,20 +707,19 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : bool or 'auto', default='auto'
-        Stop early the construction of the tree at n_clusters. This is
-        useful to decrease computation time if the number of clusters is
-        not small compared to the number of samples. This option is
-        useful only when specifying a connectivity matrix. Note also that
-        when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree. It must be ``True`` if
-        ``distance_threshold`` is not ``None``.
+    compute_full_tree : 'auto' or bool, default='auto'
+        Stop early the construction of the tree at n_clusters. This is useful
+        to decrease computation time if the number of clusters is not small
+        compared to the number of samples. This option is useful only when
+        specifying a connectivity matrix. Note also that when varying the
+        number of clusters and using caching, it may be advantageous to compute
+        the full tree. It must be ``True`` if ``distance_threshold`` is not
+        ``None``. By default `compute_full_tree` is "auto", which is equivalent
+        to `True` when `distance_threshold` is not `None` or that `n_clusters`
+        is inferior to 100 or `0.02 * n_samples`. Otherwise, "auto" is
+        equivalent to `False`.
 
-        - auto by default tales True if distance_threshold is not None,
-          otherwise it's value is based on the expression:
-          n_clusters < max(100, 0.02 * n_samples)
-
-    linkage : {"ward", "complete", "average", "single"}, default='ward'
+    linkage : {"ward", "complete", "average", "single"}, default="ward"
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -747,7 +746,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ``distance_threshold=None``, it will be equal to the given
         ``n_clusters``.
 
-    labels_ : array [n_samples]
+    labels_ : ndarray of shape (n_samples)
         cluster labels for each point
 
     n_leaves_ : int
@@ -756,7 +755,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_samples-1, 2)
+    children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
