@@ -191,10 +191,10 @@ class SpectralCoclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer, default=3
+    n_clusters : int, default=3
         The number of biclusters to find.
 
-    svd_method : string, default='randomized'
+    svd_method : {'randomized', 'arpack'}, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -211,9 +211,10 @@ class SpectralCoclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
-         Method for initialization of k-means algorithm; defaults to
-         'k-means++'.
+    init : {'k-means++', 'random', or ndarray of shape \
+            (n_clusters, n_features), default='k-means++'
+        Method for initialization of k-means algorithm; defaults to
+        'k-means++'.
 
     n_init : int, default=10
         Number of random initializations that are tried with the
@@ -223,7 +224,7 @@ class SpectralCoclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -232,24 +233,24 @@ class SpectralCoclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    rows_ : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like of shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    columns_ : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like of shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    row_labels_ : array-like, shape (n_rows,)
+    row_labels_ : array-like of shape (n_rows,)
         The bicluster label of each row.
 
-    column_labels_ : array-like, shape (n_cols,)
+    column_labels_ : array-like of shape (n_cols,)
         The bicluster label of each column.
 
     Examples
@@ -319,26 +320,28 @@ class SpectralBiclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer or tuple (n_row_clusters, n_column_clusters), default=3
+    n_clusters : int or tuple (n_row_clusters, n_column_clusters), default=3
         The number of row and column clusters in the checkerboard
         structure.
 
-    method : string, default='bistochastic'
+    method : {'bistochastic', 'scale', 'log'}, default='bistochastic'
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
         The authors recommend using 'log'. If the data is sparse,
         however, log normalization will not work, which is why the
-        default is 'bistochastic'. CAUTION: if `method='log'`, the
-        data must not be sparse.
+        default is 'bistochastic'.
 
-    n_components : integer, default=6
+        .. warning::
+           if `method='log'`, the data must be sparse.
+
+    n_components : int, default=6
         Number of singular vectors to check.
 
-    n_best : integer, default=3
+    n_best : int, default=3
         Number of best singular vectors to which to project the data
         for clustering.
 
-    svd_method : string, default='randomized'
+    svd_method : {'randomized', 'arpack'}, default='randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', uses
         :func:`~sklearn.utils.extmath.randomized_svd`, which may be faster
@@ -355,9 +358,10 @@ class SpectralBiclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
-    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
-         Method for initialization of k-means algorithm; defaults to
-         'k-means++'.
+    init : {'k-means++', 'random'} or ndarray of (n_clusters, n_features), \
+            default='k-means++'
+        Method for initialization of k-means algorithm; defaults to
+        'k-means++'.
 
     n_init : int, default=10
         Number of random initializations that are tried with the
@@ -367,7 +371,7 @@ class SpectralBiclustering(BaseSpectral):
         chosen and the algorithm runs once. Otherwise, the algorithm
         is run for each initialization and the best solution chosen.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -376,24 +380,24 @@ class SpectralBiclustering(BaseSpectral):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         Used for randomizing the singular value decomposition and the k-means
         initialization. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
-    rows_ : array-like, shape (n_row_clusters, n_rows)
+    rows_ : array-like of shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
         cluster `i` contains row `r`. Available only after calling ``fit``.
 
-    columns_ : array-like, shape (n_column_clusters, n_columns)
+    columns_ : array-like of shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
-    row_labels_ : array-like, shape (n_rows,)
+    row_labels_ : array-like of shape (n_rows,)
         Row partition labels.
 
-    column_labels_ : array-like, shape (n_cols,)
+    column_labels_ : array-like of shape (n_cols,)
         Column partition labels.
 
     Examples
