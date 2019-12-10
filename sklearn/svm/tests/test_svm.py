@@ -485,12 +485,12 @@ def test_svm_regressor_sided_sample_weight(estimator):
 
 def test_svm_equivalence_sample_weight_C():
     # test that rescaling all samples is the same as changing C
-    clf = svm.SVC()
+    clf = svm.SVC(tol=1e-6)
     clf.fit(X, Y)
     dual_coef_no_weight = clf.dual_coef_
     clf.set_params(C=100)
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
-    assert_allclose(dual_coef_no_weight, clf.dual_coef_)
+    assert_allclose(dual_coef_no_weight, clf.dual_coef_, atol=1e-5)
 
 
 @pytest.mark.parametrize(
