@@ -58,6 +58,14 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.CountVectorizer` now sorts
+  features after pruning them by document frequency. This improves performances
+  for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
+  :pr:`15834` by :user:`Santiago M. Mola <smola>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
