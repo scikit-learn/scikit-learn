@@ -36,7 +36,6 @@ from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import skip_if_32bit
 
 
 # toy sample
