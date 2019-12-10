@@ -1,7 +1,8 @@
+from itertools import product
+
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
-from itertools import product
 
 import pytest
 
@@ -651,7 +652,7 @@ def _test_ridge_cv(filter_):
     ridge_cv.predict(filter_(X_diabetes))
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert isinstance(ridge_cv.intercept_, np.float64)
 
     cv = KFold(5)
     ridge_cv.set_params(cv=cv)
@@ -659,7 +660,7 @@ def _test_ridge_cv(filter_):
     ridge_cv.predict(filter_(X_diabetes))
 
     assert len(ridge_cv.coef_.shape) == 1
-    assert type(ridge_cv.intercept_) == np.float64
+    assert isinstance(ridge_cv.intercept_, np.float64)
 
 
 @pytest.mark.parametrize(
@@ -906,6 +907,33 @@ def test_ridgecv_sample_weight():
 
         assert ridgecv.alpha_ == gs.best_estimator_.alpha
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
+
+
+@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize(
+    "scoring", ["neg_mean_squared_error", _mean_squared_error_callable]
+)
+def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
+    # regression test for 13998
+    rng = np.random.RandomState(42)
+    n_samples = 50
+    X, y = make_regression(n_samples=n_samples, random_state=42)
+    sample_weight = rng.randint(1, 4, n_samples) if with_sample_weight else None
+
+    ridgecv_default_scoring = RidgeCV(
+        store_cv_values=True, alphas=[10.], scoring=None
+    )
+    ridgecv_custom_scoring = RidgeCV(
+        store_cv_values=True, alphas=[10.], scoring=scoring
+    )
+    ridgecv_default_scoring.fit(X, y, sample_weight=sample_weight)
+    ridgecv_custom_scoring.fit(X, y, sample_weight=sample_weight)
+
+    assert_allclose(
+        ridgecv_default_scoring.cv_values_,
+        mean_squared_error(y, ridgecv_custom_scoring.cv_values_,
+        sample_weight=sample_weight)
+    )
 
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():

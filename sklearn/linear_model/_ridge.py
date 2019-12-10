@@ -1502,7 +1502,10 @@ class _RidgeGCV(LinearModel):
                 alpha_score = scorer(
                     _IdentityEstimator(), predictions.ravel(), y.ravel())
                 if self.store_cv_values:
-                    self.cv_values_[:, i] = predictions.ravel()
+                    # compute the predictions in the original space
+                    self.cv_values_[:, i] = (
+                        predictions.ravel() / np.tile(sqrt_sw, n_y)
+                        + np.repeat(y_offset, X.shape[0]))
 
             if (best_score is None) or (alpha_score > best_score):
                 best_coef, best_score, best_alpha = c, alpha_score, alpha
