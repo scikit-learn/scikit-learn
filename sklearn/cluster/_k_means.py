@@ -658,7 +658,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}, default='k-means++'
+    init : {'k-means++', 'random'} or ndarray of shape (n_clusters,), \
+            default='k-means++'
         Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -683,7 +684,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     tol : float, default=1e-4
         Relative tolerance with regards to inertia to declare convergence.
 
-    precompute_distances : {'auto', True, False}, default='auto'
+    precompute_distances : 'auto' or bool, default='auto'
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 12
@@ -697,7 +698,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     verbose : int, default=0
         Verbosity mode.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
@@ -711,7 +712,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -719,7 +720,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
+    algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
@@ -727,12 +728,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers. If the algorithm stops before fully
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
 
-    labels_ : array, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
     inertia_ : float
