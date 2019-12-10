@@ -716,8 +716,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         the full tree. It must be ``True`` if ``distance_threshold`` is not
         ``None``. By default `compute_full_tree` is "auto", which is equivalent
         to `True` when `distance_threshold` is not `None` or that `n_clusters`
-        is inferior to 100 or `0.02 * n_samples`. Otherwise, "auto" is
-        equivalent to `False`.
+        is inferior to the maximum between 100 or `0.02 * n_samples`.
+        Otherwise, "auto" is equivalent to `False`.
 
     linkage : {"ward", "complete", "average", "single"}, default="ward"
         Which linkage criterion to use. The linkage criterion determines which
@@ -955,8 +955,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         the full tree. It must be ``True`` if ``distance_threshold`` is not
         ``None``. By default `compute_full_tree` is "auto", which is equivalent
         to `True` when `distance_threshold` is not `None` or that `n_clusters`
-        is inferior to 100 or `0.02 * n_samples`. Otherwise, "auto" is
-        equivalent to `False`.
+        is inferior to the maximum between 100 or `0.02 * n_samples`.
+        Otherwise, "auto" is equivalent to `False`.
 
     linkage : {'ward', 'complete', 'average', 'single'}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
