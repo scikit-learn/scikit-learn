@@ -916,23 +916,24 @@ def test_ridgecv_sample_weight():
 def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
     # regression test for 13998
     rng = np.random.RandomState(42)
-    n_samples = 50
+    n_samples = 6
     X, y = make_regression(n_samples=n_samples, random_state=42)
     sample_weight = rng.randint(1, 4, n_samples) if with_sample_weight else None
+    scoring_ = make_scorer(scoring) if callable(scoring) else scoring
 
     ridgecv_default_scoring = RidgeCV(
         store_cv_values=True, alphas=[10.], scoring=None
     )
     ridgecv_custom_scoring = RidgeCV(
-        store_cv_values=True, alphas=[10.], scoring=scoring
+        store_cv_values=True, alphas=[10.], scoring=scoring_
     )
     ridgecv_default_scoring.fit(X, y, sample_weight=sample_weight)
     ridgecv_custom_scoring.fit(X, y, sample_weight=sample_weight)
 
     assert_allclose(
-        ridgecv_default_scoring.cv_values_,
+        np.average(ridgecv_default_scoring.cv_values_, weights=sample_weight),
         mean_squared_error(y, ridgecv_custom_scoring.cv_values_,
-        sample_weight=sample_weight)
+        sample_weight=None)
     )
 
 
