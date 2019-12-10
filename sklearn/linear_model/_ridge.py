@@ -1519,7 +1519,7 @@ class _RidgeGCV(LinearModel):
 
                 if self.is_clf:
                     identity_estimator = _IdentityClassifier(
-                        n_classes=np.arange(n_y)
+                        classes=np.arange(n_y)
                     )
                     predictions_, y_ = predictions, y.argmax(axis=1)
                 else:
