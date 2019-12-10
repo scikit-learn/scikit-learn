@@ -911,15 +911,19 @@ def test_ridgecv_sample_weight():
 
 @pytest.mark.parametrize("with_sample_weight", [True, False])
 @pytest.mark.parametrize(
-    "scoring", ["neg_mean_squared_error", _mean_squared_error_callable]
+    "scoring", ["neg_mean_squared_error", mean_squared_error]
 )
 def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
     # regression test for 13998
+    # check that the predictions are reported in the original space and not in
+    # the normalized space (i.e. substracted the mean and dividing by the std.
+    # dev.)
     rng = np.random.RandomState(42)
     n_samples = 6
     X, y = make_regression(n_samples=n_samples, random_state=42)
     sample_weight = rng.randint(1, 4, n_samples) if with_sample_weight else None
-    scoring_ = make_scorer(scoring) if callable(scoring) else scoring
+    scoring_ = (make_scorer(scoring, greater_is_better=False)
+                if callable(scoring) else scoring)
 
     ridgecv_default_scoring = RidgeCV(
         store_cv_values=True, alphas=[10.], scoring=None
@@ -930,11 +934,15 @@ def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
     ridgecv_default_scoring.fit(X, y, sample_weight=sample_weight)
     ridgecv_custom_scoring.fit(X, y, sample_weight=sample_weight)
 
-    assert_allclose(
-        np.average(ridgecv_default_scoring.cv_values_, weights=sample_weight),
-        mean_squared_error(y, ridgecv_custom_scoring.cv_values_,
-        sample_weight=None)
-    )
+    errors_default_scoring = ridgecv_default_scoring.cv_values_.ravel()
+    errors_custom_scoring = (y - ridgecv_custom_scoring.cv_values_.ravel()) ** 2
+    # FIXME: The errors is by default weighted with sample weights which should
+    # not be the case. Once a fix done for this case, we can remove the
+    # following lines. See #15648 for more details.
+    if sample_weight is not None:
+        errors_custom_scoring *= sample_weight
+
+    assert_allclose(errors_default_scoring, errors_custom_scoring)
 
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
