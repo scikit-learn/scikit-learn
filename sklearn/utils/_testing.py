@@ -438,9 +438,7 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
 
 
 # TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(include_meta_estimators=None,
-                   include_other=None, type_filter=None,
-                   include_dont_test=None):
+def all_estimators(type_filter=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -450,19 +448,6 @@ def all_estimators(include_meta_estimators=None,
 
     Parameters
     ----------
-    include_meta_estimators : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_meta_estimators`` has been deprecated and has no effect in
-           0.21 and will be removed in 0.23.
-
-    include_other : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_other`` has been deprecated and has not effect in 0.21 and
-           will be removed in 0.23.
 
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -470,13 +455,6 @@ def all_estimators(include_meta_estimators=None,
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
-
-    include_dont_test : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_dont_test`` has been deprecated and has no effect in 0.21
-           and will be removed in 0.23.
 
     Returns
     -------
@@ -490,21 +468,6 @@ def all_estimators(include_meta_estimators=None,
         if not len(c.__abstractmethods__):
             return False
         return True
-
-    if include_other is not None:
-        warnings.warn("include_other was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_dont_test is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_meta_estimators is not None:
-        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
 
     all_classes = []
     # get parent folder
@@ -912,3 +875,25 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
+
+
+def _convert_container(container, constructor_name, columns_name=None):
+    if constructor_name == 'list':
+        return list(container)
+    elif constructor_name == 'tuple':
+        return tuple(container)
+    elif constructor_name == 'array':
+        return np.asarray(container)
+    elif constructor_name == 'sparse':
+        return sp.sparse.csr_matrix(container)
+    elif constructor_name == 'dataframe':
+        pd = pytest.importorskip('pandas')
+        return pd.DataFrame(container, columns=columns_name)
+    elif constructor_name == 'series':
+        pd = pytest.importorskip('pandas')
+        return pd.Series(container)
+    elif constructor_name == 'index':
+        pd = pytest.importorskip('pandas')
+        return pd.Index(container)
+    elif constructor_name == 'slice':
+        return slice(container[0], container[1])

@@ -98,7 +98,7 @@ and have the following keys:
 The above keys must follow the case which were described, i.e., the keys are
 case sensitive. The attribute type ``attribute_type`` must be one of these
 strings (they are not case sensitive): ``NUMERIC``, ``INTEGER``, ``REAL`` or
-``STRING``. For nominal attributes, the ``atribute_type`` must be a list of
+``STRING``. For nominal attributes, the ``attribute_type`` must be a list of
 strings.
 
 In this format, the XOR dataset presented above can be represented as a python

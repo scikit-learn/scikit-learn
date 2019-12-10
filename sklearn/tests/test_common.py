@@ -78,8 +78,6 @@ def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.startswith("_"):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
@@ -125,6 +123,10 @@ def test_check_estimator_generate_only():
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
+    # This test requires Cython which is not necessarily there when running
+    # the tests of an installed version of scikit-learn or when scikit-learn
+    # is installed in editable mode by pip build isolation enabled.
+    pytest.importorskip("Cython")
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
@@ -135,16 +137,6 @@ def test_configure():
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
 
-        # This test will run every setup.py and eventually call
-        # check_openmp_support(), which tries to compile a C file that uses
-        # OpenMP, unless SKLEARN_NO_OPENMP is set. Some users might want to run
-        # the tests without having build-support for OpenMP. In particular, mac
-        # users need to set some environment variables to build with openmp
-        # support, and these might not be set anymore at test time. We thus
-        # temporarily set SKLEARN_NO_OPENMP, so that this test runs smoothly.
-        old_env = os.getenv('SKLEARN_NO_OPENMP')
-        os.environ['SKLEARN_NO_OPENMP'] = "True"
-
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
@@ -153,10 +145,6 @@ def test_configure():
                 exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
-        if old_env is not None:
-            os.environ['SKLEARN_NO_OPENMP'] = old_env
-        else:
-            del os.environ['SKLEARN_NO_OPENMP']
         os.chdir(cwd)
 
 
