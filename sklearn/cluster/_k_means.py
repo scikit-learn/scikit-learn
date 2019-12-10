@@ -658,8 +658,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random'} or ndarray of shape (n_clusters,), \
-            default='k-means++'
+    init : {'k-means++', 'random'} or ndarray of shape \
+            (n_clusters, n_features), default='k-means++'
         Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
