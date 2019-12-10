@@ -212,7 +212,6 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
-@skip_if_32bit
 def test_decision_tree_vs_gradient_boosting():
     # Make sure that the recursion method gives the same results on a
     # DecisionTreeRegressor and a GradientBoostingRegressor with 1 tree and
