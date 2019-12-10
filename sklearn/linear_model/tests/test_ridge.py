@@ -909,11 +909,11 @@ def test_ridgecv_sample_weight():
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
 
 
-@pytest.mark.parametrize("with_sample_weight", [True, False])
+@pytest.mark.parametrize("with_weights", [True, False])
 @pytest.mark.parametrize(
     "scoring", ["neg_mean_squared_error", mean_squared_error]
 )
-def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
+def test_ridge_cv_predictions_original_space(with_weights, scoring):
     # regression test for 13998
     # check that the predictions are reported in the original space and not in
     # the normalized space (i.e. substracted the mean and dividing by the std.
@@ -921,7 +921,7 @@ def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
     rng = np.random.RandomState(42)
     n_samples = 6
     X, y = make_regression(n_samples=n_samples, random_state=42)
-    sample_weight = rng.randint(1, 4, n_samples) if with_sample_weight else None
+    sample_weight = rng.randint(1, 4, n_samples) if with_weights else None
     scoring_ = (make_scorer(scoring, greater_is_better=False)
                 if callable(scoring) else scoring)
 
@@ -935,7 +935,7 @@ def test_ridge_cv_predictions_original_space(with_sample_weight, scoring):
     ridgecv_custom_scoring.fit(X, y, sample_weight=sample_weight)
 
     errors_default_scoring = ridgecv_default_scoring.cv_values_.ravel()
-    errors_custom_scoring = (y - ridgecv_custom_scoring.cv_values_.ravel()) ** 2
+    errors_custom_scoring = (y - ridgecv_custom_scoring.cv_values_.ravel())**2
     # FIXME: The errors is by default weighted with sample weights which should
     # not be the case. Once a fix done for this case, we can remove the
     # following lines. See #15648 for more details.
