@@ -1260,8 +1260,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self,
-                        msg="'estimator' parameter must be a fitted estimator")
         grid = np.asarray(grid, dtype=DTYPE, order='C')
         averaged_predictions = np.zeros(shape=grid.shape[0],
                                         dtype=np.float64, order='C')

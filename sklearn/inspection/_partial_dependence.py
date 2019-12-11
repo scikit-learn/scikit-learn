@@ -27,6 +27,7 @@ from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..tree import DecisionTreeRegressor
+from ..ensemble import RandomForestRegressor
 from ..exceptions import NotFittedError
 from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
@@ -238,7 +239,9 @@ def partial_dependence(estimator, X, features, response_method='auto',
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
-          :class:`~sklearn.tree.DecisionTreeRegressor`)
+          :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.ensemble.RandomForestRegressor`,
+          )
           but is more efficient in terms of speed.
           With this method, ``X`` is only used to build the
           grid and the partial dependences are computed using the training
@@ -251,17 +254,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto':
-
-          - 'recursion' is used for
-            :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-            and
-            :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-            if ``init=None``, and for
-            :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`
-            and
-            :class:`HistGradientBoostingRegressor<sklearn.ensemble.HistGradientBoostingRegressor>`.
-          - 'brute' is used for all other estimators.
+        - 'auto': 'recursion' is used if the estimator supports it (see
+          above), and 'brute' is used otherwise.
 
     Returns
     -------
@@ -361,7 +355,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 estimator.init is None):
             method = 'recursion'
         elif isinstance(estimator, (BaseHistGradientBoosting,
-                                    DecisionTreeRegressor)):
+                                    DecisionTreeRegressor,
+                                    RandomForestRegressor)):
             method = 'recursion'
         else:
             method = 'brute'
@@ -369,7 +364,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if method == 'recursion':
         if not isinstance(estimator,
                           (BaseGradientBoosting, BaseHistGradientBoosting,
-                           DecisionTreeRegressor)):
+                           DecisionTreeRegressor, RandomForestRegressor)):
             supported_classes_recursion = (
                 'GradientBoostingClassifier',
                 'GradientBoostingRegressor',
@@ -377,6 +372,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 'HistGradientBoostingRegressor',
                 'HistGradientBoostingRegressor',
                 'DecisionTreeRegressor',
+                'RandomForestRegressor',
             )
             raise ValueError(
                 "Only the following estimators support the 'recursion' "

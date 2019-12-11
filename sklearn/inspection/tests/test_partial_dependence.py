@@ -14,6 +14,7 @@ from sklearn.inspection._partial_dependence import (
 )
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -37,6 +38,8 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import _IS_32BIT
+from sklearn.utils.validation import check_random_state
+from sklearn.ensemble._base import MAX_RAND_SEED
 from sklearn.tree.tests.test_tree import assert_is_subtree
 
 
@@ -213,11 +216,10 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
-def test_decision_tree_vs_gradient_boosting():
+def test_decision_tree_vs():
     # Make sure that the recursion method gives the same results on a
-    # DecisionTreeRegressor and a GradientBoostingRegressor with 1 tree and
-    # same parameters. The DecisionTreeRegressor doesn't pass the
-    # test_partial_dependence_helpers() test.
+    # DecisionTreeRegressor and a GradientBoostingRegressor or a
+    # RandomForestRegressor with 1 tree and equivalent parameters.
 
     # Purely random dataset to avoid correlated features
     n_samples = 100
@@ -233,17 +235,27 @@ def test_decision_tree_vs_gradient_boosting():
     # set max_depth not too high to avoid splits with same gain but different
     # features
     max_depth = 5
+    forest = RandomForestRegressor(n_estimators=1, max_features=None,
+                                   bootstrap=False, max_depth=max_depth,
+                                   random_state=0)
+    # The forest will use ensemble.base._set_random_states to set the
+    # random_state of the tree sub-estimator. We simulate this here to have
+    # equivalent estimators.
+    equiv_random_state = check_random_state(0).randint(MAX_RAND_SEED)
     gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
                                      criterion='mse', max_depth=max_depth,
-                                     random_state=0)
-    gbdt.fit(X, y)
+                                     random_state=equiv_random_state)
+    tree = DecisionTreeRegressor(max_depth=max_depth,
+                                 random_state=equiv_random_state)
 
-    tree = DecisionTreeRegressor(random_state=0, max_depth=max_depth)
+    forest.fit(X, y)
+    gbdt.fit(X, y)
     tree.fit(X, y)
 
     # sanity check
     try:
         assert_is_subtree(tree.tree_, gbdt[0, 0].tree_)
+        assert_is_subtree(tree.tree_, forest[0].tree_)
     except AssertionError:
         # For some reason the trees aren't exactly equal on 32bits, so the PDs
         # cannot be equal either.
@@ -254,10 +266,12 @@ def test_decision_tree_vs_gradient_boosting():
     for f in range(n_features):
         features = np.array([f], dtype=np.int32)
 
+        pdp_forest = _partial_dependence_recursion(forest, grid, features)
         pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
         pdp_tree = _partial_dependence_recursion(tree, grid, features)
 
         np.testing.assert_allclose(pdp_gbdt, pdp_tree)
+        np.testing.assert_allclose(pdp_forest, pdp_tree)
 
 
 @pytest.mark.parametrize('est', (
