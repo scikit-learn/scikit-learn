@@ -1605,22 +1605,11 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.24
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
    utils.safe_indexing

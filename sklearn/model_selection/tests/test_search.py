@@ -1358,7 +1358,6 @@ def test_pickle():
                               random_search_pickled.predict(X))
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_grid_search_with_multioutput_data():
     # Test search with multi-output estimator
 

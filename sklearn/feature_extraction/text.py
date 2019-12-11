@@ -1223,8 +1223,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             X.data.fill(1)
 
         if not self.fixed_vocabulary_:
-            X = self._sort_features(X, vocabulary)
-
             n_doc = X.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
@@ -1239,6 +1237,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                                                        max_doc_count,
                                                        min_doc_count,
                                                        max_features)
+
+            X = self._sort_features(X, vocabulary)
 
             self.vocabulary_ = vocabulary
 
