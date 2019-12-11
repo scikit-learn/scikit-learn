@@ -66,6 +66,15 @@ Changelog
   for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
   :pr:`15834` by :user:`Santiago M. Mola <smola>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  method for :class:`ensemble.RandomForestRegressor` and
+  :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
+  `Nicolas Hug`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 

@@ -854,8 +854,9 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         averaged_predictions = np.zeros(shape=grid.shape[0],
                                         dtype=np.float64, order='C')
 
-        # TODO: in parallel?
         for tree in self.estimators_:
+            # Note: we don't sum in parallel because the GIL isn't released in
+            # the fast method.
             tree.tree_.compute_partial_dependence(
                 grid, target_features, averaged_predictions)
         # Average over the forest
