@@ -649,8 +649,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         X, y, groups = indexable(X, y, groups)
         # make sure fit_params are sliceable
-        fit_params_values = indexable(*fit_params.values())
-        fit_params = dict(zip(fit_params.keys(), fit_params_values))
+        # TODO: remove in 0.24
+        try:
+            fit_params_values = indexable(*fit_params.values())
+            fit_params = dict(zip(fit_params.keys(), fit_params_values))
+        except TypeError:
+            warnings.warn("Support for scaler fit params is deprecated. "
+                          "Passing scalar values as a fit parameter will "
+                          "raise an error in v0.24", FutureWarning)
 
         n_splits = cv.get_n_splits(X, y, groups)
 

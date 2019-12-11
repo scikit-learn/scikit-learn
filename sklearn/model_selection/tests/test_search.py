@@ -27,7 +27,7 @@ from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from scipy.stats import bernoulli, expon, uniform
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification
@@ -1846,3 +1846,22 @@ def test_search_cv__pairwise_property_equivalence_of_precomputed():
 
     attr_message = "GridSearchCV not identical with precomputed metric"
     assert (preds_original == preds_precomputed).all(), attr_message
+
+
+def test_scalar_fit_param():
+    # test that a scalar fit param is supported with a warning.
+    # TODO: it should raise an error from v0.24. Issue #15805
+    class TestEstimator(BaseEstimator, ClassifierMixin):
+        def __init__(self, a=None):
+            self.a = a
+
+        def fit(self, X, y, r):
+            assert r == 42
+
+        def predict(self, X):
+            return np.zeros(shape=(len(X)))
+
+    cv = GridSearchCV(TestEstimator(), param_grid = {'a': [1, 2]})
+    X, y = make_classification()
+    with pytest.warns(FutureWarning, match="Support for scaler fit params"):
+        cv.fit(X, y, r=42)
