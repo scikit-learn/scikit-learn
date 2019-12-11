@@ -1276,9 +1276,10 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
 
 
 @pytest.mark.parametrize(
-        "metric", ['braycurtis', 'canberra', 'chebyshev',
-        'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean',
-        'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
+        'metric', [
+            'braycurtis', 'canberra', 'chebyshev',
+            'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean',
+            'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
 @pytest.mark.parametrize(
         "dtype",
         [np.half, np.float, np.double, np.longdouble])
