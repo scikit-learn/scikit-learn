@@ -1861,7 +1861,7 @@ def test_scalar_fit_param():
         def predict(self, X):
             return np.zeros(shape=(len(X)))
 
-    cv = GridSearchCV(TestEstimator(), param_grid = {'a': [1, 2]})
+    cv = GridSearchCV(TestEstimator(), param_grid={'a': [1, 2]})
     X, y = make_classification()
     with pytest.warns(FutureWarning, match="Support for scaler fit params"):
         cv.fit(X, y, r=42)
