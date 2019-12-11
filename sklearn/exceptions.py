@@ -138,10 +138,10 @@ class FitFailedWarning(RuntimeWarning):
     ...     print(repr(w[-1].message))
     FitFailedWarning('Estimator fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000.
-    Details: \\n
-    Traceback (most recent call last):\\n
-    ...ValueError...
-    ValueError: Penalty term must be positive; got (C=-2)\\n'...)
+    Details:
+    \\nTraceback (most recent call last):...\\nValueError:
+    Penalty term must be positive; got (C=-2)\\n')
+
 
     .. versionchanged:: 0.18
        Moved from sklearn.cross_validation.
