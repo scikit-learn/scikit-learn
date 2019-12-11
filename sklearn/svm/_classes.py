@@ -214,18 +214,6 @@ else [n_classes, n_features]
         self : object
             An instance of the estimator.
         """
-        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
-        msg = ("loss='%s' has been deprecated in favor of "
-               "loss='%s' as of 0.16. Backward compatibility"
-               " for the loss='%s' will be removed in %s")
-
-        if self.loss in ('l1', 'l2'):
-            old_loss = self.loss
-            self.loss = {'l1': 'hinge', 'l2': 'squared_hinge'}.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          FutureWarning)
-        # ---------------------------------------------------------------------
-
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
@@ -403,20 +391,6 @@ class LinearSVR(RegressorMixin, LinearModel):
         -------
         self : object
         """
-        # FIXME Remove l1/l2 support in 0.23 ----------------------------------
-        msg = ("loss='%s' has been deprecated in favor of "
-               "loss='%s' as of 0.16. Backward compatibility"
-               " for the loss='%s' will be removed in %s")
-
-        if self.loss in ('l1', 'l2'):
-            old_loss = self.loss
-            self.loss = {'l1': 'epsilon_insensitive',
-                         'l2': 'squared_epsilon_insensitive'
-                         }.get(self.loss)
-            warnings.warn(msg % (old_loss, self.loss, old_loss, '0.23'),
-                          FutureWarning)
-        # ---------------------------------------------------------------------
-
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
