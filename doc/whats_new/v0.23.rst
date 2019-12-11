@@ -51,8 +51,49 @@ Changelog
   more memory efficient implementation of single linkage clustering.
   :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Functions :func:`datasets.make_circles` and
+  :func:`datasets.make_moons` now accept two-element tuple.
+  :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.CountVectorizer` now sorts
+  features after pruning them by document frequency. This improves performances
+  for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
+  :pr:`15834` by :user:`Santiago M. Mola <smola>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
+  method of :class:`linear_model.RANSACRegressor`, it would not be passed to
+  the wrapped `base_estimator` during the fitting of the final model.
+  :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
+
+- |Efficiency| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now does not allocate a
+  potentially large array to store dual coefficients for all hyperparameters
+  during its `fit`, nor an array to store all error or LOO predictions unless
+  `store_cv_values` is `True`.
+  :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
+
+- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV`.
+  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
+  deprecated.
+  :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
