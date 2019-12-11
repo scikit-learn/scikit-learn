@@ -1338,7 +1338,7 @@ def test_cv_iterable_wrapper():
                             list(kf_iter_wrapped.split(X, y)))
     # If the splits are randomized, successive calls to split yields different
     # results
-    kf_randomized_iter = KFold(shuffle=True).split(X, y)
+    kf_randomized_iter = KFold(shuffle=True, random_state=0).split(X, y)
     kf_randomized_iter_wrapped = check_cv(kf_randomized_iter)
     # numpy's assert_array_equal properly compares nested lists
     np.testing.assert_equal(list(kf_randomized_iter_wrapped.split(X, y)),
