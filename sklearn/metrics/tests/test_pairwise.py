@@ -1275,12 +1275,12 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
         assert_allclose(dist, expected_dist_default_params)
 
 
-@pytest.mark.parametrize("metric", ['braycurtis', 'canberra', 'chebyshev', 
-        'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean', 
-        'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
+@pytest.mark.parametrize("metric", ['braycurtis', 'canberra', 'chebyshev',
+            'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean',
+            'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
 @pytest.mark.parametrize(
-        "dtype",
-        [np.half, np.float, np.double, np.longdouble])
+            "dtype",
+            [np.half, np.float, np.double, np.longdouble])
 @pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
 def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # Check that pairwise distances gives the same result as pdist and cdist
