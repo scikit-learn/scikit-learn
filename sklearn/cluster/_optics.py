@@ -13,7 +13,7 @@ License: BSD 3 clause
 
 import warnings
 import numpy as np
-from heapq import *
+import heapq
 
 from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
@@ -483,15 +483,15 @@ if metric=’precomputed’.
     for ordering_idx in range(X.shape[0]):
         Heap.append((np.inf, ordering_idx))
 
-    heapify(Heap)
+    heapq.heapify(Heap)
     processed = np.zeros(X.shape[0], dtype=bool)
     ordering = np.zeros(X.shape[0], dtype=int)
     for ordering_idx in range(X.shape[0]):
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
-        (val, point) = heappop(Heap)
-        while (processed[point] == True):
-            (val,point) = heappop(Heap)
+        (val, point) = heapq.heappop(Heap)
+        while processed[point]:
+            (val, point) = heapq.heappop(Heap)
 
         processed[point] = True
         ordering[ordering_idx] = point
@@ -541,10 +541,9 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
 
     rdists = np.maximum(dists, core_distances_[point_index])
     improved = np.where(rdists < np.take(reachability_, unproc))
-    for arr in improved:
-        for idx in arr:
-            heappush(Heap, (rdists[idx], unproc[idx]))
-    
+    for idx in improved[0]:
+        heapq.heappush(Heap, (rdists[idx], unproc[idx]))
+
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
 
