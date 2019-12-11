@@ -1275,13 +1275,17 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
         assert_allclose(dist, expected_dist_default_params)
 
 
+@pytest.mark.parametrize("metric", ['braycurtis', 'canberra', 'chebyshev', 
+        'correlation', 'hamming', 'mahalanobis', 'minkowski', 'seuclidean', 
+        'sqeuclidean', 'cityblock', 'cosine', 'euclidean'])
 @pytest.mark.parametrize(
         "dtype",
         [np.half, np.float, np.double, np.longdouble])
 @pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
-def test_pairwise_distances_input_datatypes(dtype, y_is_x):
+def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # Check that pairwise distances gives the same result as pdist and cdist
-    # regardless of input datatype when using metric='seuclidean'.
+    # regardless of input datatype when using any scipy metric for comparing
+    # numeric vectors
     #
     # This test is necessary because pairwise_distances used to throw an
     # error when using metric='seuclidean' and the input data was not
@@ -1292,11 +1296,11 @@ def test_pairwise_distances_input_datatypes(dtype, y_is_x):
 
     if y_is_x:
         Y = X
-        expected_dist = squareform(pdist(X, metric='seuclidean'))
+        expected_dist = squareform(pdist(X, metric=metric))
     else:
         Y = rng.random_sample((5, 4)).astype(dtype)
-        expected_dist = cdist(X, Y, metric='seuclidean')
+        expected_dist = cdist(X, Y, metric=metric)
 
-    dist = pairwise_distances(X, Y, metric='seuclidean')
+    dist = pairwise_distances(X, Y, metric=metric)
 
     assert_allclose(dist, expected_dist)
