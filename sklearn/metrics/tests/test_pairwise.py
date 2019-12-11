@@ -1,4 +1,5 @@
 from types import GeneratorType
+from sys import platform
 
 import numpy as np
 from numpy import linalg
@@ -1292,6 +1293,15 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # This test is necessary because pairwise_distances used to throw an
     # error when using metric='seuclidean' and the input data was not
     # of type np.double (#15730)
+    #
+    # This test has introduced a few xfails on the Windows test benches
+    # because 'array type float64 is unsupported in linalg'.
+    if (metric == 'mahalanobis' and
+            dtype == np.longdouble and
+            platform.startswith('win')
+        ):
+        pytest.xfail('array type float64 is unsupported in linalg for this testbench')
+
     rng = np.random.RandomState(0)
 
     X = rng.random_sample((5, 4)).astype(dtype)
