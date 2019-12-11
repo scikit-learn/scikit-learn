@@ -1298,8 +1298,7 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # because 'array type float64 is unsupported in linalg'.
     if (metric == 'mahalanobis' and
             dtype == np.longdouble and
-            platform.startswith('win')
-        ):
+            platform.startswith('win')):
         pytest.xfail('array type float64 is unsupported in linalg for this testbench')
 
     rng = np.random.RandomState(0)
