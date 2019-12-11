@@ -665,15 +665,29 @@ def _test_ridge_cv(filter_):
 
 @pytest.mark.parametrize(
     "ridge, make_dataset",
-    [(RidgeCV(), make_regression),
-     (RidgeClassifierCV(), make_classification)]
+    [(RidgeCV(store_cv_values=False), make_regression),
+     (RidgeClassifierCV(store_cv_values=False), make_classification)]
 )
 def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
     # Check that `cv_values_` is not stored when store_cv_values is False
     X, y = make_dataset(n_samples=6, random_state=42)
-    ridge.set_params(store_cv_values=False)
     ridge.fit(X, y)
     assert not hasattr(ridge, "cv_values_")
+
+
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(), make_regression),
+     (RidgeClassifierCV(), make_classification)]
+)
+@pytest.mark.parametrize("cv", [None, 3])
+def test_ridge_best_score(ridge, make_dataset, cv):
+    # check that the best_score_ is store
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.set_params(store_cv_values=False, cv=cv)
+    ridge.fit(X, y)
+    assert hasattr(ridge, "best_score_")
+    assert isinstance(ridge.best_score_, float)
 
 
 def _test_ridge_diabetes(filter_):

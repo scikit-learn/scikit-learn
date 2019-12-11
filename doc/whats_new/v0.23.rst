@@ -58,6 +58,14 @@ Changelog
   :func:`datasets.make_moons` now accept two-element tuple.
   :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.CountVectorizer` now sorts
+  features after pruning them by document frequency. This improves performances
+  for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
+  :pr:`15834` by :user:`Santiago M. Mola <smola>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -72,6 +80,10 @@ Changelog
   during its `fit`, nor an array to store all error or LOO predictions unless
   `store_cv_values` is `True`.
   :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
+
+- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV`.
+  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.RidgeCV` where the predictions
   stored in `cv_values_` where in the normalized space instead of the original
