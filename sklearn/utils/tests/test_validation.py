@@ -26,7 +26,7 @@ from sklearn.utils import check_X_y
 from sklearn.utils import deprecated
 from sklearn.utils._mocking import MockDataFrame
 from sklearn.utils.estimator_checks import _NotAnArray
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.linear_model import ARDRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.ensemble import RandomForestRegressor
@@ -41,13 +41,15 @@ from sklearn.utils.validation import (
     check_non_negative,
     _num_samples,
     check_scalar,
+    _check_psd_eigenvalues,
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
     FLOAT_DTYPES)
+
 import sklearn
 
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils._testing import assert_raise_message
@@ -91,7 +93,7 @@ def test_as_float_array():
     matrices = [
         np.matrix(np.arange(5)),
         sp.csc_matrix(np.arange(5)).toarray(),
-        sparse_random_matrix(10, 10, density=0.10).toarray()
+        _sparse_random_matrix(10, 10, density=0.10).toarray()
     ]
     for M in matrices:
         N = as_float_array(M, copy=True)
@@ -824,6 +826,27 @@ def test_check_dataframe_warns_on_dtype():
     assert len(record) == 0
 
 
+def test_check_dataframe_mixed_float_dtypes():
+    # pandas dataframe will coerce a boolean into a object, this is a mismatch
+    # with np.result_type which will return a float
+    # check_array needs to explicitly check for bool dtype in a dataframe for
+    # this situation
+    # https://github.com/scikit-learn/scikit-learn/issues/15787
+
+    pd = importorskip("pandas")
+    df = pd.DataFrame({
+        'int': [1, 2, 3],
+        'float': [0, 0.1, 2.1],
+        'bool': [True, False, True]}, columns=['int', 'float', 'bool'])
+
+    array = check_array(df, dtype=(np.float64, np.float32, np.float16))
+    expected_array = np.array(
+        [[1.0, 0.0, 1.0],
+         [2.0, 0.1, 0.0],
+         [3.0, 2.1, 1.0]], dtype=np.float)
+    assert_allclose_dense_sparse(array, expected_array)
+
+
 class DummyMemory:
     def cache(self, func):
         return func
@@ -935,6 +958,81 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+_psd_cases_valid = {
+    'nominal': ((1, 2), np.array([1, 2]), None, ""),
+    'nominal_np_array': (np.array([1, 2]), np.array([1, 2]), None, ""),
+    'insignificant_imag': ((5, 5e-5j), np.array([5, 0]),
+                           PositiveSpectrumWarning,
+                           "There are imaginary parts in eigenvalues "
+                           "\\(1e\\-05 of the maximum real part"),
+    'insignificant neg': ((5, -5e-5), np.array([5, 0]),
+                          PositiveSpectrumWarning, ""),
+    'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
+                                  np.array([1, 0], dtype=np.float32),
+                                  PositiveSpectrumWarning,
+                                  "There are negative eigenvalues \\(1e\\-06 "
+                                  "of the maximum positive"),
+    'insignificant neg float64': (np.array([1, -1e-10], dtype=np.float64),
+                                  np.array([1, 0], dtype=np.float64),
+                                  PositiveSpectrumWarning,
+                                  "There are negative eigenvalues \\(1e\\-10 "
+                                  "of the maximum positive"),
+    'insignificant pos': ((5, 4e-12), np.array([5, 0]),
+                          PositiveSpectrumWarning,
+                          "the largest eigenvalue is more than 1e\\+12 "
+                          "times the smallest"),
+}
+
+
+@pytest.mark.parametrize("lambdas, expected_lambdas, w_type, w_msg",
+                         list(_psd_cases_valid.values()),
+                         ids=list(_psd_cases_valid.keys()))
+@pytest.mark.parametrize("enable_warnings", [True, False])
+def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
+                                     enable_warnings):
+    # Test that ``_check_psd_eigenvalues`` returns the right output for valid
+    # input, possibly raising the right warning
+
+    if not enable_warnings:
+        w_type = None
+        w_msg = ""
+
+    with pytest.warns(w_type, match=w_msg) as w:
+        assert_array_equal(
+            _check_psd_eigenvalues(lambdas, enable_warnings=enable_warnings),
+            expected_lambdas
+        )
+    if w_type is None:
+        assert not w
+
+
+_psd_cases_invalid = {
+    'significant_imag': ((5, 5j), ValueError,
+                         "There are significant imaginary parts in eigenv"),
+    'all negative': ((-5, -1), ValueError,
+                     "All eigenvalues are negative \\(maximum is -1"),
+    'significant neg': ((5, -1), ValueError,
+                        "There are significant negative eigenvalues"),
+    'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
+                                ValueError,
+                                "There are significant negative eigenvalues"),
+    'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
+                                ValueError,
+                                "There are significant negative eigenvalues"),
+}
+
+
+@pytest.mark.parametrize("lambdas, err_type, err_msg",
+                         list(_psd_cases_invalid.values()),
+                         ids=list(_psd_cases_invalid.keys()))
+def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
+    # Test that ``_check_psd_eigenvalues`` raises the right error for invalid
+    # input
+
+    with pytest.raises(err_type, match=err_msg):
+        _check_psd_eigenvalues(lambdas)
 
 
 def test_check_sample_weight():

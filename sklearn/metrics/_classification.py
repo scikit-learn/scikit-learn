@@ -193,8 +193,9 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
-    """Compute confusion matrix to evaluate the accuracy of a classification
+def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
+                     normalize=None):
+    """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
     is equal to the number of observations known to be in group :math:`i` and
@@ -208,25 +209,30 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_classes], optional
+    labels : array-like of shape (n_classes), default=None
         List of labels to index the matrix. This may be used to reorder
         or select a subset of labels.
-        If none is given, those that appear at least once
+        If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used in sorted order.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    normalize : {'true', 'pred', 'all'}, default=None
+        Normalizes confusion matrix over the true (rows), predicted (columns)
+        conditions or all the population. If None, confusion matrix will not be
+        normalized.
+
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix
+        Confusion matrix.
 
     References
     ----------
@@ -296,11 +302,20 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     else:
         dtype = np.float64
 
-    CM = coo_matrix((sample_weight, (y_true, y_pred)),
+    cm = coo_matrix((sample_weight, (y_true, y_pred)),
                     shape=(n_labels, n_labels), dtype=dtype,
                     ).toarray()
 
-    return CM
+    with np.errstate(all='ignore'):
+        if normalize == 'true':
+            cm = cm / cm.sum(axis=1, keepdims=True)
+        elif normalize == 'pred':
+            cm = cm / cm.sum(axis=0, keepdims=True)
+        elif normalize == 'all':
+            cm = cm / cm.sum()
+        cm = np.nan_to_num(cm)
+
+    return cm
 
 
 def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
@@ -584,80 +599,6 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
-
-
-def jaccard_similarity_score(y_true, y_pred, normalize=True,
-                             sample_weight=None):
-    """Jaccard similarity coefficient score
-
-    .. deprecated:: 0.21
-        This is deprecated to be removed in 0.23, since its handling of
-        binary and multiclass inputs was broken. `jaccard_score` has an API
-        that is consistent with precision_score, f_score, etc.
-
-    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
-
-    Parameters
-    ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
-
-    y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
-
-    normalize : bool, optional (default=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
-    Returns
-    -------
-    score : float
-        If ``normalize == True``, return the average Jaccard similarity
-        coefficient, else it returns the sum of the Jaccard similarity
-        coefficient over the sample set.
-
-        The best performance is 1 with ``normalize == True`` and the number
-        of samples with ``normalize == False``.
-
-    See also
-    --------
-    accuracy_score, hamming_loss, zero_one_loss
-
-    Notes
-    -----
-    In binary and multiclass classification, this function is equivalent
-    to the ``accuracy_score``. It differs in the multilabel classification
-    problem.
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Jaccard index
-           <https://en.wikipedia.org/wiki/Jaccard_index>`_
-    """
-    warnings.warn('jaccard_similarity_score has been deprecated and replaced '
-                  'with jaccard_score. It will be removed in version 0.23. '
-                  'This implementation has surprising behavior for binary '
-                  'and multiclass classification tasks.',
-                  FutureWarning)
-
-    # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    if y_type.startswith('multilabel'):
-        with np.errstate(divide='ignore', invalid='ignore'):
-            # oddly, we may get an "invalid" rather than a "divide" error here
-            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
-            score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 1.0
-    else:
-        score = y_true == y_pred
-
-    return _weighted_sum(score, sample_weight, normalize)
 
 
 def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
@@ -1901,10 +1842,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 

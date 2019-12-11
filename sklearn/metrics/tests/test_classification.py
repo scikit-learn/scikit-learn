@@ -1,6 +1,8 @@
 
 from functools import partial
 from itertools import product
+from itertools import chain
+from itertools import permutations
 import warnings
 import re
 
@@ -17,6 +19,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_div0
 from sklearn.utils._testing import assert_no_warnings
@@ -35,7 +38,6 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
@@ -507,6 +509,39 @@ def test_multilabel_confusion_matrix_errors():
     with pytest.raises(ValueError, match=err_msg):
         multilabel_confusion_matrix([[0, 1, 2], [2, 1, 0]],
                                     [[1, 2, 0], [1, 0, 2]])
+
+
+@pytest.mark.parametrize(
+    "normalize, cm_dtype, expected_results",
+    [('true', 'f', 0.333333333),
+     ('pred', 'f', 0.333333333),
+     ('all', 'f', 0.1111111111),
+     (None, 'i', 2)]
+)
+def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
+    y_test = [0, 1, 2] * 6
+    y_pred = list(chain(*permutations([0, 1, 2])))
+    cm = confusion_matrix(y_test, y_pred, normalize=normalize)
+    assert_allclose(cm, expected_results)
+    assert cm.dtype.kind == cm_dtype
+
+
+def test_confusion_matrix_normalize_single_class():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+
+    cm_true = confusion_matrix(y_test, y_pred, normalize='true')
+    assert cm_true.sum() == pytest.approx(2.0)
+
+    # additionally check that no warnings are raised due to a division by zero
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_test, y_pred, normalize='pred')
+    assert not rec
+    assert cm_pred.sum() == pytest.approx(1.0)
+
+    with pytest.warns(None) as rec:
+        cm_pred = confusion_matrix(y_pred, y_test, normalize='true')
+    assert not rec
 
 
 def test_cohen_kappa():
@@ -2202,22 +2237,3 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
-
-
-def test_multilabel_jaccard_similarity_score_deprecation():
-    # Dense label indicator matrix format
-    y1 = np.array([[0, 1, 1], [1, 0, 1]])
-    y2 = np.array([[0, 0, 1], [1, 0, 1]])
-
-    # size(y1 \inter y2) = [1, 2]
-    # size(y1 \union y2) = [2, 2]
-
-    jss = partial(assert_warns, FutureWarning,
-                  jaccard_similarity_score)
-    assert jss(y1, y2) == 0.75
-    assert jss(y1, y1) == 1
-    assert jss(y2, y2) == 1
-    assert jss(y2, np.logical_not(y2)) == 0
-    assert jss(y1, np.logical_not(y1)) == 0
-    assert jss(y1, np.zeros(y1.shape)) == 0
-    assert jss(y2, np.zeros(y1.shape)) == 0

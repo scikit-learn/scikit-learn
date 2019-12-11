@@ -11,6 +11,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils.validation import _check_psd_eigenvalues
 
 
 def test_kernel_pca():
@@ -270,3 +271,20 @@ def test_nested_circles():
     # The data is perfectly linearly separable in that space
     train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
     assert train_score == 1.0
+
+
+def test_kernel_conditioning():
+    """ Test that ``_check_psd_eigenvalues`` is correctly called
+    Non-regression test for issue #12140 (PR #12145)"""
+
+    # create a pathological X leading to small non-zero eigenvalue
+    X = [[5, 1],
+         [5+1e-8, 1e-8],
+         [5+1e-8, 0]]
+    kpca = KernelPCA(kernel="linear", n_components=2,
+                     fit_inverse_transform=True)
+    kpca.fit(X)
+
+    # check that the small non-zero eigenvalue was correctly set to zero
+    assert kpca.lambdas_.min() == 0
+    assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
