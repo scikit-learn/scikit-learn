@@ -515,7 +515,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
-          :class:`~sklearn.tree.DecisionTreeRegressor`)
+          :class:`~sklearn.tree.DecisionTreeRegressor`,
+          :class:`~sklearn.ensemble.RandomForestRegressor`
+          )
           but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
           grid and the partial dependences are computed using the training
