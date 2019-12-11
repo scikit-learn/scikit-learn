@@ -216,7 +216,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
-def test_decision_tree_vs():
+def test_recursion_decision_tree_vs_forest_and_gbdt():
     # Make sure that the recursion method gives the same results on a
     # DecisionTreeRegressor and a GradientBoostingRegressor or a
     # RandomForestRegressor with 1 tree and equivalent parameters.
