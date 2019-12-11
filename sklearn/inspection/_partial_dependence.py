@@ -657,7 +657,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     # Early exit if the axes does not have the correct number of axes
     if ax is not None and not isinstance(ax, plt.Axes):
-        axes = check_array(ax, dtype=object, ensure_2d=False)
+        axes = np.asarray(ax, dtype=object)
         if axes.size != len(features):
             raise ValueError("Expected ax to have {} axes, got {}".format(
                              len(features), axes.size))
@@ -888,10 +888,10 @@ class PartialDependenceDisplay:
                 axes_ravel[i] = self.figure_.add_subplot(spec)
 
         else:  # array-like
-            ax = check_array(ax, dtype=object, ensure_2d=False)
+            ax = np.asarray(ax, dtype=object)
             if ax.size != n_features:
-                raise ValueError("Expected ax to have {} axes, got {}".format(
-                                 n_features, ax.size))
+                raise ValueError("Expected ax to have {} axes, got {}"
+                                 .format(n_features, ax.size))
 
             if ax.ndim == 2:
                 n_cols = ax.shape[1]
