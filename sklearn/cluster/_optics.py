@@ -13,6 +13,7 @@ License: BSD 3 clause
 
 import warnings
 import numpy as np
+from heapq import *
 
 from ..utils import check_array
 from ..utils import gen_batches, get_chunk_n_rows
@@ -37,8 +38,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
     This implementation deviates from the original OPTICS by first performing
     k-nearest-neighborhood searches on all points to identify core sizes, then
     computing only the distances to unprocessed points when constructing the
-    cluster order. Note that we do not employ a heap to manage the expansion
-    candidates, so the time complexity will be O(n^2).
+    cluster order. Note that we employ a heap to manage the expansion
+    candidates, so the time complexity will be O(n lg n).
 
     Read more in the :ref:`User Guide <optics>`.
 
@@ -476,15 +477,21 @@ if metric=’precomputed’.
 
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
-    # Note that this implementation is O(n^2) theoretically, but
-    # supposedly with very low constant factors.
+    # This implementation is O(n lg n) theoretically.
+
+    Heap = []
+    for ordering_idx in range(X.shape[0]):
+        Heap.append((np.inf, ordering_idx))
+
+    heapify(Heap)
     processed = np.zeros(X.shape[0], dtype=bool)
     ordering = np.zeros(X.shape[0], dtype=int)
     for ordering_idx in range(X.shape[0]):
         # Choose next based on smallest reachability distance
         # (And prefer smaller ids on ties, possibly np.inf!)
-        index = np.where(processed == 0)[0]
-        point = index[np.argmin(reachability_[index])]
+        (val, point) = heappop(Heap)
+        while (processed[point] == True):
+            (val,point) = heappop(Heap)
 
         processed[point] = True
         ordering[ordering_idx] = point
@@ -495,7 +502,7 @@ if metric=’precomputed’.
                             point_index=point,
                             processed=processed, X=X, nbrs=nbrs,
                             metric=metric, metric_params=metric_params,
-                            p=p, max_eps=max_eps)
+                            p=p, max_eps=max_eps, Heap=Heap)
     if np.all(np.isinf(reachability_)):
         warnings.warn("All reachability values are inf. Set a larger"
                       " max_eps or all data will be considered outliers.",
@@ -505,7 +512,7 @@ if metric=’precomputed’.
 
 def _set_reach_dist(core_distances_, reachability_, predecessor_,
                     point_index, processed, X, nbrs, metric, metric_params,
-                    p, max_eps):
+                    p, max_eps, Heap):
     P = X[point_index:point_index + 1]
     # Assume that radius_neighbors is faster without distances
     # and we don't need all distances, nevertheless, this means
@@ -534,6 +541,10 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
 
     rdists = np.maximum(dists, core_distances_[point_index])
     improved = np.where(rdists < np.take(reachability_, unproc))
+    for arr in improved:
+        for idx in arr:
+            heappush(Heap, (rdists[idx], unproc[idx]))
+    
     reachability_[unproc[improved]] = rdists[improved]
     predecessor_[unproc[improved]] = point_index
 
