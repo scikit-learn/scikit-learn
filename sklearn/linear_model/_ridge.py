@@ -1601,6 +1601,7 @@ class _BaseRidgeCV(LinearModel):
                                   is_clf=is_classifier(self))
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
+            self.best_score_ = estimator.best_score_
             if self.store_cv_values:
                 self.cv_values_ = estimator.cv_values_
         else:
@@ -1617,6 +1618,7 @@ class _BaseRidgeCV(LinearModel):
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
+            self.best_score_ = gs.best_score_
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
@@ -1719,6 +1721,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     alpha_ : float
         Estimated regularization parameter.
 
+    best_score_ : float
+        Score of base estimator with best alpha.
+
     Examples
     --------
     >>> from sklearn.datasets import load_diabetes
@@ -1820,7 +1825,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         ``fit_intercept = False``.
 
     alpha_ : float
-        Estimated regularization parameter
+        Estimated regularization parameter.
+
+    best_score_ : float
+        Score of base estimator with best alpha.
 
     classes_ : array of shape (n_classes,)
         The classes labels.
