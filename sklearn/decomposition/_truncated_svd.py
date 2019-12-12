@@ -182,8 +182,12 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
         self.components_ = VT
 
+        if self.algorithm == "randomized" or self.tol > 0:
+            X_transformed = self.transform(X)
+        else:
+            X_transformed = U * Sigma
+
         # Calculate explained variance & explained variance ratio
-        X_transformed = U * Sigma
         self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
         if sp.issparse(X):
             _, full_var = mean_variance_axis(X, axis=0)

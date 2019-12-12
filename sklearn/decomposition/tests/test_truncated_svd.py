@@ -7,6 +7,7 @@ import pytest
 
 from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state
+from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_less, assert_allclose
 
 SVD_SOLVERS = ['arpack', 'randomized']
@@ -191,3 +192,20 @@ def test_truncated_svd_eq_pca(X_sparse):
     assert_allclose(Xt_svd, Xt_pca, rtol=1e-9)
     assert_allclose(pca.mean_, 0, atol=1e-9)
     assert_allclose(svd.components_, pca.components_)
+
+
+def test_fit_transform(X_sparse):
+    # when: 1, algorithm="randomized", 2, algorithm="arpack" with tol > 0,
+    # fit_transform(X) should equal to fit(X).transform(X)
+
+    svd1 = TruncatedSVD(n_components=5, n_iter=7, random_state=42, algorithm='randomized')
+    svd2 = TruncatedSVD(n_components=5, n_iter=7, random_state=42, algorithm='randomized')
+    x1 = svd1.fit_transform(X_sparse)
+    x2 = svd2.fit(X_sparse).transform(X_sparse)
+    assert_almost_equal(x1, x2)
+
+    svd3 = TruncatedSVD(n_components=5, n_iter=7, random_state=42, algorithm='arpack', tol=1e-6)
+    svd4 = TruncatedSVD(n_components=5, n_iter=7, random_state=42, algorithm='arpack', tol=1e-6)
+    x3 = svd3.fit_transform(X_sparse)
+    x4 = svd4.fit(X_sparse).transform(X_sparse)
+    assert_almost_equal(x3, x4)
