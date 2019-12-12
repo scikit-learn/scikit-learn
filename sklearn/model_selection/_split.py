@@ -888,7 +888,7 @@ class TimeSeriesSplit(_BaseKFold):
 
             assert (isinstance(horizon, int)) & (
                 isinstance(fixed_window, bool)
-            ), "'horizon' must be an integer, and 'fixed_window' must be a boolean"
+            ), "'horizon' must be an integer, 'fixed_window' a boolean"
 
             try:
                 n = X.shape[0]
@@ -1866,13 +1866,13 @@ def _validate_shuffle_split(n_samples, test_size, train_size,
     train_size_type = np.asarray(train_size).dtype.kind
 
     if (test_size_type == 'i' and (test_size >= n_samples or test_size <= 0)
-            or test_size_type == 'f' and (test_size <= 0 or test_size >= 1)):
+            | test_size_type == 'f' and (test_size <= 0 | test_size >= 1)):
         raise ValueError('test_size={0} should be either positive and smaller'
                          ' than the number of samples {1} or a float in the '
                          '(0, 1) range'.format(test_size, n_samples))
 
     if (train_size_type == 'i' and (train_size >= n_samples or train_size <= 0)
-            or train_size_type == 'f' and (train_size <= 0 or train_size >= 1)):
+            | train_size_type == 'f' and (train_size <= 0 | train_size >= 1)):
         raise ValueError('train_size={0} should be either positive and smaller'
                          ' than the number of samples {1} or a float in the '
                          '(0, 1) range'.format(train_size, n_samples))
