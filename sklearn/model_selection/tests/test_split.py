@@ -686,10 +686,10 @@ def test_stratified_shuffle_split_iter():
             assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
             p_train = (np.bincount(np.unique(y[train],
-                                   return_inverse=True)[1]) /
+                                             return_inverse=True)[1]) /
                        float(len(y[train])))
             p_test = (np.bincount(np.unique(y[test],
-                                  return_inverse=True)[1]) /
+                                            return_inverse=True)[1]) /
                       float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert len(train) + len(test) == y.size
@@ -876,7 +876,7 @@ def test_leave_one_p_group_out():
     assert repr(lpgo_1) == 'LeavePGroupsOut(n_groups=1)'
     assert repr(lpgo_2) == 'LeavePGroupsOut(n_groups=2)'
     assert (repr(LeavePGroupsOut(n_groups=3)) ==
-                 'LeavePGroupsOut(n_groups=3)')
+            'LeavePGroupsOut(n_groups=3)')
 
     for j, (cv, p_groups_out) in enumerate(((logo, 1), (lpgo_1, 1),
                                             (lpgo_2, 2))):
@@ -943,7 +943,7 @@ def test_leave_group_out_changing_groups():
     # n_splits = no of 2 (p) group combinations of the unique groups = 3C2 = 3
     assert (
         3 == LeavePGroupsOut(n_groups=2).get_n_splits(X, y=X,
-                                                    groups=groups))
+                                                      groups=groups))
     # n_splits = no of unique groups (C(uniq_lbls, 1) = n_unique_groups)
     assert 3 == LeaveOneGroupOut().get_n_splits(X, y=X,
                                                 groups=groups)
@@ -1382,7 +1382,7 @@ def test_group_kfold():
     assert len(folds) == len(groups)
     for i in np.unique(folds):
         assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     for group in np.unique(groups):
@@ -1419,7 +1419,7 @@ def test_group_kfold():
     assert len(folds) == len(groups)
     for i in np.unique(folds):
         assert (tolerance >=
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+                abs(sum(folds == i) - ideal_n_groups_per_fold))
 
     # Check that each group appears only in 1 fold
     with warnings.catch_warnings():
@@ -1449,69 +1449,69 @@ def test_group_kfold():
 def test_time_series_cv():
 
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14]]
-    
+
     # Should fail if there are more folds than samples
     assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
                          next,
                          TimeSeriesSplit(n_splits=7).split(X))
-        
+
     tscv = TimeSeriesSplit(2)
- 
+
     # Manually check that Time Series CV preserves the data
     # ordering on toy datasets
     splits = tscv.split(X[:-1])
     train, test = next(splits)
     assert_array_equal(train, [0, 1])
     assert_array_equal(test, [2, 3])
- 
+
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3])
     assert_array_equal(test, [4, 5])
- 
+
     splits = TimeSeriesSplit(2).split(X)
- 
+
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2])
     assert_array_equal(test, [3, 4])
- 
+
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 2, 3, 4])
     assert_array_equal(test, [5, 6])
- 
+
     # Check get_n_splits returns the correct number of splits
     splits = TimeSeriesSplit(2).split(X)
     n_splits_actual = len(list(splits))
     assert n_splits_actual == tscv.get_n_splits()
     assert n_splits_actual == 2
- 
+
     # rolling window, fixed_window=False
     tscv2 = TimeSeriesSplit()
- 
+
     splits2 = tscv2.split(X[:-1], initial_window=3,
                           horizon=2, fixed_window=False)
- 
+
     train, test = next(splits2)
     assert_array_equal(train, [0, 1, 2])
     assert_array_equal(test, [3, 4])
-     
+
     train, test = next(splits2)
     assert_array_equal(train, [0, 1, 2, 3])
     assert_array_equal(test, [4, 5])
- 
+
     # rolling window, fixed_window=True
     tscv3 = TimeSeriesSplit()
-     
+
     splits3 = tscv3.split(X[:-1], initial_window=3,
                           horizon=2, fixed_window=True)
-     
+
     train, test = next(splits3)
     assert_array_equal(train, [0, 1, 2])
     assert_array_equal(test, [3, 4])
-     
+
     train, test = next(splits3)
     assert_array_equal(train, [1, 2, 3])
     assert_array_equal(test, [4, 5])
-     
+
     assert 3 == tscv2.get_n_splits()
     assert 3 == tscv3.get_n_splits()
 
