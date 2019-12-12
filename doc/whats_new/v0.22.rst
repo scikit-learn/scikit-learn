@@ -796,7 +796,7 @@ Changelog
   :user:`Xun Tang <xun-tang>`.
 
 :mod:`sklearn.semi_supervised`
-.............................
+..............................
 
 - |Fix| :class:`semi_supervised.LabelPropagation` and
   `semi_supervised.LabelSpreading` now allow callable kernel function to
