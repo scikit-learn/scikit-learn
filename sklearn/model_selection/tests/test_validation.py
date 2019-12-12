@@ -1647,7 +1647,7 @@ def test_fit_and_score_failing():
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     def test_warn_trace(msg):
-        assert(msg.find('Traceback (most recent call last):\n') > -1)
+        assert 'Traceback (most recent call last):\n' in msg
         split = msg.splitlines()  # note: handles more than '\n'
         mtb = split[0] + '\n' + split[-1]
         return warning_message in mtb
