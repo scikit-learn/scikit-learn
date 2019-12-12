@@ -81,7 +81,6 @@ X_train, X_test, y_train, y_test = train_test_split(
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
 sns.pairplot(train_dataset, diag_kind='kde')
-plt.show()
 
 ##############################################################################
 # Looking closely at the WAGE distribution it could be noticed that it has a
@@ -89,6 +88,8 @@ plt.show()
 # to simplify our problem and approximate a normal distribution.
 # The WAGE is increasing when EDUCATION is increasing.
 # Also, the EXPERIENCE and AGE are linearly correlated.
+#
+# .. _the-pipeline:
 #
 # The pipeline
 # ............
@@ -228,8 +229,8 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # We should then normalize the coefficients by the standard deviation and we
-# will be able to compare them and helps interpretation: the greater the
-# variance of a feature, the large the impact of the corresponding coefficent
+# will be able to compare them helping interpretation: the greater the
+# variance of a feature, the larger the impact of the corresponding coefficent
 # on the output.
 
 coefs = pd.DataFrame(
@@ -312,3 +313,89 @@ plt.subplots_adjust(left=.3)
 ###############################################################################
 # The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all predictors trained during cross-validation.
+#
+# Preprocessing numerical variables
+# .................................
+#
+# As said above (see :ref:`the-pipeline`), we could also choose to scale
+# numerical values before training the model.
+# The preprocessor is redefined in order to subtract the mean and scale
+# variables to unit variance.
+
+from sklearn.preprocessing import StandardScaler
+
+preprocessor = make_column_transformer(
+    (OneHotEncoder(), categorical_columns),
+    (OrdinalEncoder(), binary_columns),
+    (StandardScaler(), numerical_columns),
+    remainder='passthrough'
+)
+
+###############################################################################
+# The model will stay unchanged.
+
+model = make_pipeline(
+    preprocessor,
+    TransformedTargetRegressor(
+        regressor=RidgeCV(alphas=np.logspace(-10, 10, 21)),
+        func=np.log10,
+        inverse_func=sp.special.exp10
+    )
+)
+
+model.fit(X_train, y_train)
+model[-1].regressor_.alpha_
+
+##############################################################################
+# Again, we check the performance of the computed
+# model using, for example, the median absolute error of the model and the R
+# squared coefficient.
+
+y_pred = model.predict(X_train)
+mae = median_absolute_error(y_train, y_pred)
+string_score = 'MAE on training set: {0:.2f} $/hour'.format(mae)
+y_pred = model.predict(X_test)
+mae = median_absolute_error(y_test, y_pred)
+r2score = model.score(X_test, y_test)
+
+string_score += '\nMAE on testing set: {0:.2f} $/hour'.format(mae)
+string_score += '\nR2 score: {0:.4f}'.format(r2score)
+fig, ax = plt.subplots(figsize=(6, 6))
+sns.regplot(y_test, y_pred)
+
+plt.text(3, 20, string_score)
+
+plt.ylabel('Model predictions')
+plt.xlabel('Truths')
+plt.xlim([0, 27])
+plt.ylim([0, 27])
+
+##############################################################################
+# Coefficients do not need to be rescaled this time
+
+coefs = pd.DataFrame(
+    model.named_steps['transformedtargetregressor'].regressor_.coef_,
+    columns=['Coefficients'], index=feature_names
+)
+coefs.plot(kind='barh', figsize=(9, 7))
+plt.axvline(x=0, color='.5')
+plt.subplots_adjust(left=.3)
+
+##############################################################################
+# Cross validation for coefficients
+
+cv_model = cross_validate(
+    model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
+    return_estimator=True, n_jobs=-1
+)
+coefs = pd.DataFrame(
+    [est.named_steps['transformedtargetregressor'].regressor_.coef_
+     for est in cv_model['estimator']],
+    columns=feature_names
+)
+plt.figure(figsize=(9, 7))
+sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
+sns.boxplot(data=coefs, orient='h', color='cyan')
+plt.axvline(x=0, color='.5')
+plt.title('Coefficient variability')
+plt.subplots_adjust(left=.3)
