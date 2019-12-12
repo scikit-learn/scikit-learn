@@ -95,7 +95,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort="deprecated",
+                 presort='deprecated',
                  ccp_alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
@@ -311,7 +311,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
-        if self.presort != "deprecated":
+        if self.presort != 'deprecated':
             warnings.warn("The parameter 'presort' is deprecated and has no "
                           "effect. It will be removed in v0.24. You can "
                           "suppress this warning by not passing any value "
@@ -491,7 +491,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         indicator : sparse matrix of shape (n_samples, n_nodes)
-            Return a node indicator matrix where non zero elements
+            Return a node indicator matrix (csr) where non zero elements
             indicates that the samples goes through the nodes.
         """
         X = self._validate_X_predict(X, check_input)
@@ -588,11 +588,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : str, default="gini"
+    criterion : {"gini", "entropy"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : str, default="best"
+    splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -633,7 +633,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or str, default=None
+    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -709,12 +709,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    presort : deprecated, default="deprecated"
+    presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
         .. deprecated:: 0.22
 
-    ccp_alpha : positive float, default=0.0
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
@@ -890,11 +890,13 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             to a sparse ``csr_matrix``.
 
         check_input : bool, default=True
-            Run check_array on X.
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
 
         Returns
         -------
-        proba : ndarray of shape (n_samples, n_classes) or list of int
+        proba : ndarray of shape (n_samples, n_classes) or list of n_outputs \
+            such arrays if n_outputs > 1
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -934,7 +936,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         Returns
         -------
-        proba : ndarray of shape (n_samples, n_classes) or list of int
+        proba : ndarray of shape (n_samples, n_classes) or list of n_outputs \
+            such arrays if n_outputs > 1
             The class log-probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
@@ -957,7 +960,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : str, default="mse"
+    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion and minimizes the L2 loss
@@ -969,7 +972,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : str, default="best"
+    splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1010,7 +1013,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float or str, default=None
+    max_features : int, float or {"auto", "sqrt", "log2"}, default=None
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1065,12 +1068,12 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    presort : deprecated, default="deprecated"
+    presort : deprecated, default='deprecated'
         This parameter is deprecated and will be removed in v0.24.
 
         .. deprecated:: 0.22
 
-    ccp_alpha : positive float, default=0.0
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
@@ -1254,11 +1257,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : str, default="gini"
+    criterion : {"gini", "entropy"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    splitter : str, default="random"
+    splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1299,7 +1302,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, str or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
@@ -1375,7 +1378,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    ccp_alpha : positive float, default=0.0
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
@@ -1479,7 +1482,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : str, default="mse"
+    criterion : {"mse", "friedman_mse", "mae"}, default="mse"
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
         reduction as feature selection criterion, and "mae" for the mean
@@ -1488,7 +1491,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
-    splitter : str, default="random"
+    splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
@@ -1529,7 +1532,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, str or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
@@ -1584,7 +1587,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    ccp_alpha : positive float, default=0.0
+    ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
