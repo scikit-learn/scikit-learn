@@ -68,12 +68,25 @@ all the changes for a release in one PR minimizes the gap between the time when
 the website points to a release, and the release being available to users.
 
 Most development of the release, and its documentation, should happen in master
-to avoid asynchrony. To select commits from master for use in the bug fix
-(version 0.999.3), you can use::
+to avoid asynchrony. First, create a branch, **on your own fork** (to release
+e.g. `0.999.3`)::
 
-    $ # # assuming master and upstream/master are the same
+    $ # assuming master and upstream/master are the same
     $ git checkout -b release-0.999.3 master
-    $ git rebase -i upstream/0.999.X
+
+Note that pushing the (empty) branch **to the main repo** will automatically
+upload its documentation, which currently corresponds to that of master, so
+it's not an accurate representation of what the release will actually be.
+
+Then create a PR **to the `scikit-learn/0.999.X` branch and not `master`** with
+all the desired changes::
+
+	$ git rebase -i upstream/0.999.2
+
+The rest of the process is to merge the PR, create a tag and publish the
+wheels. Ideally, this should be done quickly in order to minimize the gap
+between the time when the website points to a release, and the release being
+available to users.
 
 It's nice to have a copy of the ``git rebase -i`` log in the PR to help others
 understand what's included.
@@ -191,7 +204,7 @@ Making a release
        $ git checkout master
        $ rm stable
        $ ln -s 0.999 stable
-       $ sed -i "s/latestStable = '.*/latestStable = '0.999';/g" versionwarning.js
+       $ sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
        $ git commit -am "Update stable to point to 0.999"
        $ git push origin master
 
@@ -199,13 +212,16 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
     * [ ] create tag
-    * [ ] update dependencies and release tag at https://github.com/MacPython/scikit-learn-wheels
+    * [ ] update dependencies and release tag at
+      https://github.com/MacPython/scikit-learn-wheels
     * [ ] twine the wheels to PyPI when that's green
     * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
-    * [ ] confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
+    * [ ] confirm bot detected at
+      https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
+    * [ ] fix the binder release version in ``.binder/requirement.txt`` (see
+      #15840)
     * [ ] announce on mailing list and on twitter
-    * [ ] (regenerate Dash docs: https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/Scikit)
 
 The scikit-learn.org web site
 -----------------------------
