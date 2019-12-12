@@ -260,7 +260,7 @@ plt.subplots_adjust(left=.3)
 #
 # We can check the coefficient variability through cross-validation.
 # If coefficients vary in a significant way changing the input dataset
-# the robustness of the model is not guaranteed. 
+# the robustness of the model is not guaranteed.
 
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
