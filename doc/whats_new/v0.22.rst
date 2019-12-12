@@ -795,6 +795,14 @@ Changelog
   :pr:`13925` by :user:`Isaac S. Robson <isrobson>` and :pr:`15524` by
   :user:`Xun Tang <xun-tang>`.
 
+:mod:`sklearn.semi_supervised`
+.............................
+
+- |Fix| :class:`semi_supervised.LabelPropagation` and
+  `semi_supervised.LabelSpreading` now allow callable kernel function to
+  return sparse weight matrix.
+  :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
+
 :mod:`sklearn.svm`
 ..................
 

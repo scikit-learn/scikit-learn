@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from scipy.sparse import csr_matrix
+from scipy.sparse import issparse
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -165,7 +165,7 @@ def test_predict_sparse_callable_kernel():
         nn.fit(X)
         W = -1 * nn.kneighbors_graph(Y, mode='distance').power(2) * gamma
         np.exp(W.data, out=W.data)
-        assert isinstance(W, csr_matrix)
+        assert issparse(W)
         return W.T
 
     n_classes = 4
@@ -185,6 +185,14 @@ def test_predict_sparse_callable_kernel():
     Ytest = Y[n_samples - n_test:]
 
     model = label_propagation.LabelSpreading(kernel=topk_rbf)
+    model.fit(Xtrain, Ytrain)
+
+    Ypred = model.predict(Xtest)
+    n_correct = np.sum(Ypred == Ytest)
+
+    assert n_correct >= 0.9 * n_test
+
+    model = label_propagation.LabelPropagation(kernel=topk_rbf)
     model.fit(Xtrain, Ytrain)
 
     Ypred = model.predict(Xtest)
