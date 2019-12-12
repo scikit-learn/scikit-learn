@@ -3,10 +3,12 @@
 import numpy as np
 import pytest
 
+from scipy.sparse import csr_matrix
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
@@ -152,3 +154,40 @@ def test_convergence_warning():
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)
+
+
+def test_predict_sparse_callable_kernel():
+    # This is a non-regression test for #15866
+
+    # Custom sparse kernel (top-K RBF)
+    def topk_rbf(X, Y=None, n_neighbors=10, gamma=1e-5):
+        nn = NearestNeighbors(n_neighbors=10, metric='euclidean', n_jobs=-1)
+        nn.fit(X)
+        W = -1 * nn.kneighbors_graph(Y, mode='distance').power(2) * gamma
+        np.exp(W.data, out=W.data)
+        assert isinstance(W, csr_matrix)
+        return W.T
+
+    n_classes = 4
+    n_samples = 500
+    n_test = 10
+    X, Y = make_classification(n_classes=n_classes,
+                               n_samples=n_samples,
+                               n_features=20,
+                               n_informative=20,
+                               n_redundant=0,
+                               n_repeated=0,
+                               random_state=0)
+
+    Xtrain = X[:n_samples - n_test]
+    Ytrain = Y[:n_samples - n_test]
+    Xtest = X[n_samples - n_test:]
+    Ytest = Y[n_samples - n_test:]
+
+    model = label_propagation.LabelSpreading(kernel=topk_rbf)
+    model.fit(Xtrain, Ytrain)
+
+    Ypred = model.predict(Xtest)
+    n_correct = np.sum(Ypred == Ytest)
+
+    assert n_correct >= 0.9 * n_test
