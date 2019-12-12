@@ -491,7 +491,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         indicator : sparse matrix of shape (n_samples, n_nodes)
-            Return a node indicator matrix (csr) where non zero elements
+            Return a node indicator CSR matrix where non zero elements
             indicates that the samples goes through the nodes.
         """
         X = self._validate_X_predict(X, check_input)
@@ -628,7 +628,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -660,7 +660,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1008,7 +1008,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1040,7 +1040,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1297,7 +1297,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1329,7 +1329,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
@@ -1527,7 +1527,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionchanged:: 0.18
            Added float values for fractions.
 
-    min_weight_fraction_leaf : float, default=0.
+    min_weight_fraction_leaf : float, default=0.0
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
@@ -1554,7 +1554,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    min_impurity_decrease : float, default=0.
+    min_impurity_decrease : float, default=0.0
         A node will be split if this split induces a decrease of the impurity
         greater than or equal to this value.
 
