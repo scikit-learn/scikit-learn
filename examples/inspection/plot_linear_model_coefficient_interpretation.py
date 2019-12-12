@@ -228,7 +228,9 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # We should then normalize the coefficients by the standard deviation and we
-# will be able to compare them.
+# will be able to compare them and helps interpretation: the greater the
+# variance of a feature, the large the impact of the corresponding coefficent
+# on the output.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_ *
@@ -253,11 +255,12 @@ plt.subplots_adjust(left=.3)
 # other features constant as well, a younger person would have a higher
 # wage.
 #
-# Checking the coefficient stability
-# ..................................
+# Checking the coefficient variability
+# ....................................
 #
-# The stability of the coefficients is a guarantee of the robustness of the
-# model. We can check the coefficient stability through cross-validation.
+# We can check the coefficient variability through cross-validation.
+# If coefficients vary in a significant way changing the input dataset
+# the robustness of the model is not guaranteed. 
 
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import RepeatedKFold
@@ -276,12 +279,12 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan')
 plt.axvline(x=0, color='.5')
-plt.title('Stability of coefficients')
+plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The AGE and EXPERIENCE coefficients are highly unstable which might be
-# due to the collinearity between the 2 features.
+# The AGE and EXPERIENCE coefficients are affected by strong variability which
+# might be due to the collinearity between the 2 features.
 #
 # In order to verify our interpretation we remove one of the 2 features and
 # check what is the impact on the model stability.
@@ -303,9 +306,9 @@ plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
 sns.boxplot(data=coefs, orient='h', color='cyan')
 plt.axvline(x=0, color='.5')
-plt.title('Stability of coefficients')
+plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# The estimation of the EXPERIENCE coefficient is now more stable and
+# The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all predictors trained during cross-validation.
