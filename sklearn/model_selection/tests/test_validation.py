@@ -1638,14 +1638,6 @@ def test_fit_and_score_failing():
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
                                           error_message))
 
-    def test_warn_no_trace(msg):
-        split = msg.splitlines()  # note: handles more than '\n'
-        mtb = split[0] + '\n' + split[-1]
-        return warning_message in mtb
-    # check if the same warning is triggered
-    assert_warns_message(FitFailedWarning, test_warn_no_trace, _fit_and_score,
-                         *fit_and_score_args, **fit_and_score_kwargs)
-
     def test_warn_trace(msg):
         assert 'Traceback (most recent call last):\n' in msg
         split = msg.splitlines()  # note: handles more than '\n'
