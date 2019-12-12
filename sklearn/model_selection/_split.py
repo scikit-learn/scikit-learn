@@ -778,13 +778,15 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2] TEST: [3]
     TRAIN: [0 1 2 3] TEST: [4]
     TRAIN: [0 1 2 3 4] TEST: [5]
-    >>> for train_index, test_index in tscv.split(X, initial_window=3, horizon=2, fixed_window=True):
+    >>> for train_index, test_index in tscv.split(X, initial_window=3,
+    horizon=2, fixed_window=True):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [0 1 2] TEST: [3 4]
     TRAIN: [1 2 3] TEST: [4 5]
-    >>> for train_index, test_index in tscv.split(X, initial_window=2, horizon=3, fixed_window=False):
+    >>> for train_index, test_index in tscv.split(X, initial_window=2,
+    horizon=3, fixed_window=False):
     ...    ("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
