@@ -735,7 +735,7 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
 @pytest.mark.parametrize('y_list, expected_y', [
     ([-2.5, -2.5], [0, 2.5, 0, 2.5, 0]),
     ([[-2.5, -2.5], [-2.5, -2.5]],
-     [[0, 2.5, 0, 2.5, 0], [0, 2.5, 0, 2.5, 0]])])
+     [[0, 5, 0, 2.5, 0], [0, 5, 0, 2.5, 0]])])
 def test_lars_with_jitter(y_list, expected_y):
     """
     Test that user input of a small amount of jitter,
@@ -752,7 +752,8 @@ def test_lars_with_jitter(y_list, expected_y):
     lars = linear_model.LassoLars(alpha=alpha, fit_intercept=fit_intercept)
     lars_with_jitter = linear_model.LassoLars(alpha=alpha,
                                               fit_intercept=fit_intercept,
-                                              jitter=10e-5)
+                                              jitter=10e-8,
+                                              random_state=0)
 
     lars.fit(X, y)
     lars_with_jitter.fit(X, y)

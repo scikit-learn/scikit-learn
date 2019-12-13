@@ -980,8 +980,6 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             generator = check_random_state(self.random_state)
 
             noise = generator.uniform(high=self.jitter, size=len(y))
-            if y.ndim == 2:
-                noise = noise.reshape(-1, 1)
             y = y + noise
 
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
@@ -1051,11 +1049,6 @@ class LassoLars(Lars):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    jitter : float, default=None
-        Uniform noise parameter, added to the y values, to satisfy
-        the model's assumption of one-at-a-time computations
-        (Efron et al. 2004).
-
     positive : bool, default=False
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
@@ -1065,6 +1058,16 @@ class LassoLars(Lars):
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
+
+    jitter : float, default=None
+        Uniform noise parameter, added to the y values, to satisfy
+        the model's assumption of one-at-a-time computations
+        (Efron et al. 2004).
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -1118,7 +1121,7 @@ class LassoLars(Lars):
     def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False, jitter=None):
+                 positive=False, jitter=None, random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1130,6 +1133,7 @@ class LassoLars(Lars):
         self.eps = eps
         self.fit_path = fit_path
         self.jitter = jitter
+        self.random_state = random_state
 
 
 ###############################################################################
