@@ -53,8 +53,8 @@ from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "assert_true",
-           "assert_false", "assert_almost_equal", "assert_array_equal",
+           "assert_raises_regexp",
+           "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
@@ -84,16 +84,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-deprecation_message = "'assert_true' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
-
-deprecation_message = "'assert_false' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -276,8 +266,8 @@ def ignore_warnings(obj=None, category=Warning):
     ...     warnings.warn('buhuhuhu')
 
     >>> def nasty_warn():
-    ...    warnings.warn('buhuhuhu')
-    ...    print(42)
+    ...     warnings.warn('buhuhuhu')
+    ...     print(42)
 
     >>> ignore_warnings(nasty_warn)()
     42

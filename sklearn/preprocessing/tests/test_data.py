@@ -2452,21 +2452,3 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
-
-
-def test_power_transform_default_method():
-    X = np.abs(X_2d)
-
-    future_warning_message = (
-        "The default value of 'method' "
-        "will change from 'box-cox'"
-    )
-    assert_warns_message(FutureWarning, future_warning_message,
-                         power_transform, X)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        X_trans_default = power_transform(X)
-
-    X_trans_boxcox = power_transform(X, method='box-cox')
-    assert_array_equal(X_trans_boxcox, X_trans_default)
