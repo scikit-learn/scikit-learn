@@ -223,7 +223,7 @@ X_train_preprocessed = pd.DataFrame(
     model.named_steps['columntransformer'].transform(X_train),
     columns=feature_names
 )
-X_train_preprocessed.std().plot(kind='barh', figsize=(9, 7))
+X_train_preprocessed.std(axis=0).plot(kind='barh', figsize=(9, 7))
 plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
@@ -235,7 +235,7 @@ plt.subplots_adjust(left=.3)
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_ *
-    X_train_preprocessed.std(),
+    X_train_preprocessed.std(axis=0),
     columns=['Coefficients'], index=feature_names
 )
 coefs.plot(kind='barh', figsize=(9, 7))
@@ -272,13 +272,13 @@ cv_model = cross_validate(
 )
 coefs = pd.DataFrame(
     [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
-     X_train_preprocessed.std()
+     X_train_preprocessed.std(axis=0)
      for est in cv_model['estimator']],
     columns=feature_names
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan')
+sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
@@ -299,13 +299,13 @@ cv_model = cross_validate(
 )
 coefs = pd.DataFrame(
     [est.named_steps['transformedtargetregressor'].regressor_.coef_ *
-     X_train_preprocessed.drop(columns=column_to_drop).std()
+     X_train_preprocessed.drop(columns=column_to_drop).std(axis=0)
      for est in cv_model['estimator']],
     columns=feature_names[:-1]
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan')
+sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
@@ -317,7 +317,7 @@ plt.subplots_adjust(left=.3)
 # Preprocessing numerical variables
 # .................................
 #
-# As said above (see :ref:`the-pipeline`), we could also choose to scale
+# As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
@@ -371,7 +371,8 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# Coefficients do not need to be rescaled this time
+# The R squared coefficient is not better than for the non- normalized case.
+# For the coefficient analysis scaling is not needed this time.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
@@ -382,7 +383,7 @@ plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
 ##############################################################################
-# Cross validation for coefficients
+# We cross validate the coefficients.
 
 cv_model = cross_validate(
     model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
@@ -395,7 +396,13 @@ coefs = pd.DataFrame(
 )
 plt.figure(figsize=(9, 7))
 sns.swarmplot(data=coefs, orient='h', color='k', alpha=0.5)
-sns.boxplot(data=coefs, orient='h', color='cyan')
+sns.boxplot(data=coefs, orient='h', color='cyan', saturation=0.5)
 plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
+
+##############################################################################
+# The result is significantly different.
+# AGE and EXPERIENCE coefficients are less variable than other coefficients.
+# They are also smaller, meaning that the model is less influenced by those two
+# variables than by other features.
