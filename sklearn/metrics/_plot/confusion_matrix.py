@@ -192,7 +192,8 @@ def plot_confusion_matrix(estimator=None, X=None, y_true=None, labels=None,
     elif estimator is None and X is None and y_pred is not None:
         check_consistent_length(y_true, y_pred)
     else:
-        raise ValueError("Either 'estimator' and 'X' must be passed to plot_confusion_matrix or 'y_pred'")
+        raise ValueError("Either 'estimator' and 'X' must be passed to "
+                         "plot_confusion_matrix or 'y_pred'")
 
     if normalize not in {'true', 'pred', 'all', None}:
         raise ValueError("normalize must be one of {'true', 'pred', "
