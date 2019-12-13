@@ -18,10 +18,14 @@ ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
     (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
     (label_propagation.LabelPropagation, {
+        'kernel': 'sparse-rbf',  'gamma': 1e-4, 'n_neighbors': 2}),
+    (label_propagation.LabelPropagation, {
         'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
     }),
     (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
     (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelSpreading, {
+        'kernel': 'sparse-rbf',  'gamma': 1e-4, 'n_neighbors': 2}),
     (label_propagation.LabelSpreading, {
         'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
     }),
@@ -64,7 +68,7 @@ def test_predict_proba():
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
-                                  np.array([[0.5, 0.5]]))
+                                  np.array([[0.5, 0.5]]), 4)
 
 
 def test_label_spreading_closed_form():
@@ -199,3 +203,93 @@ def test_predict_sparse_callable_kernel():
     n_correct = np.sum(Ypred == Ytest)
 
     assert n_correct >= 0.9 * n_test
+
+
+def test_sparse_rbf_kernel():
+    n_classes = 4
+    n_samples = 500
+    n_test = 10
+    X, Y = make_classification(n_classes=n_classes,
+                               n_samples=n_samples,
+                               n_features=20,
+                               n_informative=20,
+                               n_redundant=0,
+                               n_repeated=0,
+                               random_state=0)
+
+    Xtrain = X[:n_samples - n_test]
+    Ytrain = Y[:n_samples - n_test]
+    Xtest = X[n_samples - n_test:]
+    Ytest = Y[n_samples - n_test:]
+
+    model = label_propagation.LabelSpreading(kernel='sparse-rbf', gamma=1e-5)
+    model.fit(Xtrain, Ytrain)
+
+    Ypred = model.predict(Xtest)
+    n_correct = np.sum(Ypred == Ytest)
+
+    assert n_correct >= 0.9 * n_test
+
+    model = label_propagation.LabelPropagation(kernel='sparse-rbf', gamma=1e-5)
+    model.fit(Xtrain, Ytrain)
+
+    Ypred = model.predict(Xtest)
+    n_correct = np.sum(Ypred == Ytest)
+
+    assert n_correct >= 0.9 * n_test
+
+
+def test_sparse_rbf_kernel_agrees_with_dense():
+
+    n_classes = 4
+    n_samples = 500
+    X, Y = make_classification(n_classes=n_classes,
+                               n_samples=n_samples,
+                               n_features=20,
+                               n_informative=20,
+                               n_redundant=0,
+                               n_repeated=0,
+                               random_state=0)
+
+    gamma = 1e-5
+    n_neighbors = 10
+
+    # Check LabelSpreading
+    # Make dense RBF kernel
+    dense_train = (label_propagation
+                   .LabelSpreading(kernel='rbf', gamma=gamma)
+                   ._get_kernel(X))
+    # Keep top k+1 per column. (k neighbors + 1 for self)
+    ind = np.argpartition(
+            dense_train, kth=-(n_neighbors+1), axis=0)[:-(n_neighbors+1), :]
+    np.put_along_axis(dense_train, ind, 0, axis=0)
+
+    # Make column-sparse RBF kernel
+    sparse_train = (label_propagation
+                    .LabelSpreading(kernel='sparse-rbf',
+                                    gamma=gamma,
+                                    n_neighbors=n_neighbors)
+                    ._get_kernel(X)
+                    .toarray())
+
+    assert_array_almost_equal(dense_train, sparse_train)
+
+    # Check LabelPropagation
+    # Make dense RBF kernel
+    dense_train = (label_propagation
+                   .LabelPropagation(kernel='rbf', gamma=gamma)
+                   ._get_kernel(X))
+    # Keep top k+1 per column. (k neighbors + 1 for self)
+    ind = np.argpartition(
+            dense_train, kth=-(n_neighbors+1), axis=0)[:-(n_neighbors+1), :]
+    np.put_along_axis(dense_train, ind, 0, axis=0)
+
+    # Make column-sparse RBF kernel
+    sparse_train = (label_propagation
+                    .LabelPropagation(kernel='sparse-rbf',
+                                      gamma=gamma,
+                                      n_neighbors=n_neighbors)
+                    ._get_kernel(X)
+                    .toarray())
+
+    assert_array_almost_equal(dense_train, sparse_train)
