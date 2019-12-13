@@ -8,6 +8,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
@@ -171,7 +172,7 @@ def test_predict_sparse_callable_kernel():
     n_classes = 4
     n_samples = 500
     n_test = 10
-    X, Y = make_classification(n_classes=n_classes,
+    X, y = make_classification(n_classes=n_classes,
                                n_samples=n_samples,
                                n_features=20,
                                n_informative=20,
@@ -179,23 +180,14 @@ def test_predict_sparse_callable_kernel():
                                n_repeated=0,
                                random_state=0)
 
-    Xtrain = X[:n_samples - n_test]
-    Ytrain = Y[:n_samples - n_test]
-    Xtest = X[n_samples - n_test:]
-    Ytest = Y[n_samples - n_test:]
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        test_size=n_test,
+                                                        random_state=0)
 
     model = label_propagation.LabelSpreading(kernel=topk_rbf)
-    model.fit(Xtrain, Ytrain)
-
-    Ypred = model.predict(Xtest)
-    n_correct = np.sum(Ypred == Ytest)
-
-    assert n_correct >= 0.9 * n_test
+    model.fit(X_train, y_train)
+    assert model.score(X_test, y_test) >= 0.9
 
     model = label_propagation.LabelPropagation(kernel=topk_rbf)
-    model.fit(Xtrain, Ytrain)
-
-    Ypred = model.predict(Xtest)
-    n_correct = np.sum(Ypred == Ytest)
-
-    assert n_correct >= 0.9 * n_test
+    model.fit(X_train, y_train)
+    assert model.score(X_test, y_test) >= 0.9

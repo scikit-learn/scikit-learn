@@ -799,7 +799,7 @@ Changelog
 ..............................
 
 - |Fix| :class:`semi_supervised.LabelPropagation` and
-  `semi_supervised.LabelSpreading` now allow callable kernel function to
+  :class:`semi_supervised.LabelSpreading` now allow callable kernel function to
   return sparse weight matrix.
   :pr:`15868` by :user:`Niklas Smedemark-Margulies <nik-sm>`.
 
