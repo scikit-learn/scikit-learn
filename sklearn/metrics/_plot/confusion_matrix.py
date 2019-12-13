@@ -205,7 +205,10 @@ def plot_confusion_matrix(estimator=None, X=None, y_true=None, labels=None,
 
     if display_labels is None:
         if labels is None:
-            display_labels = estimator.classes_
+            if estimator is None:
+                display_labels = sorted(set(y_true).union(y_pred))
+            else:
+                display_labels = estimator.classes_
         else:
             display_labels = labels
 
