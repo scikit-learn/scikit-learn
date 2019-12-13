@@ -4,6 +4,7 @@ import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
+from ...utils.validation import check_consistent_length
 from ...base import is_classifier
 
 
@@ -117,26 +118,26 @@ class ConfusionMatrixDisplay:
         return self
 
 
-def plot_confusion_matrix(estimator, X, y_true, labels=None,
+def plot_confusion_matrix(estimator=None, X=None, y_true=None, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
-                          cmap='viridis', ax=None):
+                          cmap='viridis', ax=None, y_pred=None):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
 
     Parameters
     ----------
-    estimator : estimator instance
-        Trained classifier.
+    estimator : estimator instance, default=None
+        Trained classifier. Either `estimator` and `X` must be specified, or `y_pred`.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
+        Input values. Either `estimator` and `X` must be specified, or `y_pred`.
 
-    y : array-like of shape (n_samples,)
-        Target values.
+    y_true : array-like of shape (n_samples,), default=None
+        Target values, must be specified.
 
     labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to reorder or
@@ -175,20 +176,28 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
         Axes object to plot on. If `None`, a new figure and axes is
         created.
 
+    y_pred : array-like of shape (n_samples,), default=None
+        Predicted labels. Either `estimator` and `X` must be specified, or `y_pred`.
+
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
     """
     check_matplotlib_support("plot_confusion_matrix")
 
-    if not is_classifier(estimator):
-        raise ValueError("plot_confusion_matrix only supports classifiers")
+    if estimator is not None and X is not None and y_pred is None:
+        if not is_classifier(estimator):
+            raise ValueError("plot_confusion_matrix only supports classifiers")
+        y_pred = estimator.predict(X)
+    elif estimator is None and X is None and y_pred is not None:
+        check_consistent_length(y_true, y_pred)
+    else:
+        raise ValueError("Either 'estimator' and 'X' must be passed to plot_confusion_matrix or 'y_pred'")
 
     if normalize not in {'true', 'pred', 'all', None}:
         raise ValueError("normalize must be one of {'true', 'pred', "
                          "'all', None}")
 
-    y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels, normalize=normalize)
 
