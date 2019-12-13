@@ -18,6 +18,8 @@ from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
+from ..neighbors import DistanceMetric
+from ..neighbors._dist_metrics import METRIC_MAPPING
 
 from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -107,7 +109,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     mst_array = np.vstack([mst.row, mst.col, mst.data]).T
 
     # Sort edges of the min_spanning_tree by weight
-    mst_array = mst_array[np.argsort(mst_array.T[2]), :]
+    mst_array = mst_array[np.argsort(mst_array.T[2], kind='mergesort'), :]
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = _hierarchical._single_linkage_label(mst_array)
@@ -464,7 +466,25 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             X = affinity(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        out = hierarchy.linkage(X, method=linkage, metric=affinity)
+        if (linkage == 'single'
+                and affinity != 'precomputed'
+                and not callable(affinity)
+                and affinity in METRIC_MAPPING):
+
+            # We need the fast cythonized metric from neighbors
+            dist_metric = DistanceMetric.get_metric(affinity)
+
+            # The Cython routines used require contiguous arrays
+            X = np.ascontiguousarray(X, dtype=np.double)
+
+            mst = _hierarchical.mst_linkage_core(X, dist_metric)
+            # Sort edges of the min_spanning_tree by weight
+            mst = mst[np.argsort(mst.T[2], kind='mergesort'), :]
+
+            # Convert edge list into standard hierarchical clustering format
+            out = _hierarchical.single_linkage_label(mst)
+        else:
+            out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int, copy=False)
 
         if return_distance:
@@ -663,23 +683,23 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_clusters : int or None, optional (default=2)
+    n_clusters : int or None, default=2
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : string or callable, default: "euclidean"
+    affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, optional
+    connectivity : array-like or callable, default=None
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -687,17 +707,19 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : bool or 'auto' (optional)
-        Stop early the construction of the tree at n_clusters. This is
-        useful to decrease computation time if the number of clusters is
-        not small compared to the number of samples. This option is
-        useful only when specifying a connectivity matrix. Note also that
-        when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree. It must be ``True`` if
-        ``distance_threshold`` is not ``None``.
+    compute_full_tree : 'auto' or bool, default='auto'
+        Stop early the construction of the tree at n_clusters. This is useful
+        to decrease computation time if the number of clusters is not small
+        compared to the number of samples. This option is useful only when
+        specifying a connectivity matrix. Note also that when varying the
+        number of clusters and using caching, it may be advantageous to compute
+        the full tree. It must be ``True`` if ``distance_threshold`` is not
+        ``None``. By default `compute_full_tree` is "auto", which is equivalent
+        to `True` when `distance_threshold` is not `None` or that `n_clusters`
+        is inferior to the maximum between 100 or `0.02 * n_samples`.
+        Otherwise, "auto" is equivalent to `False`.
 
-    linkage : {"ward", "complete", "average", "single"}, optional \
-            (default="ward")
+    linkage : {"ward", "complete", "average", "single"}, default="ward"
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -710,7 +732,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    distance_threshold : float, optional (default=None)
+    distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
@@ -724,7 +746,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         ``distance_threshold=None``, it will be equal to the given
         ``n_clusters``.
 
-    labels_ : array [n_samples]
+    labels_ : ndarray of shape (n_samples)
         cluster labels for each point
 
     n_leaves_ : int
@@ -733,7 +755,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_samples-1, 2)
+    children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -766,13 +788,6 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-
-    @deprecated("The ``n_components_`` attribute was deprecated "
-                "in favor of ``n_connected_components_`` in 0.21 "
-                "and will be removed in 0.23.")
-    @property
-    def n_components_(self):
-        return self.n_connected_components_
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
@@ -909,21 +924,21 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Parameters
     ----------
-    n_clusters : int or None, optional (default=2)
+    n_clusters : int, default=2
         The number of clusters to find. It must be ``None`` if
         ``distance_threshold`` is not ``None``.
 
-    affinity : string or callable, default "euclidean"
+    affinity : str or callable, default='euclidean'
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : None, str or object with the joblib.Memory interface, optional
+    memory : str or object with the joblib.Memory interface, default=None
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    connectivity : array-like or callable, optional
+    connectivity : array-like or callable, default=None
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
@@ -931,17 +946,19 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
 
-    compute_full_tree : bool or 'auto', optional, default "auto"
-        Stop early the construction of the tree at n_clusters. This is
-        useful to decrease computation time if the number of clusters is
-        not small compared to the number of features. This option is
-        useful only when specifying a connectivity matrix. Note also that
-        when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree. It must be ``True`` if
-        ``distance_threshold`` is not ``None``.
+    compute_full_tree : 'auto' or bool, optional, default='auto'
+        Stop early the construction of the tree at n_clusters. This is useful
+        to decrease computation time if the number of clusters is not small
+        compared to the number of features. This option is useful only when
+        specifying a connectivity matrix. Note also that when varying the
+        number of clusters and using caching, it may be advantageous to compute
+        the full tree. It must be ``True`` if ``distance_threshold`` is not
+        ``None``. By default `compute_full_tree` is "auto", which is equivalent
+        to `True` when `distance_threshold` is not `None` or that `n_clusters`
+        is inferior to the maximum between 100 or `0.02 * n_samples`.
+        Otherwise, "auto" is equivalent to `False`.
 
-    linkage : {"ward", "complete", "average", "single"}, optional\
-            (default="ward")
+    linkage : {'ward', 'complete', 'average', 'single'}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -954,12 +971,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    pooling_func : callable, default np.mean
+    pooling_func : callable, default=np.mean
         This combines the values of agglomerated features into a single
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
-    distance_threshold : float, optional (default=None)
+    distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
@@ -973,7 +990,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ``distance_threshold=None``, it will be equal to the given
         ``n_clusters``.
 
-    labels_ : array-like, (n_features,)
+    labels_ : array-like of (n_features,)
         cluster labels for each feature.
 
     n_leaves_ : int
@@ -982,7 +999,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes-1, 2)
+    children_ : array-like of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_features` is a non-leaf
@@ -990,7 +1007,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
 
-    distances_ : array-like, shape (n_nodes-1,)
+    distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
         Only computed if distance_threshold is not None.
 

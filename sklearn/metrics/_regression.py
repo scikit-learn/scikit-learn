@@ -717,7 +717,7 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     message = ("Mean Tweedie deviance error with power={} can only be used on "
                .format(power))
     if power < 0:
-        # 'Extreme stable', y_true any realy number, y_pred > 0
+        # 'Extreme stable', y_true any real number, y_pred > 0
         if (y_pred <= 0).any():
             raise ValueError(message + "strictly positive y_pred.")
         dev = 2 * (np.power(np.maximum(y_true, 0), 2 - power)
