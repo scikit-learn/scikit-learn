@@ -20,7 +20,7 @@ points at test time ("inductive learning").
 
 The first kernel option produces a binary k-Nearest Neighbors adjacency matrix.
 The second produces a kernel which is also k-sparse, but contains the same
-weights as used in an RBF kernel.  
+weights as used in an RBF kernel.
 
 Notice that the performance of the sparse-RBF kernel is very sensitive to
 parameters; the parameters used here were found by a quick manual search, so
@@ -28,47 +28,136 @@ the model can likely be improved with further optimization, and using this
 kernel effectively on a new dataset requires hyperparameter tuning.
 """
 import numpy as np
+from pprint import pprint
 from sklearn.datasets import fetch_openml
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.semi_supervised import LabelSpreading
-from sklearn.metrics import classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import make_scorer
 import time
 
-Xorig, Yorig = fetch_openml('mnist_784', version=1, return_X_y=True)
-Yorig = Y.astype(int)
 
-# For a quick demonstration, use only a subset of the data
-n_total = 10000
-X = Xorig[:n_total, :]
-Y = Yorig[:n_total]
+def run_comparison():
+    X_orig, y_orig = fetch_openml('mnist_784', version=1, return_X_y=True)
+    y_orig = y_orig.astype(int)
 
-# Save test set for inductive learning
-test_fraction = 0.333
-Xtrain, Xtest, Ytrain, Ytest = train_test_split(X, Y, test_size=test_fraction,
-                                                random_state=0)
+    # First, we use a small subset of the data to tune hyperparameters
+    n_total = 5000
+    X = X_orig[:n_total, :]
+    y = y_orig[:n_total]
 
-# Mask subset of train data for transductive learning
-n_train = len(Ytrain)
-#kwargs = {'gamma': 1e-9, 'n_neighbors': 50, 'n_jobs': -1, 'max_iter': 100}
+    test_fraction = 0.333
+    X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_fraction, random_state=0)
 
-#models = [LabelSpreading(kernel='knn', **kwargs),
-#          LabelSpreading(kernel='sparse-rbf', **kwargs)]
+    # Mask subset of train data for transductive learning
 
-#supervision_fractions = [0.001, 0.005, 0.01, 0.05, 0.1]
+    # We perform a grid search to optimize parameters for sparse-rbf
+    # kernel.  For this purpose, we use a smaller subset of the data.  In all
+    # cases, we simply use max_iter=100 Notice that we are searching over the
+    # inductive accuracy (accuracy on the test set) rather than the
+    # transductive accuracy (on the masked training examples).  This keeps
+    # things a bit simpler, though we could customize the score function and
+    # the `WrapLabelSpreading` class further to also hyperparameter search over
+    # the transductive accuracy.
+    sparse_rbf_model = GridSearchCV(
+            WrapLabelSpreading(kernel='sparse-rbf', supervision_fraction=0.05),
+            param_grid={
+                'n_jobs': [-1],
+                'max_iter': [100],
+                'alpha': np.linspace(0.01, 0.50, 5),
+                'gamma': np.logspace(-8, 1, 20),
+                'n_neighbors': list(range(5, 60, 3))},
+            cv=3)
 
-# First, we perform a grid search to optimize parameters for sparse-rbf kernel.
-# For this purpose, we use a smaller subset of the data.
-# Notice also that we 
+    sparse_rbf_model.fit(X, y)
+    sparse_rbf_params = sparse_rbf_model.best_params_
+    print(f"Optimal parameters for sparse RBF kernel: {sparse_rbf_params}")
+
+    knn_model = GridSearchCV(WrapLabelSpreading(kernel='knn',
+                                                supervision_fraction=0.05),
+                             param_grid={
+                                 'n_jobs': [-1],
+                                 'max_iter': [100],
+                                 'alpha': np.linspace(0.01, 0.50, 5),
+                                 'n_neighbors': list(range(5, 60, 3))},
+                             cv=3)
+
+    knn_model.fit(X, y)
+    knn_params = knn_model.best_params_
+    print(f"Optimal parameters for knn kernel: {knn_params}")
+
+    # Next, we can compare our optimized models on a larger dataset.
+    n_total = 20000
+    X = X_orig[:n_total, :]
+    y = y_orig[:n_total]
+    test_fraction = 0.333
+    X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_fraction, random_state=0)
+
+    supervision_fractions = [0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1]
+    results = {
+            'transduction': {'knn': [], 'sparse-rbf': []},
+            'induction': {'knn': [], 'sparse-rbf': []},
+            'runtimes': {'knn': [], 'sparse-rbf': []}
+    }
+    for supervision_fraction in supervision_fractions:
+        n_train = len(y_train)
+        n_labeled = int(supervision_fraction * n_train)
+        indices = np.arange(n_train)
+        unlabeled_set = indices[n_labeled:]
+
+        y_masked = np.copy(y_train)
+        y_masked[unlabeled_set] = -1
+
+        for kernel_name, params in zip(['knn', 'sparse-rbf'],
+                                       [knn_params, sparse_rbf_params]):
+            model = LabelSpreading(kernel=kernel_name, **params)
+            print("="*80)
+            print(f"Kernel: {kernel_name}, " +
+                  f"Supervision fraction: {supervision_fraction}")
+            transductive_accs = []
+            inductive_accs = []
+            runtimes = []
+
+            # Repeat each scenario several times to collect rough statistics
+            for _ in range(3):
+                t0 = time.time()
+                model.fit(X_train, y_masked)
+
+                predicted_labels = model.transduction_[unlabeled_set]
+                true_labels = y_train[unlabeled_set]
+                transductive_acc = (np.sum(predicted_labels == true_labels) /
+                                    len(unlabeled_set))
+                transductive_accs.append(transductive_acc)
+                inductive_acc = model.score(X_test, y_test)
+                inductive_accs.append(inductive_acc)
+                t1 = time.time()
+                runtimes.append(t1-t0)
+
+            mean_t_acc = np.mean(transductive_accs)
+            mean_i_acc = np.mean(inductive_accs)
+            mean_runtime = np.mean(runtimes)
+
+            print(f"Mean transductive accuracy: {100 * mean_t_acc:.2f}%, " +
+                  f"Mean inductive accuracy: {100 * mean_i_acc:.2f}%, " +
+                  f"Mean runtime: {mean_runtime:.2f}s")
+
+            results['transduction'][kernel_name].append(mean_t_acc)
+            results['induction'][kernel_name].append(mean_i_acc)
+            results['runtimes'][kernel_name].append(mean_runtime)
+
+    print("="*80)
+    print(f"supervision_fractions: {supervision_fractions}")
+    pprint(results)
+
 
 class WrapLabelSpreading(LabelSpreading):
     """
     In order to perform a grid search over this semi-supervised model,
-    we need to provide a thin wrapper that masks a subset of the data before 
+    we need to provide a thin wrapper that masks a subset of the data before
     `fit` is called.
     """
     def __init__(self, supervision_fraction, kernel='sparse-rbf', gamma=20,
-            n_neighbors=7, alpha=0.2, max_iter=30, tol=1e-3, n_jobs=None):
+                 n_neighbors=7, alpha=0.2, max_iter=30, tol=1e-3, n_jobs=None):
 
         self.supervision_fraction = supervision_fraction
 
@@ -79,7 +168,7 @@ class WrapLabelSpreading(LabelSpreading):
     def fit(self, X, y):
         # mask a random subset of labels, based on self.supervision_fraction
         n_total = len(y)
-        n_labeled = self.supervision_fraction * n_total
+        n_labeled = int(self.supervision_fraction * n_total)
 
         indices = np.arange(n_total)
         np.random.seed(0)
@@ -88,82 +177,9 @@ class WrapLabelSpreading(LabelSpreading):
 
         y[unlabeled_subset] = -1
 
-        super().fit(X,y)
+        super().fit(X, y)
         return self
 
 
-# In all cases, we simply use max_iter=100
-sparse_rbf_model = GridSearchCV(WrapLabelSpreading(kernel='sparse-rbf'),
-                                param_grid= {
-                                    'gamma': np.logspace(-8, 1, 10),
-                                    'alpha': np.linspace(0, 1, 10),
-                                     'n_neighbors': list(range(5,55,5))})
-
-knn_model = GridSearchCV(WrapLabelSpreading(kernel='knn'),
-                         param_grid= {
-                             'n_neighbors': list(range(5,55,5))},
-                             'alpha': np.linspace(0, 1, 10),
-                            )
-
-
-# Then, we compare the performance of optimized sparse-rbf kernel to knn kernel
-supervision_fractions = [0.05, 0.1]
-accuracies = {
-        'transduction': { 'knn':[], 'sparse-rbf':[] }, 
-        'induction': { 'knn':[], 'sparse-rbf':[] }
-}
-for supervision_fraction in supervision_fractions:
-    supervision_fraction = 0.05
-    n_labeled = int(supervision_fraction * n_train)
-    indices = np.arange(n_train)
-    unlabeled_set = indices[n_labeled:]
-
-    Ymasked = np.copy(Ytrain)
-    Ymasked[unlabeled_set] = -1
-
-    for kernel_name, model in zip(['knn', 'sparse-rbf'], 
-                                  [knn_model, sparse_rbf_model]):
-        knn_acc_trans = []
-        knn_acc_ind = []
-        sparse_rbf_acc_trans = []
-        sparse_rbf_acc_ind = []
-        # Repeat each scenario 5 times to collect rough statistics
-    #    for _ in range(5):
-        print("="*80)
-        t0 = time.time()
-        print(f"MODEL: {model}")
-        model.fit(Xtrain, Ymasked)
-        t1 = time.time()
-
-        predicted_labels = model.transduction_[unlabeled_set]
-        true_labels = Ytrain[unlabeled_set]
-        acc = np.sum(predicted_labels == true_labels) / len(unlabeled_set)
-        print(f"accuracy: {acc}")
-
-
-
-        print("-"*80)
-        print(f"TRANSDUCTION: {n_labeled} labeled and " +
-              f"{n_train - n_labeled} unlabeled points ({n_train} total)")
-        print("-"*80)
-        print("Confusion Matrix:")
-        print(confusion_matrix(true_labels, predicted_labels,
-                               labels=model.classes_))
-        print("-"*80)
-        print("Classification Report:")
-        print(classification_report(true_labels, predicted_labels))
-        print("-"*80)
-
-        predicted_labels = model.predict(Xtest)
-        t2 = time.time()
-
-        print("-"*80)
-        print(f"INDUCTION: {int(test_fraction * n_total)} test points")
-        print("-"*80)
-        print("Confusion Matrix:")
-        print(confusion_matrix(Ytest, predicted_labels, labels=model.classes_))
-        print("-"*80)
-        print("Classification Report:")
-        print(classification_report(Ytest, predicted_labels))
-        print("-"*80)
-        print(f"Runtimes: Transduction: {t1 - t0:.2f}s. Induction: {t2 - t1:.2f}s")
+if __name__ == '__main__':
+    run_comparison()
