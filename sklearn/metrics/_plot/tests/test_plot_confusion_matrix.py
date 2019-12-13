@@ -155,17 +155,16 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
         assert disp.text_ is None
 
 
-def test_plot_confusion_matrix_ypred(pyplot, data, y_pred,
-                                     fitted_clf):
+def test_plot_confusion_matrix_ypred(pyplot, data, y_pred, fitted_clf):
     X, y = data
     cmap = 'plasma'
     ax = pyplot.gca()
     cm_pred = plot_confusion_matrix(y_true=y, y_pred=y_pred,
-                                 cmap=cmap, ax=ax).confusion_matrix
+                                    cmap=cmap, ax=ax).confusion_matrix
 
     ax = pyplot.gca()
     cm_est = plot_confusion_matrix(fitted_clf, X, y,
-                                 cmap=cmap, ax=ax).confusion_matrix
+                                   cmap=cmap, ax=ax).confusion_matrix
 
     assert_allclose(cm_est, cm_pred)
 
