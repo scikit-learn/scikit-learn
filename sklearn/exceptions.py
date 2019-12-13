@@ -62,8 +62,8 @@ class ConvergenceWarning(UserWarning):
     ...                 [1, 0],
     ...                 [1, 0]])  # last point is duplicated
     >>> with warnings.catch_warnings(record=True) as w:
-    ...    km = KMeans(n_clusters=4).fit(X)
-    ...    print(w[-1].message)
+    ...     km = KMeans(n_clusters=4).fit(X)
+    ...     print(w[-1].message)
     Number of distinct clusters (3) found smaller than n_clusters (4).
     Possibly due to duplicate points in X.
 
