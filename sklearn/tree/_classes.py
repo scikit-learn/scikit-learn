@@ -868,7 +868,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         self : object
             Fitted estimator.
         """
-        print("hey modifying")
         super().fit(
             X, y,
             sample_weight=sample_weight,
@@ -906,7 +905,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
-
+        print(self.n_outputs_)
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
@@ -926,6 +925,57 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                 all_proba.append(proba_k)
 
             return all_proba
+
+    def predict_proba_with_sample_weight(self, X, check_input=True):
+        """Predict class probabilities of the input samples X.
+
+        The predicted class probability is the fraction of samples of the same
+        class in a leaf.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
+
+        check_input : bool
+            Run check_array on X.
+
+        Returns
+        -------
+        proba : array of shape (n_samples, n_classes), or a list of n_outputs \
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        check_is_fitted(self)
+        X = self._validate_X_predict(X, check_input)
+        proba = self.tree_.predict(X)
+        print(self.n_outputs_)
+        if self.n_outputs_ == 1:
+            proba = proba[:, :self.n_classes_]
+            normalizer = proba.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba /= normalizer
+            print(proba, normalizer)
+            return proba, normalizer
+
+        else:
+            all_proba = []
+            all_normalizer = []
+            for k in range(self.n_outputs_):
+                proba_k = proba[:, k, :self.n_classes_[k]]
+                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+                normalizer[normalizer == 0.0] = 1.0
+                proba_k /= normalizer
+                all_proba.append(proba_k)
+                all_normalizer.append(normalizer)
+            return all_proba, all_normalizer
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
