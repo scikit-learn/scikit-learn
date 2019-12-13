@@ -811,8 +811,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     jitter : float, default=None
         Uniform noise parameter, added to the y values, to satisfy
-        the model's assumption of one-at-a-time computations
-        (Efron et al. 2004).
+        the model's assumption of one-at-a-time computations.
 
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
@@ -976,10 +975,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
-        if self.jitter:
-            generator = check_random_state(self.random_state)
+        if self.jitter is not None:
+            rng = check_random_state(self.random_state)
 
-            noise = generator.uniform(high=self.jitter, size=len(y))
+            noise = rng.uniform(high=self.jitter, size=len(y))
             y = y + noise
 
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
@@ -1061,8 +1060,7 @@ class LassoLars(Lars):
 
     jitter : float, default=None
         Uniform noise parameter, added to the y values, to satisfy
-        the model's assumption of one-at-a-time computations
-        (Efron et al. 2004).
+        the model's assumption of one-at-a-time computations.
 
     random_state : int, RandomState instance or None (default)
         Determines random number generation for dataset creation. Pass an int
