@@ -511,7 +511,7 @@ function of the norm of its coefficients.
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
    LassoLars(alpha=0.1)
    >>> reg.coef_
-   array([0.717..., 0.        ])
+   array([0.0.717157..., 0.        ])
 
 .. topic:: Examples:
 

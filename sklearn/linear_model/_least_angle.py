@@ -19,7 +19,7 @@ from joblib import Parallel, delayed
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y
+from ..utils import arrayfuncs, as_float_array, check_X_y, check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 
@@ -814,6 +814,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         the model's assumption of one-at-a-time computations
         (Efron et al. 2004).
 
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
     Attributes
     ----------
     alphas_ : array-like of shape (n_alphas + 1,) | list of n_targets such \
@@ -861,7 +866,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 jitter=None):
+                 jitter=None, random_state=None):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -871,6 +876,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self.copy_X = copy_X
         self.fit_path = fit_path
         self.jitter = jitter
+        self.random_state = random_state
 
     @staticmethod
     def _get_gram(precompute, X, y):
@@ -971,7 +977,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             max_iter = self.max_iter
 
         if self.jitter:
-            noise = np.random.RandomState(0).uniform(high=self.jitter,
+            generator = check_random_state(self.random_state)
+
+            noise = generator.uniform(high=self.jitter,
                                                      size=len(y))
             if y.ndim == 2:
                 noise = noise.reshape(-1, 1)
@@ -1740,7 +1748,8 @@ class LassoLarsIC(LassoLars):
     """
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, positive=False):
+                 eps=np.finfo(np.float).eps, copy_X=True, positive=False,
+                 random_state=None):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
         self.positive = positive
@@ -1751,6 +1760,7 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+        self.random_state = random_state
 
     def _more_tags(self):
         return {'multioutput': False}
