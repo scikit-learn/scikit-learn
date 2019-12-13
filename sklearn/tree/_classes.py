@@ -905,7 +905,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
-        print(self.n_outputs_)
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
@@ -952,31 +951,20 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+        normalizer[0] : number of samples in the leaf, returned as a number
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
-        print(self.n_outputs_)
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
-            print("output1",proba, normalizer)
-            return proba, normalizer
-
+            return proba, normalizer[0]
         else:
-            all_proba = []
-            all_normalizer = []
-            for k in range(self.n_outputs_):
-                proba_k = proba[:, k, :self.n_classes_[k]]
-                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                proba_k /= normalizer
-                all_proba.append(proba_k)
-                all_normalizer.append(normalizer)
-            print("output2", all_proba, all_normalizer)
-            return all_proba, all_normalizer
+            raise ValueError("Not supported for multi-output classification.")
+        
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.

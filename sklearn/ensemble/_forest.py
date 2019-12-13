@@ -454,6 +454,23 @@ def _accumulate_prediction(predict, X, out, lock):
             for i in range(len(out)):
                 out[i] += prediction[i]
 
+def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight, lock):
+    """
+    This is a utility function for joblib's Parallel.
+
+    It can't go locally in ForestClassifier or ForestRegressor, because joblib
+    complains that it cannot pickle it when placed there.
+    """
+    proba, normalizer = predict(X, check_input=False)
+    with lock:
+        if len(out) == 1:
+            out[0] += proba
+            out_sample_weight[0] += normalizer
+        else:
+            for i in range(len(out)):
+                out[i] += proba[i]
+                out_sample_weight[i] += normalizer[i]
+
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     """
@@ -668,6 +685,56 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                                             lock)
             for e in self.estimators_)
 
+        for proba in all_proba:
+            proba /= len(self.estimators_)
+
+        if len(all_proba) == 1:
+            return all_proba[0]
+        else:
+            return all_proba
+
+    def predict_proba_with_sample_weight(self, X):
+        """
+        Predict class probabilities for X.
+
+        The predicted class probabilities of an input sample are computed as
+        the mean predicted class probabilities of the trees in the forest.
+        The class probability of a single tree is the fraction of samples of
+        the same class in a leaf.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        p : array of shape (n_samples, n_classes), or a list of n_outputs
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        check_is_fitted(self)
+        # Check data
+        X = self._validate_X_predict(X)
+
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
+
+        # avoid storing the output of every estimator by summing them here
+        all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
+                     for j in np.atleast_1d(self.n_classes_)]
+        all_sample_weights = [np.zeros(X.shape[0], dtype=np.float64)
+                     for j in np.atleast_1d(self.n_classes_)]
+        lock = threading.Lock()
+        Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                 **_joblib_parallel_args(require="sharedmem"))(
+            delayed(_accumulate_prediction_with_sample_weight)(e.predict_proba_with_sample_weight,
+                                            X, all_proba, all_sample_weights, lock)
+            for e in self.estimators_)
+        print(all_proba, all_sample_weights)
         for proba in all_proba:
             proba /= len(self.estimators_)
 
