@@ -962,7 +962,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
-            print(proba, normalizer)
+            print("output1",proba, normalizer)
             return proba, normalizer
 
         else:
@@ -975,6 +975,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                 proba_k /= normalizer
                 all_proba.append(proba_k)
                 all_normalizer.append(normalizer)
+            print("output2", all_proba, all_normalizer)
             return all_proba, all_normalizer
 
     def predict_log_proba(self, X):
