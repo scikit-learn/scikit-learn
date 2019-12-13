@@ -979,8 +979,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.jitter:
             generator = check_random_state(self.random_state)
 
-            noise = generator.uniform(high=self.jitter,
-                                                     size=len(y))
+            noise = generator.uniform(high=self.jitter, size=len(y))
             if y.ndim == 2:
                 noise = noise.reshape(-1, 1)
             y = y + noise
