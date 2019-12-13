@@ -131,10 +131,13 @@ def plot_confusion_matrix(estimator=None, X=None, y_true=None, labels=None,
     Parameters
     ----------
     estimator : estimator instance, default=None
-        Trained classifier. Either `estimator` and `X` must be specified, or `y_pred`.
+        Trained classifier. Either `estimator` and `X` must be specified, or
+        `y_pred`.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
-        Input values. Either `estimator` and `X` must be specified, or `y_pred`.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features),
+        default=None
+        Input values. Either `estimator` and `X` must be specified, or
+        `y_pred`.
 
     y_true : array-like of shape (n_samples,), default=None
         Target values, must be specified.
@@ -177,7 +180,8 @@ def plot_confusion_matrix(estimator=None, X=None, y_true=None, labels=None,
         created.
 
     y_pred : array-like of shape (n_samples,), default=None
-        Predicted labels. Either `estimator` and `X` must be specified, or `y_pred`.
+        Predicted labels. Either `estimator` and `X` must be specified, or
+        `y_pred`.
 
     Returns
     -------
