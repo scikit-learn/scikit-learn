@@ -462,6 +462,7 @@ def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight
     complains that it cannot pickle it when placed there.
     """
     proba, normalizer = predict(X, check_input=False)
+    print(normalizer)
     with lock:
         if len(out) == 1:
             out[0] += proba
