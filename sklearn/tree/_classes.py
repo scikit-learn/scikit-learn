@@ -857,7 +857,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Don't use this parameter unless you know what you do.
 
         X_idx_sorted : array-like of shape (n_samples, n_features), \
-            default=None
+                default=None
             The indexes of the sorted training input samples. If many tree
             are grown on the same dataset, this allows the ordering to be
             cached between trees. If None, the data will be sorted here.
