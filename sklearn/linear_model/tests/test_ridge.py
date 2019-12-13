@@ -34,6 +34,7 @@ from sklearn.linear_model._ridge import _solve_cholesky_kernel
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
@@ -661,6 +662,33 @@ def _test_ridge_cv(filter_):
     assert type(ridge_cv.intercept_) == np.float64
 
 
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(store_cv_values=False), make_regression),
+     (RidgeClassifierCV(store_cv_values=False), make_classification)]
+)
+def test_ridge_gcv_cv_values_not_stored(ridge, make_dataset):
+    # Check that `cv_values_` is not stored when store_cv_values is False
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.fit(X, y)
+    assert not hasattr(ridge, "cv_values_")
+
+
+@pytest.mark.parametrize(
+    "ridge, make_dataset",
+    [(RidgeCV(), make_regression),
+     (RidgeClassifierCV(), make_classification)]
+)
+@pytest.mark.parametrize("cv", [None, 3])
+def test_ridge_best_score(ridge, make_dataset, cv):
+    # check that the best_score_ is store
+    X, y = make_dataset(n_samples=6, random_state=42)
+    ridge.set_params(store_cv_values=False, cv=cv)
+    ridge.fit(X, y)
+    assert hasattr(ridge, "best_score_")
+    assert isinstance(ridge.best_score_, float)
+
+
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
@@ -720,7 +748,6 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
@@ -818,7 +845,8 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
-def test_ridgecv_store_cv_values():
+@pytest.mark.parametrize("scoring", [None, 'neg_mean_squared_error'])
+def test_ridgecv_store_cv_values(scoring):
     rng = np.random.RandomState(42)
 
     n_samples = 8
@@ -827,7 +855,7 @@ def test_ridgecv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True)
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True, scoring=scoring)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
@@ -840,7 +868,7 @@ def test_ridgecv_store_cv_values():
     r.fit(x, y)
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
-    r = RidgeCV(cv=3, store_cv_values=True)
+    r = RidgeCV(cv=3, store_cv_values=True, scoring=scoring)
     assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
                         r.fit, x, y)
 

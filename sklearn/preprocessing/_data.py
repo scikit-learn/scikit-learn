@@ -197,7 +197,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
 
 class MinMaxScaler(TransformerMixin, BaseEstimator):
-    """Transforms features by scaling each feature to a given range.
+    """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, e.g. between
@@ -225,36 +225,36 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    copy : boolean, optional, default True
+    copy : bool, default=True
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
     Attributes
     ----------
-    min_ : ndarray, shape (n_features,)
+    min_ : ndarray of shape (n_features,)
         Per feature adjustment for minimum. Equivalent to
         ``min - X.min(axis=0) * self.scale_``
 
-    scale_ : ndarray, shape (n_features,)
+    scale_ : ndarray of shape (n_features,)
         Per feature relative scaling of the data. Equivalent to
         ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
         .. versionadded:: 0.17
            *scale_* attribute.
 
-    data_min_ : ndarray, shape (n_features,)
+    data_min_ : ndarray of shape (n_features,)
         Per feature minimum seen in the data
 
         .. versionadded:: 0.17
            *data_min_*
 
-    data_max_ : ndarray, shape (n_features,)
+    data_max_ : ndarray of shape (n_features,)
         Per feature maximum seen in the data
 
         .. versionadded:: 0.17
            *data_max_*
 
-    data_range_ : ndarray, shape (n_features,)
+    data_range_ : ndarray of shape (n_features,)
         Per feature range ``(data_max_ - data_min_)`` seen in the data
 
         .. versionadded:: 0.17
@@ -321,9 +321,17 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
+
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Fitted scaler.
         """
 
         # Reset internal state before fitting
@@ -332,18 +340,24 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None):
         """Online computation of min and max on X for later scaling.
+
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
@@ -351,8 +365,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
                              " than maximum. Got %s." % str(feature_range))
 
         if sparse.issparse(X):
-            raise TypeError("MinMaxScaler does no support sparse input. "
-                            "You may consider to use MaxAbsScaler instead.")
+            raise TypeError("MinMaxScaler does not support sparse input. "
+                            "Consider using MaxAbsScaler instead.")
 
         X = check_array(X,
                         estimator=self, dtype=FLOAT_DTYPES,
@@ -380,12 +394,17 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X):
-        """Scaling features of X according to feature_range.
+        """Scale features of X according to feature_range.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Input data that will be transformed.
+
+        Returns
+        -------
+        Xt : array-like of shape (n_samples, n_features)
+            Transformed data.
         """
         check_is_fitted(self)
 
@@ -401,8 +420,13 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like of shape (n_samples, n_features)
             Input data that will be transformed. It cannot be sparse.
+
+        Returns
+        -------
+        Xt : array-like of shape (n_samples, n_features)
+            Transformed data.
         """
         check_is_fitted(self)
 
@@ -418,7 +442,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
-    """Transforms features by scaling each feature to a given range.
+    """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
     that it is in the given range on the training set, i.e. between
@@ -447,17 +471,17 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
-    X : array-like, shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data.
 
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
-    axis : int (0 by default)
-        axis used to scale along. If 0, independently scale each feature,
+    axis : int, default=0
+        Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
-    copy : boolean, optional, default is True
+    copy : bool, default=True
         Set to False to perform inplace scaling and avoid a copy (if the input
         is already a numpy array).
 
@@ -645,7 +669,9 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """Online computation of mean and std on X for later scaling.
+        """
+        Online computation of mean and std on X for later scaling.
+
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
@@ -661,8 +687,13 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
@@ -913,7 +944,9 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
         return self.partial_fit(X, y)
 
     def partial_fit(self, X, y=None):
-        """Online computation of max absolute value of X for later scaling.
+        """
+        Online computation of max absolute value of X for later scaling.
+
         All of X is processed as a single batch. This is intended for cases
         when :meth:`fit` is not feasible due to very large number of
         `n_samples` or because X is read from a continuous stream.
@@ -924,8 +957,13 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
 
-        y
-            Ignored
+        y : None
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Transformer instance.
         """
         X = check_array(X, accept_sparse=('csr', 'csc'),
                         estimator=self, dtype=FLOAT_DTYPES,
@@ -2111,6 +2149,8 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
+    .. versionadded:: 0.19
+
     Parameters
     ----------
     n_quantiles : int, optional (default=1000 or n_samples)
@@ -2503,7 +2543,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy="warn"):
+                       copy=True):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2561,18 +2601,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default="warn")
+    copy : boolean, optional, (default=True)
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
 
-        .. deprecated:: 0.21
-            The default value of parameter `copy` will be changed from False
-            to True in 0.23. The current default of False is being changed to
-            make it more consistent with the default `copy` values of other
-            functions in :mod:`sklearn.preprocessing`. Furthermore, the
-            current default of False may have unexpected side effects by
-            modifying the value of `X` inplace
+        ..versionchnanged:: 0.22
+            The default value of `copy` changed from False to True in 0.22.
 
     Returns
     -------
@@ -2609,17 +2644,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    if copy == "warn":
-        warnings.warn("The default value of `copy` will change from False to "
-                      "True in 0.23 in order to make it more consistent with "
-                      "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing` and prevent "
-                      "unexpected side effects by modifying the value of `X` "
-                      "inplace. To avoid inplace modifications of `X`, it is "
-                      "recommended to explicitly set `copy=True`",
-                      FutureWarning)
-        copy = False
-
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
