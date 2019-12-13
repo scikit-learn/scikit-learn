@@ -155,6 +155,34 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
         assert disp.text_ is None
 
 
+def test_plot_confusion_matrix_ypred(pyplot, data, y_pred,
+                                     fitted_clf):
+    X, y = data
+    cmap = 'plasma'
+    ax = pyplot.gca()
+    cm_pred = plot_confusion_matrix(y_true=y, y_pred=y_pred,
+                                 cmap=cmap, ax=ax).confusion_matrix
+
+    ax = pyplot.gca()
+    cm_est = plot_confusion_matrix(fitted_clf, X, y,
+                                 cmap=cmap, ax=ax).confusion_matrix
+
+    assert_allclose(cm_est, cm_pred)
+
+    err_msg = "Either 'estimator' and 'X' must be passed to " \
+              "plot_confusion_matrix or 'y_pred'"
+
+    with pytest.raises(ValueError) as e:
+        plot_confusion_matrix(fitted_clf, X, y,
+                              cmap=cmap, ax=ax, y_pred=y_pred)
+    assert str(e.value) == err_msg
+
+    with pytest.raises(ValueError) as e:
+        plot_confusion_matrix(y, cmap=cmap, ax=ax)
+    assert str(e.value) == err_msg
+
+
+
 def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     X, y = data
 
