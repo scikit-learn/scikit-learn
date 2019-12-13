@@ -78,8 +78,6 @@ def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
-        if name.startswith("_"):
-            continue
         try:
             estimator = _construct_instance(Estimator)
         except SkipTest:
