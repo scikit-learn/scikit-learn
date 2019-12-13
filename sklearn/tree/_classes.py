@@ -951,7 +951,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
-        normalizer[0] : number of samples in the leaf, returned as a number
+        normalizer : number of samples in the leaf
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
@@ -961,7 +961,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
-            return proba, normalizer[0]
+            return proba, normalizer
         else:
             raise ValueError("Not supported for multi-output classification.")
         
