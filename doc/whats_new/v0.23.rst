@@ -1,0 +1,106 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_0_23:
+
+Version 0.23.0
+==============
+
+**In Development**
+
+
+.. include:: changelog_legend.inc
+
+Put the changes in their relevant module.
+
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- models come here
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a faster and more
+  more memory efficient implementation of single linkage clustering.
+  :pr:`11514` by :user:`Leland McInnes <lmcinnes>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| Functions :func:`datasets.make_circles` and
+  :func:`datasets.make_moons` now accept two-element tuple.
+  :pr:`15707` by :user:`Maciej J Mikulski <mjmikulski>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Efficiency| :class:`feature_extraction.text.CountVectorizer` now sorts
+  features after pruning them by document frequency. This improves performances
+  for datasets with large vocabularies combined with ``min_df`` or ``max_df``.
+  :pr:`15834` by :user:`Santiago M. Mola <smola>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug where if a `sample_weight` parameter was passed to the fit
+  method of :class:`linear_model.RANSACRegressor`, it would not be passed to
+  the wrapped `base_estimator` during the fitting of the final model.
+  :pr:`15573` by :user:`Jeremy Alexandre <J-A16>`.
+
+- |Efficiency| :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV` now does not allocate a
+  potentially large array to store dual coefficients for all hyperparameters
+  during its `fit`, nor an array to store all error or LOO predictions unless
+  `store_cv_values` is `True`.
+  :pr:`15652` by :user:`Jérôme Dockès <jeromedockes>`.
+
+- |Fix| add `best_score_` attribute to :class:`linear_model.RidgeCV` and
+  :class:`linear_model.RidgeClassifierCV`.
+  :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :func:`_fit_and_score` yields stack trace information in fit 
+  failed warning messages in addition to previously emitted type and details.
+  :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
+  transforming. :pr:`15762` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :func:`tree.plot_tree` `rotate` parameter was unused and has been
+  deprecated.
+  :pr:`15806` by :user:`Chiara Marmo <cmarmo>`.
