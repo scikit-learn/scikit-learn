@@ -283,6 +283,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
+    if normalize not in {'true', 'pred', 'all', None}:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
+
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
