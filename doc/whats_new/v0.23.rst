@@ -91,6 +91,10 @@ Changelog
 - |Efficiency| :class:`preprocessing.OneHotEncoder` is now faster at
   transforming. :pr:`15762` by `Thomas Fan`_.
 
+- |API| `categories='auto'` is no more supported for string values in
+  :class:`preprocessing.OrdinalEncoder`. `categories='sort'` or explicit
+  category order will be required. 
+
 :mod:`sklearn.tree`
 ...................
 
