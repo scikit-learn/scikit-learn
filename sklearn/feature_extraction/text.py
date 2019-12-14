@@ -1306,7 +1306,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)]
 
     def get_feature_names(self):
-<<<<<<< HEAD
         """Array mapping from feature integer indices to feature name.
 
         Returns
@@ -1314,11 +1313,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
-=======
-        """Array mapping from feature integer indices to feature name"""
         if not hasattr(self, 'vocabulary_'):
             self._validate_vocabulary()
->>>>>>> parent of 92af3dabb... MAINT simplify check_is_fitted to use any fitted attributes (#14545)
 
         self._check_vocabulary()
 
