@@ -348,7 +348,7 @@ boolean mask array or callable
         feature_names : list of strings
             Names of the features produced by transform.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'transformers_')
         feature_names = []
         for name, trans, _, _ in self._iter(fitted=True):
             if trans == 'drop':
@@ -556,7 +556,7 @@ boolean mask array or callable
             sparse matrices.
 
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'transformers_')
         X = _check_X(X)
         if hasattr(X, "columns"):
             X_feature_names = np.asarray(X.columns)

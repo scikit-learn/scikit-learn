@@ -113,17 +113,17 @@ class _ConstantPredictor(BaseEstimator):
         return self
 
     def predict(self, X):
-        check_is_fitted(self)
+        check_is_fitted(self, 'y_')
 
         return np.repeat(self.y_, X.shape[0])
 
     def decision_function(self, X):
-        check_is_fitted(self)
+        check_is_fitted(self, 'y_')
 
         return np.repeat(self.y_, X.shape[0])
 
     def predict_proba(self, X):
-        check_is_fitted(self)
+        check_is_fitted(self, 'y_')
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
                          X.shape[0], axis=0)
@@ -309,7 +309,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
 
         n_samples = _num_samples(X)
         if self.label_binarizer_.y_type_ == "multiclass":
@@ -361,7 +361,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
         # Y[i, j] gives the probability that sample i has the label j.
         # In the multi-label case, these are not disjoint.
         Y = np.array([e.predict_proba(X)[:, 1] for e in self.estimators_]).T
@@ -390,7 +390,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         -------
         T : array-like of shape (n_samples, n_classes)
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
         if len(self.estimators_) == 1:
             return self.estimators_[0].decision_function(X)
         return np.array([est.decision_function(X).ravel()
@@ -407,7 +407,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     @property
     def coef_(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimators_[0], "coef_"):
             raise AttributeError(
                 "Base estimator doesn't have a coef_ attribute.")
@@ -418,7 +418,7 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     @property
     def intercept_(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimators_[0], "intercept_"):
             raise AttributeError(
                 "Base estimator doesn't have an intercept_ attribute.")
@@ -630,7 +630,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         Y : array-like of shape (n_samples, n_classes)
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
 
         indices = self.pairwise_indices_
         if indices is None:
@@ -809,7 +809,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         y : numpy array of shape [n_samples]
             Predicted multi-class targets.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'estimators_')
         X = check_array(X)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)

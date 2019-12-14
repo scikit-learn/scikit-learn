@@ -122,7 +122,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         IncrementalPCA(batch_size=3, n_components=2)
         >>> ipca.transform(X) # doctest: +SKIP
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ['mean_', 'components_'], all_or_any=all)
 
         X = check_array(X)
         if self.mean_ is not None:

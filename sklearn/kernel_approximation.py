@@ -115,7 +115,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'random_weights_')
 
         X = check_array(X, accept_sparse='csr')
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -222,7 +222,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'random_weights_')
 
         X = as_float_array(X, copy=True)
         X = check_array(X, copy=False)
@@ -356,7 +356,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         """
         msg = ("%(name)s is not fitted. Call fit to set the parameters before"
                " calling transform")
-        check_is_fitted(self, msg=msg)
+        check_is_fitted(self, "sample_interval_", msg=msg)
 
         X = check_array(X, accept_sparse='csr')
         sparse = sp.issparse(X)
@@ -589,7 +589,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()

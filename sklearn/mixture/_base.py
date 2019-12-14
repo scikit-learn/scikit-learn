@@ -15,7 +15,6 @@ from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.validation import check_is_fitted
 from ..utils.fixes import logsumexp
 
 
@@ -311,6 +310,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def _check_is_fitted(self):
+        pass
+
+    @abstractmethod
     def _get_parameters(self):
         pass
 
@@ -332,7 +335,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         log_prob : array, shape (n_samples,)
             Log probabilities of each data point in X.
         """
-        check_is_fitted(self)
+        self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
 
         return logsumexp(self._estimate_weighted_log_prob(X), axis=1)
@@ -367,7 +370,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         labels : array, shape (n_samples,)
             Component labels.
         """
-        check_is_fitted(self)
+        self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
@@ -386,7 +389,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Returns the probability each Gaussian (state) in
             the model given each sample.
         """
-        check_is_fitted(self)
+        self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
         _, log_resp = self._estimate_log_prob_resp(X)
         return np.exp(log_resp)
@@ -408,7 +411,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             Component labels
 
         """
-        check_is_fitted(self)
+        self._check_is_fitted()
 
         if n_samples < 1:
             raise ValueError(

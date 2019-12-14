@@ -401,7 +401,7 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'statistics_')
 
         X = self._validate_input(X)
         X_indicator = super()._transform_indicator(X)
@@ -673,7 +673,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "features_")
         X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:

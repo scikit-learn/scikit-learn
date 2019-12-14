@@ -221,7 +221,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         X = check_array(X)
         X = X - self.mean_

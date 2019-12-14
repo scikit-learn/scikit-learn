@@ -429,7 +429,7 @@ class SelectPercentile(_BaseFilter):
                              % self.percentile)
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         # Cater for NaNs
         if self.percentile == 100:
@@ -514,7 +514,7 @@ class SelectKBest(_BaseFilter):
                              % (X.shape[1], self.k))
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         if self.k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
@@ -587,7 +587,7 @@ class SelectFpr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         return self.pvalues_ < self.alpha
 
@@ -653,7 +653,7 @@ class SelectFdr(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         n_features = len(self.pvalues_)
         sv = np.sort(self.pvalues_)
@@ -716,7 +716,7 @@ class SelectFwe(_BaseFilter):
         self.alpha = alpha
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         return (self.pvalues_ < self.alpha / len(self.pvalues_))
 
@@ -811,7 +811,7 @@ class GenericUnivariateSelect(_BaseFilter):
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'scores_')
 
         selector = self._make_selector()
         selector.pvalues_ = self.pvalues_

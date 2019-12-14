@@ -325,7 +325,7 @@ the correct interface more easily.
       ...     def predict(self, X):
       ...
       ...         # Check is fit had been called
-      ...         check_is_fitted(self)
+      ...         check_is_fitted(self, ['X_', 'y_'])
       ...
       ...         # Input validation
       ...         X = check_array(X)

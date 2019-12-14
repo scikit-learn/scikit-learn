@@ -258,7 +258,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             If :meth:`fit` has not been called before.
         """
 
-        check_is_fitted(self)
+        check_is_fitted(self, ['components_'])
         X = check_array(X)
 
         return np.dot(X, self.components_.T)

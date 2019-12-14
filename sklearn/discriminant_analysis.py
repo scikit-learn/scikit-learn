@@ -494,7 +494,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if self.solver == 'lsqr':
             raise NotImplementedError("transform not implemented for 'lsqr' "
                                       "solver (use 'svd' or 'eigen').")
-        check_is_fitted(self)
+        check_is_fitted(self, ['xbar_', 'scalings_'], all_or_any=any)
 
         X = check_array(X)
         if self.solver == 'svd':
@@ -517,7 +517,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'classes_')
 
         decision = self.decision_function(X)
         if self.classes_.size == 2:
@@ -693,7 +693,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         return self
 
     def _decision_function(self, X):
-        check_is_fitted(self)
+        check_is_fitted(self, 'classes_')
 
         X = check_array(X)
         norm2 = []

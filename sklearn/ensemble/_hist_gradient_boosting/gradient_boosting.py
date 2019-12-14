@@ -563,7 +563,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
                         force_all_finite=False)
-        check_is_fitted(self)
+        check_is_fitted(self, '_predictors')
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
@@ -633,7 +633,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
     @property
     def n_iter_(self):
-        check_is_fitted(self)
+        check_is_fitted(self, '_predictors')
         return len(self._predictors)
 
 

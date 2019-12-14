@@ -32,7 +32,7 @@ from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import ChangedBehaviorWarning, NotFittedError
+from ..exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['HashingVectorizer',
@@ -483,11 +483,9 @@ class _VectorizerMixin:
             self.fixed_vocabulary_ = False
 
     def _check_vocabulary(self):
-        """Check if vocabulary is empty or missing (not fitted)"""
-        if not hasattr(self, 'vocabulary_'):
-            self._validate_vocabulary()
-            if not self.fixed_vocabulary_:
-                raise NotFittedError("Vocabulary not fitted or provided")
+        """Check if vocabulary is empty or missing (not fit-ed)"""
+        msg = "%(name)s - Vocabulary wasn't fitted."
+        check_is_fitted(self, 'vocabulary_', msg=msg),
 
         if len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary is empty")
@@ -1264,6 +1262,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             raise ValueError(
                 "Iterable over raw text documents expected, "
                 "string object received.")
+
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1304,6 +1306,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)]
 
     def get_feature_names(self):
+<<<<<<< HEAD
         """Array mapping from feature integer indices to feature name.
 
         Returns
@@ -1311,6 +1314,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         feature_names : list
             A list of feature names.
         """
+=======
+        """Array mapping from feature integer indices to feature name"""
+        if not hasattr(self, 'vocabulary_'):
+            self._validate_vocabulary()
+>>>>>>> parent of 92af3dabb... MAINT simplify check_is_fitted to use any fitted attributes (#14545)
 
         self._check_vocabulary()
 
@@ -1498,7 +1506,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             X.data += 1
 
         if self.use_idf:
-            check_is_fitted(self, msg='idf vector is not fitted')
+            check_is_fitted(self, '_idf_diag', 'idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
@@ -1883,7 +1891,7 @@ class TfidfVectorizer(CountVectorizer):
         X : sparse matrix, [n_samples, n_features]
             Tf-idf-weighted document-term matrix.
         """
-        check_is_fitted(self, msg='The tfidf vector is not fitted')
+        check_is_fitted(self, '_tfidf', 'The tfidf vector is not fitted')
 
         # FIXME Remove copy parameter support in 0.24
         if copy != "deprecated":

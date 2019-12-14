@@ -427,7 +427,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -489,7 +489,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
         X -= self.x_mean_
@@ -928,7 +928,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
         x_scores = np.dot(Xr, self.x_weights_)

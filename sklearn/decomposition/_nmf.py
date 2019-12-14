@@ -1318,7 +1318,7 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'n_components_')
 
         W, _, n_iter_ = non_negative_factorization(
             X=X, W=None, H=self.components_, n_components=self.n_components_,
@@ -1345,5 +1345,5 @@ class NMF(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'n_components_')
         return np.dot(W, self.components_)

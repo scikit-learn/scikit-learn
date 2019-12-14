@@ -717,7 +717,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         Because of scaling performed by this method, it is discouraged to use
         it together with methods that are not scale-invariant (like SVMs)
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "nbrs_")
 
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,

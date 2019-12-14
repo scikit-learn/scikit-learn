@@ -147,7 +147,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
             compatibility with other outlier detection algorithms.
 
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'offset_')
         negative_mahal_dist = self.score_samples(X)
         return negative_mahal_dist - self.offset_
 
@@ -163,7 +163,7 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         negative_mahal_distances : array-like, shape (n_samples, )
             Opposite of the Mahalanobis distances.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'offset_')
         return -self.mahalanobis(X)
 
     def predict(self, X):

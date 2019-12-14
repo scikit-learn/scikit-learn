@@ -967,7 +967,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         y : array-like, shape (n_samples,) or (n_samples, n_classes)
             The predicted classes.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "coefs_")
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1068,7 +1068,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted probability of the sample for each class in the
             model, where classes are ordered as they are in `self.classes_`.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "coefs_")
         y_pred = self._predict(X)
 
         if self.n_outputs_ == 1:
@@ -1329,7 +1329,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         y : array-like, shape (n_samples, n_outputs)
             The predicted values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "coefs_")
         y_pred = self._predict(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()

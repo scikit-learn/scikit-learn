@@ -608,7 +608,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         doc_topic_distr : shape=(n_samples, n_components)
             Document topic distribution for X.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
@@ -762,7 +762,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Perplexity score.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         X = self._check_non_neg_array(X,
                                       "LatentDirichletAllocation.perplexity")

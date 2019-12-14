@@ -191,7 +191,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         be the distance matrix between the data to be predicted and
         ``self.centroids_``.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'centroids_')
 
         X = check_array(X, accept_sparse='csr')
         return self.classes_[pairwise_distances(

@@ -36,7 +36,7 @@ class AgglomerationTransform(TransformerMixin):
         Y : array, shape = [n_samples, n_clusters] or [n_clusters]
             The pooled values for each feature cluster.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "labels_")
 
         X = check_array(X)
         if len(self.labels_) != X.shape[1]:
@@ -71,7 +71,7 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "labels_")
 
         unil, inverse = np.unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]

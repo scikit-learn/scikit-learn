@@ -409,7 +409,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         labels : ndarray, shape (n_samples,)
             Cluster labels.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "cluster_centers_indices_")
         X = check_array(X)
         if not hasattr(self, "cluster_centers_"):
             raise ValueError("Predict method is not supported when "

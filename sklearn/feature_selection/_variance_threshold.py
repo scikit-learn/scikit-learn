@@ -94,7 +94,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         return self
 
     def _get_support_mask(self):
-        check_is_fitted(self)
+        check_is_fitted(self, 'variances_')
 
         return self.variances_ > self.threshold
 

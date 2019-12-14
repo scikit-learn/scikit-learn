@@ -1052,7 +1052,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         X_new : array, shape [n_samples, k]
             X transformed in the new space.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         return self._transform(X)
@@ -1082,7 +1082,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -1109,7 +1109,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         score : float
             Opposite of the value of X on the K-means objective.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
@@ -1760,7 +1760,7 @@ class MiniBatchKMeans(KMeans):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'cluster_centers_')
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]

@@ -219,7 +219,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             Predicted values.
 
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "regressor_")
         pred = self.regressor_.predict(X)
         if pred.ndim == 1:
             pred_trans = self.transformer_.inverse_transform(

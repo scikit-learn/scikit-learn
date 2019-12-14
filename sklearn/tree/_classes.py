@@ -123,7 +123,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.tree_.max_depth : int
             The maximum depth of the tree.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
         return self.tree_.max_depth
 
     def get_n_leaves(self):
@@ -134,7 +134,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.tree_.n_leaves : int
             Number of leaves.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
         return self.tree_.n_leaves
 
     def fit(self, X, y, sample_weight=None, check_input=True,
@@ -415,7 +415,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes, or the predict values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
@@ -468,7 +468,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
@@ -572,7 +572,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         feature_importances_ : ndarray of shape (n_features,)
             Normalized total reduction of critera by feature (Gini importance).
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
 
         return self.tree_.compute_feature_importances()
 
@@ -900,7 +900,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 

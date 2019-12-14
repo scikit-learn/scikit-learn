@@ -647,6 +647,12 @@ class BayesianGaussianMixture(BaseMixture):
         # Contrary to the original bishop book, we normalize the covariances
         self.covariances_ /= self.degrees_of_freedom_
 
+    def _check_is_fitted(self):
+        check_is_fitted(self, ['weight_concentration_', 'mean_precision_',
+                               'means_', 'degrees_of_freedom_',
+                               'covariances_', 'precisions_',
+                               'precisions_cholesky_'])
+
     def _m_step(self, X, log_resp):
         """M step.
 

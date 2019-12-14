@@ -441,7 +441,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
-        check_is_fitted(self)
+        check_is_fitted(self, 'support_')
 
         X = check_array(X, accept_sparse='csr', dtype=np.float64, order="C",
                         accept_large_sparse=False)
@@ -581,7 +581,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "classes_")
         if self.break_ties and self.decision_function_shape == 'ovo':
             raise ValueError("break_ties must be False when "
                              "decision_function_shape is 'ovo'")

@@ -279,10 +279,6 @@ def test_countvectorizer_custom_vocabulary():
             assert set(vect.vocabulary_) == terms
         X = vect.transform(JUNK_FOOD_DOCS)
         assert X.shape[1] == len(terms)
-        v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v)
-        inv = vect.inverse_transform(X)
-        assert len(inv) == X.shape[0]
 
 
 def test_countvectorizer_custom_vocabulary_pipeline():

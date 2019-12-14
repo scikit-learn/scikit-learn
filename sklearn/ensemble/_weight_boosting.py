@@ -685,7 +685,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "n_classes_")
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -728,7 +728,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "n_classes_")
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -797,7 +797,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the :term:`classes_` attribute.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "n_classes_")
         X = self._validate_data(X)
 
         n_classes = self.n_classes_
@@ -1125,7 +1125,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         y : ndarray of shape (n_samples,)
             The predicted regression values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "estimator_weights_")
         X = self._validate_data(X)
 
         return self._get_median_predict(X, len(self.estimators_))
@@ -1150,7 +1150,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "estimator_weights_")
         X = self._validate_data(X)
 
         for i, _ in enumerate(self.estimators_, 1):

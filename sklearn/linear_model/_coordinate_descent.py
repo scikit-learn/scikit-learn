@@ -786,7 +786,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         T : array, shape (n_samples,)
             The predicted decision function
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'n_iter_')
         if sparse.isspmatrix(X):
             return safe_sparse_dot(X, self.coef_.T,
                                    dense_output=True) + self.intercept_

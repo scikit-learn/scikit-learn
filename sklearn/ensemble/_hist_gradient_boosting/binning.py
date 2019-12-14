@@ -188,7 +188,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             The binned data (fortran-aligned).
         """
         X = check_array(X, dtype=[X_DTYPE], force_all_finite=False)
-        check_is_fitted(self)
+        check_is_fitted(self, ['bin_thresholds_', 'actual_n_bins_'])
         if X.shape[1] != self.n_bins_non_missing_.shape[0]:
             raise ValueError(
                 'This estimator was fitted with {} features but {} got passed '

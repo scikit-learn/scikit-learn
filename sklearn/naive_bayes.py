@@ -70,7 +70,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         C : ndarray of shape (n_samples,)
             Predicted target values for X
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "classes_")
         X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
         return self.classes_[np.argmax(jll, axis=1)]
@@ -90,7 +90,7 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, "classes_")
         X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)

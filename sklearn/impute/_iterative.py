@@ -655,7 +655,7 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
              The imputed input data.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'initial_imputer_')
 
         X_indicator = super()._transform_indicator(X)
         X, Xt, mask_missing_values = self._initial_imputation(X)

@@ -263,7 +263,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         X = check_array(X)
         Ih = np.eye(len(self.components_))
@@ -287,7 +287,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
@@ -301,7 +301,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         precision : array, shape (n_features, n_features)
             Estimated precision of data.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         n_features = self.components_.shape[1]
 
@@ -335,7 +335,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         Xr = X - self.mean_
         precision = self.get_precision()

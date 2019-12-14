@@ -184,7 +184,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             Normalized probability distributions across
             class labels
         """
-        check_is_fitted(self)
+        check_is_fitted(self, 'X_')
 
         X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
                                              'bsr', 'lil', 'dia'])

@@ -417,7 +417,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        check_is_fitted(self)
+        check_is_fitted(self, 'components_')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(

@@ -325,7 +325,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
+                               "n_neighbors_", "_distances_fit_X_"])
 
         if X is not None:
             X = check_array(X, accept_sparse='csr')
@@ -465,7 +466,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
             The opposite of the Local Outlier Factor of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["offset_", "negative_outlier_factor_",
+                               "_distances_fit_X_"])
         X = check_array(X, accept_sparse='csr')
 
         distances_X, neighbors_indices_X = (

@@ -188,6 +188,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         C : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Returns predicted values.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["X_fit_", "dual_coef_"])
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

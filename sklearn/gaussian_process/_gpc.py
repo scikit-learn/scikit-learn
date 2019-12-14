@@ -262,7 +262,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
 
         # As discussed on Section 3.4.2 of GPML, for making hard binary
         # decisions, it is enough to compute the MAP of the posterior and
@@ -289,7 +289,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute ``classes_``.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["X_train_", "y_train_", "pi_", "W_sr_", "L_"])
 
         # Based on Algorithm 3.2 of GPML
         K_star = self.kernel_(self.X_train_, X)  # K_star =k(x_star)
@@ -683,7 +683,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         C : ndarray of shape (n_samples,)
             Predicted target values for X, values are from ``classes_``
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["classes_", "n_classes_"])
 
         if self.kernel is None or self.kernel.requires_vector_input:
             X = check_array(X, ensure_2d=True, dtype="numeric")
@@ -709,7 +709,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute :term:`classes_`.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["classes_", "n_classes_"])
         if self.n_classes_ > 2 and self.multi_class == "one_vs_one":
             raise ValueError("one_vs_one multi-class mode does not support "
                              "predicting probability estimates. Use "
@@ -768,7 +768,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             hyperparameters at position theta.
             Only returned when eval_gradient is True.
         """
-        check_is_fitted(self)
+        check_is_fitted(self, ["classes_", "n_classes_"])
 
         if theta is None:
             if eval_gradient:
