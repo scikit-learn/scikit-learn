@@ -184,10 +184,6 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
 
-    if normalize not in {'true', 'pred', 'all', None}:
-        raise ValueError("normalize must be one of {'true', 'pred', "
-                         "'all', None}")
-
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
                           labels=labels, normalize=normalize)
