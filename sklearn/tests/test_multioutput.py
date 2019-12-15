@@ -4,12 +4,12 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
@@ -25,6 +25,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import MultiOutputEstimator
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
@@ -49,8 +50,6 @@ def test_multi_target_regression():
     assert_almost_equal(references, y_pred)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_target_regression_partial_fit():
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
@@ -112,8 +111,6 @@ def test_multi_target_sample_weights_api():
     rgr.fit(X, y, w)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_target_sample_weight_partial_fit():
     # weighted regressor
     X = [[1, 2, 3], [4, 5, 6]]
@@ -174,6 +171,22 @@ def test_multi_output_classification_partial_fit_parallelism():
         assert est1 is not est2
 
 
+# check multioutput has predict_proba
+def test_hasattr_multi_output_predict_proba():
+    # default SGDClassifier has loss='hinge'
+    # which does not expose a predict_proba method
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    assert not hasattr(multi_target_linear, "predict_proba")
+
+    # case where predict_proba attribute exists
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    assert hasattr(multi_target_linear, "predict_proba")
+
+
 # check predict_proba passes
 def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
@@ -198,12 +211,10 @@ def test_multi_output_predict_proba():
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
     err_msg = "The base estimator should implement predict_proba method"
-    with pytest.raises(ValueError, match=err_msg):
+    with pytest.raises(AttributeError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
@@ -235,8 +246,6 @@ def test_multi_output_classification_partial_fit():
         assert_array_equal(sgd_linear_clf.predict(X), second_predictions[:, i])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
@@ -351,8 +360,6 @@ def test_multi_output_classification_sample_weights():
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit_sample_weights():
     # weighted classifier
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
@@ -377,7 +384,8 @@ def test_multi_output_exceptions():
     # and predict_proba are called
     moc = MultiOutputClassifier(LinearSVC(random_state=0))
     assert_raises(NotFittedError, moc.predict, y)
-    assert_raises(NotFittedError, moc.predict_proba, y)
+    with pytest.raises(NotFittedError):
+        moc.predict_proba
     assert_raises(NotFittedError, moc.score, X, y)
     # ValueError when number of outputs is different
     # for fit and score
@@ -544,3 +552,12 @@ def test_multi_output_classes_(estimator):
     for estimator_classes, expected_classes in zip(classes,
                                                    estimator.classes_):
         assert_array_equal(estimator_classes, expected_classes)
+
+
+# TODO: remove in 0.24
+def test_deprecation():
+    class A(MultiOutputEstimator, MultiOutputRegressor):
+        pass
+
+    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
+        A(SGDRegressor(random_state=0, max_iter=5))

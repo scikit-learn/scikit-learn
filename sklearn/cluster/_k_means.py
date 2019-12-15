@@ -244,7 +244,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : boolean, optional
+    copy_x : bool, optional
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -286,7 +286,6 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
-
     """
 
     est = KMeans(
@@ -648,18 +647,19 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
 
 class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
-    """K-Means clustering
+    """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
 
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}
+    init : {'k-means++', 'random'} or ndarray of shape \
+            (n_clusters, n_features), default='k-means++'
         Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -672,38 +672,38 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    n_init : int, default: 10
+    n_init : int, default=10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
 
-    max_iter : int, default: 300
+    max_iter : int, default=300
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    tol : float, default: 1e-4
-        Relative tolerance with regards to inertia to declare convergence
+    tol : float, default=1e-4
+        Relative tolerance with regards to inertia to declare convergence.
 
-    precompute_distances : {'auto', True, False}
+    precompute_distances : 'auto' or bool, default='auto'
         Precompute distances (faster but takes more memory).
 
         'auto' : do not precompute distances if n_samples * n_clusters > 12
         million. This corresponds to about 100MB overhead per job using
         double precision.
 
-        True : always precompute distances
+        True : always precompute distances.
 
-        False : never precompute distances
+        False : never precompute distances.
 
-    verbose : int, default 0
+    verbose : int, default=0
         Verbosity mode.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    copy_x : boolean, optional
+    copy_x : bool, default=True
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
         not modified, ensuring X is C-contiguous.  If False, the original data
@@ -712,7 +712,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         the data mean, in this case it will also not ensure that data is
         C-contiguous which may cause a significant slowdown.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
 
@@ -720,7 +720,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
+    algorithm : {"auto", "full", "elkan"}, default="auto"
         K-means algorithm to use. The classical EM-style algorithm is "full".
         The "elkan" variation is more efficient by using the triangle
         inequality, but currently doesn't support sparse data. "auto" chooses
@@ -728,12 +728,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers. If the algorithm stops before fully
         converging (see ``tol`` and ``max_iter``), these will not be
         consistent with ``labels_``.
 
-    labels_ : array, shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
     inertia_ : float
@@ -742,23 +742,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
-    Examples
-    --------
-
-    >>> from sklearn.cluster import KMeans
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [10, 2], [10, 4], [10, 0]])
-    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
-    >>> kmeans.labels_
-    array([1, 1, 1, 0, 0, 0], dtype=int32)
-    >>> kmeans.predict([[0, 0], [12, 3]])
-    array([1, 0], dtype=int32)
-    >>> kmeans.cluster_centers_
-    array([[10.,  2.],
-           [ 1.,  2.]])
-
-    See also
+    See Also
     --------
 
     MiniBatchKMeans
@@ -789,6 +773,21 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     iteration to make ``labels_`` consistent with ``predict`` on the training
     set.
 
+    Examples
+    --------
+
+    >>> from sklearn.cluster import KMeans
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [10, 2], [10, 4], [10, 0]])
+    >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
+    >>> kmeans.labels_
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> kmeans.predict([[0, 0], [12, 3]])
+    array([1, 0], dtype=int32)
+    >>> kmeans.cluster_centers_
+    array([[10.,  2.],
+           [ 1.,  2.]])
     """
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10,
@@ -830,12 +829,16 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             copy if the given data is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
+        Returns
+        -------
+        self
+            Fitted estimator.
         """
         random_state = check_random_state(self.random_state)
 
@@ -991,11 +994,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             New data to transform.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
@@ -1015,11 +1018,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             New data to transform.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
@@ -1072,7 +1075,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
@@ -1095,11 +1098,11 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             New data.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------
@@ -1325,19 +1328,21 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
 
 
 class MiniBatchKMeans(KMeans):
-    """Mini-Batch K-Means clustering
+    """
+    Mini-Batch K-Means clustering.
 
     Read more in the :ref:`User Guide <mini_batch_kmeans>`.
 
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, default=8
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
-        Method for initialization, defaults to 'k-means++':
+    init : {'k-means++', 'random'} or ndarray of shape \
+            (n_clusters, n_features), default='k-means++'
+        Method for initialization
 
         'k-means++' : selects initial cluster centers for k-mean
         clustering in a smart way to speed up convergence. See section
@@ -1349,26 +1354,26 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    max_iter : int, optional
+    max_iter : int, default=100
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
-    batch_size : int, optional, default: 100
+    batch_size : int, default=100
         Size of the mini batches.
 
-    verbose : boolean, optional
+    verbose : int, default=0
         Verbosity mode.
 
-    compute_labels : boolean, default=True
+    compute_labels : bool, default=True
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization and
         random reassignment. Use an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    tol : float, default: 0.0
+    tol : float, default=0.0
         Control early stopping based on the relative center changes as
         measured by a smoothed, variance-normalized of the mean center
         squared position changes. This early stopping heuristics is
@@ -1379,25 +1384,27 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on normalized center
         change, set tol to 0.0 (default).
 
-    max_no_improvement : int, default: 10
+    max_no_improvement : int, default=10
         Control early stopping based on the consecutive number of mini
         batches that does not yield an improvement on the smoothed inertia.
 
         To disable convergence detection based on inertia, set
         max_no_improvement to None.
 
-    init_size : int, optional, default: 3 * batch_size
+    init_size : int, default=None
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than n_clusters.
+
+        If `None`, `init_size= 3 * batch_size`.
 
     n_init : int, default=3
         Number of random initializations that are tried.
         In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
 
-    reassignment_ratio : float, default: 0.01
+    reassignment_ratio : float, default=0.01
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
@@ -1407,10 +1414,10 @@ class MiniBatchKMeans(KMeans):
     Attributes
     ----------
 
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers
 
-    labels_ :
+    labels_ : int
         Labels of each point (if compute_labels is set to True).
 
     inertia_ : float
@@ -1418,6 +1425,17 @@ class MiniBatchKMeans(KMeans):
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
         neighbor.
+
+    See Also
+    --------
+    KMeans
+        The classic implementation of the clustering method based on the
+        Lloyd's algorithm. It consumes the whole set of input data at each
+        iteration.
+
+    Notes
+    -----
+    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
     Examples
     --------
@@ -1448,19 +1466,6 @@ class MiniBatchKMeans(KMeans):
            [1.12195122, 1.3902439 ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([1, 0], dtype=int32)
-
-    See also
-    --------
-
-    KMeans
-        The classic implementation of the clustering method based on the
-        Lloyd's algorithm. It consumes the whole set of input data at each
-        iteration.
-
-    Notes
-    -----
-    See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
-
     """
 
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
@@ -1489,12 +1494,15 @@ class MiniBatchKMeans(KMeans):
             if the given data is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
+        Returns
+        -------
+        self
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
@@ -1671,12 +1679,15 @@ class MiniBatchKMeans(KMeans):
             X will be copied if it is not C-contiguous.
 
         y : Ignored
-            not used, present here for API consistency by convention.
+            Not used, present here for API consistency by convention.
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
+        Returns
+        -------
+        self
         """
 
         X = check_array(X, accept_sparse="csr", order="C",
@@ -1742,7 +1753,7 @@ class MiniBatchKMeans(KMeans):
 
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
+            are assigned equal weight (default: None).
 
         Returns
         -------

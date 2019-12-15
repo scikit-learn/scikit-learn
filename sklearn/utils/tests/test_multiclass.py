@@ -11,12 +11,11 @@ from scipy.sparse import coo_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
 
 from sklearn.utils.multiclass import unique_labels
@@ -37,6 +36,8 @@ EXAMPLES = {
         # valid when the data is formatted as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
+        [[0, 1], [1, 0]],
+        [[0, 1]],
         csr_matrix(np.array([[0, 1], [1, 0]])),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
         csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
@@ -46,6 +47,7 @@ EXAMPLES = {
         csr_matrix(np.array([[0, 0], [0, 0]])),
         csr_matrix(np.array([[0, 1]])),
         # Only valid when data is dense
+        [[-1, 1], [1, -1]],
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
         _NotAnArray(np.array([[-3, 3], [3, -3]])),
@@ -66,6 +68,8 @@ EXAMPLES = {
         np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
+        [[1, 0, 2, 2], [1, 4, 2, 4]],
+        [['a', 'b'], ['c', 'd']],
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.int8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),

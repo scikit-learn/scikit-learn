@@ -17,11 +17,12 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
-from ..utils import indices_to_mask, check_consistent_length
+from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import has_fit_parameter, check_is_fitted, \
+    _check_sample_weight
 
 
 __all__ = ["BaggingClassifier",
@@ -282,8 +283,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             multi_output=True
         )
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            check_consistent_length(y, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -415,7 +415,8 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def estimators_samples_(self):
-        """The subset of drawn samples for each base estimator.
+        """
+        The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of indices identifying
         the samples used for fitting each member of the ensemble, i.e.,
@@ -450,6 +451,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     Random Patches [4]_.
 
     Read more in the :ref:`User Guide <bagging>`.
+
+    .. versionadded:: 0.15
 
     Parameters
     ----------
@@ -546,14 +549,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     >>> from sklearn.svm import SVC
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.datasets import make_classification
-    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    >>> X, y = make_classification(n_samples=100, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = BaggingClassifier(n_estimators=100, random_state=0).fit(X, y)
-    >>> clf.predict([[0, 0, 0, 0]])
-    array([1])
     >>> clf = BaggingClassifier(base_estimator=SVC(),
-    ...                         n_estimators=100, random_state=0).fit(X, y)
+    ...                         n_estimators=10, random_state=0).fit(X, y)
     >>> clf.predict([[0, 0, 0, 0]])
     array([1])
 
@@ -854,6 +854,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Read more in the :ref:`User Guide <bagging>`.
 
+    .. versionadded:: 0.15
+
     Parameters
     ----------
     base_estimator : object or None, optional (default=None)
@@ -934,6 +936,19 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         was never left out during the bootstrap. In this case,
         `oob_prediction_` might contain NaN. This attribute exists only
         when ``oob_score`` is True.
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.ensemble import BaggingRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=100, n_features=4,
+    ...                        n_informative=2, n_targets=1,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = BaggingRegressor(base_estimator=SVR(),
+    ...                         n_estimators=10, random_state=0).fit(X, y)
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([-2.8720...])
 
     References
     ----------

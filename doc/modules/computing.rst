@@ -297,7 +297,7 @@ decision function that is applied at prediction time is the same (a dot product)
 , so latency should be equivalent.
 
 Here is an example using
-:class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
+:class:`sklearn.linear_model.SGDClassifier` with the
 ``elasticnet`` penalty. The regularization strength is globally controlled by
 the ``alpha`` parameter. With a sufficiently high ``alpha``,
 one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
@@ -319,7 +319,7 @@ Latency and throughput should (asymptotically) grow linearly with the number
 of support vectors in a SVC or SVR model. The kernel will also influence the
 latency as it is used to compute the projection of the input vector once per
 support vector. In the following graph the ``nu`` parameter of
-:class:`sklearn.svm.classes.NuSVR` was used to influence the number of
+:class:`sklearn.svm.NuSVR` was used to influence the number of
 support vectors.
 
 .. |nusvr_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_002.png
@@ -529,7 +529,7 @@ Joblib-based parallelism
 ........................
 
 When the underlying implementation uses joblib, the number of workers
-(threads or processes) that are spawned in parallel can be controled via the
+(threads or processes) that are spawned in parallel can be controlled via the
 ``n_jobs`` parameter.
 
 .. note::
@@ -666,7 +666,7 @@ Python runtime
 
 :working_memory:
 
-    the optimal size of temporary arrays used by some algoritms.
+    the optimal size of temporary arrays used by some algorithms.
 
 .. _environment_variable:
 

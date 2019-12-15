@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
-from .linear_model.base import LinearClassifierMixin
+from .linear_model._base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
@@ -423,7 +423,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        # FIXME: Future warning to be removed in 0.23
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
                          dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
@@ -455,21 +454,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             self._max_components = max_components
         else:
             if self.n_components > max_components:
-                warnings.warn(
+                raise ValueError(
                     "n_components cannot be larger than min(n_features, "
-                    "n_classes - 1). Using min(n_features, "
-                    "n_classes - 1) = min(%d, %d - 1) = %d components."
-                    % (X.shape[1], len(self.classes_), max_components),
-                    ChangedBehaviorWarning)
-                future_msg = ("In version 0.23, setting n_components > min("
-                              "n_features, n_classes - 1) will raise a "
-                              "ValueError. You should set n_components to None"
-                              " (default), or a value smaller or equal to "
-                              "min(n_features, n_classes - 1).")
-                warnings.warn(future_msg, FutureWarning)
-                self._max_components = max_components
-            else:
-                self._max_components = self.n_components
+                    "n_classes - 1)."
+                )
+            self._max_components = self.n_components
 
         if self.solver == 'svd':
             if self.shrinkage is not None:

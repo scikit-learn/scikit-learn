@@ -3,11 +3,11 @@ from scipy import sparse as sp
 
 import pytest
 
-from sklearn.svm.bounds import l1_min_c
+from sklearn.svm._bounds import l1_min_c
 from sklearn.svm import LinearSVC
-from sklearn.linear_model.logistic import LogisticRegression
+from sklearn.linear_model import LogisticRegression
 
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_raise_message
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]

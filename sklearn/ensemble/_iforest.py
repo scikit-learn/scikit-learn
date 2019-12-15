@@ -24,7 +24,8 @@ __all__ = ["IsolationForest"]
 
 
 class IsolationForest(OutlierMixin, BaseBagging):
-    """Isolation Forest Algorithm
+    """
+    Isolation Forest Algorithm.
 
     Return the anomaly score of each sample using the IsolationForest algorithm
 
@@ -80,7 +81,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : boolean, optional (default=False)
+    bootstrap : bool, optional (default=False)
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
         is performed.
@@ -158,6 +159,23 @@ class IsolationForest(OutlierMixin, BaseBagging):
            anomaly detection." ACM Transactions on Knowledge Discovery from
            Data (TKDD) 6.1 (2012): 3.
 
+    See Also
+    ----------
+    sklearn.covariance.EllipticEnvelope : An object for detecting outliers in a
+        Gaussian distributed dataset.
+    sklearn.svm.OneClassSVM : Unsupervised Outlier Detection.
+        Estimate the support of a high-dimensional distribution.
+        The implementation is based on libsvm.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection
+        using Local Outlier Factor (LOF).
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import IsolationForest
+    >>> X = [[-1.1], [0.3], [0.5], [100]]
+    >>> clf = IsolationForest(random_state=0).fit(X)
+    >>> clf.predict([[0.1], [0], [90]])
+    array([ 1,  1, -1])
     """
 
     def __init__(self,
@@ -201,7 +219,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return _joblib_parallel_args(prefer='threads')
 
     def fit(self, X, y=None, sample_weight=None):
-        """Fit estimator.
+        """
+        Fit estimator.
 
         Parameters
         ----------
@@ -210,22 +229,23 @@ class IsolationForest(OutlierMixin, BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        y : Ignored
+            Not used, present for API consistency by convention.
+
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
-
-        y : Ignored
-            not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
+            Fitted estimator.
         """
         if self.behaviour != 'deprecated':
             if self.behaviour == 'new':
                 warn(
                     "'behaviour' is deprecated in 0.22 and will be removed "
                     "in 0.24. You should not pass or set this parameter.",
-                    DeprecationWarning
+                    FutureWarning
                 )
             else:
                 raise NotImplementedError(
@@ -263,7 +283,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             else:
                 max_samples = self.max_samples
         else:  # float
-            if not (0. < self.max_samples <= 1.):
+            if not 0. < self.max_samples <= 1.:
                 raise ValueError("max_samples must be in (0, 1], got %r"
                                  % self.max_samples)
             max_samples = int(self.max_samples * X.shape[0])
@@ -287,7 +307,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return self
 
     def predict(self, X):
-        """Predict if a particular sample is an outlier or not.
+        """
+        Predict if a particular sample is an outlier or not.
 
         Parameters
         ----------
@@ -309,7 +330,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return is_inlier
 
     def decision_function(self, X):
-        """Average anomaly score of X of the base classifiers.
+        """
+        Average anomaly score of X of the base classifiers.
 
         The anomaly score of an input sample is computed as
         the mean anomaly score of the trees in the forest.
@@ -333,7 +355,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The anomaly score of the input samples.
             The lower, the more abnormal. Negative scores represent outliers,
             positive scores represent inliers.
-
         """
         # We subtract self.offset_ to make 0 be the threshold value for being
         # an outlier:
@@ -341,7 +362,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return self.score_samples(X) - self.offset_
 
     def score_samples(self, X):
-        """Opposite of the anomaly score defined in the original paper.
+        """
+        Opposite of the anomaly score defined in the original paper.
 
         The anomaly score of an input sample is computed as
         the mean anomaly score of the trees in the forest.
@@ -411,7 +433,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return scores
 
     def _compute_score_samples(self, X, subsample_features):
-        """Compute the score of each samples in X going through the extra trees.
+        """
+        Compute the score of each samples in X going through the extra trees.
 
         Parameters
         ----------
@@ -446,7 +469,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
 
 def _average_path_length(n_samples_leaf):
-    """The average path length in a n_samples iTree, which is equal to
+    """
+    The average path length in a n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters
@@ -458,7 +482,6 @@ def _average_path_length(n_samples_leaf):
     Returns
     -------
     average_path_length : array, same shape as n_samples_leaf
-
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
