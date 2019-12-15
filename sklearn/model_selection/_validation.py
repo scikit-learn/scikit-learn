@@ -13,7 +13,7 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from traceback import format_exception_only
+from traceback import format_exc
 from contextlib import suppress
 
 import numpy as np
@@ -25,8 +25,8 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..metrics.scorer import (check_scoring, _check_multimetric_scoring,
-                              _MultimetricScorer)
+from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -177,7 +177,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
@@ -494,7 +494,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     train_scores = {}
     if parameters is not None:
-        estimator.set_params(**parameters)
+        # clone after setting parameters in case any parameters
+        # are estimators (like pipeline steps)
+        # because pipeline doesn't clone steps in fit
+        cloned_parameters = {}
+        for k, v in parameters.items():
+            cloned_parameters[k] = clone(v, safe=False)
+
+        estimator = estimator.set_params(**cloned_parameters)
 
     start_time = time.time()
 
@@ -525,7 +532,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, format_exception_only(type(e), e)[0]),
+                          (error_score, format_exc()),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
