@@ -587,7 +587,6 @@ Changelog
 
 - |API| Deprecate ``training_data_`` unused attribute in
   :class:`manifold.Isomap`. :issue:`10482` by `Tom Dupre la Tour`_.
->>>>>>> master
 
 :mod:`sklearn.metrics`
 ......................
