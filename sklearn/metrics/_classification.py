@@ -601,26 +601,18 @@ def most_confused_classes(y_true, y_pred, labels=None,
     cm = confusion_matrix(y_true, y_pred, labels=labels, normalize=normalize)
 
     # Clean the diagonal
-    cm = cm - np.diag(np.diag(cm))
-    # Get the coordinates of sorted values of cm
+    cm[np.diag_indices(len(cm))] = 0
+    # Get the coordinates of descending sorted values of cm (only max_rows)
     coords = np.array(
-        np.unravel_index(np.argsort(cm, axis=None), cm.shape)
+        np.unravel_index(
+            np.argsort(cm, axis=None)[::-1][:max_rows],
+            cm.shape
+        )
     ).T
-    most_confused = np.append(
-        coords,
-        # Values corresponding to the columns
-        cm[coords[:, 0], coords[:, 1]].reshape(-1, 1),
-        axis=1
-    )
 
     # Keep only rows with count > 0
-    most_confused = most_confused[np.where(most_confused[:, -1] > 0)]
-
-    # Reverse the sort order
-    most_confused = most_confused[::-1, :]
-    # Keep only max_rows rows
-    if max_rows is not None:
-        most_confused = most_confused[:max_rows, :]
+    coords = coords[np.where(cm[coords[:, 0], coords[:, 1]] > 0)]
+    # most_confused = most_confused[np.where(most_confused[:, -1] > 0)]
 
     # Return the result as a list of tuples
     # with the class names as strings (if provided)
@@ -628,8 +620,8 @@ def most_confused_classes(y_true, y_pred, labels=None,
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
-    most_confused = [tuple([labels[int(row[0])], labels[int(row[1])], row[2]])
-                     for row in most_confused]
+    most_confused = list(zip(labels[coords[:, 0]], labels[coords[:, 1]],
+                             cm[coords[:, 0], coords[:, 1]]))
 
     return most_confused
 
