@@ -63,7 +63,7 @@ y = survey.target.values.ravel()
 survey.target.head()
 
 ###############################################################################
-# We split the sample in a train and a test dataset,
+# We split the sample in a train and a test dataset.
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
 # an unknown target.
@@ -75,8 +75,9 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 ##############################################################################
-# First, let's get some insights by looking at the marginal links between the
-# different variables. Only numerical variables will be used.
+# First, let's get some insights by looking at the variable distributions and
+# at the pairwise relationships between them. Only numerical
+# variables will be used.
 
 train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
@@ -244,17 +245,9 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # The plot above tells us that an increase of the AGE will induce a decrease
-# of the WAGE when all other features remain constant. Also an increase of
-# the EXPERIENCE will induce an increase of the WAGE when all other
-# features remain constant.
-#
-# The first interpretation might look counter-intuitive at first, if one
-# relates the relationship between AGE and WAGE as a marginal link.
-# However, as previously mentioned, a linear model computes a conditional
-# link between AGE and WAGE given all other features.
-# Therefore, one should also interpret that for a given experience and all
-# other features constant as well, a younger person would have a higher
-# wage.
+# of the WAGE when all other features remain constant, for instance at a
+# constant EXPERIENCE. An increase of the EXPERIENCE will induce an increase
+# of the WAGE when all other features remain constant.
 #
 # Checking the coefficient variability
 # ....................................
