@@ -549,7 +549,7 @@ def most_confused_classes(y_true, y_pred, labels=None,
         If none is given, all rows are returned.
 
     normalize : {'true', 'pred', 'all'}, default=None
-        Normalizes most confused classes over the true, predicted conditions
+        Normalizes the number of confusions over the true, predicted conditions
         or all the population. If None, most confused classes will not be
         normalized.
         For normalize='all', the sum of the counts of the most_confused matrix
@@ -557,7 +557,7 @@ def most_confused_classes(y_true, y_pred, labels=None,
 
     Returns
     -------
-    most_confused : list (of length n_pairs) of tuples (of length 3)
+    most_confused : list (of length max_rows) of tuples (of length 3)
         The most confused classes list, from the most confused to the least
         confused, with each row containing: (class_1, class_2, count)
         where count denotes the number of times class_1 was misclassified as
