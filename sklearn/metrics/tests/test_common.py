@@ -46,6 +46,7 @@ from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import most_confused_classes
 from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
@@ -74,7 +75,7 @@ from sklearn.metrics._base import _average_binary_score
 # all metrics that have the same behavior.
 #
 # Two types of datastructures are used in order to implement this system:
-# dictionaries of metrics and lists of metrics wit common properties.
+# dictionaries of metrics and lists of metrics with common properties.
 #
 # Dictionaries of metrics
 # ------------------------
@@ -127,6 +128,10 @@ CLASSIFICATION_METRICS = {
     "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
     "unnormalized_multilabel_confusion_matrix_sample":
         partial(multilabel_confusion_matrix, samplewise=True),
+
+    "unnormalized_most_confused_classes": most_confused_classes,
+    "normalized_most_confused_classes": partial(most_confused_classes, normalize='all'),
+
     "hamming_loss": hamming_loss,
 
     "zero_one_loss": zero_one_loss,
@@ -348,6 +353,8 @@ METRICS_WITH_POS_LABEL = {
 METRICS_WITH_LABELS = {
     "unnormalized_confusion_matrix",
     "normalized_confusion_matrix",
+    "unnormalized_most_confused_classes",
+    "normalized_most_confused_classes",
     "roc_curve",
     "precision_recall_curve",
 
@@ -462,6 +469,8 @@ NOT_SYMMETRIC_METRICS = {
     "r2_score",
     "unnormalized_confusion_matrix",
     "normalized_confusion_matrix",
+    "unnormalized_most_confused_classes",
+    "normalized_most_confused_classes",
     "roc_curve",
     "precision_recall_curve",
 
@@ -483,7 +492,9 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
     "max_error",
     "ovo_roc_auc",
-    "weighted_ovo_roc_auc"
+    "weighted_ovo_roc_auc",
+    "unnormalized_most_confused_classes",
+    "normalized_most_confused_classes"
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
@@ -702,7 +713,10 @@ def test_format_invariance_with_1d_vectors(name):
 
 @pytest.mark.parametrize(
     'name',
-    sorted(set(CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+    sorted(
+        set(CLASSIFICATION_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS
+        - {"normalized_most_confused_classes",
+           "unnormalized_most_confused_classes"}))
 def test_classification_invariance_string_vs_numbers_labels(name):
     # Ensure that classification metrics with string labels are invariant
     random_state = check_random_state(0)
