@@ -831,38 +831,38 @@ def assert_run_python_script(source_code, tmp_path, timeout=60):
     timeout : int
         Time in seconds before timeout.
     """
-    f = tmpdir.mkdir('')
-    try:
+    fp = tmp_path / 'src_test_sklearn.py'
+    with fp.open('wb') as f:
         f.write(source_code.encode('utf-8'))
-        cmd = [sys.executable, str(f)]
-        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
-        env = os.environ.copy()
-        try:
-            env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
-        except KeyError:
-            env["PYTHONPATH"] = cwd
-        kwargs = {
-            'cwd': cwd,
-            'stderr': STDOUT,
-            'env': env
-        }
-        # If coverage is running, pass the config file to the subprocess
-        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
-        if coverage_rc:
-            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
+    cmd = [sys.executable, str(fp)]
+    cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+    env = os.environ.copy()
+    try:
+        env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
+    except KeyError:
+        env["PYTHONPATH"] = cwd
+    kwargs = {
+        'cwd': cwd,
+        'stderr': STDOUT,
+        'env': env
+    }
+    # If coverage is running, pass the config file to the subprocess
+    coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
+    if coverage_rc:
+        kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
 
-        kwargs['timeout'] = timeout
+    kwargs['timeout'] = timeout
+    try:
         try:
-            try:
-                out = check_output(cmd, **kwargs)
-            except CalledProcessError as e:
-                raise RuntimeError(u"script errored with output:\n%s"
-                                   % e.output.decode('utf-8'))
-            if out != b"":
-                raise AssertionError(out.decode('utf-8'))
-        except TimeoutExpired as e:
-            raise RuntimeError(u"script timeout, output so far:\n%s"
+            out = check_output(cmd, **kwargs)
+        except CalledProcessError as e:
+            raise RuntimeError(u"script errored with output:\n%s"
                                % e.output.decode('utf-8'))
+        if out != b"":
+            raise AssertionError(out.decode('utf-8'))
+    except TimeoutExpired as e:
+        raise RuntimeError(u"script timeout, output so far:\n%s"
+                           % e.output.decode('utf-8'))
 
 
 def _convert_container(container, constructor_name, columns_name=None):

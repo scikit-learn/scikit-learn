@@ -24,7 +24,8 @@ def test_imports_strategies(tmp_path):
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(good_import_with_ensemble_first), tmp_path)
+    assert_run_python_script(textwrap.dedent(good_import_with_ensemble_first),
+                             tmp_path)
 
     bad_imports = """
     import pytest
@@ -36,4 +37,5 @@ def test_imports_strategies(tmp_path):
     with pytest.raises(ImportError):
         from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(bad_imports))
+    assert_run_python_script(textwrap.dedent(bad_imports),
+                             tmp_path)
