@@ -56,7 +56,7 @@ class ConfusionMatrixDisplay:
             Colormap recognized by matplotlib.
 
         xticks_rotation : {'vertical', 'horizontal'} or float, \
-                         default='vertical'
+                         default='horizontal'
             Rotation of xtick labels.
 
         values_format : str, default=None
@@ -160,7 +160,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
         Includes values in confusion matrix.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
-                        default='vertical'
+                        default='horizontal'
         Rotation of xtick labels.
 
     values_format : str, default=None
