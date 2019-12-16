@@ -16,7 +16,7 @@ from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
     (deprecated_path, importee)
     for _, deprecated_path, _, importee in _DEPRECATED_MODULES
 ])
-def test_import_is_deprecated(deprecated_path, importee):
+def test_import_is_deprecated(deprecated_path, importee, tmp_path):
     # Make sure that "from deprecated_path import importee" is still possible
     # but raises a warning
     # We only need one entry per file, no need to check multiple imports from
@@ -44,4 +44,4 @@ def test_import_is_deprecated(deprecated_path, importee):
         deprecated_path=deprecated_path,
         importee=importee
     )
-    assert_run_python_script(textwrap.dedent(script))
+    assert_run_python_script(textwrap.dedent(script), tmp_path)

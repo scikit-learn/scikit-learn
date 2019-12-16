@@ -814,7 +814,7 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, timeout=60):
+def assert_run_python_script(source_code, tmp_path, timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and not print
@@ -826,15 +826,15 @@ def assert_run_python_script(source_code, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
+    tmp_path : Path object
+        Path tmp directory
     timeout : int
         Time in seconds before timeout.
     """
-    fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
-    os.close(fd)
+    f = tmpdir.mkdir('')
     try:
-        with open(source_file, 'wb') as f:
-            f.write(source_code.encode('utf-8'))
-        cmd = [sys.executable, source_file]
+        f.write(source_code.encode('utf-8'))
+        cmd = [sys.executable, str(f)]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
         env = os.environ.copy()
         try:
@@ -863,8 +863,6 @@ def assert_run_python_script(source_code, timeout=60):
         except TimeoutExpired as e:
             raise RuntimeError(u"script timeout, output so far:\n%s"
                                % e.output.decode('utf-8'))
-    finally:
-        os.unlink(source_file)
 
 
 def _convert_container(container, constructor_name, columns_name=None):

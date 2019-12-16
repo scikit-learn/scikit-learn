@@ -5,7 +5,7 @@ import textwrap
 from sklearn.utils._testing import assert_run_python_script
 
 
-def test_imports_strategies():
+def test_imports_strategies(tmp_path):
     # Make sure different import strategies work or fail as expected.
 
     # Since Python caches the imported modules, we need to run a child process
@@ -17,14 +17,14 @@ def test_imports_strategies():
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(good_import))
+    assert_run_python_script(textwrap.dedent(good_import), tmp_path)
 
     good_import_with_ensemble_first = """
     import sklearn.ensemble
     from sklearn.experimental import enable_iterative_imputer
     from sklearn.impute import IterativeImputer
     """
-    assert_run_python_script(textwrap.dedent(good_import_with_ensemble_first))
+    assert_run_python_script(textwrap.dedent(good_import_with_ensemble_first), tmp_path)
 
     bad_imports = """
     import pytest
