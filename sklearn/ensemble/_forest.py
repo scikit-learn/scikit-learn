@@ -465,11 +465,11 @@ def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight
     print(normalizer)
     with lock:
         if len(out) == 1:
-            out[0] += proba
+            out[0] += proba * normalizer
             out_sample_weight[0] += normalizer
         else:
             for i in range(len(out)):
-                out[i] += proba[i]
+                out[i] += proba[i] * normalizer[i]
                 out_sample_weight[i] += normalizer[i]
 
 
@@ -737,7 +737,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             for e in self.estimators_)
         print(all_proba, all_sample_weights)
         for proba in all_proba:
+            proba /= all_sample_weights
             proba /= len(self.estimators_)
+        print(all_proba, all_sample_weights)
 
         if len(all_proba) == 1:
             return all_proba[0]
