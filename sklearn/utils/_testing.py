@@ -814,7 +814,7 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     return incorrect
 
 
-def assert_run_python_script(source_code, tmp_path, timeout=60):
+def assert_run_python_script(source_code, timeout=60):
     """Utility to check assertions in an independent Python subprocess.
 
     The script provided in the source code should return 0 and not print
@@ -826,43 +826,45 @@ def assert_run_python_script(source_code, tmp_path, timeout=60):
     ----------
     source_code : str
         The Python source code to execute.
-    tmp_path : Path object
-        Path tmp directory
     timeout : int
         Time in seconds before timeout.
     """
-    fp = tmp_path / 'src_test_sklearn.py'
-    with fp.open('wb') as f:
-        f.write(source_code.encode('utf-8'))
-    cmd = [sys.executable, str(fp)]
-    cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
-    env = os.environ.copy()
+    fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
+    os.close(fd)
     try:
-        env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
-    except KeyError:
-        env["PYTHONPATH"] = cwd
-    kwargs = {
-        'cwd': cwd,
-        'stderr': STDOUT,
-        'env': env
-    }
-    # If coverage is running, pass the config file to the subprocess
-    coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
-    if coverage_rc:
-        kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
-
-    kwargs['timeout'] = timeout
-    try:
+        with open(source_file, 'wb') as f:
+            f.write(source_code.encode('utf-8'))
+        cmd = [sys.executable, source_file]
+        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+        env = os.environ.copy()
         try:
-            out = check_output(cmd, **kwargs)
-        except CalledProcessError as e:
-            raise RuntimeError(u"script errored with output:\n%s"
+            env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
+        except KeyError:
+            env["PYTHONPATH"] = cwd
+        kwargs = {
+            'cwd': cwd,
+            'stderr': STDOUT,
+            'env': env
+        }
+        # If coverage is running, pass the config file to the subprocess
+        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
+        if coverage_rc:
+            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
+
+        kwargs['timeout'] = timeout
+        try:
+            try:
+                out = check_output(cmd, **kwargs)
+            except CalledProcessError as e:
+                raise RuntimeError(u"script errored with output:\n%s"
+                                   % e.output.decode('utf-8'))
+            if out != b"":
+                raise AssertionError(out.decode('utf-8'))
+        except TimeoutExpired as e:
+            raise RuntimeError(u"script timeout, output so far:\n%s"
                                % e.output.decode('utf-8'))
-        if out != b"":
-            raise AssertionError(out.decode('utf-8'))
-    except TimeoutExpired as e:
-        raise RuntimeError(u"script timeout, output so far:\n%s"
-                           % e.output.decode('utf-8'))
+    finally:
+        os.unlink(source_file)
 
 
 def _convert_container(container, constructor_name, columns_name=None):
