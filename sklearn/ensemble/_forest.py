@@ -462,7 +462,6 @@ def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight
     complains that it cannot pickle it when placed there.
     """
     proba, normalizer = predict(X, check_input=False)
-    print(normalizer)
     with lock:
         if len(out) == 1:
             out[0] += proba * normalizer
@@ -738,7 +737,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         print(all_proba, all_sample_weights)
         for proba in all_proba:
             proba /= all_sample_weights
-            proba /= len(self.estimators_)
+            this_normalizer = proba.sum()
+            proba /= this_normalizer
         print(all_proba, all_sample_weights)
 
         if len(all_proba) == 1:
