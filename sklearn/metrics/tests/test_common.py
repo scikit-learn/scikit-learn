@@ -130,7 +130,8 @@ CLASSIFICATION_METRICS = {
         partial(multilabel_confusion_matrix, samplewise=True),
 
     "unnormalized_most_confused_classes": most_confused_classes,
-    "normalized_most_confused_classes": partial(most_confused_classes, normalize='all'),
+    "normalized_most_confused_classes":
+        partial(most_confused_classes, normalize='all'),
 
     "hamming_loss": hamming_loss,
 
