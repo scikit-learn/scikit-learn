@@ -149,7 +149,7 @@ model = make_pipeline(
 # Processing the dataset
 # ......................
 #
-# First, we fit the model and we verify which value for :math:`\alpha` has been
+# First, we fit the model and we verify which value of :math:`\alpha` has been
 # selected.
 
 model.fit(X_train, y_train)
@@ -189,7 +189,7 @@ plt.ylim([0, 27])
 # of the data itself, it needs to be emphasized that interpretations are
 # correct if the model is correct as well.
 # In this case, we are more interested in providing a methodology than in
-# having a good description of the data: a bad example illustrates the
+# having a good description of the data: a bad example could illustrate the
 # importance of cross checking the results.
 #
 # Interpreting coefficients
@@ -228,10 +228,10 @@ plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
 ###############################################################################
-# We should then normalize the coefficients by the standard deviation and we
-# will be able to compare them helping interpretation: the greater the
+# We should then scale the coefficients by the standard deviation and we
+# will be able to better compare them: indeed, the greater the
 # variance of a feature, the larger the impact of the corresponding coefficent
-# on the output.
+# on the output, all else being equal.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_ *
@@ -286,9 +286,21 @@ plt.subplots_adjust(left=.3)
 ###############################################################################
 # The AGE and EXPERIENCE coefficients are affected by strong variability which
 # might be due to the collinearity between the 2 features.
+# To verify this interpretation we plot the variability of the AGE and
+# EXPERIENCE coefficient:
+
+plt.ylabel('Age coefficient')
+plt.xlabel('Experience coefficient')
+plt.grid(True)
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+
+###############################################################################
+# Two regions are populated: when the EXPERIENCE coefficient is
+# positive the AGE one is in general negative and viceversa, except for a small
+# number of positive points around zero.
 #
-# In order to verify our interpretation we remove one of the 2 features and
-# check what is the impact on the model stability.
+# To go further we remove one of the 2 features and check what is the impact
+# on the model stability.
 
 column_to_drop = ['AGE']
 
@@ -319,6 +331,8 @@ plt.subplots_adjust(left=.3)
 #
 # As said above (see ":ref:`the-pipeline`"), we could also choose to scale
 # numerical values before training the model.
+# In the following we will check how this approach will modify the analysis on
+# coefficient variability and interpretation.
 # The preprocessor is redefined in order to subtract the mean and scale
 # variables to unit variance.
 
@@ -371,8 +385,8 @@ plt.xlim([0, 27])
 plt.ylim([0, 27])
 
 ##############################################################################
-# The R squared coefficient is not better than for the non- normalized case.
-# For the coefficient analysis scaling is not needed this time.
+# The R squared coefficient is not better than for the non-normalized case.
+# For the coefficient analysis, scaling is not needed this time.
 
 coefs = pd.DataFrame(
     model.named_steps['transformedtargetregressor'].regressor_.coef_,
@@ -403,6 +417,15 @@ plt.subplots_adjust(left=.3)
 
 ##############################################################################
 # The result is significantly different.
-# AGE and EXPERIENCE coefficients are less variable than other coefficients.
-# They are also smaller, meaning that the model is less influenced by those two
-# variables than by other features.
+# AGE and EXPERIENCE coefficients are less variable than other coefficients,
+# they are both positive.
+
+plt.ylabel('Age coefficient')
+plt.xlabel('Experience coefficient')
+plt.grid(True)
+plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
+
+##############################################################################
+# Even if the model is still not able to provide a good description of the
+# dataset, the normalization of numerical features clearly provides more
+# reliable results for the coefficients.
