@@ -790,6 +790,7 @@ class PLSCanonical(_PLS):
 
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
+
     See also
     --------
     CCA
