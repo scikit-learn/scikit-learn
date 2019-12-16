@@ -19,11 +19,10 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
 # Load the boston dataset.
-boston = load_boston()
-X, y = boston['data'], boston['target']
+X, y = load_boston(return_X_y=True)
 
 # We use the base estimator LassoCV since the L1 norm promotes sparsity of features.
-clf = LassoCV(cv=5)
+clf = LassoCV()
 
 # Set a minimum threshold of 0.25
 sfm = SelectFromModel(clf, threshold=0.25)

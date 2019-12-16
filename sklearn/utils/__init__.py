@@ -1,12 +1,19 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+import pkgutil
+import inspect
+from importlib import import_module
+from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
+from itertools import compress
+from itertools import islice
 import numbers
 import platform
 import struct
 import timeit
+from pathlib import Path
 
 import warnings
 import numpy as np
@@ -17,6 +24,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .fixes import np_version
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -33,29 +41,6 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-# deprecate the joblib API in sklearn in favor of using directly joblib
-msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
-       "Please import this functionality directly from joblib, which can "
-       "be installed with: pip install joblib.")
-deprecate = deprecated(msg)
-
-delayed = deprecate(_joblib.delayed)
-cpu_count = deprecate(_joblib.cpu_count)
-hash = deprecate(_joblib.hash)
-effective_n_jobs = deprecate(_joblib.effective_n_jobs)
-
-
-# for classes, deprecated will change the object in _joblib module so we need
-# to subclass them.
-@deprecate
-class Memory(_joblib.Memory):
-    pass
-
-
-@deprecate
-class Parallel(_joblib.Parallel):
-    pass
-
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -64,9 +49,9 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "column_or_1d", "safe_indexing",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
-           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle", "check_matplotlib_support"]
+           "parallel_backend", "register_parallel_backend",
+           "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -178,45 +163,292 @@ def axis0_safe_slice(X, mask, len_mask):
     return np.zeros(shape=(0, X.shape[1]))
 
 
-def safe_indexing(X, indices):
-    """Return items or rows from X using indices.
+def _array_indexing(array, key, key_dtype, axis):
+    """Index an array or scipy.sparse consistently across NumPy version."""
+    if np_version < (1, 12) or issparse(array):
+        # FIXME: Remove the check for NumPy when using >= 1.12
+        # check if we have an boolean array-likes to make the proper indexing
+        if key_dtype == 'bool':
+            key = np.asarray(key)
+    if isinstance(key, tuple):
+        key = list(key)
+    return array[key] if axis == 0 else array[:, key]
 
-    Allows simple indexing of lists or arrays.
+
+def _pandas_indexing(X, key, key_dtype, axis):
+    """Index a pandas dataframe or a series."""
+    if hasattr(key, 'shape'):
+        # Work-around for indexing with read-only key in pandas
+        # FIXME: solved in pandas 0.25
+        key = np.asarray(key)
+        key = key if key.flags.writeable else key.copy()
+    elif isinstance(key, tuple):
+        key = list(key)
+    # check whether we should index with loc or iloc
+    indexer = X.iloc if key_dtype == 'int' else X.loc
+    return indexer[:, key] if axis else indexer[key]
+
+
+def _list_indexing(X, key, key_dtype):
+    """Index a Python list."""
+    if np.isscalar(key) or isinstance(key, slice):
+        # key is a slice or a scalar
+        return X[key]
+    if key_dtype == 'bool':
+        # key is a boolean array-like
+        return list(compress(X, key))
+    # key is a integer array-like of key
+    return [X[idx] for idx in key]
+
+
+def _determine_key_type(key, accept_slice=True):
+    """Determine the data type of key.
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
-        Data from which to sample rows or items.
-    indices : array-like of int
-        Indices according to which X will be subsampled.
+    key : scalar, slice or array-like
+        The key from which we want to infer the data type.
+
+    accept_slice : bool, default=True
+        Whether or not to raise an error if the key is a slice.
+
+    Returns
+    -------
+    dtype : {'int', 'str', 'bool', None}
+        Returns the data type of key.
+    """
+    err_msg = ("No valid specification of the columns. Only a scalar, list or "
+               "slice of all integers or all strings, or boolean mask is "
+               "allowed")
+
+    dtype_to_str = {int: 'int', str: 'str', bool: 'bool', np.bool_: 'bool'}
+    array_dtype_to_str = {'i': 'int', 'u': 'int', 'b': 'bool', 'O': 'str',
+                          'U': 'str', 'S': 'str'}
+
+    if key is None:
+        return None
+    if isinstance(key, tuple(dtype_to_str.keys())):
+        try:
+            return dtype_to_str[type(key)]
+        except KeyError:
+            raise ValueError(err_msg)
+    if isinstance(key, slice):
+        if not accept_slice:
+            raise TypeError(
+                'Only array-like or scalar are supported. '
+                'A Python slice was given.'
+            )
+        if key.start is None and key.stop is None:
+            return None
+        key_start_type = _determine_key_type(key.start)
+        key_stop_type = _determine_key_type(key.stop)
+        if key_start_type is not None and key_stop_type is not None:
+            if key_start_type != key_stop_type:
+                raise ValueError(err_msg)
+        if key_start_type is not None:
+            return key_start_type
+        return key_stop_type
+    if isinstance(key, (list, tuple)):
+        unique_key = set(key)
+        key_type = {_determine_key_type(elt) for elt in unique_key}
+        if not key_type:
+            return None
+        if len(key_type) != 1:
+            raise ValueError(err_msg)
+        return key_type.pop()
+    if hasattr(key, 'dtype'):
+        try:
+            return array_dtype_to_str[key.dtype.kind]
+        except KeyError:
+            raise ValueError(err_msg)
+    raise ValueError(err_msg)
+
+
+# TODO: remove in 0.24
+@deprecated("safe_indexing is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+def safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    .. deprecated:: 0.22
+        This function was deprecated in version 0.22 and will be removed in
+        version 0.24.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
+
+    indices : bool, int, str, slice, array-like
+
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
+
+    axis : int, default=0
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
 
     Returns
     -------
     subset
-        Subset of X on first axis
+        Subset of X on axis 0 or 1.
 
     Notes
     -----
     CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
     not supported.
     """
+    return _safe_indexing(X, indices, axis)
+
+
+def _safe_indexing(X, indices, axis=0):
+    """Return rows, items or columns of X using indices.
+
+    .. warning::
+
+        This utility is documented, but **private**. This means that
+        backward compatibility might be broken without any deprecation
+        cycle.
+
+    Parameters
+    ----------
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
+        Data from which to sample rows, items or columns. `list` are only
+        supported when `axis=0`.
+    indices : bool, int, str, slice, array-like
+        - If `axis=0`, boolean and integer array-like, integer slice,
+          and scalar integer are supported.
+        - If `axis=1`:
+            - to select a single column, `indices` can be of `int` type for
+              all `X` types and `str` only for dataframe. The selected subset
+              will be 1D, unless `X` is a sparse matrix in which case it will
+              be 2D.
+            - to select multiples columns, `indices` can be one of the
+              following: `list`, `array`, `slice`. The type used in
+              these containers can be one of the following: `int`, 'bool' and
+              `str`. However, `str` is only supported when `X` is a dataframe.
+              The selected subset will be 2D.
+    axis : int, default=0
+        The axis along which `X` will be subsampled. `axis=0` will select
+        rows while `axis=1` will select columns.
+
+    Returns
+    -------
+    subset
+        Subset of X on axis 0 or 1.
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
+    """
+    if indices is None:
+        return X
+
+    if axis not in (0, 1):
+        raise ValueError(
+            "'axis' should be either 0 (to index rows) or 1 (to index "
+            " column). Got {} instead.".format(axis)
+        )
+
+    indices_dtype = _determine_key_type(indices)
+
+    if axis == 0 and indices_dtype == 'str':
+        raise ValueError(
+            "String indexing is not supported with 'axis=0'"
+        )
+
+    if axis == 1 and X.ndim != 2:
+        raise ValueError(
+            "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
+            "dataframe when indexing the columns (i.e. 'axis=1'). "
+            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
+        )
+
+    if axis == 1 and indices_dtype == 'str' and not hasattr(X, 'loc'):
+        raise ValueError(
+            "Specifying the columns using strings is only supported for "
+            "pandas DataFrames"
+        )
+
     if hasattr(X, "iloc"):
-        # Work-around for indexing with read-only indices in pandas
-        indices = indices if indices.flags.writeable else indices.copy()
-        # Pandas Dataframes and Series
-        try:
-            return X.iloc[indices]
-        except ValueError:
-            # Cython typed memoryviews internally used in pandas do not support
-            # readonly buffers.
-            warnings.warn("Copying input dataframe for slicing.",
-                          DataConversionWarning)
-            return X.copy().iloc[indices]
+        return _pandas_indexing(X, indices, indices_dtype, axis=axis)
     elif hasattr(X, "shape"):
-        # just use fancy indexing, which is faster than numpy take (PR 14075)
-        return X[indices]
+        return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
-        return [X[idx] for idx in indices]
+        return _list_indexing(X, indices, indices_dtype)
+
+
+def _get_column_indices(X, key):
+    """Get feature column indices for input data X and key.
+
+    For accepted values of `key`, see the docstring of
+    :func:`_safe_indexing_column`.
+    """
+    n_columns = X.shape[1]
+
+    key_dtype = _determine_key_type(key)
+
+    if isinstance(key, (list, tuple)) and not key:
+        # we get an empty list
+        return []
+    elif key_dtype in ('bool', 'int'):
+        # Convert key into positive indexes
+        try:
+            idx = _safe_indexing(np.arange(n_columns), key)
+        except IndexError as e:
+            raise ValueError(
+                'all features must be in [0, {}] or [-{}, 0]'
+                .format(n_columns - 1, n_columns)
+            ) from e
+        return np.atleast_1d(idx).tolist()
+    elif key_dtype == 'str':
+        try:
+            all_columns = list(X.columns)
+        except AttributeError:
+            raise ValueError("Specifying the columns using strings is only "
+                             "supported for pandas DataFrames")
+        if isinstance(key, str):
+            columns = [key]
+        elif isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = all_columns.index(start)
+            if stop is not None:
+                # pandas indexing with strings is endpoint included
+                stop = all_columns.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(range(n_columns)[slice(start, stop)])
+        else:
+            columns = list(key)
+
+        try:
+            column_indices = [all_columns.index(col) for col in columns]
+        except ValueError as e:
+            if 'not in list' in str(e):
+                raise ValueError(
+                    "A given column is not a column of the dataframe"
+                ) from e
+            raise
+
+        return column_indices
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
 
 
 def resample(*arrays, **options):
@@ -366,7 +598,7 @@ def resample(*arrays, **options):
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
-    resampled_arrays = [safe_indexing(a, indices) for a in arrays]
+    resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
     if len(resampled_arrays) == 1:
         # syntactic sugar for the unit argument case
         return resampled_arrays[0]
@@ -471,6 +703,17 @@ def safe_sqr(X, copy=True):
         else:
             X **= 2
     return X
+
+
+def _chunk_generator(gen, chunksize):
+    """Chunk generator, ``gen`` into lists of length ``chunksize``. The last
+    chunk may have a length less than ``chunksize``."""
+    while True:
+        chunk = list(islice(gen, chunksize))
+        if chunk:
+            yield chunk
+        else:
+            return
 
 
 def gen_batches(n, batch_size, min_batch_size=0):
@@ -820,3 +1063,120 @@ def check_matplotlib_support(caller_name):
             "{} requires matplotlib. You can install matplotlib with "
             "`pip install matplotlib`".format(caller_name)
         ) from e
+
+
+def check_pandas_support(caller_name):
+    """Raise ImportError with detailed error message if pandsa is not
+    installed.
+
+    Plot utilities like :func:`fetch_openml` should lazily import
+    pandas and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires pandas.
+    """
+    try:
+        import pandas  # noqa
+        return pandas
+    except ImportError as e:
+        raise ImportError(
+            "{} requires pandas.".format(caller_name)
+        ) from e
+
+
+def all_estimators(type_filter=None):
+    """Get a list of all estimators from sklearn.
+
+    This function crawls the module and gets all classes that inherit
+    from BaseEstimator. Classes that are defined in test-modules are not
+    included.
+    By default meta_estimators such as GridSearchCV are also not included.
+
+    Parameters
+    ----------
+    type_filter : string, list of string,  or None, default=None
+        Which kind of estimators should be returned. If None, no filter is
+        applied and all estimators are returned.  Possible values are
+        'classifier', 'regressor', 'cluster' and 'transformer' to get
+        estimators only of these specific types, or a list of these to
+        get the estimators that fit at least one of the types.
+
+    Returns
+    -------
+    estimators : list of tuples
+        List of (name, class), where ``name`` is the class name as string
+        and ``class`` is the actuall type of the class.
+    """
+    # lazy import to avoid circular imports from sklearn.base
+    from ._testing import ignore_warnings
+    from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                        TransformerMixin, ClusterMixin)
+
+    def is_abstract(c):
+        if not(hasattr(c, '__abstractmethods__')):
+            return False
+        if not len(c.__abstractmethods__):
+            return False
+        return True
+
+    all_classes = []
+    modules_to_ignore = {"tests", "externals", "setup", "conftest"}
+    root = str(Path(__file__).parent.parent)  # sklearn package
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
+    with ignore_warnings(category=FutureWarning):
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix='sklearn.'):
+            mod_parts = modname.split(".")
+            if (any(part in modules_to_ignore for part in mod_parts)
+                    or '._' in modname):
+                continue
+            module = import_module(modname)
+            classes = inspect.getmembers(module, inspect.isclass)
+            classes = [(name, est_cls) for name, est_cls in classes
+                       if not name.startswith("_")]
+
+            # TODO: Remove when FeatureHasher is implemented in PYPY
+            # Skips FeatureHasher for PYPY
+            if IS_PYPY and 'feature_extraction' in modname:
+                classes = [(name, est_cls) for name, est_cls in classes
+                           if name == "FeatureHasher"]
+
+            all_classes.extend(classes)
+
+    all_classes = set(all_classes)
+
+    estimators = [c for c in all_classes
+                  if (issubclass(c[1], BaseEstimator) and
+                      c[0] != 'BaseEstimator')]
+    # get rid of abstract base classes
+    estimators = [c for c in estimators if not is_abstract(c[1])]
+
+    if type_filter is not None:
+        if not isinstance(type_filter, list):
+            type_filter = [type_filter]
+        else:
+            type_filter = list(type_filter)  # copy
+        filtered_estimators = []
+        filters = {'classifier': ClassifierMixin,
+                   'regressor': RegressorMixin,
+                   'transformer': TransformerMixin,
+                   'cluster': ClusterMixin}
+        for name, mixin in filters.items():
+            if name in type_filter:
+                type_filter.remove(name)
+                filtered_estimators.extend([est for est in estimators
+                                            if issubclass(est[1], mixin)])
+        estimators = filtered_estimators
+        if type_filter:
+            raise ValueError("Parameter type_filter must be 'classifier', "
+                             "'regressor', 'transformer', 'cluster' or "
+                             "None, got"
+                             " %s." % repr(type_filter))
+
+    # drop duplicates, sort for reproducibility
+    # itemgetter is used to ensure the sort does not extend to the 2nd item of
+    # the tuple
+    return sorted(set(estimators), key=itemgetter(0))

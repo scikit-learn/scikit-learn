@@ -13,18 +13,20 @@ functions to validate the model.
 import warnings
 import numbers
 import time
-from traceback import format_exception_only
+from traceback import format_exc
+from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, safe_indexing,
+from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
-from ..utils._joblib import Parallel, delayed
-from ..metrics.scorer import check_scoring, _check_multimetric_scoring
+from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -56,7 +58,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
 
     scoring : string, callable, list/tuple, dict or None, default: None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -140,7 +143,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Returns
     -------
-    scores : dict of float arrays of shape=(n_splits,)
+    scores : dict of float arrays of shape (n_splits,)
         Array of scores of the estimator for each run of the cross validation.
 
         A dict of arrays containing the score/time arrays for each scorer is
@@ -148,8 +151,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
             ``test_score``
                 The score array for test scores on each cv split.
+                Suffix ``_score`` in ``test_score`` changes to a specific
+                metric like ``test_r2`` or ``test_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
             ``train_score``
                 The score array for train scores on each cv split.
+                Suffix ``_score`` in ``train_score`` changes to a specific
+                metric like ``train_r2`` or ``train_auc`` if there are
+                multiple scoring metrics in the scoring parameter.
                 This is available only if ``return_train_score`` parameter
                 is ``True``.
             ``fit_time``
@@ -168,7 +177,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     --------
     >>> from sklearn import datasets, linear_model
     >>> from sklearn.model_selection import cross_validate
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
     >>> diabetes = datasets.load_diabetes()
@@ -271,7 +280,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -484,15 +494,20 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     train_scores = {}
     if parameters is not None:
-        estimator.set_params(**parameters)
+        # clone after setting parameters in case any parameters
+        # are estimators (like pipeline steps)
+        # because pipeline doesn't clone steps in fit
+        cloned_parameters = {}
+        for k, v in parameters.items():
+            cloned_parameters[k] = clone(v, safe=False)
+
+        estimator = estimator.set_params(**cloned_parameters)
 
     start_time = time.time()
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
-    is_multimetric = not callable(scorer)
-    n_scorers = len(scorer.keys()) if is_multimetric else 1
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -506,12 +521,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         if error_score == 'raise':
             raise
         elif isinstance(error_score, numbers.Number):
-            if is_multimetric:
-                test_scores = dict(zip(scorer.keys(),
-                                   [error_score, ] * n_scorers))
+            if isinstance(scorer, dict):
+                test_scores = {name: error_score for name in scorer}
                 if return_train_score:
-                    train_scores = dict(zip(scorer.keys(),
-                                        [error_score, ] * n_scorers))
+                    train_scores = test_scores.copy()
             else:
                 test_scores = error_score
                 if return_train_score:
@@ -519,7 +532,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             warnings.warn("Estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
-                          (error_score, format_exception_only(type(e), e)[0]),
+                          (error_score, format_exc()),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
@@ -528,14 +541,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
+        test_scores = _score(estimator, X_test, y_test, scorer)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric)
+            train_scores = _score(estimator, X_train, y_train, scorer)
     if verbose > 2:
-        if is_multimetric:
+        if isinstance(test_scores, dict):
             for scorer_name in sorted(test_scores):
                 msg += ", %s=" % scorer_name
                 if return_train_score:
@@ -565,58 +576,38 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
+def _score(estimator, X_test, y_test, scorer):
     """Compute the score(s) of an estimator on a given test set.
 
-    Will return a single float if is_multimetric is False and a dict of floats,
-    if is_multimetric is True
+    Will return a dict of floats if `scorer` is a dict, otherwise a single
+    float is returned.
     """
-    if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer)
+    if isinstance(scorer, dict):
+        # will cache method calls if needed. scorer() returns a dict
+        scorer = _MultimetricScorer(**scorer)
+    if y_test is None:
+        scores = scorer(estimator, X_test)
     else:
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
+        scores = scorer(estimator, X_test, y_test)
 
-        if hasattr(score, 'item'):
-            try:
+    error_msg = ("scoring must return a number, got %s (%s) "
+                 "instead. (scorer=%s)")
+    if isinstance(scores, dict):
+        for name, score in scores.items():
+            if hasattr(score, 'item'):
+                with suppress(ValueError):
+                    # e.g. unwrap memmapped scalars
+                    score = score.item()
+            if not isinstance(score, numbers.Number):
+                raise ValueError(error_msg % (score, type(score), name))
+            scores[name] = score
+    else:  # scalar
+        if hasattr(scores, 'item'):
+            with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%r)"
-                             % (str(score), type(score), scorer))
-    return score
-
-
-def _multimetric_score(estimator, X_test, y_test, scorers):
-    """Return a dict of score for multimetric scoring"""
-    scores = {}
-
-    for name, scorer in scorers.items():
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
-        if hasattr(score, 'item'):
-            try:
-                # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
-        scores[name] = score
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%s)"
-                             % (str(score), type(score), name))
+                scores = scores.item()
+        if not isinstance(scores, numbers.Number):
+            raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
@@ -625,8 +616,14 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
 
-    It is not appropriate to pass these predictions into an evaluation
-    metric. Use :func:`cross_validate` to measure generalization error.
+    The data is split according to the cv parameter. Each sample belongs
+    to exactly one test set, and its prediction is computed with an
+    estimator fitted on the corresponding training set.
+
+    Passing these predictions into an evaluation metric may not be a valid
+    way to measure generalization performance. Results can differ from
+    :func:`cross_validate` and :func:`cross_val_score` unless all tests sets
+    have equal size and the metric decomposes over samples.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
@@ -644,7 +641,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -946,7 +944,7 @@ def _index_param_value(X, v, indices):
         return v
     if sp.issparse(v):
         v = v.tocsr()
-    return safe_indexing(v, indices)
+    return _safe_indexing(v, indices)
 
 
 def permutation_test_score(estimator, X, y, groups=None, cv=None,
@@ -1087,14 +1085,14 @@ def _shuffle(y, groups, random_state):
         for group in np.unique(groups):
             this_mask = (groups == group)
             indices[this_mask] = random_state.permutation(indices[this_mask])
-    return safe_indexing(y, indices)
+    return _safe_indexing(y, indices)
 
 
 def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None, error_score=np.nan):
+                   random_state=None, error_score=np.nan, return_times=False):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training
@@ -1123,7 +1121,8 @@ def learning_curve(estimator, X, y, groups=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
@@ -1193,6 +1192,9 @@ def learning_curve(estimator, X, y, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+    return_times : boolean, optional (default: False)
+        Whether to return the fit and score times.
+
     Returns
     -------
     train_sizes_abs : array, shape (n_unique_ticks,), dtype int
@@ -1205,6 +1207,14 @@ def learning_curve(estimator, X, y, groups=None,
 
     test_scores : array, shape (n_ticks, n_cv_folds)
         Scores on test set.
+
+    fit_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for fitting in seconds. Only present if ``return_times``
+        is True.
+
+    score_times : array, shape (n_ticks, n_cv_folds)
+        Times spent for scoring in seconds. Only present if ``return_times``
+        is True.
 
     Notes
     -----
@@ -1243,7 +1253,7 @@ def learning_curve(estimator, X, y, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv_iter)
+            scorer, verbose, return_times) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -1253,15 +1263,21 @@ def learning_curve(estimator, X, y, groups=None,
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
-            error_score=error_score)
+            error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
+        dim = 4 if return_times else 2
+        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
 
     out = np.asarray(out).transpose((2, 1, 0))
 
-    return train_sizes_abs, out[0], out[1]
+    ret = train_sizes_abs, out[0], out[1]
+
+    if return_times:
+        ret = ret + (out[2], out[3])
+
+    return ret
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
@@ -1324,9 +1340,9 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
+                               train_sizes, scorer, verbose, return_times):
     """Train estimator on training subsets incrementally and compute scores."""
-    train_scores, test_scores = [], []
+    train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
@@ -1334,14 +1350,27 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+        start_fit = time.time()
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        fit_time = time.time() - start_fit
+        fit_times.append(fit_time)
+
+        start_score = time.time()
+
         test_scores.append(_score(estimator, X_test, y_test, scorer))
-    return np.array((train_scores, test_scores)).T
+        train_scores.append(_score(estimator, X_train, y_train, scorer))
+
+        score_time = time.time() - start_score
+        score_times.append(score_time)
+
+    ret = ((train_scores, test_scores, fit_times, score_times)
+           if return_times else (train_scores, test_scores))
+
+    return np.array(ret).T
 
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
@@ -1379,7 +1408,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
 
     groups : array-like, with shape (n_samples,), optional
         Group labels for the samples used while splitting the dataset into
-        train/test set.
+        train/test set. Only used in conjunction with a "Group" :term:`cv`
+        instance (e.g., :class:`GroupKFold`).
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.

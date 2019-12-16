@@ -7,22 +7,29 @@ import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract, signature
+from inspect import signature
 
 import sklearn
 from sklearn.utils import IS_PYPY
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_docstring_parameters
-from sklearn.utils.testing import _get_func_name
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import check_docstring_parameters
+from sklearn.utils._testing import _get_func_name
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.externals._pep562 import Pep562
 
 import pytest
 
-PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
-                                                        path=sklearn.__path__)
-                      if not ("._" in pckg[1] or ".tests." in pckg[1])])
 
+# walk_packages() ignores DeprecationWarnings, now we need to ignore
+# FutureWarnings
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore', FutureWarning)
+    PUBLIC_MODULES = set([
+        pckg[1] for pckg in walk_packages(prefix='sklearn.',
+                                          path=sklearn.__path__)
+        if not ("._" in pckg[1] or ".tests." in pckg[1])
+    ])
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -46,6 +53,7 @@ _METHODS_IGNORE_NONE_Y = [
 
 # numpydoc 0.8.0's docscrape tool raises because of collections.abc under
 # Python 3.7
+@pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
@@ -73,7 +81,7 @@ def test_docstring_parameters():
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
                 continue
-            if isabstract(cls):
+            if inspect.isabstract(cls):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -85,10 +93,10 @@ def test_docstring_parameters():
 
             if _is_deprecated(cls_init):
                 continue
-
             elif cls_init is not None:
                 this_incorrect += check_docstring_parameters(
-                    cls.__init__, cdoc, class_name=cname)
+                    cls.__init__, cdoc)
+
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
@@ -102,7 +110,7 @@ def test_docstring_parameters():
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
                 result = check_docstring_parameters(
-                    method, ignore=param_ignore, class_name=cname)
+                    method, ignore=param_ignore)
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -120,25 +128,33 @@ def test_docstring_parameters():
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)
-    msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
+
+    msg = '\n'.join(incorrect)
     if len(incorrect) > 0:
-        raise AssertionError("Docstring Error: " + msg)
+        raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
 
         if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing' in modname):
+                        'feature_extraction._hashing_fast' in modname):
             continue
 
         # because we don't import
         mod = importlib.import_module(modname)
+
+        # TODO: Remove when minimum python version is 3.7
+        # unwrap to get module because Pep562 backport wraps the original
+        # module
+        if isinstance(mod, Pep562):
+            mod = mod._module
+
         try:
-            source = getsource(mod)
+            source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',

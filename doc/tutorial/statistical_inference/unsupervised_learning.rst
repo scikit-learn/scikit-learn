@@ -33,9 +33,7 @@ algorithms. The simplest clustering algorithm is
 ::
 
     >>> from sklearn import cluster, datasets
-    >>> iris = datasets.load_iris()
-    >>> X_iris = iris.data
-    >>> y_iris = iris.target
+    >>> X_iris, y_iris = datasets.load_iris(return_X_y=True)
 
     >>> k_means = cluster.KMeans(n_clusters=3)
     >>> k_means.fit(X_iris)

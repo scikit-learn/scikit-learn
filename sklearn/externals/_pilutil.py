@@ -44,7 +44,6 @@ from __future__ import division, print_function, absolute_import
 
 
 import numpy
-import tempfile
 
 from numpy import (amin, amax, ravel, asarray, arange, ones, newaxis,
                    transpose, iscomplexobj, uint8, issubdtype, array)

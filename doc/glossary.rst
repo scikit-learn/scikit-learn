@@ -697,6 +697,7 @@ General Concepts
         to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
+    sparse graph
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
         are zero. We use the :mod:`scipy.sparse` framework, which provides
@@ -854,10 +855,10 @@ Class APIs and Estimator Types
     feature extractors
         A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object of :term:`features` for each sample
-        (and thus a 2-dimensional array-like for a set of samples).  In other
-        words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        produces an :term:`array-like` object of :term:`features` for each
+        sample (and thus a 2-dimensional array-like for a set of samples).  In
+        other words, it (lossily) maps a non-rectangular data representation
+        into :term:`rectangular` data.
 
         Feature extractors must implement at least:
 
@@ -977,7 +978,7 @@ such as:
         Cross-validation estimators are named `EstimatorCV` and tend to be
         roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
         advantage of using a cross-validation estimator over the canonical
-        `Estimator` class along with :ref:`grid search <grid_search>` is
+        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
         that they can take advantage of warm-starting by reusing precomputed
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
@@ -1272,6 +1273,8 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
+        NOTE: Using ``partial_fit`` after ``fit`` results in undefined behavior.
+
     ``predict``
         Makes a prediction for each sample, usually only taking :term:`X` as
         input (but see under regressor output conventions below). In a
@@ -1412,7 +1415,12 @@ functions or non-estimator constructors.
         ``class_weight='balanced'`` can be used to give all classes
         equal weight by giving each sample a weight inversely related
         to its class's prevalence in the training data:
-        ``n_samples / (n_classes * np.bincount(y))``.
+        ``n_samples / (n_classes * np.bincount(y))``. Class weights will be
+        used differently depending on the algorithm: for linear models (such
+        as linear SVM or logistic regression), the class weights will alter the
+        loss function by weighting the loss of each sample by its class weight.
+        For tree-based algorithms, the class weights will be used for
+        reweighting the splitting criterion.
         **Note** however that this rebalancing does not take the weight of
         samples in each class into account.
 
@@ -1500,45 +1508,29 @@ functions or non-estimator constructors.
         early.
 
     ``n_jobs``
-        This is used to specify how many concurrent processes/threads should be
-        used for parallelized routines.  Scikit-learn uses one processor for
-        its processing by default, although it also makes use of NumPy, which
-        may be configured to use a threaded numerical processor library (like
-        MKL; see :ref:`FAQ <faq_mkl_threading>`).
+        This parameter is used to specify how many concurrent processes or
+        threads should be used for routines that are parallelized with
+        :term:`joblib`.
 
-        ``n_jobs`` is an int, specifying the maximum number of concurrently
-        running jobs.  If set to -1, all CPUs are used. If 1 is given, no
-        joblib level parallelism is used at all, which is useful for
-        debugging. Even with ``n_jobs = 1``, parallelism may occur due to
-        numerical processing libraries (see :ref:`FAQ <faq_mkl_threading>`).
-        For n_jobs below -1, (n_cpus + 1 + n_jobs) are used. Thus for
-        ``n_jobs = -2``, all CPUs but one are used.
+        ``n_jobs`` is an integer, specifying the maximum number of concurrently
+        running workers. If 1 is given, no joblib parallelism is used at all,
+        which is useful for debugging. If set to -1, all CPUs are used. For
+        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used. For example with
+        ``n_jobs=-2``, all CPUs but one are used.
 
-        ``n_jobs=None`` means *unset*; it will generally be interpreted as
-        ``n_jobs=1``, unless the current :class:`joblib.Parallel` backend
-        context specifies otherwise.
+        ``n_jobs`` is ``None`` by default, which means *unset*; it will
+        generally be interpreted as ``n_jobs=1``, unless the current
+        :class:`joblib.Parallel` backend context specifies otherwise.
 
-        The use of ``n_jobs``-based parallelism in estimators varies:
+        For more details on the use of ``joblib`` and its interactions with
+        scikit-learn, please refer to our :ref:`parallelism notes
+        <parallelism>`.
 
-        * Most often parallelism happens in :term:`fitting <fit>`, but
-          sometimes parallelism happens in prediction (e.g. in random forests).
-        * Some parallelism uses a multi-threading backend by default, some
-          a multi-processing backend.  It is possible to override the default
-          backend by using :func:`sklearn.utils.parallel_backend`.
-        * Whether parallel processing is helpful at improving runtime depends
-          on many factors, and it's usually a good idea to experiment rather
-          than assuming that increasing the number of jobs is always a good
-          thing.  *It can be highly detrimental to performance to run multiple
-          copies of some estimators or functions in parallel.*
-
-        Nested uses of ``n_jobs``-based parallelism with the same backend will
-        result in an exception.
-        So ``GridSearchCV(OneVsRestClassifier(SVC(), n_jobs=2), n_jobs=2)``
-        won't work.
-
-        When ``n_jobs`` is not 1, the estimator being parallelized must be
-        picklable.  This means, for instance, that lambdas cannot be used
-        as estimator parameters.
+    ``pos_label``
+        Value with which positive labels must be encoded in binary
+        classification problems in which the positive class is not assumed.
+        This value is typically required to compute asymmetric evaluation
+        metrics such as precision and recall.
 
     ``random_state``
         Whenever randomization is part of a Scikit-learn algorithm, a

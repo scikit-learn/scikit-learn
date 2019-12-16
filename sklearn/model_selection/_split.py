@@ -19,7 +19,7 @@ from inspect import signature
 
 import numpy as np
 
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
@@ -135,10 +135,10 @@ class LeaveOneOut(BaseCrossValidator):
     >>> print(loo)
     LeaveOneOut()
     >>> for train_index, test_index in loo.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
     TRAIN: [0] TEST: [1]
@@ -207,7 +207,7 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets. Must be strictly greater than the number of
+        Size of the test sets. Must be strictly less than the number of
         samples.
 
     Examples
@@ -222,9 +222,9 @@ class LeavePOut(BaseCrossValidator):
     >>> print(lpo)
     LeavePOut(p=2)
     >>> for train_index, test_index in lpo.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [1 2] TEST: [0 3]
@@ -286,6 +286,15 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
                             " got {0}".format(shuffle))
+
+        if not shuffle and random_state is not None:  # None is the default
+            # TODO 0.24: raise a ValueError instead of a warning
+            warnings.warn(
+                'Setting a random_state has no effect since shuffle is '
+                'False. This will raise an error in 0.24. You should leave '
+                'random_state to its default (None), or set shuffle=True.',
+                FutureWarning
+            )
 
         self.n_splits = n_splits
         self.shuffle = shuffle
@@ -374,7 +383,8 @@ class KFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -388,9 +398,9 @@ class KFold(_BaseKFold):
     >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in kf.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
     TRAIN: [0 1] TEST: [2 3]
 
@@ -579,7 +589,8 @@ class StratifiedKFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Only used when ``shuffle`` is True. This should be left
+        to None if ``shuffle`` is False.
 
     Examples
     --------
@@ -593,16 +604,28 @@ class StratifiedKFold(_BaseKFold):
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
     >>> for train_index, test_index in skf.split(X, y):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 3] TEST: [0 2]
     TRAIN: [0 2] TEST: [1 3]
 
     Notes
     -----
-    Train and test sizes may be different in each fold, with a difference of at
-    most ``n_classes``.
+    The implementation is designed to:
+
+    * Generate test sets such that all contain the same distribution of
+      classes, or as close as possible.
+    * Be invariant to class label: relabelling ``y = ["Happy", "Sad"]`` to
+      ``y = [1, 0]`` should not change the indices generated.
+    * Preserve order dependencies in the dataset ordering, when
+      ``shuffle=False``: all samples from class k in some test set were
+      contiguous in y, or separated in y by samples from classes other than k.
+    * Generate test sets where the smallest and largest differ by at most one
+      sample.
+
+    .. versionchanged:: 0.22
+        The previous implementation did not follow the last constraint.
 
     See also
     --------
@@ -623,9 +646,16 @@ class StratifiedKFold(_BaseKFold):
                     allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
-        n_samples = y.shape[0]
-        unique_y, y_inversed = np.unique(y, return_inverse=True)
-        y_counts = np.bincount(y_inversed)
+
+        _, y_idx, y_inv = np.unique(y, return_index=True, return_inverse=True)
+        # y_inv encodes y according to lexicographic order. We invert y_idx to
+        # map the classes so that they are encoded by order of appearance:
+        # 0 represents the first label appearing in y, 1 the second, etc.
+        _, class_perm = np.unique(y_idx, return_inverse=True)
+        y_encoded = class_perm[y_inv]
+
+        n_classes = len(y_idx)
+        y_counts = np.bincount(y_encoded)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
             raise ValueError("n_splits=%d cannot be greater than the"
@@ -633,35 +663,29 @@ class StratifiedKFold(_BaseKFold):
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
-                           " members, which is too few. The minimum"
-                           " number of members in any class cannot"
-                           " be less than n_splits=%d."
-                           % (min_groups, self.n_splits)), Warning)
+                           " members, which is less than n_splits=%d."
+                           % (min_groups, self.n_splits)), UserWarning)
 
-        # pre-assign each sample to a test fold index using individual KFold
-        # splitting strategies for each class so as to respect the balance of
-        # classes
-        # NOTE: Passing the data corresponding to ith class say X[y==class_i]
-        # will break when the data is not 100% stratifiable for all classes.
-        # So we pass np.zeroes(max(c, n_splits)) as data to the KFold
-        per_cls_cvs = [
-            KFold(self.n_splits, shuffle=self.shuffle,
-                  random_state=rng).split(np.zeros(max(count, self.n_splits)))
-            for count in y_counts]
+        # Determine the optimal number of samples from each class in each fold,
+        # using round robin over the sorted y. (This can be done direct from
+        # counts, but that code is unreadable.)
+        y_order = np.sort(y_encoded)
+        allocation = np.asarray(
+            [np.bincount(y_order[i::self.n_splits], minlength=n_classes)
+             for i in range(self.n_splits)])
 
-        test_folds = np.zeros(n_samples, dtype=np.int)
-        for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
-            for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[y == cls]
-                # the test split can be too big because we used
-                # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
-                # stratifiable for all the classes
-                # (we use a warning instead of raising an exception)
-                # If this is the case, let's trim it:
-                test_split = test_split[test_split < len(cls_test_folds)]
-                cls_test_folds[test_split] = test_fold_indices
-                test_folds[y == cls] = cls_test_folds
-
+        # To maintain the data order dependencies as best as possible within
+        # the stratification constraint, we assign samples from each class in
+        # blocks (and then mess that up when shuffle=True).
+        test_folds = np.empty(len(y), dtype='i')
+        for k in range(n_classes):
+            # since the kth column of allocation stores the number of samples
+            # of class k in each test set, this generates blocks of fold
+            # indices corresponding to the allocation for class k.
+            folds_for_class = np.arange(self.n_splits).repeat(allocation[:, k])
+            if self.shuffle:
+                rng.shuffle(folds_for_class)
+            test_folds[y_encoded == k] = folds_for_class
         return test_folds
 
     def _iter_test_masks(self, X, y=None, groups=None):
@@ -745,9 +769,9 @@ class TimeSeriesSplit(_BaseKFold):
     >>> print(tscv)
     TimeSeriesSplit(max_train_size=None, n_splits=5)
     >>> for train_index, test_index in tscv.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [0] TEST: [1]
     TRAIN: [0 1] TEST: [2]
     TRAIN: [0 1 2] TEST: [3]
@@ -837,10 +861,10 @@ class LeaveOneGroupOut(BaseCrossValidator):
     >>> print(logo)
     LeaveOneGroupOut()
     >>> for train_index, test_index in logo.split(X, y, groups):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
@@ -956,10 +980,10 @@ class LeavePGroupsOut(BaseCrossValidator):
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
     >>> for train_index, test_index in lpgo.split(X, y, groups):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print(X_train, X_test, y_train, y_test)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
+    ...     print(X_train, X_test, y_train, y_test)
     TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
@@ -1075,7 +1099,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         and shuffle.
     """
     def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
-        if not isinstance(n_repeats, (np.integer, numbers.Integral)):
+        if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
         if n_repeats <= 0:
@@ -1149,6 +1173,9 @@ class _RepeatedSplits(metaclass=ABCMeta):
         cv = self.cv(random_state=rng, shuffle=True,
                      **self.cvargs)
         return cv.get_n_splits(X, y, groups) * self.n_repeats
+
+    def __repr__(self):
+        return _build_repr(self)
 
 
 class RepeatedKFold(_RepeatedSplits):
@@ -1378,7 +1405,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> print(rs)
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for train_index, test_index in rs.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
     TRAIN: [1 3 0 4] TEST: [5 2]
     TRAIN: [4 0 2 5] TEST: [1 3]
     TRAIN: [1 2 4 0] TEST: [3 5]
@@ -1387,7 +1414,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> rs = ShuffleSplit(n_splits=5, train_size=0.5, test_size=.25,
     ...                   random_state=0)
     >>> for train_index, test_index in rs.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
     TRAIN: [1 3 0] TEST: [5 2]
     TRAIN: [4 0 2] TEST: [1 3]
     TRAIN: [1 2 4] TEST: [3 5]
@@ -1448,10 +1475,13 @@ class GroupShuffleSplit(ShuffleSplit):
 
     test_size : float, int, None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        absolute number of test groups. If None, the value is set to the
-        complement of the train size. If ``train_size`` is also None, it will
-        be set to 0.2.
+        of groups to include in the test split (rounded up). If int,
+        represents the absolute number of test groups. If None, the value is
+        set to the complement of the train size. By default, the value is set
+        to 0.2.
+        The default will change in version 0.21. It will remain 0.2 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1465,6 +1495,22 @@ class GroupShuffleSplit(ShuffleSplit):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GroupShuffleSplit
+    >>> X = np.ones(shape=(8, 2))
+    >>> y = np.ones(shape=(8, 1))
+    >>> groups = np.array([1, 1, 2, 2, 2, 3, 3, 3])
+    >>> print(groups.shape)
+    (8,)
+    >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
+    >>> gss.get_n_splits()
+    2
+    >>> for train_idx, test_idx in gss.split(X, y, groups):
+    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
+    TRAIN: [2 3 4 5 6 7] TEST: [0 1]
+    TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
 
     def __init__(self, n_splits=5, test_size=None, train_size=None,
@@ -1574,9 +1620,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
     >>> for train_index, test_index in sss.split(X, y):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [5 2 3] TEST: [4 1 0]
     TRAIN: [5 1 4] TEST: [0 2 3]
     TRAIN: [5 0 2] TEST: [4 3 1]
@@ -1667,7 +1713,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             hence ``np.zeros(n_samples)`` may be used as a placeholder for
             ``X`` instead of actual training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_labels)
             The target variable for supervised learning problems.
             Stratification is done based on the y labels.
 
@@ -1791,9 +1837,9 @@ class PredefinedSplit(BaseCrossValidator):
     >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
     >>> for train_index, test_index in ps.split():
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
+    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    ...     X_train, X_test = X[train_index], X[test_index]
+    ...     y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 2 3] TEST: [0]
     TRAIN: [0 2] TEST: [1 3]
     """
@@ -2094,8 +2140,8 @@ def train_test_split(*arrays, **options):
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
 
-    return list(chain.from_iterable((safe_indexing(a, train),
-                                     safe_indexing(a, test)) for a in arrays))
+    return list(chain.from_iterable((_safe_indexing(a, train),
+                                     _safe_indexing(a, test)) for a in arrays))
 
 
 # Tell nose that train_test_split is not a test.
@@ -2122,11 +2168,13 @@ def _build_repr(self):
         # catch deprecated param values.
         # This is set in utils/__init__.py but it gets overwritten
         # when running under python3 somehow.
-        warnings.simplefilter("always", DeprecationWarning)
+        warnings.simplefilter("always", FutureWarning)
         try:
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+                if value is None and hasattr(self, 'cvargs'):
+                    value = self.cvargs.get(key, None)
+            if len(w) and w[0].category == FutureWarning:
                 # if the parameter is deprecated, don't show it
                 continue
         finally:
