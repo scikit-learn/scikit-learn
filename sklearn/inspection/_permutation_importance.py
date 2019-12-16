@@ -116,7 +116,8 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     baseline_score = scorer(estimator, X, y)
     scores = np.zeros((X.shape[1], n_repeats))
 
-    scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
+    scores = Parallel(n_jobs=n_jobs, max_nbytes=None)(delayed(
+        _calculate_permutation_scores)(
         estimator, X, y, col_idx, random_state, n_repeats, scorer
     ) for col_idx in range(X.shape[1]))
 
