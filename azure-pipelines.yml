@@ -12,7 +12,7 @@ jobs:
     - bash: conda create --name flake8_env --yes flake8
       displayName: Install flake8
     - bash: |
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ /\[lint skip\]/ ]]; then
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"
           exit 0
