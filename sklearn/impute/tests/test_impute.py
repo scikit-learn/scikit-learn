@@ -17,6 +17,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
 from sklearn.datasets import load_diabetes
+from sklearn.base import BaseEstimator
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -1066,6 +1067,41 @@ def test_iterative_imputer_skip_non_missing(skip_complete):
         assert_allclose(X_test_est[:, 0], np.mean(X_train[:, 0]))
     else:
         assert_allclose(X_test_est[:, 0], [11, 7, 12], rtol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "rs_imputer, rs_estimator, rs_expect",
+    [(None, None, "None"), (401, None, "int"),
+     (np.random.RandomState(seed=402), None, "int"),
+     (None, 403, 403), (404, 405, 405),
+     (np.random.RandomState(seed=406), 407, 407),
+     (None, "string", "string"), (408, "string", "string"),
+     (np.random.RandomState(seed=409), "string", "string")]
+)
+def test_iterative_imputer_set_estimator_random_state(
+    rs_imputer, rs_estimator, rs_expect
+):
+    class ZeroPredictor(BaseEstimator):
+        def __init__(self, random_state=None, rs_expect="None"):
+            self.rs_expect = rs_expect
+            self.random_state = random_state
+
+        def fit(self, X, y):
+            if self.rs_expect == "None":
+                assert self.random_state is None
+            elif self.rs_expect == "int":
+                assert isinstance(self.random_state, int)
+            else:
+                assert self.random_state == self.rs_expect
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+    X = np.ones((10, 3), dtype=float)
+    X[[1, 2, 3], 0] = np.nan
+    X[[4, 5, 6], 1] = np.nan
+    estimator = ZeroPredictor(random_state=rs_estimator, rs_expect=rs_expect)
+    imputer = IterativeImputer(estimator=estimator, random_state=rs_imputer)
+    imputer.fit_transform(X)
 
 
 @pytest.mark.parametrize(
