@@ -234,9 +234,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
+
     In French but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
+
     See also
     --------
     PLSCanonical
@@ -643,10 +645,10 @@ class PLSRegression(_PLS):
     Jacob A. Wegelin. A survey of Partial Least Squares (PLS) methods, with
     emphasis on the two-block case. Technical Report 371, Department of
     Statistics, University of Washington, Seattle, 2000.
+
     In french but still a reference:
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
-
     """
 
     def __init__(self, n_components=2, scale=True,
@@ -788,12 +790,10 @@ class PLSCanonical(_PLS):
 
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
-
     See also
     --------
     CCA
     PLSSVD
-
     """
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
