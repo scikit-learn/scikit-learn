@@ -605,7 +605,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         return y, expanded_class_weight
 
-    def predict(self, X):
+    def predict(self, X, sample_weight=False):
         """
         Predict class for X.
 
@@ -626,7 +626,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
-        proba = self.predict_proba(X)
+        if not sample_weight:
+            proba = self.predict_proba(X)
+        else:
+            proba = self.predict_proba_with_sample_weight(X)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
@@ -734,13 +737,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             delayed(_accumulate_prediction_with_sample_weight)(e.predict_proba_with_sample_weight,
                                             X, all_proba, all_sample_weights, lock)
             for e in self.estimators_)
-        print(all_proba, all_sample_weights)
         for proba in all_proba:
             print(proba)
             proba /= all_sample_weights
             this_normalizer = proba.sum(axis=1)
             proba /= this_normalizer
-        print(all_proba, all_sample_weights)
 
         if len(all_proba) == 1:
             return all_proba[0]
