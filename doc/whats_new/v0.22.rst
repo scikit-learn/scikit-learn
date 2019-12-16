@@ -501,6 +501,14 @@ Changelog
   names by default when a dataframe is passed.
   :pr:`14028` and :pr:`15429` by `Guillaume Lemaitre`_.
 
+- |Fix| Fixed a bug where :func:`inspection.permutation_importance` raised a
+  `ValueError` when using large enough pandas DataFrame and `n_jobs>0` because
+  joblib switches to read-only memmap mode, which proceeds to raise, as
+  permutation_importance tries to assign to the DataFrame. Fixed by by setting
+  `max_nbytes=None`.
+  :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`,
+  `Anders Bogsnes <andersbogsnes >`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
