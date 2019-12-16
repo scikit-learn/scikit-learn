@@ -736,8 +736,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             for e in self.estimators_)
         print(all_proba, all_sample_weights)
         for proba in all_proba:
+            print(proba)
             proba /= all_sample_weights
-            this_normalizer = proba.sum()
+            this_normalizer = proba.sum(axis=1)
             proba /= this_normalizer
         print(all_proba, all_sample_weights)
 
