@@ -85,6 +85,15 @@ Changelog
   :class:`linear_model.RidgeClassifierCV`.
   :pr:`15653` by :user:`Jérôme Dockès <jeromedockes>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` yields stack trace information
+  in fit failed warning messages in addition to previously emitted
+  type and details.
+  :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
