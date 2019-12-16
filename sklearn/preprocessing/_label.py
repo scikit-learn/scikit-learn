@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
+from collections import Counter
 import itertools
 import array
 import warnings
@@ -33,32 +34,55 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
+def _encode_numpy(values, uniques=None, encode=False, check_unknown=True,
+                  return_counts=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
-        if encode:
-            uniques, encoded = np.unique(values, return_inverse=True)
-            return uniques, encoded
+        unique_result = np.unique(values, return_inverse=encode,
+                                  return_counts=return_counts)
+        if encode and return_counts:
+            return {'uniques': unique_result[0],
+                    'encoded': unique_result[1],
+                    'counts': unique_result[2]}
+        elif encode:
+            return {'uniques': unique_result[0],
+                    'encoded': unique_result[1]}
+        elif return_counts:
+            return {'uniques': unique_result[0],
+                    'counts': unique_result[1]}
         else:
-            # unique sorts
-            return np.unique(values)
+            return {'uniques': unique_result}
+
+    output = {'uniques': uniques}
     if encode:
         if check_unknown:
             diff = _encode_check_unknown(values, uniques)
             if diff:
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(diff))
-        encoded = np.searchsorted(uniques, values)
-        return uniques, encoded
-    else:
-        return uniques
+        output['encoded'] = np.searchsorted(uniques, values)
+
+    if return_counts:
+        _, counts = np.unique(values, return_counts=True)
+        output['counts'] = counts
+
+    return output
 
 
-def _encode_python(values, uniques=None, encode=False):
+def _encode_python(values, uniques=None, encode=False, return_counts=False):
     # only used in _encode below, see docstring there for details
+    output = {}
     if uniques is None:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
+
+    if return_counts:
+        uniques_dict = Counter(values)
+        counts = np.array([uniques_dict[item] for item in uniques],
+                          dtype=np.int)
+        output['counts'] = counts
+
+    output['uniques'] = uniques
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
         try:
@@ -66,12 +90,12 @@ def _encode_python(values, uniques=None, encode=False):
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
-        return uniques, encoded
-    else:
-        return uniques
+        output['encoded'] = encoded
+    return output
 
 
-def _encode(values, uniques=None, encode=False, check_unknown=True):
+def _encode(values, uniques=None, encode=False, check_unknown=True,
+            return_counts=False):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -97,25 +121,38 @@ def _encode(values, uniques=None, encode=False, check_unknown=True):
         True in this case. This parameter is useful for
         _BaseEncoder._transform() to avoid calling _encode_check_unknown()
         twice.
+    return_counts: bool, default=False
+        Returns the counts of the unique items in values. If uniques of object
+        dtype is passed in, the order of the counts will match the
+        order of the uniques. All other dtypes will return counts that assume
+        that uniques is ordered.
 
     Returns
     -------
-    uniques
-        If ``encode=False``. The unique values are sorted if the `uniques`
-        parameter was None (and thus inferred from the data).
-    (uniques, encoded)
-        If ``encode=True``.
+    output :
+        Dictionary with attributes:
 
+        uniques :
+            If ``encode=False``. The unique values are sorted if the `uniques`
+            parameter was None (and thus inferred from the data).
+
+        encoded :
+            If ``encode=True``.
+
+        counts :
+            If ``return_counts``.
     """
     if values.dtype == object:
         try:
-            res = _encode_python(values, uniques, encode)
+            res = _encode_python(values, uniques, encode,
+                                 return_counts=return_counts)
         except TypeError:
             raise TypeError("argument must be a string or number")
         return res
     else:
         return _encode_numpy(values, uniques, encode,
-                             check_unknown=check_unknown)
+                             check_unknown=check_unknown,
+                             return_counts=return_counts)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -233,7 +270,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _encode(y)
+        self.classes_ = _encode(y)["uniques"]
         return self
 
     def fit_transform(self, y):
@@ -249,8 +286,9 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        self.classes_, y = _encode(y, encode=True)
-        return y
+        result = _encode(y, encode=True)
+        self.classes_ = result["uniques"]
+        return result["encoded"]
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -270,8 +308,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
         if _num_samples(y) == 0:
             return np.array([])
 
-        _, y = _encode(y, uniques=self.classes_, encode=True)
-        return y
+        return _encode(y, uniques=self.classes_, encode=True)["encoded"]
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.

@@ -626,13 +626,39 @@ def test_inverse_binarize_multiclass():
           np.array(['a', 'b', 'c']))],
         ids=['int64', 'object', 'str'])
 def test_encode_util(values, expected):
-    uniques = _encode(values)
+    uniques = _encode(values)['uniques']
     assert_array_equal(uniques, expected)
-    uniques, encoded = _encode(values, encode=True)
-    assert_array_equal(uniques, expected)
-    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
-    _, encoded = _encode(values, uniques, encode=True)
-    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+    result = _encode(values, encode=True)
+    assert_array_equal(result['uniques'], expected)
+    assert_array_equal(result['encoded'], np.array([1, 0, 2, 0, 2]))
+
+    result = _encode(values, uniques, encode=True)
+    assert_array_equal(result['uniques'], expected)
+    assert_array_equal(result['encoded'], np.array([1, 0, 2, 0, 2]))
+
+    result = _encode(values, return_counts=True)
+    assert_array_equal(result['uniques'], expected)
+    assert_array_equal(result['counts'], np.array([2, 1, 2]))
+
+    result = _encode(values, encode=True, return_counts=True)
+    assert_array_equal(result['uniques'], expected)
+    assert_array_equal(result['counts'], np.array([2, 1, 2]))
+    assert_array_equal(result['encoded'], np.array([1, 0, 2, 0, 2]))
+
+    result = _encode(values, uniques, return_counts=True)
+    assert_array_equal(result['uniques'], expected)
+    assert_array_equal(result['counts'], np.array([2, 1, 2]))
+
+
+def test_encode_util_uniques_unordered():
+    # The return counts are ordered based on the order of uniques
+
+    values = np.array(['b'] * 21 + ['c'] * 5 + ['a'] * 11, dtype=object)
+    result = _encode(values, np.array(['a', 'c', 'b']), return_counts=True)
+
+    assert_array_equal(result['uniques'], np.array(['a', 'c', 'b']))
+    assert_array_equal(result['counts'], [11, 5, 21])
 
 
 def test_encode_check_unknown():
