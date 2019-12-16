@@ -96,6 +96,23 @@ class _IffHasAttrDescriptor:
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
+    def __set_name__(self, owner, name):
+        def __dir__(instance):
+            attrs = instance.__dict__.keys() | set(dir(type(instance)))
+            for method_name in owner._delegated_methods:
+                for delegate_name in self.delegate_names:
+                    delegate = attrgetter(delegate_name)(instance)
+                    if hasattr(delegate, method_name):
+                        break
+                else:
+                    attrs.remove(method_name)
+            return attrs
+
+        if not hasattr(owner, "_delegated_methods"):
+            owner._delegated_methods = set()
+        owner._delegated_methods.add(name)
+        owner.__dir__ = __dir__
+
     def __get__(self, obj, type=None):
         # raise an AttributeError if the attribute is not present on the object
         if obj is not None:
