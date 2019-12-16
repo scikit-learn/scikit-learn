@@ -319,6 +319,7 @@ Others also work in the multiclass case:
    confusion_matrix
    hinge_loss
    matthews_corrcoef
+   most_confused_classes
    roc_auc_score
 
 

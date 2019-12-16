@@ -939,6 +939,7 @@ details.
    metrics.jaccard_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.most_confused_classes
    metrics.multilabel_confusion_matrix
    metrics.ndcg_score
    metrics.precision_recall_curve

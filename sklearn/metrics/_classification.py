@@ -523,7 +523,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
 
 def most_confused_classes(y_true, y_pred, labels=None,
                           max_rows=None, normalize=None):
-    """Most confused classes.
+    """Compute the most confused classes.
 
     In multiclass and binary classification, this function computes the classes
     which have been confused the most often by the classifier.
