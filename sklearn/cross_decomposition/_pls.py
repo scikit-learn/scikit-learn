@@ -864,7 +864,6 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     --------
     PLSCanonical
     CCA
-
     """
 
     def __init__(self, n_components=2, scale=True, copy=True):
