@@ -27,7 +27,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
-from ._hashing_impl import FeatureHasher
+from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT, deprecated
