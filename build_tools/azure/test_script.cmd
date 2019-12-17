@@ -6,6 +6,7 @@ IF "%PYTHON_ARCH%"=="64" (
     set PYTEST_ARGS=%PYTEST_ARGS% -n2
 )
 
+cp ntpath.py c:\miniconda\envs\testvenv\lib\ntpath.py
 mkdir %TMP_FOLDER%
 cd %TMP_FOLDER%
 
@@ -17,5 +18,4 @@ if "%COVERAGE%" == "true" (
     set PYTEST_ARGS=%PYTEST_ARGS% --cov sklearn
 )
 
-cp ntpath.py c:\miniconda\envs\testvenv\lib\ntpath.py
 pytest -x -k test_import_is_deprecated --junitxml=%JUNITXML% --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn
