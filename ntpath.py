@@ -553,13 +553,14 @@ def relpath(path, start=None):
 
     start = os.fspath(start)
     try:
+        cwd = os.getcwd()
         start_abs = abspath(normpath(start))
         path_abs = abspath(normpath(path))
         start_drive, start_rest = splitdrive(start_abs)
         path_drive, path_rest = splitdrive(path_abs)
         if normcase(start_drive) != normcase(path_drive):
-            raise ValueError("path is on mount %r, start on mount %r" % (
-                path_drive, start_drive))
+            raise ValueError("path=%r (%r), start=%r (%r), cwd=%r" % (
+                path, path_abs, start, start_abs, cwd))
 
         start_list = [x for x in start_rest.split(sep) if x]
         path_list = [x for x in path_rest.split(sep) if x]
