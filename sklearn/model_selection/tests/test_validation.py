@@ -1718,3 +1718,36 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
+
+
+def test_cross_validate_return_predict():
+    clf = MockClassifier()
+    X = np.random.rand(1000, 10)
+    y = np.random.choice([0, 1], size=(1000,), p=[0.5, 0.5])
+    ret = cross_validate(clf, X, y, cv=3, return_train_score=False,
+                         return_estimator=True, return_predictions='predict')
+    assert np.all(ret['predictions'] == clf.predict(X))
+
+
+def test_cross_validate_return_predict_proba_shape():
+    n_samples = 10000
+    n_classes = 2
+    clf = LogisticRegression(random_state=0)
+    X, y = make_classification(n_samples=n_samples, random_state=0,
+                               n_classes=n_classes)
+
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=True,
+                         return_predictions='predict_proba')
+    assert ret['predictions'].shape == (n_samples, n_classes)
+
+
+def test_cross_validate_return_predictions_value_error():
+    error_message = "return_predictions must either be 'predict' " \
+                    "or 'predict_proba'"
+    clf = MockClassifier()
+    X = np.random.rand(10, 2)
+    y = np.random.choice([0, 1], size=(10,), p=[0.5, 0.5])
+
+    assert_raise_message(ValueError, error_message, cross_validate,
+                         clf, X, y, return_predictions="wrong_value")

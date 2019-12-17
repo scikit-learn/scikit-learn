@@ -39,7 +39,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
-                   return_estimator=False, error_score=np.nan):
+                   return_estimator=False, error_score=np.nan,
+                   return_predictions=None):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -141,6 +142,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+    return_predictions : {'predict_proba', 'predict'}, default=None
+        Return cross-validation predictions for the dataset. 'predict' returns
+        the predictions whereas 'predict_proba' returns class probabilities.
+
     Returns
     -------
     scores : dict of float arrays of shape (n_splits,)
@@ -172,6 +177,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 The estimator objects for each cv split.
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
+            ``predictions``
+                Cross-validation predictions for the dataset.
+                This is available only if ``return_predictions`` parameter
+                is set to ``predict`` or ``predict_proba``.
 
     Examples
     --------
@@ -217,6 +226,12 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Make a scorer from a performance metric or loss function.
 
     """
+    if (return_predictions is not None) and \
+            (not isinstance(return_predictions, str)
+             or return_predictions not in ["predict", "predict_proba"]):
+        raise ValueError("return_predictions must either be 'predict' "
+                         "or 'predict_proba'")
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -231,13 +246,19 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
-            error_score=error_score)
+            error_score=error_score, return_predictions=return_predictions)
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
     if return_train_score:
         train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
+    if return_predictions:
+        predictions = zipped_scores.pop()
+        predictions = np.hstack(predictions) \
+            if return_predictions == "predict" else np.vstack(predictions)
+        test_indices = np.hstack(zipped_scores.pop())
+        predictions = predictions[test_indices]
     if return_estimator:
         fitted_estimators = zipped_scores.pop()
     test_scores, fit_times, score_times = zipped_scores
@@ -255,6 +276,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         if return_train_score:
             key = 'train_%s' % name
             ret[key] = np.array(train_scores[name])
+
+    if return_predictions:
+        ret['predictions'] = predictions
 
     return ret
 
@@ -394,7 +418,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
-                   error_score=np.nan):
+                   error_score=np.nan, return_predictions=None):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -455,6 +479,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
+    return_predictions : {'predict_proba', 'predict'}, default=None
+        Return cross-validation predictions for the dataset. 'predict' returns
+        the predictions whereas 'predict_proba' returns class probabilities.
+
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
@@ -478,6 +506,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     estimator : estimator object
         The fitted estimator
+
+    test_indices : int, optional
+        Indices of cv split test set, returned only if
+        `return_predictions` is `predict` or `predict_proba`.
+
+    predictions : float, optional
+        Predicted class or predicted class probability of
+        cv split test set, returned only if `return_predictions`
+        is `predict` or `predict_proba`.
     """
     if verbose > 1:
         if parameters is None:
@@ -573,6 +610,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.append(parameters)
     if return_estimator:
         ret.append(estimator)
+    if return_predictions:
+        ret.append(test)
+        if return_predictions == "predict":
+            ret.append(estimator.predict(X_test))
+        if return_predictions == "predict_proba":
+            ret.append(estimator.predict_proba(X_test))
     return ret
 
 
