@@ -184,7 +184,7 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
 # TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
-    "ignore:scipy.rand is deprecated:DeprecationWarning:scipy.*")
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip('pyamg')
@@ -218,7 +218,7 @@ def test_spectral_embedding_amg_solver(seed=36):
 # TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
 # https://github.com/scikit-learn/scikit-learn/issues/15913
 @pytest.mark.filterwarnings(
-    "ignore:scipy.rand is deprecated:DeprecationWarning:scipy.*")
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_embedding_amg_solver_failure(seed=36):
     # Test spectral embedding with amg solver failure, see issue #13393
     pytest.importorskip('pyamg')
