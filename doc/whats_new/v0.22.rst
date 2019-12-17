@@ -21,6 +21,17 @@ Changelog
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| Fixed a bug where :func:`inspection.permutation_importance` raised a
+  `ValueError` when using large enough pandas DataFrame and `n_jobs>0` because
+  joblib switches to read-only memmap mode, which proceeds to raise, as
+  permutation_importance tries to assign to the DataFrame. Fixed by by setting
+  `max_nbytes=None`.
+  :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`,
+  `Anders Bogsnes <andersbogsnes >`.
+
 .. _changes_0_22:
 
 Version 0.22.0
@@ -500,14 +511,6 @@ Changelog
   In addition :func:`inspection.plot_partial_dependence` will use the column
   names by default when a dataframe is passed.
   :pr:`14028` and :pr:`15429` by `Guillaume Lemaitre`_.
-
-- |Fix| Fixed a bug where :func:`inspection.permutation_importance` raised a
-  `ValueError` when using large enough pandas DataFrame and `n_jobs>0` because
-  joblib switches to read-only memmap mode, which proceeds to raise, as
-  permutation_importance tries to assign to the DataFrame. Fixed by by setting
-  `max_nbytes=None`.
-  :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`,
-  `Anders Bogsnes <andersbogsnes >`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
