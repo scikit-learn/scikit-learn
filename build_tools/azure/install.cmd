@@ -25,7 +25,7 @@ IF "%PYTHON_ARCH%"=="64" (
     pip install numpy scipy cython pytest wheel pillow joblib
 )
 if "%COVERAGE%" == "true" (
-    pip install coverage codecov pytest-cov
+    pip install coverage==4.5.3 codecov pytest-cov
 )
 python --version
 pip --version
