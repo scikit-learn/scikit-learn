@@ -96,21 +96,26 @@ class _IffHasAttrDescriptor:
         # update the docstring of the descriptor
         update_wrapper(self, fn)
 
+    # silently ignored in Python ver 3.5
     def __set_name__(self, owner, name):
-        def __dir__(instance):
-            attrs = instance.__dict__.keys() | set(dir(type(instance)))
-            for method_name in owner._delegated_methods:
-                for delegate_name in self.delegate_names:
-                    delegate = attrgetter(delegate_name)(instance)
-                    if hasattr(delegate, method_name):
-                        break
-                else:
-                    attrs.remove(method_name)
+        def __dir__(obj):
+            attrs = obj.__dict__.keys() | set(dir(type(obj)))
+            for delegate_names, attribute_names in owner._delegations.items():
+                for attribute_name in attribute_names:
+                    for delegate_name in delegate_names:
+                        try:
+                            delegate = attrgetter(delegate_name)(obj)
+                        except AttributeError:
+                            continue
+                        else:
+                            if not hasattr(delegate, attribute_name):
+                                attrs.discard(attribute_name)
+                            break
             return attrs
 
-        if not hasattr(owner, "_delegated_methods"):
-            owner._delegated_methods = set()
-        owner._delegated_methods.add(name)
+        if not hasattr(owner, "_delegations"):
+            owner._delegations = dict()
+        owner._delegations.setdefault(self.delegate_names, []).append(name)
         owner.__dir__ = __dir__
 
     def __get__(self, obj, type=None):
