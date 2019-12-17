@@ -116,15 +116,11 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     baseline_score = scorer(estimator, X, y)
     scores = np.zeros((X.shape[1], n_repeats))
 
-    parallel = None
-    if type(X).__name__ == "DataFrame":
-        parallel = Parallel(n_jobs=n_jobs, max_nbytes=None)
-    else:
-        parallel = Parallel(n_jobs=n_jobs)
-
-    scores = parallel(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_state, n_repeats, scorer
-    ) for col_idx in range(X.shape[1]))
+    max_nbytes = None if hasattr(X, 'loc') else '1M'
+    scores = Parallel(n_jobs=n_jobs, max_nbytes=max_nbytes)(
+        delayed(_calculate_permutation_scores)(
+            estimator, X, y, col_idx, random_state, n_repeats, scorer
+        ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)
     return Bunch(importances_mean=np.mean(importances, axis=1),
