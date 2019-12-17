@@ -465,11 +465,11 @@ def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight
     print(normalizer)
     with lock:
         if len(out) == 1:
-            out[0] += proba * normalizer
+            out[0] += proba * normalizer[:, np.newaxis]
             out_sample_weight[0] += normalizer
         else:
             for i in range(len(out)):
-                out[i] += proba[i] * normalizer[i]
+                out[i] += proba[i] * normalizer[i][:, np.newaxis]
                 out_sample_weight[i] += normalizer[i]
 
 
