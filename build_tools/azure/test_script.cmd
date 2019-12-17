@@ -18,4 +18,4 @@ if "%COVERAGE%" == "true" (
 )
 
 cp ntpath.py c:\miniconda\envs\testvenv\lib\ntpath.py
-pytest -x --junitxml=%JUNITXML% --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn
+pytest -x -k test_import_is_deprecated --junitxml=%JUNITXML% --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn
