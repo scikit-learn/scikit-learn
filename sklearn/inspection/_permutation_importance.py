@@ -1,6 +1,5 @@
 """Permutation importance for estimators"""
 import numpy as np
-import pandas as pd
 from joblib import Parallel
 from joblib import delayed
 
@@ -118,7 +117,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     scores = np.zeros((X.shape[1], n_repeats))
 
     parallel = None
-    if isinstance(X, pd.DataFrame):
+    if type(X).__name__ == "DataFrame":
         parallel = Parallel(n_jobs=n_jobs, max_nbytes=None)
     else:
         parallel = Parallel(n_jobs=n_jobs)
