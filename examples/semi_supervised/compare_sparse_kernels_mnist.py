@@ -163,6 +163,8 @@ def plot_results(supervision_fractions, results):
         ax[i].set_xlim([8e-4, 1.3e-1])
         ax[i].set_title(f'{label.capitalize()}')
         ax[i].set_xlabel('Supervision Fraction')
+        ax[i].set_ylabel(ylabel)
+        ax[i].legend()
         ax[i].fill_between(supervision_fractions,
                            [a - b for a, b in zip(S_avg, S_std)],
                            [a + b for a, b in zip(S_avg, S_std)],
@@ -213,7 +215,7 @@ if __name__ == '__main__':
     # Set the fraction of data to use for hyperparam tuning
     hyperp_tune_fraction = 0.1
     # Set the fraction of data to use for the final comparison
-    compare_fraction = 0.1
+    compare_fraction = 0.2
     # Set this flag to run the grid search, which takes several hours
     do_grid_search = False
 
