@@ -35,18 +35,6 @@ def test_import_is_deprecated(deprecated_path, importee):
 
     script = """
     import pytest
-    import ntpath
-    from ntpath import relpath as orig_relpath
-
-
-    def wrapped_relpath(path, start=None):
-        try:
-            return orig_relpath(path, start=start)
-        except ValueError:
-            raise ValueError("path=%s, start=%s" % (path, start))
-
-    ntpath.relpath = wrapped_relpath
-
 
     with pytest.warns(FutureWarning,
                       match="{expected_message}"):
