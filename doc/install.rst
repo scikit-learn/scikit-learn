@@ -267,21 +267,22 @@ Error caused by file path length limit on Windows
 
 It can happen that pip fails to install packages when reaching the default path
 size limit of Windows if Python is installed in a nested location such as the
-`AppData` folder structure under the user home directory, for instance:
+`AppData` folder structure under the user home directory, for instance::
 
-```
-C:\Users\username>C:\Users\username\AppData\Local\Microsoft\WindowsApps\python.exe -m pip install scikit-learn
-Collecting scikit-learn
-...
-Installing collected packages: scikit-learn
-ERROR: Could not install packages due to an EnvironmentError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
-```
+    C:\Users\username>C:\Users\username\AppData\Local\Microsoft\WindowsApps\python.exe -m pip install scikit-learn
+    Collecting scikit-learn
+    ...
+    Installing collected packages: scikit-learn
+    ERROR: Could not install packages due to an EnvironmentError: [Errno 2] No such file or directory: 'C:\\Users\\username\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.7_qbz5n2kfra8p0\\LocalCache\\local-packages\\Python37\\site-packages\\sklearn\\datasets\\tests\\data\\openml\\292\\api-v1-json-data-list-data_name-australian-limit-2-data_version-1-status-deactivated.json.gz'
 
-In this case it is possible to lift that limit in the Windows registry by using the ``regedit`` tool:
+In this case it is possible to lift that limit in the Windows registry by
+using the ``regedit`` tool:
 
 #. Type "regedit" in the Windows start menu to launch ``regedit``.
 
-#. Go to the ``Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem`` key.
+#. Go to the
+   ``Computer\HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\FileSystem``
+   key.
 
 #. Edit the value of the ``LongPathsEnabled`` property of that key and set
    it to 1.
