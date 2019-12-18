@@ -136,7 +136,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             W = self.nn_fit.kneighbors_graph(y, mode='distance').T.power(2)
             W *= -1 * self.gamma
             np.exp(W.data, out=W.data)
-            # explicitly set diagonal, 
+            # explicitly set diagonal,
             # since np.exp(W.data) does not modify zeros on the diagonal
             W.setdiag(1)
             return W
