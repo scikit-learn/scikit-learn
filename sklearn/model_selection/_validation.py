@@ -734,7 +734,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
     encode = method in ['decision_function', 'predict_proba',
-                        'predict_log_proba']
+                        'predict_log_proba'] and y is not None
     if encode:
         y = np.asarray(y)
         if y.ndim == 1:
