@@ -23,7 +23,7 @@ from . import _hierarchical_fast as _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
-from ..utils import deprecated
+
 
 ###############################################################################
 # For non fully-connected graphs
@@ -247,8 +247,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     else:
         if n_clusters > n_samples:
             raise ValueError('Cannot provide more clusters than samples. '
-                             '%i n_clusters was asked, and there are %i samples.'
-                             % (n_clusters, n_samples))
+                             '%i n_clusters was asked, and there are %i '
+                             'samples.' % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
     # create inertia matrix
