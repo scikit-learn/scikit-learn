@@ -220,7 +220,7 @@ The following GitHub checklist might be helpful in a release PR::
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
     * [ ] fix the binder release version in ``.binder/requirement.txt`` (see
-      #15840)
+      #15847)
     * [ ] announce on mailing list and on twitter
 
 The scikit-learn.org web site
