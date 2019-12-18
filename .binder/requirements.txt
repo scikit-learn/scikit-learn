@@ -1,6 +1,9 @@
-matplotlib
-scikit-image
-pandas
-sphinx-gallery
+# Dependencies version were set to roughly the latest available version at the
+# time of the scikit-learn major release
+matplotlib==3.1.2
+scikit-image==0.16.2
+pandas==0.25.3
+sphinx-gallery==0.5.0
+# Need to update the scikit-learn version on each 0.22 minor release
 scikit-learn==0.22
 
