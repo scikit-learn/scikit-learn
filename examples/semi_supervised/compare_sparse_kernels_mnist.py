@@ -33,10 +33,11 @@ from pprint import pprint
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.semi_supervised import LabelSpreading
+from torchvision.datasets import CIFAR10
 import time
 
 
-def run_grid_search(X, y):
+def run_grid_search(X_train, X_test, y_train, y_test):
     """
     We perform a grid search to optimize parameters for sparse-rbf
     kernel.  For this purpose, we use a smaller subset of the data.  In all
@@ -47,16 +48,6 @@ def run_grid_search(X, y):
     the `WrapLabelSpreading` class further to also hyperparameter search over
     the transductive accuracy.
     """
-
-    # First, we use a small subset of the data to tune hyperparameters
-    n_total = 5000
-    X = X[:n_total, :]
-    y = y[:n_total]
-
-    test_fraction = 0.333
-    X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_fraction, random_state=0)
-
     # In order to use GridSearchCV, we will use a thin wrapper class
     # that masks a subset of our training labels.
     sparse_rbf_model = GridSearchCV(
@@ -69,7 +60,8 @@ def run_grid_search(X, y):
                 'n_neighbors': list(range(6, 30, 2))},
             cv=3)
 
-    sparse_rbf_model.fit(X, y)
+    sparse_rbf_model.fit(np.vstack((X_train, X_test)),
+                         np.concatenate((y_train, y_test)))
     sparse_rbf_params = sparse_rbf_model.best_params_
     print(f"Optimal parameters for sparse RBF kernel: {sparse_rbf_params}")
 
@@ -82,24 +74,16 @@ def run_grid_search(X, y):
                 'n_neighbors': list(range(6, 30, 2))},
             cv=3)
 
-    knn_model.fit(X, y)
+    knn_model.fit(np.vstack((X_train, X_test)),
+                  np.concatenate((y_train, y_test)))
     knn_params = knn_model.best_params_
     print(f"Optimal parameters for knn kernel: {knn_params}")
-    return n_total, sparse_rbf_params, knn_params
+    return sparse_rbf_params, knn_params
 
 
-def run_comparison(X, y, sparse_rbf_params, knn_params, n_skip):
+def run_comparison(X_train, X_test, y_train, y_test,
+                   sparse_rbf_params, knn_params):
     print("Begin comparison...")
-    # Next, we can compare our optimized models on a larger dataset.
-    n_total = 35000
-    X = X[n_skip:n_total+n_skip, :]
-    y = y[n_skip:n_total+n_skip]
-    test_fraction = 0.333
-
-    print("Train/Test split...")
-    X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=test_fraction, random_state=0)
-
     supervision_fractions = [0.001, 0.003, 0.005, 0.01, 0.03, 0.05, 0.1]
     results = {
             'transduction': {
@@ -224,16 +208,54 @@ class WrapLabelSpreading(LabelSpreading):
 
 
 if __name__ == '__main__':
-    X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
-    y = y.astype(int)
-
+    # Choose the dataset
+    dataset = 'mnist'
+    # Set the fraction of data to use for hyperparam tuning
+    hyperp_tune_fraction = 0.1
+    # Set the fraction of data to use for the final comparison
+    compare_fraction = 0.1
     # Set this flag to run the grid search, which takes several hours
     do_grid_search = False
 
-    if do_grid_search:
-        n_skip, sparse_rbf_params, knn_params = run_grid_search(X, y)
+    if dataset == 'mnist':
+        X, y = fetch_openml('mnist_784', version=1, return_X_y=True)
+        y = y.astype(int)
+
+        X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=10000, random_state=0)
+
+    elif dataset == 'cifar10':
+        cifar10 = CIFAR10('.', download=True, train=True)
+        X_train = cifar10.data.reshape(-1, 3*32*32)
+        y_train = np.array(cifar10.targets)
+
+        cifar10 = CIFAR10('.', download=True, train=False)
+        X_test = cifar10.data.reshape(-1, 3*32*32)
+        y_test = np.array(cifar10.targets)
     else:
-        # Values found from running grid search previously
+        raise ValueError(f"dataset {dataset} not supported")
+
+    print("Full dataset sizes: " +
+          f"\nX_train {X_train.shape}" +
+          f"\nX_test {X_test.shape}" +
+          f"\ny_train {y_train.shape}" +
+          f"\ny_test {y_test.shape}")
+
+    if do_grid_search:
+        # First, we use a small subset of the data to tune hyperparameters
+        tr_tune = int(hyperp_tune_fraction * len(y_train))
+        te_tune = int(hyperp_tune_fraction * len(y_test))
+        print("# items for hyperparam tuning:" +
+              f"train: {tr_tune}, test: {te_tune}")
+        sparse_rbf_params, knn_params = run_grid_search(
+                X_train[:tr_tune, :],
+                X_test[:te_tune, :],
+                y_train[:tr_tune],
+                y_test[:te_tune])
+    else:
+        # Values found from running grid search previously on MNIST
+        tr_tune = 0
+        te_tune = 0
         sparse_rbf_params = {
                 'alpha': 0.663,
                 'gamma': 2.154e-7,
@@ -245,11 +267,14 @@ if __name__ == '__main__':
                 'max_iter': 100,
                 'n_jobs': -1,
                 'n_neighbors': 6}
-        n_skip = 0
 
+    # Skip the items used for hyperparam tuning
+    tr_comp = int(compare_fraction * len(y_train)) + tr_tune
+    te_comp = int(compare_fraction * len(y_test)) + te_tune
     supervision_fractions, results = run_comparison(
-            X, y, sparse_rbf_params=sparse_rbf_params,
-            knn_params=knn_params,
-            n_skip=n_skip)
+            X_train[tr_tune:tr_comp, :], X_test[te_tune:te_comp, :],
+            y_train[tr_tune:tr_comp],    y_test[te_tune:te_comp],
+            sparse_rbf_params=sparse_rbf_params,
+            knn_params=knn_params)
 
     plot_results(supervision_fractions, results)
