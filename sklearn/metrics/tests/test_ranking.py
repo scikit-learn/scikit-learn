@@ -554,7 +554,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
-    # on the same input (Provost & Domingos, 2001)
+    # on the same input (Provost & Domingos, 2000)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(
