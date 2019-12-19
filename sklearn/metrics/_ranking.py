@@ -255,24 +255,25 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
         True labels or binary label indicators. The binary and multiclass cases
-        expect labels with shape = [n_samples], the multilabel case expects
-        binary label indicators with shape = [n_samples, n_classes].
+        expect labels with shape (n_samples,) while the multilabel case expects
+        binary label indicators with shape (n_samples, n_classes).
 
-    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores. In the binary and multilabel cases, these can be either
         probability estimates or non-thresholded decision values (as returned
-        by "decision_function" on some classifiers). In the multiclass case,
+        by `decision_function` on some classifiers). In the multiclass case,
         these must be probability estimates which sum to 1. The binary
-        case expects shape = [n_samples], and the scores must be the scores of
+        case expects a shape (n_samples,), and the scores must be the scores of
         the class with the greater label. The multiclass and multilabel
-        cases expect shape = [n_samples, n_classes]. In the multiclass case,
+        cases expect a shape (n_samples, n_classes). In the multiclass case,
         the order of the class scores must correspond to the order of
         ``labels``, if provided, or else to the numerical or lexicographical
         order of the labels in ``y_true``.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {'micro', 'macro', 'samples', 'weighted'} or None, \
+            default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
         Note: multiclass ROC AUC currently only handles the 'macro' and
@@ -295,13 +296,13 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    max_fpr : float > 0 and <= 1, optional
+    max_fpr : float > 0 and <= 1, default=None
         If not ``None``, the standardized partial AUC [2]_ over the range
         [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
-    multi_class : string, 'ovr' or 'ovo', optional(default='raise')
+    multi_class : {'raise', 'ovr', 'ovo'}, default='raise'
         Multiclass only. Determines the type of configuration to use. The
         default value raises an error, so either ``'ovr'`` or ``'ovo'`` must be
         passed explicitly.
@@ -317,7 +318,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             classes [5]_. Insensitive to class imbalance when
             ``average == 'macro'``.
 
-    labels : array, shape = [n_classes] or None, optional (default=None)
+    labels : array-like of shape (n_classes,), default=None
         Multiclass only. List of labels that index the classes in ``y_score``.
         If ``None``, the numerical or lexicographical order of the labels in
         ``y_true`` is used.
@@ -361,7 +362,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> roc_auc_score(y_true, y_scores)
     0.75
-
     """
 
     y_type = type_of_target(y_true)
