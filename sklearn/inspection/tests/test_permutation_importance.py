@@ -6,7 +6,9 @@ from numpy.testing import assert_allclose
 from sklearn.compose import ColumnTransformer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression
@@ -194,3 +196,30 @@ def test_permutation_importance_equivalence_sequential_paralell():
         importance_loky['importances'],
         importance_sequential['importances']
     )
+
+
+@pytest.mark.parametrize("input_type", ["array", "dataframe"])
+def test_permutation_importance_large_memmaped_data(input_type):
+    # Smoke, non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15810
+    n_samples, n_features = int(5e4), 4
+    X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                               random_state=0)
+    assert X.nbytes > 1e6  # trigger joblib memmaping
+
+    if input_type == "dataframe":
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X)
+    else:
+        assert input_type == "array"
+
+    clf = DummyClassifier(strategy='prior').fit(X, y)
+
+    # Actual smoke test: should not raise any error:
+    n_repeats = 5
+    r = permutation_importance(clf, X, y, n_repeats=n_repeats, n_jobs=2)
+
+    # Auxiliary check: dummy classifier is feature indpendent:
+    # permutating feature should not change the predictions
+    expected_importances = np.zeros((n_features, n_repeats))
+    assert_allclose(expected_importances, r.importances)

@@ -20,8 +20,11 @@ Changelog
 
 - |Fix| :func:`inspection.permutation_importance` will return the same
   `importances` when a `random_state` is given for both `n_jobs=1` or
-  `n_jobs>1`.
-  :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>`.
+  `n_jobs>1` both with shared memory backends (thread-safety) and
+  isolated memory, process-based backends.
+  Also avoid casting the data as object dtype and avoid read-only error
+  on large dataframes with `n_jobs>1` as reported in :issue:`15810`.
+  :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
 :mod:`sklearn.metrics`
 ......................
