@@ -20,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.utils import parallel_backend
+from sklearn.utils._testing import _convert_container
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -156,7 +157,7 @@ def test_permutation_importance_linear_regresssion():
                     rtol=1e-1, atol=1e-6)
 
 
-def test_permutation_importance_equivalence_sequential_paralell():
+def test_permutation_importance_equivalence_sequential_parallel():
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
@@ -205,12 +206,7 @@ def test_permutation_importance_large_memmaped_data(input_type):
                                random_state=0)
     assert X.nbytes > 1e6  # trigger joblib memmaping
 
-    if input_type == "dataframe":
-        pd = pytest.importorskip("pandas")
-        X = pd.DataFrame(X)
-    else:
-        assert input_type == "array"
-
+    X = _convert_container(X, input_type)
     clf = DummyClassifier(strategy='prior').fit(X, y)
 
     # Actual smoke test: should not raise any error:

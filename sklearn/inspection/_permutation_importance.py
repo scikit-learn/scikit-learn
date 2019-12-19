@@ -4,25 +4,10 @@ from joblib import Parallel
 from joblib import delayed
 
 from ..metrics import check_scoring
+from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import Bunch
-
-
-def _safe_column_setting(X, col_idx, values):
-    """Set column on X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        X.iloc[:, col_idx] = values
-    else:
-        X[:, col_idx] = values
-
-
-def _safe_column_indexing(X, col_idx):
-    """Return column from X using `col_idx`"""
-    if hasattr(X, "iloc"):
-        return X.iloc[:, col_idx].values
-    else:
-        return X[:, col_idx]
+from ..utils import _safe_indexing
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
@@ -33,11 +18,14 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     # Work on a copy of X to to ensure thread-safety in case of threading
     # based parallelism:
     X_permuted = X.copy()
-    column_data = _safe_column_indexing(X_permuted, col_idx)
+    column_data = np.asarray(_safe_indexing(X_permuted, col_idx, axis=1))
     scores = np.zeros(n_repeats)
     for n_round in range(n_repeats):
         random_state.shuffle(column_data)
-        _safe_column_setting(X_permuted, col_idx, column_data)
+        if hasattr(X_permuted, "iloc"):
+            X_permuted.iloc[:, col_idx] = column_data
+        else:
+            X_permuted[:, col_idx] = column_data
         feature_score = scorer(estimator, X_permuted, y)
         scores[n_round] = feature_score
 
