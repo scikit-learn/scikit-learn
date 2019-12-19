@@ -111,15 +111,21 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
                         copy=True)
 
+    # Precompute random seed from the random state to be used
+    # to get a fresh independent RandomState instance for each
+    # parallel call to _calculate_permutation_scores, irrespective of
+    # the fact that variables are shared or not depending on the active
+    # joblib backend (sequential, thread-based or process-based).
     MAX_RAND_SEED = np.iinfo(np.int32).max
     random_state = check_random_state(random_state)
-    many_random_state = random_state.randint(MAX_RAND_SEED, size=X.shape[0])
+    random_seed = random_state.randint(0, MAX_RAND_SEED)
+
     scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = scorer(estimator, X, y)
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, rand_int, n_repeats, scorer
-    ) for rand_int, col_idx in zip(many_random_state, range(X.shape[1])))
+        estimator, X, y, col_idx, random_seed, n_repeats, scorer
+    ) for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)
     return Bunch(importances_mean=np.mean(importances, axis=1),
