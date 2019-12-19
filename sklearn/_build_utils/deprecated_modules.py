@@ -1,3 +1,4 @@
+
 """Generates submodule to allow deprecation of submodules and keeping git
 blame."""
 from pathlib import Path
@@ -133,7 +134,7 @@ _DEPRECATED_MODULES = [
      'sklearn.datasets', 'make_classification'),
     ('_species_distributions', 'sklearn.datasets.species_distributions',
      'sklearn.datasets', 'fetch_species_distributions'),
-    ('_svmlight_format', 'sklearn.datasets.svmlight_format',
+    ('_svmlight_format_io', 'sklearn.datasets.svmlight_format',
      'sklearn.datasets', 'load_svmlight_file'),
     ('_twenty_newsgroups', 'sklearn.datasets.twenty_newsgroups',
      'sklearn.datasets', 'strip_newsgroup_header'),
