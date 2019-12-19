@@ -20,8 +20,9 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     X_permuted = X.copy()
     # Ensure to take a view on a column of X_permuted to make shuffling inplace
     column_data = _safe_indexing(X_permuted, col_idx, axis=1)
-    if hasattr(X_permuted, "iloc"):
-        column_data = column_data.values
+    column_data = getattr(column_data, "values", column_data)
+    # if hasattr(X_permuted, "iloc"):
+    #     column_data = column_data.values
     scores = np.zeros(n_repeats)
     for n_round in range(n_repeats):
         random_state.shuffle(column_data)
