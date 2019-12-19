@@ -183,7 +183,7 @@ def enet_coordinate_descent(floating[::1] w,
                     w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
                              / (norm_cols_X[ii] + beta))
 
-                if w[ii] != 0.0:
+                if (w_ii - w[ii]) != 0.0:
                     # R +=  (w_ii - w[ii]) * X[:,ii] # Update residual
                     _axpy(n_samples, w_ii - w[ii], &X[0, ii], 1, &R[0], 1)
 
