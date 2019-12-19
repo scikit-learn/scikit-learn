@@ -621,6 +621,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
+        sample_weight: boolean variable with default False, if set to True,
+                       will predict with predict_proba_with_sample_weight 
+                       instead of predict_proba
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -700,10 +704,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         """
         Predict class probabilities for X.
 
-        The predicted class probabilities of an input sample are computed as
-        the mean predicted class probabilities of the trees in the forest.
-        The class probability of a single tree is the fraction of samples of
-        the same class in a leaf.
+        The predicted class probabilities of an input sample is the weighted
+        sum of class probabilities from each tree in the forest. Weights are 
+        calculated by the number of samples in the training set in the node 
+        the input sample falls into. Class probabilities are then normalized
+        to sum to 1 for each input sample.
 
         Parameters
         ----------
@@ -739,7 +744,6 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             for e in self.estimators_)
         for proba in all_proba:
             this_normalizer = proba.sum(axis=1)
-            print(this_normalizer)
             proba /= this_normalizer[:, np.newaxis]
 
         if len(all_proba) == 1:
