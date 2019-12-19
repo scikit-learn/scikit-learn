@@ -18,14 +18,13 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     # Work on a copy of X to to ensure thread-safety in case of threading
     # based parallelism:
     X_permuted = X.copy()
-    column_data = np.asarray(_safe_indexing(X_permuted, col_idx, axis=1))
+    # Ensure to take a view on a column of X_permuted to make shuffling inplace
+    column_data = _safe_indexing(X_permuted, col_idx, axis=1)
+    if hasattr(X_permuted, "iloc"):
+        column_data = column_data.values
     scores = np.zeros(n_repeats)
     for n_round in range(n_repeats):
         random_state.shuffle(column_data)
-        if hasattr(X_permuted, "iloc"):
-            X_permuted.iloc[:, col_idx] = column_data
-        else:
-            X_permuted[:, col_idx] = column_data
         feature_score = scorer(estimator, X_permuted, y)
         scores[n_round] = feature_score
 
