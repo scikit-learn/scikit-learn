@@ -245,7 +245,7 @@ def test_label_encoder_errors():
         le.inverse_transform([-2, -3, -4])
 
     # Fail on inverse_transform("")
-    msg = "should be a 1d array.+shape \(\)"
+    msg = r"should be a 1d array.+shape \(\)"
     with pytest.raises(ValueError, match=msg):
         le.inverse_transform("")
 
