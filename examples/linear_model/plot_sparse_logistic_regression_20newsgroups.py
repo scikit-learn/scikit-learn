@@ -1,6 +1,6 @@
 """
 ====================================================
-Multiclass sparse logistic regression on newgroups20
+Multiclass sparse logistic regression on 20newgroups
 ====================================================
 
 Comparison of multinomial logistic L1 vs one-versus-rest L1 logistic regression
