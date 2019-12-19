@@ -114,7 +114,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     # parallel call to _calculate_permutation_scores, irrespective of
     # the fact that variables are shared or not depending on the active
     # joblib backend (sequential, thread-based or process-based).
-    MAX_RAND_SEED = np.iinfo(np.uint32).max
+    MAX_RAND_SEED = np.iinfo(np.int32).max
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(0, MAX_RAND_SEED)
 
