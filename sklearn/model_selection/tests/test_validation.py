@@ -214,6 +214,9 @@ class MockClassifier:
             T = T.reshape(len(T), -1)
         return T[:, 0]
 
+    def predict_proba(self, T):
+        return T
+
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
 
@@ -970,6 +973,18 @@ def test_cross_val_predict_unbalanced():
     assert np.all(yhat_proba[test[1]] > 0)
     assert_array_almost_equal(yhat_proba.sum(axis=1), np.ones(y.shape),
                               decimal=12)
+
+
+def test_cross_val_predict_y_none():
+    # ensure that cross_val_predict works when y is None
+    mock_classifier = MockClassifier(allow_nd=True)
+    X = np.random.random((100, 10))
+    y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                              method='predict')
+    assert np.all(X[:, 0] == y_hat)
+    y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                                    method='predict_proba')
+    assert np.all(y_hat_proba == X)
 
 
 def test_cross_val_score_sparse_fit_params():

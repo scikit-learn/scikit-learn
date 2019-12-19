@@ -842,7 +842,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+
+    encode = method in ['decision_function', 'predict_proba',
+                        'predict_log_proba'] and y is not None
+
+    if encode:
         if isinstance(predictions, list):
             predictions = [_enforce_prediction_order(
                 estimator.classes_[i_label], predictions[i_label],
