@@ -174,22 +174,24 @@ def test_permutation_importance_equivalence_sequential_paralell():
 
     # The actually check that parallelism does not impact the results
     # either with shared memory (threading) or without isolated memory
-    # via process-based parallelism using loky:
+    # via process-based parallelism using the default backend
+    # ('loky' or 'multiprocessing') depending on the joblib version:
+
+    # process-based parallelism (by default):
+    importance_processes = permutation_importance(
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=2
+    assert_allclose(
+        importance_processes['importances'],
+        importance_sequential['importances']
+    )
+
+    # thread-based parallelism:
     with parallel_backend("threading"):
         importance_threading = permutation_importance(
             lr, X, y, n_repeats=5, random_state=0, n_jobs=2
         )
     assert_allclose(
         importance_threading['importances'],
-        importance_sequential['importances']
-    )
-
-    with parallel_backend("loky"):
-        importance_loky = permutation_importance(
-            lr, X, y, n_repeats=5, random_state=0, n_jobs=2
-        )
-    assert_allclose(
-        importance_loky['importances'],
         importance_sequential['importances']
     )
 
@@ -215,7 +217,7 @@ def test_permutation_importance_large_memmaped_data(input_type):
     n_repeats = 5
     r = permutation_importance(clf, X, y, n_repeats=n_repeats, n_jobs=2)
 
-    # Auxiliary check: dummy classifier is feature indpendent:
+    # Auxiliary check: DummyClassifier is feature independent:
     # permutating feature should not change the predictions
     expected_importances = np.zeros((n_features, n_repeats))
     assert_allclose(expected_importances, r.importances)
