@@ -29,17 +29,18 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
-    original_feature = _safe_column_indexing(X, col_idx).copy()
-    temp = original_feature.copy()
 
+    # Work on a copy of X to to ensure thread-safety in case of threading
+    # based parallelism:
+    X_permuted = X.copy()
+    column_data = _safe_column_indexing(X_permuted, col_idx)
     scores = np.zeros(n_repeats)
     for n_round in range(n_repeats):
-        random_state.shuffle(temp)
-        _safe_column_setting(X, col_idx, temp)
-        feature_score = scorer(estimator, X, y)
+        random_state.shuffle(column_data)
+        _safe_column_setting(X_permuted, col_idx, column_data)
+        feature_score = scorer(estimator, X_permuted, y)
         scores[n_round] = feature_score
 
-    _safe_column_setting(X, col_idx, original_feature)
     return scores
 
 
@@ -105,18 +106,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
              2001. https://doi.org/10.1023/A:1010933404324
     """
-    if hasattr(X, "iloc"):
-        X = X.copy()  # Dataframe
-    else:
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
-                        copy=True)
+    if not hasattr(X, "iloc"):
+        X = check_array(X, force_all_finite='allow-nan', dtype=None)
 
     # Precompute random seed from the random state to be used
     # to get a fresh independent RandomState instance for each
     # parallel call to _calculate_permutation_scores, irrespective of
     # the fact that variables are shared or not depending on the active
     # joblib backend (sequential, thread-based or process-based).
-    MAX_RAND_SEED = np.iinfo(np.int32).max
+    MAX_RAND_SEED = np.iinfo(np.uint32).max
     random_state = check_random_state(random_state)
     random_seed = random_state.randint(0, MAX_RAND_SEED)
 

@@ -17,6 +17,8 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
+from sklearn.utils import parallel_backend
+
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_permutation_importance_correlated_feature_regression(n_jobs):
@@ -162,9 +164,6 @@ def test_permutation_importance_equivalence_sequential_paralell():
 
     lr = LinearRegression().fit(X, y)
 
-    importance_parallel = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=2
-    )
     importance_sequential = permutation_importance(
         lr, X, y, n_repeats=5, random_state=0, n_jobs=1
     )
@@ -175,8 +174,23 @@ def test_permutation_importance_equivalence_sequential_paralell():
     imp_max = importance_sequential['importances'].max()
     assert imp_max - imp_min > 0.3
 
-    # The actually check that parallelism does not impact the results:
+    # The actually check that parallelism does not impact the results
+    # either with shared memory (threading) or without isolated memory
+    # via process-based parallelism using loky:
+    with parallel_backend("threading"):
+        importance_threading = permutation_importance(
+            lr, X, y, n_repeats=5, random_state=0, n_jobs=2
+        )
     assert_allclose(
-        importance_parallel['importances'],
+        importance_threading['importances'],
+        importance_sequential['importances']
+    )
+
+    with parallel_backend("loky"):
+        importance_loky = permutation_importance(
+            lr, X, y, n_repeats=5, random_state=0, n_jobs=2
+        )
+    assert_allclose(
+        importance_loky['importances'],
         importance_sequential['importances']
     )
