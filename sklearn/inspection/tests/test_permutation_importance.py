@@ -179,7 +179,7 @@ def test_permutation_importance_equivalence_sequential_paralell():
 
     # process-based parallelism (by default):
     importance_processes = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=2
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=2)
     assert_allclose(
         importance_processes['importances'],
         importance_sequential['importances']
