@@ -526,6 +526,13 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     assert cm.dtype.kind == cm_dtype
 
 
+def test_confusion_matrix_normalize_wrong_option():
+    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
+    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
+    with pytest.raises(ValueError, match='normalize must be one of'):
+        confusion_matrix(y_test, y_pred, normalize=True)
+
+
 def test_confusion_matrix_normalize_single_class():
     y_test = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
@@ -1176,11 +1183,6 @@ def test_multilabel_hamming_loss():
     assert hamming_loss(y1, np.zeros_like(y1), sample_weight=w) == 2. / 3
     # sp_hamming only works with 1-D arrays
     assert hamming_loss(y1[0], y2[0]) == sp_hamming(y1[0], y2[0])
-    assert_warns_message(FutureWarning,
-                         "The labels parameter is unused. It was"
-                         " deprecated in version 0.21 and"
-                         " will be removed in version 0.23",
-                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_jaccard_score_validation():
