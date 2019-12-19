@@ -68,7 +68,7 @@ jobs:
       # It runs tests requiring pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
-        # FIXME: pinned until SciPy wheels are available for Pyhon 3.8
+        # FIXME: pinned until SciPy wheels are available for Python 3.8
         PYTHON_VERSION: '3.8'
         PYTEST_VERSION: '4.6.2'
         COVERAGE: 'true'

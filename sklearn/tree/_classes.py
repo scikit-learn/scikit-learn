@@ -570,7 +570,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : ndarray of shape (n_features,)
-            Normalized total reduction of critera by feature (Gini importance).
+            Normalized total reduction of criteria by feature (Gini importance).
         """
         check_is_fitted(self)
 
