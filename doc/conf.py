@@ -51,6 +51,7 @@ numpydoc_class_members_toctree = False
 if os.environ.get('NO_MATHJAX'):
     extensions.append('sphinx.ext.imgmath')
     imgmath_image_format = 'svg'
+    mathjax_path = ''
 else:
     extensions.append('sphinx.ext.mathjax')
     mathjax_path = ('https://cdn.jsdelivr.net/npm/mathjax@3/es5/'
@@ -304,7 +305,9 @@ sphinx_gallery_conf = {
         'branch': binder_branch,
         'dependencies': './binder/requirements.txt',
         'use_jupyter_lab': True
-    }
+    },
+    # avoid generating too many cross links
+    'inspect_global_variables': False,
 }
 
 

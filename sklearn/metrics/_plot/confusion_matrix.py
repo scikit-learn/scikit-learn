@@ -56,7 +56,7 @@ class ConfusionMatrixDisplay:
             Colormap recognized by matplotlib.
 
         xticks_rotation : {'vertical', 'horizontal'} or float, \
-                         default='vertical'
+                         default='horizontal'
             Rotation of xtick labels.
 
         values_format : str, default=None
@@ -160,7 +160,7 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
         Includes values in confusion matrix.
 
     xticks_rotation : {'vertical', 'horizontal'} or float, \
-                        default='vertical'
+                        default='horizontal'
         Rotation of xtick labels.
 
     values_format : str, default=None
@@ -183,10 +183,6 @@ def plot_confusion_matrix(estimator, X, y_true, labels=None,
 
     if not is_classifier(estimator):
         raise ValueError("plot_confusion_matrix only supports classifiers")
-
-    if normalize not in {'true', 'pred', 'all', None}:
-        raise ValueError("normalize must be one of {'true', 'pred', "
-                         "'all', None}")
 
     y_pred = estimator.predict(X)
     cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,

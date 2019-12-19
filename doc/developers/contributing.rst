@@ -437,6 +437,7 @@ message, the following actions are taken.
     ---------------------- -------------------
     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
+    [lint skip]            Azure pipeline skips linting
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots

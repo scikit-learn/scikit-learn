@@ -29,7 +29,8 @@ from ._dict_learning import (dict_learning_online,
                              MiniBatchDictionaryLearning, SparseCoder)  # noqa
 from ._factor_analysis import FactorAnalysis  # noqa
 from ..utils.extmath import randomized_svd  # noqa
-from ._online_lda import LatentDirichletAllocation  # noqa
+from ._lda import LatentDirichletAllocation  # noqa
+
 
 __all__ = ['DictionaryLearning',
            'FastICA',

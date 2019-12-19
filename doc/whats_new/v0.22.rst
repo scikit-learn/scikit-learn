@@ -15,11 +15,25 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 Changelog
 ---------
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.plot_confusion_matrix` now raises error when `normalize`
+  is invalid. Previously, it runs fine with no normalization.
+  :pr:`15888` by `Hanmin Qin`_.
+
 :mod:`sklearn.utils`
 ....................
 
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.plot_partial_dependence` and 
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
 
 .. _changes_0_22:
 

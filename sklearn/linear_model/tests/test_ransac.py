@@ -334,7 +334,6 @@ def test_ransac_min_n_samples():
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_multi_dimensional_targets():
 
     base_estimator = LinearRegression()
@@ -355,7 +354,6 @@ def test_ransac_multi_dimensional_targets():
     assert_array_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_ransac_residual_loss():
     loss_multi1 = lambda y_true, y_pred: np.sum(np.abs(y_true - y_pred), axis=1)
     loss_multi2 = lambda y_true, y_pred: np.sum((y_true - y_pred) ** 2, axis=1)
