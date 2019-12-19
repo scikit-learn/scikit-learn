@@ -21,7 +21,7 @@ Changelog
 - |Fix| :func:`inspection.permutation_importance` will return the same
   `importances` when a `random_state` is given for both `n_jobs=1` or
   `n_jobs>1`.
-  :pr:`15993` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.metrics`
 ......................
