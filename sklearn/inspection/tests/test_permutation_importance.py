@@ -169,6 +169,13 @@ def test_permutation_importance_equivalence_sequential_paralell():
         lr, X, y, n_repeats=5, random_state=0, n_jobs=1
     )
 
+    # First check that the problem is structured enough and that the model is
+    # complex enough to not yield trivial, constant importances:
+    imp_min = importance_sequential['importances'].min()
+    imp_max = importance_sequential['importances'].max()
+    assert imp_max - imp_min > 0.3
+
+    # The actually check that parallelism does not impact the results:
     assert_allclose(
         importance_parallel['importances'],
         importance_sequential['importances']
