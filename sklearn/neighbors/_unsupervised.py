@@ -11,6 +11,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
 
+    .. versionadded:: 0.9
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
