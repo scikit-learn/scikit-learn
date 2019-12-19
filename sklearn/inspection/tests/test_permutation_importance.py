@@ -160,10 +160,6 @@ def test_permutation_importance_equivalence_sequential_paralell():
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
-
-    X = scale(X)
-    y = scale(y)
-
     lr = LinearRegression().fit(X, y)
 
     importance_sequential = permutation_importance(
