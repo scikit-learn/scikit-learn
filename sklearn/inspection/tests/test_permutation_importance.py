@@ -150,3 +150,24 @@ def test_permutation_importance_linear_regresssion():
                                      scoring='neg_mean_squared_error')
     assert_allclose(expected_importances, results.importances_mean,
                     rtol=1e-1, atol=1e-6)
+
+
+def test_permutation_importance_equivalence_sequential_paralell():
+    X, y = make_regression(n_samples=500, n_features=10, random_state=0)
+
+    X = scale(X)
+    y = scale(y)
+
+    lr = LinearRegression().fit(X, y)
+
+    importance_parallel = permutation_importance(
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=2
+    )
+    importance_sequential = permutation_importance(
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=1
+    )
+
+    assert_allclose(
+        importance_parallel['importances'],
+        importance_sequential['importances']
+    )

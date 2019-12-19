@@ -28,6 +28,7 @@ def _safe_column_indexing(X, col_idx):
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
                                   n_repeats, scorer):
     """Calculate score when `col_idx` is permuted."""
+    random_state = check_random_state(random_state)
     original_feature = _safe_column_indexing(X, col_idx).copy()
     temp = original_feature.copy()
 
@@ -110,15 +111,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object,
                         copy=True)
 
+    MAX_RAND_SEED = np.iinfo(np.int32).max
     random_state = check_random_state(random_state)
+    many_random_state = random_state.randint(MAX_RAND_SEED, size=X.shape[0])
     scorer = check_scoring(estimator, scoring=scoring)
-
     baseline_score = scorer(estimator, X, y)
-    scores = np.zeros((X.shape[1], n_repeats))
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_state, n_repeats, scorer
-    ) for col_idx in range(X.shape[1]))
+        estimator, X, y, col_idx, rand_int, n_repeats, scorer
+    ) for rand_int, col_idx in zip(many_random_state, range(X.shape[1])))
 
     importances = baseline_score - np.array(scores)
     return Bunch(importances_mean=np.mean(importances, axis=1),
