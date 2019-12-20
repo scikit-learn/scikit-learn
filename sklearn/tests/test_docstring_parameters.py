@@ -140,7 +140,7 @@ def test_tabs():
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
 
-        if IS_PYPY and ('_svmlight_format' in modname or
+        if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
             continue
 
