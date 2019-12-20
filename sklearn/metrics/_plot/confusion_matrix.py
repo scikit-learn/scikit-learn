@@ -92,8 +92,10 @@ class ConfusionMatrixDisplay:
             if values_format is None:
                 values_format = '.2g'
 
+            cm_max = cm.max()
+            cm_min = cm.min()
             # print text with appropriate color depending on background
-            thresh = (cm.max() - cm.min()) / 2.
+            thresh = (cm_max - cm_min) / 2. + cm_min
             for i, j in product(range(n_classes), range(n_classes)):
                 color = cmap_max if cm[i, j] < thresh else cmap_min
                 self.text_[i, j] = ax.text(j, i,
