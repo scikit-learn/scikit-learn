@@ -47,6 +47,8 @@ class Pipeline(_BaseComposition):
 
     Read more in the :ref:`User Guide <pipeline>`.
 
+    .. versionadded:: 0.5
+
     Parameters
     ----------
     steps : list
@@ -305,7 +307,7 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
             else:
                 cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transfomer
+            # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
@@ -759,6 +761,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     or removed by setting to 'drop'.
 
     Read more in the :ref:`User Guide <feature_union>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------

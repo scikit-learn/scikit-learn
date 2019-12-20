@@ -40,7 +40,7 @@ logger.setLevel(logging.INFO)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.22.dev0'
+__version__ = '0.23.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
@@ -70,11 +70,17 @@ if __SKLEARN_SETUP__:
     # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
-    from . import __check_build
+    # `_distributor_init` allows distributors to run custom init code.
+    # For instance, for the Windows wheel, this is used to pre-load the
+    # vcomp shared library runtime for OpenMP embedded in the sklearn/.libs
+    # sub-folder.
+    # It is necessary to do this prior to importing show_versions as the
+    # later is linked to the OpenMP runtime to make it possible to introspect
+    # it and importing it first would fail if the OpenMP dll cannot be found.
+    from . import _distributor_init  # noqa: F401
+    from . import __check_build  # noqa: F401
     from .base import clone
     from .utils._show_versions import show_versions
-
-    __check_build  # avoid flakes unused variable error
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',

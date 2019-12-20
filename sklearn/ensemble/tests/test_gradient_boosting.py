@@ -33,6 +33,7 @@ from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1169,9 +1170,10 @@ def test_non_uniform_weights_toy_edge_case_clf():
 
 def check_sparse_input(EstimatorClass, X, X_sparse, y):
     dense = EstimatorClass(n_estimators=10, random_state=0,
-                           max_depth=2).fit(X, y)
+                           max_depth=2, min_impurity_decrease=1e-7).fit(X, y)
     sparse = EstimatorClass(n_estimators=10, random_state=0,
-                            max_depth=2).fit(X_sparse, y)
+                            max_depth=2,
+                            min_impurity_decrease=1e-7).fit(X_sparse, y)
 
     assert_array_almost_equal(sparse.apply(X), dense.apply(X))
     assert_array_almost_equal(sparse.predict(X), dense.predict(X))
@@ -1298,6 +1300,8 @@ def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),
@@ -1308,7 +1312,7 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
-    # inital estimator does not support sample weight
+    # initial estimator does not support sample weight
 
     X, y = dataset_maker()
     sample_weight = np.random.RandomState(42).rand(100)

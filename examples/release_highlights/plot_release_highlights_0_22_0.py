@@ -20,27 +20,78 @@ or with conda::
 """
 
 ##############################################################################
-# KNN Based Imputation
-# ------------------------------------
-# We now support imputation for completing missing values using k-Nearest
-# Neighbors.
+# New plotting API
+# ----------------
 #
-# Each sample's missing values are imputed using the mean value from
-# ``n_neighbors`` nearest neighbors found in the training set. Two samples are
-# close if the features that neither is missing are close.
-# By default, a euclidean distance metric
-# that supports missing values,
-# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
-# neighbors.
+# A new plotting API is available for creating visualizations. This new API
+# allows for quickly adjusting the visuals of a plot without involving any
+# recomputation. It is also possible to add different plots to the same
+# figure. The following example illustrates :class:`~metrics.plot_roc_curve`,
+# but other plots utilities are supported like
+# :class:`~inspection.plot_partial_dependence`,
+# :class:`~metrics.plot_precision_recall_curve`, and
+# :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
+# :ref:`User Guide <visualizations>`.
+
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import plot_roc_curve
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import make_classification
+import matplotlib.pyplot as plt
+
+X, y = make_classification(random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+svc = SVC(random_state=42)
+svc.fit(X_train, y_train)
+rfc = RandomForestClassifier(random_state=42)
+rfc.fit(X_train, y_train)
+
+svc_disp = plot_roc_curve(svc, X_test, y_test)
+rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+rfc_disp.figure_.suptitle("ROC curve comparison")
+
+plt.show()
+
+############################################################################
+# Stacking Classifier and Regressor
+# ---------------------------------
+# :class:`~ensemble.StackingClassifier` and
+# :class:`~ensemble.StackingRegressor`
+# allow you to have a stack of estimators with a final classifier or
+# a regressor.
+# Stacked generalization consists in stacking the output of individual
+# estimators and use a classifier to compute the final prediction. Stacking
+# allows to use the strength of each individual estimator by using their output
+# as input of a final estimator.
+# Base estimators are fitted on the full ``X`` while
+# the final estimator is trained using cross-validated predictions of the
+# base estimators using ``cross_val_predict``.
 #
-# Read more in the :ref:`User Guide <knnimpute>`.
+# Read more in the :ref:`User Guide <stacking>`.
 
-import numpy as np
-from sklearn.impute import KNNImputer
+from sklearn.datasets import load_iris
+from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.ensemble import StackingClassifier
+from sklearn.model_selection import train_test_split
 
-X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
-imputer = KNNImputer(n_neighbors=2)
-print(imputer.fit_transform(X))
+X, y = load_iris(return_X_y=True)
+estimators = [
+    ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
+    ('svr', make_pipeline(StandardScaler(),
+                          LinearSVC(random_state=42)))
+]
+clf = StackingClassifier(
+    estimators=estimators, final_estimator=LogisticRegression()
+)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, stratify=y, random_state=42
+)
+clf.fit(X_train, y_train).score(X_test, y_test)
 
 ##############################################################################
 # Permutation-based feature importance
@@ -50,9 +101,7 @@ print(imputer.fit_transform(X))
 # estimate of the importance of each feature, for any fitted estimator:
 
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
 from sklearn.inspection import permutation_importance
-import matplotlib.pyplot as plt
 
 X, y = make_classification(random_state=0, n_features=5, n_informative=3)
 rf = RandomForestClassifier(random_state=0).fit(X, y)
@@ -87,32 +136,60 @@ y = [0, 0, 1, 1]
 gbdt = HistGradientBoostingClassifier(min_samples_leaf=1).fit(X, y)
 print(gbdt.predict(X))
 
-##############################################################################
-# New plotting API
-# ----------------
-#
-# A new plotting API is available for creating visualizations. This new API
-# allows for quickly adjusting the visuals of a plot without involving any
-# recomputation. It is also possible to add different plots to the same
-# figure. See more examples in the :ref:`User Guide <visualizations>`.
+############################################################################
+# Precomputed sparse nearest neighbors graph
+# ------------------------------------------
+# Most estimators based on nearest neighbors graphs now accept precomputed
+# sparse graphs as input, to reuse the same graph for multiple estimator fits.
+# To use this feature in a pipeline, one can use the `memory` parameter, along
+# with one of the two new transformers,
+# :class:`neighbors.KNeighborsTransformer` and
+# :class:`neighbors.RadiusNeighborsTransformer`. The precomputation
+# can also be performed by custom estimators to use alternative
+# implementations, such as approximate nearest neighbors methods.
+# See more details in the :ref:`User Guide <neighbors_transformer>`.
 
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-from sklearn.metrics import plot_roc_curve
+from tempfile import TemporaryDirectory
+from sklearn.neighbors import KNeighborsTransformer
+from sklearn.manifold import Isomap
+from sklearn.pipeline import make_pipeline
 
 X, y = make_classification(random_state=0)
-X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-svc = SVC(random_state=42)
-svc.fit(X_train, y_train)
-rfc = RandomForestClassifier(random_state=42)
-rfc.fit(X_train, y_train)
+with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
+    estimator = make_pipeline(
+        KNeighborsTransformer(n_neighbors=10, mode='distance'),
+        Isomap(n_neighbors=10, metric='precomputed'),
+        memory=tmpdir)
+    estimator.fit(X)
 
-svc_disp = plot_roc_curve(svc, X_test, y_test)
-rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
-rfc_disp.figure_.suptitle("ROC curve comparison")
+    # We can decrease the number of neighbors and the graph will not be
+    # recomputed.
+    estimator.set_params(isomap__n_neighbors=5)
+    estimator.fit(X)
 
-plt.show()
+##############################################################################
+# KNN Based Imputation
+# ------------------------------------
+# We now support imputation for completing missing values using k-Nearest
+# Neighbors.
+#
+# Each sample's missing values are imputed using the mean value from
+# ``n_neighbors`` nearest neighbors found in the training set. Two samples are
+# close if the features that neither is missing are close.
+# By default, a euclidean distance metric
+# that supports missing values,
+# :func:`~metrics.nan_euclidean_distances`, is used to find the nearest
+# neighbors.
+#
+# Read more in the :ref:`User Guide <knnimpute>`.
+
+import numpy as np
+from sklearn.impute import KNNImputer
+
+X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
+imputer = KNNImputer(n_neighbors=2)
+print(imputer.fit_transform(X))
 
 #############################################################################
 # Tree pruning
@@ -144,84 +221,14 @@ titanic = fetch_openml('titanic', version=1, as_frame=True)
 print(titanic.data.head()[['pclass', 'embarked']])
 
 ############################################################################
-# Precomputed sparse nearest neighbors graph
-# ------------------------------------------
-# Most estimators based on nearest neighbors graphs now accept precomputed
-# sparse graphs as input, to reuse the same graph for multiple estimator fits.
-# To use this feature in a pipeline, one can use the `memory` parameter, along
-# with one of the two new transformers,
-# :class:`neighbors.KNeighborsTransformer` and
-# :class:`neighbors.RadiusNeighborsTransformer`. The precomputation
-# can also be performed by custom estimators to use alternative
-# implementations, such as approximate nearest neighbors methods.
-# See more details in the :ref:`User Guide <neighbors_transformer>`.
-
-from tempfile import TemporaryDirectory
-from sklearn.neighbors import KNeighborsTransformer
-from sklearn.manifold import Isomap
-from sklearn.pipeline import make_pipeline
-
-with TemporaryDirectory(prefix="sklearn_cache_") as tmpdir:
-    estimator = make_pipeline(
-        KNeighborsTransformer(n_neighbors=10, mode='distance'),
-        Isomap(n_neighbors=10, metric='precomputed'),
-        memory=tmpdir)
-    estimator.fit(X)
-
-    # We can decrease the number of neighbors and the graph will not be
-    # recomputed.
-    estimator.set_params(isomap__n_neighbors=5)
-    estimator.fit(X)
-
-############################################################################
-# Stacking Classifier and Regressor
-# ---------------------------------
-# :class:`~ensemble.StackingClassifier` and
-# :class:`~ensemble.StackingRegressor`
-# allow you to have a stack of estimators with a final classifier or
-# a regressor.
-# Stacked generalization consists in stacking the output of individual
-# estimators and use a classifier to compute the final prediction. Stacking
-# allows to use the strength of each individual estimator by using their output
-# as input of a final estimator.
-# Base estimators are fitted on the full ``X`` while
-# the final estimator is trained using cross-validated predictions of the
-# base estimators using ``cross_val_predict``.
-#
-# Read more in the :ref:`User Guide <stacking>`.
-
-from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.ensemble import StackingClassifier
-from sklearn.model_selection import train_test_split
-
-X, y = load_iris(return_X_y=True)
-estimators = [
-    ('rf', RandomForestClassifier(n_estimators=10, random_state=42)),
-    ('svr', make_pipeline(StandardScaler(),
-                          LinearSVC(random_state=42)))
-]
-clf = StackingClassifier(
-    estimators=estimators, final_estimator=LogisticRegression()
-)
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, stratify=y, random_state=42
-)
-clf.fit(X_train, y_train).score(X_test, y_test)
-
-############################################################################
 # Checking scikit-learn compatibility of an estimator
 # ---------------------------------------------------
 # Developers can check the compatibility of their scikit-learn compatible
 # estimators using :func:`~utils.estimator_checks.check_estimator`. For
 # instance, the ``check_estimator(LinearSVC)`` passes.
 #
-# We now provide a ``pytest`` specific decorator which allows the ``pytest``
-# ro run all checks independently and report the checks that are failing.
+# We now provide a ``pytest`` specific decorator which allows ``pytest``
+# to run all checks independently and report the checks that are failing.
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor
@@ -231,3 +238,27 @@ from sklearn.utils.estimator_checks import parametrize_with_checks
 @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
+
+############################################################################
+# ROC AUC now supports multiclass classification
+# ----------------------------------------------
+# The :func:`roc_auc_score` function can also be used in multi-class
+# classification. Two averaging strategies are currently supported: the
+# one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
+# the one-vs-rest algorithm computes the average of the ROC AUC scores for each
+# class against all other classes. In both cases, the multiclass ROC AUC scores
+# are computed from the probability estimates that a sample belongs to a
+# particular class according to the model. The OvO and OvR algorithms support
+# weighting uniformly (``average='macro'``) and weighting by the prevalence
+# (``average='weighted'``).
+#
+# Read more in the :ref:`User Guide <roc_metrics>`.
+
+
+from sklearn.datasets import make_classification
+from sklearn.svm import SVC
+from sklearn.metrics import roc_auc_score
+
+X, y = make_classification(n_classes=4, n_informative=16)
+clf = SVC(decision_function_shape='ovo', probability=True).fit(X, y)
+print(roc_auc_score(y, clf.predict_proba(X), multi_class='ovo'))

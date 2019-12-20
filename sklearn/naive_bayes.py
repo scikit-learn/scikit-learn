@@ -26,17 +26,18 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, check_consistent_length
+from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
+from .utils.validation import _check_sample_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
 
 
-class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
+class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
@@ -114,7 +115,7 @@ class BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return np.exp(self.predict_log_proba(X))
 
 
-class GaussianNB(BaseNB):
+class GaussianNB(_BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
@@ -153,8 +154,13 @@ class GaussianNB(BaseNB):
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
+<<<<<<< HEAD
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
+=======
+    epsilon_ : float
+        absolute additive value to variances
+>>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
 
     Examples
     --------
@@ -355,8 +361,7 @@ class GaussianNB(BaseNB):
         """
         X, y = check_X_y(X, y)
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-            check_consistent_length(y, sample_weight)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
@@ -457,13 +462,13 @@ class GaussianNB(BaseNB):
 _ALPHA_MIN = 1e-10
 
 
-class BaseDiscreteNB(BaseNB):
+class _BaseDiscreteNB(_BaseNB):
     """Abstract base class for naive Bayes on discrete/categorical data
 
     Any estimator based on this class should provide:
 
     __init__
-    _joint_log_likelihood(X) as per BaseNB
+    _joint_log_likelihood(X) as per _BaseNB
     """
 
     def _check_X(self, X):
@@ -658,7 +663,7 @@ class BaseDiscreteNB(BaseNB):
         return {'poor_score': True}
 
 
-class MultinomialNB(BaseDiscreteNB):
+class MultinomialNB(_BaseDiscreteNB):
     """
     Naive Bayes classifier for multinomial models
 
@@ -715,7 +720,10 @@ class MultinomialNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
     Examples
     --------
     >>> import numpy as np
@@ -770,7 +778,7 @@ class MultinomialNB(BaseDiscreteNB):
                 self.class_log_prior_)
 
 
-class ComplementNB(BaseDiscreteNB):
+class ComplementNB(_BaseDiscreteNB):
     """The Complement Naive Bayes classifier described in Rennie et al. (2003).
 
     The Complement Naive Bayes classifier was designed to correct the "severe
@@ -823,6 +831,13 @@ class ComplementNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+<<<<<<< HEAD
+=======
+    feature_all_ : array, shape (n_features,)
+        Number of samples encountered for each feature during fitting. This
+        value is weighted by the sample weight when provided.
+
+>>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
     Examples
     --------
     >>> import numpy as np
@@ -865,7 +880,7 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        # _BaseNB.predict uses argmax, but ComplementNB operates with argmin.
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
             feature_log_prob = logged / summed
@@ -881,7 +896,7 @@ class ComplementNB(BaseDiscreteNB):
         return jll
 
 
-class BernoulliNB(BaseDiscreteNB):
+class BernoulliNB(_BaseDiscreteNB):
     """Naive Bayes classifier for multivariate Bernoulli models.
 
     Like MultinomialNB, this classifier is suitable for discrete data. The
@@ -900,7 +915,7 @@ class BernoulliNB(BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean, optional (default=True)
+    fit_prior : bool, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
@@ -931,6 +946,7 @@ class BernoulliNB(BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
+<<<<<<< HEAD
 
     Examples
     --------
@@ -944,10 +960,15 @@ class BernoulliNB(BaseDiscreteNB):
     BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
+=======
+    See Also
+    ----------
+    MultinomialNB: The multinomial Naive Bayes classifier is \
+        suitable for classification with discrete features.
+>>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
 
     References
     ----------
-
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
@@ -958,6 +979,19 @@ class BernoulliNB(BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> rng = np.random.RandomState(1)
+    >>> X = rng.randint(5, size=(6, 100))
+    >>> Y = np.array([1, 2, 3, 4, 4, 5])
+    >>> from sklearn.naive_bayes import BernoulliNB
+    >>> clf = BernoulliNB()
+    >>> clf.fit(X, Y)
+    BernoulliNB()
+    >>> print(clf.predict(X[2:3]))
+    [3]
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
@@ -1009,7 +1043,7 @@ class BernoulliNB(BaseDiscreteNB):
         return jll
 
 
-class CategoricalNB(BaseDiscreteNB):
+class CategoricalNB(_BaseDiscreteNB):
     """Naive Bayes classifier for categorical features
 
     The categorical Naive Bayes classifier is suitable for classification with
@@ -1219,3 +1253,17 @@ class CategoricalNB(BaseDiscreteNB):
             jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
         return total_ll
+
+
+# TODO: remove in 0.24
+@deprecated("BaseNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseNB(_BaseNB):
+    pass
+
+
+# TODO: remove in 0.24
+@deprecated("BaseDiscreteNB is deprecated in version "
+            "0.22 and will be removed in version 0.24.")
+class BaseDiscreteNB(_BaseDiscreteNB):
+    pass
