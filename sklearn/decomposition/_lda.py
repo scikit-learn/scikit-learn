@@ -193,7 +193,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     evaluate_every : int, optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
-        set it to 0 or negative number to not evalute perplexity in
+        set it to 0 or negative number to not evaluate perplexity in
         training at all. Evaluating perplexity can help you check convergence
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time

@@ -604,7 +604,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def _raw_predict_init(self, X):
-        """Check input and compute raw predictions of the init estimtor."""
+        """Check input and compute raw predictions of the init estimator."""
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if X.shape[1] != self.n_features_:
@@ -868,14 +868,14 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float, (default=0)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', optional (default=None)
@@ -1340,14 +1340,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float, (default=0)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
            ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator or 'zero', optional (default=None)
