@@ -7,7 +7,6 @@ from ..metrics import check_scoring
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils import _safe_indexing
 
 
 def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
