@@ -552,7 +552,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
 
-        self.arrow_args = dict(arrowstyle="fancy",fc="w", ec="k")
+        self.arrow_args = dict(arrowstyle="fancy", fc="w", ec="k")
 
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
@@ -627,7 +627,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # offset things by .5 to center them in plot
         xy = ((node.x + .5) * scale_x, height - (node.y + .5) * scale_y)
-        xy_arrow = ((node.x + .5) * scale_x, height - (node.y +.3) * scale_y)
+        xy_arrow = ((node.x + .5) * scale_x, height - (node.y + .3) * scale_y)
         
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
