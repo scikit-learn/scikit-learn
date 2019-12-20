@@ -1150,7 +1150,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
+        if indptr[-1] > 2147483648:  # = 2**31 - 1
             if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
