@@ -628,7 +628,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # offset things by .5 to center them in plot
         xy = ((node.x + .5) * scale_x, height - (node.y + .5) * scale_y)
         xy_arrow = ((node.x + .5) * scale_x, height - (node.y + .3) * scale_y)
-        
+
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
                 kwargs['bbox']['fc'] = self.get_fill_color(tree,
