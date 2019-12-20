@@ -16,6 +16,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.inspection import permutation_importance
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
@@ -205,13 +206,34 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
 
     # regression test to make sure that sequential and parallel calls will
     # output the same results.
-    X, y = make_regression(n_samples=500, n_features=10, random_state=0)
+    X, y = make_regression(n_samples=100, n_features=5, random_state=0)
     X_df = pd.DataFrame(X)
 
-    lr = LinearRegression().fit(X, y)
+    # Add a categorical feature that is statistical linked to y:
+    binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
+    cat_column = binner.fit_transform(y.reshape(-1, 1))
 
+    # Concatenate the extra column to the numpy array: integer will be
+    # cast to float values
+    X = np.hstack([X, cat_column])
+    assert X.dtype.kind == "f"
+
+    # Insert extra column as a non-numpy-native dtype (while keeping backward
+    # compat for old numpy):
+    if hasattr(pd, "Categorical"):
+        cat_column = pd.Categorical(cat_column.ravel())
+    else:
+        cat_column = cat_column.ravel()
+    new_col_idx = len(X_df.columns)
+    X_df[new_col_idx] = cat_column
+    assert X_df[new_col_idx].dtype == cat_column.dtype
+
+    rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
+    rf.fit(X, y)
+
+    n_repeats = 3
     importance_array = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=n_jobs
+        rf, X, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
     )
 
     # First check that the problem is structured enough and that the model is
@@ -221,7 +243,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     assert imp_max - imp_min > 0.3
 
     importance_dataframe = permutation_importance(
-        lr, X_df, y, n_repeats=5, random_state=0, n_jobs=n_jobs
+        rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
     )
     assert_allclose(
         importance_array['importances'],
