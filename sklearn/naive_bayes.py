@@ -154,13 +154,8 @@ class GaussianNB(_BaseNB):
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
-<<<<<<< HEAD
     theta_ : array, shape (n_classes, n_features)
         mean of each feature per class
-=======
-    epsilon_ : float
-        absolute additive value to variances
->>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
 
     Examples
     --------
@@ -720,10 +715,6 @@ class MultinomialNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-<<<<<<< HEAD
-
-=======
->>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
     Examples
     --------
     >>> import numpy as np
@@ -831,13 +822,6 @@ class ComplementNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-<<<<<<< HEAD
-=======
-    feature_all_ : array, shape (n_features,)
-        Number of samples encountered for each feature during fitting. This
-        value is weighted by the sample weight when provided.
-
->>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
     Examples
     --------
     >>> import numpy as np
@@ -946,7 +930,6 @@ class BernoulliNB(_BaseDiscreteNB):
     n_features_ : int
         Number of features of each sample.
 
-<<<<<<< HEAD
 
     Examples
     --------
@@ -960,12 +943,6 @@ class BernoulliNB(_BaseDiscreteNB):
     BernoulliNB()
     >>> print(clf.predict(X[2:3]))
     [3]
-=======
-    See Also
-    ----------
-    MultinomialNB: The multinomial Naive Bayes classifier is \
-        suitable for classification with discrete features.
->>>>>>> a68ba97309512f691feb25e6a07af7561fc56e3b
 
     References
     ----------
