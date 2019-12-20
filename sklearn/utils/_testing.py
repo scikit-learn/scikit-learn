@@ -513,7 +513,7 @@ def all_estimators(include_meta_estimators=None,
             path=path, prefix='sklearn.', onerror=lambda x: None):
         if ".tests." in modname or "externals" in modname:
             continue
-        if IS_PYPY and ('_svmlight_format' in modname or
+        if IS_PYPY and ('_svmlight_format_io' in modname or
                         'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
