@@ -104,7 +104,7 @@ enable_spectral_norm = False
 # in case the reconstructed (dense) matrix is too large
 MAX_MEMORY = np.int(2e9)
 
-# The following datasets can be dowloaded manually from:
+# The following datasets can be downloaded manually from:
 # CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 # SVHN: http://ufldl.stanford.edu/housenumbers/train_32x32.mat
 CIFAR_FOLDER = "./cifar-10-batches-py/"
