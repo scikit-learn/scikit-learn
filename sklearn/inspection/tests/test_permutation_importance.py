@@ -87,8 +87,8 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     n_repeats = 5
     n_samples = 1000
     n_classes = 5
-    n_informative_features = 3
-    n_noise_features = 10
+    n_informative_features = 2
+    n_noise_features = 1
     n_features = n_informative_features + n_noise_features
 
     # Generate a multiclass classification dataset and a set of informative
@@ -117,6 +117,16 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     clf = RandomForestClassifier(n_estimators=5, random_state=rng)
     clf.fit(X_train, y_train)
 
+    # Variable importances computed by impurity decrease on the tree node
+    # splits often use the noisy features in splits. This can give misleading
+    # impression that high cardinality noisy variables are the most important:
+    tree_importances = clf.feature_importances_
+    informative_tree_importances = tree_importances[:n_informative_features]
+    noisy_tree_importances = tree_importances[n_informative_features:]
+    assert informative_tree_importances.max() < noisy_tree_importances.min()
+
+    # Let's check that permutation-based feature importances do not have this
+    # problem.
     r = permutation_importance(clf, X_test, y_test, n_repeats=n_repeats,
                                random_state=rng, n_jobs=n_jobs)
 
@@ -136,8 +146,8 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
 
     # The binary features correlated with y should have a higher importance
     # than the high cardinality noisy features.
-    # The maximum test accuracy is 3 / 5 == 0.6, each informative feature
-    # contributing approximately 0.2 of accuracy.
+    # The maximum test accuracy is 2 / 5 == 0.4, each informative feature
+    # contributing approximately a bit more than 0.2 of accuracy.
     assert informative_importances.min() > 0.15
 
 
