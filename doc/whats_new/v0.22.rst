@@ -42,6 +42,10 @@ Changelog
   is invalid. Previously, it runs fine with no normalization.
   :pr:`15888` by `Hanmin Qin`_.
 
+- |Fix| :func:`metrics.classification_report` does no longer ignore the
+  value of the ``zero_division`` keyword argument. :pr:`15879`
+  by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
+
 :mod:`sklearn.utils`
 ....................
 
