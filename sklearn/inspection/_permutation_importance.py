@@ -26,10 +26,9 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     for n_round in range(n_repeats):
         random_state.shuffle(shuffling_idx)
         if hasattr(X_permuted, "iloc"):
-            # reset the index such that pandas reaffect by position instead of
-            # indices
-            X_permuted.iloc[:, col_idx] = X_permuted.iloc[
-                shuffling_idx, col_idx].reset_index(drop=True)
+            col = X_permuted.iloc[shuffling_idx, col_idx]
+            col.index = X_permuted.index
+            X_permuted.iloc[:, col_idx] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         feature_score = scorer(estimator, X_permuted, y)
