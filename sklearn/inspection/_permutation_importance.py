@@ -105,7 +105,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     # the fact that variables are shared or not depending on the active
     # joblib backend (sequential, thread-based or process-based).
     random_state = check_random_state(random_state)
-    random_seed = random_state.randint(0, np.iinfo(np.int32).max)
+    random_seed = random_state.randint(np.iinfo(np.int32).max + 1)
 
     scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = scorer(estimator, X, y)
