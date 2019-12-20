@@ -197,6 +197,38 @@ def test_permutation_importance_equivalence_sequential_parallel():
     )
 
 
+@pytest.mark.parametrize("n_jobs", [None, 1, 2])
+def test_permutation_importance_equivalence_array_dataframe(n_jobs):
+    # This test checks that the column shuffling logic has the same behavior
+    # both a dataframe and a simple numpy array.
+    pd = pytest.importorskip('pandas')
+
+    # regression test to make sure that sequential and parallel calls will
+    # output the same results.
+    X, y = make_regression(n_samples=500, n_features=10, random_state=0)
+    X_df = pd.DataFrame(X)
+
+    lr = LinearRegression().fit(X, y)
+
+    importance_array = permutation_importance(
+        lr, X, y, n_repeats=5, random_state=0, n_jobs=n_jobs
+    )
+
+    # First check that the problem is structured enough and that the model is
+    # complex enough to not yield trivial, constant importances:
+    imp_min = importance_array['importances'].min()
+    imp_max = importance_array['importances'].max()
+    assert imp_max - imp_min > 0.3
+
+    importance_dataframe = permutation_importance(
+        lr, X_df, y, n_repeats=5, random_state=0, n_jobs=n_jobs
+    )
+    assert_allclose(
+        importance_array['importances'],
+        importance_dataframe['importances']
+    )
+
+
 @pytest.mark.parametrize("input_type", ["array", "dataframe"])
 def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
