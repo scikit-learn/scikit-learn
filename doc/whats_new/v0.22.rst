@@ -24,6 +24,7 @@ Changelog
   isolated memory, process-based backends.
   Also avoid casting the data as object dtype and avoid read-only error
   on large dataframes with `n_jobs>1` as reported in :issue:`15810`.
+  Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
   :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
 :mod:`sklearn.metrics`
