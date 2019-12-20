@@ -15,6 +15,14 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 Changelog
 ---------
 
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`KMeans` with ``algorithm="elkan"`` now uses the same stopping
+  criterion as with the default ``algorithm="full"``. :pr:`15930` by
+  :user:`inder128`.
+ 
 :mod:`sklearn.inspection`
 .........................
 
@@ -39,6 +47,13 @@ Changelog
 
 - |Fix| :func:`utils.check_array` now correctly converts pandas DataFrame with
   boolean columns to floats. :pr:`15797` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| :func:`inspection.plot_partial_dependence` and 
+  :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
+  the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
 
 .. _changes_0_22:
 

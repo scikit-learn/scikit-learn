@@ -486,7 +486,7 @@ def test_multilabel_confusion_matrix_errors():
     # Bad sample_weight
     with pytest.raises(ValueError, match="inconsistent numbers of samples"):
         multilabel_confusion_matrix(y_true, y_pred, sample_weight=[1, 2])
-    with pytest.raises(ValueError, match="bad input shape"):
+    with pytest.raises(ValueError, match="should be a 1d array"):
         multilabel_confusion_matrix(y_true, y_pred,
                                     sample_weight=[[1, 2, 3],
                                                    [2, 3, 4],
