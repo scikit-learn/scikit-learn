@@ -30,6 +30,7 @@ from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..utils import MAX_INT_32
 from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import ChangedBehaviorWarning, NotFittedError
@@ -1150,7 +1151,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        if indptr[-1] > 2147483648:  # = 2**31 - 1
+        if indptr[-1] > MAX_INT_32:  # = 2**31 - 1
             if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '

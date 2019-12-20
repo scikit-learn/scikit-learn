@@ -56,6 +56,8 @@ __all__ = ["murmurhash3_32", "as_float_array",
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 
+MAX_INT_32 = np.iinfo(np.int32).max
+
 
 class Bunch(dict):
     """Container object for datasets

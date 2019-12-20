@@ -30,6 +30,7 @@ from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
+from ..utils import MAX_INT_32
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight
@@ -197,7 +198,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = ((2 ** 31) - 1 if self.max_depth is None
+        max_depth = (MAX_INT_32 if self.max_depth is None
                      else self.max_depth)
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
