@@ -22,12 +22,17 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
     # (memmap). X.copy() on the other hand is always guaranteed to return a
     # writable data-structure whose columns can be shuffled inplace.
     X_permuted = X.copy()
-    # Ensure to take a view on a column of X_permuted to make shuffling inplace
-    column_data = _safe_indexing(X_permuted, col_idx, axis=1)
-    column_data = getattr(column_data, "values", column_data)
     scores = np.zeros(n_repeats)
+    shuffling_idx = np.arange(X.shape[0])
     for n_round in range(n_repeats):
-        random_state.shuffle(column_data)
+        random_state.shuffle(shuffling_idx)
+        if hasattr(X_permuted, "iloc"):
+            # reset the index such that pandas reaffect by position instead of
+            # indices
+            X_permuted.iloc[:, col_idx] = X_permuted.iloc[
+                shuffling_idx, col_idx].reset_index(drop=True)
+        else:
+            X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         feature_score = scorer(estimator, X_permuted, y)
         scores[n_round] = feature_score
 
