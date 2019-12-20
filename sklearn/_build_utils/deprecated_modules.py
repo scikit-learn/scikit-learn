@@ -1,4 +1,3 @@
-
 """Generates submodule to allow deprecation of submodules and keeping git
 blame."""
 from pathlib import Path
