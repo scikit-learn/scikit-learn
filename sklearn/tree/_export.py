@@ -16,8 +16,6 @@ from numbers import Integral
 
 import numpy as np
 
-import matplotlib.patches as mpatch
-
 from ..utils.validation import check_is_fitted
 from ..base import is_classifier
 
@@ -554,7 +552,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
 
-        self.arrow_args = dict(arrowstyle="simple",fc="w", ec="k")
+        self.arrow_args = dict(arrowstyle="fancy",fc="w", ec="k")
 
     def _make_tree(self, node_id, et, criterion, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
@@ -624,15 +622,13 @@ class _MPLTreeExporter(_BaseTreeExporter):
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes pixels')
 
-        #kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-        #              zorder=100 , xycoords='axes pixels')
-
         if self.fontsize is not None:
             kwargs['fontsize'] = self.fontsize
 
         # offset things by .5 to center them in plot
         xy = ((node.x + .5) * scale_x, height - (node.y + .5) * scale_y)
-
+        xy_arrow = ((node.x + .5) * scale_x, height - (node.y +.3) * scale_y)
+        
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
                 kwargs['bbox']['fc'] = self.get_fill_color(tree,
@@ -643,10 +639,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
             else:
                 xy_parent = ((node.parent.x + .5) * scale_x,
                              height - (node.parent.y + .5) * scale_y)
-                kwargs["arrowprops"] = self.arrow_args
-                p = mpatch.Arrow(xy, fc="w", ec="k")
-                ax.add_patch(p)
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
+                kwargs["arrowprops"] = self.arrow_args
+                ax.annotate("", xy_arrow, xy_parent, **kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, scale_x, scale_y, height,
                              depth=depth + 1)
@@ -654,11 +649,10 @@ class _MPLTreeExporter(_BaseTreeExporter):
         else:
             xy_parent = ((node.parent.x + .5) * scale_x,
                          height - (node.parent.y + .5) * scale_y)
-            kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
-            p = mpatch.Arrow(xy, fc="w", ec="k")
-            ax.add_patch(p)
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
+            kwargs["arrowprops"] = self.arrow_args
+            ax.annotate("", xy_arrow, xy_parent, **kwargs)
 
 
 def export_graphviz(decision_tree, out_file=None, max_depth=None,
