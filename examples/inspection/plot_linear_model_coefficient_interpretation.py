@@ -7,14 +7,19 @@ Linear models describe situations in which the target value is expected to be
 a linear combination of the features (see the :ref:`linear_model` User Guide
 section for a description of a set of linear model methods available in
 scikit-learn).
-It is important to emphasize that coefficients in multiple linear models
-represent the relationship between the given feature and the target
-assuming that other features remain constant.
+Coefficients in multiple linear models represent the relationship between the
+given feature (`X[i]`) and the target (`y`) assuming that all the other
+features remain constant.
+This is not the same thing than plotting `X[i]` versus `y` and fitting a linear
+relationship: in that case all possible values of the other features are
+added to the estimation.
 
 This example will provide some hints in interpreting coefficient in linear
-models, using data from the "Current Population Survey" from 1985.
-We will be interested in the prediction of the wage as a function of various
-features such as experience, age, or education.
+models, pointing at problems that arise when either the linear model is not
+appropriate to describe the dataset, or features are correlated. 
+
+We will use data from the "Current Population Survey" from 1985 to predict
+wage as a function of various features such as experience, age, or education.
 
 A description of the dataset follows.
 """
