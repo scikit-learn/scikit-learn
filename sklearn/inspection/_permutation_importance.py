@@ -5,7 +5,6 @@ from joblib import delayed
 
 from ..metrics import check_scoring
 from ..utils import Bunch
-from ..utils import MAX_INT_32
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import _safe_indexing
@@ -106,7 +105,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
     # the fact that variables are shared or not depending on the active
     # joblib backend (sequential, thread-based or process-based).
     random_state = check_random_state(random_state)
-    random_seed = random_state.randint(0, MAX_INT_32)
+    random_seed = random_state.randint(0, np.iinfo(np.int32).max)
 
     scorer = check_scoring(estimator, scoring=scoring)
     baseline_score = scorer(estimator, X, y)

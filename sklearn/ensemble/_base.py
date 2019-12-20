@@ -16,7 +16,6 @@ from ..base import is_classifier, is_regressor
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import Bunch
-from ..utils import MAX_INT_32
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
@@ -70,7 +69,7 @@ def _set_random_states(estimator, random_state=None):
     to_set = {}
     for key in sorted(estimator.get_params(deep=True)):
         if key == 'random_state' or key.endswith('__random_state'):
-            to_set[key] = random_state.randint(MAX_INT_32)
+            to_set[key] = random_state.randint(np.iinfo(np.int32).max)
 
     if to_set:
         estimator.set_params(**to_set)
