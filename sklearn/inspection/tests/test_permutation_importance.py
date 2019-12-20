@@ -209,17 +209,17 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     X, y = make_regression(n_samples=100, n_features=5, random_state=0)
     X_df = pd.DataFrame(X)
 
-    # Add a categorical feature that is statistical linked to y:
+    # Add a categorical feature that is statistically linked to y:
     binner = KBinsDiscretizer(n_bins=3, encode="ordinal")
     cat_column = binner.fit_transform(y.reshape(-1, 1))
 
-    # Concatenate the extra column to the numpy array: integer will be
+    # Concatenate the extra column to the numpy array: integers will be
     # cast to float values
     X = np.hstack([X, cat_column])
     assert X.dtype.kind == "f"
 
     # Insert extra column as a non-numpy-native dtype (while keeping backward
-    # compat for old numpy):
+    # compat for old pandas versions):
     if hasattr(pd, "Categorical"):
         cat_column = pd.Categorical(cat_column.ravel())
     else:
@@ -242,6 +242,8 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     imp_max = importance_array['importances'].max()
     assert imp_max - imp_min > 0.3
 
+    # Now check that importances computed on dataframe matche the values
+    # of those computed on the array with the same data.
     importance_dataframe = permutation_importance(
         rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
     )
