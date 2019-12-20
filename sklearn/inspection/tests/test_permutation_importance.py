@@ -228,6 +228,9 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
+    # Stich an aribtrary index to the dataframe:
+    X_df.index = np.arange(len(X_df)).astype(str)
+
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
     rf.fit(X, y)
 
