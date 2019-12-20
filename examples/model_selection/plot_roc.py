@@ -151,7 +151,7 @@ plt.show()
 # .........................................
 # The :func:`sklearn.metrics.roc_auc_score` function can be used for
 # multi-class classification. The multi-class One-vs-One scheme compares every
-# unique pairwise combination of classes. In this section, we calcuate the AUC
+# unique pairwise combination of classes. In this section, we calculate the AUC
 # using the OvR and OvO schemes. We report a macro average, and a
 # prevalence-weighted average.
 y_prob = classifier.predict_proba(X_test)

@@ -307,7 +307,7 @@ class Pipeline(_BaseComposition):
                     cloned_transformer = clone(transformer)
             else:
                 cloned_transformer = clone(transformer)
-            # Fit or load from cache the current transfomer
+            # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
