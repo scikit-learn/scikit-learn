@@ -15,6 +15,13 @@ This is a bug-fix release to primarily resolve some packaging issues in version
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| :class:`KMeans` with ``algorithm="elkan"`` now uses the same stopping
+  criterion as with the default ``algorithm="full"``. :pr:`15930` by
+  :user:`inder128`.
+
 :mod:`sklearn.metrics`
 ......................
 
