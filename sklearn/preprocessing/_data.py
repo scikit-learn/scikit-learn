@@ -2679,6 +2679,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     method : str, (default='yeo-johnson')

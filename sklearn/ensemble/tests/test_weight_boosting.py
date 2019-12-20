@@ -526,7 +526,7 @@ def test_adaboostregressor_sample_weight():
     X[-1] *= 10
     y[-1] = 10000
 
-    # random_state=0 ensure that the underlying boostrap will use the outlier
+    # random_state=0 ensure that the underlying bootstrap will use the outlier
     regr_no_outlier = AdaBoostRegressor(
         base_estimator=LinearRegression(), n_estimators=1, random_state=0
     )

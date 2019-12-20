@@ -154,7 +154,7 @@ class LeastSquares(BaseLoss):
 
 
 class LeastAbsoluteDeviation(BaseLoss):
-    """Least asbolute deviation, for regression.
+    """Least absolute deviation, for regression.
 
     For a given sample x_i, the loss is defined as::
 
