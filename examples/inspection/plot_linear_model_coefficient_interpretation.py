@@ -220,7 +220,8 @@ plt.subplots_adjust(left=.3)
 
 ###############################################################################
 # Soon we realize that we cannot compare different coefficients since we did
-# not scale the data before the fit, features having different value ranges.
+# not scale the data before the fit, features having different value ranges
+# because of their different unit of measure.
 # For instance, the AGE coefficient is expressed in $/hours/leaving years
 # while the EDUCATION is expressed in $/hours/years of education.
 # This is evident if we compare feature standard deviations.
