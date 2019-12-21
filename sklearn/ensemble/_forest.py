@@ -616,7 +616,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        sample_weight: boolean variable with default False, if set to True,
+        use_sample_weight : boolean variable with default False, if set to True,
                        will predict with predict_proba_with_sample_weight 
                        instead of predict_proba
 
@@ -660,7 +660,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        sample_weight bool, default=False
+        use_sample_weight : bool, default=False
             The predicted class probabilities of an input sample is the weighted
             sum of class probabilities from each tree in the forest. Weights are 
             calculated by the number of samples in the training set in the node 

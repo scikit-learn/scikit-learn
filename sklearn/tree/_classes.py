@@ -876,7 +876,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             X_idx_sorted=X_idx_sorted)
         return self
 
-    def predict_proba(self, X, check_input=True, sample_weight=False):
+    def predict_proba(self, X, check_input=True, use_sample_weight=False):
         """Predict class probabilities of the input samples X.
 
         The predicted class probability is the fraction of samples of the same
@@ -893,7 +893,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
-        sample_weight bool, default=False
+        use_sample_weight :s bool, default=False
             Return normalizer with proba for cases where n_outputs_ == 1.
             Noramlizer is the number of samples in the training set that 
             falls into the same leaf as the input sample
