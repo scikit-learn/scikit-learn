@@ -956,19 +956,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> rng = np.random.RandomState(1)
-    >>> X = rng.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 4, 5])
-    >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
-    >>> clf.fit(X, Y)
-    BernoulliNB()
-    >>> print(clf.predict(X[2:3]))
-    [3]
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
