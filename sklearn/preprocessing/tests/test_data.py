@@ -25,6 +25,7 @@ from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import _convert_container
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing._data import _handle_zeros_in_scale
@@ -1532,16 +1533,15 @@ def test_quantile_transform_nan():
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
-@pytest.mark.parametrize("sparse_data", [False, True])
-def test_quantile_transformer_sorted_quantiles(sparse_data):
+@pytest.mark.parametrize("array_type", ['array', 'sparse'])
+def test_quantile_transformer_sorted_quantiles(array_type):
     # Non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15733
     # Taken from upstream bug report:
     # https://github.com/numpy/numpy/issues/14685
     X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
     X = 0.1 * X.reshape(-1, 1)
-    if sparse_data:
-        X = sparse.csc_matrix(X)
+    X = _convert_container(X, array_type)
 
     n_quantiles = 100
     qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
