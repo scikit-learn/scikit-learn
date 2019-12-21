@@ -19,10 +19,10 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| :class:`KMeans` with ``algorithm="elkan"`` now uses the same stopping
-  criterion as with the default ``algorithm="full"``. :pr:`15930` by
+- |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` now uses the same
+  stopping criterion as with the default ``algorithm="full"``. :pr:`15930` by
   :user:`inder128`.
- 
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -51,7 +51,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| :func:`inspection.plot_partial_dependence` and 
+- |Fix| :func:`inspection.plot_partial_dependence` and
   :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
   the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
 
@@ -816,6 +816,10 @@ Changelog
 - |Fix| KernelCenterer now throws error when fit on non-square
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
+
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
 
 :mod:`sklearn.model_selection`
 ..............................
