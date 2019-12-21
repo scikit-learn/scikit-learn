@@ -42,6 +42,10 @@ Changelog
   is invalid. Previously, it runs fine with no normalization.
   :pr:`15888` by `Hanmin Qin`_.
 
+- |Fix| :func:`metrics.plot_confusion_matrix` now colors the label color
+  correctly to maximize contrast with its background. :pr:`15936` by
+  `Thomas Fan`_ and :user:`DizietAsahi`.
+
 :mod:`sklearn.utils`
 ....................
 
