@@ -157,7 +157,6 @@ def test_classification_report_dictionary_output():
 def test_classification_report_zero_division_warning(zero_division):
     y_true, y_pred = ["a", "b", "c"], ["a", "b", "d"]
     with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter('always')
         classification_report(
             y_true, y_pred, zero_division=zero_division, output_dict=True)
         if zero_division == "warn":
@@ -167,7 +166,7 @@ def test_classification_report_zero_division_warning(zero_division):
                        "behavior.")
                 assert msg in str(item.message)
         else:
-            assert record == []
+            assert not record
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
