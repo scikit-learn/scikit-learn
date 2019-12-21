@@ -862,7 +862,7 @@ def check_is_fitted(estimator, attributes=None, msg=None):
     estimator : estimator instance.
         estimator instance for which the check is performed.
 
-    attributes : list or tuple of str or None, default=None
+    attributes : str, list or tuple of str or None, default=None
         attribute name(s) given as string or a list/tuple of strings
         Eg.:
             ``["coef_", "estimator_", ...], "coef_"``

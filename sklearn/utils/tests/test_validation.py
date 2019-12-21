@@ -683,7 +683,6 @@ def test_check_is_fitted():
                          [itemgetter(0), list, tuple],
                          ids=["single", "list", "tuple"])
 def test_check_is_fitted_with_attributes(wrap):
-
     ard = ARDRegression()
     with pytest.raises(NotFittedError, match="is not fitted yet"):
         check_is_fitted(ard, wrap(["coef_"]))
