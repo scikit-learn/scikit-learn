@@ -14,7 +14,7 @@ path": on the left-hand side of the figure (strong regularizers), all the
 coefficients are exactly 0. When regularization gets progressively looser,
 coefficients can get non-zero values one after the other.
 
-Here we choose the SAGA solver because it can efficiently optimize for the
+Here we choose the liblinear solver because it can efficiently optimize for the
 Logistic Regression loss with a non-smooth, sparsity inducing l1 penalty.
 
 Also note that we set a low value for the tolerance to make sure that the model
