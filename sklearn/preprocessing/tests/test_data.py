@@ -1533,6 +1533,27 @@ def test_quantile_transform_nan():
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
 
 
+@pytest.mark.parametrize("sparse_data", [False, True])
+def test_quantile_transformer_sorted_quantiles(sparse_data):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15733
+    # Taken from upstream bug report:
+    # https://github.com/numpy/numpy/issues/14685
+    X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
+    X = 0.1 * X.reshape(-1, 1)
+    if sparse_data:
+        X = sparse.csc_matrix(X)
+
+    n_quantiles = 100
+    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
+
+    # Check that the estimated quantile threasholds are monotically
+    # increasing:
+    quantiles = qt.quantiles_[:, 0]
+    assert len(quantiles) == 100
+    assert all(np.diff(quantiles) >= 0)
+
+
 def test_deprecated_quantile_transform_copy():
     future_message = ("The default value of `copy` will change from False to "
                       "True in 0.23 in order to make it more consistent with "
