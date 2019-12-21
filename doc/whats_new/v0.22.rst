@@ -817,6 +817,10 @@ Changelog
   :class:`preprocessing.KernelCenterer`
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
+- |Fix| :class:`preprocessing.QuantileTransformer` now guarantees the 
+  `quantiles_` attribute to be completely sorted in non-decreasing manner.
+  :pr:`15751` by :user:`Tirth Patel <tirthasheshpatel>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
