@@ -447,7 +447,7 @@ def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     complains that it cannot pickle it when placed there.
     """
     if out_sample_weight:
-        proba, normalizer = predict(X, check_input=False)
+        proba, normalizer = predict(X, check_input=False, use_sample_weight=True)
     else:
         prediction = predict(X, check_input=False)
     with lock:
@@ -600,7 +600,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
         return y, expanded_class_weight
 
-    def predict(self, X, sample_weight=False):
+    def predict(self, X, use_sample_weight=False):
         """
         Predict class for X.
 
@@ -625,7 +625,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             The predicted classes.
         """
-        proba = self.predict_proba(X, sample_weight=sample_weight)
+        proba = self.predict_proba(X, use_sample_weight=use_sample_weight)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
@@ -644,7 +644,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return predictions
 
-    def predict_proba(self, X, sample_weight=False):
+    def predict_proba(self, X, use_sample_weight=False):
         """
         Predict class probabilities for X.
 
@@ -685,7 +685,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        if not sample_weight:
+        if not use_sample_weight:
             Parallel(n_jobs=n_jobs, verbose=self.verbose,
                      **_joblib_parallel_args(require="sharedmem"))(
                 delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
