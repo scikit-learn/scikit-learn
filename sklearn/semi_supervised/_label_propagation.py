@@ -288,6 +288,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             )
             self.n_iter_ += 1
 
+        self.label_distributions_[np.sum(self.label_distributions_, axis=1) == 0, :] = 1
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
 
