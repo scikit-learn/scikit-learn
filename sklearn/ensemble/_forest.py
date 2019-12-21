@@ -439,37 +439,32 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return all_importances / np.sum(all_importances)
 
 
-def _accumulate_prediction(predict, X, out, lock):
+def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     """
     This is a utility function for joblib's Parallel.
 
     It can't go locally in ForestClassifier or ForestRegressor, because joblib
     complains that it cannot pickle it when placed there.
     """
-    prediction = predict(X, check_input=False)
+    if out_sample_weight:
+        proba, normalizer = predict(X, check_input=False)
+    else:
+        prediction = predict(X, check_input=False)
     with lock:
         if len(out) == 1:
-            out[0] += prediction
+            if out_sample_weight:
+                out[0] += proba * normalizer[:, np.newaxis]
+                out_sample_weight[0] += normalizer
+            else:
+                out[0] += prediction
         else:
-            for i in range(len(out)):
-                out[i] += prediction[i]
-
-def _accumulate_prediction_with_sample_weight(predict, X, out, out_sample_weight, lock):
-    """
-    This is a utility function for joblib's Parallel.
-
-    It can't go locally in ForestClassifier or ForestRegressor, because joblib
-    complains that it cannot pickle it when placed there.
-    """
-    proba, normalizer = predict(X, check_input=False)
-    with lock:
-        if len(out) == 1:
-            out[0] += proba * normalizer[:, np.newaxis]
-            out_sample_weight[0] += normalizer
-        else:
-            for i in range(len(out)):
-                out[i] += proba[i] * normalizer[i][:, np.newaxis]
-                out_sample_weight[i] += normalizer[i]
+            if out_sample_weight:
+                for i in range(len(out)):
+                    out[i] += proba[i] * normalizer[i][:, np.newaxis]
+                    out_sample_weight[i] += normalizer[i]
+            else:
+                for i in range(len(out)):
+                    out[i] += prediction[i]
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
@@ -652,7 +647,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
 
             return predictions
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, sample_weight=False):
         """
         Predict class probabilities for X.
 
@@ -667,6 +662,13 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The input samples. Internally, its dtype will be converted to
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
+
+        sample_weight bool, default=False
+            The predicted class probabilities of an input sample is the weighted
+            sum of class probabilities from each tree in the forest. Weights are 
+            calculated by the number of samples in the training set in the node 
+            the input sample falls into. Class probabilities are then normalized
+            to sum to 1 for each input sample.
 
         Returns
         -------
@@ -686,14 +688,26 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
-                                            lock)
-            for e in self.estimators_)
+        if not sample_weight:
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
+                                                lock, None)
+                for e in self.estimators_)
 
-        for proba in all_proba:
-            proba /= len(self.estimators_)
+            for proba in all_proba:
+                proba /= len(self.estimators_)
+        else:
+            all_sample_weights = [np.zeros(X.shape[0], dtype=np.float64)
+                                  for j in np.atleast_1d(self.n_classes_)]
+            Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                     **_joblib_parallel_args(require="sharedmem"))(
+                delayed(_accumulate_prediction)(e.predict_proba_with_sample_weight,
+                                                X, all_proba, lock, all_sample_weights)
+                for e in self.estimators_)
+            for proba in all_proba:
+                this_normalizer = proba.sum(axis=1)
+                proba /= this_normalizer[:, np.newaxis]
 
         if len(all_proba) == 1:
             return all_proba[0]
@@ -735,12 +749,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
         all_sample_weights = [np.zeros(X.shape[0], dtype=np.float64)
-                     for j in np.atleast_1d(self.n_classes_)]
+                              for j in np.atleast_1d(self.n_classes_)]
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose,
                  **_joblib_parallel_args(require="sharedmem"))(
             delayed(_accumulate_prediction_with_sample_weight)(e.predict_proba_with_sample_weight,
-                                            X, all_proba, all_sample_weights, lock)
+                                                               X, all_proba, all_sample_weights, lock)
             for e in self.estimators_)
         for proba in all_proba:
             this_normalizer = proba.sum(axis=1)
@@ -1173,6 +1187,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     DecisionTreeClassifier, ExtraTreesClassifier
     """
+
     def __init__(self,
                  n_estimators=100,
                  criterion="gini",
@@ -1459,6 +1474,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     DecisionTreeRegressor, ExtraTreesRegressor
     """
+
     def __init__(self,
                  n_estimators=100,
                  criterion="mse",
@@ -1762,6 +1778,7 @@ class ExtraTreesClassifier(ForestClassifier):
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
     """
+
     def __init__(self,
                  n_estimators=100,
                  criterion="gini",
@@ -2022,6 +2039,7 @@ class ExtraTreesRegressor(ForestRegressor):
     sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
     RandomForestRegressor: Ensemble regressor using trees with optimal splits.
     """
+
     def __init__(self,
                  n_estimators=100,
                  criterion="mse",

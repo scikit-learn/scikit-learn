@@ -800,6 +800,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
     def __init__(self,
                  criterion="gini",
                  splitter="best",
@@ -875,7 +876,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             X_idx_sorted=X_idx_sorted)
         return self
 
-    def predict_proba(self, X, check_input=True):
+    def predict_proba(self, X, check_input=True, sample_weight=False):
         """Predict class probabilities of the input samples X.
 
         The predicted class probability is the fraction of samples of the same
@@ -892,12 +893,20 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
+        sample_weight bool, default=False
+            Return normalizer with proba for cases where n_outputs_ == 1.
+            Noramlizer is the number of samples in the training set that 
+            falls into the same leaf as the input sample
+
         Returns
         -------
         proba : ndarray of shape (n_samples, n_classes) or list of n_outputs \
             such arrays if n_outputs > 1
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+        normalizer : returns iff sample_weight == True and self.n_outputs_ == 1
+            number of samples in the leaf, returned as a number
         """
         check_is_fitted(self)
         X = self._validate_X_predict(X, check_input)
@@ -908,9 +917,14 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
 
+            if sample_weight:
+                return proba, normalizer[:, 0]
             return proba
 
         else:
+            if sample_weight:
+                raise ValueError("Not supported for multi-output classification.")
+
             all_proba = []
 
             for k in range(self.n_outputs_):
@@ -921,47 +935,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                 all_proba.append(proba_k)
 
             return all_proba
-
-    def predict_proba_with_sample_weight(self, X, check_input=True):
-        """Predict class probabilities of the input samples X.
-
-        The predicted class probability is the fraction of samples of the same
-        class in a leaf.
-
-        check_input : boolean, (default=True)
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
-            The input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csr_matrix``.
-
-        check_input : bool
-            Run check_array on X.
-
-        Returns
-        -------
-        proba : array of shape (n_samples, n_classes), or a list of n_outputs \
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute :term:`classes_`.
-        normalizer : number of samples in the leaf, returned as a number
-        """
-        check_is_fitted(self)
-        X = self._validate_X_predict(X, check_input)
-        proba = self.tree_.predict(X)
-        if self.n_outputs_ == 1:
-            proba = proba[:, :self.n_classes_]
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
-            return proba, normalizer[:,0]
-        else:
-            raise ValueError("Not supported for multi-output classification.")
-        
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
@@ -1190,6 +1163,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
+
     def __init__(self,
                  criterion="mse",
                  splitter="best",
@@ -1475,6 +1449,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
+
     def __init__(self,
                  criterion="gini",
                  splitter="random",
@@ -1686,6 +1661,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     >>> reg.score(X_test, y_test)
     0.7788...
     """
+
     def __init__(self,
                  criterion="mse",
                  splitter="random",
