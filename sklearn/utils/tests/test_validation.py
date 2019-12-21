@@ -5,6 +5,7 @@ import os
 
 from tempfile import NamedTemporaryFile
 from itertools import product
+from operator import itemgetter
 
 import pytest
 from pytest import importorskip
@@ -676,6 +677,25 @@ def test_check_is_fitted():
 
     assert check_is_fitted(ard) is None
     assert check_is_fitted(svr) is None
+
+
+@pytest.mark.parametrize("wrap",
+                         [itemgetter(0), list, tuple],
+                         ids=["single", "list", "tuple"])
+def test_check_is_fitted_with_attributes(wrap):
+
+    ard = ARDRegression()
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_"]))
+
+    ard.fit(*make_blobs())
+
+    # Does not raise
+    check_is_fitted(ard, wrap(["coef_"]))
+
+    # Raises when using attribute that is not defined
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        check_is_fitted(ard, wrap(["coef_bad_"]))
 
 
 def test_check_consistent_length():

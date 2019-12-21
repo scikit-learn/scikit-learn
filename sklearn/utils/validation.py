@@ -850,7 +850,7 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, msg=None):
+def check_is_fitted(estimator, attributes=None, msg=None):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -861,6 +861,15 @@ def check_is_fitted(estimator, msg=None):
     ----------
     estimator : estimator instance.
         estimator instance for which the check is performed.
+
+    attributes : list or tuple of str or None, default=None
+        attribute name(s) given as string or a list/tuple of strings
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
+
+        If None, `estimator` is considered fitted if there exist an attribute
+        that starts or ends with a underscore and does not start
+        with double underscore.
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -890,9 +899,14 @@ def check_is_fitted(estimator, msg=None):
     if not hasattr(estimator, 'fit'):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
-    attrs = [v for v in vars(estimator)
-             if (v.endswith("_") or v.startswith("_"))
-             and not v.startswith("__")]
+    if attributes is not None:
+        if not isinstance(attributes, (list, tuple)):
+            attributes = [attributes]
+        attrs = all([hasattr(estimator, attr) for attr in attributes])
+    else:
+        attrs = [v for v in vars(estimator)
+                 if (v.endswith("_") or v.startswith("_"))
+                 and not v.startswith("__")]
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
