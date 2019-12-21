@@ -905,7 +905,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
 
-        normalizer : returned iff 
+        normalizer : returned iff
             use_sample_weight == True and self.n_outputs_ == 1
             number of samples in the leaf, returned as a number
         """

@@ -617,8 +617,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        use_sample_weight : boolean variable with default False, 
-            if set to True, will predict with predict_proba where 
+        use_sample_weight : boolean variable with default False,
+            if set to True, will predict with predict_proba where
             use_sample_weight will be set to True instead of the default False
 
         Returns
@@ -701,7 +701,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             Parallel(n_jobs=n_jobs, verbose=self.verbose,
                      **_joblib_parallel_args(require="sharedmem"))(
                 delayed(_accumulate_prediction)(e.predict_proba,
-                                                X, all_proba, lock, 
+                                                X, all_proba, lock,
                                                 all_sample_weights)
                 for e in self.estimators_)
             for proba in all_proba:
