@@ -447,7 +447,8 @@ def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     complains that it cannot pickle it when placed there.
     """
     if out_sample_weight:
-        proba, normalizer = predict(X, check_input=False, use_sample_weight=True)
+        proba, normalizer = predict(X, check_input=False,
+                                    use_sample_weight=True)
     else:
         prediction = predict(X, check_input=False)
     with lock:
@@ -616,9 +617,9 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             ``dtype=np.float32``. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
-        use_sample_weight : boolean variable with default False, if set to True,
-                       will predict with predict_proba where use_sample_weight
-                       will be set to True instead of the default False
+        use_sample_weight : boolean variable with default False, 
+            if set to True, will predict with predict_proba where 
+            use_sample_weight will be set to True instead of the default False
 
         Returns
         -------
@@ -661,11 +662,11 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             converted into a sparse ``csr_matrix``.
 
         use_sample_weight : bool, default=False
-            The predicted class probabilities of an input sample is the weighted
-            sum of class probabilities from each tree in the forest. Weights are 
-            calculated by the number of samples in the training set in the node 
-            the input sample falls into. Class probabilities are then normalized
-            to sum to 1 for each input sample.
+            The predicted class probabilities of an input sample is the
+            weighted sum of class probabilities from each tree in the forest.
+            Weights are calculated by the number of samples in the training
+            set in the node the input sample falls into. Class probabilities
+            are then normalized to sum to 1 for each input sample.
 
         Returns
         -------
@@ -700,7 +701,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             Parallel(n_jobs=n_jobs, verbose=self.verbose,
                      **_joblib_parallel_args(require="sharedmem"))(
                 delayed(_accumulate_prediction)(e.predict_proba,
-                                                X, all_proba, lock, all_sample_weights)
+                                                X, all_proba, lock, 
+                                                all_sample_weights)
                 for e in self.estimators_)
             for proba in all_proba:
                 this_normalizer = proba.sum(axis=1)
