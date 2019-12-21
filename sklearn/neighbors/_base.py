@@ -276,8 +276,8 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
-        neigh_dist = np.array(np.split(data, indptr[1:-1]))
-    neigh_ind = np.array(np.split(indices, indptr[1:-1]))
+        neigh_dist = np.array(np.split(data, indptr[1:-1]), dtype=object)
+    neigh_ind = np.array(np.split(indices, indptr[1:-1]), dtype=object)
 
     if return_distance:
         return neigh_dist, neigh_ind
@@ -558,7 +558,7 @@ class KNeighborsMixin:
 
         Examples
         --------
-        In the following example, we construct a NeighborsClassifier
+        In the following example, we construct a NearestNeighbors
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 

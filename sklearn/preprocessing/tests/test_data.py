@@ -1453,7 +1453,6 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
-@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1552,18 +1551,6 @@ def test_quantile_transformer_sorted_quantiles(sparse_data):
     quantiles = qt.quantiles_[:, 0]
     assert len(quantiles) == 100
     assert all(np.diff(quantiles) >= 0)
-
-
-def test_deprecated_quantile_transform_copy():
-    future_message = ("The default value of `copy` will change from False to "
-                      "True in 0.23 in order to make it more consistent with "
-                      "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing` and prevent "
-                      "unexpected side effects by modifying the value of `X` "
-                      "inplace. To avoid inplace modifications of `X`, it is "
-                      "recommended to explicitly set `copy=True`")
-    assert_warns_message(FutureWarning, future_message, quantile_transform,
-                         np.array([[0, 1], [0, 0.5], [1, 0]]))
 
 
 def test_robust_scaler_invalid_range():
@@ -2184,7 +2171,6 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
-@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -2487,21 +2473,3 @@ def test_power_transformer_copy_False(method, standardize):
 
     X_inv_trans = pt.inverse_transform(X_trans)
     assert X_trans is X_inv_trans
-
-
-def test_power_transform_default_method():
-    X = np.abs(X_2d)
-
-    future_warning_message = (
-        "The default value of 'method' "
-        "will change from 'box-cox'"
-    )
-    assert_warns_message(FutureWarning, future_warning_message,
-                         power_transform, X)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        X_trans_default = power_transform(X)
-
-    X_trans_boxcox = power_transform(X, method='box-cox')
-    assert_array_equal(X_trans_boxcox, X_trans_default)

@@ -1348,8 +1348,8 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly
-(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+class. The OvO and OvR algorithms support weighting uniformly
+(``average='macro'``) and by prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
@@ -1380,10 +1380,10 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
-The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
-OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+[PD2000]_. The algorithm is functionally the same as the multilabel case. To
+enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
 ``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
@@ -1421,6 +1421,10 @@ to the given limit.
        `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38.
+
+    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
+       Stern School of Business, New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_

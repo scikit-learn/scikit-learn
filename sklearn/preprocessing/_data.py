@@ -2553,7 +2553,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy="warn"):
+                       copy=True):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2611,18 +2611,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default="warn")
+    copy : boolean, optional, (default=True)
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array). If True, a copy of `X` is transformed,
         leaving the original `X` unchanged
 
-        .. deprecated:: 0.21
-            The default value of parameter `copy` will be changed from False
-            to True in 0.23. The current default of False is being changed to
-            make it more consistent with the default `copy` values of other
-            functions in :mod:`sklearn.preprocessing`. Furthermore, the
-            current default of False may have unexpected side effects by
-            modifying the value of `X` inplace
+        ..versionchnanged:: 0.23
+            The default value of `copy` changed from False to True in 0.23.
 
     Returns
     -------
@@ -2659,17 +2654,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
-    if copy == "warn":
-        warnings.warn("The default value of `copy` will change from False to "
-                      "True in 0.23 in order to make it more consistent with "
-                      "the default `copy` values of other functions in "
-                      ":mod:`sklearn.preprocessing` and prevent "
-                      "unexpected side effects by modifying the value of `X` "
-                      "inplace. To avoid inplace modifications of `X`, it is "
-                      "recommended to explicitly set `copy=True`",
-                      FutureWarning)
-        copy = False
-
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
@@ -2704,6 +2688,8 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
     transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -3034,7 +3020,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return {'allow_nan': True}
 
 
-def power_transform(X, method='warn', standardize=True, copy=True):
+def power_transform(X, method='yeo-johnson', standardize=True, copy=True):
     """
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
@@ -3058,15 +3044,15 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data to be transformed using a power transformation.
 
-    method : str
+    method : {'yeo-johnson', 'box-cox'}, default='yeo-johnson'
         The power transform method. Available methods are:
 
         - 'yeo-johnson' [1]_, works with positive and negative values
         - 'box-cox' [2]_, only works with strictly positive values
 
-        The default method will be changed from 'box-cox' to 'yeo-johnson'
-        in version 0.23. To suppress the FutureWarning, explicitly set the
-        parameter.
+        .. versionchanged:: 0.23
+            The default value of the `method` parameter changed from
+            'box-cox' to 'yeo-johnson' in 0.23.
 
     standardize : boolean, default=True
         Set to True to apply zero-mean, unit-variance normalization to the
@@ -3118,12 +3104,5 @@ def power_transform(X, method='warn', standardize=True, copy=True):
     .. [2] G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal
            of the Royal Statistical Society B, 26, 211-252 (1964).
     """
-    if method == 'warn':
-        warnings.warn("The default value of 'method' will change from "
-                      "'box-cox' to 'yeo-johnson' in version 0.23. Set "
-                      "the 'method' argument explicitly to silence this "
-                      "warning in the meantime.",
-                      FutureWarning)
-        method = 'box-cox'
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)

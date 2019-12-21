@@ -248,27 +248,32 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task in label indicator format.
+    Note: this implementation can be used with binary, multiclass and
+    multilabel classification, but some restrictions apply (see Parameters).
 
     Read more in the :ref:`User Guide <roc_metrics>`.
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels or binary label indicators.
-        The multiclass case expects shape = [n_samples] and labels
-        with values in ``range(n_classes)``.
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
+        True labels or binary label indicators. The binary and multiclass cases
+        expect labels with shape (n_samples,) while the multilabel case expects
+        binary label indicators with shape (n_samples, n_classes).
 
-    y_score : array, shape = [n_samples] or [n_samples, n_classes]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers). For binary
-        y_true, y_score is supposed to be the score of the class with greater
-        label. The multiclass case expects shape = [n_samples, n_classes]
-        where the scores correspond to probability estimates.
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Target scores. In the binary and multilabel cases, these can be either
+        probability estimates or non-thresholded decision values (as returned
+        by `decision_function` on some classifiers). In the multiclass case,
+        these must be probability estimates which sum to 1. The binary
+        case expects a shape (n_samples,), and the scores must be the scores of
+        the class with the greater label. The multiclass and multilabel
+        cases expect a shape (n_samples, n_classes). In the multiclass case,
+        the order of the class scores must correspond to the order of
+        ``labels``, if provided, or else to the numerical or lexicographical
+        order of the labels in ``y_true``.
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {'micro', 'macro', 'samples', 'weighted'} or None, \
+            default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
         Note: multiclass ROC AUC currently only handles the 'macro' and
@@ -291,26 +296,32 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    max_fpr : float > 0 and <= 1, optional
-        If not ``None``, the standardized partial AUC [3]_ over the range
+    max_fpr : float > 0 and <= 1, default=None
+        If not ``None``, the standardized partial AUC [2]_ over the range
         [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
 
-    multi_class : string, 'ovr' or 'ovo', optional(default='raise')
-        Determines the type of multiclass configuration to use.
-        ``multi_class`` must be provided when ``y_true`` is multiclass.
+    multi_class : {'raise', 'ovr', 'ovo'}, default='raise'
+        Multiclass only. Determines the type of configuration to use. The
+        default value raises an error, so either ``'ovr'`` or ``'ovo'`` must be
+        passed explicitly.
 
         ``'ovr'``:
-            Calculate metrics for the multiclass case using the one-vs-rest
-            approach.
+            Computes the AUC of each class against the rest [3]_ [4]_. This
+            treats the multiclass case in the same way as the multilabel case.
+            Sensitive to class imbalance even when ``average == 'macro'``,
+            because class imbalance affects the composition of each of the
+            'rest' groupings.
         ``'ovo'``:
-            Calculate metrics for the multiclass case using the one-vs-one
-            approach.
+            Computes the average AUC of all possible pairwise combinations of
+            classes [5]_. Insensitive to class imbalance when
+            ``average == 'macro'``.
 
-    labels : array, shape = [n_classes] or None, optional (default=None)
-        List of labels to index ``y_score`` used for multiclass. If ``None``,
-        the lexicon order of ``y_true`` is used to index ``y_score``.
+    labels : array-like of shape (n_classes,), default=None
+        Multiclass only. List of labels that index the classes in ``y_score``.
+        If ``None``, the numerical or lexicographical order of the labels in
+        ``y_true`` is used.
 
     Returns
     -------
@@ -321,11 +332,21 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
-    .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
-           Letters, 2006, 27(8):861-874.
-
-    .. [3] `Analyzing a portion of the ROC curve. McClish, 1989
+    .. [2] `Analyzing a portion of the ROC curve. McClish, 1989
             <https://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
+
+    .. [3] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+           probability estimation trees (Section 6.2), CeDER Working Paper
+           #IS-00-04, Stern School of Business, New York University.
+
+    .. [4] `Fawcett, T. (2006). An introduction to ROC analysis. Pattern
+            Recognition Letters, 27(8), 861-874.
+            <https://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
+
+    .. [5] `Hand, D.J., Till, R.J. (2001). A Simple Generalisation of the Area
+            Under the ROC Curve for Multiple Class Classification Problems.
+            Machine Learning, 45(2), 171-186.
+            <http://link.springer.com/article/10.1023/A:1010920819831>`_
 
     See also
     --------
@@ -341,7 +362,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> roc_auc_score(y_true, y_scores)
     0.75
-
     """
 
     y_type = type_of_target(y_true)
