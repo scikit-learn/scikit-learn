@@ -25,6 +25,7 @@ from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._testing import _convert_container
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing._data import _handle_zeros_in_scale
@@ -1543,6 +1544,26 @@ def test_deprecated_quantile_transform_copy():
                       "recommended to explicitly set `copy=True`")
     assert_warns_message(FutureWarning, future_message, quantile_transform,
                          np.array([[0, 1], [0, 0.5], [1, 0]]))
+
+
+@pytest.mark.parametrize("array_type", ['array', 'sparse'])
+def test_quantile_transformer_sorted_quantiles(array_type):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/15733
+    # Taken from upstream bug report:
+    # https://github.com/numpy/numpy/issues/14685
+    X = np.array([0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 1, 1, 9, 9, 9, 8, 8, 7] * 10)
+    X = 0.1 * X.reshape(-1, 1)
+    X = _convert_container(X, array_type)
+
+    n_quantiles = 100
+    qt = QuantileTransformer(n_quantiles=n_quantiles).fit(X)
+
+    # Check that the estimated quantile threasholds are monotically
+    # increasing:
+    quantiles = qt.quantiles_[:, 0]
+    assert len(quantiles) == 100
+    assert all(np.diff(quantiles) >= 0)
 
 
 def test_robust_scaler_invalid_range():
